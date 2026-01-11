@@ -26,7 +26,7 @@ const ActivityLog = (function() {
     let sortNewest = true;
     let isPinned = true;
     let activeMode = 'live'; // 'live' or 'server'
-    let serverLogSource = 'agent'; // Current server log source
+    let serverLogSource = 'kitt'; // Current server log source
 
     // Log types with colors from STANDARDS.md color scheme
     const LOG_TYPES = {
@@ -70,10 +70,10 @@ const ActivityLog = (function() {
                 <button class="log-tab active" data-mode="live">Live</button>
                 <button class="log-tab" data-mode="server">Server Logs</button>
                 <select class="log-source-select" id="log-source" style="display:none;">
-                    <option value="agent">Agent Log</option>
+                    <option value="kitt">Kitt Chat</option>
+                    <option value="agent">Agent Server</option>
                     <option value="errors">Errors</option>
                     <option value="chat">Chat History</option>
-                    <option value="simwidget">SimWidget</option>
                     <option value="usage">Usage</option>
                 </select>
             </div>
@@ -164,7 +164,28 @@ const ActivityLog = (function() {
             const data = await response.json();
 
             logContent.innerHTML = '';
-            const lines = (data.log || data.content || '').split('\n').filter(l => l.trim());
+
+            // Handle kitt logs (array of entries)
+            if (serverLogSource === 'kitt' && data.entries) {
+                if (data.entries.length === 0) {
+                    logContent.innerHTML = '<div style="color:#666;padding:20px;text-align:center;">No chat history</div>';
+                    return;
+                }
+                data.entries.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry server-log';
+                    const isUser = entry.from && entry.from.includes('user');
+                    const icon = isUser ? '👤' : '🤖';
+                    const color = isUser ? '#4a9eff' : '#22c55e';
+                    div.innerHTML = `<span class="log-time">${entry.time || ''}</span><span style="color:${color};margin:0 8px;">${icon}</span><span class="log-message">${escapeHtml(entry.message || '')}</span>`;
+                    logContent.appendChild(div);
+                });
+                document.getElementById('log-count').textContent = `${data.entries.length} messages`;
+                return;
+            }
+
+            // Handle plain text logs (agent, errors, etc.)
+            const lines = (data.log || data.content || data.message || '').split('\n').filter(l => l.trim());
             if (lines.length === 0) {
                 logContent.innerHTML = '<div style="color:#666;padding:20px;text-align:center;">No logs available</div>';
                 return;
@@ -179,7 +200,7 @@ const ActivityLog = (function() {
 
             document.getElementById('log-count').textContent = `${lines.length} lines`;
         } catch (err) {
-            logContent.innerHTML = `<div style="color:#ef4444;padding:20px;text-align:center;">Error: ${err.message}</div>`;
+            logContent.innerHTML = `<div style="color:#ef4444;padding:20px;text-align:center;">Failed to fetch log</div>`;
         }
     }
 
@@ -967,18 +988,8 @@ const ActivityLog = (function() {
 
     // Hook into existing systems to capture events
     function hookIntoSystems() {
-        // Intercept WebSocket messages
-        const originalWsHandler = window.AdminKitt?.state?.ws?.onmessage;
-
-        // Hook into AdminKitt if available
-        if (typeof AdminKitt !== 'undefined') {
-            // Patch sendQuick
-            const originalSendQuick = AdminKitt.sendQuick;
-            AdminKitt.sendQuick = function(text) {
-                log('send', `Message: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
-                return originalSendQuick.apply(this, arguments);
-            };
-        }
+        // Note: Don't patch sendQuick here - core.js already logs via ActivityLog.send()
+        // This prevents double-logging of messages
 
         // Listen for custom events
         document.addEventListener('kitt:send', (e) => log('send', e.detail));

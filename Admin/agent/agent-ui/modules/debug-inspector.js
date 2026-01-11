@@ -71,6 +71,14 @@ const DebugInspector = (function() {
             { label: 'Toggle on click', cmd: 'add toggle on click' },
             { label: 'Fade in/out', cmd: 'add fade animation' }
         ]},
+        { icon: '🔅', label: 'Dim', cmd: 'dim', sub: [
+            { label: 'Dim element', cmd: 'dim element, reduce opacity' },
+            { label: 'Highlight element', cmd: 'highlight element, make it stand out' },
+            { label: 'Dim others', cmd: 'dim all other elements except this one' },
+            { label: 'Add focus overlay', cmd: 'add dark overlay highlighting this element' },
+            { label: 'Grayscale', cmd: 'make element grayscale' },
+            { label: 'Reset opacity', cmd: 'reset opacity to normal' }
+        ]},
         { icon: '✏️', label: 'Edit', cmd: 'edit', sub: [
             { label: 'Edit text', cmd: 'edit text' },
             { label: 'Edit HTML', cmd: 'edit html' },
@@ -157,8 +165,9 @@ const DebugInspector = (function() {
             z-index: 100001;
             display: none;
             min-width: 180px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            overflow: visible;
         `;
         document.body.appendChild(menu);
 
@@ -172,8 +181,9 @@ const DebugInspector = (function() {
             z-index: 100002;
             display: none;
             min-width: 160px;
+            max-height: calc(100vh - 60px);
+            overflow-y: auto;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            overflow: hidden;
         `;
         document.body.appendChild(submenu);
     }
@@ -669,8 +679,13 @@ const DebugInspector = (function() {
             document.body.style.cursor = '';
             lastElement = null;
             selectedElement = null;
+            selectedSelector = '';
             console.log('🔍 Debug Inspector OFF');
         }
+
+        // Sync quick action button state
+        const btn = document.querySelector('.qa-btn[data-cmd="inspect"]');
+        if (btn) btn.classList.toggle('active', active);
     }
 
     // ============================================
@@ -906,9 +921,85 @@ const DebugInspector = (function() {
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('click', onClick, true);
 
-        console.log('🔍 Debug Inspector v2.1 ready');
+        // Initialize quick actions bar
+        initQuickActions();
+
+        console.log('🔍 Debug Inspector v2.2 ready');
         console.log('   Ctrl+Alt+Shift+D - Element inspector');
         console.log('   Ctrl+Shift+D - Debug info panel');
+        console.log('   Quick Actions bar in header');
+    }
+
+    // Quick Actions Bar functionality
+    function initQuickActions() {
+        const qaBar = document.getElementById('quick-actions');
+        if (!qaBar) return;
+
+        qaBar.addEventListener('click', (e) => {
+            const btn = e.target.closest('.qa-btn');
+            if (!btn) return;
+
+            const cmd = btn.dataset.cmd;
+            if (!cmd) return;
+
+            // Special case: inspect button toggles debug inspector
+            if (cmd === 'inspect') {
+                toggle();
+                btn.classList.toggle('active', active);
+                return;
+            }
+
+            // If debug inspector is active and element is selected, send command
+            if (selectedElement && selectedSelector) {
+                sendQuickCommand(cmd);
+            } else {
+                // No element selected - activate inspector first
+                if (!active) {
+                    toggle();
+                    showToast('🔍 Select an element first');
+                } else {
+                    showToast('⚠ Click an element to select it');
+                }
+            }
+        });
+    }
+
+    function sendQuickCommand(cmd) {
+        const path = getPath(selectedElement);
+        const rect = selectedElement.getBoundingClientRect();
+        const size = `${Math.round(rect.width)}×${Math.round(rect.height)}`;
+        const computedStyle = window.getComputedStyle(selectedElement);
+        const styles = `color:${computedStyle.color}, bg:${computedStyle.backgroundColor}, display:${computedStyle.display}`;
+
+        const message = `[DEBUG] ${cmd} "${selectedSelector}"\nPath: ${path}\nSize: ${size}\nStyles: ${styles}`;
+
+        // Send to Kitt
+        let sent = false;
+        if (typeof AdminKitt !== 'undefined' && typeof AdminKitt.sendQuick === 'function') {
+            try {
+                AdminKitt.sendQuick(message);
+                sent = true;
+            } catch (err) {
+                console.error('AdminKitt.sendQuick failed:', err);
+            }
+        }
+
+        if (!sent) {
+            const input = document.getElementById('message-input');
+            if (input) {
+                input.value = message;
+                input.focus();
+            }
+        }
+
+        showToast(`🚀 Sent: ${cmd}`);
+        toggle(); // Exit debug mode after sending
+    }
+
+    // Update inspect button state when toggling
+    function updateInspectButton() {
+        const btn = document.querySelector('.qa-btn[data-cmd="inspect"]');
+        if (btn) btn.classList.toggle('active', active);
     }
 
     return {
@@ -916,7 +1007,8 @@ const DebugInspector = (function() {
         toggle,
         toggleDebugPanel,
         checkKitt,
-        resetKitt
+        resetKitt,
+        sendQuickCommand
     };
 })();
 

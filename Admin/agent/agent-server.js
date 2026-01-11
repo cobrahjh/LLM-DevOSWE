@@ -36,10 +36,33 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
 const { exec, spawn } = require('child_process');
+
+// SSL Configuration
+const SSL_CONFIG = {
+    enabled: process.env.SSL_ENABLED === 'true' || false,
+    certDir: path.join(__dirname, 'certs'),
+    keyFile: 'server.key',
+    certFile: 'server.crt'
+};
+
+// Load SSL certificates if available
+function loadSSLCerts() {
+    const keyPath = path.join(SSL_CONFIG.certDir, SSL_CONFIG.keyFile);
+    const certPath = path.join(SSL_CONFIG.certDir, SSL_CONFIG.certFile);
+
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        return {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath)
+        };
+    }
+    return null;
+}
 const Anthropic = require('@anthropic-ai/sdk');
 const TroubleshootEngine = require('../shared/troubleshoot-engine');
 const { ServiceManager, SERVICES } = require('./service-manager');
@@ -51,15 +74,33 @@ const serviceManager = new ServiceManager();
 let kittBusy = false;
 let kittBusySince = null;
 let kittCurrentTask = null;
+let busyTimeoutId = null;
+
+// Safety timeout - auto-reset busy state if stuck for too long (10 minutes)
+const BUSY_SAFETY_TIMEOUT = 10 * 60 * 1000;
 
 // Task queue for when Kitt is busy
 const taskQueue = [];
 let isProcessingQueue = false;
 
 function setKittBusy(busy, task = null) {
+    // Clear any existing safety timeout
+    if (busyTimeoutId) {
+        clearTimeout(busyTimeoutId);
+        busyTimeoutId = null;
+    }
+
     kittBusy = busy;
     kittBusySince = busy ? new Date().toISOString() : null;
     kittCurrentTask = task;
+
+    // Set safety timeout when marking busy
+    if (busy) {
+        busyTimeoutId = setTimeout(() => {
+            console.log('[Agent] Safety timeout: Force-resetting stuck busy state');
+            setKittBusy(false);
+        }, BUSY_SAFETY_TIMEOUT);
+    }
 
     // Broadcast to all WebSocket clients
     wss.clients.forEach(client => {
@@ -136,11 +177,25 @@ function broadcastQueueUpdate() {
 }
 
 const app = express();
-const server = http.createServer(app);
+
+// Create HTTP server (always available)
+const httpServer = http.createServer(app);
+
+// Create HTTPS server if certs are available
+let httpsServer = null;
+const sslCerts = loadSSLCerts();
+if (sslCerts) {
+    httpsServer = https.createServer(sslCerts, app);
+    console.log('[Agent] SSL certificates loaded - HTTPS enabled');
+}
+
+// Use HTTPS if available and enabled, otherwise HTTP
+const server = (SSL_CONFIG.enabled && httpsServer) ? httpsServer : httpServer;
 const wss = new WebSocket.Server({ noServer: true });
 const HotEngine = require('./hot-update/hot-engine');
 
 const PORT = process.env.AGENT_PORT || 8585;
+const SSL_PORT = process.env.AGENT_SSL_PORT || 8586;
 
 // Handle WebSocket upgrades manually to support multiple WS endpoints
 server.on('upgrade', (request, socket, head) => {
@@ -1471,6 +1526,36 @@ app.delete('/api/kitt/queue', (req, res) => {
     res.json({ success: true, cleared, message: `Cleared ${cleared} queued tasks` });
 });
 
+// Cancel/stop current task and clear busy state
+app.post('/api/kitt/cancel', (req, res) => {
+    const wasBusy = kittBusy;
+    setKittBusy(false);
+
+    // Also clear any pending tasks
+    const clearedTasks = taskQueue.length;
+    taskQueue.length = 0;
+
+    // Broadcast cancellation to all clients
+    wss.clients.forEach(client => {
+        if (client.readyState === 1) {
+            client.send(JSON.stringify({
+                type: 'cancelled',
+                message: 'Task cancelled by user'
+            }));
+        }
+    });
+
+    broadcastQueueUpdate();
+    console.log('[Kitt] Task cancelled by user');
+
+    res.json({
+        success: true,
+        wasBusy,
+        clearedTasks,
+        message: wasBusy ? 'Current task cancelled' : 'No active task to cancel'
+    });
+});
+
 // ==================== GAMING DEVICES API ====================
 
 // List gaming devices
@@ -2066,6 +2151,17 @@ app.post('/api/model', (req, res) => {
     });
 });
 
+// SSL status
+app.get('/api/ssl', (req, res) => {
+    res.json({
+        enabled: SSL_CONFIG.enabled,
+        httpsAvailable: !!httpsServer,
+        httpPort: PORT,
+        httpsPort: SSL_PORT,
+        certsExist: !!sslCerts
+    });
+});
+
 // Relay mode configuration
 app.get('/api/relay', (req, res) => {
     res.json({
@@ -2245,22 +2341,59 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start server with TroubleshootEngine
 const troubleshoot = new TroubleshootEngine('Agent');
 
-troubleshoot.startServer(server, PORT, '0.0.0.0', () => {
+// Handle WebSocket upgrades for HTTPS server if available
+if (httpsServer) {
+    httpsServer.on('upgrade', (request, socket, head) => {
+        const pathname = new URL(request.url, 'https://localhost').pathname;
+
+        if (pathname === '/chat') {
+            wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.emit('connection', ws, request);
+            });
+        } else if (pathname === '/hot') {
+            if (server.hotEngine && server.hotEngine.wss) {
+                server.hotEngine.wss.handleUpgrade(request, socket, head, (ws) => {
+                    server.hotEngine.wss.emit('connection', ws, request);
+                });
+            } else {
+                socket.destroy();
+            }
+        } else {
+            socket.destroy();
+        }
+    });
+}
+
+// Start HTTP server
+troubleshoot.startServer(httpServer, PORT, '0.0.0.0', () => {
     console.log('');
-    console.log('╔═══════════════════════════════════════════╗');
-    console.log('║     SimWidget Agent v1.2.0                ║');
-    console.log('╠═══════════════════════════════════════════╣');
-    console.log(`║  Local:   http://localhost:${PORT}            ║`);
-    console.log(`║  Network: http://192.168.1.42:${PORT}         ║`);
-    console.log('║                                           ║');
-    console.log('║  Access from phone to chat with Kitt!     ║');
-    console.log('╚═══════════════════════════════════════════╝');
-    console.log('');
-    
-    // Start Hot Update Engine
-    const hot = new HotEngine(server, [
+    console.log('╔═══════════════════════════════════════════════╗');
+    console.log('║     SimWidget Agent v1.4.0                    ║');
+    console.log('╠═══════════════════════════════════════════════╣');
+    console.log(`║  HTTP:    http://localhost:${PORT}                ║`);
+
+    // Start HTTPS server if certs available
+    if (httpsServer) {
+        httpsServer.listen(SSL_PORT, '0.0.0.0', () => {
+            console.log(`║  HTTPS:   https://localhost:${SSL_PORT}               ║`);
+            console.log('║                                               ║');
+            console.log('║  SSL enabled - use HTTPS for secure access   ║');
+            console.log('╚═══════════════════════════════════════════════╝');
+            console.log('');
+        });
+    } else {
+        console.log('║                                               ║');
+        console.log('║  Run generate-certs.bat to enable HTTPS      ║');
+        console.log('╚═══════════════════════════════════════════════╝');
+        console.log('');
+    }
+
+    // Start Hot Update Engine on primary server
+    const hot = new HotEngine(httpServer, [
         path.join(__dirname, 'agent-ui'),
         path.join(__dirname, 'hot-update')
     ]);
     hot.start();
+    httpServer.hotEngine = hot;
+    if (httpsServer) httpsServer.hotEngine = hot;
 });

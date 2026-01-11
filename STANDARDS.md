@@ -279,6 +279,29 @@ Each service row shows mode context:
 - `(node)` - Dev mode (yellow)
 - `(service)` - Windows Service mode (blue)
 
+### Services & Ports
+| Service | Port | Purpose |
+|---------|------|---------|
+| Master | 8500 | Health watchdog, service orchestration |
+| SimWidget | 8080 | Main server, SimConnect bridge |
+| Agent (Kitt) | 8585 | AI assistant, chat interface |
+| Remote | 8590 | Remote support access |
+| Relay | 8600 | Claude Desktop message relay |
+| Bridge | 8601 | Claude Code CLI bridge |
+
+### Status Icon States
+All status dots use consistent colors and animations:
+
+| State | Color | Effect | CSS Class |
+|-------|-------|--------|-----------|
+| online/running | Green `#22c55e` | Glow | `.online`, `.running` |
+| offline/stopped | Red `#ef4444` | Subtle glow | `.offline`, `.stopped` |
+| checking | Yellow `#f59e0b` | Pulse animation | `.checking` |
+| starting | Blue `#3b82f6` | Blink animation | `.starting` |
+| warning | Yellow `#f59e0b` | Subtle glow | `.warning` |
+
+CSS classes: `.compact-dot`, `.status-dot`, `.server-dot`
+
 ### Log Screen Standards
 All log viewing screens must include:
 - **Type filters** - Checkboxes to show/hide by log type (info, error, warning, etc.)

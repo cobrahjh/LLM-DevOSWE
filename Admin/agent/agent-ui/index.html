@@ -28,12 +28,23 @@
         <h1>🤖 Admin Kitt <span id="kitt-status" class="kitt-status">✨</span></h1>
         <div class="header-right">
             <button class="btn-todo" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
-            <button class="btn-logs" onclick="toggleLog('agent')" title="View Logs">📜</button>
-            <div class="compact-status" id="compact-status">
-                <span class="compact-dot" id="dot-simwidget" title="SimWidget :8080"></span>
-                <span class="compact-dot" id="dot-agent" title="Agent :8585"></span>
-                <span class="compact-dot" id="dot-remote" title="Remote :8590"></span>
+            <div class="compact-status" id="compact-status" title="Click for services panel">
+                <span class="compact-dot" id="dot-master" data-service="master" data-port="8500" title="Master :8500"></span>
+                <span class="compact-dot" id="dot-simwidget" data-service="simwidget" data-port="8080" title="SimWidget :8080"></span>
+                <span class="compact-dot" id="dot-agent" data-service="agent" data-port="8585" title="Agent :8585"></span>
+                <span class="compact-dot" id="dot-remote" data-service="remote" data-port="8590" title="Remote :8590"></span>
+                <span class="compact-dot" id="dot-relay" data-service="relay" data-port="8600" title="Relay :8600"></span>
+                <span class="compact-dot" id="dot-bridge" data-service="bridge" data-port="8601" title="Bridge :8601"></span>
+                <span class="compact-separator">|</span>
                 <span class="header-cost" id="header-cost" onclick="event.stopPropagation(); toggleCostReport()" title="Today's cost">$0.00</span>
+            </div>
+            <div class="quick-actions" id="quick-actions">
+                <button class="qa-btn" data-cmd="inspect" title="Debug Inspector (Ctrl+Alt+Shift+D)">🔍</button>
+                <button class="qa-btn" data-cmd="not working" title="Report Not Working">❌</button>
+                <button class="qa-btn" data-cmd="fix" title="Fix Issue">🔧</button>
+                <button class="qa-btn" data-cmd="upgrade functionality" title="Upgrade">⬆️</button>
+                <button class="qa-btn" data-cmd="add content" title="Add Content">➕</button>
+                <button class="qa-btn danger" data-cmd="remove" title="Remove Element">🗑️</button>
             </div>
             <button class="btn-services" id="btn-services" title="Services">⚙️</button>
             <button class="btn-refresh" id="btn-refresh" title="Reconnect">🔄</button>

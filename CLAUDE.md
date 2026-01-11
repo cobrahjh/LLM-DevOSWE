@@ -11,6 +11,28 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 ## ⚠️ Important Rules
 
 - **NEVER use Anthropic API key for Kitt agent** - not cost effective. Use relay mode or direct Claude Code instead.
+- **Continue changes without prompting** - Don't ask for confirmation, just make the changes and report what was done.
+
+### Kitt Processing Mode (Dual Setup)
+
+Use **both** methods together for best workflow:
+
+| Location | Method | How |
+|----------|--------|-----|
+| **At PC** | Claude Code direct | Talk directly in terminal (free, full power) |
+| **On Phone** | Relay + Consumer | Kitt UI → Relay → Consumer → Claude Code |
+
+**Start relay consumer:**
+```bash
+node "C:/DevOSWE/Admin/relay/relay-consumer.js"
+```
+
+Consumer shows incoming messages, respond via Claude Code or curl:
+```bash
+curl -X POST http://localhost:8600/api/queue/respond \
+  -H "Content-Type: application/json" \
+  -d '{"messageId":"abc123","response":"Done!"}'
+```
 
 ### Files using API keys (need refactoring):
 | File | Usage | Refactor To |
