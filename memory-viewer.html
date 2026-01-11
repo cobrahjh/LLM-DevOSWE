@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Viewer - CLAUDE.md & STANDARDS.md</title>
+    <style>
+        /* Standard color scheme from STANDARDS.md */
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-darker: #0f0f1a;
+            --bg-panel: #0f172a;
+            --bg-card: #2a2a3e;
+            --accent-success: #22c55e;
+            --accent-info: #4a9eff;
+            --accent-warning: #f59e0b;
+            --accent-error: #ef4444;
+            --accent-purple: #a855f7;
+            --text-primary: #e0e0e0;
+            --text-muted: #94a3b8;
+            --border-color: #333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Standard panel header */
+        .header {
+            background: var(--bg-dark);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header h1 {
+            font-size: 18px;
+            color: var(--accent-info);
+        }
+
+        /* Standard tab buttons */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .tab {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s ease;
+        }
+        .tab:hover { color: #fff; border-color: var(--accent-info); }
+        .tab.active { background: var(--accent-info); color: #fff; border-color: var(--accent-info); }
+
+        /* Standard button */
+        .btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.15s ease;
+        }
+        .btn:hover { background: #3a3a4e; color: #fff; }
+
+        /* Standard search input */
+        .search-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            width: 200px;
+            transition: border-color 0.15s ease;
+        }
+        .search-box:focus { outline: none; border-color: var(--accent-info); }
+
+        /* Content area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Markdown rendering */
+        .markdown {
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .markdown h1 {
+            font-size: 28px;
+            margin: 24px 0 16px;
+            color: var(--accent-info);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .markdown h2 { font-size: 22px; margin: 20px 0 12px; color: var(--accent-success); }
+        .markdown h3 { font-size: 18px; margin: 16px 0 10px; color: var(--accent-warning); }
+        .markdown h4 { font-size: 15px; margin: 14px 0 8px; color: var(--accent-purple); }
+        .markdown p { margin: 10px 0; }
+        .markdown ul, .markdown ol { margin: 10px 0 10px 24px; }
+        .markdown li { margin: 4px 0; }
+        .markdown code {
+            background: var(--bg-card);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            color: var(--accent-warning);
+        }
+        .markdown pre {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        .markdown pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+        }
+        .markdown table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+        .markdown th, .markdown td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .markdown th { background: var(--bg-card); color: var(--accent-info); }
+        .markdown tr:hover { background: rgba(74, 158, 255, 0.1); }
+        .markdown strong { color: var(--accent-info); }
+        .markdown a { color: var(--accent-info); text-decoration: none; }
+        .markdown a:hover { text-decoration: underline; }
+        .markdown blockquote {
+            border-left: 3px solid var(--accent-info);
+            padding-left: 16px;
+            margin: 12px 0;
+            color: var(--text-muted);
+        }
+        .markdown hr { border: none; border-top: 1px solid var(--border-color); margin: 20px 0; }
+
+        /* Standard toast notification */
+        .status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent-success);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 30000;
+        }
+        .status.visible { opacity: 1; }
+        .status.error { background: var(--accent-error); }
+
+        .last-modified {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .highlight {
+            background: var(--accent-warning);
+            color: #000;
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+
+        /* Queue indicator */
+        .queue-indicator {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: var(--accent-warning);
+            color: #000;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .queue-indicator.visible { display: flex; }
+
+        /* PM Quick Actions */
+        .pm-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .pm-btn {
+            background: transparent;
+            border: 1px solid var(--accent-info);
+            color: var(--accent-info);
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.15s ease;
+        }
+        .pm-btn:hover {
+            background: var(--accent-info);
+            color: #fff;
+        }
+
+        /* Summary View */
+        .summary-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .summary-section h3 {
+            color: var(--accent-info);
+            margin-bottom: 12px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .summary-card {
+            background: var(--bg-dark);
+            border-radius: 6px;
+            padding: 12px;
+        }
+        .summary-card .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .summary-card .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--accent-success);
+        }
+        .shortcut-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .shortcut-item {
+            background: var(--bg-dark);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .shortcut-item .abbr {
+            color: var(--accent-warning);
+            font-weight: bold;
+            font-family: monospace;
+        }
+        .shortcut-item .meaning {
+            color: var(--text-muted);
+        }
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .status-row:last-child { border-bottom: none; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-dot.online { background: var(--accent-success); }
+        .status-dot.offline { background: var(--accent-error); }
+        .status-dot.unknown { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Memory Viewer</h1>
+        <input type="text" class="search-box" id="search" placeholder="Search..." oninput="highlightSearch()">
+        <div class="queue-indicator" id="queue-indicator">
+            <span id="queue-count">0</span> queued
+        </div>
+        <div class="pm-actions">
+            <button class="pm-btn" onclick="jumpTo('shortcuts')" title="User Shortcuts">Shortcuts</button>
+            <button class="pm-btn" onclick="jumpTo('components')" title="Component Status">Components</button>
+            <button class="pm-btn" onclick="jumpTo('api')" title="API Patterns">API</button>
+            <button class="pm-btn" onclick="openKitt()" title="Open Kitt Admin">Kitt</button>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('claude', this)">CLAUDE.md</button>
+            <button class="tab" onclick="showTab('standards', this)">STANDARDS.md</button>
+            <button class="tab" onclick="showTab('summary', this)">Summary</button>
+        </div>
+        <button class="btn" onclick="loadMemory()">Refresh</button>
+    </div>
+    <div class="content">
+        <div class="last-modified" id="last-modified"></div>
+        <div class="markdown" id="content">Loading...</div>
+    </div>
+    <div class="status" id="status"></div>
+
+    <script>
+        let data = { claude: '', standards: '' };
+        let currentTab = 'claude';
+        let serviceStatus = {};
+
+        async function loadMemory() {
+            try {
+                const res = await fetch('http://localhost:8585/api/memory');
+                data = await res.json();
+                renderContent();
+                showStatus('Refreshed');
+            } catch (err) {
+                showStatus('Error: ' + err.message, true);
+                document.getElementById('content').innerHTML = '<p style="color:var(--accent-error);">Failed to load. Is the agent running on port 8585?</p>';
+            }
+        }
+
+        // Check Kitt queue status
+        async function checkQueueStatus() {
+            try {
+                const res = await fetch('http://localhost:8585/api/kitt/queue');
+                const queue = await res.json();
+                const indicator = document.getElementById('queue-indicator');
+                const count = document.getElementById('queue-count');
+                if (queue.queueLength > 0) {
+                    count.textContent = queue.queueLength;
+                    indicator.classList.add('visible');
+                } else {
+                    indicator.classList.remove('visible');
+                }
+            } catch (e) {
+                // Ignore - agent might not be running
+            }
+        }
+
+        // Check service status for summary (parallel for speed)
+        async function checkServices() {
+            const services = [
+                { name: 'Agent (Kitt)', url: 'http://localhost:8585/api/health' },
+                { name: 'SimWidget', url: 'http://localhost:8080/api/status' },
+                { name: 'Relay', url: 'http://localhost:8600/api/health' }
+            ];
+
+            await Promise.all(services.map(async (svc) => {
+                try {
+                    const res = await fetch(svc.url, { signal: AbortSignal.timeout(2000) });
+                    serviceStatus[svc.name] = res.ok ? 'online' : 'offline';
+                } catch {
+                    serviceStatus[svc.name] = 'offline';
+                }
+            }));
+
+            // Re-render summary if on that tab
+            if (currentTab === 'summary') {
+                renderSummary();
+            }
+        }
+
+        function showTab(tab, clickedElement = null) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // Find and activate the correct tab button
+            const tabBtn = clickedElement || document.querySelector(`.tab[onclick*="'${tab}'"]`);
+            if (tabBtn) tabBtn.classList.add('active');
+            renderContent();
+        }
+
+        function renderContent() {
+            if (currentTab === 'summary') {
+                renderSummary();
+                return;
+            }
+
+            const content = currentTab === 'claude' ? data.claude : data.standards;
+            const modified = data.lastModified?.[currentTab];
+
+            document.getElementById('last-modified').textContent = modified
+                ? 'Last modified: ' + new Date(modified).toLocaleString()
+                : '';
+
+            document.getElementById('content').innerHTML = parseMarkdown(content);
+
+            // Apply search highlight if there's a query
+            const query = document.getElementById('search').value.trim();
+            if (query) {
+                highlightSearch();
+            }
+        }
+
+        // Render PM Summary view
+        function renderSummary() {
+            document.getElementById('last-modified').textContent = '';
+
+            // Extract shortcuts from CLAUDE.md
+            const shortcuts = extractShortcuts(data.claude);
+
+            // Extract component status from CLAUDE.md
+            const components = extractComponents(data.claude);
+
+            // Build service status HTML
+            const serviceNames = ['Agent (Kitt)', 'SimWidget', 'Relay'];
+            const serviceHtml = serviceNames.map(name => {
+                const status = serviceStatus[name] || 'unknown';
+                const statusColor = status === 'online' ? 'var(--accent-success)' : status === 'offline' ? 'var(--accent-error)' : 'var(--text-muted)';
+                return `
+                    <div class="status-row">
+                        <span><span class="status-dot ${status}"></span>${name}</span>
+                        <span style="color: ${statusColor}">${status}</span>
+                    </div>
+                `;
+            }).join('');
+
+            let html = `
+                <div class="summary-section">
+                    <h3>Service Status</h3>
+                    <div>${serviceHtml}</div>
+                </div>
+
+                <div class="summary-section">
+                    <h3>Quick Shortcuts (${shortcuts.length})</h3>
+                    <div class="shortcut-list">
+                        ${shortcuts.length > 0 ? shortcuts.map(s => `
+                            <div class="shortcut-item">
+                                <span class="abbr">${escapeHtml(s.abbr)}</span>
+                                <span class="meaning">${escapeHtml(s.meaning)}</span>
+                            </div>
+                        `).join('') : '<span style="color: var(--text-muted)">No shortcuts found</span>'}
+                    </div>
+                </div>
+
+                <div class="summary-section">
+                    <h3>Component Status (${components.length})</h3>
+                    <div class="summary-grid">
+                        ${components.length > 0 ? components.map(c => `
+                            <div class="summary-card">
+                                <div class="label">${escapeHtml(c.name)}</div>
+                                <div class="value" style="color: ${c.status === 'done' ? 'var(--accent-success)' : c.status === 'partial' ? 'var(--accent-warning)' : 'var(--text-muted)'}">${c.status}</div>
+                            </div>
+                        `).join('') : '<span style="color: var(--text-muted)">No components found</span>'}
+                    </div>
+                </div>
+
+                <div class="summary-section">
+                    <h3>Quick Actions</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn" onclick="openKitt()">Open Kitt Admin</button>
+                        <button class="btn" onclick="goToSection('claude', 'shortcuts')">View All Shortcuts</button>
+                        <button class="btn" onclick="goToSection('standards', 'timing')">Timing Defaults</button>
+                        <button class="btn" onclick="goToSection('standards', 'debugger')">Debugger Standards</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        // Helper to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Navigate to a tab and section
+        function goToSection(tab, section) {
+            showTab(tab);
+            setTimeout(() => jumpTo(section), 100);
+        }
+
+        // Extract shortcuts from CLAUDE.md content
+        function extractShortcuts(content) {
+            const shortcuts = [];
+            const regex = /\|\s*`?(\w+)`?\s*\|\s*([^|]+)\|/g;
+            let match;
+            while ((match = regex.exec(content)) !== null) {
+                const abbr = match[1].trim();
+                const meaning = match[2].trim();
+                // Filter to likely shortcuts (short abbreviations)
+                if (abbr.length <= 12 && !abbr.includes('---') && meaning.length < 60) {
+                    shortcuts.push({ abbr, meaning });
+                }
+            }
+            return shortcuts.slice(0, 20); // Limit to 20
+        }
+
+        // Extract component status from CLAUDE.md
+        function extractComponents(content) {
+            const components = [];
+            const statusMap = { '✅': 'done', '🔨': 'partial', '📋': 'planned' };
+
+            const regex = /\|\s*(\w+[^|]*)\s*\|\s*`[^`]+`\s*\|\s*([✅🔨📋])/g;
+            let match;
+            while ((match = regex.exec(content)) !== null) {
+                components.push({
+                    name: match[1].trim(),
+                    status: statusMap[match[2]] || 'unknown'
+                });
+            }
+            return components;
+        }
+
+        // Jump to section
+        function jumpTo(section) {
+            const searchTerms = {
+                'shortcuts': 'User Shortcuts',
+                'components': 'Component System',
+                'api': 'API Patterns',
+                'timing': 'Timing Defaults',
+                'debugger': 'Debug Inspector'
+            };
+
+            const term = searchTerms[section] || section;
+            document.getElementById('search').value = term;
+            highlightSearch();
+
+            // Scroll to first match
+            setTimeout(() => {
+                const highlight = document.querySelector('.highlight');
+                if (highlight) {
+                    highlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+        }
+
+        // Open Kitt Admin
+        function openKitt() {
+            window.open('http://localhost:8585', '_blank');
+        }
+
+        function parseMarkdown(md) {
+            if (!md) return '<p>No content</p>';
+
+            // Escape HTML
+            md = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            // Code blocks
+            md = md.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+
+            // Inline code
+            md = md.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+            // Headers
+            md = md.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+            md = md.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            md = md.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            md = md.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            // Bold and italic
+            md = md.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            md = md.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+            // Links
+            md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+            // Tables
+            md = md.replace(/^\|(.+)\|$/gm, (match, content) => {
+                const cells = content.split('|').map(c => c.trim());
+                if (cells.every(c => /^-+$/.test(c))) return ''; // Skip separator
+                const tag = cells[0].startsWith('**') ? 'th' : 'td';
+                return '<tr>' + cells.map(c => `<${tag}>${c.replace(/\*\*/g, '')}</${tag}>`).join('') + '</tr>';
+            });
+            md = md.replace(/((<tr>[\s\S]*?<\/tr>\n?)+)/g, '<table>$1</table>');
+
+            // Lists
+            md = md.replace(/^- (.+)$/gm, '<li>$1</li>');
+            md = md.replace(/((<li>[\s\S]*?<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+            // Horizontal rules
+            md = md.replace(/^---$/gm, '<hr>');
+
+            // Paragraphs
+            md = md.replace(/\n\n/g, '</p><p>');
+            md = '<p>' + md + '</p>';
+            md = md.replace(/<p><\/p>/g, '');
+            md = md.replace(/<p>(<h[1-4]>)/g, '$1');
+            md = md.replace(/(<\/h[1-4]>)<\/p>/g, '$1');
+            md = md.replace(/<p>(<pre>)/g, '$1');
+            md = md.replace(/(<\/pre>)<\/p>/g, '$1');
+            md = md.replace(/<p>(<table>)/g, '$1');
+            md = md.replace(/(<\/table>)<\/p>/g, '$1');
+            md = md.replace(/<p>(<ul>)/g, '$1');
+            md = md.replace(/(<\/ul>)<\/p>/g, '$1');
+            md = md.replace(/<p>(<hr>)/g, '$1');
+
+            return md;
+        }
+
+        function highlightSearch() {
+            const query = document.getElementById('search').value.trim().toLowerCase();
+            if (!query || currentTab === 'summary') {
+                return;
+            }
+
+            // Re-render content first to clear previous highlights
+            const content = currentTab === 'claude' ? data.claude : data.standards;
+            document.getElementById('content').innerHTML = parseMarkdown(content);
+
+            // Escape regex special chars
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            const contentEl = document.getElementById('content');
+            contentEl.innerHTML = contentEl.innerHTML.replace(
+                new RegExp(`(${escapedQuery})`, 'gi'),
+                '<span class="highlight">$1</span>'
+            );
+        }
+
+        function showStatus(msg, isError = false) {
+            const status = document.getElementById('status');
+            status.textContent = msg;
+            status.className = 'status visible' + (isError ? ' error' : '');
+            setTimeout(() => status.classList.remove('visible'), 2000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadMemory, 30000);
+        setInterval(checkQueueStatus, 5000);
+        setInterval(checkServices, 10000);
+
+        // Initial load
+        loadMemory();
+        checkQueueStatus();
+        checkServices();
+    </script>
+</body>
+</html>

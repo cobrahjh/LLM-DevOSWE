@@ -1,0 +1,868 @@
+# SimWidget Engine - Project Standards & Conventions
+**Version:** 1.2.0
+**Last Updated:** 2026-01-11
+
+This document captures proven patterns, timing defaults, and lessons learned throughout development. **Always reference this before implementing new features.**
+
+---
+
+## 🕐 Timing Defaults
+
+| Context | Value | Reason |
+|---------|-------|--------|
+| UI polling (gamepad/input) | `100ms` | Balance between responsiveness and CPU usage |
+| Debounce after toggle | `100-200ms` | Prevents UI flicker during state changes |
+| WebSocket reconnect | `3000ms` | Allows service recovery without spam |
+| TCP timeout | `2000ms` | Fast enough for responsiveness, long enough for reliability |
+| SimConnect data request | `100ms` | Matches sim frame rate roughly |
+| Config file watch delay | `100ms` | Allows file write to complete |
+
+## 🪟 Windows-Specific Patterns
+
+### PowerShell vs CMD vs Bash
+- **Always use PowerShell** for Windows automation
+- Use semicolons `;` not `&&` for command chaining in PowerShell
+- Example: `powershell -Command "cd C:\path; node server.js"`
+
+### Path Conventions
+- **Never use spaces** in directory names → causes execution failures
+- Use underscores: `SimWidget_Engine` not `SimWidget Engine`
+- Always use absolute paths for reliability
+- Escape paths in PowerShell: `"C:\Path With Spaces\file.js"`
+
+### Process Management
+```powershell
+# Stop process
+Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
+
+# Start detached
+Start-Process -FilePath "node" -ArgumentList "server.js" -WindowStyle Hidden
+```
+
+## 🎮 Gamepad API Patterns
+
+### Stale Reference Problem
+`navigator.getGamepads()` returns **stale/null references** when called from click handlers.
+
+**Solution:** Cache device IDs during polling loop:
+```javascript
+let deviceIdByIndex = {};
+
+// In polling loop:
+deviceIdByIndex[gamepad.index] = gamepad.id;
+
+// In click handler - use cached ID:
+const deviceId = deviceIdByIndex[index];
+```
+
+### Change Detection (Prevent Flicker)
+Only re-render when state actually changes:
+```javascript
+let lastState = '';
+const currentState = buildStateString();
+if (currentState !== lastState) {
+    lastState = currentState;
+    render();
+}
+```
+
+## 📁 Config File Formats
+
+### Keymaps (v3.0 format - Current)
+```json
+{
+    "cam-001-cockpit-vfr": {
+        "originalId": "cockpitVFR",   // For backward compat lookups
+        "name": "Cockpit VFR",        // User-editable display name
+        "key": "F10",                 // Sent to MSFS (keyboard only)
+        "trigger": "",                // Activates action (keyboard or controller)
+        "isDefault": true             // Protected from deletion
+    }
+}
+```
+
+**Reversibility:** Call `GET /api/keymaps/export/v2` to export back to v2.0 format.
+
+### Keymaps (v2.0 format - Legacy)
+```json
+{
+    "action": {
+        "key": "BACKSPACE",
+        "trigger": "BTN1"
+    }
+}
+```
+
+### Backward Compatibility
+- `getKey(category, action)` checks both direct ID and `originalId` lookup
+- Always handle both string and object formats:
+```javascript
+const key = typeof binding === 'object' ? binding.key : binding;
+```
+
+## 🔌 API Patterns
+
+### Consistent Response Format
+```javascript
+// Success
+{ success: true, data: {...} }
+
+// Error
+{ success: false, error: "Message" }
+
+// Warning (non-fatal)
+{ success: true, warning: "Message", data: {...} }
+```
+
+### Field Updates
+When updating partial objects, send field name explicitly:
+```javascript
+{ field: 'trigger', value: 'BTN1' }
+```
+
+## 🎨 UI Standards
+
+### Toggle Switch (Pure CSS, no checkbox)
+Checkboxes cause event conflicts. Use div-based toggles:
+```html
+<div class="toggle-switch on" onclick="toggle()">
+    <div class="toggle-slider"></div>
+</div>
+```
+With `pointer-events: none` on inner elements.
+
+### Color Scheme
+| Element | Color |
+|---------|-------|
+| Background | `#1a1a2e` → `#16213e` gradient |
+| Card/Panel | `#0f172a` |
+| Accent (success) | `#22c55e` / `#4ade80` |
+| Accent (info) | `#3b82f6` / `#7ec8e3` |
+| Warning | `#f59e0b` |
+| Error | `#ef4444` |
+| Text primary | `#eee` / `#e2e8f0` |
+| Text muted | `#94a3b8` / `#64748b` |
+
+## 🐛 Known Gotchas
+
+### SimConnect Camera Events
+SimConnect camera events are **unreliable**. Use keyboard shortcuts via SendKeys instead.
+
+### vJoy + ChasePlane
+vJoy integration causes input conflicts with ChasePlane. ChasePlane WebSocket (port 8652) is read-only.
+
+### Node.js on Windows
+- `&&` doesn't work in PowerShell - use `;`
+- Use `shell: 'cmd'` or explicit PowerShell for complex commands
+
+### TCP KeySender vs PowerShell
+- TCP: ~5ms latency (preferred)
+- PowerShell fallback: ~700ms latency
+- Always try TCP first, fallback to PowerShell
+
+## 📝 Documentation Standards
+
+### File Headers
+```javascript
+/**
+ * Component Name vX.X.X
+ * Brief description
+ * 
+ * Path: C:\DevOSWE\SimWidget_Engine\...
+ * 
+ * Changelog:
+ * vX.X.X - Change description
+ */
+```
+
+### CLAUDE.md in Each Directory
+Each major directory should have a `CLAUDE.md` with:
+- Purpose
+- Key files
+- API endpoints (if applicable)
+- Dependencies
+
+---
+
+## Adding New Standards
+
+When you discover a pattern that:
+1. Solved a recurring problem
+2. Took significant debugging to find
+3. Is non-obvious or platform-specific
+
+**Add it here** with:
+- The pattern/value
+- Why it works
+- Example code if helpful
+
+---
+
+## 💬 Admin UI Standards
+
+### Chat Bubble Features (v1.1.0)
+Chat bubbles support:
+- **Copy button (📋)** - Copies message text to clipboard
+- **Dismiss button (✗)** - Toggles strikethrough/dimmed state
+
+### Dismissed Message Styling
+```css
+.message-wrapper.dismissed .message {
+    text-decoration: line-through;
+    opacity: 0.4;
+    filter: grayscale(100%);
+}
+```
+
+### Message Structure
+```html
+<div class="message-wrapper user|assistant">
+    <div class="message-actions">
+        <button class="msg-action-btn" onclick="copyMessage(this)">📋</button>
+        <button class="msg-action-btn" onclick="dismissMessage(this)">✗</button>
+    </div>
+    <div class="message user|assistant">Content</div>
+</div>
+```
+
+### Service Mode Indicators
+Each service row shows mode context:
+- `(node)` - Dev mode (yellow)
+- `(service)` - Windows Service mode (blue)
+
+### Log Screen Standards
+All log viewing screens must include:
+- **Type filters** - Checkboxes to show/hide by log type (info, error, warning, etc.)
+- **Sort toggle** - Newest first / Oldest first
+- **Search/filter** - Text search within logs
+- **Clear button** - Clear current view
+- **Export button** - Download logs as file
+- **Auto-scroll toggle** - Enable/disable scroll to latest
+
+Example filter implementation:
+```javascript
+const LOG_TYPES = {
+    info: { icon: 'ℹ️', color: '#4a9eff' },
+    error: { icon: '✗', color: '#ef4444' },
+    warning: { icon: '⚠', color: '#eab308' },
+    success: { icon: '✓', color: '#22c55e' }
+};
+```
+
+### Menu Standards & Structure
+
+**Basic Menu Pattern:**
+```css
+.menu {
+    position: absolute;
+    background: #2a2a3e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 4px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    min-width: 140px;
+}
+.menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.menu-item:hover { background: #3a3a4e; color: #fff; }
+.menu-item.danger:hover { background: #ef4444; }
+.menu-divider { height: 1px; background: #444; margin: 4px 8px; }
+```
+
+**HTML Structure:**
+```html
+<div class="menu" id="context-menu">
+    <div class="menu-item" data-action="edit">📝 Edit</div>
+    <div class="menu-item" data-action="copy">📋 Copy</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item danger" data-action="delete">🗑 Delete</div>
+</div>
+```
+
+**JavaScript Pattern:**
+```javascript
+// Show menu at position
+function showMenu(x, y) {
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.style.display = 'block';
+}
+
+// Close on click outside
+document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target)) menu.style.display = 'none';
+});
+
+// Close on Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') menu.style.display = 'none';
+});
+
+// Handle actions via data-action
+menu.querySelectorAll('.menu-item').forEach(item => {
+    item.onclick = () => {
+        handleAction(item.dataset.action);
+        menu.style.display = 'none';
+    };
+});
+```
+
+**Key Conventions:**
+- Use `data-action` attribute for action handlers
+- Always include click-outside and Escape key to close
+- Add `.danger` class for destructive actions
+- Use dividers to separate destructive actions
+- Position with `left/top` in pixels from event coordinates
+- Include icons for visual recognition
+
+### Submenu Pattern for Menu Options
+
+When a menu action has multiple variants, use hover-activated submenus:
+
+**CSS Structure:**
+```css
+.menu-btn.has-submenu { position: relative; }
+.menu-btn.has-submenu::after {
+    content: '▾';
+    margin-left: 4px;
+    font-size: 10px;
+}
+.menu-submenu {
+    position: absolute;
+    bottom: 100%;  /* or top: 100% for dropdown */
+    left: 0;
+    background: #2a2a3e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 4px;
+    min-width: 160px;
+    display: none;
+    z-index: 10001;
+}
+.menu-btn.has-submenu:hover .menu-submenu { display: block; }
+.menu-submenu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.menu-submenu-item:hover { background: #3a3a4e; }
+```
+
+**HTML Structure:**
+```html
+<button class="menu-btn has-submenu">📥 Export
+    <div class="menu-submenu">
+        <div class="menu-submenu-item" onclick="exportAll()">Export All</div>
+        <div class="menu-submenu-item" onclick="exportCurrent()">Export Current</div>
+        <div class="menu-submenu-divider"></div>
+        <div class="menu-submenu-item danger" onclick="exportReset()">Reset</div>
+    </div>
+</button>
+```
+
+**Key Points:**
+- Use `position: relative` on parent, `position: absolute` on submenu
+- `bottom: 100%` for upward menus, `top: 100%` for dropdowns
+- Add `::after` arrow indicator for visual cue
+- Include dividers for destructive actions
+- Use `onclick` handlers on submenu items, not the parent button
+
+---
+
+## 💡 Recommendations
+
+### UI/UX Best Practices
+
+| Pattern | Recommendation | Reason |
+|---------|----------------|--------|
+| Destructive actions | Always require confirmation | Prevents accidental data loss |
+| State persistence | Use localStorage for UI state | Maintains user preferences across sessions |
+| Loading states | Show spinner/skeleton during async ops | User knows action is in progress |
+| Error messages | Display inline near the action | Context helps user understand issue |
+| Success feedback | Brief toast or visual highlight | Confirms action completed |
+
+### Panel/Window Features
+
+Every floating panel should include:
+- **Draggable header** - `cursor: move` on header element
+- **Pin/Hover toggle** - 📌 pinned vs 👆 hover mode
+- **Minimize button** - Collapse to title bar only
+- **Close button** - Hide panel completely
+- **Position persistence** - Save left/top to localStorage
+
+#### Pin/Hover Mode Implementation
+```javascript
+let isPinned = true;
+
+function togglePin() {
+    isPinned = !isPinned;
+    localStorage.setItem('panel-pinned', isPinned);
+    updatePinButton();
+}
+
+function updatePinButton() {
+    const btn = document.getElementById('pin-btn');
+    btn.textContent = isPinned ? '📌' : '👆';
+    btn.title = isPinned ? 'Pinned (click for hover mode)' : 'Hover mode (click to pin)';
+    btn.classList.toggle('active', isPinned);
+    panel.classList.toggle('hover-mode', !isPinned);
+}
+
+// Auto-hide on mouse leave (hover mode only)
+panel.onmouseleave = () => {
+    if (!isPinned) hide();
+};
+```
+
+#### Draggable Panel Implementation
+```javascript
+function setupDragPanel() {
+    const header = panel.querySelector('.panel-header');
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+
+    header.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON') return; // Don't drag on buttons
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = panel.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        panel.style.left = (startLeft + e.clientX - startX) + 'px';
+        panel.style.top = (startTop + e.clientY - startY) + 'px';
+        panel.style.right = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isDragging) savePosition();
+        isDragging = false;
+    });
+}
+```
+
+#### Position Persistence
+```javascript
+function savePosition() {
+    localStorage.setItem('panel-position', JSON.stringify({
+        left: panel.style.left,
+        top: panel.style.top
+    }));
+}
+
+function loadPosition() {
+    const saved = localStorage.getItem('panel-position');
+    if (saved) {
+        const pos = JSON.parse(saved);
+        if (pos.left) panel.style.left = pos.left;
+        if (pos.top) panel.style.top = pos.top;
+        panel.style.right = 'auto'; // Clear default right positioning
+    }
+}
+
+### File Import Pattern
+
+Standard pattern for importing JSON backup files:
+```javascript
+function importFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            const imported = JSON.parse(text);
+
+            // Validate structure
+            if (!imported.requiredField) {
+                showError('Invalid file format');
+                return;
+            }
+
+            // Merge with existing (skip duplicates)
+            for (const item of imported.items) {
+                const exists = existingItems.some(i =>
+                    i.id === item.id || i.text === item.text
+                );
+                if (!exists) {
+                    item.id = generateNewId(); // Avoid ID conflicts
+                    existingItems.push(item);
+                }
+            }
+
+            await save();
+            render();
+            showSuccess(`Imported ${count} items`);
+        } catch (err) {
+            showError(`Import failed: ${err.message}`);
+        }
+    };
+
+    input.click();
+}
+```
+
+**Key Points:**
+- Always validate file structure before processing
+- Check for duplicates by ID and content
+- Generate new IDs to avoid conflicts
+- Wrap in try/catch for parse errors
+- Show clear success/error feedback
+
+### File Export Pattern
+
+```javascript
+function exportData(data, filename) {
+    const backup = {
+        ...data,
+        exportedAt: new Date().toISOString(),
+        version: '1.0'
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+```
+
+### Action Menus
+
+| Action Type | Visual Cue | Behavior |
+|-------------|------------|----------|
+| Primary action | Blue background | Execute immediately |
+| Secondary action | Default style | Execute immediately |
+| Destructive action | Red on hover + divider above | Confirm before executing |
+| Multi-option action | ▾ arrow indicator | Show submenu on hover |
+
+### localStorage State Management
+
+**Naming Convention:**
+```
+{component}-{property}
+Examples:
+- todo-panel-pinned
+- todo-panel-position
+- activity-log-pinned
+- todo-collapsed-sections
+```
+
+**Pattern for UI State:**
+```javascript
+// Save state
+function saveState() {
+    localStorage.setItem('component-state', JSON.stringify({
+        visible: isVisible,
+        minimized: isMinimized,
+        position: { left: panel.style.left, top: panel.style.top }
+    }));
+}
+
+// Load state (call after DOM ready)
+function loadState() {
+    try {
+        const saved = localStorage.getItem('component-state');
+        if (saved) {
+            const state = JSON.parse(saved);
+            if (state.visible) show();
+            if (state.minimized) minimize();
+            if (state.position) applyPosition(state.position);
+        }
+    } catch (err) {
+        console.error('Failed to load state:', err);
+        // Continue with defaults - don't break the app
+    }
+}
+```
+
+**Key Points:**
+- Always wrap in try/catch (localStorage can fail)
+- Use JSON.stringify/parse for objects
+- Call loadState after DOM is ready
+- Fail gracefully to defaults
+
+### Form Inputs
+
+| Input Type | Pattern |
+|------------|---------|
+| Text input | Focus border color `#4a9eff` |
+| Checkbox | Use div-based toggle (no native checkbox) |
+| Select | Style with dark theme colors |
+| Textarea | Auto-resize with content |
+
+### Keyboard Shortcuts
+
+Always support:
+- `Escape` - Close menus, dialogs, cancel operations
+- `Enter` - Submit/confirm (when not in multiline input)
+- `Ctrl+S` - Save (if applicable)
+
+### Animation Timing
+
+| Animation | Duration | Easing |
+|-----------|----------|--------|
+| Hover transitions | `0.15s` | `ease` |
+| Panel show/hide | `0.2s` | `ease` |
+| Fade effects | `0.3s` | `ease` |
+| Slide animations | `0.2s` | `ease-out` |
+
+### z-index Layers
+
+| Layer | z-index | Usage |
+|-------|---------|-------|
+| Base panels | `9999` | Floating panels (Todo, Activity Log) |
+| Menus | `10000` | Context menus, dropdowns |
+| Submenus | `10001` | Nested menus |
+| Modals | `20000` | Dialog overlays, image viewers |
+| Toasts | `30000` | Notification messages |
+
+---
+
+## 🔍 Debug Inspector Standards
+
+### Quick Command Structure
+
+Commands are organized with icons, labels, and optional submenus:
+
+```javascript
+const quickCommands = [
+    { icon: '❌', label: 'Not Working', cmd: 'not working' },
+    { icon: '🔧', label: 'Fix', cmd: 'fix', sub: [
+        { label: 'Fix all errors', cmd: 'fix all errors' },
+        { label: 'Fix and test', cmd: 'fix and test' }
+    ]},
+    { icon: '🎨', label: 'Design', cmd: 'design', sub: [
+        { label: '── Style ──', cmd: '', disabled: true },  // Section header
+        { label: 'Change colors', cmd: 'change colors' },
+        { label: 'Improve layout', cmd: 'improve layout' },
+        { label: '── Size ──', cmd: '', disabled: true },
+        { label: 'Make smaller', cmd: 'make smaller' },
+        { label: 'Make larger', cmd: 'make larger' }
+    ]},
+    { divider: true },  // Visual separator
+    { icon: '🗑️', label: 'Remove', cmd: 'remove', danger: true }
+];
+```
+
+### Command Categories
+
+| Category | Icon | Purpose |
+|----------|------|---------|
+| Quick Actions | ❌🔧✅ | Immediate fixes, status changes |
+| Design | 🎨 | Visual/layout modifications |
+| Code | 💻 | Refactoring, optimization |
+| Analysis | 🔍 | Explain, review, understand |
+| Destructive | 🗑️ | Remove, delete (use danger styling) |
+
+### Section Headers in Submenus
+
+Use disabled items as visual section headers:
+```javascript
+{ label: '── Section Name ──', cmd: '', disabled: true }
+```
+
+### Rendering Quick Commands
+
+```javascript
+function renderQuickCommands(commands, container) {
+    commands.forEach(cmd => {
+        if (cmd.divider) {
+            container.appendChild(createDivider());
+            return;
+        }
+
+        const btn = document.createElement('button');
+        btn.className = 'quick-cmd' + (cmd.danger ? ' danger' : '');
+        btn.innerHTML = `${cmd.icon} ${cmd.label}`;
+
+        if (cmd.sub) {
+            btn.classList.add('has-submenu');
+            const submenu = createSubmenu(cmd.sub);
+            btn.appendChild(submenu);
+        } else {
+            btn.onclick = () => sendCommand(cmd.cmd);
+        }
+
+        container.appendChild(btn);
+    });
+}
+```
+
+### Quick Command CSS
+
+```css
+.quick-cmd {
+    background: #2a2a3e;
+    border: 1px solid #333;
+    color: #ccc;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.quick-cmd:hover { background: #3a3a4e; color: #fff; }
+.quick-cmd.danger:hover { background: #ef4444; }
+.quick-cmd.has-submenu { position: relative; }
+.quick-cmd.has-submenu::after { content: '▾'; margin-left: 4px; }
+
+.quick-submenu {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #2a2a3e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 4px;
+    min-width: 160px;
+    display: none;
+    z-index: 10001;
+}
+.quick-cmd.has-submenu:hover .quick-submenu { display: block; }
+.quick-submenu-item { padding: 6px 10px; cursor: pointer; border-radius: 4px; }
+.quick-submenu-item:hover { background: #3a3a4e; }
+.quick-submenu-item.disabled {
+    color: #666;
+    cursor: default;
+    font-weight: bold;
+}
+.quick-submenu-item.disabled:hover { background: transparent; }
+```
+
+### Send to External Service Pattern
+
+When sending commands to another service (like Kitt):
+
+```javascript
+async function sendCommand(message) {
+    // Try multiple methods for reliability
+    let sent = false;
+
+    // Method 1: Direct function call
+    try {
+        if (typeof ServiceAPI?.send === 'function') {
+            await ServiceAPI.send(message);
+            sent = true;
+        }
+    } catch (e) { console.warn('Method 1 failed:', e); }
+
+    // Method 2: Window global
+    if (!sent) {
+        try {
+            if (typeof window.ServiceAPI?.send === 'function') {
+                await window.ServiceAPI.send(message);
+                sent = true;
+            }
+        } catch (e) { console.warn('Method 2 failed:', e); }
+    }
+
+    // Method 3: DOM interaction fallback
+    if (!sent) {
+        try {
+            const input = document.getElementById('service-input');
+            const sendBtn = document.getElementById('service-send-btn');
+            if (input && sendBtn) {
+                input.value = message;
+                sendBtn.click();
+                sent = true;
+            }
+        } catch (e) { console.warn('Method 3 failed:', e); }
+    }
+
+    if (!sent) {
+        showError('Could not send command');
+    }
+}
+```
+
+### Element Inspector Integration
+
+```javascript
+// Enable element picking
+function startInspecting() {
+    document.body.style.cursor = 'crosshair';
+
+    const highlightOverlay = createHighlightOverlay();
+
+    document.addEventListener('mouseover', (e) => {
+        if (!isInspecting) return;
+        highlightElement(e.target, highlightOverlay);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!isInspecting) return;
+        e.preventDefault();
+        e.stopPropagation();
+        selectElement(e.target);
+        stopInspecting();
+    }, { capture: true });
+}
+
+// Highlight overlay
+function createHighlightOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'inspector-highlight';
+    overlay.style.cssText = `
+        position: fixed;
+        pointer-events: none;
+        background: rgba(74, 158, 255, 0.2);
+        border: 2px solid #4a9eff;
+        z-index: 99999;
+        transition: all 0.1s ease;
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+}
+```
+
+---
+
+### Component Review Checklist
+
+All components should be periodically analyzed for:
+
+| Review Area | Questions to Ask |
+|-------------|------------------|
+| **Accessibility** | Keyboard navigable? Screen reader friendly? Color contrast OK? Focus indicators visible? |
+| **Feature Creep** | Does it do too much? Should it be split? Are all features actually used? |
+| **Redundant Info** | Duplicate displays? Unnecessary labels? Repeated data? |
+| **Consistency** | Matches other components? Follows standards? Uses shared styles? |
+| **Performance** | Unnecessary re-renders? Heavy computations? Memory leaks? |
+| **Mobile/Responsive** | Works on smaller screens? Touch-friendly? |
+
+**When to Review:**
+- After major feature additions
+- Before release milestones
+- When users report confusion
+- Quarterly maintenance cycles
+
+**Review Actions:**
+```
+[ ] Run accessibility audit (Lighthouse, axe)
+[ ] Check for unused code/features
+[ ] Verify consistent styling with other components
+[ ] Test keyboard navigation (Tab, Enter, Escape)
+[ ] Review for redundant/duplicate information
+[ ] Confirm all text is readable (contrast, size)
+```
