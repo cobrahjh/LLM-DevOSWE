@@ -1,10 +1,13 @@
 /**
- * SimWidget Master (O) v1.0.0
- * 
+ * SimWidget Master (O) v1.1.0
+ *
  * Master service orchestrator - survives when child services fail
- * 
- * Path: C:\DevOSWE\SimWidget_Engine\Admin\orchestrator\orchestrator.js
- * Last Updated: 2026-01-09
+ *
+ * Path: C:\DevOSWE\Admin\orchestrator\orchestrator.js
+ * Last Updated: 2026-01-11
+ *
+ * v1.1.0 - Switched to Windows Services for all managed services
+ *        - Removed spawn fallback (all services are Windows Services now)
  * 
  * Features:
  *   - Service registry with inheritance
@@ -79,7 +82,7 @@ const SERVICES = {
         port: 8080,
         dir: path.join(PROJECT_ROOT, 'simwidget-hybrid', 'backend'),
         start: 'node server.js',
-        winService: 'SimWidget Main',  // Windows Service name (if installed)
+        winService: 'simwidgetmainserver.exe',  // Windows Service ID
         healthEndpoint: '/api/status',
         priority: 1,
         autoRestart: true
@@ -90,7 +93,7 @@ const SERVICES = {
         port: 8585,
         dir: path.join(PROJECT_ROOT, 'Admin', 'agent'),
         start: 'node agent-server.js',
-        winService: 'SimWidget Agent',  // Windows Service name (if installed)
+        winService: 'simwidgetagent.exe',  // Windows Service ID
         healthEndpoint: '/api/health',
         priority: 2,
         autoRestart: true
@@ -101,7 +104,7 @@ const SERVICES = {
         port: 8600,
         dir: path.join(PROJECT_ROOT, 'Admin', 'relay'),
         start: 'node relay-service.js',
-        winService: 'SimWidget Relay',  // Windows Service name (if installed)
+        winService: 'simwidgetrelay.exe',  // Windows Service ID
         healthEndpoint: '/api/health',
         priority: 3,
         autoRestart: true
@@ -112,6 +115,7 @@ const SERVICES = {
         port: 8590,
         dir: path.join(PROJECT_ROOT, 'Admin', 'remote-support'),
         start: 'node service.js',
+        winService: 'simwidgetremotesupport.exe',  // Windows Service ID
         healthEndpoint: '/api/health',
         priority: 4,
         autoRestart: true
@@ -122,6 +126,7 @@ const SERVICES = {
         port: 8601,
         dir: path.join(PROJECT_ROOT, 'Admin', 'claude-bridge'),
         start: 'node bridge-server.js',
+        winService: 'simwidgetclaudebridge.exe',  // Windows Service ID
         healthEndpoint: '/api/health',
         priority: 5,
         autoRestart: false
@@ -289,55 +294,57 @@ async function startViaSpawn(svc, state) {
 async function startService(serviceId) {
     const svc = SERVICES[serviceId];
     if (!svc) return { success: false, error: 'Unknown service' };
-    
+
     const state = serviceStates[serviceId];
-    
+
     // Reset restart counter on manual start
     state.restartCount = 0;
     state.error = null;
-    
+
     // Check if already running
     const portInUse = await checkPortInUse(svc.port);
     if (portInUse) {
         return { success: true, message: 'Already running' };
     }
-    
+
     log(`[Service] Starting ${svc.name}...`);
-    
-    // PRIORITY 1: Windows Service (if configured and exists)
-    if (svc.winService) {
-        const winSvcExists = await checkWinServiceExists(svc.winService);
-        if (winSvcExists) {
-            log(`[Service] Using Windows Service: ${svc.winService}`);
-            const result = await startViaWinService(svc.winService);
-            if (result.success) {
-                state.lastStart = new Date().toISOString();
-                state.startMethod = 'winservice';
-                log(`[Service] ${svc.name} ${result.message}`);
-                return result;
-            }
-            log(`[Service] Windows Service failed: ${result.error}, trying spawn...`, 'WARN');
-        }
+
+    // All services are Windows Services now
+    if (!svc.winService) {
+        log(`[Service] ${svc.name} has no Windows Service configured`, 'ERROR');
+        return { success: false, error: 'No Windows Service configured' };
     }
-    
-    // PRIORITY 2: Spawn (fallback)
-    log(`[Service] Using spawn: ${svc.start}`);
-    const result = await startViaSpawn(svc, state);
-    state.startMethod = 'spawn';
-    log(`[Service] ${svc.name} started (PID: ${result.pid})`);
+
+    const winSvcExists = await checkWinServiceExists(svc.winService);
+    if (!winSvcExists) {
+        log(`[Service] Windows Service ${svc.winService} not installed`, 'ERROR');
+        state.error = 'Windows Service not installed';
+        return { success: false, error: 'Windows Service not installed. Run service-install.js' };
+    }
+
+    log(`[Service] Starting Windows Service: ${svc.winService}`);
+    const result = await startViaWinService(svc.winService);
+    if (result.success) {
+        state.lastStart = new Date().toISOString();
+        state.startMethod = 'winservice';
+        log(`[Service] ${svc.name} ${result.message}`);
+    } else {
+        log(`[Service] Failed to start ${svc.name}: ${result.error}`, 'ERROR');
+        state.error = result.error;
+    }
     return result;
 }
 
 async function stopService(serviceId, graceful = true) {
     const svc = SERVICES[serviceId];
     if (!svc) return { success: false, error: 'Unknown service' };
-    
+
     const state = serviceStates[serviceId];
     log(`[Service] Stopping ${svc.name}...`);
-    
-    // PRIORITY 1: Windows Service (if it was started that way)
-    if (svc.winService && state.startMethod === 'winservice') {
-        log(`[Service] Stopping via Windows Service: ${svc.winService}`);
+
+    // All services are Windows Services now
+    if (svc.winService) {
+        log(`[Service] Stopping Windows Service: ${svc.winService}`);
         const result = await new Promise((resolve) => {
             exec(`net stop "${svc.winService}"`, (error, stdout, stderr) => {
                 if (error && !stderr.includes('is not started')) {
@@ -352,40 +359,11 @@ async function stopService(serviceId, graceful = true) {
             log(`[Service] ${svc.name} stopped via Windows Service`);
             return result;
         }
-        log(`[Service] Windows Service stop failed, trying graceful...`, 'WARN');
+        log(`[Service] Windows Service stop failed: ${result.error}`, 'WARN');
     }
-    
-    // PRIORITY 2: Graceful shutdown via API
-    if (graceful) {
-        try {
-            await new Promise((resolve, reject) => {
-                const req = http.request({
-                    hostname: 'localhost',
-                    port: svc.port,
-                    path: '/api/shutdown',
-                    method: 'POST',
-                    timeout: 3000
-                }, (res) => resolve(res));
-                req.on('error', reject);
-                req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
-                req.end();
-            });
-            
-            // Wait for shutdown
-            await new Promise(r => setTimeout(r, 1000));
-            
-            const stillRunning = await checkPortInUse(svc.port);
-            if (!stillRunning) {
-                log(`[Service] ${svc.name} gracefully stopped`);
-                serviceStates[serviceId].running = false;
-                return { success: true, method: 'graceful' };
-            }
-        } catch (e) {
-            log(`[Service] Graceful shutdown failed for ${svc.name}, forcing...`, 'WARN');
-        }
-    }
-    
-    // Force kill by port
+
+    // Fallback: Force kill by port (in case service is stuck)
+    log(`[Service] Force stopping ${svc.name} by port...`);
     return new Promise((resolve) => {
         exec(`powershell -Command "Get-NetTCPConnection -LocalPort ${svc.port} -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"`,
             (error) => {

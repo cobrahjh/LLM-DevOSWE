@@ -1,0 +1,28 @@
+<service>
+	<id>simwidgetrelay.exe</id>
+	<name>SimWidget Relay</name>
+	<description>SimWidget Relay Service - Routes requests between agents and Claude</description>
+	<executable>C:\Program Files\nodejs\node.exe</executable>
+	<argument>C:\DevOSWE\Admin\relay\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>--file</argument>
+	<argument>C:\DevOSWE\Admin\relay\relay-service.js</argument>
+	<argument>--scriptoptions=</argument>
+	<argument>--log</argument>
+	<argument>SimWidget Relay wrapper</argument>
+	<argument>--grow</argument>
+	<argument>0.25</argument>
+	<argument>--wait</argument>
+	<argument>1</argument>
+	<argument>--maxrestarts</argument>
+	<argument>3</argument>
+	<argument>--abortonerror</argument>
+	<argument>n</argument>
+	<argument>--stopparentfirst</argument>
+	<argument>undefined</argument>
+	<logmode>rotate</logmode>
+	<stoptimeout>30sec</stoptimeout>
+	<serviceaccount>
+		<username>LocalSystem</username>
+	</serviceaccount>
+	<workingdirectory>C:\DevOSWE\Admin\relay</workingdirectory>
+</service>

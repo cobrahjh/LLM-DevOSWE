@@ -1,5 +1,5 @@
 # SimWidget Engine - Project Standards & Conventions
-**Version:** 1.3.0
+**Version:** 1.4.0
 **Last Updated:** 2026-01-11
 
 This document captures proven patterns, timing defaults, and lessons learned throughout development. **Always reference this before implementing new features.**
@@ -38,6 +38,55 @@ Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force
 # Start detached
 Start-Process -FilePath "node" -ArgumentList "server.js" -WindowStyle Hidden
 ```
+
+### Windows Services (node-windows)
+All Node.js services **must** be installed as Windows Services for production:
+
+**Required Files:**
+```
+service-dir/
+├── daemon/
+│   ├── servicename.exe       # WinSW wrapper (generated)
+│   ├── servicename.xml       # Service config
+│   └── servicename.exe.config
+├── service-install.js        # Installer script
+├── service-uninstall.js      # Uninstaller script
+└── server.js                 # Main service code
+```
+
+**Service Naming Convention:**
+| Service | ID | Display Name | Port |
+|---------|-----|--------------|------|
+| Main Server | `simwidgetmainserver.exe` | SimWidget Main Server | 8080 |
+| Agent (Kitt) | `simwidgetagent.exe` | SimWidget Agent | 8585 |
+| Master O | `simwidgetmastero.exe` | SimWidget Master O | 8500 |
+| Relay | `simwidgetrelay.exe` | SimWidget Relay | 8600 |
+| Claude Bridge | `simwidgetclaudebridge.exe` | SimWidget Claude Bridge | 8601 |
+| Remote Support | `simwidgetremotesupport.exe` | SimWidget Remote Support | 8590 |
+| KeySender | `simwidgetkeysender` | SimWidget KeySender | N/A |
+
+**Service Commands:**
+```bash
+# Install service (run as admin)
+cd service-dir && node service-install.js
+
+# Control via sc.exe
+sc query simwidgetservicename.exe
+net start simwidgetservicename.exe
+net stop simwidgetservicename.exe
+
+# Direct WinSW control
+cd daemon && ./servicename.exe install|start|stop|uninstall
+```
+
+**Service Account:** Always use `LocalSystem` in XML:
+```xml
+<serviceaccount>
+    <username>LocalSystem</username>
+</serviceaccount>
+```
+
+**Never use scripts to run services in production.** Scripts are for development only.
 
 ## 🎮 Gamepad API Patterns
 
@@ -1109,4 +1158,268 @@ All components should be periodically analyzed for:
 [ ] Test keyboard navigation (Tab, Enter, Escape)
 [ ] Review for redundant/duplicate information
 [ ] Confirm all text is readable (contrast, size)
+```
+
+---
+
+## 💰 Token, Cost & Memory Optimization
+
+Best practices for saving on API tokens, reducing costs, and optimizing memory/performance while maintaining session data consistency.
+
+### Token Optimization Strategies
+
+| Strategy | Savings | Implementation |
+|----------|---------|----------------|
+| **Context Compaction** | 60-80% | Summarize long conversations before hitting context limit |
+| **Selective File Reading** | 40-60% | Only read files that are directly relevant to the task |
+| **Batch Operations** | 30-50% | Group related queries into single requests |
+| **Cache Common Queries** | 50-70% | Store frequently-accessed data locally |
+| **Incremental Updates** | 70-90% | Send only changed data, not entire documents |
+
+### Session Data Consistency
+
+**Problem:** Context compaction loses detailed history.
+
+**Solutions:**
+
+1. **Memory File Pattern (CLAUDE.md)**
+```markdown
+## Session Memory
+- Last task: [brief description]
+- Key decisions: [bullet points]
+- Open issues: [what's not resolved]
+- Files modified: [list with line numbers]
+```
+
+2. **Checkpoint Pattern**
+```javascript
+// Save checkpoint before compaction
+const checkpoint = {
+    timestamp: Date.now(),
+    currentTask: 'description',
+    modifiedFiles: ['file1.js:42', 'file2.js:100'],
+    pendingTodos: [...todoList],
+    keyContext: 'critical info to preserve'
+};
+await saveCheckpoint(checkpoint);
+```
+
+3. **Structured Memory API**
+```javascript
+// Agent memory persistence
+POST /api/memory/save
+{
+    "key": "session-state",
+    "value": { /* structured data */ },
+    "ttl": 86400  // 24 hours
+}
+
+GET /api/memory/load?key=session-state
+```
+
+### Cost-Effective API Usage
+
+| Pattern | Cost Impact | When to Use |
+|---------|-------------|-------------|
+| **Use smaller models** | -70% cost | Simple queries, code formatting |
+| **Limit output tokens** | -30-50% | When you know expected response size |
+| **Avoid re-reading files** | -20-40% | Cache file contents in session |
+| **Use search before read** | -50-70% | Find specific content instead of reading entire files |
+| **Parallel tool calls** | -time | Independent operations in same request |
+
+### Memory Management
+
+**Browser/Frontend:**
+```javascript
+// Limit stored data size
+const MAX_LOG_ENTRIES = 100;
+const MAX_HISTORY_ITEMS = 50;
+
+// Prune old data
+function pruneStorage(key, maxItems) {
+    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    if (data.length > maxItems) {
+        localStorage.setItem(key, JSON.stringify(data.slice(-maxItems)));
+    }
+}
+
+// Use WeakMap for temporary references (auto-GC)
+const tempCache = new WeakMap();
+
+// Clear unused event listeners
+element.removeEventListener('click', handler);
+element.remove();  // Don't orphan elements
+```
+
+**Node.js/Backend:**
+```javascript
+// Limit in-memory caches
+const LRU = require('lru-cache');
+const cache = new LRU({ max: 500, maxAge: 1000 * 60 * 5 });
+
+// Stream large files instead of loading fully
+const stream = fs.createReadStream(file);
+stream.pipe(response);
+
+// Clear intervals when done
+const interval = setInterval(check, 1000);
+// Later:
+clearInterval(interval);
+```
+
+### Performance Optimization
+
+| Area | Pattern | Impact |
+|------|---------|--------|
+| **DOM Updates** | Batch with `requestAnimationFrame` | -50% CPU |
+| **Event Handlers** | Debounce/throttle | -30-70% calls |
+| **Network** | Request deduplication | -40% requests |
+| **Rendering** | Virtual scrolling for long lists | -90% DOM nodes |
+| **Data** | Pagination over full loads | -80% memory |
+
+**Debounce Pattern:**
+```javascript
+function debounce(fn, delay = 100) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
+
+// Usage
+const saveDebounced = debounce(save, 500);
+input.oninput = saveDebounced;
+```
+
+**Throttle Pattern:**
+```javascript
+function throttle(fn, limit = 100) {
+    let inThrottle;
+    return (...args) => {
+        if (!inThrottle) {
+            fn(...args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+// Usage - limit scroll handler to 10fps
+window.onscroll = throttle(handleScroll, 100);
+```
+
+### Data Consistency Patterns
+
+**Optimistic Updates with Rollback:**
+```javascript
+async function updateWithRollback(id, newData) {
+    const oldData = getData(id);
+
+    // Optimistic update
+    setData(id, newData);
+    renderUI();
+
+    try {
+        await api.save(id, newData);
+    } catch (error) {
+        // Rollback on failure
+        setData(id, oldData);
+        renderUI();
+        showError('Save failed, changes reverted');
+    }
+}
+```
+
+**Version Tracking:**
+```javascript
+// Include version in saved data
+const data = {
+    version: 3,
+    lastModified: Date.now(),
+    content: { ... }
+};
+
+// Check version before overwriting
+async function save(data) {
+    const current = await load();
+    if (current.version > data.version) {
+        throw new Error('Conflict: data was modified elsewhere');
+    }
+    data.version++;
+    await storage.save(data);
+}
+```
+
+**Sync Reconciliation:**
+```javascript
+// Merge local and remote changes
+function reconcile(local, remote) {
+    // Remote wins for conflicts, but preserve local-only items
+    const merged = { ...local };
+
+    for (const [key, remoteItem] of Object.entries(remote)) {
+        const localItem = local[key];
+
+        if (!localItem) {
+            // New remote item
+            merged[key] = remoteItem;
+        } else if (remoteItem.lastModified > localItem.lastModified) {
+            // Remote is newer
+            merged[key] = remoteItem;
+        }
+        // Else: keep local (it's newer or equal)
+    }
+
+    return merged;
+}
+```
+
+### Claude Code Session Tips
+
+| Tip | Benefit |
+|-----|---------|
+| **Use todo lists** | Maintains task state across compaction |
+| **Write to CLAUDE.md** | Persists critical decisions |
+| **Prefer edits over rewrites** | Smaller diffs, less tokens |
+| **Use grep before read** | Find specific content efficiently |
+| **Batch file operations** | Parallel reads save time |
+| **Keep responses concise** | Faster, cheaper |
+| **Reference line numbers** | Precise edits, less context |
+
+### Session Recovery Pattern
+
+When resuming after compaction:
+```markdown
+## Recovery Checklist
+1. Read CLAUDE.md for project context
+2. Check todo list for pending tasks
+3. Review recent git commits for changes
+4. Check service status (ports 8080, 8585, 8500)
+5. Resume from last documented checkpoint
+```
+
+### Cost Monitoring
+
+```javascript
+// Track API usage (if available)
+const usageStats = {
+    inputTokens: 0,
+    outputTokens: 0,
+    requests: 0,
+
+    log(input, output) {
+        this.inputTokens += input;
+        this.outputTokens += output;
+        this.requests++;
+
+        // Estimate cost (example rates)
+        const cost = (input * 0.003 + output * 0.015) / 1000;
+        console.log(`[Cost] Request: $${cost.toFixed(4)} | Total: $${this.totalCost().toFixed(4)}`);
+    },
+
+    totalCost() {
+        return (this.inputTokens * 0.003 + this.outputTokens * 0.015) / 1000;
+    }
+};
 ```
