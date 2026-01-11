@@ -163,7 +163,7 @@ server.on('upgrade', (request, socket, head) => {
         socket.destroy();
     }
 });
-const PROJECT_ROOT = 'C:\\DevClaude\\SimWidget_Engine';
+const PROJECT_ROOT = 'C:\\DevOSWE';
 
 // Serve static files from agent-ui directory
 app.use(express.static(path.join(__dirname, 'agent-ui')));
@@ -672,7 +672,7 @@ IMPORTANT: When running PowerShell commands, use native Windows/PowerShell cmdle
 - Use "Get-ChildItem" NOT "ls"
 - Use "Test-NetConnection" for connectivity tests
 
-Project location: C:\\DevClaude\\SimWidget_Engine
+Project location: C:\\DevOSWE
 - simwidget-hybrid/ - Main project code (server on port 8080)
 - Admin/ - Admin scripts and tools
 
