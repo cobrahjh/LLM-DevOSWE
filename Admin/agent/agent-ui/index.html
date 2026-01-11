@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<!--
+  Admin Kitt - SimWidget Agent UI
+  Version: v2.0.0
+  Last updated: 2026-01-10
+  
+  Modular refactor with:
+  - Separated CSS (styles/main.css)
+  - Modular JavaScript (modules/*.js)
+  - Fixed emoji encoding issues
+  - Removed duplicate CSS definitions
+  - Improved maintainability
+  
+  Changelog:
+  - v2.0.0: Complete modular refactor
+  - v1.3.0: Previous monolithic version
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SimWidget Agent - Kitt v2.0.0</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="header">
+        <button class="btn-menu" id="btn-menu" title="Menu">☰</button>
+        <h1>🤖 Admin Kitt <span id="kitt-status" class="kitt-status">✨</span></h1>
+        <div class="header-right">
+            <button class="btn-todo" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
+            <button class="btn-logs" onclick="toggleLog('agent')" title="View Logs">📜</button>
+            <div class="compact-status" id="compact-status">
+                <span class="compact-dot" id="dot-simwidget" title="SimWidget :8080"></span>
+                <span class="compact-dot" id="dot-agent" title="Agent :8585"></span>
+                <span class="compact-dot" id="dot-remote" title="Remote :8590"></span>
+                <span class="header-cost" id="header-cost" onclick="event.stopPropagation(); toggleCostReport()" title="Today's cost">$0.00</span>
+            </div>
+            <button class="btn-services" id="btn-services" title="Services">⚙️</button>
+            <button class="btn-refresh" id="btn-refresh" title="Reconnect">🔄</button>
+            <div class="status" id="status">Disconnected</div>
+        </div>
+    </div>
+
+    <!-- Admin Menu -->
+    <div class="overlay" id="admin-overlay"></div>
+    <div class="admin-menu" id="admin-menu">
+        <div class="admin-header"><h2>Admin</h2><button class="btn-close" id="btn-close-admin">×</button></div>
+        <div class="admin-content">
+            <div class="section-label">SERVERS</div>
+            <div class="server-controls" id="server-controls">
+                <!-- Mode Toggle -->
+                <div class="mode-toggle-row">
+                    <span class="mode-label">Mode:</span>
+                    <button class="mode-btn" id="mode-dev" onclick="setServiceMode('dev')">🛠️ Dev</button>
+                    <button class="mode-btn" id="mode-service" onclick="setServiceMode('service')">🪟 Service</button>
+                    <span class="mode-status" id="mode-status"></span>
+                </div>
+
+                <!-- Server Rows -->
+                <div class="server-row" data-server="master">
+                    <span class="server-dot" id="dot-master"></span>
+                    <div class="server-info">
+                        <span class="server-name">Master (O)</span>
+                        <span class="server-mode" id="mode-master">orchestrator</span>
+                    </div>
+                    <span class="server-port">:8500</span>
+                    <div class="server-controls-btns">
+                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8500','_blank')" title="Open">↗</button>
+                    </div>
+                </div>
+                <div class="server-row" data-server="simwidget">
+                    <span class="server-dot" id="dot-simwidget"></span>
+                    <div class="server-info">
+                        <span class="server-name">Main Server</span>
+                        <span class="server-mode" id="mode-simwidget"></span>
+                    </div>
+                    <span class="server-port">:8080</span>
+                    <div class="server-controls-btns">
+                        <button class="server-btn start" onclick="startServer('simwidget')" title="Start">▶</button>
+                        <button class="server-btn restart" onclick="restartServer('simwidget')" title="Restart">🔄</button>
+                        <button class="server-btn stop" onclick="stopServer('simwidget')" title="Stop">■</button>
+                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8080','_blank')" title="Open">↗</button>
+                    </div>
+                </div>
+                <div class="server-row" data-server="agent">
+                    <span class="server-dot" id="dot-agent"></span>
+                    <div class="server-info">
+                        <span class="server-name">Agent (Kitt)</span>
+                        <span class="server-mode" id="mode-agent"></span>
+                    </div>
+                    <span class="server-port">:8585</span>
+                    <div class="server-controls-btns">
+                        <button class="server-btn start" onclick="startServer('agent')" title="Start">▶</button>
+                        <button class="server-btn restart" onclick="restartServer('agent')" title="Restart">🔄</button>
+                        <button class="server-btn stop" onclick="stopServer('agent')" title="Stop">■</button>
+                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8585','_blank')" title="Open">↗</button>
+                    </div>
+                </div>
+                <div class="server-row" data-server="remote">
+                    <span class="server-dot" id="dot-remote"></span>
+                    <div class="server-info">
+                        <span class="server-name">Remote Support</span>
+                        <span class="server-mode" id="mode-remote"></span>
+                    </div>
+                    <span class="server-port">:8590</span>
+                    <div class="server-controls-btns">
+                        <button class="server-btn start" onclick="startServer('remote')" title="Start">▶</button>
+                        <button class="server-btn restart" onclick="restartServer('remote')" title="Restart">🔄</button>
+                        <button class="server-btn stop" onclick="stopServer('remote')" title="Stop">■</button>
+                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8590','_blank')" title="Open">↗</button>
+                    </div>
+                </div>
+                <div class="server-row" data-server="relay">
+                    <span class="server-dot" id="dot-relay"></span>
+                    <div class="server-info">
+                        <span class="server-name">Relay Service</span>
+                        <span class="server-mode" id="mode-relay">node</span>
+                    </div>
+                    <span class="server-port">:8600</span>
+                    <div class="server-controls-btns">
+                        <button class="server-btn start" onclick="startServer('relay')" title="Start">▶</button>
+                        <button class="server-btn restart" onclick="restartServer('relay')" title="Restart">🔄</button>
+                        <button class="server-btn stop" onclick="stopServer('relay')" title="Stop">■</button>
+                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8600','_blank')" title="Open">↗</button>
+                    </div>
+                </div>
+                <div class="server-row" data-server="bridge">
+                    <span class="server-dot" id="dot-bridge"></span>
+                    <div class="server-info">
+                        <span class="server-name">Claude Bridge</span>
+                        <span class="server-mode" id="mode-bridge">node</span>
+                    </div>
+                    <span class="server-port">:8601</span>
+                    <div class="server-controls-btns">
+                        <button class="server-btn start" onclick="startServer('bridge')" title="Start">▶</button>
+                        <button class="server-btn restart" onclick="restartServer('bridge')" title="Restart">🔄</button>
+                        <button class="server-btn stop" onclick="stopServer('bridge')" title="Stop">■</button>
+                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8601','_blank')" title="Open">↗</button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <button class="admin-btn" onclick="startAllServers()" style="flex:1;">🚀 Start All<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
+                    <button class="admin-btn" onclick="checkAllServers()" style="flex:1;">🔍 Check<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
+                    <button class="admin-btn" onclick="stopAllServers()" style="flex:1;">⏹️ Stop All<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
+                </div>
+                <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+                    <button class="admin-btn" id="relay-toggle" onclick="toggleRelayMode()" style="flex:1;">🔄 Relay: <span id="relay-status">OFF</span></button>
+                    <span id="relay-queue" style="font-size: 11px; color: #888;">Q:0</span>
+                </div>
+                <div style="margin-top: 8px;">
+                    <button class="admin-btn" id="model-toggle" onclick="toggleModel()" style="width:100%;">🧠 Model: <span id="model-name">Sonnet 4</span></button>
+                </div>
+            </div>
+            
+            <div class="section-label">QUICK COMMANDS</div>
+            <div class="admin-buttons">
+                <button class="admin-btn" onclick="AdminKitt.sendQuick('run tests')">🧪 Tests<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+                <button class="admin-btn" onclick="AdminKitt.sendQuick('show errors')">⚠️ Errors<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+                <button class="admin-btn" onclick="AdminKitt.sendQuick('sync to github')">📤 Git Sync<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+            </div>
+            
+            <div class="section-label">WIDGETS</div>
+            <div class="admin-buttons">
+                <button class="admin-btn" onclick="AdminKitt.sendQuick('list widgets')">🎛️ List All<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+                <button class="admin-btn" onclick="AdminKitt.sendQuick('create widget')">➕ New Widget<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+            </div>
+            
+            <div class="section-label">LINKS</div>
+            <div class="admin-buttons">
+                <button class="admin-btn" onclick="window.open('http://' + location.hostname + ':8080', '_blank')">🚀 SimWidget UI<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+                <button class="admin-btn" onclick="showCostReport()">💰 API Costs<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+                <button class="admin-btn" onclick="showDevTracker()">📈 Dev Tracker<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+            </div>
+            
+            <div class="section-label">LOGS</div>
+            <div class="admin-buttons">
+                <button class="admin-btn" onclick="ActivityLog.show(); ActivityLog.switchToServer('agent')">🤖 Agent Log<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+                <button class="admin-btn" onclick="ActivityLog.show(); ActivityLog.switchToServer('errors')">⚠️ Errors<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+                <button class="admin-btn" onclick="ActivityLog.show(); ActivityLog.switchToServer('usage')">📊 Usage<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+            </div>
+            
+            <div class="section-label">🛠️ TROUBLESHOOTING</div>
+            <div id="trouble-alerts" style="padding: 0 12px 8px 12px;"></div>
+            <div class="admin-buttons">
+                <button class="admin-btn" onclick="resetKitt()">🔄 Reset Kitt<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
+                <button class="admin-btn" onclick="showQueuePanel()">📬 View Queue<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
+                <button class="admin-btn" onclick="window.open('http://' + location.hostname + ':8600', '_blank')">🔗 Relay UI<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
+            </div>
+            
+            <div class="section-label">🎮 GAMING DEVICES</div>
+            <div id="device-status" style="padding: 0 12px 8px 12px; font-size: 11px; color: #888;"></div>
+            <div class="admin-buttons">
+                <button class="admin-btn" onclick="disableGamingDevices()">🚫 Disable All<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+                <button class="admin-btn" onclick="enableGamingDevices()">✅ Enable All<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+                <button class="admin-btn" onclick="showGamingDevices()">📋 List Devices<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+            </div>
+            
+            <div class="section-label">NOTES</div>
+            <div class="notes-section">
+                <textarea id="admin-notes" placeholder="Quick notes..." rows="6"></textarea>
+                <button class="admin-btn notes-save" onclick="saveNotes()">💾 Save Notes<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
+            </div>
+            
+            <div class="section-label">QUICK REFERENCE</div>
+            <div class="quick-ref-section" id="quick-ref-section" style="padding: 0 12px; font-size: 11px; color: #888; line-height: 1.8;">
+                <div class="quick-ref-loading">Loading...</div>
+            </div>
+            
+            <div style="padding: 8px 12px;">
+                <button class="admin-btn" onclick="showTodoInsight()" style="width: 100%;">💡 TODO Insights<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cost Report Modal -->
+    <div class="cost-modal" id="cost-modal">
+        <div class="log-header"><h2>💰 API Usage & Costs</h2><button class="btn-close" id="btn-close-cost">×</button></div>
+        <div class="cost-content" id="cost-content">
+            <div class="cost-card">
+                <h3>Today</h3>
+                <div class="cost-row"><span class="cost-label">Requests</span><span class="cost-value" id="today-requests">-</span></div>
+                <div class="cost-row"><span class="cost-label">Input Tokens</span><span class="cost-value" id="today-input">-</span></div>
+                <div class="cost-row"><span class="cost-label">Output Tokens</span><span class="cost-value" id="today-output">-</span></div>
+                <div class="cost-row"><span class="cost-label">Cost</span><span class="cost-value highlight" id="today-cost">$0.00</span></div>
+            </div>
+            <div class="cost-card">
+                <h3>All Time</h3>
+                <div class="cost-row"><span class="cost-label">Requests</span><span class="cost-value" id="total-requests">-</span></div>
+                <div class="cost-row"><span class="cost-label">Input Tokens</span><span class="cost-value" id="total-input">-</span></div>
+                <div class="cost-row"><span class="cost-label">Output Tokens</span><span class="cost-value" id="total-output">-</span></div>
+                <div class="cost-row"><span class="cost-label">Total Cost</span><span class="cost-value highlight" id="total-cost">$0.00</span></div>
+            </div>
+            <div class="cost-card">
+                <h3>📊 Projected Costs</h3>
+                <div class="cost-row"><span class="cost-label">Daily Avg</span><span class="cost-value" id="proj-daily">$0.00</span></div>
+                <div class="cost-row"><span class="cost-label">Weekly</span><span class="cost-value" id="proj-weekly">$0.00</span></div>
+                <div class="cost-row"><span class="cost-label">Monthly</span><span class="cost-value highlight" id="proj-monthly">$0.00</span></div>
+                <div class="cost-row"><span class="cost-label">Yearly</span><span class="cost-value" id="proj-yearly">$0.00</span></div>
+            </div>
+            <div class="cost-card cost-history">
+                <h3>Last 7 Days</h3>
+                <div id="cost-history"></div>
+            </div>
+            <div class="cost-card cost-history">
+                <h3>Monthly Breakdown</h3>
+                <div id="cost-months"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <button class="quick-btn" onclick="AdminKitt.sendQuick('server status')">Status</button>
+        <button class="quick-btn" onclick="AdminKitt.sendQuick('restart server')">Restart</button>
+        <button class="quick-btn" onclick="AdminKitt.sendQuick('run tests')">Tests</button>
+        <button class="quick-btn" onclick="AdminKitt.sendQuick('list widgets')">Widgets</button>
+        <button class="quick-btn" onclick="AdminKitt.sendQuick('sync to github')">Git Sync</button>
+    </div>
+
+    <div class="chat-container" id="chat"></div>
+
+    <!-- Pending Task Bubble -->
+    <div class="pending-bubble" id="pending-bubble">
+        <div class="pending-text" id="pending-text" onclick="AdminKitt.copyPendingText()" title="Click to copy"></div>
+        <div class="pending-actions">
+            <button class="pending-btn pending-send" id="pending-send-btn" onclick="AdminKitt.sendPending()" disabled>Send (when ready)</button>
+            <button class="pending-btn pending-todo" onclick="AdminKitt.addTodo()">TODO:</button>
+            <select class="priority-select" id="priority-select">
+                <option value="mustdo">⚡ MUSTDO</option>
+                <option value="high">High</option>
+                <option value="medium" selected>Medium</option>
+                <option value="low">Low</option>
+            </select>
+            <button class="pending-btn pending-cancel">✕</button>
+        </div>
+    </div>
+
+    <!-- Attachment Preview -->
+    <div class="attachment-preview" id="attachment-preview"></div>
+
+    <div class="input-container">
+        <input type="file" id="file-input" multiple hidden accept="image/*,.pdf,.txt,.js,.json,.md,.html,.css">
+        <div class="input-wrapper">
+            <button class="btn-attach" id="btn-attach" title="Attach file (Ctrl+U)">📎</button>
+            <input type="text" id="message-input" placeholder="Message Kitt... (paste images here)" autocomplete="off">
+            <button class="btn-ntt" id="btn-ntt" title="Next Todo Task">NTT</button>
+            <button class="btn btn-voice" id="btn-voice" title="Voice input">🎤</button>
+        </div>
+        <button class="btn btn-send" id="btn-send" title="Send">➤</button>
+    </div>
+
+    <!-- Module Scripts -->
+    <script src="modules/debug-inspector.js"></script>
+    <script src="modules/voice-engine.js"></script>
+    <script src="modules/core.js"></script>
+    <script src="modules/ui-panels.js"></script>
+    <script src="modules/services.js"></script>
+    <script src="modules/troubleshooting.js"></script>
+    <script src="modules/local-commands.js"></script>
+    <script src="modules/relay.js"></script>
+    <script src="modules/model.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="modules/cost-report.js"></script>
+    <script src="modules/menu-utils.js"></script>
+    <script src="modules/activity-log.js"></script>
+    
+    <!-- Existing Modules -->
+    <script src="todo-module.js"></script>
+    <script src="component-tester.js"></script>
+    <script src="../hot-update/hot-client.js"></script>
+    
+    <script>
+        // Initialize TODO module
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof TodoModule !== 'undefined') {
+                TodoModule.init(null, {
+                    assistantName: 'Kitt',
+                    inputSelector: '#message-input'
+                });
+            }
+        });
+    </script>
+</body>
+</html>

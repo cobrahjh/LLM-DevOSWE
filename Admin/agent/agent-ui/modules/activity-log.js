@@ -999,6 +999,16 @@ const ActivityLog = (function() {
     function task(msg) { log('task', msg); }
     function queue(msg) { log('queue', msg); }
 
+    // Switch to server logs tab with specific source
+    function switchToServer(source) {
+        const sourceSelect = document.getElementById('log-source');
+        if (sourceSelect) {
+            sourceSelect.value = source;
+            serverLogSource = source;
+        }
+        switchMode('server');
+    }
+
     return {
         init,
         log,
@@ -1015,7 +1025,8 @@ const ActivityLog = (function() {
         show,
         hide,
         toggle,
-        clear
+        clear,
+        switchToServer
     };
 })();
 
