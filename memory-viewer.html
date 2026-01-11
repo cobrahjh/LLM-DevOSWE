@@ -648,6 +648,162 @@
         loadMemory();
         checkQueueStatus();
         checkServices();
+
+        // ============================================
+        // DEBUG PANEL (Ctrl+Shift+D to toggle)
+        // ============================================
+        (function() {
+            let debugPanel = null;
+            let isDebugVisible = false;
+
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                    e.preventDefault();
+                    toggleDebug();
+                }
+            });
+
+            function toggleDebug() {
+                if (!debugPanel) createDebugPanel();
+                isDebugVisible = !isDebugVisible;
+                debugPanel.style.display = isDebugVisible ? 'block' : 'none';
+                if (isDebugVisible) updateDebugInfo();
+            }
+
+            function createDebugPanel() {
+                debugPanel = document.createElement('div');
+                debugPanel.id = 'debug-panel';
+                debugPanel.innerHTML = `
+                    <div class="debug-header">
+                        <span>Debug Panel</span>
+                        <button onclick="this.parentElement.parentElement.style.display='none'">×</button>
+                    </div>
+                    <div class="debug-content" id="debug-content"></div>
+                    <div class="debug-actions">
+                        <button onclick="location.reload()">Reload</button>
+                        <button onclick="localStorage.clear(); location.reload()">Clear Storage</button>
+                        <button onclick="checkKittStatus()">Kitt Status</button>
+                        <button onclick="resetKitt()">Reset Kitt</button>
+                    </div>
+                `;
+                debugPanel.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    width: 280px;
+                    background: var(--bg-dark);
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    font-family: monospace;
+                    font-size: 11px;
+                    color: var(--text-primary);
+                    z-index: 99999;
+                    display: none;
+                `;
+                document.body.appendChild(debugPanel);
+                addDebugStyles();
+            }
+
+            function addDebugStyles() {
+                const style = document.createElement('style');
+                style.textContent = `
+                    #debug-panel .debug-header {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 8px 12px;
+                        background: var(--bg-card);
+                        border-radius: 8px 8px 0 0;
+                        font-weight: bold;
+                        color: var(--accent-warning);
+                    }
+                    #debug-panel .debug-header button {
+                        background: none;
+                        border: none;
+                        color: var(--text-muted);
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    #debug-panel .debug-content {
+                        padding: 12px;
+                        max-height: 200px;
+                        overflow-y: auto;
+                    }
+                    #debug-panel .debug-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 4px 0;
+                        border-bottom: 1px solid var(--border-color);
+                    }
+                    #debug-panel .debug-label { color: var(--text-muted); }
+                    #debug-panel .debug-value { color: var(--accent-info); }
+                    #debug-panel .debug-actions {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 6px;
+                        padding: 8px 12px;
+                        border-top: 1px solid var(--border-color);
+                    }
+                    #debug-panel .debug-actions button {
+                        padding: 6px;
+                        background: var(--bg-card);
+                        border: 1px solid #444;
+                        border-radius: 4px;
+                        color: #ccc;
+                        cursor: pointer;
+                        font-size: 10px;
+                    }
+                    #debug-panel .debug-actions button:hover {
+                        background: #3a3a4e;
+                        color: #fff;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            function updateDebugInfo() {
+                const content = document.getElementById('debug-content');
+                if (!content) return;
+
+                const info = [
+                    ['Page', document.title],
+                    ['Tab', currentTab],
+                    ['Viewport', `${window.innerWidth}×${window.innerHeight}`],
+                    ['CLAUDE.md', data.claude ? data.claude.length + ' chars' : 'Not loaded'],
+                    ['STANDARDS.md', data.standards ? data.standards.length + ' chars' : 'Not loaded'],
+                    ['Services', Object.keys(serviceStatus).length + ' checked'],
+                    ['localStorage', Object.keys(localStorage).length + ' keys'],
+                    ['DOM Elements', document.querySelectorAll('*').length]
+                ];
+
+                content.innerHTML = info.map(([label, value]) => `
+                    <div class="debug-row">
+                        <span class="debug-label">${label}</span>
+                        <span class="debug-value">${value}</span>
+                    </div>
+                `).join('');
+            }
+
+            window.checkKittStatus = async function() {
+                try {
+                    const res = await fetch('http://localhost:8585/api/kitt/status');
+                    const status = await res.json();
+                    alert('Kitt: ' + (status.busy ? 'Busy - ' + status.task : 'Available') + '\nUptime: ' + Math.round(status.uptime) + 's');
+                } catch (e) {
+                    alert('Kitt not reachable');
+                }
+            };
+
+            window.resetKitt = async function() {
+                try {
+                    await fetch('http://localhost:8585/api/kitt/reset', { method: 'POST' });
+                    alert('Kitt reset successfully');
+                } catch (e) {
+                    alert('Reset failed: ' + e.message);
+                }
+            };
+
+            console.log('[Debug] Press Ctrl+Shift+D to open debug panel');
+        })();
     </script>
 </body>
 </html>

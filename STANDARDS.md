@@ -1,5 +1,5 @@
 # SimWidget Engine - Project Standards & Conventions
-**Version:** 1.2.0
+**Version:** 1.3.0
 **Last Updated:** 2026-01-11
 
 This document captures proven patterns, timing defaults, and lessons learned throughout development. **Always reference this before implementing new features.**
@@ -833,6 +833,250 @@ function createHighlightOverlay() {
     `;
     document.body.appendChild(overlay);
     return overlay;
+}
+```
+
+---
+
+## 🌐 Debug Integration for All Webpages
+
+All webpages should include a standardized debug panel for development and troubleshooting.
+
+### Standard Debug Include
+
+Add this script tag to all HTML pages:
+
+```html
+<!-- Debug Panel (remove in production) -->
+<script src="/modules/debug-panel.js"></script>
+```
+
+### Minimal Debug Panel Implementation
+
+For standalone pages (like memory-viewer.html), include this inline:
+
+```html
+<script>
+// Debug Panel - Press Ctrl+Shift+D to toggle
+(function() {
+    let debugPanel = null;
+    let isVisible = false;
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            e.preventDefault();
+            toggleDebug();
+        }
+    });
+
+    function toggleDebug() {
+        if (!debugPanel) createPanel();
+        isVisible = !isVisible;
+        debugPanel.style.display = isVisible ? 'block' : 'none';
+        if (isVisible) updateInfo();
+    }
+
+    function createPanel() {
+        debugPanel = document.createElement('div');
+        debugPanel.id = 'debug-panel';
+        debugPanel.innerHTML = `
+            <div class="debug-header">
+                <span>Debug Panel</span>
+                <button onclick="this.parentElement.parentElement.style.display='none'">×</button>
+            </div>
+            <div class="debug-content" id="debug-content"></div>
+            <div class="debug-actions">
+                <button onclick="location.reload()">Reload</button>
+                <button onclick="localStorage.clear(); location.reload()">Clear Storage</button>
+                <button onclick="console.clear()">Clear Console</button>
+            </div>
+        `;
+        debugPanel.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #e0e0e0;
+            z-index: 99999;
+            display: none;
+        `;
+        document.body.appendChild(debugPanel);
+        addDebugStyles();
+    }
+
+    function addDebugStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            #debug-panel .debug-header {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 12px;
+                background: #2a2a3e;
+                border-radius: 8px 8px 0 0;
+                font-weight: bold;
+            }
+            #debug-panel .debug-header button {
+                background: none;
+                border: none;
+                color: #888;
+                cursor: pointer;
+                font-size: 14px;
+            }
+            #debug-panel .debug-content {
+                padding: 12px;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            #debug-panel .debug-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 4px 0;
+                border-bottom: 1px solid #333;
+            }
+            #debug-panel .debug-label { color: #888; }
+            #debug-panel .debug-value { color: #4a9eff; }
+            #debug-panel .debug-actions {
+                display: flex;
+                gap: 8px;
+                padding: 8px 12px;
+                border-top: 1px solid #333;
+            }
+            #debug-panel .debug-actions button {
+                flex: 1;
+                padding: 6px;
+                background: #2a2a3e;
+                border: 1px solid #444;
+                border-radius: 4px;
+                color: #ccc;
+                cursor: pointer;
+                font-size: 10px;
+            }
+            #debug-panel .debug-actions button:hover {
+                background: #3a3a4e;
+                color: #fff;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function updateInfo() {
+        const content = document.getElementById('debug-content');
+        if (!content) return;
+
+        const info = [
+            ['Page', document.title],
+            ['URL', location.pathname],
+            ['Viewport', `${window.innerWidth}×${window.innerHeight}`],
+            ['localStorage', Object.keys(localStorage).length + ' keys'],
+            ['sessionStorage', Object.keys(sessionStorage).length + ' keys'],
+            ['DOM Elements', document.querySelectorAll('*').length],
+            ['Scripts', document.scripts.length],
+            ['Stylesheets', document.styleSheets.length]
+        ];
+
+        content.innerHTML = info.map(([label, value]) => `
+            <div class="debug-row">
+                <span class="debug-label">${label}</span>
+                <span class="debug-value">${value}</span>
+            </div>
+        `).join('');
+    }
+
+    // Auto-show in development
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        console.log('[Debug] Press Ctrl+Shift+D to open debug panel');
+    }
+})();
+</script>
+```
+
+### Debug Panel Features
+
+| Feature | Shortcut | Description |
+|---------|----------|-------------|
+| Toggle Panel | `Ctrl+Shift+D` | Show/hide debug panel |
+| Reload | Button | Refresh page |
+| Clear Storage | Button | Clear localStorage and reload |
+| Clear Console | Button | Clear browser console |
+
+### Debug Info to Display
+
+```javascript
+const debugInfo = [
+    // Page Info
+    ['Page', document.title],
+    ['URL', location.pathname],
+    ['Viewport', `${window.innerWidth}×${window.innerHeight}`],
+
+    // Storage
+    ['localStorage', Object.keys(localStorage).length + ' keys'],
+    ['sessionStorage', Object.keys(sessionStorage).length + ' keys'],
+
+    // DOM Stats
+    ['DOM Elements', document.querySelectorAll('*').length],
+    ['Scripts', document.scripts.length],
+    ['Stylesheets', document.styleSheets.length],
+
+    // Performance (if needed)
+    ['Load Time', performance.timing.loadEventEnd - performance.timing.navigationStart + 'ms'],
+
+    // Custom App Data
+    ['Connected', wsConnected ? 'Yes' : 'No'],
+    ['Queue', taskQueue.length]
+];
+```
+
+### Integration with Kitt
+
+For pages that connect to Kitt, add these debug actions:
+
+```javascript
+// Additional debug actions for Kitt-connected pages
+const kittDebugActions = `
+    <button onclick="checkKittStatus()">Kitt Status</button>
+    <button onclick="resetKitt()">Reset Kitt</button>
+`;
+
+async function checkKittStatus() {
+    try {
+        const res = await fetch('http://localhost:8585/api/kitt/status');
+        const status = await res.json();
+        console.log('[Kitt Status]', status);
+        alert('Kitt: ' + (status.busy ? 'Busy' : 'Available'));
+    } catch (e) {
+        alert('Kitt not reachable');
+    }
+}
+
+async function resetKitt() {
+    try {
+        await fetch('http://localhost:8585/api/kitt/reset', { method: 'POST' });
+        alert('Kitt reset');
+    } catch (e) {
+        alert('Reset failed');
+    }
+}
+```
+
+### Production Removal
+
+Use build flags or environment checks to exclude debug code:
+
+```javascript
+// Only include in development
+if (process.env.NODE_ENV !== 'production') {
+    // Debug code here
+}
+
+// Or check hostname
+if (!['localhost', '127.0.0.1'].includes(location.hostname)) {
+    return; // Skip debug in production
 }
 ```
 
