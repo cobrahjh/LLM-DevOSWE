@@ -39,6 +39,13 @@ This document captures proven patterns, timing defaults, and lessons learned thr
 - Always use absolute paths for reliability
 - Escape paths in PowerShell: `"C:\Path With Spaces\file.js"`
 
+### Network/URL Conventions
+- **Never use `localhost` or `127.0.0.1`** - always use the actual IP address
+- Dev machine IP: `192.168.1.42`
+- This ensures consistency across all devices (phone, other PCs, etc.)
+- Example: `http://192.168.1.42:8585/` not `http://localhost:8585/`
+- All documentation, code, and instructions must use IP addresses
+
 ### Process Management
 ```powershell
 # Stop process

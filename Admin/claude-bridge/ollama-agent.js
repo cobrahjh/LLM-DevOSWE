@@ -25,7 +25,7 @@ const http = require('http');
 
 const CONFIG = {
     ollamaModel: 'kitt',  // Custom model with project context
-    maxIterations: 10,          // Prevent infinite loops
+    maxIterations: 15,          // Allow more complex tasks
     commandTimeout: 30000,      // 30s max per command
     fileTimeout: 5000,          // 5s max for file operations
     lockTimeout: 10000,         // 10s max wait for locks
@@ -182,7 +182,7 @@ async function executeCommand(cmd, timeout = CONFIG.commandTimeout) {
 // SAFE FILE OPERATIONS
 // ============================================
 
-async function readFile(filePath, timeout = CONFIG.fileTimeout) {
+async function readFile(filePath, options = {}, timeout = CONFIG.fileTimeout) {
     const absPath = path.resolve(CONFIG.workDir, filePath);
 
     try {
@@ -190,14 +190,156 @@ async function readFile(filePath, timeout = CONFIG.fileTimeout) {
 
         log(`[File] Reading: ${absPath}`);
         const content = fs.readFileSync(absPath, 'utf8');
+        const lines = content.split('\n');
+
+        // Support line range: startLine-endLine or just startLine
+        let startLine = options.startLine || 1;
+        let endLine = options.endLine || lines.length;
+
+        // Clamp to valid range
+        startLine = Math.max(1, Math.min(startLine, lines.length));
+        endLine = Math.max(startLine, Math.min(endLine, lines.length));
+
+        // Add line numbers
+        const numberedLines = lines
+            .slice(startLine - 1, endLine)
+            .map((line, i) => `${startLine + i}: ${line}`)
+            .join('\n');
 
         releaseLock(absPath);
-        return { success: true, content };
+        return {
+            success: true,
+            content: numberedLines,
+            totalLines: lines.length,
+            range: `${startLine}-${endLine}`
+        };
 
     } catch (err) {
         releaseLock(absPath);
         return { success: false, error: err.message };
     }
+}
+
+// Edit file - find and replace
+async function editFile(filePath, oldText, newText, timeout = CONFIG.fileTimeout) {
+    const absPath = path.resolve(CONFIG.workDir, filePath);
+
+    try {
+        await acquireLock(absPath, timeout);
+
+        log(`[File] Editing: ${absPath}`);
+        let content = fs.readFileSync(absPath, 'utf8');
+
+        if (!content.includes(oldText)) {
+            releaseLock(absPath);
+            return { success: false, error: 'Old text not found in file' };
+        }
+
+        // Create backup
+        fs.copyFileSync(absPath, absPath + '.bak');
+
+        // Replace
+        content = content.replace(oldText, newText);
+        fs.writeFileSync(absPath, content, 'utf8');
+
+        releaseLock(absPath);
+        return { success: true, message: 'Edit applied successfully' };
+
+    } catch (err) {
+        releaseLock(absPath);
+        return { success: false, error: err.message };
+    }
+}
+
+// Search files for pattern (grep-like)
+async function searchFiles(pattern, searchPath = '.', timeout = CONFIG.fileTimeout) {
+    const absPath = path.resolve(CONFIG.workDir, searchPath);
+
+    try {
+        await acquireLock(absPath, timeout);
+
+        log(`[Search] Looking for "${pattern}" in ${absPath}`);
+        const results = [];
+
+        function searchDir(dir) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+
+                // Skip node_modules, .git, etc.
+                if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+
+                if (entry.isDirectory()) {
+                    searchDir(fullPath);
+                } else if (entry.isFile() && /\.(js|html|css|json|md|txt)$/i.test(entry.name)) {
+                    try {
+                        const content = fs.readFileSync(fullPath, 'utf8');
+                        const lines = content.split('\n');
+                        lines.forEach((line, i) => {
+                            if (line.includes(pattern)) {
+                                results.push({
+                                    file: fullPath.replace(CONFIG.workDir, '').replace(/\\/g, '/'),
+                                    line: i + 1,
+                                    text: line.trim().substring(0, 100)
+                                });
+                            }
+                        });
+                    } catch (e) { /* skip unreadable files */ }
+                }
+            }
+        }
+
+        searchDir(absPath);
+        releaseLock(absPath);
+
+        return {
+            success: true,
+            matches: results.slice(0, 20),  // Limit results
+            totalMatches: results.length
+        };
+
+    } catch (err) {
+        releaseLock(absPath);
+        return { success: false, error: err.message };
+    }
+}
+
+// HTTP request
+async function httpRequest(method, url, body = null) {
+    return new Promise((resolve) => {
+        log(`[HTTP] ${method} ${url}`);
+
+        const parsedUrl = new URL(url);
+        const options = {
+            hostname: parsedUrl.hostname,
+            port: parsedUrl.port || 80,
+            path: parsedUrl.pathname + parsedUrl.search,
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 10000
+        };
+
+        const req = http.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                resolve({
+                    success: true,
+                    status: res.statusCode,
+                    body: data.substring(0, 2000)  // Limit response size
+                });
+            });
+        });
+
+        req.on('error', (err) => resolve({ success: false, error: err.message }));
+        req.on('timeout', () => {
+            req.destroy();
+            resolve({ success: false, error: 'Request timeout' });
+        });
+
+        if (body) req.write(JSON.stringify(body));
+        req.end();
+    });
 }
 
 async function writeFile(filePath, content, timeout = CONFIG.fileTimeout) {
@@ -346,24 +488,40 @@ async function runAgent(task) {
     let iteration = 0;
     let finalResult = null;
 
-    const systemPrompt = `You are an AI agent that can execute tasks. You have these tools:
+    const systemPrompt = `You are Kitt, an AI agent for the SimWidget project. You can execute tasks using these tools:
 
-[ACTION: command]shell command here[/ACTION] - Run a shell command
-[ACTION: read]file/path.txt[/ACTION] - Read a file
-[ACTION: write]file/path.txt
-content here
-[/ACTION] - Write to a file
-[ACTION: list]directory/path[/ACTION] - List files in directory
+TOOLS:
+[ACTION: command]shell command[/ACTION] - Run shell/powershell command
+[ACTION: read]path/file.js[/ACTION] - Read entire file with line numbers
+[ACTION: read]path/file.js:100-150[/ACTION] - Read lines 100-150 of file
+[ACTION: search]pattern[/ACTION] - Search all files for pattern
+[ACTION: search]pattern|path[/ACTION] - Search in specific path
+[ACTION: edit]path/file.js
+old text to find
+---
+new text to replace with
+[/ACTION] - Find and replace text in file
+[ACTION: write]path/file.js
+file content
+[/ACTION] - Write/create file
+[ACTION: list]directory[/ACTION] - List files in directory
+[ACTION: http]GET http://192.168.1.42:8600/api/status[/ACTION] - HTTP request
+[ACTION: http]POST http://192.168.1.42:8600/api/queue
+{"message": "hello"}
+[/ACTION] - HTTP POST with JSON body
 
-When the task is complete, say [DONE] with a summary.
+IMPORTANT RULES:
+- ALWAYS use [ACTION: type]content[/ACTION] format - brackets are required!
+- One action per response, wait for results
+- Use IP 192.168.1.42 never localhost or 127.0.0.1
+- Maximum ${CONFIG.maxIterations} iterations allowed
+- Say [DONE] with summary when task is complete
 
-Rules:
-- One action at a time
-- Wait for results before next action
-- Handle errors gracefully
-- Maximum ${CONFIG.maxIterations} steps allowed
-
-Current directory: ${CONFIG.workDir}
+PROJECT INFO:
+- Directory: ${CONFIG.workDir}
+- Stack: Node.js, Electron, WebSocket
+- Ports: Main=8080, Agent=8585, Relay=8600, Router=8610
+- Sandbox files: Admin/agent/agent-ui/ollama-sandbox.html, styles/ollama-sandbox.css
 `;
 
     try {
@@ -419,21 +577,91 @@ Current directory: ${CONFIG.workDir}
                     break;
 
                 case 'read':
-                    result = await readFile(action.content);
+                    // Parse line range if provided: filepath:startLine-endLine
+                    let readPath = action.content;
+                    let readOpts = {};
+                    const rangeMatch = action.content.match(/^(.+?):(\d+)(?:-(\d+))?$/);
+                    if (rangeMatch) {
+                        readPath = rangeMatch[1];
+                        readOpts.startLine = parseInt(rangeMatch[2]);
+                        readOpts.endLine = rangeMatch[3] ? parseInt(rangeMatch[3]) : readOpts.startLine + 50;
+                    }
+                    result = await readFile(readPath, readOpts);
                     history.push({
                         action: `read: ${action.content}`,
-                        result: result.success ? result.content.substring(0, 500) : `Error: ${result.error}`
+                        result: result.success
+                            ? `[Lines ${result.range} of ${result.totalLines}]\n${result.content.substring(0, 1500)}`
+                            : `Error: ${result.error}`
                     });
                     break;
 
                 case 'write':
-                    const lines = action.content.split('\n');
-                    const filePath = lines[0];
-                    const content = lines.slice(1).join('\n');
-                    result = await writeFile(filePath, content);
+                    const writeLines = action.content.split('\n');
+                    const writePath = writeLines[0];
+                    const writeContent = writeLines.slice(1).join('\n');
+                    result = await writeFile(writePath, writeContent);
                     history.push({
-                        action: `write: ${filePath}`,
+                        action: `write: ${writePath}`,
                         result: result.success ? 'File written successfully' : `Error: ${result.error}`
+                    });
+                    break;
+
+                case 'edit':
+                    // Format: filepath\nOLD_TEXT\n---\nNEW_TEXT
+                    const editParts = action.content.split('\n---\n');
+                    if (editParts.length !== 2) {
+                        history.push({
+                            action: `edit: invalid format`,
+                            result: 'Error: Edit format must be: filepath\\nold_text\\n---\\nnew_text'
+                        });
+                        break;
+                    }
+                    const editLines = editParts[0].split('\n');
+                    const editPath = editLines[0];
+                    const oldText = editLines.slice(1).join('\n');
+                    const newText = editParts[1];
+                    result = await editFile(editPath, oldText, newText);
+                    history.push({
+                        action: `edit: ${editPath}`,
+                        result: result.success ? result.message : `Error: ${result.error}`
+                    });
+                    break;
+
+                case 'search':
+                    // Format: pattern or pattern|path
+                    const searchParts = action.content.split('|');
+                    const searchPattern = searchParts[0];
+                    const searchPath = searchParts[1] || '.';
+                    result = await searchFiles(searchPattern, searchPath);
+                    if (result.success) {
+                        const matchSummary = result.matches
+                            .map(m => `${m.file}:${m.line}: ${m.text}`)
+                            .join('\n');
+                        history.push({
+                            action: `search: ${searchPattern}`,
+                            result: `Found ${result.totalMatches} matches:\n${matchSummary}`
+                        });
+                    } else {
+                        history.push({
+                            action: `search: ${searchPattern}`,
+                            result: `Error: ${result.error}`
+                        });
+                    }
+                    break;
+
+                case 'http':
+                    // Format: METHOD url or METHOD url\n{json_body}
+                    const httpLines = action.content.split('\n');
+                    const httpFirst = httpLines[0].split(' ');
+                    const httpMethod = httpFirst[0].toUpperCase();
+                    const httpUrl = httpFirst.slice(1).join(' ');
+                    const httpBody = httpLines.length > 1 ? JSON.parse(httpLines.slice(1).join('\n')) : null;
+                    result = await httpRequest(httpMethod, httpUrl, httpBody);
+                    history.push({
+                        action: `http: ${httpMethod} ${httpUrl}`,
+                        result: result.success
+                            ? `Status ${result.status}: ${result.body.substring(0, 500)}`
+                            : `Error: ${result.error}`
                     });
                     break;
 
