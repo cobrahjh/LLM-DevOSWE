@@ -12,15 +12,15 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { execSync } = require('child_process');
 
 const CONFIG = {
     relayUrl: 'http://localhost:8600',
-    ollamaModel: 'qwen2.5-coder:14b',
+    ollamaModel: 'qwen2.5-coder:7b',  // 7b is faster (172 tok/s)
     pollInterval: 5000,  // 5 seconds
     outputFile: path.join(__dirname, 'pending-messages.json'),
     logFile: path.join(__dirname, 'auto-poller.log'),
-    maxResponseTime: 120000  // 2 min timeout for LLM
+    maxResponseTime: 60000  // 60 sec timeout for LLM
 };
 
 let isProcessing = false;
@@ -78,44 +78,30 @@ function post(url, body) {
 }
 
 function runOllama(prompt) {
-    return new Promise((resolve, reject) => {
-        const systemPrompt = `You are Kitt, a helpful AI assistant for the SimWidget project.
-Keep responses concise and helpful. If the message is a test or greeting, respond briefly.
-If it's a task request, acknowledge it and provide a helpful response.`;
+    const systemPrompt = `You are Kitt, a helpful AI assistant. Keep responses brief (1-2 sentences). For tests/greetings, respond simply.`;
 
-        const fullPrompt = `${systemPrompt}\n\nUser message: ${prompt}\n\nResponse:`;
+    // Escape quotes in prompt for shell
+    const safePrompt = prompt.replace(/"/g, '\\"').replace(/\n/g, ' ');
+    const fullPrompt = `${systemPrompt} User: ${safePrompt}`;
 
-        let output = '';
-        let error = '';
-
-        const proc = spawn('ollama', ['run', CONFIG.ollamaModel, fullPrompt], {
-            shell: true,
-            timeout: CONFIG.maxResponseTime
+    try {
+        const output = execSync(`ollama run ${CONFIG.ollamaModel} "${fullPrompt}"`, {
+            encoding: 'utf8',
+            timeout: CONFIG.maxResponseTime,
+            windowsHide: true
         });
 
-        proc.stdout.on('data', (data) => {
-            output += data.toString();
-        });
+        // Clean up the output (remove spinner chars, ANSI codes)
+        const cleaned = output
+            .replace(/\[[\d;?]*[mGKHJ]|\x1b\[[^m]*m/g, '')  // ANSI codes
+            .replace(/[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏\[\]?]/g, '')  // Spinner chars
+            .replace(/\r/g, '')
+            .trim();
 
-        proc.stderr.on('data', (data) => {
-            error += data.toString();
-        });
-
-        proc.on('close', (code) => {
-            if (code === 0) {
-                // Clean up the output (remove spinner chars, extra whitespace)
-                const cleaned = output
-                    .replace(/\[[\d;]*[mGKH]|\x1b\[[^m]*m/g, '')  // ANSI codes
-                    .replace(/[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]/g, '')  // Spinner chars
-                    .trim();
-                resolve(cleaned || 'Message received.');
-            } else {
-                reject(new Error(error || `Ollama exited with code ${code}`));
-            }
-        });
-
-        proc.on('error', reject);
-    });
+        return cleaned || 'Message received.';
+    } catch (err) {
+        throw new Error(`Ollama error: ${err.message}`);
+    }
 }
 
 async function processMessage(msg) {
@@ -132,7 +118,7 @@ async function processMessage(msg) {
 
         // 2. Get LLM response
         log(`  Generating response with ${CONFIG.ollamaModel}...`);
-        const response = await runOllama(msg.content);
+        const response = runOllama(msg.content);
         log(`  LLM response: "${response.substring(0, 100)}..."`);
 
         // 3. Send response
