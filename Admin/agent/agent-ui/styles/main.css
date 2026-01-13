@@ -274,6 +274,27 @@ body::before {
     color: var(--text-primary);
 }
 
+.header-llm-select {
+    height: 32px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-dim);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+}
+
+.header-llm-select:hover {
+    border-color: var(--border-accent);
+    color: var(--text-primary);
+}
+
+.header-llm-select:focus {
+    border-color: var(--accent-primary);
+}
+
 /* ==================== LAYOUT ==================== */
 .layout {
     display: flex;

@@ -54,6 +54,11 @@
                 <button class="header-btn" id="btn-output" onclick="OutputBubble.toggle()" title="Claude Activity">🤖</button>
                 <span class="claude-status-text" id="header-claude-status">Ready</span>
                 <button class="header-btn voice-toggle" id="btn-voice-toggle" onclick="toggleVoiceEnabled()" title="Toggle Voice">🔊</button>
+                <select class="header-llm-select" id="llm-select" onchange="switchLLM(this.value)" title="Select LLM">
+                    <option value="local">🖥️ Local</option>
+                    <option value="aipc">🌐 ai-pc</option>
+                    <option value="claude">🧠 Claude</option>
+                </select>
             </div>
             <button class="header-btn" id="btn-terminal-stream" onclick="TerminalStream.toggle()" title="Terminal Stream">💻</button>
             <button class="header-btn" id="btn-claude-tasks" onclick="toggleClaudeTasksPanel()" title="Claude Tasks">🤖</button>
@@ -1883,6 +1888,46 @@ async function refreshTaskList() {
             console.log('[Voice] Voice', voiceEnabled ? 'enabled' : 'disabled');
         }
 
+        // LLM Switcher
+        async function switchLLM(mode) {
+            try {
+                const response = await fetch('http://localhost:8610/api/llm/mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode })
+                });
+                const result = await response.json();
+                console.log('[LLM] Switched to:', mode, result);
+
+                // Update status text
+                const statusEl = document.getElementById('header-claude-status');
+                if (statusEl) {
+                    const labels = { local: 'Local LLM', aipc: 'ai-pc', claude: 'Claude' };
+                    statusEl.textContent = labels[mode] || mode;
+                }
+
+                // Save preference
+                localStorage.setItem('cc-llm-mode', mode);
+            } catch (err) {
+                console.error('[LLM] Switch failed:', err);
+                alert('Failed to switch LLM. Is Smart Router running?');
+            }
+        }
+
+        function restoreLLMMode() {
+            const saved = localStorage.getItem('cc-llm-mode') || 'local';
+            const select = document.getElementById('llm-select');
+            if (select) {
+                select.value = saved;
+                // Update status text
+                const statusEl = document.getElementById('header-claude-status');
+                if (statusEl) {
+                    const labels = { local: 'Local LLM', aipc: 'ai-pc', claude: 'Claude' };
+                    statusEl.textContent = labels[saved] || 'Ready';
+                }
+            }
+        }
+
         function restoreVoiceState() {
             const btn = document.getElementById('btn-voice-toggle');
             if (btn) {
@@ -1898,7 +1943,9 @@ async function refreshTaskList() {
         }
 
         document.addEventListener('DOMContentLoaded', restoreVoiceState);
+        document.addEventListener('DOMContentLoaded', restoreLLMMode);
         window.toggleVoiceEnabled = toggleVoiceEnabled;
+        window.switchLLM = switchLLM;
 
         function addActivityItem(type, message, time) {
             const list = document.getElementById('activity-list');

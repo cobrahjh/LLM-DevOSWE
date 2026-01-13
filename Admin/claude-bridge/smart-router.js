@@ -20,6 +20,7 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const { execSync } = require('child_process');
 
 const app = express();
 const PORT = 8610;
@@ -43,7 +44,10 @@ const CONFIG = {
     relayUrl: 'http://localhost:8600',
     claudeTimeout: 30000,      // Consider Claude offline after 30s no heartbeat
     pollInterval: 3000,        // Check relay every 3s
-    // Remote LLM on ai-pc (OpenAI-compatible API)
+    // Local Ollama LLM
+    useLocalOllama: true,
+    ollamaModel: 'qwen2.5-coder:14b',  // 14b for better quality (87 tok/s)
+    // Remote LLM (backup - ai-pc)
     llmUrl: 'http://ai-pc:1234',
     llmModel: 'qwen2.5-7b-instruct',
     llmTimeout: 60000
@@ -92,6 +96,23 @@ function relayPost(path, body = {}) {
         req.write(JSON.stringify(body));
         req.end();
     });
+}
+
+function runLocalOllama(prompt) {
+    const safePrompt = prompt.replace(/"/g, '\\"').replace(/\n/g, ' ').substring(0, 500);
+    // Direct prompt - just answer the question
+    const fullPrompt = safePrompt;
+
+    try {
+        const output = execSync(`ollama run ${CONFIG.ollamaModel} "${fullPrompt}"`, {
+            encoding: 'utf8',
+            timeout: CONFIG.llmTimeout,
+            windowsHide: true
+        });
+        return output.replace(/[\x1b\[][\d;?]*[mGKHJ]/g, '').replace(/[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]/g, '').trim();
+    } catch (err) {
+        return `Ollama Error: ${err.message}`;
+    }
 }
 
 async function runRemoteLLM(prompt) {
@@ -273,9 +294,18 @@ async function processWithFallback() {
 
         log(`LLM fallback: [${msg.id}] "${msg.content.substring(0, 30)}..."`);
 
-        const response = await runRemoteLLM(msg.content);
+        let response;
+        let label;
+        if (CONFIG.useLocalOllama) {
+            response = runLocalOllama(msg.content);
+            label = 'Local LLM';
+        } else {
+            response = await runRemoteLLM(msg.content);
+            label = 'ai-pc LLM';
+        }
+
         await relayPost(`/api/messages/${msg.id}/respond`, {
-            response: `[ai-pc LLM] ${response}`
+            response: `[${label}] ${response}`
         });
 
         state.llmFallbackCount++;
@@ -293,6 +323,7 @@ app.get('/api/status', (req, res) => {
     res.json({
         service: 'Smart Router',
         version: '1.0.0',
+        llmMode: CONFIG.useLocalOllama ? 'local' : 'aipc',
         claude: {
             available: isClaudeAvailable(),
             sessionId: state.claudeSessionId,
@@ -302,6 +333,37 @@ app.get('/api/status', (req, res) => {
             processedByClaudeCode: state.processedCount,
             processedByLLM: state.llmFallbackCount
         }
+    });
+});
+
+// Switch LLM mode
+app.post('/api/llm/mode', (req, res) => {
+    const { mode } = req.body;
+
+    if (mode === 'local') {
+        CONFIG.useLocalOllama = true;
+        log('Switched to Local Ollama');
+    } else if (mode === 'aipc') {
+        CONFIG.useLocalOllama = false;
+        log('Switched to ai-pc LLM');
+    } else if (mode === 'claude') {
+        // Claude mode just means prefer Claude when available
+        CONFIG.useLocalOllama = true;  // Fallback to local
+        log('Switched to Claude priority mode');
+    }
+
+    res.json({
+        success: true,
+        mode: mode,
+        useLocalOllama: CONFIG.useLocalOllama
+    });
+});
+
+app.get('/api/llm/mode', (req, res) => {
+    res.json({
+        mode: CONFIG.useLocalOllama ? 'local' : 'aipc',
+        useLocalOllama: CONFIG.useLocalOllama,
+        claudeAvailable: isClaudeAvailable()
     });
 });
 
