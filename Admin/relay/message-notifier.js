@@ -18,38 +18,19 @@ let ws = null;
 let reconnectTimer = null;
 
 function showNotification(title, message) {
-    // Use PowerShell to show Windows toast notification
-    const psScript = `
-        [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-        [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+    // Play attention-grabbing sound
+    exec('powershell -Command "[console]::beep(1000,200); [console]::beep(1200,200); [console]::beep(1000,200)"');
 
-        $template = @"
-        <toast>
-            <visual>
-                <binding template="ToastText02">
-                    <text id="1">${title.replace(/"/g, "'")}</text>
-                    <text id="2">${message.replace(/"/g, "'").substring(0, 100)}</text>
-                </binding>
-            </visual>
-            <audio src="ms-winsoundevent:Notification.Default"/>
-        </toast>
-"@
-        $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-        $xml.LoadXml($template)
-        $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
-        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Kitt Message").Show($toast)
-    `;
+    // Show MessageBox popup (guaranteed visible, non-blocking)
+    const safeMsg = message.replace(/'/g, "''").replace(/"/g, '').substring(0, 150);
+    exec(`powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('${safeMsg}', '📱 ${title}', 'OK', 'Information')"`, { windowsHide: false });
 
-    exec(`powershell -Command "${psScript.replace(/\n/g, ' ')}"`, (err) => {
-        if (err) {
-            // Fallback: simple console beep + message
-            console.log('\x07'); // Terminal bell
-            console.log(`\n${'='.repeat(50)}`);
-            console.log(`📱 NEW MESSAGE: ${title}`);
-            console.log(`   ${message.substring(0, 80)}`);
-            console.log(`${'='.repeat(50)}\n`);
-        }
-    });
+    // Console output
+    console.log('\x07'); // Terminal bell
+    console.log(`\n${'='.repeat(50)}`);
+    console.log(`📱 NEW MESSAGE: ${title}`);
+    console.log(`   ${message.substring(0, 80)}`);
+    console.log(`${'='.repeat(50)}\n`);
 }
 
 function connect() {
