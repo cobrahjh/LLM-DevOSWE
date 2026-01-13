@@ -1,5 +1,5 @@
 # SimWidget Engine
-**Version:** v1.12.0
+**Version:** v1.13.0
 **Last updated:** 2026-01-13
 
 Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
@@ -41,6 +41,26 @@ curl -X POST http://localhost:8600/api/messages/MESSAGE_ID/respond \
 ```
 
 **Message Protection:** Pending/processing messages cannot be deleted without `?force=true`. Use `cleanup` to only remove completed tasks.
+
+### Local LLM Setup (Ollama + Qwen2.5-Coder)
+
+**Models installed:**
+- `qwen2.5-coder:7b` - 172 tok/s (blazing fast, quick tasks)
+- `qwen2.5-coder:14b` - 87 tok/s (quality work, sweet spot)
+- `qwen2.5-coder:32b` - 6.5 tok/s (too slow, skip)
+
+**Run model:** `ollama run qwen2.5-coder:14b "your prompt"`
+
+**Open WebUI (ChatGPT-like interface):**
+```bash
+Admin\tools\start-open-webui.bat   # Start at http://localhost:3000
+Admin\tools\stop-open-webui.bat    # Stop container
+```
+
+**Message Notifier (popup when phone message arrives):**
+```bash
+node Admin/relay/message-notifier.js
+```
 
 ### Files using API keys (need refactoring):
 
