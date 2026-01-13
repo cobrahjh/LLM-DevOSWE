@@ -1,5 +1,5 @@
 # SimWidget Engine
-**Version:** v1.11.0
+**Version:** v1.12.0
 **Last updated:** 2026-01-13
 
 Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
@@ -17,24 +17,30 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 - **⚠️ COST WARNING REQUIRED** - If ANY feature/action would cost real money (API tokens, external services, etc.), an admin warning MUST appear before execution. No silent charges.
 - **UI Design Process** - Any UI changes must go through a mockup phase first. Create a separate mockup file, get user approval, then implement. High design standards required.
 
-### Kitt Processing Mode (Dual Setup)
+### Kitt Processing Mode (Direct Polling v3.0)
 
-Use **both** methods together for best workflow:
+Two ways to use Kitt:
 
 - **At PC** → Claude Code direct - Talk directly in terminal (free, full power)
-- **On Phone** → Relay + Consumer - Kitt UI → Relay → Consumer → Claude Code
+- **On Phone** → Kitt UI → Relay → Claude Code polls directly (no consumer needed)
 
-**Start relay consumer:**
+**Check for messages:** Use shortcut `msg` or run:
 ```bash
-node "C:/DevOSWE/Admin/relay/relay-consumer.js"
+curl http://localhost:8600/api/messages/pending
 ```
 
-Consumer shows incoming messages, respond via Claude Code or curl:
+**Respond to a message:**
 ```bash
-curl -X POST http://localhost:8600/api/queue/respond \
+# 1. Claim the message
+curl -X POST http://localhost:8600/api/messages/MESSAGE_ID/claim
+
+# 2. Send response
+curl -X POST http://localhost:8600/api/messages/MESSAGE_ID/respond \
   -H "Content-Type: application/json" \
-  -d '{"messageId":"abc123","response":"Done!"}'
+  -d '{"response":"Done!"}'
 ```
+
+**Message Protection:** Pending/processing messages cannot be deleted without `?force=true`. Use `cleanup` to only remove completed tasks.
 
 ### Files using API keys (need refactoring):
 
@@ -44,6 +50,7 @@ curl -X POST http://localhost:8600/api/queue/respond \
 
 ## User Shortcuts
 
+- `msg` - check messages - poll relay for pending Kitt messages
 - `mem` - memory - add to CLAUDE.md for future reference
 - `ntt` - next todo task - work on next item from todo list
 - `br` - add to todo options - add feature/option to todo module

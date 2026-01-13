@@ -1,7 +1,7 @@
 /**
- * SimWidget Relay Service v2.1.0
+ * SimWidget Relay Service v3.0.0
  *
- * REDESIGNED: Single source of truth for Kitt task management
+ * REDESIGNED: Direct Claude Code polling (no consumer process needed)
  *
  * Features:
  *   - SQLite persistence (tasks.db)
@@ -20,8 +20,17 @@
  *   consumer:online - Consumer connected
  *   consumer:offline- Consumer disconnected
  *
- * Flow:
- *   Phone → Agent Kitt → Relay → Claude Desktop → Response → Relay → Agent Kitt
+ * Flow (Direct - no consumer):
+ *   Phone → Agent Kitt → Relay → [Claude Code polls] → Response → Relay → Agent Kitt
+ *
+ * Direct API for Claude Code:
+ *   GET  /api/messages/pending     - Check for pending messages
+ *   POST /api/messages/:id/claim   - Claim a message (mark processing)
+ *   POST /api/messages/:id/respond - Complete with response
+ *
+ * Message Protection:
+ *   - Pending/processing messages cannot be deleted without ?force=true
+ *   - Cleanup only removes completed/failed tasks
  *
  * Path: C:\DevOSWE\Admin\relay\relay-service.js
  * Last Updated: 2026-01-12
@@ -522,7 +531,7 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         service: 'SimWidget Relay',
-        version: '2.1.1',
+        version: '3.0.0',
         queue: stats,
         activeConsumers: consumers.count,
         deadLetters: deadLetters.count
@@ -1151,6 +1160,113 @@ app.get('/api/tasks/dead-letters', (req, res) => {
     }
 });
 
+// ============================================
+// DIRECT CLAUDE CODE API (No consumer needed)
+// ============================================
+
+// Check for pending messages - Claude polls this directly
+app.get('/api/messages/pending', (req, res) => {
+    const pending = db.prepare(`
+        SELECT * FROM tasks
+        WHERE status = 'pending'
+        ORDER BY
+            CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END,
+            created_at ASC
+    `).all();
+
+    if (pending.length === 0) {
+        return res.json({ count: 0, messages: [] });
+    }
+
+    res.json({
+        count: pending.length,
+        messages: pending.map(t => ({
+            id: t.id,
+            content: t.content,
+            priority: t.priority,
+            age: Math.round((Date.now() - t.created_at) / 1000) + 's',
+            createdAt: t.created_at
+        }))
+    });
+});
+
+// Claim a message - marks it as processing and returns content
+app.post('/api/messages/:id/claim', (req, res) => {
+    const { id } = req.params;
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+
+    if (!task) {
+        return res.status(404).json({ error: 'Message not found' });
+    }
+
+    if (task.status !== 'pending') {
+        return res.status(409).json({
+            error: `Message already ${task.status}`,
+            status: task.status
+        });
+    }
+
+    // Claim it
+    db.prepare(`
+        UPDATE tasks SET status = 'processing', processing_at = ?, consumer_id = 'claude-code'
+        WHERE id = ?
+    `).run(Date.now(), id);
+
+    log(`Message ${id} claimed by Claude Code`);
+
+    broadcast('task:processing', {
+        id,
+        sessionId: task.session_id,
+        consumerId: 'claude-code',
+        processingAt: Date.now()
+    });
+
+    res.json({
+        success: true,
+        message: {
+            id: task.id,
+            content: task.content,
+            sessionId: task.session_id,
+            priority: task.priority
+        }
+    });
+});
+
+// Complete a message with response
+app.post('/api/messages/:id/respond', (req, res) => {
+    const { id } = req.params;
+    const { response } = req.body;
+
+    if (!response) {
+        return res.status(400).json({ error: 'response required' });
+    }
+
+    const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+    if (!task) {
+        return res.status(404).json({ error: 'Message not found' });
+    }
+
+    const completedAt = Date.now();
+    const responseTime = completedAt - task.created_at;
+
+    db.prepare(`
+        UPDATE tasks SET status = 'completed', response = ?, completed_at = ?
+        WHERE id = ?
+    `).run(response, completedAt, id);
+
+    log(`Message ${id} completed (${responseTime}ms)`);
+
+    broadcast('task:completed', {
+        id,
+        sessionId: task.session_id,
+        response,
+        completedAt,
+        responseTime
+    });
+
+    res.json({ success: true, id, responseTime });
+});
+
 // Get single task by ID (must come AFTER specific routes like /api/tasks/next, /api/tasks/history)
 app.get('/api/tasks/:id', (req, res) => {
     const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
@@ -1173,17 +1289,29 @@ app.get('/api/tasks/:id', (req, res) => {
     });
 });
 
-// Delete task
+// Delete task (protected - can't delete pending/claimed without force)
 app.delete('/api/queue/:id', (req, res) => {
+    const { force } = req.query;
+
     // Get task info before deleting (for broadcast)
     const task = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(req.params.id);
     if (!task) {
         return res.status(404).json({ error: 'Task not found' });
     }
 
+    // Protected states - can't delete without force flag
+    const protectedStates = ['pending', 'processing'];
+    if (protectedStates.includes(task.status) && force !== 'true') {
+        return res.status(403).json({
+            error: `Cannot delete ${task.status} task without force=true`,
+            hint: 'Add ?force=true to delete protected tasks',
+            status: task.status
+        });
+    }
+
     const result = db.prepare(`DELETE FROM tasks WHERE id = ?`).run(req.params.id);
     if (result.changes > 0) {
-        log(`Task ${req.params.id} deleted`);
+        log(`Task ${req.params.id} deleted${force === 'true' ? ' (forced)' : ''}`);
 
         // Broadcast delete to all clients
         broadcast('task:deleted', {
@@ -1266,23 +1394,31 @@ app.post('/api/queue/:id/note', (req, res) => {
     res.json({ success: true });
 });
 
-// Cleanup completed tasks
+// Cleanup completed tasks (ONLY completed and failed - never pending/processing)
 app.post('/api/queue/cleanup', (req, res) => {
     const completed = db.prepare(`DELETE FROM tasks WHERE status = 'completed'`).run();
     const failed = db.prepare(`DELETE FROM tasks WHERE status = 'failed'`).run();
 
-    log(`Cleanup: cleared ${completed.changes} completed, ${failed.changes} failed`);
+    // Count protected (not deleted)
+    const protected = db.prepare(`SELECT COUNT(*) as count FROM tasks WHERE status IN ('pending', 'processing')`).get();
+
+    log(`Cleanup: cleared ${completed.changes} completed, ${failed.changes} failed. Protected: ${protected.count} pending/processing`);
 
     // Broadcast cleanup to all clients
     if (completed.changes > 0 || failed.changes > 0) {
         broadcast('tasks:cleanup', {
             completed: completed.changes,
             failed: failed.changes,
+            protected: protected.count,
             action: 'cleanup'
         });
     }
 
-    res.json({ success: true, cleared: { completed: completed.changes, failed: failed.changes } });
+    res.json({
+        success: true,
+        cleared: { completed: completed.changes, failed: failed.changes },
+        protected: protected.count
+    });
 });
 
 // Reset stuck processing tasks (force clear)
