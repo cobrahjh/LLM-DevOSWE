@@ -56,6 +56,7 @@
                 <button class="header-btn voice-toggle" id="btn-voice-toggle" onclick="toggleVoiceEnabled()" title="Toggle Voice">🔊</button>
             </div>
             <button class="header-btn" id="btn-terminal-stream" onclick="TerminalStream.toggle()" title="Terminal Stream">💻</button>
+            <button class="header-btn" id="btn-claude-tasks" onclick="toggleClaudeTasksPanel()" title="Claude Tasks">🤖</button>
             <button class="header-btn" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
             <button class="header-btn" id="btn-voice-entry" onclick="showVoiceEntryModal()" title="Voice Entry">🎤</button>
             <button class="header-btn" id="btn-settings" title="Settings">⚙️</button>
@@ -97,6 +98,10 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">Quick Actions</div>
+                    <div class="nav-item" onclick="syncUIWithServer()">
+                        <span class="icon">🔄</span>
+                        <span class="label">Sync Status</span>
+                    </div>
                     <div class="nav-item" onclick="showCompletedTasks()">
                         <span class="icon">📋</span>
                         <span class="label">Tasks</span>
@@ -271,68 +276,57 @@
                             <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-activity')" title="Minimize"></button>
                         </div>
                     </div>
+                    <div class="activity-filters" id="activity-task-filters">
+                        <button class="af-tab active" data-filter="all" onclick="filterActivityTasks('all')">All</button>
+                        <button class="af-tab" data-filter="pending" onclick="filterActivityTasks('pending')">⏳ Pending</button>
+                        <button class="af-tab" data-filter="processing" onclick="filterActivityTasks('processing')">💭 Processing</button>
+                        <button class="af-tab" data-filter="completed" onclick="filterActivityTasks('completed')">✅ Completed</button>
+                        <button class="af-tab" data-filter="failed" onclick="filterActivityTasks('failed')">❌ Failed</button>
+                    </div>
                     <div class="card-body" style="padding: 0; max-height: 150px; overflow-y: auto;">
                         <div id="activity-mini-log" class="activity-mini-log"></div>
                     </div>
                 </div>
 
-                <!-- Claude Tasks Card -->
-                <div class="card card-claude-terminal">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <span class="icon">🤖</span>
-                            Claude Tasks
-                        </div>
-                        <div class="card-actions">
-                            <button class="card-btn" onclick="refreshTaskList()" title="Refresh">🔄</button>
-                            <button class="card-btn" onclick="ClaudeTerminal.show()" title="Terminal">💻</button>
-                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-claude-terminal')" title="Minimize"></button>
-                        </div>
-                    </div>
-                    <div class="card-body" style="padding: 0; max-height: 200px; overflow-y: auto;">
-                        <div id="claude-tasks-list" class="claude-tasks-list">
-                            <div class="task-empty">No tasks</div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
 
-        <!-- Kitt Chat Panel -->
-        <aside class="chat-panel" id="chat-panel">
-            <div class="chat-header">
-                <div class="chat-title">
-                    <div class="kitt-avatar" id="kitt-avatar">🤖</div>
-                    <div class="kitt-info">
-                        <h3>Kitt's Tasks</h3>
-                        <p id="kitt-status-text">● Online</p>
-                    </div>
+        <!-- Claude Tasks Floating Panel -->
+        <div id="claude-tasks-panel" class="claude-tasks-panel">
+            <div class="ctp-header">
+                <div class="ctp-title">
+                    <span class="ctp-icon">🤖</span>
+                    <span>Claude Tasks</span>
+                    <span class="ctp-status" id="ctp-status">●</span>
                 </div>
-                <button class="card-btn" onclick="toggleChatPanel()" title="Collapse">◀</button>
-            </div>
-
-            <div class="chat-messages" id="chat"></div>
-
-            <!-- Task Bubbles Container -->
-            <div class="task-bubbles-container" id="task-bubbles-container"></div>
-
-            <div class="chat-quick-actions">
-                <button class="quick-cmd" onclick="AdminKitt.sendQuick('status')">📊 Status</button>
-                <button class="quick-cmd" onclick="sendNTT()">📝 NTT</button>
-                <button class="quick-cmd" onclick="AdminKitt.sendQuick('clear')">🗑️ Clear</button>
-                <button class="quick-cmd" onclick="AdminKitt.sendQuick('help')">❓ Help</button>
-            </div>
-
-            <div class="chat-input-area">
-                <div class="chat-input-wrapper">
-                    <input type="text" class="chat-input" id="message-input" placeholder="Message Kitt..." autocomplete="off">
-                    <button class="chat-voice-btn" id="btn-voice" title="Voice">🎤</button>
-                    <button class="chat-send-btn" id="btn-send">➤</button>
+                <div class="ctp-controls">
+                    <button class="ctp-btn" onclick="refreshTaskList()" title="Refresh">🔄</button>
+                    <button class="ctp-btn" onclick="ClaudeTerminal.show()" title="Terminal">💻</button>
+                    <button class="ctp-btn ctp-pin" onclick="togglePinPanel('claude-tasks-panel')" title="Pin (lock position)">📌</button>
+                    <button class="ctp-btn" onclick="toggleClaudeTasksMinimize()" title="Minimize">−</button>
+                    <button class="ctp-btn" onclick="hideClaudeTasksPanel()" title="Close">×</button>
                 </div>
             </div>
+            <div class="ctp-tabs">
+                <button class="ctp-tab active" data-filter="all" onclick="filterClaudeTasks('all')">All</button>
+                <button class="ctp-tab" data-filter="pending" onclick="filterClaudeTasks('pending')">⏳ Pending</button>
+                <button class="ctp-tab" data-filter="processing" onclick="filterClaudeTasks('processing')">💭 Processing</button>
+                <button class="ctp-tab" data-filter="completed" onclick="filterClaudeTasks('completed')">✅ Completed</button>
+                <button class="ctp-tab" data-filter="failed" onclick="filterClaudeTasks('failed')">❌ Failed</button>
+            </div>
+            <div class="ctp-body">
+                <div id="claude-tasks-list" class="claude-tasks-list">
+                    <div class="task-empty">No tasks</div>
+                </div>
+            </div>
+        </div>
 
-        </aside>
     </div>
+
+    <!-- Dashboard FAB -->
+    <button class="dashboard-fab" id="dashboard-fab" onclick="toggleDashboard()" title="Toggle Dashboard">
+        <span class="fab-icon">📊</span>
+    </button>
 
     <!-- Hidden file input for attachments -->
     <input type="file" id="file-input" multiple hidden accept="image/*,.pdf,.txt,.js,.json,.md,.html,.css">
@@ -505,6 +499,53 @@
             if (status) {
                 status.className = `service-status ${online ? 'online' : 'offline'}`;
                 status.textContent = online ? 'Online' : 'Offline';
+            }
+        }
+
+        // Sync UI with server status
+        async function syncUIWithServer() {
+            console.log('[Sync] Syncing UI with server...');
+
+            // Flash the sync button
+            const syncItems = document.querySelectorAll('.nav-item');
+            syncItems.forEach(item => {
+                if (item.textContent.includes('Sync Status')) {
+                    item.style.background = 'rgba(74, 158, 255, 0.3)';
+                    setTimeout(() => item.style.background = '', 500);
+                }
+            });
+
+            try {
+                // 1. Sync TaskProcessor with relay server
+                if (typeof TaskProcessor !== 'undefined' && TaskProcessor.syncWithServer) {
+                    const result = await TaskProcessor.syncWithServer();
+                    console.log('[Sync] TaskProcessor result:', result);
+                }
+
+                // 2. Force refresh services status
+                await checkAllServicesStatus();
+
+                // 3. Update header claude status
+                const healthRes = await fetch('http://127.0.0.1:8600/api/health');
+                const health = await healthRes.json();
+                const headerStatus = document.getElementById('header-claude-status');
+                if (headerStatus) {
+                    const busy = (health.queue?.pending > 0) || (health.queue?.processing > 0);
+                    headerStatus.textContent = busy ? 'Working' : 'Ready';
+                    headerStatus.style.color = busy ? '#8b5cf6' : '#22c55e';
+                }
+
+                // 4. Show toast notification
+                if (typeof ActivityLog !== 'undefined') {
+                    ActivityLog.success(`Synced - P:${health.queue?.pending || 0} W:${health.queue?.processing || 0}`);
+                }
+
+                console.log('[Sync] Complete:', health.queue);
+            } catch (err) {
+                console.error('[Sync] Failed:', err.message);
+                if (typeof ActivityLog !== 'undefined') {
+                    ActivityLog.error('Sync failed: ' + err.message);
+                }
             }
         }
 
@@ -1563,7 +1604,166 @@
             };
         }
 
-        async function refreshTaskList() {
+        
+        // Claude Tasks Panel Functions
+        function showClaudeTasksPanel() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) {
+                panel.classList.remove('hidden');
+                refreshTaskList();
+            }
+        }
+
+        function hideClaudeTasksPanel() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) panel.classList.add('hidden');
+        }
+
+        function toggleClaudeTasksPanel() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+                if (!panel.classList.contains('hidden')) refreshTaskList();
+            }
+        }
+
+        function toggleDashboard() {
+            const main = document.getElementById('main-content');
+            const fab = document.getElementById('dashboard-fab');
+            if (main && fab) {
+                main.classList.toggle('hidden');
+                fab.classList.toggle('collapsed');
+                fab.title = main.classList.contains('hidden') ? 'Show Dashboard' : 'Hide Dashboard';
+            }
+        }
+
+        function toggleClaudeTasksMinimize() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) panel.classList.toggle('minimized');
+        }
+
+        // Generic Pin/Unpin function for any panel/window
+        function togglePinPanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const isPinned = panel.classList.toggle('panel-pinned');
+
+            // Update pin button state
+            const pinBtn = panel.querySelector('.ctp-pin, .fp-pin, [class*="-pin"]');
+            if (pinBtn) {
+                pinBtn.classList.toggle('pinned', isPinned);
+                pinBtn.title = isPinned ? 'Unpin (enable dragging)' : 'Pin (lock position)';
+            }
+
+            // Update header cursor
+            const header = panel.querySelector('.ctp-header, .fp-header, [class*="-header"]');
+            if (header) {
+                header.style.cursor = isPinned ? 'default' : 'move';
+            }
+
+            // Save pin state
+            localStorage.setItem(`panel-${panelId}-pinned`, isPinned);
+
+            console.log(`[Pin] ${panelId}: ${isPinned ? 'PINNED' : 'UNPINNED'}`);
+        }
+        window.togglePinPanel = togglePinPanel;
+
+        // Restore pin states on load
+        function restorePinStates() {
+            const panels = ['claude-tasks-panel', 'tasks-panel', 'claude-terminal-panel'];
+            panels.forEach(panelId => {
+                const isPinned = localStorage.getItem(`panel-${panelId}-pinned`) === 'true';
+                if (isPinned) {
+                    const panel = document.getElementById(panelId);
+                    if (panel) {
+                        panel.classList.add('panel-pinned');
+                        const pinBtn = panel.querySelector('.ctp-pin, .fp-pin, [class*="-pin"]');
+                        if (pinBtn) {
+                            pinBtn.classList.add('pinned');
+                            pinBtn.title = 'Unpin (enable dragging)';
+                        }
+                        const header = panel.querySelector('.ctp-header, .fp-header, [class*="-header"]');
+                        if (header) header.style.cursor = 'default';
+                    }
+                }
+            });
+        }
+
+        // Make Claude Tasks panel draggable
+        function initClaudeTasksDrag() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (!panel) return;
+
+            const header = panel.querySelector('.ctp-header');
+            if (!header) return;
+
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                if (panel.classList.contains('panel-pinned')) return; // Don't drag if pinned
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                const rect = panel.getBoundingClientRect();
+                startLeft = rect.left;
+                startTop = rect.top;
+                panel.style.transition = 'none';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                panel.style.left = (startLeft + dx) + 'px';
+                panel.style.top = (startTop + dy) + 'px';
+                panel.style.bottom = 'auto';
+                panel.style.right = 'auto';
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.style.transition = '';
+                    // Save position
+                    localStorage.setItem('claudeTasksPanelPos', JSON.stringify({
+                        left: panel.style.left,
+                        top: panel.style.top
+                    }));
+                }
+            });
+            
+            // Restore saved position
+            const saved = localStorage.getItem('claudeTasksPanelPos');
+            if (saved) {
+                try {
+                    const pos = JSON.parse(saved);
+                    panel.style.left = pos.left;
+                    panel.style.top = pos.top;
+                    panel.style.bottom = 'auto';
+                    panel.style.right = 'auto';
+                } catch(e) {}
+            }
+        }
+        
+        // Init on load
+        document.addEventListener('DOMContentLoaded', initClaudeTasksDrag);
+        document.addEventListener('DOMContentLoaded', restorePinStates);
+
+        // Claude Tasks filter state
+        let claudeTasksFilter = 'all';
+
+        function filterClaudeTasks(filter) {
+            claudeTasksFilter = filter;
+            document.querySelectorAll('.ctp-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.filter === filter);
+            });
+            refreshTaskList();
+        }
+
+async function refreshTaskList() {
             const listEl = document.getElementById('claude-tasks-list');
             if (!listEl) return;
 
@@ -1579,16 +1779,31 @@
 
                 // Sort: processing first, then pending, then others
                 const statusOrder = { processing: 0, pending: 1, completed: 2, failed: 3 };
-                const tasks = data.messages.sort((a, b) => {
+                let tasks = data.messages.sort((a, b) => {
                     return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
                 });
+
+                // Apply filter
+                if (claudeTasksFilter !== 'all') {
+                    tasks = tasks.filter(t => t.status === claudeTasksFilter);
+                }
+
+                if (tasks.length === 0) {
+                    listEl.innerHTML = `<div class="task-empty">No ${claudeTasksFilter === 'all' ? '' : claudeTasksFilter + ' '}tasks</div>`;
+                    return;
+                }
 
                 // Render task items (show max 10)
                 listEl.innerHTML = tasks.slice(0, 10).map(task => {
                     const shortId = task.id.substring(0, 8);
                     const name = getTaskName(task.preview || task.content);
                     const desc = getTaskDescription(task.preview || task.content);
-                    const status = task.status || 'pending';
+                    let status = task.status || 'pending';
+
+                    // Check if processing task is stale (>2 minutes)
+                    const isStale = status === 'processing' && task.createdAt &&
+                        (Date.now() - new Date(task.createdAt).getTime()) > 2 * 60 * 1000;
+                    if (isStale) status = 'stale';
 
                     // Calculate estimate for processing tasks
                     let timeInfo = '';
@@ -1713,6 +1928,29 @@
         // Expose globally
         window.addActivityItem = addActivityItem;
         window.updateServiceUI = updateServiceUI;
+
+        // Activity Monitor Task Filters
+        function filterActivityTasks(filter) {
+            const filtersContainer = document.getElementById('activity-task-filters');
+            const activityLog = document.getElementById('activity-mini-log');
+            if (!filtersContainer || !activityLog) return;
+
+            // Update active tab
+            filtersContainer.querySelectorAll('.af-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+
+            // Filter activity items
+            activityLog.querySelectorAll('.activity-item').forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = '';
+                } else {
+                    const itemStatus = item.dataset.status || '';
+                    item.style.display = itemStatus === filter ? '' : 'none';
+                }
+            });
+        }
+        window.filterActivityTasks = filterActivityTasks;
 
         // Card Minimize/Expand functionality
         function toggleCardMinimize(cardClass) {

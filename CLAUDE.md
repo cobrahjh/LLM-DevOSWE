@@ -1,6 +1,6 @@
 # SimWidget Engine
-**Version:** v1.10.0  
-**Last updated:** 2026-01-09
+**Version:** v1.11.0
+**Last updated:** 2026-01-13
 
 Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 
@@ -21,10 +21,8 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 
 Use **both** methods together for best workflow:
 
-| Location | Method | How |
-|----------|--------|-----|
-| **At PC** | Claude Code direct | Talk directly in terminal (free, full power) |
-| **On Phone** | Relay + Consumer | Kitt UI → Relay → Consumer → Claude Code |
+- **At PC** → Claude Code direct - Talk directly in terminal (free, full power)
+- **On Phone** → Relay + Consumer - Kitt UI → Relay → Consumer → Claude Code
 
 **Start relay consumer:**
 ```bash
@@ -39,33 +37,34 @@ curl -X POST http://localhost:8600/api/queue/respond \
 ```
 
 ### Files using API keys (need refactoring):
-| File | Usage | Refactor To |
-|------|-------|-------------|
-| `Admin/agent/agent-server.js` | Kitt chat | Relay mode / Claude Code MCP |
-| `overlay/renderer/copilot-ui.js` | Overlay copilot | Relay mode |
-| `packages/core/agents.js` | Core agents | Relay mode |
+
+- `Admin/agent/agent-server.js` - Kitt chat → Relay mode / Claude Code MCP
+- `overlay/renderer/copilot-ui.js` - Overlay copilot → Relay mode
+- `packages/core/agents.js` - Core agents → Relay mode
 
 ## User Shortcuts
 
-| Shortcut | Meaning |
-|----------|---------|
-| `mem` | memory - add to CLAUDE.md for future reference |
-| `ntt` | next todo task - work on next item from todo list |
-| `br` | add to todo options - add feature/option to todo module |
-| `mst` | make standard - add pattern/convention to STANDARDS.md |
-| `memstandards` | session reflection - review session work and add learned patterns to STANDARDS.md |
-| `psreflect` | project reflection - give recommendations based on project experience |
-| `ts` | test this - run tests on recent changes |
-| `rst` | reset - reset stuck services/state |
-| `rfr` | refactor from standards - refactor code to follow STANDARDS.md |
-| `chk` | check/verify - check status, syntax, or state |
-| `opn` | open UI - open browser to test |
-| `syn` | sync - test sync/reconcile features |
-| `cls` | clear/clean - clear stuck queues, logs, cache |
-| `idt` | I don't think/know - signals uncertainty, needs clarification |
-| `adi` | add debug item - add item to Debug Inspector (fix formatting, performance) |
-| `vl` | voice log - show/manage voice output history in floating window |
-| `syncmem` | sync memory - backup CLAUDE.md and STANDARDS.md to database |
+- `mem` - memory - add to CLAUDE.md for future reference
+- `ntt` - next todo task - work on next item from todo list
+- `br` - add to todo options - add feature/option to todo module
+- `mst` - make standard - add pattern/convention to STANDARDS.md
+- `memstandards` - session reflection - review work and add patterns to STANDARDS.md
+- `psreflect` - project reflection - give recommendations based on experience
+- `ts` - test this - run tests on recent changes
+- `rst` - reset - reset stuck services/state
+- `rfr` - refactor from standards - refactor code to follow STANDARDS.md
+- `chk` - check/verify - check status, syntax, or state
+- `opn` - open UI - open browser to test
+- `syn` - sync - test sync/reconcile features
+- `cls` - clear/clean - clear stuck queues, logs, cache
+- `idt` - I don't think/know - signals uncertainty, needs clarification
+- `adi` - add debug item - add item to Debug Inspector
+- `vl` - voice log - show/manage voice output history
+- `syncmem` - sync memory - backup CLAUDE.md and STANDARDS.md to database
+- `ayb` - are you busy? - check if Claude is ready for next task
+- `dinsp` - debug inspector - refers to Debug Inspector tool/menu
+- `wpan` - window/panel - refers to floating windows or panels
+- `rvw` - review - review code for issues, clean up, optimize
 
 ## Memory & Standards Persistence
 
@@ -163,29 +162,28 @@ CREATE TABLE knowledge (
 
 ## Documentation Index
 
-| Document | Path | Purpose |
-|----------|------|---------|
-| **PROJECT-PLAN.md** | `PROJECT-PLAN.md` | **Project roadmap & milestones** |
-| **PLUGINS.md** | `docs/PLUGINS.md` | **Plugin system & API** |
-| **RESOURCES.md** | `docs/RESOURCES.md` | **External API integrations** |
-| **WIDGET-INVENTORY.md** | `docs/WIDGET-INVENTORY.md` | **Widget standards & templates** |
-| **STANDARDS.md** | `STANDARDS.md` | **Patterns, timing defaults, conventions** |
-| **CLAUDE.md** | `CLAUDE.md` | This file - AI context |
-| **ARCHITECTURE.md** | `ARCHITECTURE.md` | System architecture v3.0 |
-| **TODO.md** | `TODO.md` | Development backlog |
-| **Widget Creation Guide** | `docs/WIDGET-CREATION-GUIDE.md` | How to build widgets |
-| **Component Registry** | `docs/COMPONENT-REGISTRY.md` | All UI components catalog |
-| **Component Architecture** | `docs/COMPONENT-ARCHITECTURE.md` | Component specs & naming |
-| **SimVars Reference** | `docs/SIMVARS-REFERENCE.md` | SimConnect variables |
-| **Flow Pro Reference** | `docs/FLOW-PRO-REFERENCE.md` | Widget API & categories |
+**Core Documentation:**
+- `PROJECT-PLAN.md` - Project roadmap & milestones
+- `STANDARDS.md` - Patterns, timing defaults, conventions
+- `CLAUDE.md` - This file - AI context
+- `ARCHITECTURE.md` - System architecture v3.0
+- `TODO.md` - Development backlog
+
+**Reference Guides:**
+- `docs/PLUGINS.md` - Plugin system & API
+- `docs/RESOURCES.md` - External API integrations
+- `docs/WIDGET-INVENTORY.md` - Widget standards & templates
+- `docs/WIDGET-CREATION-GUIDE.md` - How to build widgets
+- `docs/COMPONENT-REGISTRY.md` - All UI components catalog
+- `docs/COMPONENT-ARCHITECTURE.md` - Component specs & naming
+- `docs/SIMVARS-REFERENCE.md` - SimConnect variables
+- `docs/FLOW-PRO-REFERENCE.md` - Widget API & categories
 
 ## Security Tools
 
-| Tool | Path | Purpose |
-|------|------|---------|
-| **Security Inspector** | `tools/security-inspector.js` | Scan files for vulnerabilities |
-| **Widget Validator** | `tools/widget-validator.js` | Validate community widgets |
-| **Security API** | `tools/security-api.js` | REST API for scanning |
+- `tools/security-inspector.js` - Scan files for vulnerabilities
+- `tools/widget-validator.js` - Validate community widgets
+- `tools/security-api.js` - REST API for scanning
 
 ## Architecture Overview
 
@@ -284,11 +282,10 @@ camera-controller.js ──► detectChasePlane()
 - Events: `TOGGLE_DRONE_MODE`, `VIEW_CAMERA_SELECT_1`, `VIEW_MODE`
 
 **Button Mappings:**
-| Button | ChasePlane | Native MSFS |
-|--------|------------|-------------|
-| TCM (Toggle Cinematic) | Alt+Z | TOGGLE_DRONE_MODE |
-| NCV (Next Cinematic) | Alt+X | VIEW_CAMERA_SELECT_1 |
-| I/E (Internal/External) | Backspace | VIEW_MODE |
+
+- **TCM (Toggle Cinematic)** - ChasePlane: Alt+Z / Native: TOGGLE_DRONE_MODE
+- **NCV (Next Cinematic)** - ChasePlane: Alt+X / Native: VIEW_CAMERA_SELECT_1
+- **I/E (Internal/External)** - ChasePlane: Backspace / Native: VIEW_MODE
 
 **Files:**
 - `camera-controller.js` - Smart routing logic
@@ -362,27 +359,25 @@ npm start
 ## Component System
 
 ### Implemented Components
-| Component | CSS Class | Status |
-|-----------|-----------|--------|
-| AxisPad (Joystick) | `.swc-ap`, `.axispad` | ✅ v1.2 |
-| PushButton | `.swc-pb`, `.btn` | ✅ v1.0 |
-| LinearSlider | `.swc-ls`, `.lever` | ✅ v1.0 |
-| DataField | `.swc-df`, `.di` | ✅ v1.0 |
-| StatusLamp | `.swc-sl`, `.sd` | ✅ v1.0 |
-| RockerSwitch | `.swc-rs`, `.ap-adj` | 🔨 Partial |
-| RotaryKnob | `.swc-rk` | 📋 Planned |
-| ToggleSwitch | `.swc-ts` | 📋 Planned |
-| ProgressBar | `.swc-pg` | 📋 Planned |
+
+- **AxisPad (Joystick)** `.swc-ap`, `.axispad` - ✅ v1.2
+- **PushButton** `.swc-pb`, `.btn` - ✅ v1.0
+- **LinearSlider** `.swc-ls`, `.lever` - ✅ v1.0
+- **DataField** `.swc-df`, `.di` - ✅ v1.0
+- **StatusLamp** `.swc-sl`, `.sd` - ✅ v1.0
+- **RockerSwitch** `.swc-rs`, `.ap-adj` - 🔨 Partial
+- **RotaryKnob** `.swc-rk` - 📋 Planned
+- **ToggleSwitch** `.swc-ts` - 📋 Planned
+- **ProgressBar** `.swc-pg` - 📋 Planned
 
 ### Naming Convention
-| Old Name | New Name | Prefix |
-|----------|----------|--------|
-| joystick | AxisPad | swc-ap |
-| slider | LinearSlider | swc-ls |
-| knob | RotaryKnob | swc-rk |
-| button | PushButton | swc-pb |
-| display | DataField | swc-df |
-| indicator | StatusLamp | swc-sl |
+
+- joystick → **AxisPad** (swc-ap)
+- slider → **LinearSlider** (swc-ls)
+- knob → **RotaryKnob** (swc-rk)
+- button → **PushButton** (swc-pb)
+- display → **DataField** (swc-df)
+- indicator → **StatusLamp** (swc-sl)
 
 See `docs/COMPONENT-REGISTRY.md` for full component catalog.
 

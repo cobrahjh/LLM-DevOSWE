@@ -37,7 +37,7 @@
 
     --sidebar-width: 220px;
     --header-height: 56px;
-    --chat-width: 320px;
+    --chat-width: 0px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -570,6 +570,32 @@ body::before {
 }
 .card.minimized .minimize-btn::after {
     content: '+';
+}
+
+/* Floating Card State (dragged out of grid) */
+.card.floating {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    border: 1px solid var(--border-accent);
+    resize: both;
+    overflow: auto;
+    min-width: 280px;
+    min-height: 100px;
+    transition: z-index 0s, box-shadow 0.15s;
+}
+.card.floating .card-header {
+    cursor: move;
+}
+
+/* Minimized floating card - clickable header to expand */
+.card.floating.minimized .card-header {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.card.floating.minimized .card-header:hover {
+    background: var(--bg-hover);
+}
+.card.floating.minimized {
+    min-height: auto;
 }
 
 /* System Health Card */
@@ -1133,8 +1159,9 @@ body::before {
     background: transparent;
     border: none;
     overflow: visible;
-    min-height: 200px;
+    min-height: auto;
     resize: none;
+    padding: 0;
 }
 
 .card-todo::before,
@@ -1143,11 +1170,32 @@ body::before {
 }
 
 .card-todo .todo-panel {
+    position: relative;
+    width: 100%;
     border-radius: 12px;
     border: 1px solid var(--border-dim);
     max-height: 400px;
-    resize: both;
     overflow: auto;
+    margin: 0;
+}
+
+/* Floating todo card overrides */
+.card-todo.floating {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    min-width: 320px;
+    min-height: auto;
+    padding: 0;
+    overflow: visible;
+    box-shadow: none;
+}
+
+.card-todo.floating .todo-panel {
+    border: 1px solid var(--border-accent);
+    border-radius: 12px;
+    max-height: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 /* Claude Tasks Card */
@@ -1204,9 +1252,36 @@ body::before {
     background: var(--accent-red);
 }
 
+.claude-task-status.stale {
+    background: #f97316;
+    box-shadow: 0 0 6px #f97316;
+    animation: stale-blink 1s infinite;
+}
+
+.claude-task-status-text.stale {
+    background: rgba(249, 115, 22, 0.2);
+    color: #f97316;
+}
+
+@keyframes stale-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
 @keyframes pulse-dot {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.claude-task-status,
+.claude-task-status-text,
+.task-status {
+    animation: fade-in 0.3s ease-out;
 }
 
 .claude-task-content {
@@ -1317,6 +1392,87 @@ body::before {
     border-radius: 2px;
     transition: width 0.3s ease;
 }
+
+/* ==================== CLAUDE TASKS FLOATING PANEL ==================== */
+.claude-tasks-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 240px;
+    width: 420px;
+    height: 280px;
+    background: var(--bg-deep);
+    border: 1px solid var(--accent-blue);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    z-index: 10000;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), var(--glow-blue);
+    font-family: var(--font-mono);
+    resize: both;
+    overflow: hidden;
+}
+.claude-tasks-panel.hidden { display: none; }
+.claude-tasks-panel.minimized { height: 40px; resize: none; }
+.claude-tasks-panel.minimized .ctp-body { display: none; }
+.ctp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: move;
+}
+.ctp-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.ctp-icon { font-size: 16px; }
+.ctp-status { font-size: 10px; color: var(--text-muted); }
+.ctp-status.connected { color: var(--accent-green); }
+.ctp-status.disconnected { color: var(--accent-red); }
+.ctp-controls { display: flex; gap: 4px; }
+.ctp-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+}
+.ctp-btn:hover { background: rgba(255,255,255,0.2); color: var(--text-primary); }
+
+/* Claude Tasks Tabs */
+.ctp-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(0,0,0,0.2);
+    flex-wrap: wrap;
+}
+.ctp-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.15s;
+}
+.ctp-tab:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-primary);
+}
+.ctp-tab.active {
+    background: var(--accent-info);
+    color: #fff;
+    border-color: var(--accent-info);
+}
+.claude-tasks-panel.minimized .ctp-tabs { display: none; }
+
+.ctp-body { flex: 1; overflow: hidden; }
+.ctp-body .claude-tasks-list { height: 100%; overflow-y: auto; }
 
 .activity-list {
     display: flex;
@@ -1637,6 +1793,45 @@ body::before {
     flex: 1;
 }
 
+/* ==================== DASHBOARD FAB ==================== */
+.dashboard-fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-info), var(--accent-purple));
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+    z-index: 9998;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dashboard-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(74, 158, 255, 0.6);
+}
+.dashboard-fab:active {
+    transform: scale(0.95);
+}
+.dashboard-fab .fab-icon {
+    transition: transform 0.3s;
+}
+.dashboard-fab.collapsed .fab-icon {
+    transform: rotate(180deg);
+}
+
+/* Main content hidden state */
+#main-content.hidden {
+    display: none;
+}
+
 /* ==================== TODO PANEL ==================== */
 .todo-panel {
     position: fixed;
@@ -1671,6 +1866,182 @@ body::before {
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+/* ==================== LOG CONTENT TASK STATUS ==================== */
+#log-content .task-status,
+.log-content .task-status,
+.log-entry .task-status,
+span.task-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 4px;
+    vertical-align: middle;
+}
+
+/* Pending - Yellow/Orange */
+span.task-status.pending,
+.task-status.pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Processing - Purple with pulse animation */
+span.task-status.processing,
+.task-status.processing {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+/* Queued - Blue */
+span.task-status.queued,
+.task-status.queued {
+    background: rgba(74, 158, 255, 0.2);
+    color: #4a9eff;
+    border: 1px solid rgba(74, 158, 255, 0.3);
+}
+
+/* Completed/Success - Green */
+span.task-status.completed,
+span.task-status.complete,
+span.task-status.success,
+.task-status.completed,
+.task-status.complete,
+.task-status.success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Failed/Error - Red */
+span.task-status.failed,
+span.task-status.error,
+.task-status.failed,
+.task-status.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Cancelled/Skipped - Gray */
+span.task-status.cancelled,
+span.task-status.skipped,
+.task-status.cancelled,
+.task-status.skipped {
+    background: rgba(107, 114, 128, 0.2);
+    color: #9ca3af;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+/* Waiting - Cyan */
+span.task-status.waiting,
+.task-status.waiting {
+    background: rgba(34, 211, 238, 0.2);
+    color: #22d3ee;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Running - Orange */
+span.task-status.running,
+.task-status.running {
+    background: rgba(249, 115, 22, 0.2);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ==================== PANEL PIN STATE ==================== */
+.panel-pinned {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3), 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+
+.panel-pinned::before {
+    content: '📌';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 14px;
+    z-index: 1;
+}
+
+.ctp-pin, .fp-pin {
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+}
+
+.ctp-pin.pinned, .fp-pin.pinned {
+    color: #f59e0b !important;
+}
+
+.ctp-pin:hover, .fp-pin:hover {
+    color: #f59e0b;
+}
+
+/* ==================== ACTIVITY MONITOR FILTERS ==================== */
+.activity-filters {
+    display: flex;
+    gap: 4px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-dim);
+    flex-wrap: wrap;
+}
+
+.af-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.15s ease;
+}
+
+.af-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.af-tab.active {
+    background: var(--accent-blue);
+    color: #fff;
+    border-color: var(--accent-blue);
+}
+
+.af-tab[data-filter="pending"].active {
+    background: rgba(245, 158, 11, 0.8);
+    border-color: #f59e0b;
+}
+
+.af-tab[data-filter="processing"].active {
+    background: rgba(139, 92, 246, 0.8);
+    border-color: #8b5cf6;
+}
+
+.af-tab[data-filter="completed"].active {
+    background: rgba(34, 197, 94, 0.8);
+    border-color: #22c55e;
+}
+
+.af-tab[data-filter="failed"].active {
+    background: rgba(239, 68, 68, 0.8);
+    border-color: #ef4444;
 }
 
 /* ==================== RESPONSIVE ==================== */

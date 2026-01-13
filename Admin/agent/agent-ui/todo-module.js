@@ -102,6 +102,16 @@ const TodoModule = (function() {
                 background: #3a3a4e;
                 color: #fff;
             }
+            .todo-header-btn#todo-refresh {
+                transition: transform 0.3s ease;
+            }
+            .todo-header-btn.reconcile-icon {
+                font-size: 12px;
+                opacity: 0.7;
+            }
+            .todo-header-btn.reconcile-icon:hover {
+                opacity: 1;
+            }
             .todo-list-selector {
                 background: #1a1a2e;
                 border: 1px solid #333;
@@ -609,6 +619,17 @@ const TodoModule = (function() {
                 align-items: center;
             }
             .reconcile-header h4 { margin: 0; color: #e0e0e0; font-size: 14px; }
+            .reconcile-header-actions { display: flex; gap: 8px; align-items: center; }
+            .reconcile-btn {
+                background: #2a2a3e;
+                border: 1px solid #444;
+                color: #ccc;
+                cursor: pointer;
+                font-size: 14px;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+            .reconcile-btn:hover { background: #3a3a4e; color: #fff; }
             .reconcile-close {
                 background: none;
                 border: none;
@@ -763,7 +784,8 @@ const TodoModule = (function() {
             <div class="todo-header" id="todo-drag-handle">
                 <h3>📋 <select class="todo-list-selector" id="todo-list-selector"></select><button class="todo-new-list-btn" id="todo-new-list" title="New List">+</button> <span class="todo-count" id="todo-count">0</span></h3>
                 <div class="todo-header-btns">
-                    <button class="todo-header-btn" id="todo-reconcile" title="Reconcile/Sync">🔄</button>
+                    <button class="todo-header-btn" id="todo-refresh" title="Refresh">🔄</button>
+                    <button class="todo-header-btn reconcile-icon" id="todo-reconcile" title="Reconcile/Sync">⚙️</button>
                     <button class="todo-header-btn pin-btn active" id="todo-pin" title="Pinned (click for hover mode)">📌</button>
                     <button class="todo-header-btn" id="todo-minimize" title="Minimize">−</button>
                     <button class="todo-header-btn" id="todo-close" title="Close">×</button>
@@ -849,6 +871,12 @@ const TodoModule = (function() {
     function setupEvents() {
         document.getElementById('todo-minimize').addEventListener('click', toggleMinimize);
         document.getElementById('todo-close').addEventListener('click', hide);
+        document.getElementById('todo-refresh').addEventListener('click', () => {
+            loadTodos();
+            const btn = document.getElementById('todo-refresh');
+            btn.style.transform = 'rotate(360deg)';
+            setTimeout(() => btn.style.transform = '', 300);
+        });
         document.getElementById('todo-reconcile').addEventListener('click', showReconcileDialog);
         document.getElementById('todo-pin').addEventListener('click', togglePin);
         document.getElementById('todo-add-btn').addEventListener('click', addTodo);
@@ -1032,7 +1060,10 @@ const TodoModule = (function() {
             <div class="todo-reconcile-dialog">
                 <div class="reconcile-header">
                     <h4>🔄 Reconcile Todos</h4>
-                    <button class="reconcile-close" id="reconcile-close">×</button>
+                    <div class="reconcile-header-actions">
+                        <button class="reconcile-btn" id="reconcile-clear" title="Clear Log">🧹</button>
+                        <button class="reconcile-close" id="reconcile-close">×</button>
+                    </div>
                 </div>
                 <div class="reconcile-body">
                     <div class="reconcile-section">
@@ -1047,6 +1078,10 @@ const TodoModule = (function() {
         document.body.appendChild(reconcileDialog);
 
         document.getElementById('reconcile-close').onclick = closeReconcileDialog;
+        document.getElementById('reconcile-clear').onclick = () => {
+            const log = document.getElementById('reconcile-log');
+            if (log) log.innerHTML = '';
+        };
         reconcileDialog.onclick = (e) => {
             if (e.target === reconcileDialog) closeReconcileDialog();
         };

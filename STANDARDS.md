@@ -1,6 +1,6 @@
 # SimWidget Engine - Project Standards & Conventions
-**Version:** 1.5.0
-**Last Updated:** 2026-01-11
+**Version:** 1.6.0
+**Last Updated:** 2026-01-13
 
 This document captures proven patterns, timing defaults, and lessons learned throughout development. **Always reference this before implementing new features.**
 
@@ -8,14 +8,23 @@ This document captures proven patterns, timing defaults, and lessons learned thr
 
 ## 🕐 Timing Defaults
 
-| Context | Value | Reason |
-|---------|-------|--------|
-| UI polling (gamepad/input) | `100ms` | Balance between responsiveness and CPU usage |
-| Debounce after toggle | `100-200ms` | Prevents UI flicker during state changes |
-| WebSocket reconnect | `3000ms` | Allows service recovery without spam |
-| TCP timeout | `2000ms` | Fast enough for responsiveness, long enough for reliability |
-| SimConnect data request | `100ms` | Matches sim frame rate roughly |
-| Config file watch delay | `100ms` | Allows file write to complete |
+**UI polling (gamepad/input):** `100ms`
+- Balance between responsiveness and CPU usage
+
+**Debounce after toggle:** `100-200ms`
+- Prevents UI flicker during state changes
+
+**WebSocket reconnect:** `3000ms`
+- Allows service recovery without spam
+
+**TCP timeout:** `2000ms`
+- Fast enough for responsiveness, long enough for reliability
+
+**SimConnect data request:** `100ms`
+- Matches sim frame rate roughly
+
+**Config file watch delay:** `100ms`
+- Allows file write to complete
 
 ## 🪟 Windows-Specific Patterns
 
@@ -55,15 +64,14 @@ service-dir/
 ```
 
 **Service Naming Convention:**
-| Service | ID | Display Name | Port |
-|---------|-----|--------------|------|
-| Main Server | `simwidgetmainserver.exe` | SimWidget Main Server | 8080 |
-| Agent (Kitt) | `simwidgetagent.exe` | SimWidget Agent | 8585 |
-| Master O | `simwidgetmastero.exe` | SimWidget Master O | 8500 |
-| Relay | `simwidgetrelay.exe` | SimWidget Relay | 8600 |
-| Claude Bridge | `simwidgetclaudebridge.exe` | SimWidget Claude Bridge | 8601 |
-| Remote Support | `simwidgetremotesupport.exe` | SimWidget Remote Support | 8590 |
-| KeySender | `simwidgetkeysender` | SimWidget KeySender | N/A |
+
+- **Main Server** → `simwidgetmainserver.exe` (Port 8080)
+- **Agent (Kitt)** → `simwidgetagent.exe` (Port 8585)
+- **Master O** → `simwidgetmastero.exe` (Port 8500)
+- **Relay** → `simwidgetrelay.exe` (Port 8600)
+- **Claude Bridge** → `simwidgetclaudebridge.exe` (Port 8601)
+- **Remote Support** → `simwidgetremotesupport.exe` (Port 8590)
+- **KeySender** → `simwidgetkeysender` (No Port)
 
 **Service Commands:**
 ```bash
@@ -495,6 +503,69 @@ function setupMinimize(panel, storageKey) {
 - [ ] Visual indicator when minimized
 - [ ] Works with drag and snap features
 
+### Overlapping Windows - Z-Index & Accessibility
+
+**Problem:** When floating windows overlap, minimized windows may have their expand button hidden under other windows.
+
+**Solution:** Implement three complementary behaviors:
+
+1. **Bring to front on click** - Any click on a floating window raises its z-index
+2. **Bring to front on hover (minimized)** - Hovering a minimized window raises it
+3. **Click header to expand** - Entire minimized header is clickable, not just the button
+
+**Implementation:**
+```javascript
+// Z-Index Manager
+let topZIndex = 100;
+
+function bringToFront(element) {
+    topZIndex++;
+    element.style.zIndex = topZIndex;
+}
+
+// In setupCardDrag or similar:
+// 1. Bring to front on click
+card.addEventListener('mousedown', () => {
+    if (card.classList.contains('floating')) {
+        bringToFront(card);
+    }
+});
+
+// 2. Bring to front on hover when minimized
+card.addEventListener('mouseenter', () => {
+    if (card.classList.contains('minimized') && card.classList.contains('floating')) {
+        bringToFront(card);
+    }
+});
+
+// 3. Click header to expand when minimized
+header.addEventListener('click', (e) => {
+    if (card.classList.contains('minimized') && !e.target.closest('button, input, select')) {
+        const minBtn = header.querySelector('.minimize-btn');
+        if (minBtn) minBtn.click();
+    }
+});
+```
+
+**CSS for visual feedback:**
+```css
+.card.floating.minimized .card-header {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.card.floating.minimized .card-header:hover {
+    background: var(--bg-hover);
+}
+```
+
+**Checklist for Overlapping Windows:**
+- [ ] `bringToFront()` function available
+- [ ] Click anywhere on floating card brings to front
+- [ ] Hover on minimized card brings to front
+- [ ] Click minimized header expands (not just button)
+- [ ] Cursor changes to pointer on minimized header
+- [ ] Hover highlight on minimized header
+
 ### Toggle Switch (Pure CSS, no checkbox)
 Checkboxes cause event conflicts. Use div-based toggles:
 ```html
@@ -505,16 +576,15 @@ Checkboxes cause event conflicts. Use div-based toggles:
 With `pointer-events: none` on inner elements.
 
 ### Color Scheme
-| Element | Color |
-|---------|-------|
-| Background | `#1a1a2e` → `#16213e` gradient |
-| Card/Panel | `#0f172a` |
-| Accent (success) | `#22c55e` / `#4ade80` |
-| Accent (info) | `#3b82f6` / `#7ec8e3` |
-| Warning | `#f59e0b` |
-| Error | `#ef4444` |
-| Text primary | `#eee` / `#e2e8f0` |
-| Text muted | `#94a3b8` / `#64748b` |
+
+- **Background:** `#1a1a2e` → `#16213e` gradient
+- **Card/Panel:** `#0f172a`
+- **Accent (success):** `#22c55e` / `#4ade80`
+- **Accent (info):** `#3b82f6` / `#7ec8e3`
+- **Warning:** `#f59e0b`
+- **Error:** `#ef4444`
+- **Text primary:** `#eee` / `#e2e8f0`
+- **Text muted:** `#94a3b8` / `#64748b`
 
 ## 🐛 Known Gotchas
 
@@ -604,25 +674,23 @@ Each service row shows mode context:
 - `(service)` - Windows Service mode (blue)
 
 ### Services & Ports
-| Service | Port | Purpose |
-|---------|------|---------|
-| Master | 8500 | Health watchdog, service orchestration |
-| SimWidget | 8080 | Main server, SimConnect bridge |
-| Agent (Kitt) | 8585 | AI assistant, chat interface |
-| Remote | 8590 | Remote support access |
-| Relay | 8600 | Claude Desktop message relay |
-| Bridge | 8601 | Claude Code CLI bridge |
+
+- **Master (8500)** - Health watchdog, service orchestration
+- **SimWidget (8080)** - Main server, SimConnect bridge
+- **Agent/Kitt (8585)** - AI assistant, chat interface
+- **Remote (8590)** - Remote support access
+- **Relay (8600)** - Claude Desktop message relay
+- **Bridge (8601)** - Claude Code CLI bridge
 
 ### Status Icon States
+
 All status dots use consistent colors and animations:
 
-| State | Color | Effect | CSS Class |
-|-------|-------|--------|-----------|
-| online/running | Green `#22c55e` | Glow | `.online`, `.running` |
-| offline/stopped | Red `#ef4444` | Subtle glow | `.offline`, `.stopped` |
-| checking | Yellow `#f59e0b` | Pulse animation | `.checking` |
-| starting | Blue `#3b82f6` | Blink animation | `.starting` |
-| warning | Yellow `#f59e0b` | Subtle glow | `.warning` |
+- **online/running** - Green `#22c55e` with glow → `.online`, `.running`
+- **offline/stopped** - Red `#ef4444` with subtle glow → `.offline`, `.stopped`
+- **checking** - Yellow `#f59e0b` with pulse animation → `.checking`
+- **starting** - Blue `#3b82f6` with blink animation → `.starting`
+- **warning** - Yellow `#f59e0b` with subtle glow → `.warning`
 
 CSS classes: `.compact-dot`, `.status-dot`, `.server-dot`
 
@@ -826,18 +894,35 @@ function positionMenu(menu, triggerEl) {
 
 ### UI/UX Best Practices
 
-| Pattern | Recommendation | Reason |
-|---------|----------------|--------|
-| Destructive actions | Always require confirmation | Prevents accidental data loss |
-| State persistence | Use localStorage for UI state | Maintains user preferences across sessions |
-| Loading states | Show spinner/skeleton during async ops | User knows action is in progress |
-| Error messages | Display inline near the action | Context helps user understand issue |
-| Success feedback | Brief toast or visual highlight | Confirms action completed |
-| Tooltips | Add `title` attribute to interactive items | Helps user understand item purpose on hover |
-| Task lifecycle | Show in Active Tasks → reconcile to Recent Activity on completion | Full visibility of task progress and history |
-| Task queuing | Wait for current task to finish before starting new one | Prevents lost state, uncompleted tasks, admin overhead |
-| Task verification | Verify last task completed before starting next; take corrective action if not | Ensures no stuck/orphaned tasks |
-| Deferred restarts | Queue service restarts for after task completion; send response first | Prevents connection loss mid-task |
+- **Destructive actions** → Always require confirmation
+  - Prevents accidental data loss
+
+- **State persistence** → Use localStorage for UI state
+  - Maintains user preferences across sessions
+
+- **Loading states** → Show spinner/skeleton during async ops
+  - User knows action is in progress
+
+- **Error messages** → Display inline near the action
+  - Context helps user understand issue
+
+- **Success feedback** → Brief toast or visual highlight
+  - Confirms action completed
+
+- **Tooltips** → Add `title` attribute to interactive items
+  - Helps user understand item purpose on hover
+
+- **Task lifecycle** → Show in Active Tasks → reconcile to Recent Activity on completion
+  - Full visibility of task progress and history
+
+- **Task queuing** → Wait for current task to finish before starting new one
+  - Prevents lost state, uncompleted tasks, admin overhead
+
+- **Task verification** → Verify last task completed before starting next
+  - Ensures no stuck/orphaned tasks
+
+- **Deferred restarts** → Queue service restarts for after task completion
+  - Prevents connection loss mid-task
 
 ### Panel/Window Features
 
@@ -996,12 +1081,10 @@ function exportData(data, filename) {
 
 ### Action Menus
 
-| Action Type | Visual Cue | Behavior |
-|-------------|------------|----------|
-| Primary action | Blue background | Execute immediately |
-| Secondary action | Default style | Execute immediately |
-| Destructive action | Red on hover + divider above | Confirm before executing |
-| Multi-option action | ▾ arrow indicator | Show submenu on hover |
+- **Primary action** - Blue background → Execute immediately
+- **Secondary action** - Default style → Execute immediately
+- **Destructive action** - Red on hover + divider above → Confirm before executing
+- **Multi-option action** - ▾ arrow indicator → Show submenu on hover
 
 ### localStorage State Management
 
@@ -1051,12 +1134,10 @@ function loadState() {
 
 ### Form Inputs
 
-| Input Type | Pattern |
-|------------|---------|
-| Text input | Focus border color `#4a9eff` |
-| Checkbox | Use div-based toggle (no native checkbox) |
-| Select | Style with dark theme colors |
-| Textarea | Auto-resize with content |
+- **Text input** - Focus border color `#4a9eff`
+- **Checkbox** - Use div-based toggle (no native checkbox)
+- **Select** - Style with dark theme colors
+- **Textarea** - Auto-resize with content
 
 ### Keyboard Shortcuts
 
@@ -1067,22 +1148,18 @@ Always support:
 
 ### Animation Timing
 
-| Animation | Duration | Easing |
-|-----------|----------|--------|
-| Hover transitions | `0.15s` | `ease` |
-| Panel show/hide | `0.2s` | `ease` |
-| Fade effects | `0.3s` | `ease` |
-| Slide animations | `0.2s` | `ease-out` |
+- **Hover transitions** - `0.15s` ease
+- **Panel show/hide** - `0.2s` ease
+- **Fade effects** - `0.3s` ease
+- **Slide animations** - `0.2s` ease-out
 
 ### z-index Layers
 
-| Layer | z-index | Usage |
-|-------|---------|-------|
-| Base panels | `9999` | Floating panels (Todo, Activity Log) |
-| Menus | `10000` | Context menus, dropdowns |
-| Submenus | `10001` | Nested menus |
-| Modals | `20000` | Dialog overlays, image viewers |
-| Toasts | `30000` | Notification messages |
+- **Base panels (9999)** - Floating panels (Todo, Activity Log)
+- **Menus (10000)** - Context menus, dropdowns
+- **Submenus (10001)** - Nested menus
+- **Modals (20000)** - Dialog overlays, image viewers
+- **Toasts (30000)** - Notification messages
 
 ---
 
@@ -1114,13 +1191,11 @@ const quickCommands = [
 
 ### Command Categories
 
-| Category | Icon | Purpose |
-|----------|------|---------|
-| Quick Actions | ❌🔧✅ | Immediate fixes, status changes |
-| Design | 🎨 | Visual/layout modifications |
-| Code | 💻 | Refactoring, optimization |
-| Analysis | 🔍 | Explain, review, understand |
-| Destructive | 🗑️ | Remove, delete (use danger styling) |
+- **Quick Actions (❌🔧✅)** - Immediate fixes, status changes
+- **Design (🎨)** - Visual/layout modifications
+- **Code (💻)** - Refactoring, optimization
+- **Analysis (🔍)** - Explain, review, understand
+- **Destructive (🗑️)** - Remove, delete (use danger styling)
 
 ### Section Headers in Submenus
 
@@ -1447,12 +1522,10 @@ For standalone pages (like memory-viewer.html), include this inline:
 
 ### Debug Panel Features
 
-| Feature | Shortcut | Description |
-|---------|----------|-------------|
-| Toggle Panel | `Ctrl+Shift+D` | Show/hide debug panel |
-| Reload | Button | Refresh page |
-| Clear Storage | Button | Clear localStorage and reload |
-| Clear Console | Button | Clear browser console |
+- **Toggle Panel (`Ctrl+Shift+D`)** - Show/hide debug panel
+- **Reload (Button)** - Refresh page
+- **Clear Storage (Button)** - Clear localStorage and reload
+- **Clear Console (Button)** - Clear browser console
 
 ### Debug Info to Display
 
@@ -1535,14 +1608,12 @@ if (!['localhost', '127.0.0.1'].includes(location.hostname)) {
 
 All components should be periodically analyzed for:
 
-| Review Area | Questions to Ask |
-|-------------|------------------|
-| **Accessibility** | Keyboard navigable? Screen reader friendly? Color contrast OK? Focus indicators visible? |
-| **Feature Creep** | Does it do too much? Should it be split? Are all features actually used? |
-| **Redundant Info** | Duplicate displays? Unnecessary labels? Repeated data? |
-| **Consistency** | Matches other components? Follows standards? Uses shared styles? |
-| **Performance** | Unnecessary re-renders? Heavy computations? Memory leaks? |
-| **Mobile/Responsive** | Works on smaller screens? Touch-friendly? |
+- **Accessibility** - Keyboard navigable? Screen reader friendly? Color contrast OK? Focus indicators visible?
+- **Feature Creep** - Does it do too much? Should it be split? Are all features actually used?
+- **Redundant Info** - Duplicate displays? Unnecessary labels? Repeated data?
+- **Consistency** - Matches other components? Follows standards? Uses shared styles?
+- **Performance** - Unnecessary re-renders? Heavy computations? Memory leaks?
+- **Mobile/Responsive** - Works on smaller screens? Touch-friendly?
 
 **When to Review:**
 - After major feature additions
@@ -1568,13 +1639,11 @@ Best practices for saving on API tokens, reducing costs, and optimizing memory/p
 
 ### Token Optimization Strategies
 
-| Strategy | Savings | Implementation |
-|----------|---------|----------------|
-| **Context Compaction** | 60-80% | Summarize long conversations before hitting context limit |
-| **Selective File Reading** | 40-60% | Only read files that are directly relevant to the task |
-| **Batch Operations** | 30-50% | Group related queries into single requests |
-| **Cache Common Queries** | 50-70% | Store frequently-accessed data locally |
-| **Incremental Updates** | 70-90% | Send only changed data, not entire documents |
+- **Context Compaction (60-80% savings)** - Summarize long conversations before hitting context limit
+- **Selective File Reading (40-60% savings)** - Only read files directly relevant to the task
+- **Batch Operations (30-50% savings)** - Group related queries into single requests
+- **Cache Common Queries (50-70% savings)** - Store frequently-accessed data locally
+- **Incremental Updates (70-90% savings)** - Send only changed data, not entire documents
 
 ### Session Data Consistency
 
@@ -1619,13 +1688,11 @@ GET /api/memory/load?key=session-state
 
 ### Cost-Effective API Usage
 
-| Pattern | Cost Impact | When to Use |
-|---------|-------------|-------------|
-| **Use smaller models** | -70% cost | Simple queries, code formatting |
-| **Limit output tokens** | -30-50% | When you know expected response size |
-| **Avoid re-reading files** | -20-40% | Cache file contents in session |
-| **Use search before read** | -50-70% | Find specific content instead of reading entire files |
-| **Parallel tool calls** | -time | Independent operations in same request |
+- **Use smaller models (-70% cost)** - Simple queries, code formatting
+- **Limit output tokens (-30-50%)** - When you know expected response size
+- **Avoid re-reading files (-20-40%)** - Cache file contents in session
+- **Use search before read (-50-70%)** - Find specific content instead of reading entire files
+- **Parallel tool calls (saves time)** - Independent operations in same request
 
 ### Memory Management
 
@@ -1669,13 +1736,11 @@ clearInterval(interval);
 
 ### Performance Optimization
 
-| Area | Pattern | Impact |
-|------|---------|--------|
-| **DOM Updates** | Batch with `requestAnimationFrame` | -50% CPU |
-| **Event Handlers** | Debounce/throttle | -30-70% calls |
-| **Network** | Request deduplication | -40% requests |
-| **Rendering** | Virtual scrolling for long lists | -90% DOM nodes |
-| **Data** | Pagination over full loads | -80% memory |
+- **DOM Updates** - Batch with `requestAnimationFrame` (-50% CPU)
+- **Event Handlers** - Debounce/throttle (-30-70% calls)
+- **Network** - Request deduplication (-40% requests)
+- **Rendering** - Virtual scrolling for long lists (-90% DOM nodes)
+- **Data** - Pagination over full loads (-80% memory)
 
 **Debounce Pattern:**
 ```javascript
@@ -1777,15 +1842,13 @@ function reconcile(local, remote) {
 
 ### Claude Code Session Tips
 
-| Tip | Benefit |
-|-----|---------|
-| **Use todo lists** | Maintains task state across compaction |
-| **Write to CLAUDE.md** | Persists critical decisions |
-| **Prefer edits over rewrites** | Smaller diffs, less tokens |
-| **Use grep before read** | Find specific content efficiently |
-| **Batch file operations** | Parallel reads save time |
-| **Keep responses concise** | Faster, cheaper |
-| **Reference line numbers** | Precise edits, less context |
+- **Use todo lists** - Maintains task state across compaction
+- **Write to CLAUDE.md** - Persists critical decisions
+- **Prefer edits over rewrites** - Smaller diffs, less tokens
+- **Use grep before read** - Find specific content efficiently
+- **Batch file operations** - Parallel reads save time
+- **Keep responses concise** - Faster, cheaper
+- **Reference line numbers** - Precise edits, less context
 
 ### Session Recovery Pattern
 
@@ -1822,4 +1885,118 @@ const usageStats = {
         return (this.inputTokens * 0.003 + this.outputTokens * 0.015) / 1000;
     }
 };
+```
+
+---
+
+## 🔧 Refactoring Guidelines
+
+Use shortcuts `rfr` (refactor from standards) or `rvw` (review/cleanup) to trigger refactoring.
+
+### Refactoring Capabilities
+
+- **Dead code removal** - Find and remove unused functions, variables, imports
+  - When: After major feature changes
+
+- **Code deduplication** - Extract repeated patterns into shared functions
+  - When: Same logic appears 3+ times
+
+- **Naming cleanup** - Rename variables/functions for clarity
+  - When: Names are unclear or inconsistent
+
+- **Structure improvement** - Split large files, reorganize modules
+  - When: Files > 500 lines or mixed concerns
+
+- **Pattern alignment** - Refactor to match STANDARDS.md conventions
+  - When: New code or legacy cleanup
+
+- **Performance optimization** - Identify and fix inefficient code
+  - When: After profiling or visible slowness
+
+- **Dependency cleanup** - Remove unused packages, update imports
+  - When: Before releases
+
+- **Comment cleanup** - Remove stale comments, add missing docs
+  - When: Comments contradict code
+
+### Refactoring Checklist
+
+Before refactoring:
+- [ ] Ensure tests exist (or create them first)
+- [ ] Commit current state (clean rollback point)
+- [ ] Identify scope - don't refactor everything at once
+
+During refactoring:
+- [ ] One change type at a time (don't mix rename + restructure)
+- [ ] Run tests after each change
+- [ ] Keep commits small and focused
+
+After refactoring:
+- [ ] Verify all tests pass
+- [ ] Check for broken imports/references
+- [ ] Update documentation if APIs changed
+
+### Code Smell Indicators
+
+- **Long function (> 50 lines)** → Extract helper functions
+- **Deep nesting (> 3 levels)** → Early returns, extract logic
+- **Magic numbers (hardcoded values)** → Extract to constants
+- **God object (does too much)** → Split by responsibility
+- **Feature envy (accesses other object's data)** → Move method to that object
+- **Duplicate code (3+ places)** → Extract to shared function
+- **Dead code (unreachable/unused)** → Delete it
+- **Inconsistent naming** → Standardize names
+
+### Safe Refactoring Patterns
+
+**Extract Function:**
+```javascript
+// Before
+function processOrder(order) {
+    // 20 lines of validation
+    // 30 lines of calculation
+    // 15 lines of formatting
+}
+
+// After
+function processOrder(order) {
+    validateOrder(order);
+    const total = calculateTotal(order);
+    return formatOrder(order, total);
+}
+```
+
+**Replace Magic Numbers:**
+```javascript
+// Before
+if (retryCount > 3) { ... }
+setTimeout(fn, 5000);
+
+// After
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 5000;
+if (retryCount > MAX_RETRIES) { ... }
+setTimeout(fn, RETRY_DELAY_MS);
+```
+
+**Early Return:**
+```javascript
+// Before
+function process(data) {
+    if (data) {
+        if (data.valid) {
+            if (data.ready) {
+                // actual logic
+            }
+        }
+    }
+}
+
+// After
+function process(data) {
+    if (!data) return;
+    if (!data.valid) return;
+    if (!data.ready) return;
+    // actual logic
+}
 ```

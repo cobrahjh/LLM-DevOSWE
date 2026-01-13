@@ -1,5 +1,5 @@
 /**
- * Debug Inspector v2.3 - Element Selector Tool + Debug Panel + DIM Status
+ * Debug Inspector v2.5 - Element Selector Tool + Debug Panel + DIM Status
  * Hotkeys:
  *   Ctrl+Alt+Shift+D - Toggle element inspector
  *   Ctrl+Shift+D - Toggle debug info panel
@@ -23,6 +23,15 @@ const DebugInspector = (function() {
     let debugPanelVisible = false;
 
     const quickCommands = [
+        { icon: '❓', label: 'What is this?', cmd: 'what is this element and what does it do' },
+        { icon: '🔍', label: 'Inspect', cmd: 'inspect', sub: [
+            { label: 'Check element state', cmd: 'check element state and properties' },
+            { label: 'Check data bindings', cmd: 'check data bindings and event listeners' },
+            { label: 'Check CSS styles', cmd: 'check computed CSS styles' },
+            { label: 'Check accessibility', cmd: 'check accessibility attributes' },
+            { label: 'Check performance', cmd: 'check element performance impact' },
+            { label: 'Log to console', cmd: 'log element details to console' }
+        ]},
         { icon: '❌', label: 'Not Working', cmd: 'not working' },
         { icon: '🔧', label: 'Fix', cmd: 'fix', sub: [
             { label: 'Fix layout', cmd: 'fix layout' },
@@ -60,6 +69,19 @@ const DebugInspector = (function() {
             { label: 'Better UX', cmd: 'improve user experience' },
             { label: 'Mobile friendly', cmd: 'make mobile responsive' }
         ]},
+        { icon: '🖼️', label: 'Mockup', cmd: 'mockup', sub: [
+            { label: '── Create ──', cmd: '', disabled: true },
+            { label: 'Create mockup', cmd: 'create mockup of element for redesign' },
+            { label: 'Create alternate designs', cmd: 'create 3 alternate mockup designs' },
+            { label: 'Mockup with variations', cmd: 'create mockup with color and style variations' },
+            { label: '── Redesign ──', cmd: '', disabled: true },
+            { label: 'Full redesign', cmd: 'redesign element completely, create mockup first' },
+            { label: 'Modern redesign', cmd: 'redesign with modern UI patterns, create mockup' },
+            { label: 'Minimal redesign', cmd: 'redesign with minimal aesthetic, create mockup' },
+            { label: '── Compare ──', cmd: '', disabled: true },
+            { label: 'Side-by-side compare', cmd: 'create side-by-side mockup comparison' },
+            { label: 'Before/after', cmd: 'create before and after mockup' }
+        ]},
         { icon: '⬆️', label: 'Upgrade', cmd: 'upgrade', sub: [
             { label: 'Upgrade UI', cmd: 'upgrade ui' },
             { label: 'Upgrade functionality', cmd: 'upgrade functionality' },
@@ -78,6 +100,20 @@ const DebugInspector = (function() {
             { label: 'Show element', cmd: 'show element' },
             { label: 'Toggle on click', cmd: 'add toggle on click' },
             { label: 'Fade in/out', cmd: 'add fade animation' }
+        ]},
+        { icon: '📌', label: 'Pin', cmd: 'pin', sub: [
+            { label: '📌 Pin window', cmd: 'pin window in place so it cannot be moved or dragged' },
+            { label: '📌 Unpin window', cmd: 'unpin window so it can be moved again' },
+            { label: '── Position ──', cmd: '', disabled: true },
+            { label: 'Lock position', cmd: 'lock element position, disable dragging' },
+            { label: 'Unlock position', cmd: 'unlock element position, enable dragging' },
+            { label: 'Save position', cmd: 'save position to localStorage' },
+            { label: 'Reset position', cmd: 'reset position to default' },
+            { label: '── Window ──', cmd: '', disabled: true },
+            { label: 'Make draggable', cmd: 'make draggable' },
+            { label: 'Make floating', cmd: 'make floating window' },
+            { label: 'Add minimize btn', cmd: 'add minimize button' },
+            { label: 'Add close btn', cmd: 'add close button' }
         ]},
         { icon: '🔅', label: 'Dim', cmd: 'dim', sub: [
             { label: 'Dim element', cmd: 'dim element, reduce opacity' },
@@ -101,6 +137,17 @@ const DebugInspector = (function() {
         ]},
         { icon: '📋', label: 'Copy selector', cmd: 'copy' },
         { divider: true },
+        { icon: '📝', label: 'Tasks', cmd: 'tasks', sub: [
+            { label: '── Task Queue ──', cmd: '', disabled: true },
+            { label: 'Sync UI with server', cmd: 'task-sync' },
+            { label: 'Check queue status', cmd: 'task-queue-status' },
+            { label: 'View pending tasks', cmd: 'task-view-pending' },
+            { label: 'View all tasks', cmd: 'task-view-all' },
+            { label: 'Clear stuck tasks', cmd: 'task-clear-stuck' },
+            { label: '── This Element ──', cmd: '', disabled: true },
+            { label: 'Create task for element', cmd: 'create task for this element' },
+            { label: 'Add to dashboard', cmd: 'add element to dashboard as widget' }
+        ]},
         { icon: '🖥️', label: 'DIM', cmd: 'dim-status', sub: [
             { label: '── Data Interface Manager ──', cmd: '', disabled: true },
             { label: 'Check DIM status', cmd: 'dim-check' },
@@ -331,6 +378,19 @@ const DebugInspector = (function() {
     async function handleCommand(cmd) {
         hideMenu();
 
+        // Skip empty commands
+        if (!cmd || cmd.trim() === '') {
+            console.warn('[DebugInspector] Empty command, skipping');
+            return;
+        }
+
+        // Check if element is selected
+        if (!selectedElement) {
+            showToast('❌ No element selected');
+            toggle();
+            return;
+        }
+
         if (cmd === 'copy') {
             navigator.clipboard.writeText(selectedSelector);
             showToast('✓ Copied: ' + selectedSelector);
@@ -342,6 +402,12 @@ const DebugInspector = (function() {
         if (cmd.startsWith('snapshot')) {
             await handleSnapshot(cmd);
             toggle();
+            return;
+        }
+
+        // Handle Task commands
+        if (cmd.startsWith('task-')) {
+            await handleTaskCommand(cmd);
             return;
         }
 
@@ -373,52 +439,37 @@ const DebugInspector = (function() {
         const computedStyle = window.getComputedStyle(selectedElement);
         const styles = `color:${computedStyle.color}, bg:${computedStyle.backgroundColor}, display:${computedStyle.display}`;
 
-        const message = `[DEBUG] ${cmd} "${selectedSelector}"\nPath: ${path}\nSize: ${size}\nStyles: ${styles}`;
+        const message = `${cmd} "${selectedSelector}"\nPath: ${path}\nSize: ${size}\nStyles: ${styles}`;
 
-        // Send to Kitt - try multiple methods
-        let sent = false;
+        console.log('[DebugInspector] Sending task:', message);
 
-        // Method 1: Direct AdminKitt.sendQuick
-        if (typeof AdminKitt !== 'undefined' && typeof AdminKitt.sendQuick === 'function') {
-            try {
-                AdminKitt.sendQuick(message);
-                sent = true;
-            } catch (err) {
-                console.error('AdminKitt.sendQuick failed:', err);
+        // Send directly to relay queue
+        try {
+            const response = await fetch('http://127.0.0.1:8600/api/queue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+            console.log('[DebugInspector] Response:', data);
+
+            if (response.ok && data.success) {
+                showToast(`🚀 Task created: ${cmd}`);
+                // Refresh task list if available
+                if (typeof refreshTaskList === 'function') {
+                    refreshTaskList();
+                }
+                // Also show Claude Tasks panel
+                if (typeof showClaudeTasksPanel === 'function') {
+                    showClaudeTasksPanel();
+                }
+            } else {
+                showToast(`❌ Failed: ${data.error || 'Unknown error'}`);
             }
-        }
-
-        // Method 2: Window global
-        if (!sent && typeof window.AdminKitt !== 'undefined' && typeof window.AdminKitt.sendQuick === 'function') {
-            try {
-                window.AdminKitt.sendQuick(message);
-                sent = true;
-            } catch (err) {
-                console.error('window.AdminKitt.sendQuick failed:', err);
-            }
-        }
-
-        // Method 3: Direct input + send button click
-        if (!sent) {
-            const input = document.getElementById('message-input');
-            const sendBtn = document.getElementById('btn-send');
-            if (input && sendBtn) {
-                input.value = message;
-                sendBtn.click();
-                sent = true;
-            }
-        }
-
-        if (sent) {
-            showToast(`🚀 Sent to Kitt: ${cmd}`);
-        } else {
-            // Final fallback: just put in input
-            const input = document.getElementById('message-input');
-            if (input) {
-                input.value = message;
-                input.focus();
-            }
-            showToast(`📋 Ready to send: ${cmd}`);
+        } catch (err) {
+            console.error('[DebugInspector] Failed to send to relay:', err);
+            showToast(`❌ Relay offline - ${err.message}`);
         }
 
         toggle(); // Exit debug mode
@@ -489,7 +540,7 @@ const DebugInspector = (function() {
                 </div>
                 <div style="padding: 12px 16px; border-top: 1px solid #333; display: flex; justify-content: flex-end; gap: 8px;">
                     <button id="edit-prompt-cancel" style="padding: 8px 16px; background: #2a2a3e; border: 1px solid #444; border-radius: 6px; color: #ccc; cursor: pointer; font-size: 13px;">Cancel</button>
-                    <button id="edit-prompt-send" style="padding: 8px 16px; background: #4a9eff; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px;">Send to Kitt</button>
+                    <button id="edit-prompt-send" style="padding: 8px 16px; background: #4a9eff; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px;">Send to Claude</button>
                 </div>
             `;
 
@@ -676,6 +727,134 @@ const DebugInspector = (function() {
         link.download = filename;
         link.href = canvas.toDataURL('image/png');
         link.click();
+    }
+
+    // ============================================
+    // DIM (Data Interface Manager) Commands
+    // ============================================
+
+    // ============================================
+    // Task Queue Commands
+    // ============================================
+
+    async function handleTaskCommand(cmd) {
+        const RELAY_URL = 'http://127.0.0.1:8600';
+
+        try {
+            switch (cmd) {
+                case 'task-sync':
+                    if (typeof syncUIWithServer === 'function') {
+                        await syncUIWithServer();
+                    } else if (typeof TaskProcessor !== 'undefined' && TaskProcessor.syncWithServer) {
+                        await TaskProcessor.syncWithServer();
+                        showToast('✓ Synced with server');
+                    } else {
+                        showToast('Sync function not available');
+                    }
+                    break;
+
+                case 'task-queue-status':
+                    await checkTaskQueueStatus(RELAY_URL);
+                    break;
+
+                case 'task-view-pending':
+                    await viewTasks(RELAY_URL, 'pending');
+                    break;
+
+                case 'task-view-all':
+                    await viewTasks(RELAY_URL, 'all');
+                    break;
+
+                case 'task-clear-stuck':
+                    await clearStuckTasks(RELAY_URL);
+                    break;
+
+                default:
+                    showToast('Unknown task command: ' + cmd);
+            }
+        } catch (err) {
+            console.error('Task command error:', err);
+            showToast('Task Error: ' + err.message);
+        }
+    }
+
+    async function checkTaskQueueStatus(baseUrl) {
+        showToast('Checking task queue...');
+        try {
+            const res = await fetch(`${baseUrl}/api/queue`);
+            const data = await res.json();
+            const messages = data.messages || [];
+
+            const pending = messages.filter(m => m.status === 'pending').length;
+            const processing = messages.filter(m => m.status === 'processing').length;
+            const completed = messages.filter(m => m.status === 'completed').length;
+            const failed = messages.filter(m => m.status === 'failed').length;
+
+            showDIMStatusModal({
+                title: 'Task Queue Status',
+                status: pending > 0 || processing > 0 ? 'active' : 'idle',
+                items: [
+                    { label: 'Total', value: messages.length },
+                    { label: 'Pending', value: pending, color: pending > 0 ? '#f59e0b' : '#888' },
+                    { label: 'Processing', value: processing, color: processing > 0 ? '#8b5cf6' : '#888' },
+                    { label: 'Completed', value: completed, color: '#22c55e' },
+                    { label: 'Failed', value: failed, color: failed > 0 ? '#ef4444' : '#888' }
+                ]
+            });
+        } catch (err) {
+            showDIMStatusModal({
+                title: 'Task Queue Status',
+                status: 'error',
+                items: [
+                    { label: 'Error', value: 'Relay not reachable', color: '#ef4444' }
+                ]
+            });
+        }
+    }
+
+    async function viewTasks(baseUrl, filter) {
+        showToast(`Loading ${filter} tasks...`);
+        try {
+            const res = await fetch(`${baseUrl}/api/queue`);
+            const data = await res.json();
+            let messages = data.messages || [];
+
+            if (filter === 'pending') {
+                messages = messages.filter(m => m.status === 'pending' || m.status === 'processing');
+            }
+
+            if (messages.length === 0) {
+                showToast(`No ${filter} tasks found`);
+                return;
+            }
+
+            const items = messages.slice(0, 8).map(m => ({
+                label: m.status,
+                value: (m.preview || m.id).substring(0, 30) + '...',
+                color: m.status === 'completed' ? '#22c55e' :
+                       m.status === 'failed' ? '#ef4444' :
+                       m.status === 'processing' ? '#8b5cf6' : '#f59e0b'
+            }));
+
+            showDIMStatusModal({
+                title: `Tasks (${filter})`,
+                status: 'active',
+                items
+            });
+        } catch (err) {
+            showToast('Failed to load tasks: ' + err.message);
+        }
+    }
+
+    async function clearStuckTasks(baseUrl) {
+        showToast('Clearing stuck tasks...');
+        try {
+            const res = await fetch(`${baseUrl}/api/queue/cleanup`, { method: 'POST' });
+            const data = await res.json();
+            showToast(`Cleared: ${data.cleared?.completed || 0} completed, ${data.cleared?.failed || 0} failed`);
+        } catch (err) {
+            showToast('Failed to clear tasks: ' + err.message);
+        }
     }
 
     // ============================================
@@ -1144,8 +1323,8 @@ const DebugInspector = (function() {
             <div class="dip-actions">
                 <button onclick="location.reload()">Reload</button>
                 <button onclick="localStorage.clear(); location.reload()">Clear Storage</button>
-                <button onclick="DebugInspector.checkKitt()">Kitt Status</button>
-                <button onclick="DebugInspector.resetKitt()">Reset Kitt</button>
+                <button onclick="DebugInspector.checkClaude()">Claude Status</button>
+                <button onclick="DebugInspector.resetClaude()">Reset Claude</button>
             </div>
         `;
         document.body.appendChild(debugPanel);
@@ -1304,23 +1483,23 @@ const DebugInspector = (function() {
         content.innerHTML = html;
     }
 
-    async function checkKitt() {
+    async function checkClaude() {
         try {
-            const res = await fetch('http://127.0.0.1:8585/api/kitt/status');
+            const res = await fetch('http://127.0.0.1:8585/api/claude/status');
             const status = await res.json();
             const msg = status.busy
-                ? `Kitt: Busy - ${status.task}\nUptime: ${Math.round(status.uptime)}s`
-                : `Kitt: Available\nUptime: ${Math.round(status.uptime)}s`;
+                ? `Claude: Busy - ${status.task}\nUptime: ${Math.round(status.uptime)}s`
+                : `Claude: Available\nUptime: ${Math.round(status.uptime)}s`;
             alert(msg);
         } catch (e) {
-            alert('Kitt not reachable');
+            alert('Claude not reachable');
         }
     }
 
-    async function resetKitt() {
+    async function resetClaude() {
         try {
-            await fetch('http://127.0.0.1:8585/api/kitt/reset', { method: 'POST' });
-            alert('Kitt reset successfully');
+            await fetch('http://127.0.0.1:8585/api/claude/reset', { method: 'POST' });
+            alert('Claude reset successfully');
         } catch (e) {
             alert('Reset failed: ' + e.message);
         }
@@ -1401,7 +1580,7 @@ const DebugInspector = (function() {
         const computedStyle = window.getComputedStyle(selectedElement);
         const styles = `color:${computedStyle.color}, bg:${computedStyle.backgroundColor}, display:${computedStyle.display}`;
 
-        const message = `[DEBUG] ${cmd} "${selectedSelector}"\nPath: ${path}\nSize: ${size}\nStyles: ${styles}`;
+        const message = `${cmd} "${selectedSelector}"\nPath: ${path}\nSize: ${size}\nStyles: ${styles}`;
 
         // Send to Kitt
         let sent = false;
@@ -1436,8 +1615,8 @@ const DebugInspector = (function() {
         init,
         toggle,
         toggleDebugPanel,
-        checkKitt,
-        resetKitt,
+        checkClaude,
+        resetClaude,
         sendQuickCommand
     };
 })();
