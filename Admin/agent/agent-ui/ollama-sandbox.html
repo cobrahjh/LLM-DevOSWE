@@ -854,10 +854,33 @@
             voiceOptions.voiceName = selectedVoice || '';
             voiceOptions.rate = persona === 'shizhenxiang' ? 0.85 : 0.9;
 
-            // Use VoiceEngine to speak
-            if (typeof VoiceEngine !== 'undefined') {
-                VoiceEngine.speakNow(text, voiceOptions);
+            // Use VoiceEngine to speak, with direct Web Speech API fallback
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.speakNow) {
+                try {
+                    VoiceEngine.speakNow(text, voiceOptions);
+                } catch (e) {
+                    console.error('[VoiceEntry] VoiceEngine error:', e);
+                    speakDirect(text, selectedVoice, voiceOptions.rate);
+                }
+            } else {
+                speakDirect(text, selectedVoice, voiceOptions.rate);
             }
+        }
+
+        // Direct Web Speech API fallback for mobile/when VoiceEngine unavailable
+        function speakDirect(text, voiceName, rate) {
+            if (!window.speechSynthesis) {
+                alert('Speech synthesis not supported on this device');
+                return;
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            if (voiceName) {
+                const voice = voices.find(v => v.name === voiceName);
+                if (voice) utterance.voice = voice;
+            }
+            utterance.rate = rate || 0.9;
+            window.speechSynthesis.speak(utterance);
         }
 
         function stopVoiceEntry() {
