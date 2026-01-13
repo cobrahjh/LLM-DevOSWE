@@ -873,14 +873,38 @@
                 alert('Speech synthesis not supported on this device');
                 return;
             }
-            const utterance = new SpeechSynthesisUtterance(text);
+
+            // Cancel any pending speech
+            window.speechSynthesis.cancel();
+
+            const doSpeak = () => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voices = window.speechSynthesis.getVoices();
+
+                if (voiceName && voices.length > 0) {
+                    const voice = voices.find(v => v.name === voiceName);
+                    if (voice) utterance.voice = voice;
+                }
+                utterance.rate = rate || 0.9;
+
+                utterance.onstart = () => console.log('[speakDirect] Started speaking');
+                utterance.onend = () => console.log('[speakDirect] Finished speaking');
+                utterance.onerror = (e) => console.error('[speakDirect] Error:', e.error);
+
+                window.speechSynthesis.speak(utterance);
+            };
+
+            // Mobile Chrome: voices load async, may need to wait
             const voices = window.speechSynthesis.getVoices();
-            if (voiceName) {
-                const voice = voices.find(v => v.name === voiceName);
-                if (voice) utterance.voice = voice;
+            if (voices.length === 0) {
+                window.speechSynthesis.onvoiceschanged = doSpeak;
+                // Trigger voice loading
+                window.speechSynthesis.getVoices();
+                // Fallback: speak anyway after short delay (uses default voice)
+                setTimeout(doSpeak, 100);
+            } else {
+                doSpeak();
             }
-            utterance.rate = rate || 0.9;
-            window.speechSynthesis.speak(utterance);
         }
 
         function stopVoiceEntry() {
