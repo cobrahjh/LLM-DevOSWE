@@ -1,0 +1,17 @@
+{
+  "name": "claude-bridge",
+  "version": "2.0.0",
+  "description": "WebSocket bridge to Claude Code CLI - 2 worker system",
+  "main": "bridge-service.js",
+  "scripts": {
+    "start": "node bridge-service.js",
+    "install-service": "node service-install.js",
+    "uninstall-service": "node service-uninstall.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "node-windows": "^1.0.0-beta.8",
+    "ws": "^8.19.0"
+  }
+}
