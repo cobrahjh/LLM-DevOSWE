@@ -219,16 +219,38 @@ body::before {
 
 .claude-status-text {
     font-size: 11px;
-    color: var(--accent-success);
+    color: var(--accent-green);
     font-weight: 500;
 }
 
 .claude-status-text.busy {
-    color: var(--accent-warning);
+    color: var(--accent-yellow);
 }
 
 .claude-status-text.offline {
     color: var(--text-muted);
+}
+
+/* Voice toggle button */
+.voice-toggle {
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.voice-toggle.muted {
+    color: var(--accent-red) !important;
+    opacity: 0.7;
+}
+
+.voice-toggle.muted::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 20px;
+    background: var(--accent-red);
+    transform: rotate(45deg);
+    top: 8px;
+    left: 17px;
 }
 
 .header-btn {
@@ -452,8 +474,29 @@ body::before {
     background: var(--bg-card);
     border: 1px solid var(--border-dim);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: auto;
     position: relative;
+    resize: both;
+    min-width: 200px;
+    min-height: 100px;
+}
+
+.card.resizing {
+    transition: none;
+}
+
+/* Resize handle visual indicator */
+.card::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, transparent 50%, var(--border-accent) 50%);
+    border-radius: 0 0 8px 0;
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .card::before {
@@ -511,10 +554,11 @@ body::before {
     padding: 16px;
 }
 
-/* Minimize Button */
-.card-btn.minimize-btn {
-    font-weight: bold;
+/* Minimize Button - icon via ::after */
+.card-btn.minimize-btn::after {
+    content: '−';
     font-size: 14px;
+    font-weight: bold;
 }
 
 /* Minimized Card State */
@@ -524,27 +568,17 @@ body::before {
 .card.minimized {
     height: auto !important;
 }
-.card.minimized .minimize-btn {
-    transform: rotate(0deg);
-}
 .card.minimized .minimize-btn::after {
     content: '+';
-}
-.card:not(.minimized) .minimize-btn::after {
-    content: '−';
-}
-.card .minimize-btn {
-    font-size: 0; /* Hide original text */
-}
-.card .minimize-btn::after {
-    font-size: 14px;
-    font-weight: bold;
 }
 
 /* System Health Card */
 .card-health {
     grid-column: 1 / 5;
     grid-row: 1;
+}
+.card-health.minimized .card-body {
+    display: none !important;
 }
 
 .services-grid {
@@ -1092,10 +1126,160 @@ body::before {
     grid-row: 3;
 }
 
-/* Claude Terminal Card */
+/* Todo Panel Card - embedded todo module */
+.card-todo {
+    grid-column: 5 / 9;
+    grid-row: 1;
+    background: transparent;
+    border: none;
+    overflow: visible;
+    min-height: 200px;
+    resize: none;
+}
+
+.card-todo::before,
+.card-todo::after {
+    display: none;
+}
+
+.card-todo .todo-panel {
+    border-radius: 12px;
+    border: 1px solid var(--border-dim);
+    max-height: 400px;
+    resize: both;
+    overflow: auto;
+}
+
+/* Claude Tasks Card */
 .card-claude-terminal {
     grid-column: 5 / 9;
     grid-row: 2;
+}
+
+.claude-tasks-list {
+    padding: 0;
+}
+
+.claude-task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-dim);
+    transition: background 0.15s;
+}
+
+.claude-task-item:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.claude-task-item:last-child {
+    border-bottom: none;
+}
+
+.claude-task-status {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+}
+
+.claude-task-status.pending {
+    background: var(--accent-yellow);
+    box-shadow: 0 0 6px var(--accent-yellow);
+}
+
+.claude-task-status.processing {
+    background: var(--accent-purple);
+    box-shadow: 0 0 6px var(--accent-purple);
+    animation: pulse-dot 1.5s infinite;
+}
+
+.claude-task-status.completed {
+    background: var(--accent-green);
+}
+
+.claude-task-status.failed {
+    background: var(--accent-red);
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+.claude-task-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.claude-task-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.claude-task-id {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-blue);
+    background: rgba(74, 158, 255, 0.1);
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.claude-task-status-text {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 3px;
+}
+
+.claude-task-status-text.pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--accent-yellow);
+}
+
+.claude-task-status-text.processing {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--accent-purple);
+}
+
+.claude-task-status-text.completed {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--accent-green);
+}
+
+.claude-task-status-text.failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--accent-red);
+}
+
+.claude-task-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.claude-task-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
 }
 
 .activity-list {

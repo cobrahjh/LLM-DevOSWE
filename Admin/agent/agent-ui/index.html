@@ -53,6 +53,7 @@
             <div class="header-claude-status">
                 <button class="header-btn" id="btn-output" onclick="OutputBubble.toggle()" title="Claude Activity">🤖</button>
                 <span class="claude-status-text" id="header-claude-status">Ready</span>
+                <button class="header-btn voice-toggle" id="btn-voice-toggle" onclick="toggleVoiceEnabled()" title="Toggle Voice">🔊</button>
             </div>
             <button class="header-btn" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
             <button class="header-btn" id="btn-voice-entry" onclick="showVoiceEntryModal()" title="Voice Entry">🎤</button>
@@ -203,7 +204,7 @@
                         <div class="card-actions">
                             <button class="card-btn" onclick="checkAllServers()" title="Refresh">🔄</button>
                             <button class="card-btn" onclick="restartAllServers()" title="Restart All">⚡</button>
-                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-health')" title="Minimize">−</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-health')" title="Minimize"></button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -222,7 +223,7 @@
                         </div>
                         <div class="card-actions">
                             <button class="card-btn" onclick="reconnectMSFS()" title="Reconnect">🔄</button>
-                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-msfs')" title="Minimize">−</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-msfs')" title="Minimize"></button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -254,6 +255,9 @@
                     </div>
                 </div>
 
+                <!-- Todo Panel Container -->
+                <div id="todo-panel-container" class="card card-todo"></div>
+
                 <!-- Activity Monitor Card -->
                 <div class="card card-activity">
                     <div class="card-header">
@@ -263,7 +267,7 @@
                         </div>
                         <div class="card-actions">
                             <button class="card-btn" onclick="ActivityLog.toggle()" title="Expand">↗</button>
-                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-activity')" title="Minimize">−</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-activity')" title="Minimize"></button>
                         </div>
                     </div>
                     <div class="card-body" style="padding: 0; max-height: 150px; overflow-y: auto;">
@@ -271,21 +275,22 @@
                     </div>
                 </div>
 
-                <!-- Claude Terminal Card -->
+                <!-- Claude Tasks Card -->
                 <div class="card card-claude-terminal">
                     <div class="card-header">
                         <div class="card-title">
                             <span class="icon">🤖</span>
-                            Claude Terminal
+                            Claude Tasks
                         </div>
                         <div class="card-actions">
-                            <button class="card-btn" onclick="ClaudeTerminal.show()" title="Expand">↗</button>
-                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-claude-terminal')" title="Minimize">−</button>
+                            <button class="card-btn" onclick="refreshTaskList()" title="Refresh">🔄</button>
+                            <button class="card-btn" onclick="ClaudeTerminal.show()" title="Terminal">💻</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-claude-terminal')" title="Minimize"></button>
                         </div>
                     </div>
-                    <div class="card-body" style="padding: 0; max-height: 150px; overflow-y: auto;">
-                        <div id="claude-terminal-mini" class="claude-terminal-mini">
-                            <div style="padding: 12px; color: var(--text-muted); text-align: center; font-size: 11px;">Click ↗ to open terminal</div>
+                    <div class="card-body" style="padding: 0; max-height: 200px; overflow-y: auto;">
+                        <div id="claude-tasks-list" class="claude-tasks-list">
+                            <div class="task-empty">No tasks</div>
                         </div>
                     </div>
                 </div>
@@ -325,8 +330,6 @@
                 </div>
             </div>
 
-            <!-- Todo Panel Container - TodoModule renders here -->
-            <div id="todo-panel-container"></div>
         </aside>
     </div>
 
@@ -349,6 +352,7 @@
     <script src="modules/services.js"></script>
     <script src="modules/troubleshooting.js"></script>
     <script src="modules/local-commands.js"></script>
+    <script src="modules/claude-bridge.js"></script>
     <script src="modules/relay.js"></script>
     <script src="modules/model.js"></script>
     <script src="modules/devices.js"></script>
@@ -1513,6 +1517,128 @@
         }
         window.clearTaskState = clearTaskState;
 
+        // ==================== CLAUDE TASKS LIST ====================
+
+        function getTaskName(content) {
+            // Extract first line or first 40 chars as task name
+            if (!content) return 'Unknown task';
+            const firstLine = content.split('\n')[0];
+            return firstLine.length > 40 ? firstLine.substring(0, 40) + '...' : firstLine;
+        }
+
+        function getTaskDescription(content) {
+            // Get a short description from the content
+            if (!content) return '';
+            const lines = content.split('\n');
+            if (lines.length > 1) {
+                return lines[1].substring(0, 60) + (lines[1].length > 60 ? '...' : '');
+            }
+            return content.length > 60 ? content.substring(40, 100) + '...' : '';
+        }
+
+        async function refreshTaskList() {
+            const listEl = document.getElementById('claude-tasks-list');
+            if (!listEl) return;
+
+            try {
+                // Fetch tasks from relay service
+                const res = await fetch('http://127.0.0.1:8600/api/queue');
+                const data = await res.json();
+
+                if (!data.messages || data.messages.length === 0) {
+                    listEl.innerHTML = '<div class="task-empty">No tasks</div>';
+                    return;
+                }
+
+                // Sort: processing first, then pending, then others
+                const statusOrder = { processing: 0, pending: 1, completed: 2, failed: 3 };
+                const tasks = data.messages.sort((a, b) => {
+                    return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
+                });
+
+                // Render task items (show max 10)
+                listEl.innerHTML = tasks.slice(0, 10).map(task => {
+                    const shortId = task.id.substring(0, 8);
+                    const name = getTaskName(task.preview || task.content);
+                    const desc = getTaskDescription(task.preview || task.content);
+                    const status = task.status || 'pending';
+
+                    return `
+                        <div class="claude-task-item">
+                            <div class="claude-task-status ${status}"></div>
+                            <div class="claude-task-content">
+                                <div class="claude-task-header">
+                                    <span class="claude-task-id">${shortId}</span>
+                                    <span class="claude-task-status-text ${status}">${status}</span>
+                                </div>
+                                <div class="claude-task-name">${escapeHtmlSimple(name)}</div>
+                                ${desc ? `<div class="claude-task-desc">${escapeHtmlSimple(desc)}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Show count if more than displayed
+                if (tasks.length > 10) {
+                    listEl.innerHTML += `<div class="task-empty">+${tasks.length - 10} more tasks</div>`;
+                }
+
+            } catch (err) {
+                listEl.innerHTML = '<div class="task-empty">Could not load tasks</div>';
+                console.error('[TaskList] Error:', err);
+            }
+        }
+
+        // Auto-refresh task list every 3 seconds
+        let taskListInterval;
+        function startTaskListPolling() {
+            refreshTaskList();
+            taskListInterval = setInterval(refreshTaskList, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', startTaskListPolling);
+        window.refreshTaskList = refreshTaskList;
+
+        // ==================== VOICE TOGGLE ====================
+
+        let voiceEnabled = localStorage.getItem('cc-voice-enabled') !== 'false'; // Default enabled
+
+        function toggleVoiceEnabled() {
+            voiceEnabled = !voiceEnabled;
+            localStorage.setItem('cc-voice-enabled', voiceEnabled);
+
+            const btn = document.getElementById('btn-voice-toggle');
+            if (btn) {
+                btn.classList.toggle('muted', !voiceEnabled);
+                btn.textContent = voiceEnabled ? '🔊' : '🔇';
+                btn.title = voiceEnabled ? 'Voice On (click to mute)' : 'Voice Off (click to unmute)';
+            }
+
+            // Update VoiceEngine if available
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setEnabled) {
+                VoiceEngine.setEnabled(voiceEnabled);
+            }
+
+            console.log('[Voice] Voice', voiceEnabled ? 'enabled' : 'disabled');
+        }
+
+        function restoreVoiceState() {
+            const btn = document.getElementById('btn-voice-toggle');
+            if (btn) {
+                btn.classList.toggle('muted', !voiceEnabled);
+                btn.textContent = voiceEnabled ? '🔊' : '🔇';
+                btn.title = voiceEnabled ? 'Voice On (click to mute)' : 'Voice Off (click to unmute)';
+            }
+
+            // Apply to VoiceEngine
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setEnabled) {
+                VoiceEngine.setEnabled(voiceEnabled);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', restoreVoiceState);
+        window.toggleVoiceEnabled = toggleVoiceEnabled;
+
         function addActivityItem(type, message, time) {
             const list = document.getElementById('activity-list');
             if (!list) return;
@@ -1575,6 +1701,54 @@
         // Call on DOM ready
         document.addEventListener('DOMContentLoaded', restoreCardMinimizedStates);
         window.toggleCardMinimize = toggleCardMinimize;
+
+        // ==================== CARD RESIZE PERSISTENCE ====================
+        const resizableCards = ['card-health', 'card-msfs', 'card-activity', 'card-claude-terminal'];
+
+        function saveCardSize(cardClass, width, height) {
+            localStorage.setItem(`cc-${cardClass}-width`, width);
+            localStorage.setItem(`cc-${cardClass}-height`, height);
+        }
+
+        function restoreCardSizes() {
+            resizableCards.forEach(cardClass => {
+                const card = document.querySelector(`.${cardClass}`);
+                if (!card) return;
+
+                const savedWidth = localStorage.getItem(`cc-${cardClass}-width`);
+                const savedHeight = localStorage.getItem(`cc-${cardClass}-height`);
+
+                if (savedWidth) card.style.width = savedWidth;
+                if (savedHeight) card.style.height = savedHeight;
+            });
+        }
+
+        // Use ResizeObserver to detect when cards are resized
+        function initCardResizeTracking() {
+            resizableCards.forEach(cardClass => {
+                const card = document.querySelector(`.${cardClass}`);
+                if (!card) return;
+
+                const observer = new ResizeObserver(entries => {
+                    for (const entry of entries) {
+                        const { width, height } = entry.contentRect;
+                        // Only save if user-initiated (not initial load)
+                        if (card.dataset.initialized) {
+                            saveCardSize(cardClass, `${width}px`, `${height}px`);
+                        }
+                    }
+                });
+
+                observer.observe(card);
+                // Mark as initialized after first observation
+                setTimeout(() => card.dataset.initialized = 'true', 100);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            restoreCardSizes();
+            initCardResizeTracking();
+        });
     </script>
 </body>
 </html>
