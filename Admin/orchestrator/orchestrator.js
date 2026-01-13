@@ -130,6 +130,18 @@ const SERVICES = {
         healthEndpoint: '/api/health',
         priority: 5,
         autoRestart: false
+    },
+    keysender: {
+        id: 'keysender',
+        name: 'KeySender Service',
+        port: null,  // No HTTP port - native Windows service
+        dir: path.join(PROJECT_ROOT, 'KeySenderService'),
+        start: null,  // Managed by Windows Service only
+        winService: 'simwidgetkeysender',  // Windows Service ID
+        healthEndpoint: null,  // Health checked via SC query
+        priority: 6,
+        autoRestart: true,
+        type: 'native'  // Flag for native Windows service (no Node.js)
     }
 };
 
@@ -159,7 +171,22 @@ const RESTART_COOLDOWN = 60000; // 1 minute between restarts
 async function checkServiceHealth(serviceId) {
     const svc = SERVICES[serviceId];
     if (!svc) return { healthy: false, error: 'Unknown service' };
-    
+
+    // Native Windows services (no HTTP port) - check via SC query
+    if (svc.type === 'native' || !svc.port) {
+        return new Promise((resolve) => {
+            exec(`sc query "${svc.winService}"`, (error, stdout) => {
+                if (error) {
+                    resolve({ healthy: false, error: 'Service not found' });
+                } else {
+                    const running = stdout.includes('RUNNING');
+                    resolve({ healthy: running, status: running ? 'RUNNING' : 'STOPPED' });
+                }
+            });
+        });
+    }
+
+    // HTTP-based health check for Node.js services
     return new Promise((resolve) => {
         const req = http.get({
             hostname: 'localhost',
@@ -169,11 +196,11 @@ async function checkServiceHealth(serviceId) {
         }, (res) => {
             resolve({ healthy: res.statusCode === 200, statusCode: res.statusCode });
         });
-        
+
         req.on('error', (err) => {
             resolve({ healthy: false, error: err.message });
         });
-        
+
         req.on('timeout', () => {
             req.destroy();
             resolve({ healthy: false, error: 'Timeout' });
@@ -302,9 +329,17 @@ async function startService(serviceId) {
     state.error = null;
 
     // Check if already running
-    const portInUse = await checkPortInUse(svc.port);
-    if (portInUse) {
-        return { success: true, message: 'Already running' };
+    if (svc.port) {
+        const portInUse = await checkPortInUse(svc.port);
+        if (portInUse) {
+            return { success: true, message: 'Already running' };
+        }
+    } else {
+        // Native service - check via SC query
+        const health = await checkServiceHealth(serviceId);
+        if (health.healthy) {
+            return { success: true, message: 'Already running' };
+        }
     }
 
     log(`[Service] Starting ${svc.name}...`);
@@ -363,6 +398,12 @@ async function stopService(serviceId, graceful = true) {
     }
 
     // Fallback: Force kill by port (in case service is stuck)
+    // Skip for native services without ports
+    if (!svc.port) {
+        log(`[Service] ${svc.name} is a native service, no port to force kill`, 'WARN');
+        return { success: false, error: 'Could not stop native service' };
+    }
+
     log(`[Service] Force stopping ${svc.name} by port...`);
     return new Promise((resolve) => {
         exec(`powershell -Command "Get-NetTCPConnection -LocalPort ${svc.port} -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"`,

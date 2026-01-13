@@ -67,19 +67,21 @@ const AdminKitt = (function() {
             state.ws.close();
         }
         
-        elements.btnRefresh.classList.add('spinning');
+        elements.btnRefresh?.classList.add('spinning');
         state.ws = new WebSocket(`${config.wsProtocol}//${location.host}/chat`);
-        
+
         state.ws.onopen = handleWsOpen;
         state.ws.onclose = handleWsClose;
-        state.ws.onerror = () => elements.btnRefresh.classList.remove('spinning');
+        state.ws.onerror = () => elements.btnRefresh?.classList.remove('spinning');
         state.ws.onmessage = handleWsMessage;
     }
-    
+
     function handleWsOpen() {
-        elements.status.textContent = 'Connected';
-        elements.status.className = 'status connected';
-        elements.btnRefresh.classList.remove('spinning');
+        if (elements.status) {
+            elements.status.textContent = 'Connected';
+            elements.status.className = 'status connected';
+        }
+        elements.btnRefresh?.classList.remove('spinning');
         state.manualDisconnect = false;
         
         if (!sessionStorage.getItem('kittConnected')) {
@@ -162,12 +164,16 @@ const AdminKitt = (function() {
                 updatePendingSendBtn();
                 if (msg.busy) {
                     showThinking();
-                    elements.status.textContent = 'Busy...';
-                    elements.status.className = 'status busy';
+                    if (elements.status) {
+                        elements.status.textContent = 'Busy...';
+                        elements.status.className = 'status busy';
+                    }
                 } else {
                     hideThinking();
-                    elements.status.textContent = 'Connected';
-                    elements.status.className = 'status connected';
+                    if (elements.status) {
+                        elements.status.textContent = 'Connected';
+                        elements.status.className = 'status connected';
+                    }
                 }
                 if (AL) AL.info(msg.busy ? 'Kitt is busy' : 'Kitt is ready');
                 break;
@@ -285,19 +291,42 @@ const AdminKitt = (function() {
     // ==================== MESSAGING ====================
     function send() {
         const text = elements.input.value.trim();
-        if ((!text && state.attachments.length === 0) || !state.ws || state.ws.readyState !== WebSocket.OPEN) return;
-        
+
+        // Check for empty input
+        if (!text && state.attachments.length === 0) {
+            console.log('[Core] Send: No content to send');
+            return;
+        }
+
+        // Check WebSocket connection with user feedback
+        if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
+            console.warn('[Core] Send: WebSocket not connected');
+            addSystemMessage('⚠️ Not connected to Kitt. Reconnecting...');
+            connect();
+            return;
+        }
+
+        // Use TaskProcessor if available for better state management
+        if (typeof TaskProcessor !== 'undefined') {
+            sendViaTaskProcessor(text).catch(err => {
+                console.error('[Core] Unhandled error in sendViaTaskProcessor:', err);
+                addSystemMessage(`❌ Error: ${err.message}`);
+            });
+            return;
+        }
+
+        // Legacy fallback
         if (state.isBusy) {
             showPendingBubble(text);
             elements.input.value = '';
             return;
         }
-        
+
         let displayText = text;
         if (state.attachments.length > 0) {
             displayText += `\n📎 ${state.attachments.length} attachment(s): ${state.attachments.map(a => a.name).join(', ')}`;
         }
-        
+
         addMessage('user', displayText);
 
         // Track last message for thinking bubble
@@ -321,19 +350,89 @@ const AdminKitt = (function() {
             ActivityLog.send(`Sent: "${text.substring(0, 40)}${text.length > 40 ? '...' : ''}"`);
         }
     }
+
+    // New: Send via TaskProcessor for better state management
+    async function sendViaTaskProcessor(text) {
+        let displayText = text;
+        if (state.attachments.length > 0) {
+            displayText += `\n📎 ${state.attachments.length} attachment(s): ${state.attachments.map(a => a.name).join(', ')}`;
+        }
+
+        // Clear input immediately for better UX
+        elements.input.value = '';
+        const attachmentsCopy = [...state.attachments];
+        clearAttachments();
+
+        let task;
+        try {
+            // Submit to TaskProcessor
+            task = await TaskProcessor.submit(text, {
+                source: 'user',
+                metadata: {
+                    attachments: attachmentsCopy.map(a => ({ name: a.name, type: a.type }))
+                }
+            });
+        } catch (err) {
+            console.error('[Core] TaskProcessor submit failed:', err);
+            addSystemMessage(`❌ Failed to submit task: ${err.message}`);
+            // Restore the input text so user doesn't lose their message
+            elements.input.value = text;
+            return;
+        }
+
+        // Log to activity
+        if (typeof ActivityLog !== 'undefined') {
+            ActivityLog.send(`Task ${task.id}: "${text.substring(0, 40)}${text.length > 40 ? '...' : ''}"`);
+        }
+
+        // If task is queued (Claude busy), TaskBubbles will show the state
+        // If processing immediately, also send via WebSocket for server tracking
+        if (task.state === TaskProcessor.TaskState.QUEUED ||
+            task.state === TaskProcessor.TaskState.WAITING_FOR_CLAUDE) {
+            // TaskProcessor handles relay communication
+            // Subscribe to completion
+            const onComplete = ({ task: t, response }) => {
+                if (t.id === task.id) {
+                    addMessage('assistant', response);
+                    if (typeof VoiceEngine !== 'undefined') VoiceEngine.speakResponse(response);
+                    TaskProcessor.off('taskComplete', onComplete);
+                    TaskProcessor.off('taskError', onError);
+                }
+            };
+            const onError = ({ task: t, error }) => {
+                if (t.id === task.id) {
+                    addMessage('error', 'Error: ' + error.message);
+                    TaskProcessor.off('taskComplete', onComplete);
+                    TaskProcessor.off('taskError', onError);
+                }
+            };
+            TaskProcessor.on('taskComplete', onComplete);
+            TaskProcessor.on('taskError', onError);
+        }
+    }
     
     function sendQuick(text) {
         const btn = event?.target?.closest('.admin-btn, .quick-btn');
         if (typeof UIPanels !== 'undefined') UIPanels.closeAll();
-        
-        if (state.isBusy) {
-            showPendingBubble(text);
-            return;
-        }
-        
+
         // Try local execution first on dev machine
         if (config.isDevMachine && typeof LocalCommands !== 'undefined' && LocalCommands.has(text)) {
             LocalCommands.execute(text, btn);
+            return;
+        }
+
+        // Use TaskProcessor if available
+        if (typeof TaskProcessor !== 'undefined') {
+            if (btn) setButtonState(btn, 'loading', '⏳');
+            sendViaTaskProcessor(text).then(() => {
+                if (btn) setTimeout(() => setButtonState(btn, 'success', '✓', 1000), 500);
+            });
+            return;
+        }
+
+        // Legacy fallback
+        if (state.isBusy) {
+            showPendingBubble(text);
             return;
         }
         
@@ -505,6 +604,7 @@ const AdminKitt = (function() {
     
     // ==================== STATUS ====================
     function updateKittStatus() {
+        if (!elements.kittStatus) return; // Element doesn't exist in v3.0 layout
         if (state.isBusy) {
             elements.kittStatus.textContent = '💭';
             elements.kittStatus.classList.add('busy');
@@ -600,17 +700,20 @@ const AdminKitt = (function() {
         state.attachments = state.attachments.filter(a => a.id !== id);
         const item = elements.attachmentPreview.querySelector(`[data-id="${id}"]`);
         if (item) item.remove();
-        if (state.attachments.length === 0) elements.attachmentPreview.classList.remove('active');
+        if (state.attachments.length === 0) elements.attachmentPreview?.classList.remove('active');
     }
-    
+
     function clearAttachments() {
         state.attachments = [];
-        elements.attachmentPreview.innerHTML = '';
-        elements.attachmentPreview.classList.remove('active');
+        if (elements.attachmentPreview) {
+            elements.attachmentPreview.innerHTML = '';
+            elements.attachmentPreview.classList.remove('active');
+        }
     }
     
     // ==================== COST TRACKING ====================
     async function updateHeaderCost() {
+        if (!elements.headerCost) return; // Element doesn't exist in v3.0 layout
         try {
             const response = await fetch(`http://${config.baseHost}:8585/api/usage`);
             const data = await response.json();
@@ -775,7 +878,7 @@ const AdminKitt = (function() {
             const relayEl = document.getElementById('sp-relay-status');
             if (relayEl) {
                 try {
-                    const relayRes = await fetch('http://localhost:8600/api/health');
+                    const relayRes = await fetch('http://127.0.0.1:8600/api/health');
                     const relayData = await relayRes.json();
                     relayEl.innerHTML = `<span class="status-ready">🟢 ${relayData.queue.pending} pending</span>`;
                 } catch {
@@ -797,7 +900,7 @@ const AdminKitt = (function() {
             const dimEl = document.getElementById('sp-dim-status');
             if (dimEl) {
                 try {
-                    const dimRes = await fetch('http://localhost:8080/api/status');
+                    const dimRes = await fetch('http://127.0.0.1:8080/api/status');
                     const dimData = await dimRes.json();
                     if (dimData.connected || dimData.status === 'ok') {
                         dimEl.innerHTML = `<span class="status-ready">🟢 Connected</span>`;
@@ -837,22 +940,31 @@ const AdminKitt = (function() {
     
     // ==================== INITIALIZATION ====================
     function init() {
+        console.log('[Core] Init starting...');
         cacheElements();
-        
-        // Event listeners
-        elements.btnSend.addEventListener('click', send);
-        elements.input.addEventListener('keypress', (e) => { if (e.key === 'Enter') send(); });
-        elements.btnRefresh.addEventListener('click', () => { addMessage('system', 'Reconnecting...'); connect(); });
-        
+        console.log('[Core] Elements cached:', {
+            btnSend: !!elements.btnSend,
+            input: !!elements.input,
+            ws: !!state.ws
+        });
+
+        // Event listeners (with null checks for v3.0 compatibility)
+        elements.btnSend?.addEventListener('click', () => {
+            console.log('[Core] Send button clicked');
+            send();
+        });
+        elements.input?.addEventListener('keypress', (e) => { if (e.key === 'Enter') send(); });
+        elements.btnRefresh?.addEventListener('click', () => { addMessage('system', 'Reconnecting...'); connect(); });
+
         // Attachment handlers
-        document.getElementById('btn-attach').addEventListener('click', () => elements.fileInput.click());
-        elements.fileInput.addEventListener('change', (e) => {
+        document.getElementById('btn-attach')?.addEventListener('click', () => elements.fileInput?.click());
+        elements.fileInput?.addEventListener('change', (e) => {
             Array.from(e.target.files).forEach(file => addAttachment(file));
             elements.fileInput.value = '';
         });
-        
+
         // Clipboard paste
-        elements.input.addEventListener('paste', (e) => {
+        elements.input?.addEventListener('paste', (e) => {
             const items = e.clipboardData?.items;
             if (!items) return;
             for (const item of items) {
@@ -863,24 +975,24 @@ const AdminKitt = (function() {
                 }
             }
         });
-        
+
         // Ctrl+U shortcut
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'u') {
                 e.preventDefault();
-                elements.fileInput.click();
+                elements.fileInput?.click();
             }
         });
-        
+
         // NTT button
-        document.getElementById('btn-ntt').addEventListener('click', loadNextTodo);
+        document.getElementById('btn-ntt')?.addEventListener('click', loadNextTodo);
         
         // Pending bubble buttons
         document.querySelector('.pending-cancel')?.addEventListener('click', hidePendingBubble);
         
         // Voice recognition
         initVoice();
-        
+
         // Connect WebSocket
         connect();
         
@@ -888,10 +1000,10 @@ const AdminKitt = (function() {
         updateHeaderCost();
         setInterval(updateHeaderCost, 30000);
 
-        // Initialize status panel
-        createStatusPanel();
-        updateStatusPanel();
-        setInterval(updateStatusPanel, 2000);
+        // Status panel disabled in v3.0 - dashboard has its own status indicators
+        // createStatusPanel();
+        // updateStatusPanel();
+        // setInterval(updateStatusPanel, 2000);
 
         console.log(`🤖 Admin Kitt v2.0.0 initialized (${config.isDevMachine ? 'Dev' : 'Remote'} mode)`);
     }
@@ -1001,3 +1113,56 @@ const AdminKitt = (function() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', AdminKitt.init);
+
+// All Tasks panel - fetch and display relay tasks
+async function refreshAllTasks() {
+    const container = document.getElementById('all-tasks-list');
+    if (!container) return;
+
+    try {
+        const res = await fetch(`http://${location.hostname}:8600/api/queue`);
+        const data = await res.json();
+        const tasks = data.messages || [];
+
+        if (tasks.length === 0) {
+            container.innerHTML = '<div style="padding: 12px; color: var(--text-muted); text-align: center; font-size: 11px;">No tasks</div>';
+            return;
+        }
+
+        const statusColors = {
+            pending: '#f59e0b',
+            processing: '#4a9eff',
+            completed: '#22c55e',
+            failed: '#ef4444'
+        };
+
+        container.innerHTML = tasks.slice(0, 10).map(task => `
+            <div style="padding: 8px 12px; border-bottom: 1px solid var(--border-dim); font-size: 11px; display: flex; align-items: center; gap: 8px;">
+                <span style="color: ${statusColors[task.status] || '#888'};">●</span>
+                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${task.preview || 'Task'}</span>
+                <span style="color: var(--text-muted); font-size: 10px;">${task.status}</span>
+            </div>
+        `).join('');
+    } catch (err) {
+        container.innerHTML = '<div style="padding: 12px; color: var(--text-muted); text-align: center; font-size: 11px;">Failed to load</div>';
+    }
+}
+
+// Auto-refresh all tasks on load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(refreshAllTasks, 1000);
+    setInterval(refreshAllTasks, 10000);
+});
+
+// Header clock
+function updateClock() {
+    const el = document.getElementById('clock-time');
+    if (el) {
+        const now = new Date();
+        el.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+}
+document.addEventListener('DOMContentLoaded', () => {
+    updateClock();
+    setInterval(updateClock, 1000);
+});

@@ -1,309 +1,349 @@
 <!DOCTYPE html>
 <!--
-  Admin Kitt - SimWidget Agent UI
-  Version: v2.0.0
-  Last updated: 2026-01-10
-  
-  Modular refactor with:
-  - Separated CSS (styles/main.css)
-  - Modular JavaScript (modules/*.js)
-  - Fixed emoji encoding issues
-  - Removed duplicate CSS definitions
-  - Improved maintainability
-  
-  Changelog:
-  - v2.0.0: Complete modular refactor
-  - v1.3.0: Previous monolithic version
+  Admin Kitt - SimWidget Command Center
+  Version: v3.0.0
+  Last updated: 2026-01-11
+
+  Complete redesign with:
+  - Sidebar navigation
+  - Dashboard cards
+  - Chat panel for Kitt
 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SimWidget Agent - Kitt v2.0.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget Command Center v3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-    <div class="header">
-        <button class="btn-menu" id="btn-menu" title="Menu">☰</button>
-        <h1>🤖 Admin Kitt <span id="kitt-status" class="kitt-status">✨</span></h1>
-        <div class="header-right">
-            <button class="btn-todo" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
-            <div class="compact-status" id="compact-status" title="Click for services panel">
-                <span class="compact-dot" id="dot-master" data-service="master" data-port="8500" title="Master :8500"></span>
-                <span class="compact-dot" id="dot-simwidget" data-service="simwidget" data-port="8080" title="SimWidget :8080"></span>
-                <span class="compact-dot" id="dot-agent" data-service="agent" data-port="8585" title="Agent :8585"></span>
-                <span class="compact-dot" id="dot-remote" data-service="remote" data-port="8590" title="Remote :8590"></span>
-                <span class="compact-dot" id="dot-relay" data-service="relay" data-port="8600" title="Relay :8600"></span>
-                <span class="compact-dot" id="dot-bridge" data-service="bridge" data-port="8601" title="Bridge :8601"></span>
-                <span class="compact-separator">|</span>
-                <span class="header-cost" id="header-cost" onclick="event.stopPropagation(); toggleCostReport()" title="Today's cost">$0.00</span>
-            </div>
-            <div class="quick-actions" id="quick-actions">
-                <button class="qa-btn" data-cmd="inspect" title="Debug Inspector (Ctrl+Alt+Shift+D)">🔍</button>
-                <button class="qa-btn" data-cmd="not working" title="Report Not Working">❌</button>
-                <button class="qa-btn" data-cmd="fix" title="Fix Issue">🔧</button>
-                <button class="qa-btn" data-cmd="upgrade functionality" title="Upgrade">⬆️</button>
-                <button class="qa-btn" data-cmd="add content" title="Add Content">➕</button>
-                <button class="qa-btn danger" data-cmd="remove" title="Remove Element">🗑️</button>
-            </div>
-            <button class="btn-services" id="btn-services" title="Services">⚙️</button>
-            <button class="btn-refresh" id="btn-refresh" title="Reconnect">🔄</button>
-            <div class="status" id="status">Disconnected</div>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">✈️</div>
+            <div class="logo-text">Sim<span>Widget</span></div>
         </div>
-    </div>
 
-    <!-- Admin Menu -->
-    <div class="overlay" id="admin-overlay"></div>
-    <div class="admin-menu" id="admin-menu">
-        <div class="admin-header"><h2>Admin</h2><button class="btn-close" id="btn-close-admin">×</button></div>
-        <div class="admin-content">
-            <div class="section-label">SERVERS</div>
-            <div class="server-controls" id="server-controls">
-                <!-- Mode Toggle -->
-                <div class="mode-toggle-row">
-                    <span class="mode-label">Mode:</span>
-                    <button class="mode-btn" id="mode-dev" onclick="setServiceMode('dev')">🛠️ Dev</button>
-                    <button class="mode-btn" id="mode-service" onclick="setServiceMode('service')">🪟 Service</button>
-                    <span class="mode-status" id="mode-status"></span>
-                </div>
+        <div class="header-title">
+            <h1>Command Center</h1>
+            <p>System overview and quick actions</p>
+        </div>
 
-                <!-- Server Rows -->
-                <div class="server-row" data-server="master">
-                    <span class="server-dot" id="dot-master"></span>
-                    <div class="server-info">
-                        <span class="server-name">Master (O)</span>
-                        <span class="server-mode" id="mode-master">orchestrator</span>
-                    </div>
-                    <span class="server-port">:8500</span>
-                    <div class="server-controls-btns">
-                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8500','_blank')" title="Open">↗</button>
-                    </div>
-                </div>
-                <div class="server-row" data-server="simwidget">
-                    <span class="server-dot" id="dot-simwidget"></span>
-                    <div class="server-info">
-                        <span class="server-name">Main Server</span>
-                        <span class="server-mode" id="mode-simwidget"></span>
-                    </div>
-                    <span class="server-port">:8080</span>
-                    <div class="server-controls-btns">
-                        <button class="server-btn start" onclick="startServer('simwidget')" title="Start">▶</button>
-                        <button class="server-btn restart" onclick="restartServer('simwidget')" title="Restart">🔄</button>
-                        <button class="server-btn stop" onclick="stopServer('simwidget')" title="Stop">■</button>
-                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8080','_blank')" title="Open">↗</button>
-                    </div>
-                </div>
-                <div class="server-row" data-server="agent">
-                    <span class="server-dot" id="dot-agent"></span>
-                    <div class="server-info">
-                        <span class="server-name">Agent (Kitt)</span>
-                        <span class="server-mode" id="mode-agent"></span>
-                    </div>
-                    <span class="server-port">:8585</span>
-                    <div class="server-controls-btns">
-                        <button class="server-btn start" onclick="startServer('agent')" title="Start">▶</button>
-                        <button class="server-btn restart" onclick="restartServer('agent')" title="Restart">🔄</button>
-                        <button class="server-btn stop" onclick="stopServer('agent')" title="Stop">■</button>
-                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8585','_blank')" title="Open">↗</button>
-                    </div>
-                </div>
-                <div class="server-row" data-server="remote">
-                    <span class="server-dot" id="dot-remote"></span>
-                    <div class="server-info">
-                        <span class="server-name">Remote Support</span>
-                        <span class="server-mode" id="mode-remote"></span>
-                    </div>
-                    <span class="server-port">:8590</span>
-                    <div class="server-controls-btns">
-                        <button class="server-btn start" onclick="startServer('remote')" title="Start">▶</button>
-                        <button class="server-btn restart" onclick="restartServer('remote')" title="Restart">🔄</button>
-                        <button class="server-btn stop" onclick="stopServer('remote')" title="Stop">■</button>
-                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8590','_blank')" title="Open">↗</button>
-                    </div>
-                </div>
-                <div class="server-row" data-server="relay">
-                    <span class="server-dot" id="dot-relay"></span>
-                    <div class="server-info">
-                        <span class="server-name">Relay Service</span>
-                        <span class="server-mode" id="mode-relay">node</span>
-                    </div>
-                    <span class="server-port">:8600</span>
-                    <div class="server-controls-btns">
-                        <button class="server-btn start" onclick="startServer('relay')" title="Start">▶</button>
-                        <button class="server-btn restart" onclick="restartServer('relay')" title="Restart">🔄</button>
-                        <button class="server-btn stop" onclick="stopServer('relay')" title="Stop">■</button>
-                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8600','_blank')" title="Open">↗</button>
-                    </div>
-                </div>
-                <div class="server-row" data-server="bridge">
-                    <span class="server-dot" id="dot-bridge"></span>
-                    <div class="server-info">
-                        <span class="server-name">Claude Bridge</span>
-                        <span class="server-mode" id="mode-bridge">node</span>
-                    </div>
-                    <span class="server-port">:8601</span>
-                    <div class="server-controls-btns">
-                        <button class="server-btn start" onclick="startServer('bridge')" title="Start">▶</button>
-                        <button class="server-btn restart" onclick="restartServer('bridge')" title="Restart">🔄</button>
-                        <button class="server-btn stop" onclick="stopServer('bridge')" title="Stop">■</button>
-                        <button class="server-btn link" onclick="window.open('http://'+location.hostname+':8601','_blank')" title="Open">↗</button>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div style="margin-top: 10px; display: flex; gap: 8px;">
-                    <button class="admin-btn" onclick="startAllServers()" style="flex:1;">🚀 Start All<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
-                    <button class="admin-btn" onclick="checkAllServers()" style="flex:1;">🔍 Check<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
-                    <button class="admin-btn" onclick="stopAllServers()" style="flex:1;">⏹️ Stop All<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
-                </div>
-                <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
-                    <button class="admin-btn" id="relay-toggle" onclick="toggleRelayMode()" style="flex:1;">🔄 Relay: <span id="relay-status">OFF</span></button>
-                    <span id="relay-queue" style="font-size: 11px; color: #888;">Q:0</span>
-                </div>
-                <div style="margin-top: 8px;">
-                    <button class="admin-btn" id="model-toggle" onclick="toggleModel()" style="width:100%;">🧠 Model: <span id="model-name">Sonnet 4</span></button>
-                </div>
+        <div class="header-status" id="header-status">
+            <div class="status-item" id="msfs-aircraft">
+                <span class="icon">✈️</span>
+                <span class="value">No Aircraft</span>
             </div>
-            
-            <div class="section-label">QUICK COMMANDS</div>
-            <div class="admin-buttons">
-                <button class="admin-btn" onclick="AdminKitt.sendQuick('run tests')">🧪 Tests<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
-                <button class="admin-btn" onclick="AdminKitt.sendQuick('show errors')">⚠️ Errors<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
-                <button class="admin-btn" onclick="AdminKitt.sendQuick('sync to github')">📤 Git Sync<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+            <div class="status-item" id="msfs-location">
+                <span class="icon">📍</span>
+                <span class="value">---</span>
             </div>
-            
-            <div class="section-label">WIDGETS</div>
-            <div class="admin-buttons">
-                <button class="admin-btn" onclick="AdminKitt.sendQuick('list widgets')">🎛️ List All<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
-                <button class="admin-btn" onclick="AdminKitt.sendQuick('create widget')">➕ New Widget<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+            <div class="status-item" id="msfs-time">
+                <span class="icon">⏱️</span>
+                <span class="value">00:00:00</span>
             </div>
-            
-            <div class="section-label">LINKS</div>
-            <div class="admin-buttons">
-                <button class="admin-btn" onclick="window.open('http://' + location.hostname + ':8080', '_blank')">🚀 SimWidget UI<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-                <button class="admin-btn" onclick="showCostReport()">💰 API Costs<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-                <button class="admin-btn" onclick="showDevTracker()">📈 Dev Tracker<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-            </div>
-            
-            <div class="section-label">LOGS</div>
-            <div class="admin-buttons">
-                <button class="admin-btn" onclick="ActivityLog.show(); ActivityLog.switchToServer('agent')">🤖 Agent Log<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-                <button class="admin-btn" onclick="ActivityLog.show(); ActivityLog.switchToServer('errors')">⚠️ Errors<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-                <button class="admin-btn" onclick="ActivityLog.show(); ActivityLog.switchToServer('usage')">📊 Usage<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-            </div>
-            
-            <div class="section-label">🛠️ TROUBLESHOOTING</div>
-            <div id="trouble-alerts" style="padding: 0 12px 8px 12px;"></div>
-            <div class="admin-buttons">
-                <button class="admin-btn" onclick="resetKitt()">🔄 Reset Kitt<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
-                <button class="admin-btn" onclick="showQueuePanel()">📬 View Queue<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
-                <button class="admin-btn" onclick="window.open('http://' + location.hostname + ':8600', '_blank')">🔗 Relay UI<div class="component-indicators"><span class="indicator-free">🆓</span></div></button>
-            </div>
-            
-            <div class="section-label">🎮 GAMING DEVICES</div>
-            <div id="device-status" style="padding: 0 12px 8px 12px; font-size: 11px; color: #888;"></div>
-            <div class="admin-buttons">
-                <button class="admin-btn" onclick="disableGamingDevices()">🚫 Disable All<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-                <button class="admin-btn" onclick="enableGamingDevices()">✅ Enable All<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-                <button class="admin-btn" onclick="showGamingDevices()">📋 List Devices<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-            </div>
-            
-            <div class="section-label">NOTES</div>
-            <div class="notes-section">
-                <textarea id="admin-notes" placeholder="Quick notes..." rows="6"></textarea>
-                <button class="admin-btn notes-save" onclick="saveNotes()">💾 Save Notes<div class="component-indicators"><span class="indicator-free">🆓</span><span class="indicator-local">💻</span></div></button>
-            </div>
-            
-            <div class="section-label">QUICK REFERENCE</div>
-            <div class="quick-ref-section" id="quick-ref-section" style="padding: 0 12px; font-size: 11px; color: #888; line-height: 1.8;">
-                <div class="quick-ref-loading">Loading...</div>
-            </div>
-            
-            <div style="padding: 8px 12px;">
-                <button class="admin-btn" onclick="showTodoInsight()" style="width: 100%;">💡 TODO Insights<div class="component-indicators"><span class="indicator-tokens">🪙</span><span class="indicator-kitt">🤖</span></div></button>
+            <div class="status-item" id="header-clock">
+                <span class="icon">🕐</span>
+                <span class="value" id="clock-time">--:--</span>
             </div>
         </div>
-    </div>
 
-    <!-- Cost Report Modal -->
-    <div class="cost-modal" id="cost-modal">
-        <div class="log-header"><h2>💰 API Usage & Costs</h2><button class="btn-close" id="btn-close-cost">×</button></div>
-        <div class="cost-content" id="cost-content">
-            <div class="cost-card">
-                <h3>Today</h3>
-                <div class="cost-row"><span class="cost-label">Requests</span><span class="cost-value" id="today-requests">-</span></div>
-                <div class="cost-row"><span class="cost-label">Input Tokens</span><span class="cost-value" id="today-input">-</span></div>
-                <div class="cost-row"><span class="cost-label">Output Tokens</span><span class="cost-value" id="today-output">-</span></div>
-                <div class="cost-row"><span class="cost-label">Cost</span><span class="cost-value highlight" id="today-cost">$0.00</span></div>
+        <div class="header-actions">
+            <div class="header-claude-status">
+                <button class="header-btn" id="btn-output" onclick="OutputBubble.toggle()" title="Claude Activity">🤖</button>
+                <span class="claude-status-text" id="header-claude-status">Ready</span>
             </div>
-            <div class="cost-card">
-                <h3>All Time</h3>
-                <div class="cost-row"><span class="cost-label">Requests</span><span class="cost-value" id="total-requests">-</span></div>
-                <div class="cost-row"><span class="cost-label">Input Tokens</span><span class="cost-value" id="total-input">-</span></div>
-                <div class="cost-row"><span class="cost-label">Output Tokens</span><span class="cost-value" id="total-output">-</span></div>
-                <div class="cost-row"><span class="cost-label">Total Cost</span><span class="cost-value highlight" id="total-cost">$0.00</span></div>
-            </div>
-            <div class="cost-card">
-                <h3>📊 Projected Costs</h3>
-                <div class="cost-row"><span class="cost-label">Daily Avg</span><span class="cost-value" id="proj-daily">$0.00</span></div>
-                <div class="cost-row"><span class="cost-label">Weekly</span><span class="cost-value" id="proj-weekly">$0.00</span></div>
-                <div class="cost-row"><span class="cost-label">Monthly</span><span class="cost-value highlight" id="proj-monthly">$0.00</span></div>
-                <div class="cost-row"><span class="cost-label">Yearly</span><span class="cost-value" id="proj-yearly">$0.00</span></div>
-            </div>
-            <div class="cost-card cost-history">
-                <h3>Last 7 Days</h3>
-                <div id="cost-history"></div>
-            </div>
-            <div class="cost-card cost-history">
-                <h3>Monthly Breakdown</h3>
-                <div id="cost-months"></div>
-            </div>
+            <button class="header-btn" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
+            <button class="header-btn" id="btn-voice-entry" onclick="showVoiceEntryModal()" title="Voice Entry">🎤</button>
+            <button class="header-btn" id="btn-settings" title="Settings">⚙️</button>
+            <button class="header-btn" id="btn-help" title="Help">❓</button>
         </div>
+    </header>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <div class="nav-item active" data-page="dashboard">
+                        <span class="icon">📊</span>
+                        <span class="label">Dashboard</span>
+                    </div>
+                    <div class="nav-item" data-page="services">
+                        <span class="icon">🔧</span>
+                        <span class="label">Services</span>
+                        <span class="arrow">›</span>
+                    </div>
+                    <div class="nav-submenu" id="services-submenu">
+                        <div class="nav-item" onclick="showServiceDetails('master')">Master O</div>
+                        <div class="nav-item" onclick="showServiceDetails('simwidget')">DIM Server</div>
+                        <div class="nav-item" onclick="showServiceDetails('agent')">Agent (Kitt)</div>
+                        <div class="nav-item" onclick="showServiceDetails('relay')">Relay Queue</div>
+                    </div>
+                    <div class="nav-item" data-page="widgets">
+                        <span class="icon">🎛️</span>
+                        <span class="label">Widgets</span>
+                    </div>
+                    <div class="nav-item" data-page="logs" onclick="ActivityLog.show()">
+                        <span class="icon">📝</span>
+                        <span class="label">Logs</span>
+                        <span class="badge" id="error-count" style="display:none">0</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Quick Actions</div>
+                    <div class="nav-item" onclick="showCompletedTasks()">
+                        <span class="icon">📋</span>
+                        <span class="label">Tasks</span>
+                    </div>
+                    <div class="nav-item" onclick="ClaudeTerminal.show()">
+                        <span class="icon">🤖</span>
+                        <span class="label">Claude</span>
+                    </div>
+                    <div class="nav-item" onclick="clearRelayQueue()">
+                        <span class="icon">🗑️</span>
+                        <span class="label">Clear Queue</span>
+                    </div>
+                    <div class="nav-item" onclick="clearLogs()">
+                        <span class="icon">🧹</span>
+                        <span class="label">Clear Logs</span>
+                    </div>
+                    <div class="nav-item" onclick="AdminKitt.sendQuick('sync to github')">
+                        <span class="icon">📤</span>
+                        <span class="label">Git Sync</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Widgets</div>
+                    <div class="nav-item" onclick="window.open('file:///C:/DevOSWE/msfs-panel/test.html','_blank')">
+                        <span class="icon">🧪</span>
+                        <span class="label">MSFS Panel Test</span>
+                    </div>
+                    <div class="nav-item" onclick="window.open('http://'+location.hostname+':8080','_blank')">
+                        <span class="icon">✈️</span>
+                        <span class="label">DIM Server UI</span>
+                    </div>
+                    <div class="nav-item" onclick="showCompletedTasks()">
+                        <span class="icon">✅</span>
+                        <span class="label">Completed Tasks</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Tools</div>
+                    <div class="nav-item" onclick="DebugInspector.toggle()">
+                        <span class="icon">🔍</span>
+                        <span class="label">Debug Inspector</span>
+                    </div>
+                    <div class="nav-item" onclick="window.open('http://'+location.hostname+':8600/task-history.html','_blank')">
+                        <span class="icon">📊</span>
+                        <span class="label">Task History</span>
+                    </div>
+                    <div class="nav-item" onclick="showDocsCenter()">
+                        <span class="icon">📚</span>
+                        <span class="label">Documentation</span>
+                    </div>
+                    <div class="nav-item" onclick="showDocAdmin()">
+                        <span class="icon">📄</span>
+                        <span class="label">Doc Admin</span>
+                    </div>
+                    <div class="nav-item" onclick="TodoModule.toggle()">
+                        <span class="icon">📋</span>
+                        <span class="label">TODO List</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <div class="nav-item" onclick="showSettingsModal()">
+                        <span class="icon">⚙️</span>
+                        <span class="label">Settings</span>
+                    </div>
+                    <div class="nav-item" onclick="showCostReport()">
+                        <span class="icon">💰</span>
+                        <span class="label">Cost Report</span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <div class="user-name">Admin</div>
+                        <div class="user-role">Developer</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main" id="main-content">
+            <div class="dashboard-grid">
+                <!-- System Health Card -->
+                <div class="card card-health">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">💚</span>
+                            System Health
+                        </div>
+                        <div class="header-services" id="header-services">
+                            <div class="service-dot" id="hdot-master" title="Master"></div>
+                            <div class="service-dot" id="hdot-simwidget" title="DIM"></div>
+                            <div class="service-dot" id="hdot-agent" title="Agent"></div>
+                            <div class="service-dot" id="hdot-relay" title="Relay"></div>
+                            <div class="service-dot" id="hdot-remote" title="Remote"></div>
+                            <div class="service-dot" id="hdot-keysender" title="KeySender"></div>
+                            <span class="service-label" id="service-count">0/6</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="checkAllServers()" title="Refresh">🔄</button>
+                            <button class="card-btn" onclick="restartAllServers()" title="Restart All">⚡</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-health')" title="Minimize">−</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="services-grid" id="services-grid">
+                            <!-- Services populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MSFS Connection Card -->
+                <div class="card card-msfs">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">✈️</span>
+                            MSFS Connection
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="reconnectMSFS()" title="Reconnect">🔄</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-msfs')" title="Minimize">−</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="msfs-status">
+                            <div class="msfs-icon">✈️</div>
+                            <div class="msfs-info">
+                                <h4 id="aircraft-name">No Aircraft</h4>
+                                <p id="simconnect-status" class="disconnected">● SimConnect Disconnected</p>
+                            </div>
+                        </div>
+                        <div class="flight-data">
+                            <div class="flight-stat">
+                                <div class="flight-stat-label">Altitude</div>
+                                <div class="flight-stat-value"><span id="stat-altitude">---</span><span class="flight-stat-unit">ft</span></div>
+                            </div>
+                            <div class="flight-stat">
+                                <div class="flight-stat-label">Speed</div>
+                                <div class="flight-stat-value"><span id="stat-speed">---</span><span class="flight-stat-unit">kts</span></div>
+                            </div>
+                            <div class="flight-stat">
+                                <div class="flight-stat-label">Heading</div>
+                                <div class="flight-stat-value"><span id="stat-heading">---</span><span class="flight-stat-unit">°</span></div>
+                            </div>
+                            <div class="flight-stat">
+                                <div class="flight-stat-label">Fuel</div>
+                                <div class="flight-stat-value"><span id="stat-fuel">---</span><span class="flight-stat-unit">%</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Monitor Card -->
+                <div class="card card-activity">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📊</span>
+                            Activity Monitor
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="ActivityLog.toggle()" title="Expand">↗</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-activity')" title="Minimize">−</button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 0; max-height: 150px; overflow-y: auto;">
+                        <div id="activity-mini-log" class="activity-mini-log"></div>
+                    </div>
+                </div>
+
+                <!-- Claude Terminal Card -->
+                <div class="card card-claude-terminal">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">🤖</span>
+                            Claude Terminal
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="ClaudeTerminal.show()" title="Expand">↗</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-claude-terminal')" title="Minimize">−</button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 0; max-height: 150px; overflow-y: auto;">
+                        <div id="claude-terminal-mini" class="claude-terminal-mini">
+                            <div style="padding: 12px; color: var(--text-muted); text-align: center; font-size: 11px;">Click ↗ to open terminal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Kitt Chat Panel -->
+        <aside class="chat-panel" id="chat-panel">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <div class="kitt-avatar" id="kitt-avatar">🤖</div>
+                    <div class="kitt-info">
+                        <h3>Kitt's Tasks</h3>
+                        <p id="kitt-status-text">● Online</p>
+                    </div>
+                </div>
+                <button class="card-btn" onclick="toggleChatPanel()" title="Collapse">◀</button>
+            </div>
+
+            <div class="chat-messages" id="chat"></div>
+
+            <!-- Task Bubbles Container -->
+            <div class="task-bubbles-container" id="task-bubbles-container"></div>
+
+            <div class="chat-quick-actions">
+                <button class="quick-cmd" onclick="AdminKitt.sendQuick('status')">📊 Status</button>
+                <button class="quick-cmd" onclick="sendNTT()">📝 NTT</button>
+                <button class="quick-cmd" onclick="AdminKitt.sendQuick('clear')">🗑️ Clear</button>
+                <button class="quick-cmd" onclick="AdminKitt.sendQuick('help')">❓ Help</button>
+            </div>
+
+            <div class="chat-input-area">
+                <div class="chat-input-wrapper">
+                    <input type="text" class="chat-input" id="message-input" placeholder="Message Kitt..." autocomplete="off">
+                    <button class="chat-voice-btn" id="btn-voice" title="Voice">🎤</button>
+                    <button class="chat-send-btn" id="btn-send">➤</button>
+                </div>
+            </div>
+
+            <!-- Todo Panel Container - TodoModule renders here -->
+            <div id="todo-panel-container"></div>
+        </aside>
     </div>
 
-    <div class="quick-actions">
-        <button class="quick-btn" onclick="AdminKitt.sendQuick('server status')">Status</button>
-        <button class="quick-btn" onclick="AdminKitt.sendQuick('restart server')">Restart</button>
-        <button class="quick-btn" onclick="AdminKitt.sendQuick('run tests')">Tests</button>
-        <button class="quick-btn" onclick="AdminKitt.sendQuick('list widgets')">Widgets</button>
-        <button class="quick-btn" onclick="AdminKitt.sendQuick('sync to github')">Git Sync</button>
-    </div>
-
-    <div class="chat-container" id="chat"></div>
-
-    <!-- Pending Task Bubble -->
-    <div class="pending-bubble" id="pending-bubble">
-        <div class="pending-text" id="pending-text" onclick="AdminKitt.copyPendingText()" title="Click to copy"></div>
-        <div class="pending-actions">
-            <button class="pending-btn pending-send" id="pending-send-btn" onclick="AdminKitt.sendPending()" disabled>Send (when ready)</button>
-            <button class="pending-btn pending-todo" onclick="AdminKitt.addTodo()">TODO:</button>
-            <select class="priority-select" id="priority-select">
-                <option value="mustdo">⚡ MUSTDO</option>
-                <option value="high">High</option>
-                <option value="medium" selected>Medium</option>
-                <option value="low">Low</option>
-            </select>
-            <button class="pending-btn pending-cancel">✕</button>
-        </div>
-    </div>
-
-    <!-- Attachment Preview -->
-    <div class="attachment-preview" id="attachment-preview"></div>
-
-    <div class="input-container">
-        <input type="file" id="file-input" multiple hidden accept="image/*,.pdf,.txt,.js,.json,.md,.html,.css">
-        <div class="input-wrapper">
-            <button class="btn-attach" id="btn-attach" title="Attach file (Ctrl+U)">📎</button>
-            <input type="text" id="message-input" placeholder="Message Kitt... (paste images here)" autocomplete="off">
-            <button class="btn-ntt" id="btn-ntt" title="Next Todo Task">NTT</button>
-            <button class="btn btn-voice" id="btn-voice" title="Voice input">🎤</button>
-        </div>
-        <button class="btn btn-send" id="btn-send" title="Send">➤</button>
-    </div>
+    <!-- Hidden file input for attachments -->
+    <input type="file" id="file-input" multiple hidden accept="image/*,.pdf,.txt,.js,.json,.md,.html,.css">
 
     <!-- Module Scripts -->
     <script src="modules/debug-inspector.js"></script>
     <script src="modules/voice-engine.js"></script>
+    <script src="modules/claude-terminal.js"></script>
+    <script src="modules/relay-ws.js"></script>
+    <script src="modules/heather.js"></script>
+    <script src="modules/shi-zhen-xiang.js"></script>
+    <script src="modules/team-tasks.js"></script>
+    <script src="modules/task-processor.js"></script>
+    <script src="modules/claude-status.js"></script>
+    <script src="modules/task-bubbles.js"></script>
     <script src="modules/core.js"></script>
     <script src="modules/ui-panels.js"></script>
     <script src="modules/services.js"></script>
@@ -312,25 +352,1229 @@
     <script src="modules/relay.js"></script>
     <script src="modules/model.js"></script>
     <script src="modules/devices.js"></script>
+    <script src="modules/remote-clients.js"></script>
     <script src="modules/cost-report.js"></script>
     <script src="modules/menu-utils.js"></script>
     <script src="modules/activity-log.js"></script>
-    
+    <script src="modules/output-bubble.js"></script>
+    <script src="modules/mobile-engine.js"></script>
+    <script src="modules/consumer-status.js"></script>
+    <script src="modules/openai-usage.js"></script>
+
     <!-- Existing Modules -->
     <script src="todo-module.js"></script>
     <script src="component-tester.js"></script>
     <script src="../hot-update/hot-client.js"></script>
-    
+
     <script>
-        // Initialize TODO module
+        // v3.0 Command Center initialization
+        console.log('[CommandCenter] Script loaded');
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('[CommandCenter] DOMContentLoaded fired');
+            // Initialize TODO module
             if (typeof TodoModule !== 'undefined') {
                 TodoModule.init(null, {
                     assistantName: 'Kitt',
                     inputSelector: '#message-input'
                 });
             }
+
+            // Initialize services grid
+            initServicesGrid();
+
+            // Setup nav item clicks
+            setupNavigation();
+
+            // Start service polling
+            startServicePolling();
+
+            // Start MSFS data polling
+            startMSFSPolling();
         });
+
+        // Services configuration
+        const SERVICES = {
+            master: { name: 'Master O', icon: '🎯', port: 8500 },
+            simwidget: { name: 'DIM', icon: '✈️', port: 8080 },
+            agent: { name: 'Agent', icon: '🤖', port: 8585 },
+            relay: { name: 'Relay', icon: '📡', port: 8600 },
+            remote: { name: 'Remote', icon: '📱', port: 8590 },
+            keysender: { name: 'KeySender', icon: '⌨️', port: null, native: true }
+        };
+
+        function initServicesGrid() {
+            const grid = document.getElementById('services-grid');
+            if (!grid) return;
+
+            grid.innerHTML = Object.entries(SERVICES).map(([id, svc]) => `
+                <div class="service-card" data-service="${id}">
+                    <div class="service-card-header">
+                        <span class="service-name">${svc.icon} ${svc.name} <span class="service-port">${svc.port ? ':' + svc.port : 'native'}</span></span>
+                        <span class="service-status offline" id="status-${id}">Offline</span>
+                    </div>
+                    <div class="service-actions">
+                        <button class="service-action-btn" onclick="restartServer('${id}')">Restart</button>
+                        <button class="service-action-btn" onclick="${svc.port ? `window.open('http://'+location.hostname+':${svc.port}','_blank')` : `testService('${id}')`}">${svc.port ? 'Open' : 'Test'}</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const hasArrow = this.querySelector('.arrow');
+                    if (hasArrow) {
+                        this.classList.toggle('expanded');
+                    } else {
+                        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        let servicePollingInterval;
+        function startServicePolling() {
+            console.log('[CommandCenter] startServicePolling called');
+            checkAllServicesStatus();
+            servicePollingInterval = setInterval(checkAllServicesStatus, 10000);
+        }
+
+        async function checkAllServicesStatus() {
+            let onlineCount = 0;
+            console.log('[ServicePoll] Checking services...');
+
+            try {
+                // Get all service statuses from Master O - use 127.0.0.1 to avoid DNS issues
+                const masterUrl = 'http://127.0.0.1:8500/api/status';
+                console.log('[ServicePoll] Fetching from:', masterUrl);
+                const masterResp = await fetch(masterUrl);
+                console.log('[ServicePoll] Master response:', masterResp.status);
+
+                if (masterResp.ok) {
+                    const data = await masterResp.json();
+
+                    // Update Master O itself (it's running if we got here)
+                    updateServiceUI('master', true);
+                    onlineCount++;
+
+                    // Update other services from Master O data
+                    for (const [id, svc] of Object.entries(SERVICES)) {
+                        if (id === 'master') continue;
+
+                        const masterData = data.services?.[id];
+                        const isOnline = masterData?.running && masterData?.healthy;
+
+                        updateServiceUI(id, isOnline);
+                        if (isOnline) onlineCount++;
+                    }
+                } else {
+                    // Master O not responding - mark all offline
+                    for (const id of Object.keys(SERVICES)) {
+                        updateServiceUI(id, false);
+                    }
+                }
+            } catch (err) {
+                // Master O unreachable - mark all offline
+                console.error('[ServicePoll] Fetch error:', err.message, 'URL:', `http://${location.hostname}:8500/api/status`);
+                for (const id of Object.keys(SERVICES)) {
+                    updateServiceUI(id, false);
+                }
+            }
+
+            document.getElementById('service-count').textContent = `${onlineCount}/6`;
+        }
+
+        function updateServiceUI(id, online) {
+            console.log(`[ServicePoll] Update ${id}: ${online ? 'ONLINE' : 'OFFLINE'}`);
+            // Update header dot
+            const hdot = document.getElementById(`hdot-${id}`);
+            if (hdot) {
+                hdot.className = `service-dot ${online ? 'online' : 'offline'}`;
+            }
+
+            // Update card status
+            const status = document.getElementById(`status-${id}`);
+            if (status) {
+                status.className = `service-status ${online ? 'online' : 'offline'}`;
+                status.textContent = online ? 'Online' : 'Offline';
+            }
+        }
+
+        function toggleChatPanel() {
+            document.getElementById('chat-panel').classList.toggle('collapsed');
+            document.querySelector('.main').style.marginRight =
+                document.getElementById('chat-panel').classList.contains('collapsed') ? '0' : '';
+        }
+
+        function toggleServicesPanel() {
+            const servicesNav = document.querySelector('.nav-item[data-page="services"]');
+            if (servicesNav) servicesNav.classList.toggle('expanded');
+        }
+
+        function showServiceDetails(serviceId) {
+            const svc = SERVICES[serviceId];
+            if (svc && svc.port) {
+                window.open(`http://${location.hostname}:${svc.port}`, '_blank');
+            }
+        }
+
+        function showSettingsModal() {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('settings-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'settings-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal" style="width: 400px;">
+                        <div class="modal-header">
+                            <h3>Settings</h3>
+                            <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="setting-group">
+                                <label class="setting-label">Voice</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <select id="voice-select" class="setting-select" onchange="changeVoice(this.value)" style="flex: 1;">
+                                        <option value="">Loading voices...</option>
+                                    </select>
+                                    <button onclick="testVoice()" class="btn-small" title="Test voice">🔊 Test</button>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Voice Rate</label>
+                                <input type="range" id="voice-rate" min="0.5" max="2" step="0.1" value="1"
+                                       onchange="changeVoiceRate(this.value)" class="setting-range">
+                                <span id="voice-rate-value">1.0x</span>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Voice Enabled</label>
+                                <input type="checkbox" id="voice-enabled" checked onchange="toggleVoice(this.checked)">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Populate voices
+            populateVoiceSelect();
+
+            // Show modal
+            modal.classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        // Doc Admin - Documentation management
+        function showDocAdmin() {
+            let modal = document.getElementById('doc-admin-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'doc-admin-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal" style="width: 700px; max-height: 80vh;">
+                        <div class="modal-header">
+                            <h3>📄 Doc Admin</h3>
+                            <button class="modal-close" onclick="closeDocAdmin()">✕</button>
+                        </div>
+                        <div class="modal-body" style="overflow-y: auto;">
+                            <div class="doc-admin-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div class="doc-card" onclick="window.open('http://'+location.hostname+':8600/task-history.html','_blank')" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Task History</div>
+                                    <div style="font-size: 12px; color: #888;">View all past and present tasks</div>
+                                </div>
+                                <div class="doc-card" onclick="showDocsCenter()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">📚</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Documentation</div>
+                                    <div style="font-size: 12px; color: #888;">Project documentation</div>
+                                </div>
+                                <div class="doc-card" onclick="openStandards()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">📏</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Standards</div>
+                                    <div style="font-size: 12px; color: #888;">STANDARDS.md patterns</div>
+                                </div>
+                                <div class="doc-card" onclick="openClaude()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🤖</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">CLAUDE.md</div>
+                                    <div style="font-size: 12px; color: #888;">AI context file</div>
+                                </div>
+                                <div class="doc-card" onclick="openArchitecture()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🏗️</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Architecture</div>
+                                    <div style="font-size: 12px; color: #888;">System architecture</div>
+                                </div>
+                                <div class="doc-card" onclick="openTodo()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">TODO.md</div>
+                                    <div style="font-size: 12px; color: #888;">Development backlog</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #333;">
+                                <div style="font-size: 13px; color: #888; margin-bottom: 12px;">Quick Actions</div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button onclick="AdminKitt.sendQuick('open CLAUDE.md and show summary')" class="btn-secondary" style="font-size: 12px;">📖 Show CLAUDE.md</button>
+                                    <button onclick="AdminKitt.sendQuick('open STANDARDS.md and show summary')" class="btn-secondary" style="font-size: 12px;">📏 Show Standards</button>
+                                    <button onclick="AdminKitt.sendQuick('memstandards')" class="btn-secondary" style="font-size: 12px;">💾 Update Standards</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.onclick = (e) => { if (e.target === modal) closeDocAdmin(); };
+            }
+            modal.classList.add('active');
+        }
+
+        function closeDocAdmin() {
+            const modal = document.getElementById('doc-admin-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function openStandards() { AdminKitt.sendQuick('read STANDARDS.md'); closeDocAdmin(); }
+        function openClaude() { AdminKitt.sendQuick('read CLAUDE.md'); closeDocAdmin(); }
+        function openArchitecture() { AdminKitt.sendQuick('read ARCHITECTURE.md'); closeDocAdmin(); }
+        function openTodo() { AdminKitt.sendQuick('read TODO.md'); closeDocAdmin(); }
+
+        // Voice Entry Modal - manual voice output control
+        function showVoiceEntryModal() {
+            let modal = document.getElementById('voice-entry-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'voice-entry-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal" style="width: 450px;">
+                        <div class="modal-header">
+                            <h3>🎤 Voice Entry</h3>
+                            <button class="modal-close" onclick="closeVoiceEntryModal()">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="setting-group">
+                                <label class="setting-label">Persona</label>
+                                <select id="voice-persona-select" class="setting-select">
+                                    <option value="heather">Heather (UK Female)</option>
+                                    <option value="shizhenxiang">Shǐ zhēn xiāng (Cantonese)</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Message Type</label>
+                                <select id="voice-type-select" class="setting-select">
+                                    <option value="system">System</option>
+                                    <option value="response">Response</option>
+                                    <option value="idle">Idle</option>
+                                    <option value="greeting">Greeting</option>
+                                    <option value="task">Task</option>
+                                    <option value="error">Error</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Text to Speak</label>
+                                <textarea id="voice-entry-text" class="setting-textarea" rows="4"
+                                    placeholder="Enter text for voice output..."></textarea>
+                            </div>
+                            <div class="setting-group" style="display: flex; gap: 10px;">
+                                <button onclick="speakVoiceEntry()" class="btn-primary" style="flex: 1;">
+                                    🔊 Speak
+                                </button>
+                                <button onclick="stopVoiceEntry()" class="btn-secondary">
+                                    ⏹ Stop
+                                </button>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Quick Phrases</label>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    <button onclick="setQuickPhrase('Hello! How can I help you today?')" class="btn-chip">Greeting</button>
+                                    <button onclick="setQuickPhrase('Working on it...')" class="btn-chip">Working</button>
+                                    <button onclick="setQuickPhrase('Done! Task completed successfully.')" class="btn-chip">Done</button>
+                                    <button onclick="setQuickPhrase('Let me think about that for a moment.')" class="btn-chip">Thinking</button>
+                                    <button onclick="setQuickPhrase('Something went wrong. Let me try again.')" class="btn-chip">Error</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Add styles for new elements
+                const style = document.createElement('style');
+                style.textContent = `
+                    .setting-textarea {
+                        width: 100%;
+                        padding: 10px;
+                        background: var(--bg-card, #2a2a3e);
+                        border: 1px solid var(--border-color, #333);
+                        border-radius: 6px;
+                        color: var(--text-primary, #e0e0e0);
+                        font-family: inherit;
+                        font-size: 13px;
+                        resize: vertical;
+                    }
+                    .setting-textarea:focus {
+                        outline: none;
+                        border-color: var(--accent-info, #4a9eff);
+                    }
+                    .btn-primary {
+                        background: var(--accent-info, #4a9eff);
+                        color: #fff;
+                        border: none;
+                        padding: 10px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    }
+                    .btn-primary:hover { opacity: 0.9; }
+                    .btn-secondary {
+                        background: var(--bg-card, #2a2a3e);
+                        color: var(--text-primary, #e0e0e0);
+                        border: 1px solid var(--border-color, #333);
+                        padding: 10px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                    }
+                    .btn-secondary:hover { background: #3a3a4e; }
+                    .btn-chip {
+                        background: var(--bg-card, #2a2a3e);
+                        color: var(--text-muted, #94a3b8);
+                        border: 1px solid var(--border-color, #333);
+                        padding: 4px 10px;
+                        border-radius: 12px;
+                        font-size: 11px;
+                        cursor: pointer;
+                    }
+                    .btn-chip:hover {
+                        background: #3a3a4e;
+                        color: var(--text-primary, #e0e0e0);
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            modal.classList.add('active');
+        }
+
+        function closeVoiceEntryModal() {
+            const modal = document.getElementById('voice-entry-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function setQuickPhrase(text) {
+            const textarea = document.getElementById('voice-entry-text');
+            if (textarea) textarea.value = text;
+        }
+
+        function speakVoiceEntry() {
+            const text = document.getElementById('voice-entry-text').value.trim();
+            const persona = document.getElementById('voice-persona-select').value;
+            const messageType = document.getElementById('voice-type-select').value;
+
+            if (!text) {
+                alert('Please enter text to speak');
+                return;
+            }
+
+            // Determine voice options based on persona
+            let voiceOptions = {
+                messageType: messageType,
+                persona: persona === 'heather' ? 'Heather' : 'Shǐ zhēn xiāng'
+            };
+
+            if (persona === 'shizhenxiang') {
+                voiceOptions.voiceName = '粵語';
+                voiceOptions.rate = 0.85;
+            } else {
+                voiceOptions.voiceName = 'Google UK English Female';
+                voiceOptions.rate = 0.9;
+            }
+
+            // Use VoiceEngine to speak
+            if (typeof VoiceEngine !== 'undefined') {
+                VoiceEngine.speakNow(text, voiceOptions);
+            }
+        }
+
+        function stopVoiceEntry() {
+            if (typeof VoiceEngine !== 'undefined') {
+                VoiceEngine.stopSpeaking();
+            }
+        }
+
+        // Completed Tasks Floatable Window
+        let allTasksFilter = 'all';
+
+        async function showCompletedTasks() {
+            let panel = document.getElementById('tasks-panel');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.id = 'tasks-panel';
+                panel.className = 'floatable-panel';
+                panel.innerHTML = `
+                    <div class="fp-header">
+                        <div class="fp-title">
+                            <span>📋</span>
+                            <span>All Tasks</span>
+                        </div>
+                        <div class="fp-controls">
+                            <button class="fp-btn" onclick="loadCompletedTasks()" title="Refresh">🔄</button>
+                            <button class="fp-btn fp-pin" onclick="togglePanelPin('tasks-panel')" title="Pin/Unpin">📌</button>
+                            <button class="fp-btn" onclick="toggleTasksMinimize()" title="Minimize">─</button>
+                            <button class="fp-btn" onclick="closeCompletedTasksModal()" title="Close">✕</button>
+                        </div>
+                    </div>
+                    <div class="fp-tabs">
+                        <button class="fp-tab active" data-filter="all" onclick="filterTasks('all')">All</button>
+                        <button class="fp-tab" data-filter="pending" onclick="filterTasks('pending')">⏳ Pending</button>
+                        <button class="fp-tab" data-filter="processing" onclick="filterTasks('processing')">💭 Processing</button>
+                        <button class="fp-tab" data-filter="completed" onclick="filterTasks('completed')">✅ Completed</button>
+                        <button class="fp-tab" data-filter="failed" onclick="filterTasks('failed')">❌ Failed</button>
+                    </div>
+                    <div class="fp-body">
+                        <div id="completed-tasks-list" class="completed-tasks-list">
+                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="fp-footer">
+                        <span id="tasks-count" style="color:var(--text-muted);font-size:12px;">0 tasks</span>
+                        <a href="http://localhost:8600" target="_blank" style="color:var(--accent-info);font-size:12px;">Open Relay Queue ↗</a>
+                    </div>
+                `;
+                document.body.appendChild(panel);
+                addFloatablePanelStyles();
+                makeFloatableDraggable(panel);
+            }
+
+            panel.classList.remove('fp-hidden');
+            loadCompletedTasks();
+        }
+
+        function toggleTasksMinimize() {
+            const panel = document.getElementById('tasks-panel');
+            if (panel) panel.classList.toggle('fp-minimized');
+        }
+
+        function filterTasks(filter) {
+            allTasksFilter = filter;
+            document.querySelectorAll('.fp-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.filter === filter);
+            });
+            loadCompletedTasks();
+        }
+
+        function closeCompletedTasksModal() {
+            const panel = document.getElementById('tasks-panel');
+            if (panel) panel.classList.add('fp-hidden');
+        }
+
+        // Shared floatable panel styles
+        function addFloatablePanelStyles() {
+            if (document.getElementById('floatable-panel-styles')) return;
+            const style = document.createElement('style');
+            style.id = 'floatable-panel-styles';
+            style.textContent = `
+                .floatable-panel {
+                    position: fixed;
+                    bottom: 100px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 650px;
+                    height: 450px;
+                    min-width: 300px;
+                    min-height: 200px;
+                    background: var(--bg-card, #0d0d14);
+                    border: 1px solid var(--accent-info, #4a9eff);
+                    border-radius: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    z-index: 10000;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                    resize: both;
+                    overflow: hidden;
+                }
+                .floatable-panel::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 2px;
+                    right: 2px;
+                    width: 12px;
+                    height: 12px;
+                    background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%);
+                    pointer-events: none;
+                    border-radius: 0 0 6px 0;
+                }
+                .floatable-panel.fp-hidden { display: none; }
+                .floatable-panel.fp-minimized { height: 44px; resize: none; }
+                .floatable-panel.fp-minimized .fp-tabs,
+                .floatable-panel.fp-minimized .fp-body,
+                .floatable-panel.fp-minimized .fp-footer { display: none; }
+                .fp-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 14px;
+                    background: var(--bg-panel, #1a1a2e);
+                    border-bottom: 1px solid var(--border-color, #333);
+                    cursor: move;
+                    border-radius: 8px 8px 0 0;
+                    flex-shrink: 0;
+                }
+                .fp-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text-primary, #e0e0e0);
+                }
+                .fp-controls { display: flex; gap: 4px; }
+                .fp-btn {
+                    background: rgba(255,255,255,0.1);
+                    border: none;
+                    color: var(--text-muted, #aaa);
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                .fp-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+                .fp-btn.fp-pin { color: var(--text-muted); }
+                .fp-btn.fp-pin.pinned { color: #f59e0b; }
+                .floatable-panel.fp-pinned .fp-header { cursor: default; }
+                .floatable-panel.fp-pinned { border-color: #f59e0b; }
+                .fp-tabs {
+                    display: flex;
+                    gap: 4px;
+                    padding: 8px 14px;
+                    border-bottom: 1px solid var(--border-color, #333);
+                    background: rgba(0,0,0,0.2);
+                    flex-shrink: 0;
+                    flex-wrap: wrap;
+                }
+                .fp-tab {
+                    background: transparent;
+                    border: 1px solid transparent;
+                    color: var(--text-muted);
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: all 0.15s;
+                }
+                .fp-tab:hover { background: rgba(255,255,255,0.05); }
+                .fp-tab.active { background: var(--accent-info); color: #fff; }
+                .fp-body {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 0;
+                }
+                .fp-footer {
+                    padding: 8px 14px;
+                    border-top: 1px solid var(--border-color, #333);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex-shrink: 0;
+                }
+                .task-item {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid var(--border-color);
+                    transition: background 0.15s;
+                }
+                .task-item:hover { background: rgba(255,255,255,0.03); }
+                .task-item.crossed { opacity: 0.5; text-decoration: line-through; }
+                .task-status {
+                    display: inline-block;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
+                .task-status.pending { background: rgba(245,158,11,0.2); color: #f59e0b; }
+                .task-status.processing { background: rgba(139,92,246,0.2); color: #8b5cf6; }
+                .task-status.completed { background: rgba(34,197,94,0.2); color: #22c55e; }
+                .task-status.failed { background: rgba(239,68,68,0.2); color: #ef4444; }
+                .task-preview { margin-top: 6px; color: var(--text-primary); }
+                .task-meta { margin-top: 4px; font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+                #fp-snap-preview {
+                    position: fixed;
+                    background: rgba(74, 158, 255, 0.15);
+                    border: 2px dashed rgba(74, 158, 255, 0.6);
+                    border-radius: 8px;
+                    pointer-events: none;
+                    z-index: 9999;
+                    display: none;
+                    transition: all 0.15s ease;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Snap zones for floatable panels
+        const fpSnapConfig = {
+            threshold: 30,
+            zones: {
+                left: { x: 0, y: 0, w: 0.5, h: 1 },
+                right: { x: 0.5, y: 0, w: 0.5, h: 1 },
+                topLeft: { x: 0, y: 0, w: 0.5, h: 0.5 },
+                topRight: { x: 0.5, y: 0, w: 0.5, h: 0.5 },
+                bottomLeft: { x: 0, y: 0.5, w: 0.5, h: 0.5 },
+                bottomRight: { x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
+                full: { x: 0, y: 0, w: 1, h: 1 }
+            }
+        };
+
+        let fpSnapPreview = null;
+
+        function getFpSnapZone(x, y) {
+            const vw = window.innerWidth, vh = window.innerHeight, t = fpSnapConfig.threshold;
+            if (x < t && y < t) return 'topLeft';
+            if (x > vw - t && y < t) return 'topRight';
+            if (x < t && y > vh - t) return 'bottomLeft';
+            if (x > vw - t && y > vh - t) return 'bottomRight';
+            if (y < t && x > vw * 0.3 && x < vw * 0.7) return 'full';
+            if (x < t) return 'left';
+            if (x > vw - t) return 'right';
+            return null;
+        }
+
+        function showFpSnapPreview(zone) {
+            if (!fpSnapPreview) {
+                fpSnapPreview = document.createElement('div');
+                fpSnapPreview.id = 'fp-snap-preview';
+                document.body.appendChild(fpSnapPreview);
+            }
+            if (!zone) { fpSnapPreview.style.display = 'none'; return; }
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const z = fpSnapConfig.zones[zone], gap = 8;
+            fpSnapPreview.style.left = (z.x * vw + gap) + 'px';
+            fpSnapPreview.style.top = (z.y * vh + gap) + 'px';
+            fpSnapPreview.style.width = (z.w * vw - gap * 2) + 'px';
+            fpSnapPreview.style.height = (z.h * vh - gap * 2) + 'px';
+            fpSnapPreview.style.display = 'block';
+        }
+
+        function togglePanelPin(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const isPinned = panel.classList.toggle('fp-pinned');
+            const pinBtn = panel.querySelector('.fp-pin');
+            if (pinBtn) {
+                pinBtn.classList.toggle('pinned', isPinned);
+                pinBtn.title = isPinned ? 'Unpin (enable dragging)' : 'Pin (disable dragging)';
+            }
+        }
+
+        function makeFloatableDraggable(el) {
+            const header = el.querySelector('.fp-header');
+            let isDragging = false, startX, startY, initialX, initialY;
+            let pendingSnap = null, isSnapped = false, originalSize = null;
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.closest('button') || e.target.closest('a')) return;
+                if (el.classList.contains('fp-pinned')) return; // Don't drag if pinned
+                isDragging = true;
+                const rect = el.getBoundingClientRect();
+                startX = e.clientX; startY = e.clientY;
+                initialX = rect.left; initialY = rect.top;
+                el.style.transition = 'none';
+                el.style.transform = 'none';
+                if (isSnapped) {
+                    el.style.width = originalSize?.width + 'px';
+                    el.style.height = originalSize?.height + 'px';
+                    isSnapped = false;
+                    delete el.dataset.snapped;
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                el.style.left = (initialX + e.clientX - startX) + 'px';
+                el.style.top = (initialY + e.clientY - startY) + 'px';
+                el.style.right = 'auto'; el.style.bottom = 'auto';
+                pendingSnap = getFpSnapZone(e.clientX, e.clientY);
+                showFpSnapPreview(pendingSnap);
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                el.style.transition = '';
+                if (pendingSnap) {
+                    if (!isSnapped) originalSize = { width: el.offsetWidth, height: el.offsetHeight, left: el.offsetLeft, top: el.offsetTop };
+                    const vw = window.innerWidth, vh = window.innerHeight;
+                    const z = fpSnapConfig.zones[pendingSnap], gap = 8;
+                    el.style.left = (z.x * vw + gap) + 'px';
+                    el.style.top = (z.y * vh + gap) + 'px';
+                    el.style.width = (z.w * vw - gap * 2) + 'px';
+                    el.style.height = (z.h * vh - gap * 2) + 'px';
+                    isSnapped = true;
+                    el.dataset.snapped = pendingSnap;
+                }
+                showFpSnapPreview(null);
+                pendingSnap = null;
+            });
+
+            header.addEventListener('dblclick', (e) => {
+                if (e.target.closest('button')) return;
+                if (isSnapped && el.dataset.snapped === 'full') {
+                    if (originalSize) {
+                        el.style.left = originalSize.left + 'px';
+                        el.style.top = originalSize.top + 'px';
+                        el.style.width = originalSize.width + 'px';
+                        el.style.height = originalSize.height + 'px';
+                    }
+                    isSnapped = false;
+                    delete el.dataset.snapped;
+                } else {
+                    if (!isSnapped) originalSize = { width: el.offsetWidth, height: el.offsetHeight, left: el.offsetLeft, top: el.offsetTop };
+                    const z = fpSnapConfig.zones.full, gap = 8;
+                    el.style.left = gap + 'px';
+                    el.style.top = gap + 'px';
+                    el.style.width = (window.innerWidth - gap * 2) + 'px';
+                    el.style.height = (window.innerHeight - gap * 2) + 'px';
+                    isSnapped = true;
+                    el.dataset.snapped = 'full';
+                }
+            });
+        }
+
+        async function loadCompletedTasks() {
+            const list = document.getElementById('completed-tasks-list');
+            if (!list) return;
+
+            list.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8600/api/queue');
+                const data = await response.json();
+
+                if (!data.messages || data.messages.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No tasks in queue</div>';
+                    document.getElementById('tasks-count').textContent = '0 tasks';
+                    return;
+                }
+
+                // Filter tasks based on selected filter
+                let tasks = data.messages;
+                if (allTasksFilter !== 'all') {
+                    tasks = tasks.filter(t => t.status === allTasksFilter);
+                }
+
+                document.getElementById('tasks-count').textContent = `${tasks.length} of ${data.messages.length} tasks`;
+
+                if (tasks.length === 0) {
+                    list.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">No ${allTasksFilter} tasks</div>`;
+                    return;
+                }
+
+                list.innerHTML = tasks.map(task => `
+                    <div class="task-item ${task.crossed ? 'crossed' : ''}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span class="task-status ${task.status}">${task.status}</span>
+                            <span style="font-size:11px;color:var(--text-muted);">${task.id.substring(0,8)}...</span>
+                        </div>
+                        <div class="task-preview">${escapeHtml(task.preview || 'No preview')}</div>
+                        <div class="task-meta">
+                            <span>📅 ${new Date(task.createdAt).toLocaleString()}</span>
+                            ${task.retryCount > 0 ? `<span>🔄 ${task.retryCount} retries</span>` : ''}
+                            ${task.notes ? `<span>📝 ${escapeHtml(task.notes)}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    Error loading tasks: ${err.message}<br>
+                    <small>Make sure relay service is running on port 8600</small>
+                </div>`;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function populateVoiceSelect() {
+            const select = document.getElementById('voice-select');
+            if (!select) return;
+
+            const voices = window.speechSynthesis.getVoices();
+            select.innerHTML = voices.map(v =>
+                `<option value="${v.name}" ${v.name.includes('David') || v.name.includes('Mark') ? 'selected' : ''}>${v.name}</option>`
+            ).join('');
+
+            // Select current voice if VoiceEngine has one
+            if (typeof VoiceEngine !== 'undefined') {
+                const current = VoiceEngine.getSelectedVoice?.()?.name;
+                if (current) select.value = current;
+            }
+        }
+
+        function changeVoice(voiceName) {
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setVoice) {
+                VoiceEngine.setVoice(voiceName);
+                console.log('[Settings] Voice changed to:', voiceName);
+            }
+        }
+
+        function changeVoiceRate(rate) {
+            document.getElementById('voice-rate-value').textContent = rate + 'x';
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setRate) {
+                VoiceEngine.setRate(parseFloat(rate));
+            }
+        }
+
+        function toggleVoice(enabled) {
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setEnabled) {
+                VoiceEngine.setEnabled(enabled);
+            }
+        }
+
+        function testVoice() {
+            const testPhrases = [
+                'Hello! This is how I sound.',
+                'Testing, one two three.',
+                'Hi there! Nice to meet you.',
+                'This is my voice. Do you like it?'
+            ];
+            const phrase = testPhrases[Math.floor(Math.random() * testPhrases.length)];
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.speak) {
+                VoiceEngine.speak(phrase);
+            }
+        }
+
+        function clearLogs() {
+            if (typeof UIPanels !== 'undefined' && UIPanels.clearLog) {
+                UIPanels.clearLog();
+            } else {
+                console.log('[CommandCenter] Clear logs - not yet implemented in v3.0');
+            }
+        }
+
+        function reconnectMSFS() {
+            // Restart DIM service via Master O to reconnect SimConnect
+            fetch('http://127.0.0.1:8500/api/services/simwidget/restart', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    console.log('[CommandCenter] DIM restart requested:', data);
+                    addActivityItem('info', 'DIM restarting to reconnect MSFS...', 'now');
+                })
+                .catch(err => console.error('[CommandCenter] DIM restart failed:', err));
+        }
+
+        // MSFS Data Polling
+        async function updateMSFSData() {
+            try {
+                const res = await fetch('http://127.0.0.1:8080/api/status');
+                const data = await res.json();
+
+                const statusEl = document.getElementById('simconnect-status');
+                const aircraftEl = document.getElementById('aircraft-name');
+
+                if (data.connected && data.flightData) {
+                    const fd = data.flightData;
+
+                    if (statusEl) {
+                        statusEl.textContent = '● SimConnect Connected';
+                        statusEl.className = 'connected';
+                    }
+                    if (aircraftEl) aircraftEl.textContent = fd.engineRunning ? 'In Flight' : 'On Ground';
+
+                    // Update flight stats
+                    const alt = document.getElementById('stat-altitude');
+                    const spd = document.getElementById('stat-speed');
+                    const hdg = document.getElementById('stat-heading');
+                    const fuel = document.getElementById('stat-fuel');
+
+                    if (alt) alt.textContent = Math.round(fd.altitude);
+                    if (spd) spd.textContent = Math.round(fd.groundSpeed || fd.speed);
+                    if (hdg) hdg.textContent = Math.round(fd.heading);
+                    if (fuel && fd.fuelCapacity > 0) {
+                        fuel.textContent = Math.round((fd.fuelTotal / fd.fuelCapacity) * 100);
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = '● SimConnect Disconnected';
+                        statusEl.className = 'disconnected';
+                    }
+                    if (aircraftEl) aircraftEl.textContent = 'No Aircraft';
+                }
+            } catch {
+                // DIM offline - don't spam errors
+            }
+        }
+
+        function startMSFSPolling() {
+            updateMSFSData();
+            setInterval(updateMSFSData, 2000);
+        }
+
+        function sendNTT() {
+            const input = document.getElementById('message-input');
+            if (input) {
+                input.value = 'ntt';
+                document.getElementById('btn-send').click();
+            }
+        }
+
+        // Active Tasks Card Integration
+        function updateActiveTasksCard() {
+            const taskList = document.getElementById('task-list');
+            if (!taskList || typeof TaskProcessor === 'undefined') return;
+
+            const queue = TaskProcessor.getQueue();
+            const currentTask = TaskProcessor.getCurrentTask();
+
+            // Build tasks array (current + queued)
+            const allTasks = [];
+            if (currentTask) allTasks.push(currentTask);
+            allTasks.push(...queue.filter(t => t.id !== currentTask?.id));
+
+            if (allTasks.length === 0) {
+                taskList.innerHTML = `
+                    <div class="task-item" style="opacity: 0.5;">
+                        <div class="task-status-icon queued">💭</div>
+                        <div class="task-content">
+                            <div class="task-title">No active tasks</div>
+                            <div class="task-meta">Send a message to Kitt to start</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const stateIcons = {
+                idle: '⏳',
+                queued: '📋',
+                waiting_for_claude: '⏳',
+                claude_processing: '💭',
+                complete: '✓',
+                error: '✗',
+                cancelled: '⊘'
+            };
+
+            const stateColors = {
+                idle: '#888',
+                queued: '#4a9eff',
+                waiting_for_claude: '#f59e0b',
+                claude_processing: '#8b5cf6',
+                complete: '#22c55e',
+                error: '#ef4444',
+                cancelled: '#666'
+            };
+
+            taskList.innerHTML = allTasks.slice(0, 5).map((task, idx) => {
+                const icon = stateIcons[task.state] || '📋';
+                const color = stateColors[task.state] || '#888';
+                const canCancel = ['queued', 'waiting_for_claude', 'claude_processing'].includes(task.state);
+
+                // Calculate elapsed time
+                const startTime = task.startedAt || task.queuedAt || task.createdAt;
+                const elapsed = startTime ? getElapsedTime(new Date(startTime)) : '';
+
+                // Better status messages
+                const stateLabels = {
+                    idle: 'Preparing...',
+                    queued: `Queued${elapsed ? ` • ${elapsed}` : ''}`,
+                    waiting_for_claude: `Sending to Claude... ${elapsed}`,
+                    claude_processing: `Claude thinking... ${elapsed}`,
+                    complete: 'Done',
+                    error: 'Failed',
+                    cancelled: 'Cancelled'
+                };
+
+                const statusText = task.statusMessage || stateLabels[task.state] || task.state;
+
+                return `
+                    <div class="task-item ${task.state === 'claude_processing' ? 'processing' : ''}">
+                        <div class="task-status-icon" style="color: ${color}">${icon}</div>
+                        <div class="task-content">
+                            <div class="task-title">${escapeHtmlSimple(task.content?.substring(0, 50) || 'Task')}${task.content?.length > 50 ? '...' : ''}</div>
+                            <div class="task-meta">${statusText}</div>
+                        </div>
+                        ${canCancel ? `<button class="task-cancel-btn" onclick="cancelActiveTask('${task.id}')" title="Cancel">✕</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtmlSimple(text) {
+            if (!text) return '';
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function getElapsedTime(startDate) {
+            const now = new Date();
+            const diffMs = now - startDate;
+            const diffSec = Math.floor(diffMs / 1000);
+            if (diffSec < 60) return `${diffSec}s`;
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin}m ${diffSec % 60}s`;
+            const diffHr = Math.floor(diffMin / 60);
+            return `${diffHr}h ${diffMin % 60}m`;
+        }
+
+        function cancelActiveTask(taskId) {
+            if (typeof TaskProcessor !== 'undefined' && TaskProcessor.cancel) {
+                TaskProcessor.cancel(taskId);
+            }
+        }
+
+        function toggleTasksMinimize() {
+            const card = document.querySelector('.card-tasks .card-body');
+            const btn = document.querySelector('.card-tasks .card-header button');
+            if (card) {
+                card.style.display = card.style.display === 'none' ? '' : 'none';
+                if (btn) btn.textContent = card.style.display === 'none' ? '▼' : '▲';
+            }
+        }
+
+        // Task reconciliation - move completed tasks to Recent Activity
+        function reconcileTaskToActivity(eventData) {
+            const task = eventData.task;
+            if (!task) return;
+
+            const taskPreview = (task.content || 'Task').substring(0, 40) + (task.content?.length > 40 ? '...' : '');
+
+            if (task.state === 'complete') {
+                addActivityItem('success', `Completed: ${taskPreview}`, 'now');
+            } else if (task.state === 'error') {
+                addActivityItem('error', `Failed: ${taskPreview} - ${task.error || 'Unknown error'}`, 'now');
+            } else if (task.state === 'cancelled') {
+                addActivityItem('warning', `Cancelled: ${taskPreview}`, 'now');
+            }
+
+            // Update the active tasks card
+            updateActiveTasksCard();
+        }
+
+        // Subscribe to TaskProcessor events when available
+        function initActiveTasksSubscription() {
+            if (typeof TaskProcessor !== 'undefined') {
+                // Update active tasks display
+                TaskProcessor.on('taskStateChange', updateActiveTasksCard);
+                TaskProcessor.on('taskProgress', updateActiveTasksCard);
+                TaskProcessor.on('taskQueued', (e) => {
+                    updateActiveTasksCard();
+                    addActivityItem('info', `Queued: ${(e.task?.content || 'Task').substring(0, 40)}...`, 'now');
+                });
+                TaskProcessor.on('taskStarted', (e) => {
+                    updateActiveTasksCard();
+                    addActivityItem('info', `Started: ${(e.task?.content || 'Task').substring(0, 40)}...`, 'now');
+                });
+
+                // Reconcile completed tasks to Recent Activity
+                TaskProcessor.on('taskComplete', reconcileTaskToActivity);
+                TaskProcessor.on('taskError', reconcileTaskToActivity);
+                TaskProcessor.on('taskCancelled', reconcileTaskToActivity);
+                TaskProcessor.on('taskRemoved', updateActiveTasksCard);
+
+                // Corrective action notification
+                TaskProcessor.on('taskCorrected', (e) => {
+                    updateActiveTasksCard();
+                    addActivityItem('warning', `Corrected: ${(e.task?.content || 'Task').substring(0, 30)}... - ${e.reason || 'stuck task'}`, 'now');
+                });
+
+                updateActiveTasksCard();
+                console.log('[CommandCenter] Active Tasks subscribed to TaskProcessor');
+            } else {
+                // Retry in 100ms
+                setTimeout(initActiveTasksSubscription, 100);
+            }
+        }
+
+        // Init after DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initActiveTasksSubscription, 200);
+        });
+
+        // Clear all task state (localStorage + DOM)
+        function clearTaskState() {
+            localStorage.removeItem('task-bubbles-state');
+            localStorage.removeItem('task-processor-state');
+            document.querySelectorAll('.task-bubble').forEach(el => el.remove());
+            if (typeof TaskProcessor !== 'undefined') {
+                TaskProcessor._state.queue = [];
+                TaskProcessor._state.currentTask = null;
+                TaskProcessor._state.lastTask = null;
+            }
+            updateActiveTasksCard();
+            addActivityItem('info', 'Task state cleared', 'now');
+            console.log('[CommandCenter] Task state cleared');
+        }
+        window.clearTaskState = clearTaskState;
+
+        function addActivityItem(type, message, time) {
+            const list = document.getElementById('activity-list');
+            if (!list) return;
+
+            const iconClass = { info: 'info', success: 'success', warning: 'warning', error: 'error' }[type] || 'info';
+            const iconSymbol = { info: 'ℹ', success: '✓', warning: '⚠', error: '✕' }[type] || 'ℹ';
+
+            const item = document.createElement('div');
+            item.className = 'activity-item';
+            item.innerHTML = `
+                <div class="activity-icon ${iconClass}">${iconSymbol}</div>
+                <div class="activity-content">
+                    <div class="activity-message">${message}</div>
+                </div>
+                <div class="activity-time">${time || 'now'}</div>
+            `;
+
+            list.insertBefore(item, list.firstChild);
+
+            // Keep only last 10 items
+            while (list.children.length > 10) {
+                list.removeChild(list.lastChild);
+            }
+        }
+
+        // Expose globally
+        window.addActivityItem = addActivityItem;
+        window.updateServiceUI = updateServiceUI;
+
+        // Card Minimize/Expand functionality
+        function toggleCardMinimize(cardClass) {
+            const card = document.querySelector(`.${cardClass}`);
+            if (!card) return;
+
+            const isMinimized = card.classList.toggle('minimized');
+            localStorage.setItem(`cc-${cardClass}-minimized`, isMinimized);
+
+            const btn = card.querySelector('.minimize-btn');
+            if (btn) {
+                btn.title = isMinimized ? 'Expand' : 'Minimize';
+            }
+        }
+
+        // Restore minimized state on load
+        function restoreCardMinimizedStates() {
+            const cardClasses = ['card-health', 'card-msfs', 'card-activity', 'card-claude-terminal'];
+            cardClasses.forEach(cardClass => {
+                const isMinimized = localStorage.getItem(`cc-${cardClass}-minimized`) === 'true';
+                if (isMinimized) {
+                    const card = document.querySelector(`.${cardClass}`);
+                    if (card) {
+                        card.classList.add('minimized');
+                        const btn = card.querySelector('.minimize-btn');
+                        if (btn) btn.title = 'Expand';
+                    }
+                }
+            });
+        }
+
+        // Call on DOM ready
+        document.addEventListener('DOMContentLoaded', restoreCardMinimizedStates);
+        window.toggleCardMinimize = toggleCardMinimize;
     </script>
 </body>
 </html>

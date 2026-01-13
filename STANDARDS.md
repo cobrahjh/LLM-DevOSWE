@@ -1,5 +1,5 @@
 # SimWidget Engine - Project Standards & Conventions
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Last Updated:** 2026-01-11
 
 This document captures proven patterns, timing defaults, and lessons learned throughout development. **Always reference this before implementing new features.**
@@ -170,6 +170,330 @@ When updating partial objects, send field name explicitly:
 ```
 
 ## 🎨 UI Standards
+
+### All Windows/Modals MUST Be Draggable
+
+**MANDATORY:** Every floating window, modal, panel, or dialog must be draggable by its header.
+
+**Standard Implementation:**
+```javascript
+function setupDraggable(modal, handleSelector = '.modal-header, .panel-header, .dialog-header') {
+    const panel = modal.querySelector('.modal-content, .panel-content, .dialog-content') || modal;
+    const handle = modal.querySelector(handleSelector);
+    if (!handle) return;
+
+    let isDragging = false;
+    let startX, startY, initialX, initialY;
+
+    // Set initial positioning
+    panel.style.position = 'absolute';
+
+    handle.style.cursor = 'move';
+    handle.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button, input, select')) return; // Don't drag on controls
+        isDragging = true;
+        const rect = panel.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        initialX = rect.left;
+        initialY = rect.top;
+
+        // Remove centering transform on first drag
+        panel.style.transform = 'none';
+        panel.style.left = initialX + 'px';
+        panel.style.top = initialY + 'px';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        let newX = initialX + (e.clientX - startX);
+        let newY = initialY + (e.clientY - startY);
+
+        // Keep in viewport
+        newX = Math.max(0, Math.min(window.innerWidth - 100, newX));
+        newY = Math.max(0, Math.min(window.innerHeight - 50, newY));
+
+        panel.style.left = newX + 'px';
+        panel.style.top = newY + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+}
+```
+
+**CSS Requirements:**
+```css
+.modal-header, .panel-header, .dialog-header {
+    cursor: move;
+    user-select: none;
+}
+```
+
+**Checklist for New Windows:**
+- [ ] Header element with `cursor: move`
+- [ ] `setupDraggable()` called after DOM creation
+- [ ] Keep in viewport bounds
+- [ ] Don't drag on buttons/inputs inside header
+- [ ] Position persisted to localStorage (optional)
+
+### All Windows MUST Be Snappable
+
+**MANDATORY:** Every floating window, modal, or panel with drag support must also support snap-to-edge behavior.
+
+**Snap Zones Configuration:**
+```javascript
+const SNAP_ZONES = {
+    left:       { x: 0,   y: 0,   w: 0.5, h: 1    },  // Left half
+    right:      { x: 0.5, y: 0,   w: 0.5, h: 1    },  // Right half
+    topLeft:    { x: 0,   y: 0,   w: 0.5, h: 0.5  },  // Top-left quarter
+    topRight:   { x: 0.5, y: 0,   w: 0.5, h: 0.5  },  // Top-right quarter
+    bottomLeft: { x: 0,   y: 0.5, w: 0.5, h: 0.5  },  // Bottom-left quarter
+    bottomRight:{ x: 0.5, y: 0.5, w: 0.5, h: 0.5  },  // Bottom-right quarter
+    full:       { x: 0,   y: 0,   w: 1,   h: 1    }   // Full screen
+};
+const SNAP_THRESHOLD = 30;  // Pixels from edge to trigger snap
+```
+
+**Snap Detection Logic:**
+```javascript
+function getSnapZone(x, y) {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Corner detection (takes priority)
+    if (x < SNAP_THRESHOLD && y < SNAP_THRESHOLD) return 'topLeft';
+    if (x > vw - SNAP_THRESHOLD && y < SNAP_THRESHOLD) return 'topRight';
+    if (x < SNAP_THRESHOLD && y > vh - SNAP_THRESHOLD) return 'bottomLeft';
+    if (x > vw - SNAP_THRESHOLD && y > vh - SNAP_THRESHOLD) return 'bottomRight';
+
+    // Edge detection
+    if (x < SNAP_THRESHOLD) return 'left';
+    if (x > vw - SNAP_THRESHOLD) return 'right';
+    if (y < SNAP_THRESHOLD) return 'full';  // Top edge = maximize
+
+    return null;
+}
+```
+
+**Snap Preview Overlay:**
+```javascript
+function showSnapPreview(zone) {
+    let preview = document.getElementById('snap-preview');
+    if (!preview) {
+        preview = document.createElement('div');
+        preview.id = 'snap-preview';
+        document.body.appendChild(preview);
+    }
+
+    const z = SNAP_ZONES[zone];
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    preview.style.cssText = `
+        position: fixed;
+        left: ${z.x * vw}px;
+        top: ${z.y * vh}px;
+        width: ${z.w * vw}px;
+        height: ${z.h * vh}px;
+        background: rgba(74, 158, 255, 0.2);
+        border: 2px solid #4a9eff;
+        z-index: 9998;
+        pointer-events: none;
+        transition: all 0.15s ease;
+    `;
+    preview.style.display = 'block';
+}
+
+function hideSnapPreview() {
+    const preview = document.getElementById('snap-preview');
+    if (preview) preview.style.display = 'none';
+}
+```
+
+**Apply Snap on Drop:**
+```javascript
+function applySnap(panel, zone) {
+    const z = SNAP_ZONES[zone];
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const padding = 10;  // Gap from screen edge
+
+    panel.style.left = (z.x * vw + padding) + 'px';
+    panel.style.top = (z.y * vh + padding) + 'px';
+    panel.style.width = (z.w * vw - padding * 2) + 'px';
+    panel.style.height = (z.h * vh - padding * 2) + 'px';
+
+    // Store original size for restore
+    panel.dataset.snapped = zone;
+}
+```
+
+**Double-Click Header to Maximize/Restore:**
+```javascript
+header.addEventListener('dblclick', (e) => {
+    if (e.target.closest('button')) return;
+
+    if (panel.dataset.snapped === 'full') {
+        // Restore to original size
+        panel.style.width = panel.dataset.originalWidth || '400px';
+        panel.style.height = panel.dataset.originalHeight || '300px';
+        panel.style.left = '50%';
+        panel.style.top = '50%';
+        panel.style.transform = 'translate(-50%, -50%)';
+        delete panel.dataset.snapped;
+    } else {
+        // Save original size and maximize
+        panel.dataset.originalWidth = panel.style.width;
+        panel.dataset.originalHeight = panel.style.height;
+        applySnap(panel, 'full');
+    }
+});
+```
+
+**Integration with Drag Handler:**
+```javascript
+document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+
+    // Normal drag positioning
+    panel.style.left = (startLeft + e.clientX - startX) + 'px';
+    panel.style.top = (startTop + e.clientY - startY) + 'px';
+
+    // Check for snap zone
+    const zone = getSnapZone(e.clientX, e.clientY);
+    if (zone) {
+        showSnapPreview(zone);
+    } else {
+        hideSnapPreview();
+    }
+});
+
+document.addEventListener('mouseup', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+
+    // Apply snap if in zone
+    const zone = getSnapZone(e.clientX, e.clientY);
+    if (zone) {
+        applySnap(panel, zone);
+    }
+    hideSnapPreview();
+    savePosition();
+});
+```
+
+**CSS Requirements:**
+```css
+/* Snap preview overlay */
+#snap-preview {
+    display: none;
+    position: fixed;
+    background: rgba(74, 158, 255, 0.2);
+    border: 2px solid #4a9eff;
+    border-radius: 8px;
+    z-index: 9998;
+    pointer-events: none;
+    transition: all 0.15s ease;
+}
+
+/* Snapped panel styling */
+.panel[data-snapped] {
+    border-radius: 0;
+    transition: all 0.2s ease;
+}
+
+.panel[data-snapped="full"] {
+    border-radius: 0;
+}
+```
+
+**Checklist for Snappable Windows:**
+- [ ] Snap zones configuration defined
+- [ ] `getSnapZone()` function implemented
+- [ ] Preview overlay created on drag
+- [ ] `applySnap()` called on mouseup when in zone
+- [ ] Double-click header maximizes/restores
+- [ ] Original size stored for restore
+- [ ] Works with pin functionality (no snap when pinned)
+
+### All Windows MUST Be Minimizable
+
+**MANDATORY:** Every floating window, modal, panel, or card must have a minimize button in its header.
+
+**Standard Implementation:**
+```javascript
+function setupMinimize(panel, storageKey) {
+    const header = panel.querySelector('.card-header, .panel-header, .modal-header');
+    const body = panel.querySelector('.card-body, .panel-body, .modal-body');
+    if (!header || !body) return;
+
+    // Add minimize button if not present
+    let minBtn = header.querySelector('.minimize-btn');
+    if (!minBtn) {
+        minBtn = document.createElement('button');
+        minBtn.className = 'minimize-btn';
+        minBtn.innerHTML = '−';
+        minBtn.title = 'Minimize';
+        header.appendChild(minBtn);
+    }
+
+    let isMinimized = localStorage.getItem(storageKey + '-minimized') === 'true';
+
+    function updateState() {
+        body.style.display = isMinimized ? 'none' : '';
+        minBtn.innerHTML = isMinimized ? '+' : '−';
+        minBtn.title = isMinimized ? 'Expand' : 'Minimize';
+        panel.classList.toggle('minimized', isMinimized);
+        localStorage.setItem(storageKey + '-minimized', isMinimized);
+    }
+
+    minBtn.onclick = (e) => {
+        e.stopPropagation();
+        isMinimized = !isMinimized;
+        updateState();
+    };
+
+    // Apply saved state
+    updateState();
+}
+```
+
+**CSS Requirements:**
+```css
+.minimize-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+.minimize-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Minimized state */
+.card.minimized,
+.panel.minimized {
+    height: auto !important;
+}
+.card.minimized .card-body,
+.panel.minimized .panel-body {
+    display: none;
+}
+```
+
+**Checklist for Minimizable Windows:**
+- [ ] Minimize button (−/+) in header
+- [ ] Toggle hides/shows body content
+- [ ] State persisted to localStorage
+- [ ] Visual indicator when minimized
+- [ ] Works with drag and snap features
 
 ### Toggle Switch (Pure CSS, no checkbox)
 Checkboxes cause event conflicts. Use div-based toggles:
@@ -448,6 +772,54 @@ When a menu action has multiple variants, use hover-activated submenus:
 - Include dividers for destructive actions
 - Use `onclick` handlers on submenu items, not the parent button
 
+### Popup Menu Viewport Positioning
+
+**ALWAYS check viewport boundaries** before showing popup menus. Menus must be fully visible on screen.
+
+```javascript
+function positionMenu(menu, triggerEl) {
+    const rect = triggerEl.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const gap = 8; // margin from screen edge
+
+    // Default: position below trigger
+    let top = rect.bottom + 4;
+    let left = rect.left;
+
+    // Flip up if would overflow bottom
+    if (top + menuRect.height > vh - gap) {
+        top = rect.top - menuRect.height - 4;
+    }
+
+    // Shift left if would overflow right
+    if (left + menuRect.width > vw - gap) {
+        left = vw - menuRect.width - gap;
+    }
+
+    // Shift right if would overflow left
+    if (left < gap) {
+        left = gap;
+    }
+
+    // Clamp top to screen
+    if (top < gap) {
+        top = gap;
+    }
+
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+}
+```
+
+**Rules:**
+- Always measure menu dimensions AFTER making it visible (use `visibility: hidden` first if needed)
+- Keep 8px minimum margin from viewport edges
+- Flip direction (up/down) if menu would overflow
+- Shift horizontally if near screen edge
+- For context menus at cursor: use `clientX/clientY` as starting point
+
 ---
 
 ## 💡 Recommendations
@@ -461,6 +833,11 @@ When a menu action has multiple variants, use hover-activated submenus:
 | Loading states | Show spinner/skeleton during async ops | User knows action is in progress |
 | Error messages | Display inline near the action | Context helps user understand issue |
 | Success feedback | Brief toast or visual highlight | Confirms action completed |
+| Tooltips | Add `title` attribute to interactive items | Helps user understand item purpose on hover |
+| Task lifecycle | Show in Active Tasks → reconcile to Recent Activity on completion | Full visibility of task progress and history |
+| Task queuing | Wait for current task to finish before starting new one | Prevents lost state, uncompleted tasks, admin overhead |
+| Task verification | Verify last task completed before starting next; take corrective action if not | Ensures no stuck/orphaned tasks |
+| Deferred restarts | Queue service restarts for after task completion; send response first | Prevents connection loss mid-task |
 
 ### Panel/Window Features
 

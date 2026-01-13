@@ -48,7 +48,77 @@ const ActivityLog = (function() {
         createToggleButton();
         hookIntoSystems();
         log('system', 'Activity Log initialized');
+
+        // Fetch recent tasks from relay to populate log
+        setTimeout(fetchRecentRelayTasks, 800);
+
         console.log('[ActivityLog] Initialized');
+    }
+
+    // Fetch recent tasks from relay and add to activity log
+    async function fetchRecentRelayTasks() {
+        try {
+            const host = location.hostname;
+            const res = await fetch(`http://${host}:8600/api/queue`);
+            const data = await res.json();
+
+            if (!data.messages || data.messages.length === 0) {
+                console.log('[ActivityLog] No recent relay tasks');
+                return;
+            }
+
+            // Get most recent 10 tasks for activity log
+            const recentTasks = data.messages.slice(0, 10);
+
+            console.log(`[ActivityLog] Loading ${recentTasks.length} recent tasks into log`);
+
+            // Add each task to activity log (in reverse order so oldest first)
+            recentTasks.reverse().forEach(task => {
+                const statusIcon = getStatusIcon(task.status);
+                const preview = task.preview || 'Task';
+                const time = new Date(task.createdAt).toLocaleTimeString('en-US', { hour12: false });
+
+                // Create entry with task time
+                const entry = {
+                    id: Date.now() + Math.random(),
+                    time: time,
+                    type: getLogType(task.status),
+                    message: `[${task.status.toUpperCase()}] ${preview}`,
+                    data: { relayId: task.id, status: task.status },
+                    matchedTodo: null
+                };
+
+                entries.push(entry);
+            });
+
+            // Re-render to show all entries
+            rerenderAll();
+            updateCount();
+
+            log('info', `Loaded ${recentTasks.length} tasks from relay history`);
+        } catch (err) {
+            console.warn('[ActivityLog] Failed to fetch relay tasks:', err.message);
+        }
+    }
+
+    function getStatusIcon(status) {
+        switch (status) {
+            case 'pending': return '⏳';
+            case 'processing': return '💭';
+            case 'completed': return '✓';
+            case 'failed': return '✗';
+            default: return '📋';
+        }
+    }
+
+    function getLogType(status) {
+        switch (status) {
+            case 'pending': return 'queue';
+            case 'processing': return 'relay';
+            case 'completed': return 'success';
+            case 'failed': return 'error';
+            default: return 'task';
+        }
     }
 
     function createPanel() {
@@ -134,6 +204,12 @@ const ActivityLog = (function() {
         addStyles();
         setupDragPanel();
         loadPosition();
+
+        // Start minimized by default - user can click to show
+        // const wasVisible = localStorage.getItem('activity-log-visible') === 'true';
+        // if (wasVisible) {
+        //     show();
+        // }
     }
 
     function switchMode(mode) {
@@ -208,6 +284,8 @@ const ActivityLog = (function() {
         if (activeMode === 'server') {
             fetchServerLogs();
         } else {
+            // Reload from relay and re-render
+            fetchRecentRelayTasks();
             rerenderAll();
         }
         log('system', 'Logs refreshed');
@@ -347,7 +425,7 @@ const ActivityLog = (function() {
                 position: fixed;
                 bottom: 60px;
                 right: 20px;
-                width: 500px;
+                width: 380px;
                 height: 400px;
                 background: var(--bg-dark);
                 border: 1px solid var(--border-color);
@@ -637,8 +715,32 @@ const ActivityLog = (function() {
         return null;
     }
 
+    function updateMiniLog(entry) {
+        const miniLog = document.getElementById('activity-mini-log');
+        if (!miniLog) return;
+
+        const typeInfo = LOG_TYPES[entry.type] || LOG_TYPES.info;
+        const div = document.createElement('div');
+        div.className = 'mini-log-entry';
+        div.style.cssText = 'padding:6px 12px;border-bottom:1px solid var(--border-color,#333);font-size:11px;display:flex;gap:8px;align-items:center;';
+        div.innerHTML = `
+            <span style="color:${typeInfo.color}">${typeInfo.icon}</span>
+            <span style="color:var(--text-muted);flex-shrink:0;">${entry.time}</span>
+            <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(entry.message)}</span>
+        `;
+
+        // Insert at top, keep max 10 entries
+        miniLog.insertBefore(div, miniLog.firstChild);
+        while (miniLog.children.length > 10) {
+            miniLog.removeChild(miniLog.lastChild);
+        }
+    }
+
     function renderEntry(entry) {
         if (!logContent) return;
+
+        // Also update mini log
+        updateMiniLog(entry);
 
         const typeInfo = LOG_TYPES[entry.type] || LOG_TYPES.info;
         const div = document.createElement('div');
@@ -965,6 +1067,7 @@ const ActivityLog = (function() {
         if (logPanel) {
             logPanel.classList.add('visible');
             isVisible = true;
+            localStorage.setItem('activity-log-visible', 'true');
             const btn = document.getElementById('btn-activity-log');
             if (btn) btn.classList.remove('has-new');
             console.log('[ActivityLog] Panel visible:', logPanel.classList.contains('visible'));
@@ -978,6 +1081,7 @@ const ActivityLog = (function() {
         if (logPanel) {
             logPanel.classList.remove('visible');
             isVisible = false;
+            localStorage.setItem('activity-log-visible', 'false');
         }
     }
 
@@ -996,6 +1100,47 @@ const ActivityLog = (function() {
         document.addEventListener('kitt:receive', (e) => log('receive', e.detail));
         document.addEventListener('kitt:status', (e) => log('relay', e.detail));
         document.addEventListener('kitt:error', (e) => log('error', e.detail));
+
+        // Subscribe to RelayWS for real-time task updates
+        subscribeToRelay();
+    }
+
+    function subscribeToRelay() {
+        // Wait for RelayWS to be available
+        const trySubscribe = () => {
+            if (typeof RelayWS !== 'undefined' && RelayWS.on) {
+                RelayWS.on('task:created', (data) => {
+                    log('queue', `New task: ${data.preview || data.content?.substring(0, 50) || 'Task'}`);
+                });
+
+                RelayWS.on('task:processing', (data) => {
+                    log('relay', `Processing: ${data.preview || data.id}`);
+                });
+
+                RelayWS.on('task:completed', (data) => {
+                    log('success', `Completed: ${data.preview || data.id}`);
+                });
+
+                RelayWS.on('task:failed', (data) => {
+                    log('error', `Failed: ${data.preview || data.id} - ${data.error || 'Unknown error'}`);
+                });
+
+                RelayWS.on('task:deleted', (data) => {
+                    log('task', `Deleted: ${data.id}`);
+                });
+
+                RelayWS.on('task:updated', (data) => {
+                    log('task', `Updated: ${data.preview || data.id}`);
+                });
+
+                console.log('[ActivityLog] Subscribed to RelayWS events');
+            } else {
+                // Retry after a short delay
+                setTimeout(trySubscribe, 500);
+            }
+        };
+
+        trySubscribe();
     }
 
     // Public logging methods for other modules to use
@@ -1037,7 +1182,8 @@ const ActivityLog = (function() {
         hide,
         toggle,
         clear,
-        switchToServer
+        switchToServer,
+        fetchRecentRelayTasks
     };
 })();
 

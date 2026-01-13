@@ -42,16 +42,11 @@ const TodoModule = (function() {
         const style = document.createElement('style');
         style.textContent = `
             .todo-panel {
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                width: 380px;
-                max-height: 500px;
+                position: relative;
+                width: 100%;
+                max-height: 300px;
                 background: #1a1a2e;
-                border: 1px solid #333;
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-                z-index: 9999;
+                border-top: 1px solid #333;
                 display: flex;
                 flex-direction: column;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -70,9 +65,8 @@ const TodoModule = (function() {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 10px 14px;
+                padding: 8px 12px;
                 background: #2a2a3e;
-                cursor: move;
                 user-select: none;
                 border-bottom: 1px solid #333;
             }
@@ -503,6 +497,11 @@ const TodoModule = (function() {
                 0%, 100% { opacity: 1; }
                 50% { opacity: 0.7; }
             }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-4px); }
+                75% { transform: translateX(4px); }
+            }
             .todo-notes-area {
                 background: #1a1a2e;
                 border: 1px solid #333;
@@ -695,11 +694,19 @@ const TodoModule = (function() {
                 border: 1px solid #444;
                 border-radius: 6px;
                 padding: 4px;
+                padding-bottom: 8px;
                 min-width: 160px;
                 box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
                 display: none;
                 z-index: 10001;
-                margin-bottom: 4px;
+            }
+            .reconcile-submenu::after {
+                content: '';
+                position: absolute;
+                bottom: -8px;
+                left: 0;
+                right: 0;
+                height: 8px;
             }
             .reconcile-btn.has-submenu:hover .reconcile-submenu,
             .reconcile-submenu:hover {
@@ -785,9 +792,18 @@ const TodoModule = (function() {
                 </div>
             </div>
         `;
-        document.body.appendChild(panel);
-        
-        setupDragPanel(panel);
+        // Append to container if exists, otherwise body
+        const container = document.getElementById('todo-panel-container');
+        if (container) {
+            container.appendChild(panel);
+        } else {
+            document.body.appendChild(panel);
+        }
+
+        // Only enable drag if floating (not in container)
+        if (!container) {
+            setupDragPanel(panel);
+        }
         setupEvents();
     }
 
@@ -1554,8 +1570,10 @@ const TodoModule = (function() {
 
     function populateListSelector() {
         const selector = document.getElementById('todo-list-selector');
-        const lists = Object.keys(allLists).length > 0 ? Object.keys(allLists) : DEFAULT_LISTS;
-        // Add "All" option at the top
+        // Get all list names, excluding ALL_LISTS_KEY (it's added separately at top)
+        const lists = (Object.keys(allLists).length > 0 ? Object.keys(allLists) : DEFAULT_LISTS)
+            .filter(name => name !== ALL_LISTS_KEY);
+        // Add "All" option at the top (always first, never duplicated)
         const allOption = `<option value="${ALL_LISTS_KEY}" ${currentListName === ALL_LISTS_KEY ? 'selected' : ''}>${ALL_LISTS_KEY}</option>`;
         const listOptions = lists.map(name =>
             `<option value="${name}" ${name === currentListName ? 'selected' : ''}>${name}</option>`
@@ -1724,10 +1742,8 @@ const TodoModule = (function() {
                 const state = JSON.parse(saved);
                 const panel = document.getElementById('todo-panel');
 
-                // Restore current list name
-                if (state.currentList) {
-                    currentListName = state.currentList;
-                }
+                // Note: currentListName always defaults to "All" on page load
+                // (set in init before loadState is called)
 
                 if (state.visible) {
                     panel.style.display = 'flex';
@@ -1837,13 +1853,15 @@ const TodoModule = (function() {
     }
 
     function render() {
+        console.log('[TodoModule] render() called, todos.length:', todos.length);
         const body = document.getElementById('todo-body');
         const count = document.getElementById('todo-count');
-        
+
         const activeTodos = todos.filter(t => !t.completed);
         count.textContent = activeTodos.length;
 
         if (todos.length === 0) {
+            console.log('[TodoModule] render() - no todos, showing empty state');
             body.innerHTML = '<div class="todo-empty">No tasks yet.<br>Add one below!</div>';
             return;
         }
@@ -1852,6 +1870,7 @@ const TodoModule = (function() {
         const grouped = {};
         PRIORITIES.forEach(p => grouped[p.id] = []);
         todos.forEach(t => {
+            console.log('[TodoModule] Grouping todo:', t.id, 'priority:', t.priority, 'grouped[priority]:', !!grouped[t.priority]);
             if (grouped[t.priority]) grouped[t.priority].push(t);
             else grouped['medium'].push(t);
         });
@@ -2149,8 +2168,6 @@ const TodoModule = (function() {
 
         const menu = document.createElement('div');
         menu.className = 'priority-menu';
-        menu.style.left = e.pageX + 'px';
-        menu.style.top = e.pageY + 'px';
 
         menu.innerHTML = PRIORITIES.map(p => `
             <div class="priority-menu-item" data-priority="${p.id}">
@@ -2164,6 +2181,35 @@ const TodoModule = (function() {
         `;
 
         document.body.appendChild(menu);
+
+        // Position menu within viewport bounds
+        const menuRect = menu.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const gap = 8;
+
+        let left = e.clientX;
+        let top = e.clientY;
+
+        // Shift left if overflows right edge
+        if (left + menuRect.width > vw - gap) {
+            left = vw - menuRect.width - gap;
+        }
+        // Shift right if overflows left edge
+        if (left < gap) {
+            left = gap;
+        }
+        // Flip up if overflows bottom
+        if (top + menuRect.height > vh - gap) {
+            top = e.clientY - menuRect.height;
+        }
+        // Clamp top
+        if (top < gap) {
+            top = gap;
+        }
+
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
 
         menu.querySelectorAll('.priority-menu-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -2499,20 +2545,50 @@ const TodoModule = (function() {
     function copyToInput(id) {
         const todo = todos.find(t => t.id === id);
         if (!todo) return;
-        
-        // Find message input and set value
-        const input = document.querySelector(config.inputSelector);
-        if (input) {
-            input.value = todo.text;
-            input.focus();
-            
-            // Visual feedback on the todo item
+
+        // Send to Kitt via TaskProcessor (relay queue)
+        if (typeof TaskProcessor !== 'undefined' && TaskProcessor.submit) {
+            // Build task content with todo text and any notes/thought
+            let taskContent = todo.text;
+            if (todo.thought) {
+                taskContent += `\n\n💭 Notes: ${todo.thought}`;
+            }
+
+            TaskProcessor.submit(taskContent, {
+                priority: todo.priority || 'normal',
+                source: 'todo-module'
+            });
+
+            // Visual feedback - green flash for sent
             const item = document.querySelector(`.todo-item[data-id="${id}"]`);
             if (item) {
-                item.style.background = '#3a5a3a';
+                item.style.background = '#2a5a2a';
+                item.style.transition = 'background 0.3s';
                 setTimeout(() => {
                     item.style.background = '';
-                }, 300);
+                }, 500);
+            }
+
+            // Show notification
+            if (typeof showNotification === 'function') {
+                showNotification(`Task sent to ${config.assistantName}`, 'success');
+            }
+
+            console.log(`[TodoModule] Sent to ${config.assistantName}:`, taskContent.substring(0, 50));
+        } else {
+            // Fallback: copy to input field
+            const input = document.querySelector(config.inputSelector);
+            if (input) {
+                input.value = todo.text;
+                input.focus();
+
+                const item = document.querySelector(`.todo-item[data-id="${id}"]`);
+                if (item) {
+                    item.style.background = '#3a5a3a';
+                    setTimeout(() => {
+                        item.style.background = '';
+                    }, 300);
+                }
             }
         }
     }
@@ -2529,13 +2605,26 @@ const TodoModule = (function() {
         }
 
         const text = input.value.trim();
-        const priority = prioritySelect?.value || 'medium';
+        const priority = prioritySelect?.value;
         const notes = notesInput ? notesInput.value.trim() : '';
 
         console.log('[TodoModule] Input text:', text, 'Priority:', priority, 'CurrentList:', currentListName);
 
         if (!text) {
             console.log('[TodoModule] Empty text, returning');
+            return;
+        }
+
+        // Require priority selection
+        if (!priority) {
+            console.log('[TodoModule] No priority selected');
+            prioritySelect.style.borderColor = '#ef4444';
+            prioritySelect.style.animation = 'shake 0.3s';
+            setTimeout(() => {
+                prioritySelect.style.borderColor = '';
+                prioritySelect.style.animation = '';
+            }, 1000);
+            prioritySelect.focus();
             return;
         }
 
@@ -2569,7 +2658,30 @@ const TodoModule = (function() {
         }
 
         console.log('[TodoModule] Todo added, rendering. Todos count:', todos.length);
+        console.log('[TodoModule] Todo object:', JSON.stringify(todo));
+        console.log('[TodoModule] Current todos array:', todos.map(t => ({id: t.id, text: t.text, priority: t.priority})));
+
+        // Auto-expand the priority section so new task is visible
+        if (collapsedSections[priority]) {
+            console.log('[TodoModule] Auto-expanding collapsed section:', priority);
+            collapsedSections[priority] = false;
+            localStorage.setItem('todo-collapsed-sections', JSON.stringify(collapsedSections));
+        }
+
         render();
+
+        // Scroll to show the new task
+        setTimeout(() => {
+            const newTaskEl = document.querySelector(`[data-id="${todo.id}"]`);
+            if (newTaskEl) {
+                newTaskEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Briefly highlight the new task
+                newTaskEl.style.outline = '2px solid #00d9ff';
+                setTimeout(() => newTaskEl.style.outline = '', 1500);
+            } else {
+                console.warn('[TodoModule] Could not find new task element in DOM:', todo.id);
+            }
+        }, 100);
 
         // Reset inputs
         input.value = '';
@@ -2586,11 +2698,8 @@ const TodoModule = (function() {
         apiBase = baseUrl || `http://${location.hostname}:8585`;
         config = { ...config, ...options };
 
-        // Default to "All" list on first load (no saved state)
-        const savedState = localStorage.getItem('todo-panel-state');
-        if (!savedState) {
-            currentListName = ALL_LISTS_KEY;
-        }
+        // Always default to "All" list on page load
+        currentListName = ALL_LISTS_KEY;
 
         loadCollapsedState();
         createStyles();

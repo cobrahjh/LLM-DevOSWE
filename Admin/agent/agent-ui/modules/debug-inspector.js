@@ -1,5 +1,5 @@
 /**
- * Debug Inspector v2.1 - Element Selector Tool + Debug Panel
+ * Debug Inspector v2.3 - Element Selector Tool + Debug Panel + DIM Status
  * Hotkeys:
  *   Ctrl+Alt+Shift+D - Toggle element inspector
  *   Ctrl+Shift+D - Toggle debug info panel
@@ -29,7 +29,9 @@ const DebugInspector = (function() {
             { label: 'Fix spacing', cmd: 'fix spacing' },
             { label: 'Fix alignment', cmd: 'fix alignment' },
             { label: 'Fix overflow', cmd: 'fix overflow' },
-            { label: 'Fix responsiveness', cmd: 'fix responsiveness' }
+            { label: 'Fix responsiveness', cmd: 'fix responsiveness' },
+            { label: 'Fix formatting', cmd: 'fix formatting' },
+            { label: 'Fix performance', cmd: 'fix performance issues' }
         ]},
         { icon: '🎨', label: 'Design', cmd: 'design', sub: [
             { label: '── Style ──', cmd: '', disabled: true },
@@ -42,6 +44,12 @@ const DebugInspector = (function() {
             { label: 'Make larger', cmd: 'make larger' },
             { label: 'Make smaller', cmd: 'make smaller' },
             { label: 'Full width', cmd: 'make full width' },
+            { label: '── Width ──', cmd: '', disabled: true },
+            { label: 'Width wider', cmd: 'make width wider' },
+            { label: 'Width narrower', cmd: 'make width narrower' },
+            { label: '── Height ──', cmd: '', disabled: true },
+            { label: 'Height taller', cmd: 'make height taller' },
+            { label: 'Height shorter', cmd: 'make height shorter' },
             { label: '── Simplify ──', cmd: '', disabled: true },
             { label: 'Simplify design', cmd: 'simplify design, remove clutter' },
             { label: 'Reduce complexity', cmd: 'reduce complexity, fewer elements' },
@@ -93,6 +101,15 @@ const DebugInspector = (function() {
         ]},
         { icon: '📋', label: 'Copy selector', cmd: 'copy' },
         { divider: true },
+        { icon: '🖥️', label: 'DIM', cmd: 'dim-status', sub: [
+            { label: '── Data Interface Manager ──', cmd: '', disabled: true },
+            { label: 'Check DIM status', cmd: 'dim-check' },
+            { label: 'Open SimWidget UI', cmd: 'dim-open' },
+            { label: 'Restart DIM', cmd: 'dim-restart' },
+            { label: '── SimConnect ──', cmd: '', disabled: true },
+            { label: 'Check connection', cmd: 'dim-simconnect' },
+            { label: 'View flight data', cmd: 'dim-flightdata' }
+        ]},
         { icon: '🗑️', label: 'Remove', cmd: 'remove', danger: true },
     ];
 
@@ -328,6 +345,27 @@ const DebugInspector = (function() {
             return;
         }
 
+        // Handle DIM (Data Interface Manager) commands
+        if (cmd.startsWith('dim-')) {
+            await handleDIMCommand(cmd);
+            return;
+        }
+
+        // Check if this is an edit command that needs a prompt
+        const editCommands = ['edit text', 'edit html', 'add content', 'auto update contents'];
+        if (editCommands.includes(cmd)) {
+            const userInput = await showEditPrompt(cmd);
+            if (userInput === null) {
+                // User cancelled
+                toggle();
+                return;
+            }
+            // Append user input to command if provided
+            if (userInput.trim()) {
+                cmd = `${cmd}: "${userInput}"`;
+            }
+        }
+
         // Build context for Kitt
         const path = getPath(selectedElement);
         const rect = selectedElement.getBoundingClientRect();
@@ -384,6 +422,113 @@ const DebugInspector = (function() {
         }
 
         toggle(); // Exit debug mode
+    }
+
+    // Show edit prompt modal for edit commands
+    function showEditPrompt(cmd) {
+        return new Promise((resolve) => {
+            // Remove existing prompt
+            const existing = document.getElementById('edit-prompt-modal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'edit-prompt-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #1a1a2e;
+                border: 1px solid #4a9eff;
+                border-radius: 12px;
+                padding: 0;
+                min-width: 400px;
+                z-index: 100005;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+                font-family: system-ui, sans-serif;
+            `;
+
+            const cmdLabels = {
+                'edit text': 'Enter new text',
+                'edit html': 'Enter HTML content',
+                'add content': 'Enter content to add',
+                'auto update contents': 'Describe what to update'
+            };
+
+            const placeholder = {
+                'edit text': 'e.g., "Welcome to Admin Panel"',
+                'edit html': 'e.g., "<span>New content</span>"',
+                'add content': 'e.g., "Add a status indicator"',
+                'auto update contents': 'e.g., "Show live server status"'
+            };
+
+            modal.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #2a2a3e; border-radius: 12px 12px 0 0; border-bottom: 1px solid #333;">
+                    <span style="font-weight: 600; color: #fff;">✏️ ${cmdLabels[cmd] || 'Edit Element'}</span>
+                    <button id="edit-prompt-close" style="background: none; border: none; color: #888; cursor: pointer; font-size: 18px; padding: 0;">&times;</button>
+                </div>
+                <div style="padding: 16px;">
+                    <div style="color: #888; font-size: 12px; margin-bottom: 8px;">
+                        Element: <span style="color: #4a9eff;">${selectedSelector}</span>
+                    </div>
+                    <textarea id="edit-prompt-input" placeholder="${placeholder[cmd] || 'Enter text...'}" style="
+                        width: 100%;
+                        min-height: 80px;
+                        background: #0f0f1a;
+                        border: 1px solid #444;
+                        border-radius: 6px;
+                        color: #e0e0e0;
+                        padding: 10px;
+                        font-size: 13px;
+                        resize: vertical;
+                        box-sizing: border-box;
+                    "></textarea>
+                    <div style="color: #666; font-size: 11px; margin-top: 6px;">
+                        Leave empty to use default action
+                    </div>
+                </div>
+                <div style="padding: 12px 16px; border-top: 1px solid #333; display: flex; justify-content: flex-end; gap: 8px;">
+                    <button id="edit-prompt-cancel" style="padding: 8px 16px; background: #2a2a3e; border: 1px solid #444; border-radius: 6px; color: #ccc; cursor: pointer; font-size: 13px;">Cancel</button>
+                    <button id="edit-prompt-send" style="padding: 8px 16px; background: #4a9eff; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px;">Send to Kitt</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            const input = document.getElementById('edit-prompt-input');
+            const closeBtn = document.getElementById('edit-prompt-close');
+            const cancelBtn = document.getElementById('edit-prompt-cancel');
+            const sendBtn = document.getElementById('edit-prompt-send');
+
+            // Focus input
+            setTimeout(() => input.focus(), 50);
+
+            // Handle close
+            const close = (result) => {
+                modal.remove();
+                resolve(result);
+            };
+
+            closeBtn.onclick = () => close(null);
+            cancelBtn.onclick = () => close(null);
+            sendBtn.onclick = () => close(input.value);
+
+            // Enter to send, Escape to cancel
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    close(input.value);
+                }
+                if (e.key === 'Escape') {
+                    close(null);
+                }
+            };
+
+            // Click outside to cancel
+            modal.onclick = (e) => {
+                if (e.target === modal) close(null);
+            };
+        });
     }
 
     async function handleSnapshot(cmd) {
@@ -531,6 +676,291 @@ const DebugInspector = (function() {
         link.download = filename;
         link.href = canvas.toDataURL('image/png');
         link.click();
+    }
+
+    // ============================================
+    // DIM (Data Interface Manager) Commands
+    // ============================================
+
+    async function handleDIMCommand(cmd) {
+        const baseHost = location.hostname || 'localhost';
+        const DIM_PORT = 8080;
+        const DIM_URL = `http://${baseHost}:${DIM_PORT}`;
+
+        try {
+            switch (cmd) {
+                case 'dim-check':
+                    await checkDIMStatus(DIM_URL);
+                    break;
+
+                case 'dim-open':
+                    window.open(DIM_URL, '_blank');
+                    showToast('Opening SimWidget UI...');
+                    break;
+
+                case 'dim-restart':
+                    await restartDIM();
+                    break;
+
+                case 'dim-simconnect':
+                    await checkSimConnect(DIM_URL);
+                    break;
+
+                case 'dim-flightdata':
+                    await viewFlightData(DIM_URL);
+                    break;
+
+                default:
+                    showToast('Unknown DIM command: ' + cmd);
+            }
+        } catch (err) {
+            console.error('DIM command error:', err);
+            showToast('DIM Error: ' + err.message);
+        }
+    }
+
+    async function checkDIMStatus(baseUrl) {
+        showToast('Checking DIM status...');
+        try {
+            const res = await fetch(`${baseUrl}/api/health`, { timeout: 3000 });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+
+            const status = data.simconnect ? 'SimConnect: Connected' : 'SimConnect: Disconnected';
+            const vars = data.variables ? `${data.variables} vars` : '';
+
+            showDIMStatusModal({
+                title: 'DIM Status',
+                status: 'online',
+                items: [
+                    { label: 'Server', value: 'Online', color: '#22c55e' },
+                    { label: 'SimConnect', value: data.simconnect ? 'Connected' : 'Disconnected', color: data.simconnect ? '#22c55e' : '#ef4444' },
+                    { label: 'Variables', value: vars || 'N/A' },
+                    { label: 'Clients', value: data.clients || 0 },
+                    { label: 'Uptime', value: formatUptime(data.uptime) }
+                ]
+            });
+        } catch (err) {
+            showDIMStatusModal({
+                title: 'DIM Status',
+                status: 'offline',
+                items: [
+                    { label: 'Server', value: 'Offline', color: '#ef4444' },
+                    { label: 'Error', value: err.message }
+                ]
+            });
+        }
+    }
+
+    async function restartDIM() {
+        showToast('Restarting DIM service...');
+        try {
+            // Try via orchestrator API
+            const res = await fetch('http://127.0.0.1:8500/api/services/simwidget/restart', {
+                method: 'POST'
+            });
+            if (res.ok) {
+                showToast('DIM restart initiated');
+            } else {
+                throw new Error('Restart failed');
+            }
+        } catch (err) {
+            // Fallback: inform user
+            showToast('Cannot restart remotely - use service manager');
+        }
+    }
+
+    async function checkSimConnect(baseUrl) {
+        showToast('Checking SimConnect...');
+        try {
+            const res = await fetch(`${baseUrl}/api/simconnect/status`);
+            const data = await res.json();
+
+            showDIMStatusModal({
+                title: 'SimConnect Status',
+                status: data.connected ? 'connected' : 'disconnected',
+                items: [
+                    { label: 'Status', value: data.connected ? 'Connected' : 'Disconnected', color: data.connected ? '#22c55e' : '#ef4444' },
+                    { label: 'MSFS', value: data.msfsRunning ? 'Running' : 'Not Running', color: data.msfsRunning ? '#22c55e' : '#888' },
+                    { label: 'Version', value: data.version || 'Unknown' },
+                    { label: 'Last Event', value: data.lastEvent || 'None' }
+                ]
+            });
+        } catch (err) {
+            showDIMStatusModal({
+                title: 'SimConnect Status',
+                status: 'error',
+                items: [
+                    { label: 'Error', value: 'Cannot reach DIM server', color: '#ef4444' }
+                ]
+            });
+        }
+    }
+
+    async function viewFlightData(baseUrl) {
+        showToast('Fetching flight data...');
+        try {
+            const res = await fetch(`${baseUrl}/api/simvars`);
+            const data = await res.json();
+
+            // Format key flight variables
+            const vars = data.variables || data;
+            const items = [];
+
+            // Common flight data points
+            const keyVars = [
+                { key: 'INDICATED ALTITUDE', label: 'Altitude', unit: 'ft' },
+                { key: 'AIRSPEED INDICATED', label: 'Airspeed', unit: 'kts' },
+                { key: 'HEADING INDICATOR', label: 'Heading', unit: '' },
+                { key: 'VERTICAL SPEED', label: 'VS', unit: 'fpm' },
+                { key: 'PLANE LATITUDE', label: 'Latitude', unit: '' },
+                { key: 'PLANE LONGITUDE', label: 'Longitude', unit: '' },
+                { key: 'AUTOPILOT MASTER', label: 'AP', unit: '' }
+            ];
+
+            keyVars.forEach(v => {
+                const val = vars[v.key] || vars[`A:${v.key}`];
+                if (val !== undefined) {
+                    const displayVal = typeof val === 'number' ? val.toFixed(1) : val;
+                    items.push({ label: v.label, value: `${displayVal} ${v.unit}`.trim() });
+                }
+            });
+
+            if (items.length === 0) {
+                items.push({ label: 'Status', value: 'No flight data available' });
+            }
+
+            showDIMStatusModal({
+                title: 'Flight Data',
+                status: items.length > 1 ? 'active' : 'inactive',
+                items
+            });
+        } catch (err) {
+            showDIMStatusModal({
+                title: 'Flight Data',
+                status: 'error',
+                items: [
+                    { label: 'Error', value: 'Cannot fetch flight data', color: '#ef4444' }
+                ]
+            });
+        }
+    }
+
+    function setupDIMModalDrag(modal) {
+        const handle = modal.querySelector('.dim-modal-header');
+        if (!handle) return;
+
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+
+        handle.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button')) return;
+            isDragging = true;
+            const rect = modal.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = rect.left;
+            initialY = rect.top;
+            modal.style.transform = 'none';
+            modal.style.left = initialX + 'px';
+            modal.style.top = initialY + 'px';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let newX = initialX + (e.clientX - startX);
+            let newY = initialY + (e.clientY - startY);
+            newX = Math.max(0, Math.min(window.innerWidth - 100, newX));
+            newY = Math.max(0, Math.min(window.innerHeight - 50, newY));
+            modal.style.left = newX + 'px';
+            modal.style.top = newY + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
+    }
+
+    function showDIMStatusModal(config) {
+        // Remove existing modal
+        const existing = document.getElementById('dim-status-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'dim-status-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a2e;
+            border: 1px solid #4a9eff;
+            border-radius: 12px;
+            padding: 0;
+            min-width: 280px;
+            z-index: 100003;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            font-family: system-ui, sans-serif;
+        `;
+
+        const statusColor = {
+            online: '#22c55e',
+            offline: '#ef4444',
+            connected: '#22c55e',
+            disconnected: '#f59e0b',
+            active: '#22c55e',
+            inactive: '#888',
+            error: '#ef4444'
+        }[config.status] || '#4a9eff';
+
+        modal.innerHTML = `
+            <div class="dim-modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #2a2a3e; border-radius: 12px 12px 0 0; border-bottom: 1px solid #333; cursor: move; user-select: none;">
+                <span style="font-weight: 600; color: #fff;">${config.title}</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor};"></span>
+                    <button onclick="this.closest('#dim-status-modal').remove()" style="background: none; border: none; color: #888; cursor: pointer; font-size: 18px; padding: 0;">&times;</button>
+                </div>
+            </div>
+            <div style="padding: 16px;">
+                ${config.items.map(item => `
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333;">
+                        <span style="color: #888;">${item.label}</span>
+                        <span style="color: ${item.color || '#e0e0e0'}; font-weight: 500;">${item.value}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div style="padding: 12px 16px; border-top: 1px solid #333; display: flex; justify-content: flex-end;">
+                <button onclick="this.closest('#dim-status-modal').remove()" style="padding: 6px 16px; background: #4a9eff; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px;">Close</button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        setupDIMModalDrag(modal);
+
+        // Auto-close after 10 seconds
+        setTimeout(() => {
+            if (document.getElementById('dim-status-modal')) {
+                modal.remove();
+            }
+        }, 10000);
+
+        // Close on click outside
+        const clickHandler = (e) => {
+            if (!modal.contains(e.target)) {
+                modal.remove();
+                document.removeEventListener('click', clickHandler);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', clickHandler), 100);
+    }
+
+    function formatUptime(seconds) {
+        if (!seconds) return 'N/A';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        if (h > 0) return `${h}h ${m}m`;
+        if (m > 0) return `${m}m ${s}s`;
+        return `${s}s`;
     }
 
     function showToast(msg) {
@@ -876,7 +1306,7 @@ const DebugInspector = (function() {
 
     async function checkKitt() {
         try {
-            const res = await fetch('http://localhost:8585/api/kitt/status');
+            const res = await fetch('http://127.0.0.1:8585/api/kitt/status');
             const status = await res.json();
             const msg = status.busy
                 ? `Kitt: Busy - ${status.task}\nUptime: ${Math.round(status.uptime)}s`
@@ -889,7 +1319,7 @@ const DebugInspector = (function() {
 
     async function resetKitt() {
         try {
-            await fetch('http://localhost:8585/api/kitt/reset', { method: 'POST' });
+            await fetch('http://127.0.0.1:8585/api/kitt/reset', { method: 'POST' });
             alert('Kitt reset successfully');
         } catch (e) {
             alert('Reset failed: ' + e.message);
@@ -924,7 +1354,7 @@ const DebugInspector = (function() {
         // Initialize quick actions bar
         initQuickActions();
 
-        console.log('🔍 Debug Inspector v2.2 ready');
+        console.log('🔍 Debug Inspector v2.3 ready');
         console.log('   Ctrl+Alt+Shift+D - Element inspector');
         console.log('   Ctrl+Shift+D - Debug info panel');
         console.log('   Quick Actions bar in header');

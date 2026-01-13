@@ -1,5 +1,5 @@
 /**
- * SimWidget Agent Server v1.4.0
+ * SimWidget Agent Server v1.6.0
  *
  * Self-hosted Claude assistant with local dev environment access
  *
@@ -17,10 +17,14 @@
  * - Service Manager with dev/service modes
  * - Kitt busy state tracking & broadcasting
  * - Task queue system (prevents deadlock when Kitt is busy)
+ * - Deferred restart system (queue restarts for after task completion)
+ * - Relay service integration (unified status view)
  *
- * Path: C:\DevOSWE\SimWidget_Engine\Admin\agent\agent-server.js
- * Last Updated: 2026-01-11
+ * Path: C:\DevOSWE\Admin\agent\agent-server.js
+ * Last Updated: 2026-01-12
  *
+ * v1.6.0 - Relay integration: /api/kitt/status includes relay health for unified view
+ * v1.5.0 - Deferred restart system: queue service restarts, process after task completes
  * v1.4.0 - Task queue system: queue tasks when Kitt is busy, auto-process when available
  * v1.3.0 - Token optimization: budget limits, history truncation, max_tokens reduction
  * v1.2.0 - Added Kitt busy state API (/api/kitt/status) and WebSocket broadcast
@@ -83,6 +87,247 @@ const BUSY_SAFETY_TIMEOUT = 10 * 60 * 1000;
 const taskQueue = [];
 let isProcessingQueue = false;
 
+// Deferred restarts - queue restarts to execute after task completion
+const deferredRestarts = [];
+let isProcessingRestarts = false;
+
+// ============================================
+// CLAUDE CODE CONTROLLER
+// Direct control over Claude Code CLI sessions
+// ============================================
+
+const claudeSessions = new Map(); // sessionId -> { process, ws clients, buffer }
+let claudeSessionCounter = 0;
+
+const ClaudeController = {
+    // Spawn a new Claude Code session
+    spawn(options = {}) {
+        const sessionId = `claude-${++claudeSessionCounter}-${Date.now()}`;
+        const cwd = options.cwd || PROJECT_ROOT;
+
+        console.log(`[ClaudeController] Spawning session ${sessionId} in ${cwd}`);
+
+        // Spawn claude with --dangerously-skip-permissions for non-interactive mode
+        const args = options.args || [];
+        if (!args.includes('--dangerously-skip-permissions')) {
+            args.push('--dangerously-skip-permissions');
+        }
+
+        // Use full path to claude executable
+        const claudePath = process.env.CLAUDE_PATH || 'C:\\Users\\hjhar\\.local\\bin\\claude.exe';
+
+        const claudeProcess = spawn(claudePath, args, {
+            cwd,
+            shell: false,
+            env: { ...process.env, FORCE_COLOR: '0' }, // Disable color codes
+            stdio: ['pipe', 'pipe', 'pipe']
+        });
+
+        const session = {
+            id: sessionId,
+            process: claudeProcess,
+            clients: new Set(), // WebSocket clients listening to this session
+            buffer: [],         // Recent output buffer
+            startedAt: Date.now(),
+            cwd,
+            status: 'running'
+        };
+
+        claudeSessions.set(sessionId, session);
+
+        // Handle stdout
+        claudeProcess.stdout.on('data', (data) => {
+            const text = data.toString();
+            session.buffer.push({ type: 'stdout', text, time: Date.now() });
+            if (session.buffer.length > 1000) session.buffer.shift();
+
+            // Broadcast to all clients
+            ClaudeController.broadcast(sessionId, {
+                type: 'claude:output',
+                sessionId,
+                stream: 'stdout',
+                text
+            });
+        });
+
+        // Handle stderr
+        claudeProcess.stderr.on('data', (data) => {
+            const text = data.toString();
+            session.buffer.push({ type: 'stderr', text, time: Date.now() });
+            if (session.buffer.length > 1000) session.buffer.shift();
+
+            ClaudeController.broadcast(sessionId, {
+                type: 'claude:output',
+                sessionId,
+                stream: 'stderr',
+                text
+            });
+        });
+
+        // Handle process exit
+        claudeProcess.on('close', (code) => {
+            console.log(`[ClaudeController] Session ${sessionId} exited with code ${code}`);
+            session.status = 'exited';
+            session.exitCode = code;
+
+            ClaudeController.broadcast(sessionId, {
+                type: 'claude:exit',
+                sessionId,
+                code
+            });
+        });
+
+        claudeProcess.on('error', (err) => {
+            console.error(`[ClaudeController] Session ${sessionId} error:`, err.message);
+            session.status = 'error';
+            session.error = err.message;
+
+            ClaudeController.broadcast(sessionId, {
+                type: 'claude:error',
+                sessionId,
+                error: err.message
+            });
+        });
+
+        return session;
+    },
+
+    // Send input to a Claude session
+    input(sessionId, text) {
+        const session = claudeSessions.get(sessionId);
+        if (!session || !session.process || session.status !== 'running') {
+            return { success: false, error: 'Session not found or not running' };
+        }
+
+        session.process.stdin.write(text + '\n');
+        console.log(`[ClaudeController] Input to ${sessionId}: ${text.substring(0, 50)}...`);
+
+        return { success: true };
+    },
+
+    // Send a prompt to Claude (for non-interactive mode)
+    prompt(sessionId, prompt) {
+        const session = claudeSessions.get(sessionId);
+        if (!session || !session.process || session.status !== 'running') {
+            return { success: false, error: 'Session not found or not running' };
+        }
+
+        // Send the prompt followed by newline
+        session.process.stdin.write(prompt + '\n');
+
+        return { success: true };
+    },
+
+    // Kill a Claude session
+    kill(sessionId) {
+        const session = claudeSessions.get(sessionId);
+        if (!session || !session.process) {
+            return { success: false, error: 'Session not found' };
+        }
+
+        console.log(`[ClaudeController] Killing session ${sessionId}`);
+        session.process.kill('SIGTERM');
+        session.status = 'killed';
+
+        return { success: true };
+    },
+
+    // Get session info
+    get(sessionId) {
+        const session = claudeSessions.get(sessionId);
+        if (!session) return null;
+
+        return {
+            id: session.id,
+            status: session.status,
+            startedAt: session.startedAt,
+            cwd: session.cwd,
+            exitCode: session.exitCode,
+            error: session.error,
+            bufferLength: session.buffer.length,
+            clientCount: session.clients.size
+        };
+    },
+
+    // List all sessions
+    list() {
+        return Array.from(claudeSessions.values()).map(s => ({
+            id: s.id,
+            status: s.status,
+            startedAt: s.startedAt,
+            cwd: s.cwd,
+            clientCount: s.clients.size
+        }));
+    },
+
+    // Get recent output from session buffer
+    getBuffer(sessionId, limit = 100) {
+        const session = claudeSessions.get(sessionId);
+        if (!session) return [];
+
+        return session.buffer.slice(-limit);
+    },
+
+    // Add a WebSocket client to a session
+    subscribe(sessionId, ws) {
+        const session = claudeSessions.get(sessionId);
+        if (!session) return false;
+
+        session.clients.add(ws);
+        console.log(`[ClaudeController] Client subscribed to ${sessionId}`);
+        return true;
+    },
+
+    // Remove a WebSocket client from a session
+    unsubscribe(sessionId, ws) {
+        const session = claudeSessions.get(sessionId);
+        if (!session) return;
+
+        session.clients.delete(ws);
+    },
+
+    // Broadcast message to all clients of a session
+    broadcast(sessionId, message) {
+        const session = claudeSessions.get(sessionId);
+        if (!session) return;
+
+        const data = JSON.stringify(message);
+        session.clients.forEach(ws => {
+            if (ws.readyState === 1) { // WebSocket.OPEN
+                ws.send(data);
+            }
+        });
+
+        // Also broadcast to general claude WebSocket
+        if (claudeWss) {
+            claudeWss.clients.forEach(ws => {
+                if (ws.readyState === 1) {
+                    ws.send(data);
+                }
+            });
+        }
+    },
+
+    // Clean up old sessions
+    cleanup() {
+        const now = Date.now();
+        const maxAge = 30 * 60 * 1000; // 30 minutes
+
+        for (const [id, session] of claudeSessions) {
+            if (session.status !== 'running' && (now - session.startedAt) > maxAge) {
+                claudeSessions.delete(id);
+                console.log(`[ClaudeController] Cleaned up old session ${id}`);
+            }
+        }
+    }
+};
+
+// Cleanup old sessions every 5 minutes
+setInterval(() => ClaudeController.cleanup(), 5 * 60 * 1000);
+
+// WebSocket server for Claude sessions
+let claudeWss = null;
+
 function setKittBusy(busy, task = null) {
     // Clear any existing safety timeout
     if (busyTimeoutId) {
@@ -119,6 +364,92 @@ function setKittBusy(busy, task = null) {
     if (!busy && taskQueue.length > 0 && !isProcessingQueue) {
         processNextInQueue();
     }
+
+    // Process deferred restarts after all tasks complete
+    if (!busy && taskQueue.length === 0 && deferredRestarts.length > 0 && !isProcessingRestarts) {
+        processDeferredRestarts();
+    }
+}
+
+// Queue a service restart for after task completion
+function queueDeferredRestart(serviceName, reason = 'requested') {
+    // Don't duplicate
+    if (deferredRestarts.find(r => r.service === serviceName)) {
+        console.log(`[DeferredRestart] ${serviceName} already queued`);
+        return { queued: false, reason: 'already queued' };
+    }
+
+    deferredRestarts.push({
+        service: serviceName,
+        reason,
+        queuedAt: new Date().toISOString()
+    });
+
+    console.log(`[DeferredRestart] Queued ${serviceName} restart (reason: ${reason})`);
+
+    // Broadcast to clients
+    wss.clients.forEach(client => {
+        if (client.readyState === 1) {
+            client.send(JSON.stringify({
+                type: 'deferred_restart_queued',
+                service: serviceName,
+                reason,
+                queueLength: deferredRestarts.length
+            }));
+        }
+    });
+
+    return { queued: true, position: deferredRestarts.length };
+}
+
+// Process all deferred restarts
+async function processDeferredRestarts() {
+    if (deferredRestarts.length === 0 || isProcessingRestarts) return;
+
+    isProcessingRestarts = true;
+    console.log(`[DeferredRestart] Processing ${deferredRestarts.length} deferred restart(s)...`);
+
+    // Notify clients before restarting
+    wss.clients.forEach(client => {
+        if (client.readyState === 1) {
+            client.send(JSON.stringify({
+                type: 'deferred_restarts_starting',
+                services: deferredRestarts.map(r => r.service),
+                count: deferredRestarts.length
+            }));
+        }
+    });
+
+    // Small delay to ensure response is sent
+    await new Promise(r => setTimeout(r, 500));
+
+    while (deferredRestarts.length > 0) {
+        const restart = deferredRestarts.shift();
+        console.log(`[DeferredRestart] Restarting ${restart.service}...`);
+
+        try {
+            if (restart.service === 'agent' || restart.service === 'self') {
+                // Self-restart - exit and let service manager restart us
+                console.log('[DeferredRestart] Self-restart requested, exiting...');
+                isProcessingRestarts = false;
+                process.exit(0);
+            } else {
+                // Restart via Master O
+                await fetch(`http://127.0.0.1:8500/api/services/${restart.service}/restart`, {
+                    method: 'POST'
+                });
+                console.log(`[DeferredRestart] ${restart.service} restart triggered`);
+            }
+        } catch (err) {
+            console.error(`[DeferredRestart] Failed to restart ${restart.service}:`, err.message);
+        }
+
+        // Brief delay between restarts
+        await new Promise(r => setTimeout(r, 1000));
+    }
+
+    isProcessingRestarts = false;
+    console.log('[DeferredRestart] All deferred restarts processed');
 }
 
 // Add task to queue
@@ -197,13 +528,91 @@ const HotEngine = require('./hot-update/hot-engine');
 const PORT = process.env.AGENT_PORT || 8585;
 const SSL_PORT = process.env.AGENT_SSL_PORT || 8586;
 
+// Create Claude WebSocket server
+claudeWss = new WebSocket.Server({ noServer: true });
+
+// Handle Claude WebSocket connections
+claudeWss.on('connection', (ws) => {
+    console.log('[ClaudeWS] Client connected');
+
+    ws.on('message', (data) => {
+        try {
+            const msg = JSON.parse(data.toString());
+
+            switch (msg.type) {
+                case 'subscribe':
+                    // Subscribe to a specific session
+                    if (msg.sessionId) {
+                        ClaudeController.subscribe(msg.sessionId, ws);
+                        // Send current buffer
+                        const buffer = ClaudeController.getBuffer(msg.sessionId, 100);
+                        ws.send(JSON.stringify({ type: 'claude:buffer', sessionId: msg.sessionId, buffer }));
+                    }
+                    break;
+
+                case 'unsubscribe':
+                    if (msg.sessionId) {
+                        ClaudeController.unsubscribe(msg.sessionId, ws);
+                    }
+                    break;
+
+                case 'spawn':
+                    // Spawn new session via WebSocket
+                    const session = ClaudeController.spawn(msg.options || {});
+                    ClaudeController.subscribe(session.id, ws);
+                    ws.send(JSON.stringify({ type: 'claude:spawned', session: ClaudeController.get(session.id) }));
+                    break;
+
+                case 'input':
+                    if (msg.sessionId && msg.text) {
+                        ClaudeController.input(msg.sessionId, msg.text);
+                    }
+                    break;
+
+                case 'prompt':
+                    if (msg.sessionId && msg.prompt) {
+                        ClaudeController.prompt(msg.sessionId, msg.prompt);
+                    }
+                    break;
+
+                case 'kill':
+                    if (msg.sessionId) {
+                        ClaudeController.kill(msg.sessionId);
+                    }
+                    break;
+
+                case 'list':
+                    ws.send(JSON.stringify({ type: 'claude:sessions', sessions: ClaudeController.list() }));
+                    break;
+            }
+        } catch (err) {
+            console.error('[ClaudeWS] Message error:', err);
+        }
+    });
+
+    ws.on('close', () => {
+        // Unsubscribe from all sessions
+        for (const session of claudeSessions.values()) {
+            session.clients.delete(ws);
+        }
+        console.log('[ClaudeWS] Client disconnected');
+    });
+
+    // Send initial session list
+    ws.send(JSON.stringify({ type: 'claude:sessions', sessions: ClaudeController.list() }));
+});
+
 // Handle WebSocket upgrades manually to support multiple WS endpoints
 server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url, 'http://localhost').pathname;
-    
+
     if (pathname === '/chat') {
         wss.handleUpgrade(request, socket, head, (ws) => {
             wss.emit('connection', ws, request);
+        });
+    } else if (pathname === '/claude') {
+        claudeWss.handleUpgrade(request, socket, head, (ws) => {
+            claudeWss.emit('connection', ws, request);
         });
     } else if (pathname === '/hot') {
         // Let HotEngine handle /hot path - it will be set up after server.listen
@@ -1121,6 +1530,76 @@ app.post('/api/quick-reference', (req, res) => {
     }
 });
 
+// File Read API - read documentation files
+const ALLOWED_EXTENSIONS = ['.md', '.txt', '.json', '.js', '.html', '.css'];
+
+app.get('/api/file', (req, res) => {
+    try {
+        let filePath = req.query.path;
+        if (!filePath) {
+            return res.status(400).json({ error: 'Path required' });
+        }
+
+        // Normalize path to forward slashes
+        filePath = filePath.replace(/\\/g, '/');
+        const normalizedRoot = PROJECT_ROOT.replace(/\\/g, '/');
+
+        // Security: ensure path is within project root
+        if (!filePath.toLowerCase().startsWith(normalizedRoot.toLowerCase())) {
+            return res.status(403).json({ error: 'Access denied - path outside project' });
+        }
+
+        // Security: check extension
+        const ext = path.extname(filePath).toLowerCase();
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            return res.status(403).json({ error: 'File type not allowed' });
+        }
+
+        // Security: prevent path traversal
+        if (filePath.includes('..')) {
+            return res.status(403).json({ error: 'Path traversal not allowed' });
+        }
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const content = fs.readFileSync(filePath, 'utf8');
+        res.type('text/plain').send(content);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Open file in VS Code
+app.post('/api/open-file', (req, res) => {
+    try {
+        let filePath = req.body.path;
+        if (!filePath) {
+            return res.status(400).json({ error: 'Path required' });
+        }
+
+        // Normalize and validate path
+        filePath = filePath.replace(/\\/g, '/');
+        const normalizedRoot = PROJECT_ROOT.replace(/\\/g, '/');
+        if (!filePath.toLowerCase().startsWith(normalizedRoot.toLowerCase())) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Open in VS Code
+        const { exec } = require('child_process');
+        exec(`code "${filePath}"`, (err) => {
+            if (err) {
+                res.status(500).json({ error: 'Failed to open file' });
+            } else {
+                res.json({ success: true });
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // TODO Insight API - get Kitt's thoughts on a task
 app.post('/api/todo-insight', async (req, res) => {
     const { task, context } = req.body;
@@ -1259,6 +1738,66 @@ app.post('/api/simwidget/restart', async (req, res) => {
 // Status endpoint for service monitoring
 app.get('/api/status', (req, res) => {
     res.json({ status: 'ok', service: 'agent', version: '1.1.0' });
+});
+
+// OpenAI configuration endpoint
+const OPENAI_KEY_FILE = path.join(__dirname, 'openai API  key.txt');
+
+app.get('/api/config/openai-key', (req, res) => {
+    try {
+        // Try to read from file
+        if (fs.existsSync(OPENAI_KEY_FILE)) {
+            const key = fs.readFileSync(OPENAI_KEY_FILE, 'utf8').trim();
+            // Only return masked key for security (last 4 chars visible)
+            const masked = key.length > 4 ? '****' + key.slice(-4) : '****';
+            return res.json({
+                configured: true,
+                masked,
+                // Only send full key if explicitly requested (for API calls)
+                key: req.query.full === 'true' ? key : undefined
+            });
+        }
+
+        // Try environment variable
+        if (process.env.OPENAI_API_KEY) {
+            const key = process.env.OPENAI_API_KEY;
+            const masked = key.length > 4 ? '****' + key.slice(-4) : '****';
+            return res.json({
+                configured: true,
+                masked,
+                key: req.query.full === 'true' ? key : undefined
+            });
+        }
+
+        res.json({ configured: false });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/config/openai-key', (req, res) => {
+    try {
+        const { key } = req.body;
+        if (!key) {
+            return res.status(400).json({ error: 'API key required' });
+        }
+
+        fs.writeFileSync(OPENAI_KEY_FILE, key.trim());
+        res.json({ success: true, message: 'OpenAI API key saved' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/config/openai-tier', (req, res) => {
+    // Return account tier info (can be expanded to fetch from OpenAI)
+    res.json({
+        tier: 'tier-1', // Default assumption
+        limits: {
+            rpm: 500,
+            tpm: 200000
+        }
+    });
 });
 
 // Memory (CLAUDE.md and STANDARDS.md)
@@ -1457,12 +1996,22 @@ app.get('/api/dev-tracker/today', (req, res) => {
 // ==================== KITT BUSY STATUS API ====================
 
 // Get Kitt busy status (can be polled by other services)
-app.get('/api/kitt/status', (req, res) => {
+app.get('/api/kitt/status', async (req, res) => {
+    // Fetch relay status for unified view
+    let relayStatus = null;
+    try {
+        const relayRes = await fetch('http://localhost:8600/api/health', { timeout: 2000 });
+        relayStatus = await relayRes.json();
+    } catch (err) {
+        relayStatus = { status: 'offline', error: err.message };
+    }
+
     res.json({
         busy: kittBusy,
         since: kittBusySince,
         task: kittCurrentTask,
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        relay: relayStatus
     });
 });
 
@@ -1554,6 +2103,107 @@ app.post('/api/kitt/cancel', (req, res) => {
         clearedTasks,
         message: wasBusy ? 'Current task cancelled' : 'No active task to cancel'
     });
+});
+
+// ==================== CLAUDE CODE CONTROLLER API ====================
+
+// List all Claude sessions
+app.get('/api/claude/sessions', (req, res) => {
+    res.json({
+        sessions: ClaudeController.list(),
+        total: claudeSessions.size
+    });
+});
+
+// Spawn a new Claude session
+app.post('/api/claude/spawn', (req, res) => {
+    const { cwd, args, prompt } = req.body;
+
+    try {
+        const session = ClaudeController.spawn({ cwd, args });
+
+        // If initial prompt provided, send it after a short delay
+        if (prompt) {
+            setTimeout(() => {
+                ClaudeController.prompt(session.id, prompt);
+            }, 1000);
+        }
+
+        res.json({
+            success: true,
+            session: ClaudeController.get(session.id)
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get session info
+app.get('/api/claude/sessions/:id', (req, res) => {
+    const session = ClaudeController.get(req.params.id);
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    res.json({ session });
+});
+
+// Get session output buffer
+app.get('/api/claude/sessions/:id/buffer', (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    const buffer = ClaudeController.getBuffer(req.params.id, limit);
+    res.json({ buffer });
+});
+
+// Send input to a Claude session
+app.post('/api/claude/sessions/:id/input', (req, res) => {
+    const { text } = req.body;
+    if (!text) {
+        return res.status(400).json({ error: 'text is required' });
+    }
+
+    const result = ClaudeController.input(req.params.id, text);
+    res.json(result);
+});
+
+// Send a prompt to Claude session
+app.post('/api/claude/sessions/:id/prompt', (req, res) => {
+    const { prompt } = req.body;
+    if (!prompt) {
+        return res.status(400).json({ error: 'prompt is required' });
+    }
+
+    const result = ClaudeController.prompt(req.params.id, prompt);
+    res.json(result);
+});
+
+// Kill a Claude session
+app.post('/api/claude/sessions/:id/kill', (req, res) => {
+    const result = ClaudeController.kill(req.params.id);
+    res.json(result);
+});
+
+// Quick spawn and prompt (convenience endpoint)
+app.post('/api/claude/quick', async (req, res) => {
+    const { prompt, cwd } = req.body;
+    if (!prompt) {
+        return res.status(400).json({ error: 'prompt is required' });
+    }
+
+    try {
+        // Spawn with -p flag for single prompt mode
+        const session = ClaudeController.spawn({
+            cwd: cwd || PROJECT_ROOT,
+            args: ['-p', prompt]
+        });
+
+        res.json({
+            success: true,
+            sessionId: session.id,
+            message: 'Session spawned with prompt'
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 // ==================== GAMING DEVICES API ====================
@@ -1699,6 +2349,41 @@ app.post('/api/services/:name/restart', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// ==================== DEFERRED RESTART API ====================
+
+// Queue a deferred restart (executes after current task completes)
+app.post('/api/services/:name/defer-restart', (req, res) => {
+    const { reason } = req.body || {};
+    const result = queueDeferredRestart(req.params.name, reason || 'API request');
+    res.json(result);
+});
+
+// Get pending deferred restarts
+app.get('/api/deferred-restarts', (req, res) => {
+    res.json({
+        pending: deferredRestarts,
+        count: deferredRestarts.length,
+        isProcessing: isProcessingRestarts,
+        kittBusy: kittBusy
+    });
+});
+
+// Clear all deferred restarts
+app.delete('/api/deferred-restarts', (req, res) => {
+    const cleared = deferredRestarts.length;
+    deferredRestarts.length = 0;
+    res.json({ cleared, message: `Cleared ${cleared} deferred restart(s)` });
+});
+
+// Force process deferred restarts now (even if busy)
+app.post('/api/deferred-restarts/process', async (req, res) => {
+    if (deferredRestarts.length === 0) {
+        return res.json({ message: 'No deferred restarts pending' });
+    }
+    res.json({ message: `Processing ${deferredRestarts.length} deferred restart(s)...` });
+    processDeferredRestarts();
 });
 
 // Install Windows service (requires admin)
