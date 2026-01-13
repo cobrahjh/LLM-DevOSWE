@@ -20,7 +20,6 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
-const { execSync } = require('child_process');
 
 const app = express();
 const PORT = 8610;
@@ -44,7 +43,9 @@ const CONFIG = {
     relayUrl: 'http://localhost:8600',
     claudeTimeout: 30000,      // Consider Claude offline after 30s no heartbeat
     pollInterval: 3000,        // Check relay every 3s
-    llmModel: 'qwen2.5-coder:7b',
+    // Remote LLM on ai-pc (OpenAI-compatible API)
+    llmUrl: 'http://ai-pc:1234',
+    llmModel: 'qwen2.5-7b-instruct',
     llmTimeout: 60000
 };
 
@@ -93,20 +94,57 @@ function relayPost(path, body = {}) {
     });
 }
 
-function runLocalLLM(prompt) {
+async function runRemoteLLM(prompt) {
     const systemPrompt = `You are Kitt, a helpful AI assistant. Keep responses brief (1-2 sentences).`;
-    const safePrompt = prompt.replace(/"/g, '\\"').replace(/\n/g, ' ');
 
-    try {
-        const output = execSync(`ollama run ${CONFIG.llmModel} "${systemPrompt} User: ${safePrompt}"`, {
-            encoding: 'utf8',
-            timeout: CONFIG.llmTimeout,
-            windowsHide: true
+    return new Promise((resolve, reject) => {
+        const url = new URL(`${CONFIG.llmUrl}/v1/chat/completions`);
+        const body = JSON.stringify({
+            model: CONFIG.llmModel,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: prompt }
+            ],
+            max_tokens: 150,
+            temperature: 0.7
         });
-        return output.replace(/[\x1b\[][\d;?]*[mGKHJ]/g, '').replace(/[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]/g, '').trim();
-    } catch (err) {
-        return `LLM Error: ${err.message}`;
-    }
+
+        const req = http.request({
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body)
+            },
+            timeout: CONFIG.llmTimeout
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    if (json.choices && json.choices[0] && json.choices[0].message) {
+                        resolve(json.choices[0].message.content.trim());
+                    } else {
+                        resolve('Message received.');
+                    }
+                } catch (e) {
+                    resolve(`LLM Parse Error: ${data.substring(0, 100)}`);
+                }
+            });
+        });
+
+        req.on('error', (err) => resolve(`LLM Error: ${err.message}`));
+        req.on('timeout', () => {
+            req.destroy();
+            resolve('LLM Timeout');
+        });
+
+        req.write(body);
+        req.end();
+    });
 }
 
 function isClaudeAvailable() {
@@ -235,9 +273,9 @@ async function processWithFallback() {
 
         log(`LLM fallback: [${msg.id}] "${msg.content.substring(0, 30)}..."`);
 
-        const response = runLocalLLM(msg.content);
+        const response = await runRemoteLLM(msg.content);
         await relayPost(`/api/messages/${msg.id}/respond`, {
-            response: `[Local LLM] ${response}`
+            response: `[ai-pc LLM] ${response}`
         });
 
         state.llmFallbackCount++;
