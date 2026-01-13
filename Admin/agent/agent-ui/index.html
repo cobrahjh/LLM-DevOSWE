@@ -711,6 +711,12 @@
                         </div>
                         <div class="modal-body">
                             <div class="setting-group">
+                                <label class="setting-label">Voice</label>
+                                <select id="voice-entry-voice-select" class="setting-select" onchange="updateVoiceEntryVoice(this.value)">
+                                    <option value="">Loading voices...</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
                                 <label class="setting-label">Persona</label>
                                 <select id="voice-persona-select" class="setting-select">
                                     <option value="heather">Heather (UK Female)</option>
@@ -810,6 +816,34 @@
                 document.head.appendChild(style);
             }
             modal.classList.add('active');
+
+            // Populate voice selector
+            populateVoiceEntrySelect();
+        }
+
+        function populateVoiceEntrySelect() {
+            const select = document.getElementById('voice-entry-voice-select');
+            if (!select) return;
+
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => populateVoiceEntrySelect();
+                return;
+            }
+
+            select.innerHTML = voices.map(v =>
+                `<option value="${v.name}" ${v.name.includes('UK') && v.name.includes('Female') ? 'selected' : ''}>${v.name}</option>`
+            ).join('');
+
+            // Restore saved voice
+            const saved = localStorage.getItem('voice-entry-selected');
+            if (saved && [...select.options].some(o => o.value === saved)) {
+                select.value = saved;
+            }
+        }
+
+        function updateVoiceEntryVoice(voiceName) {
+            localStorage.setItem('voice-entry-selected', voiceName);
         }
 
         function closeVoiceEntryModal() {
@@ -838,13 +872,10 @@
                 persona: persona === 'heather' ? 'Heather' : 'Shǐ zhēn xiāng'
             };
 
-            if (persona === 'shizhenxiang') {
-                voiceOptions.voiceName = '粵語';
-                voiceOptions.rate = 0.85;
-            } else {
-                voiceOptions.voiceName = 'Google UK English Female';
-                voiceOptions.rate = 0.9;
-            }
+            // Use selected voice from dropdown (dynamic, works on all browsers)
+            const selectedVoice = document.getElementById('voice-entry-voice-select')?.value;
+            voiceOptions.voiceName = selectedVoice || '';
+            voiceOptions.rate = persona === 'shizhenxiang' ? 0.85 : 0.9;
 
             // Use VoiceEngine to speak
             if (typeof VoiceEngine !== 'undefined') {
