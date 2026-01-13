@@ -579,10 +579,8 @@ app.post('/api/queue', (req, res) => {
     });
 });
 
-// Consumer gets next pending task
+// List pending tasks (READ-ONLY - no auto-claim, use /api/messages/:id/claim instead)
 app.get('/api/queue/pending', (req, res) => {
-    const consumerId = req.query.consumerId || req.headers['x-consumer-id'];
-
     // Get all pending sorted by priority then time
     const pending = db.prepare(`
         SELECT * FROM tasks
@@ -591,41 +589,6 @@ app.get('/api/queue/pending', (req, res) => {
             CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END,
             created_at ASC
     `).all();
-
-    if (pending.length === 0) {
-        return res.json({ pending: [], count: 0 });
-    }
-
-    // Mark first as processing
-    const next = pending[0];
-    db.prepare(`
-        UPDATE tasks SET status = 'processing', processing_at = ?, consumer_id = ?
-        WHERE id = ?
-    `).run(Date.now(), consumerId || null, next.id);
-
-    // Update consumer tracking
-    if (consumerId) {
-        db.prepare(`
-            INSERT INTO consumers (id, name, last_heartbeat, current_task_id)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET last_heartbeat = ?, current_task_id = ?
-        `).run(consumerId, consumerId, Date.now(), next.id, Date.now(), next.id);
-    }
-
-    log(`Task ${next.id} now processing by ${consumerId || 'unknown'}`);
-
-    // Broadcast task:processing event
-    broadcast('task:processing', {
-        id: next.id,
-        sessionId: next.session_id,
-        consumerId: consumerId || null,
-        processingAt: Date.now()
-    });
-
-    // Broadcast consumer:online if new consumer
-    if (consumerId) {
-        broadcast('consumer:online', { consumerId, taskId: next.id });
-    }
 
     res.json({
         pending: pending.map(m => ({
@@ -637,11 +600,7 @@ app.get('/api/queue/pending', (req, res) => {
             age: Math.round((Date.now() - m.created_at) / 1000) + 's'
         })),
         count: pending.length,
-        processing: {
-            id: next.id,
-            sessionId: next.session_id,
-            message: next.content
-        }
+        hint: 'Use POST /api/messages/:id/claim to claim a message'
     });
 });
 
