@@ -62,6 +62,12 @@ Admin\tools\stop-open-webui.bat    # Stop container
 node Admin/relay/message-notifier.js
 ```
 
+**Auto-Poller (background polling for messages):**
+- Runs automatically with `start-all-servers.bat`
+- Polls every 5 seconds, writes to `Admin/relay/pending-messages.json`
+- Manual start: `node Admin/relay/auto-poller.js`
+- Quick check: `node Admin/relay/check-and-process.js`
+
 ### Files using API keys (need refactoring):
 
 - `Admin/agent/agent-server.js` - Kitt chat → Relay mode / Claude Code MCP
