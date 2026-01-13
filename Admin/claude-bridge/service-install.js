@@ -1,6 +1,6 @@
 /**
  * SimWidget Claude Bridge Windows Service Installer
- * v1.0.0 - 2026-01-11
+ * v2.0.0 - 2026-01-12
  *
  * Path: C:\DevOSWE\Admin\claude-bridge\service-install.js
  *
@@ -10,7 +10,7 @@
  * This registers Claude Bridge as a Windows Service with:
  * - Auto-restart on crash
  * - Auto-start on boot
- * - Recovery options (restart after 1min, 2min, 5min)
+ * - 2-worker system (Quick + Code)
  */
 
 const path = require('path');
@@ -19,8 +19,8 @@ const Service = require('node-windows').Service;
 // Service configuration
 const svc = new Service({
     name: 'SimWidget Claude Bridge',
-    description: 'SimWidget Claude Bridge - Routes requests through Claude Code CLI using Pro subscription',
-    script: path.join(__dirname, 'bridge-server.js'),
+    description: 'SimWidget Claude Bridge v2 - 2-worker WebSocket bridge to Claude Code CLI',
+    script: path.join(__dirname, 'bridge-service.js'),
     nodeOptions: [],
     workingDirectory: __dirname,
     allowServiceLogon: true
@@ -39,7 +39,8 @@ svc.on('start', () => {
     console.log('');
     console.log('Service Details:');
     console.log('  Name: SimWidget Claude Bridge');
-    console.log('  Port: 8601');
+    console.log('  Port: 8700 (WebSocket)');
+    console.log('  Workers: QuickWorker + CodeWorker');
     console.log('  Status: Running');
     console.log('');
     console.log('Management Commands:');

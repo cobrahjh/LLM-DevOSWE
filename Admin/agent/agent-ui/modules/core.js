@@ -298,10 +298,24 @@ const AdminKitt = (function() {
             return;
         }
 
+        // Try ClaudeBridge first (new 2-worker system)
+        if (typeof ClaudeBridge !== 'undefined' && ClaudeBridge.isConnected) {
+            console.log('[Core] Sending via ClaudeBridge');
+            addMessage('user', text);
+            ClaudeBridge.send(text);
+            elements.input.value = '';
+            clearAttachments();
+            if (typeof ActivityLog !== 'undefined') {
+                ActivityLog.send(`Bridge: "${text.substring(0, 40)}${text.length > 40 ? '...' : ''}"`);
+            }
+            return;
+        }
+
+        // Fall back to legacy agent server
         // Check WebSocket connection with user feedback
         if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
             console.warn('[Core] Send: WebSocket not connected');
-            addSystemMessage('⚠️ Not connected to Kitt. Reconnecting...');
+            addSystemMessage('⚠️ Not connected to Kitt or Bridge. Reconnecting...');
             connect();
             return;
         }
@@ -993,9 +1007,37 @@ const AdminKitt = (function() {
         // Voice recognition
         initVoice();
 
-        // Connect WebSocket
+        // Connect WebSocket (legacy agent server)
         connect();
-        
+
+        // Initialize ClaudeBridge (new 2-worker system)
+        if (typeof ClaudeBridge !== 'undefined') {
+            console.log('[Core] Initializing ClaudeBridge...');
+            ClaudeBridge.onConnect(() => {
+                console.log('[Core] ClaudeBridge connected');
+                addSystemMessage('🌉 Claude Bridge connected (2-worker mode)');
+            });
+            ClaudeBridge.onDisconnect(() => {
+                console.log('[Core] ClaudeBridge disconnected');
+            });
+            ClaudeBridge.onOutput((text) => {
+                // Stream output to chat or terminal
+                if (typeof ClaudeTerminal !== 'undefined') {
+                    ClaudeTerminal.appendOutput(text);
+                }
+            });
+            ClaudeBridge.onComplete((output, exitCode) => {
+                addMessage('assistant', output || '(No output)');
+                if (typeof Heather !== 'undefined') {
+                    Heather.speak(output?.substring(0, 500) || 'Task complete');
+                }
+            });
+            ClaudeBridge.onError((err) => {
+                addSystemMessage(`❌ Bridge error: ${err}`);
+            });
+            ClaudeBridge.connect();
+        }
+
         // Start cost update interval
         updateHeaderCost();
         setInterval(updateHeaderCost, 30000);
