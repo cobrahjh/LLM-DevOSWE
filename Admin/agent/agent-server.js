@@ -20,7 +20,7 @@
  * - Deferred restart system (queue restarts for after task completion)
  * - Relay service integration (unified status view)
  *
- * Path: C:\DevOSWE\Admin\agent\agent-server.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-server.js
  * Last Updated: 2026-01-12
  *
  * v1.6.0 - Relay integration: /api/kitt/status includes relay health for unified view

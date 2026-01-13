@@ -1,0 +1,465 @@
+/**
+ * Services Panel Widget v1.2.0
+ * Path: C:\DevClaude\SimWidget_Engine\simwidget-hybrid\ui\services-panel\widget.css
+ * Last Updated: 2025-01-08
+ * 
+ * Added: Cost tracking display and matrix
+ */
+
+.widget-container {
+    background: #1a1a2e;
+    border-radius: 8px;
+    min-width: 340px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #e0e0e0;
+    overflow: hidden;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #16213e;
+    border-bottom: 1px solid #0f3460;
+}
+
+.widget-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.header-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+#btn-costs {
+    color: #4ade80;
+    font-weight: bold;
+}
+
+#btn-costs:hover {
+    color: #22c55e;
+    background: rgba(74, 222, 128, 0.1);
+}
+
+.widget-content {
+    padding: 12px 16px;
+}
+
+.services-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #666;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.service-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.service-row:last-child {
+    border-bottom: none;
+}
+
+.service-status {
+    width: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #666;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.status-dot:hover {
+    transform: scale(1.2);
+}
+
+.status-dot.online {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+
+.status-dot.offline {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.status-dot.checking {
+    background: #eab308;
+    animation: pulse 1s infinite;
+}
+
+.status-dot.starting {
+    background: #3b82f6;
+    animation: pulse 1s infinite;
+}
+
+.status-dot.stopping {
+    background: #f97316;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.service-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.service-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.service-cost {
+    font-size: 10px;
+    color: #4ade80;
+    font-family: 'Consolas', monospace;
+}
+
+.service-cost.high {
+    color: #f59e0b;
+}
+
+.service-cost.critical {
+    color: #ef4444;
+}
+
+.service-port {
+    font-size: 12px;
+    color: #888;
+    font-family: 'Consolas', monospace;
+    min-width: 50px;
+    text-align: right;
+}
+
+.service-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-control {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-start {
+    background: #0f3460;
+    color: #22c55e;
+}
+
+.btn-start:hover:not(:disabled) {
+    background: #1a4a7a;
+}
+
+.btn-stop {
+    background: #3d1a1a;
+    color: #ef4444;
+}
+
+.btn-stop:hover:not(:disabled) {
+    background: #5a2a2a;
+}
+
+.btn-refresh {
+    background: #1a2a3d;
+    color: #888;
+    font-size: 14px;
+}
+
+.btn-refresh:hover:not(:disabled) {
+    background: #2a3a4d;
+    color: #fff;
+}
+
+.btn-control:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Cost Section */
+.cost-section {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 12px;
+    margin-bottom: 16px;
+}
+
+.cost-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.cost-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    background: #0f1419;
+    border-radius: 4px;
+    border: 1px solid #2a2a3e;
+}
+
+.cost-label {
+    font-size: 10px;
+    color: #888;
+    font-weight: 500;
+}
+
+.cost-value {
+    font-size: 11px;
+    color: #4ade80;
+    font-family: 'Consolas', monospace;
+    font-weight: 600;
+}
+
+.cost-value.warning {
+    color: #f59e0b;
+}
+
+.cost-value.error {
+    color: #ef4444;
+}
+
+.cost-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cost-alert {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.cost-alert.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.cost-alert.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Hidden by default, shown when cost button clicked */
+.cost-section.hidden {
+    display: none;
+}
+
+/* Log Section */
+.log-section {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 12px;
+}
+
+.log-container {
+    background: #0f1419;
+    border: 1px solid #2a2a3e;
+    border-radius: 6px;
+    padding: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.log-message {
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+.log-message:last-child {
+    border-bottom: none;
+}
+
+.log-message.welcome {
+    color: #888;
+    font-style: italic;
+    text-align: center;
+    padding: 8px 0;
+}
+
+.log-message.info {
+    color: #7ec8e3;
+}
+
+.log-message.success {
+    color: #22c55e;
+}
+
+.log-message.error {
+    color: #ef4444;
+}
+
+.log-message.warning {
+    color: #eab308;
+}
+
+.log-timestamp {
+    color: #666;
+    margin-right: 8px;
+}
+
+.log-service {
+    color: #a855f7;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+/* Compact mode - status dots only */
+.compact-mode {
+    display: none;
+    padding: 8px 12px;
+    gap: 12px;
+    justify-content: flex-end;
+    background: #1a1a2e;
+    border-radius: 20px;
+}
+
+.compact-mode.active {
+    display: flex;
+}
+
+.compact-dot {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #666;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compact-dot.online {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.compact-dot.offline {
+    background: #ef4444;
+}
+
+.compact-dot.checking {
+    background: #eab308;
+    animation: pulse 1s infinite;
+}
+
+.compact-cost {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #1a1a2e;
+    color: #4ade80;
+    font-size: 8px;
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 6px;
+    border: 1px solid #2a2a3e;
+    white-space: nowrap;
+    font-family: 'Consolas', monospace;
+}
+
+.compact-cost.high {
+    color: #f59e0b;
+}
+
+.compact-cost.critical {
+    color: #ef4444;
+}
+
+/* Collapsed state */
+.widget-container.collapsed .widget-content {
+    display: none;
+}
+
+.widget-container.collapsed .compact-mode {
+    display: flex;
+}
+
+.widget-container.collapsed {
+    min-width: auto;
+    border-radius: 20px;
+}
+
+.widget-container.collapsed .widget-header {
+    display: none;
+}
+
+/* Custom scrollbar for log container */
+.log-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}"

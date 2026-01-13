@@ -7,7 +7,7 @@
  *
  * Usage: node check-and-process.js
  *
- * Path: C:\DevOSWE\Admin\relay\check-and-process.js
+ * Path: C:\LLM-DevOSWE\Admin\relay\check-and-process.js
  */
 
 const http = require('http');

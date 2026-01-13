@@ -2,7 +2,7 @@
  * TODO Module v2.1.0
  * Free-floating, draggable TODO panel with multiple lists
  *
- * Path: C:\DevOSWE\Admin\agent\agent-ui\todo-module.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-ui\todo-module.js
  * Last Updated: 2026-01-11
  *
  * Changelog:

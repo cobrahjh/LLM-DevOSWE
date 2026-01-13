@@ -1,0 +1,36 @@
+{
+    "id": "display-widget-template",
+    "name": "Display Widget Template",
+    "version": "1.0.0",
+    "type": "display",
+    "author": "SimWidget Team",
+    "description": "Template for widgets that display read-only data",
+    "category": "Templates",
+    "entry": "index.html",
+    "width": 320,
+    "height": 350,
+    "minWidth": 280,
+    "minHeight": 250,
+    "resizable": true,
+    "transparent": true,
+    "components": [
+        "header",
+        "status-bar",
+        "data-grid",
+        "data-card",
+        "data-row",
+        "settings-panel"
+    ],
+    "simVars": [
+        "INDICATED ALTITUDE",
+        "HEADING INDICATOR",
+        "AIRSPEED INDICATED",
+        "VERTICAL SPEED",
+        "GROUND VELOCITY"
+    ],
+    "commands": [],
+    "dependencies": [
+        "../shared/widget-common.css",
+        "../shared/widget-base.js"
+    ]
+}

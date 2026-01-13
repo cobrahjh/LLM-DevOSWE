@@ -2,7 +2,7 @@
  * SimWidget Claude Bridge Windows Service Installer
  * v2.0.0 - 2026-01-12
  *
- * Path: C:\DevOSWE\Admin\claude-bridge\service-install.js
+ * Path: C:\LLM-DevOSWE\Admin\claude-bridge\service-install.js
  *
  * Run as Administrator:
  *   node service-install.js

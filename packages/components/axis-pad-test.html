@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<!--
+  SimWidget AxisPad Component Test Page
+  Version: v1.0.0
+  Last Updated: 2025-01-05
+  Path: C:\DevClaude\SimWidget_Engine\packages\components\axis-pad-test.html
+  
+  Open in browser to test the joystick component.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget AxisPad Component Test</title>
+    <link rel="stylesheet" href="axis-pad.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            color: #fff;
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .test-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            justify-content: center;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 280px;
+        }
+        
+        .test-section h2 {
+            font-size: 14px;
+            color: #00d4ff;
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .output-log {
+            background: #0a0a15;
+            border: 1px solid #222;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 30px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+        
+        .output-log .entry {
+            margin-bottom: 5px;
+            padding: 4px 8px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        .output-log .entry .cmd {
+            color: #00ff88;
+        }
+        
+        .output-log .entry .val {
+            color: #ffcc00;
+        }
+        
+        .sim-output {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .sim-var {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .sim-var .label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .sim-var .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00d4ff;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(145deg, #2a2a4e, #1a1a2e);
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(145deg, #3a3a6e, #2a2a4e);
+            border-color: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>SimWidget AxisPad Component</h1>
+    <p class="subtitle">Test the 2-axis joystick control for flight surfaces</p>
+    
+    <div class="test-container">
+        <!-- Standard Yoke -->
+        <div class="test-section">
+            <h2>Flight Yoke (Standard)</h2>
+            <div id="yoke-pad"></div>
+            <div class="sim-output">
+                <div class="sim-var">
+                    <div class="label">Aileron</div>
+                    <div class="value" id="val-aileron">0</div>
+                </div>
+                <div class="sim-var">
+                    <div class="label">Elevator</div>
+                    <div class="value" id="val-elevator">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Square Style -->
+        <div class="test-section">
+            <h2>Square Stick (No Spring)</h2>
+            <div id="square-pad"></div>
+            <div class="controls">
+                <button class="btn" onclick="resetSquare()">Reset</button>
+                <button class="btn" onclick="toggleSquare()">Toggle Enable</button>
+            </div>
+        </div>
+        
+        <!-- Small Size -->
+        <div class="test-section">
+            <h2>Compact Stick</h2>
+            <div id="compact-pad"></div>
+        </div>
+    </div>
+    
+    <div class="output-log">
+        <strong style="color:#00d4ff;">Command Log:</strong>
+        <div id="log-entries"></div>
+    </div>
+    
+    <script src="axis-pad.js"></script>
+    <script>
+        // Command log
+        const logEl = document.getElementById('log-entries');
+        function logCommand(cmd, val) {
+            const entry = document.createElement('div');
+            entry.className = 'entry';
+            entry.innerHTML = `<span class="cmd">${cmd}</span> = <span class="val">${val}</span>`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            if (logEl.children.length > 20) {
+                logEl.removeChild(logEl.lastChild);
+            }
+        }
+        
+        // Standard Yoke
+        const yokePad = new SWAxisPad('#yoke-pad', {
+            id: 'flight-yoke',
+            label: 'Yoke',
+            width: 180,
+            height: 180,
+            style: 'round',
+            returnToCenter: true,
+            springStrength: 0.12,
+            onChange: (data) => {
+                document.getElementById('val-aileron').textContent = data.xValue;
+                document.getElementById('val-elevator').textContent = data.yValue;
+                // Log only significant changes
+                if (Math.abs(data.x) > 0.1 || Math.abs(data.y) > 0.1) {
+                    logCommand(data.xCommand, data.xValue);
+                    logCommand(data.yCommand, data.yValue);
+                }
+            }
+        });
+        
+        // Square Style (no spring return)
+        let squarePad;
+        squarePad = new SWAxisPad('#square-pad', {
+            id: 'square-stick',
+            label: 'Stick',
+            width: 160,
+            height: 160,
+            style: 'square',
+            returnToCenter: false,
+            showGrid: true,
+            onChange: (data) => {
+                logCommand('SQUARE_X', data.xValue);
+            }
+        });
+        
+        function resetSquare() {
+            squarePad.reset();
+        }
+        
+        let squareEnabled = true;
+        function toggleSquare() {
+            squareEnabled = !squareEnabled;
+            squarePad.setEnabled(squareEnabled);
+        }
+        
+        // Compact
+        new SWAxisPad('#compact-pad', {
+            id: 'compact-stick',
+            label: 'Mini',
+            width: 100,
+            height: 100,
+            style: 'round',
+            showValues: false,
+            showGrid: false,
+            returnToCenter: true,
+            springStrength: 0.2
+        });
+        
+        console.log('AxisPad components initialized');
+    </script>
+</body>
+</html>

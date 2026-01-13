@@ -1,0 +1,31 @@
+{
+    "id": "tool-widget-template",
+    "name": "Tool Widget Template",
+    "version": "1.0.0",
+    "type": "tool",
+    "author": "SimWidget Team",
+    "description": "Template for utility widgets with start/stop/pause functionality",
+    "category": "Templates",
+    "entry": "index.html",
+    "width": 340,
+    "height": 500,
+    "minWidth": 300,
+    "minHeight": 400,
+    "resizable": true,
+    "transparent": true,
+    "components": [
+        "header",
+        "status-area",
+        "transport-controls",
+        "stats-row",
+        "list-container",
+        "action-row",
+        "settings-panel"
+    ],
+    "simVars": [],
+    "commands": [],
+    "dependencies": [
+        "../shared/widget-common.css",
+        "../shared/widget-base.js"
+    ]
+}

@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-01-08T06:05:22.453Z",
+  "duration": 30,
+  "runId": 8,
+  "summary": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0
+  },
+  "tests": [
+    {
+      "id": "files/inspector-loads",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/type-detection",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "files/js-inspection",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "files/json-inspection",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "files/css-inspection",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/html-inspection",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/directory-scan",
+      "status": "passed",
+      "duration": 8
+    },
+    {
+      "id": "files/magic-bytes",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "files/metadata-extraction",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/binary-detection",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/node-addon-scan",
+      "status": "passed",
+      "duration": 10
+    }
+  ]
+}

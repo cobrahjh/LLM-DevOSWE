@@ -1,0 +1,11 @@
+{
+  "allPresent": true,
+  "methods": {
+    "connectWebSocket": true,
+    "sendCommand": true,
+    "saveSettings": true,
+    "loadSettings": true,
+    "updateStatus": true,
+    "toggleTransparency": true
+  }
+}

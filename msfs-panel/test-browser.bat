@@ -1,0 +1,3 @@
+@echo off
+echo Opening browser test...
+start "" "%~dp0test.html"

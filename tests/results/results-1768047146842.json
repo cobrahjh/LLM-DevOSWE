@@ -1,0 +1,217 @@
+{
+  "timestamp": "2026-01-10T12:12:26.842Z",
+  "duration": 3078,
+  "runId": null,
+  "summary": {
+    "passed": 34,
+    "failed": 0,
+    "skipped": 7
+  },
+  "tests": [
+    {
+      "id": "plugins/discovery",
+      "status": "passed",
+      "duration": 2
+    },
+    {
+      "id": "plugins/core-manifest",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "plugins/manifests-valid",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "templates/directories-exist",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "templates/shared-files",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "templates/required-files",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "templates/manifests-valid",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "templates/html-structure",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "templates/css-variables",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "templates/base-class-methods",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/inspector-loads",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/type-detection",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "files/js-inspection",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "files/json-inspection",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "files/css-inspection",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/html-inspection",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/directory-scan",
+      "status": "passed",
+      "duration": 6
+    },
+    {
+      "id": "files/magic-bytes",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/metadata-extraction",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/binary-detection",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "files/node-addon-scan",
+      "status": "passed",
+      "duration": 10
+    },
+    {
+      "id": "services/server-status",
+      "status": "passed",
+      "duration": 11
+    },
+    {
+      "id": "services/lorby-connection",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "services/lorby-simvar",
+      "status": "passed",
+      "duration": 3007
+    },
+    {
+      "id": "widgets/flight-data-widget-loads",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "widgets/aircraft-control-loads",
+      "status": "skipped",
+      "duration": 2
+    },
+    {
+      "id": "widgets/voice-control-loads",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "widgets/flight-recorder-loads",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "api/flight-data-structure",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "api/plugins-list",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "api/keymaps",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "security/Security Inspector Loads",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "security/Scan JavaScript File",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "security/Scan Widget Directory",
+      "status": "passed",
+      "duration": 3
+    },
+    {
+      "id": "security/Detect Dangerous Patterns",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "security/Widget Validator Loads",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "security/Validate Widget Template",
+      "status": "passed",
+      "duration": 3
+    },
+    {
+      "id": "security/Validate Manifest Schema",
+      "status": "passed",
+      "duration": 3
+    },
+    {
+      "id": "security/Detect Blocked File Types",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "security/Hash Calculation",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "security/Entropy Calculation",
+      "status": "passed",
+      "duration": 0
+    }
+  ]
+}

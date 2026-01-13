@@ -6,7 +6,7 @@
  *
  * Run: node message-notifier.js
  *
- * Path: C:\DevOSWE\Admin\relay\message-notifier.js
+ * Path: C:\LLM-DevOSWE\Admin\relay\message-notifier.js
  */
 
 const WebSocket = require('ws');

@@ -1,0 +1,7 @@
+{
+  "allExist": true,
+  "files": {
+    "widget-common.css": true,
+    "widget-base.js": true
+  }
+}

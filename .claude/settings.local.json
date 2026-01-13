@@ -1,17 +1,4 @@
 {
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node C:/DevOSWE/Admin/terminal-bridge/hooks/output-hook.js"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Read",
@@ -66,7 +53,27 @@
       "Bash(Select-String \"IPv4\")",
       "Bash(netsh advfirewall firewall show:*)",
       "Bash(/dev/null -exec sh -c 'echo \"\"=== {} ===\"\" && head -3 \"\"{}\"\" && grep \"\"serverUrl\"\" \"\"{}\"\" | head -1' ;)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(while read id)",
+      "Bash(do curl -s -X DELETE \"http://127.0.0.1:8600/api/queue/$id\")",
+      "Bash(done)",
+      "Bash(sqlite3:*)",
+      "Bash(printf:*)",
+      "Bash(ollama:*)",
+      "Bash(winget install:*)",
+      "Bash(\"/c/Users/hjhar/AppData/Local/Programs/Ollama/ollama.exe\" --version)",
+      "Bash(\"C:/Users/$USER/AppData/Local/Programs/Ollama/ollama.exe\" --version)",
+      "Bash(\"/c/Users/hjhar/AppData/Local/Programs/Ollama/ollama.exe\" pull qwen2.5-coder:14b)",
+      "Bash(\"/c/Users/hjhar/AppData/Local/Programs/Ollama/ollama.exe\" list)",
+      "Bash(\"/c/Users/hjhar/AppData/Local/Programs/Ollama/ollama.exe\" pull qwen2.5-coder:7b)",
+      "Bash(\"/c/Users/hjhar/AppData/Local/Programs/Ollama/ollama.exe\" run qwen2.5-coder:7b \"Write a hello world function in Python\" --verbose)",
+      "Bash(\"/c/Users/hjhar/AppData/Local/Programs/Ollama/ollama.exe\" run qwen2.5-coder:14b \"Write a hello world function in Python\" --verbose)",
+      "Bash(\"/c/Users/hjhar/AppData/Local/Programs/Ollama/ollama.exe\" run qwen2.5-coder:32b \"Write a hello world function in Python\" --verbose)",
+      "Bash(docker:*)",
+      "Bash(pip install:*)",
+      "Bash(more:*)",
+      "Bash(for i in 1 2 3 4 5 6)",
+      "Bash(do curl -s http://localhost:8610/api/messages/next)"
     ],
     "deny": [
       "Read(.env)",
@@ -74,5 +81,19 @@
       "Read(**/*credentials*)"
     ],
     "defaultMode": "acceptEdits"
-  }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/LLM-DevOSWE/Admin/terminal-bridge/hooks/output-hook.js"
+          }
+        ]
+      }
+    ]
+  },
+  "outputStyle": "default"
 }

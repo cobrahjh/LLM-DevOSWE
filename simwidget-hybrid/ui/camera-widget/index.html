@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Control - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget camera-widget">
+        <div class="widget-header">
+            <span class="widget-title">📷 CAMERA CONTROL</span>
+            <span class="widget-brand">SimWidget</span>
+            <span class="connection-status" id="conn-status" title="Disconnected">●</span>
+        </div>
+        
+        <div class="widget-content">
+            <!-- View Buttons -->
+            <div class="section">
+                <div class="section-title">Views</div>
+                <div class="button-grid">
+                    <button class="cam-btn" data-action="cockpit" title="Cockpit View">
+                        <span class="icon">🎯</span>
+                        <span class="label">Cockpit</span>
+                    </button>
+                    <button class="cam-btn" data-action="external" title="External/Chase View">
+                        <span class="icon">✈️</span>
+                        <span class="label">External</span>
+                    </button>
+                    <button class="cam-btn" data-action="drone" title="Drone View">
+                        <span class="icon">🚁</span>
+                        <span class="label">Drone</span>
+                    </button>
+                    <button class="cam-btn" data-action="topdown" title="Top-Down View">
+                        <span class="icon">⬇️</span>
+                        <span class="label">Top Down</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section">
+                <div class="section-title">Quick Actions</div>
+                <div class="button-row">
+                    <button class="cam-btn wide" data-action="toggle" title="Toggle Cockpit/External">
+                        <span class="icon">🔄</span>
+                        <span class="label">Toggle View</span>
+                    </button>
+                    <button class="cam-btn wide" data-action="cycle" title="Cycle Through Views">
+                        <span class="icon">↻</span>
+                        <span class="label">Cycle</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cinematic Modes -->
+            <div class="section">
+                <div class="section-title">Cinematic</div>
+                <div class="button-grid">
+                    <button class="cam-btn cinematic" data-action="flyby" title="Flyby Mode">
+                        <span class="icon">🎬</span>
+                        <span class="label">Flyby</span>
+                    </button>
+                    <button class="cam-btn cinematic" data-action="orbit" title="Orbit Mode">
+                        <span class="icon">🌀</span>
+                        <span class="label">Orbit</span>
+                    </button>
+                    <button class="cam-btn stop" data-action="stop" title="Stop Cinematic">
+                        <span class="icon">⏹️</span>
+                        <span class="label">Stop</span>
+                    </button>
+                    <button class="cam-btn" data-action="reset" title="Reset Camera">
+                        <span class="icon">↩️</span>
+                        <span class="label">Reset</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zoom Control -->
+            <div class="section">
+                <div class="section-title">Zoom</div>
+                <div class="zoom-control">
+                    <button class="zoom-btn" data-action="zoomout" title="Zoom Out">−</button>
+                    <input type="range" id="zoomSlider" min="0" max="100" value="50" class="zoom-slider">
+                    <button class="zoom-btn" data-action="zoomin" title="Zoom In">+</button>
+                </div>
+                <div class="zoom-value"><span id="zoomValue">50</span>%</div>
+            </div>
+
+            <!-- Smart Camera -->
+            <div class="section">
+                <div class="section-title">Smart Camera</div>
+                <div class="button-row">
+                    <button class="cam-btn smart" data-action="smart" title="Enable Smart Camera">
+                        <span class="icon">🎯</span>
+                        <span class="label">Smart On</span>
+                    </button>
+                    <button class="cam-btn" data-action="smartoff" title="Disable Smart Camera">
+                        <span class="icon">❌</span>
+                        <span class="label">Smart Off</span>
+                    </button>
+                    <button class="cam-btn" data-action="smartnext" title="Next Target">
+                        <span class="icon">➡️</span>
+                        <span class="label">Next</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Presets -->
+            <div class="section">
+                <div class="section-title">Presets</div>
+                <div class="preset-grid" id="presetGrid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

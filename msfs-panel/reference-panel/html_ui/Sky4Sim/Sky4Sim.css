@@ -1,0 +1,812 @@
+@font-face {
+    font-family: roboto-bold;
+    src: url(./fonts/Roboto-Bold.ttf);
+}
+
+@font-face {
+    font-family: roboto-italic;
+    src: url(./fonts/Roboto-LightItalic.ttf);
+}
+
+@font-face {
+    font-family: roboto;
+    src: url(./fonts/Roboto-Medium.ttf);
+}
+
+@font-face {
+    font-family: roboto-light;
+    src: url(./fonts/Roboto-Light.ttf);
+}
+
+/** This mixin makes a single line element fit exactly on the Roboto font for easier integration. */
+/**
+ * Forces z-index above other siblings during a focused parent.
+*/
+.parent-is-highlighted.above-base-focus {
+    z-index: 6 !important;
+  }
+  
+  ui-navigation-bloc.condensed-interactive.ButtonChildActive, options-menu.condensed-interactive.ButtonChildActive, internal-link.condensed-interactive.Focused, ui-button.condensed-interactive.Focused, ui-navigation-bloc.condensed-interactive.Focused, options-menu.condensed-interactive.Focused {
+    --outlineWidth: var(--quartMargin);
+  }
+  ui-navigation-bloc.selected.condensed-interactive.ButtonChildActive:before, options-menu.selected.condensed-interactive.ButtonChildActive:before, internal-link.selected.condensed-interactive.Focused:before, ui-button.selected.condensed-interactive.Focused:before, ui-navigation-bloc.selected.condensed-interactive.Focused:before, options-menu.selected.condensed-interactive.Focused:before {
+    border-width: var(--minimalBorderWidth) !important;
+  }
+  ui-navigation-bloc.condensed-interactive.ButtonChildActive:before, options-menu.condensed-interactive.ButtonChildActive:before, internal-link.condensed-interactive.Focused:before, ui-button.condensed-interactive.Focused:before, ui-navigation-bloc.condensed-interactive.Focused:before, options-menu.condensed-interactive.Focused:before {
+    animation: outlineFocusAppear 0.1s backwards;
+  }
+  
+  ui-navigation-bloc.ButtonChildActive, options-menu.ButtonChildActive, internal-link.Focused, ui-button.Focused, ui-navigation-bloc.Focused, options-menu.Focused {
+    --outlineWidth: var(--halfMargin);
+    --outlineOffset: calc(-1 * var(--outlineWidth));
+    position: relative;
+  }
+  ui-navigation-bloc[no-focus-white].ButtonChildActive:before, options-menu[no-focus-white].ButtonChildActive:before, internal-link[no-focus-white].Focused:before, ui-button[no-focus-white].Focused:before, ui-navigation-bloc[no-focus-white].Focused:before, options-menu[no-focus-white].Focused:before {
+    background-color: transparent !important;
+  }
+  ui-navigation-bloc.ButtonChildActive:before, options-menu.ButtonChildActive:before, internal-link.Focused:before, ui-button.Focused:before, ui-navigation-bloc.Focused:before, options-menu.Focused:before {
+    transform: rotateX(0);
+    content: "";
+    display: block;
+    pointer-events: none;
+    position: absolute;
+    left: var(--outlineOffset);
+    top: var(--outlineOffset);
+    right: var(--outlineOffset);
+    bottom: var(--outlineOffset);
+    border: var(--outlineWidth) solid var(--enabledHoverBackgroundColor);
+    background-color: var(--color-white-op30);
+    z-index: 2;
+    animation: outlineFocusAppear 0.2s backwards;
+  }
+  ui-navigation-bloc.selected.ButtonChildActive:before, options-menu.selected.ButtonChildActive:before, internal-link.selected.Focused:before, ui-button.selected.Focused:before, ui-navigation-bloc.selected.Focused:before, options-menu.selected.Focused:before {
+    border-width: var(--quartMargin);
+  }
+  ui-navigation-bloc.ButtonChildActive > .parent-is-highlighted, options-menu.ButtonChildActive > .parent-is-highlighted, internal-link.Focused > .parent-is-highlighted, ui-button.Focused > .parent-is-highlighted, ui-navigation-bloc.Focused > .parent-is-highlighted, options-menu.Focused > .parent-is-highlighted {
+    position: relative;
+    z-index: 4;
+  }
+  
+  ui-navigation-bloc.no-outline:before, options-menu.no-outline:before, ui-navigation-bloc[auto-inside]:before, options-menu[auto-inside]:before {
+    content: none !important;
+  }
+  ui-navigation-bloc.ButtonChildActive:before, options-menu.ButtonChildActive:before {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border: none;
+  }
+  
+  @font-face {
+    font-family: "ui-icon-font";
+    src: url("/Fonts/icons/icon.svg") format("svg"), url("/Fonts/icons/icon.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+    -coherent-font-sdf: off;
+  }
+  /******* Foreign Fonts ******/
+  @font-face {
+    font-family: "Simsun";
+    src: url("/Fonts/simsun.ttc") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "NotoSansSC";
+    src: url("/Fonts/NotoSansSC-Light.otf") format("truetype");
+    font-weight: 100;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "NotoSansSC";
+    src: url("/Fonts/NotoSansSC-Regular.otf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "NotoSansSC";
+    src: url("/Fonts/NotoSansSC-Medium.otf") format("truetype");
+    font-weight: 600;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "NotoSansSC";
+    src: url("/Fonts/NotoSansSC-Bold.otf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "NotoSansSC";
+    src: url("/Fonts/NotoSansSC-Black.otf") format("truetype");
+    font-weight: 900;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Malgun";
+    src: url("/Fonts/malgun.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Meiryobui";
+    src: url("/Fonts/RobotoMono-Medium+meiryobui.ttf");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Mangal";
+    src: url("/Fonts/mangal.ttf");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Vrinda";
+    src: url("/Fonts/vrinda.ttf");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Nirmalas";
+    src: url("/Fonts/nirmalas.ttf");
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "micross";
+    src: url("/Fonts/micross.ttf");
+    font-weight: 400;
+    font-style: normal;
+  }
+  /***  ROBOTO ****/
+  @font-face {
+    font-family: "Roboto-Regular";
+    src: url("/Fonts/Roboto-Regular.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Roboto-Regular";
+    src: url("/Fonts/Roboto-Light.ttf") format("truetype");
+    font-weight: 300;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Roboto-Regular";
+    src: url("/Fonts/Roboto-Medium.ttf") format("truetype");
+    font-weight: 600;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Roboto-Regular";
+    src: url("/Fonts/Roboto-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "Roboto-Regular";
+    src: url("/Fonts/Roboto-Black.ttf") format("truetype");
+    font-weight: 900;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "RobotoMono-Regular";
+    src: url("/Fonts/RobotoMono-Regular.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "RobotoMono-Regular";
+    src: url("/Fonts/RobotoMono-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: "RobotoMono-Regular";
+    src: url("/Fonts/RobotoMono-BoldItalic.ttf") format("truetype");
+    font-weight: 700;
+    font-style: italic;
+  }
+  :root {
+    --viewportWidthRatio: 1;
+    --viewportHeightRatio: 1;
+    --color-yellow: #FFD300;
+    --color-orange: #F5821F;
+    --color-cyan: #00b4ff;
+    --color-white: #FFFFFF;
+    --color-black: #000000;
+    --color-red-lighten: #F9373F;
+    --color-red: #FF2704;
+    --color-red-darken: #D02027;
+    --color-green-market: #9BF00B;
+    --color-green: #2EDC21;
+    --color-green-dim: #18A721;
+    --color-green-darken: #0F8313;
+    --color-black-op0: rgba(0,0,0,0.0);
+    --color-black-op10: rgba(0,0,0,0.1);
+    --color-black-op20: rgba(0,0,0,0.2);
+    --color-black-op30: rgba(0,0,0,0.3);
+    --color-black-op40: rgba(0,0,0,0.4);
+    --color-black-op45: rgba(0,0,0,0.45);
+    --color-black-op50: rgba(0,0,0,0.5);
+    --color-black-op60: rgba(0,0,0,0.6);
+    --color-charcoal: #222222;
+    --color-darker-gray: #282E34;
+    --color-blueish-darker-gray: #34393f;
+    --color-dark-gray: #3F4751;
+    --color-dark-gray-neuter: #3f4048;
+    --color-low-gray: #595A61;
+    --color-blueish-gray: #494d53;
+    --color-gray: rgb(114, 117, 122);
+    --color-light-gray: #c4c5c6;
+    --color-light-blueish-gray: #C6C9D0;
+    --color-off-white: #D6D9E0;
+    --color-transparent-white: rgba(255,255,255,0);
+    --color-white-op10: rgba(255,255,255,0.1);
+    --color-white-op15: rgba(255,255,255,0.15);
+    --color-white-op20: rgba(255,255,255,0.20);
+    --color-white-op30: rgba(255,255,255,0.30);
+    --color-white-op50: rgba(255,255,255,0.50);
+    --color-dark-gray-vr: rgba(63, 71, 81, 0.8);
+    --color-darker-gray-vr: rgba(40, 46, 52, 0.8);
+    --color-market-text: #3E4A5A;
+    --primaryColor: var(--color-cyan);
+    --accentColor: var(--color-yellow);
+    --primaryColor: var(--color-cyan);
+    --accentColor: var(--color-yellow);
+    --copilotActivity: var(--accentColor);
+    --color-online: #ABE328;
+    --textColor: var(--color-white);
+    --textErrorColor: var(--color-red);
+    --textValidationColor: var(--color-green-dim);
+    --textColorGray: var(--color-light-gray);
+    --contrastedTextHintColor: var(--color-gray);
+    --contrastedTextColor: var(--color-dark-gray);
+    --darkerTextColor: var(--color-charcoal);
+    --textStrokeColor: var(--textColor);
+    --textContraestedStrokeColor: var(--contrastedTextColor);
+    --textStrokeWidth: calc(var(--screenHeight) * (2px / 1080) );
+    --outlineColor: var(--color-transparent-white);
+    --outlineColorHover: var(--color-white);
+    --outlineContrastedColor: var(--color-dark-gray);
+    --tableBorderColor: var(--color-white);
+    --tableBackgroundColor: var(--color-white);
+    --tableColor: var(--color-white);
+    --tableHeaderBorderColor: var(--color-white-op20);
+    --tableHeaderBackgroundColor: transparent;
+    --tableHeaderColor: var(--color-white);
+    --tableSeparatorColor: var(--color-white);
+    --listSeparatorColor: var(--color-white-op30);
+    --overWhiteListSeparatorColor: var(--color-black-op20);
+    --colorBorderThin: var(--listSeparatorColor);
+    --backgroundColorPanel: var(--color-black-op20);
+    --backgroundColorContrastedPanel: var(--color-white-op20);
+    --backgroundColorSelfContrastedPanel: rgba(120, 120, 120, 0.34);
+    --backgroundColorComponent: var(--color-black-op10);
+    --backgroundColorContrastedComponent: var(--color-white-op10);
+    --backgroundColorDarkerPanel: var(--color-black-op30);
+    --backgroundColorDoublePanel: var(--color-black-op40);
+    --backgroundColorOverlay: var(--color-black-op60);
+    --backgroundColorValidation: var(--color-green-dim);
+    --backgroundColorInput: var(--color-dark-gray);
+    --outlineColorInput: var(--color-darker-gray);
+    --inputThumbSize: calc(var(--screenHeight) * (30px / 2160) );
+    --inputThumbHalfSize: calc(var(--screenHeight) * (15px / 2160) );
+    --filterShadow: drop-shadow(0 0 calc(var(--screenHeight) * (6px / 2160) ) rgba(0,0,0,0.4));
+    --useFilterGrayscale: grayscale(100%);
+    --filterGrayscale: grayscale(0%);
+    --filterBlur: blur(0);
+    --textShadow: 0px 0px calc(var(--screenHeight) * (6px / 2160) ) rgba(0, 0, 0, 0.4);
+    --coherentAA: on;
+    /**** BUTTON STATES COLORS *******/
+    --enabledColor: var(--color-white);
+    --enabledBackGroundColor: var(--primaryColor);
+    --enabledBackgroundColor: var(--primaryColor);
+    --enabledHoverColor: var(--primaryColor);
+    --enabledHoverBackGroundColor: var(--color-white);
+    --enabledHoverBackgroundColor: var(--color-white);
+    --disabledColor: var(--color-dark-gray);
+    --disabledBackGroundColor: rgba(64,68,73,0.5);
+    --disabledHoverColor: var(--color-white);
+    --disabledHoverBackgroundColor: var(--color-white-op30);
+    --activeColor: var(--color-white);
+    --activeBackGroundColor: var(--color-dark-gray);
+    --activeBackgroundColor: var(--color-dark-gray);
+    --selectedColor: var(--color-dark-gray);
+    --selectedBackgroundColor: var(--color-white);
+    --selectedHoverColor: var(--primaryColor);
+    --selectedHoverBackgroundColor: var(--color-white);
+    /*************** FONTS ****************/
+    --fontMono: RobotoMono-Regular, Arial, Meiryobui, Malgun, Mangal, Hirmalas, Virinda, Nirmalas, micross;
+    --font-ja-JP: Roboto-Regular, Meiryobui, Arial;
+    --font-zh-CN: Roboto-Regular, NotoSansSC, Arial;
+    --font-Default: Roboto-Regular, Arial, Meiryobui, NotoSansSC, Mangal, Hirmalas, Virinda, Nirmalas, micross;
+    --font: var(--font-Default);
+    --fontGamertag: Roboto-Regular, Arial, Meiryobui, NotoSansSC, Mangal, Hirmalas, Virinda, Nirmalas, micross;
+    --minimalFontSize: 18;
+    --sizeDeviceButton: 15;
+    --sizeParagraph: 18;
+    --sizeDefault: 24;
+    --sizeMedium: 30;
+    --sizeBig: 36;
+    --sizeXXL: 48;
+    --fontSizeDeviceButton: calc(var(--screenHeight) * (30px / 2160) );
+    --fontSizeParagraph: calc(var(--screenHeight) * (36px / 2160) );
+    --fontSizeDefault: calc(var(--screenHeight) * (48px / 2160) );
+    --fontSizeMedium: calc(var(--screenHeight) * (60px / 2160) );
+    --fontSizeBig: calc(var(--screenHeight) * (72px / 2160) );
+    --fontSizeXXL: calc(var(--screenHeight) * (96px / 2160) );
+    --fontSizeXXXL: calc(var(--screenHeight) * (120px / 2160) );
+    --lineHeightDefault: 1.4;
+    --defaultAnimation: all ease .234s;
+    --animationTime: 0.3s;
+    --animationTimeFast: 0.1s;
+    --animationEffect: ease-out;
+    --inputBarHeight: calc(var(--screenHeight) * (80px / 1080) );
+    --pageWidth: calc(var(--unscaledScreenHeight) * (3336px / 2160) );
+    --fullPageWidth: calc(var(--unscaledScreenHeight) * (1840px / 1080) );
+    --scaledPageWidth: calc(var(--screenHeight) * (3336px / 2160) );
+    --pageMargin: calc(var(--unscaledScreenHeight) * (242px / 2160) );
+    --pageLeftPos: calc(var(--screenHeight) * (242px / 2160) );
+    --pageTop: calc(var(--screenHeight) * (278px / 2160) );
+    --popInWidth: var(--pageWidth);
+    --popInHeight: calc(var(--screenHeight) * (1760px / 2160) );
+    --flowBarHeight: calc(var(--screenHeight) * (158px / 2160) );
+    --margin: 24px;
+    --baseMargin: calc(var(--screenHeight) * (12px / 1080) );
+    --halfMargin: calc(var(--screenHeight) * (6px / 1080) );
+    --quartMargin: calc(var(--screenHeight) * (3px / 1080) );
+    --threeHalfMargin: calc(var(--screenHeight) * (18px / 1080) );
+    --doubleMargin: calc(var(--screenHeight) * (24px / 1080) );
+    --tripleMargin: calc(var(--screenHeight) * (32px / 1080) );
+    --basePadding: calc(var(--screenHeight) * (12px / 1080) );
+    --pageHeight: calc(var(--unscaledScreenHeight) * (806px / 1080) );
+    --quartPadding: calc(var(--screenHeight) * (3px / 1080) );
+    --halfPadding: calc(var(--screenHeight) * (6px / 1080) );
+    --optionContentWidth: calc(var(--screenHeight) * (350px / 1080) );
+    --optionLineHeight: calc(var(--screenHeight) * (36px / 1080) );
+    --currentPageHeight: 1080px;
+    --minimalBorderWidth: 1px;
+  }
+  
+  body.transition {
+    --animationTime: 0.3s;
+  }
+  
+  @keyframes marquee {
+    0% {
+      left: 0;
+    }
+    1% {
+      left: -1px;
+    }
+    100% {
+      left: -200px;
+    }
+  }
+  @keyframes fromLeft {
+    /*0%   { left: get-vw(22px); }
+    10%   { left: get-vw(11px); }
+    100% { left: get-vw(22px); }*/
+  }
+  @keyframes zoomInOut {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes bodyLoad {
+    0% {
+      transform: scale(0);
+      left: -100vw;
+    }
+    100% {
+      transform: scale(1);
+      left: 0;
+    }
+  }
+  @media (min-width: 3800px) {
+    :root {
+      --minimalBorderWidth: calc(var(--screenHeight) * (1.05px / 1080) );
+    }
+  }
+  @keyframes outlineFocusAppear {
+    0% {
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      border: 0px solid rgba(255, 255, 255, 0);
+    }
+  }
+  @keyframes slowFadeIn {
+    0%, 20% {
+      opacity: 0.01;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  .IconTextElement {
+    background-size: contain;
+  }
+  .IconTextElement > icon-element {
+    height: 100%;
+  }
+  
+  .polyfill-children-spacing {
+    --childrenSpacing: 0;
+    /*margin: calc(-1 * var(--childrenSpacing)) 0 0 calc(-1 * var(--childrenSpacing));*/
+  }
+  .polyfill-children-spacing--horizontal > *:not(:first-child):not(.polyfill-children-spacing-ignore) {
+    margin-left: var(--selfSpacing);
+  }
+  .polyfill-children-spacing--vertical > *:not(:first-child):not(.polyfill-children-spacing-ignore) {
+    margin-top: var(--selfSpacing);
+  }
+  
+  :host(.host-polyfill-children-spacing--horizontal) > *:not(.first-child):not(.polyfill-children-spacing-ignore) {
+    margin-left: var(--selfSpacing);
+  }
+  
+  :host(.host-polyfill-children-spacing--vertical) > *:not(.first-child):not(.polyfill-children-spacing-ignore) {
+    margin-top: var(--selfSpacing);
+  }
+  
+  /** This mixin makes a single line element fit exactly on the Roboto font for easier integration. */
+  /**
+   * Forces z-index above other siblings during a focused parent.
+  */
+  .parent-is-highlighted.above-base-focus {
+    z-index: 6 !important;
+  }
+  
+  internal-link.condensed-interactive.Focused, ui-button.condensed-interactive.Focused, ui-navigation-bloc.condensed-interactive.Focused, options-menu.condensed-interactive.Focused, ui-navigation-bloc.condensed-interactive.ButtonChildActive, options-menu.condensed-interactive.ButtonChildActive {
+    --outlineWidth: var(--quartMargin);
+  }
+  internal-link.selected.condensed-interactive.Focused:before, ui-button.selected.condensed-interactive.Focused:before, ui-navigation-bloc.selected.condensed-interactive.Focused:before, options-menu.selected.condensed-interactive.Focused:before, ui-navigation-bloc.selected.condensed-interactive.ButtonChildActive:before, options-menu.selected.condensed-interactive.ButtonChildActive:before {
+    border-width: var(--minimalBorderWidth) !important;
+  }
+  internal-link.condensed-interactive.Focused:before, ui-button.condensed-interactive.Focused:before, ui-navigation-bloc.condensed-interactive.Focused:before, options-menu.condensed-interactive.Focused:before, ui-navigation-bloc.condensed-interactive.ButtonChildActive:before, options-menu.condensed-interactive.ButtonChildActive:before {
+    animation: outlineFocusAppear 0.1s backwards;
+  }
+  
+  internal-link.Focused, ui-button.Focused, ui-navigation-bloc.Focused, options-menu.Focused, ui-navigation-bloc.ButtonChildActive, options-menu.ButtonChildActive {
+    --outlineWidth: var(--halfMargin);
+    --outlineOffset: calc(-1 * var(--outlineWidth));
+    position: relative;
+  }
+  internal-link[no-focus-white].Focused:before, ui-button[no-focus-white].Focused:before, ui-navigation-bloc[no-focus-white].Focused:before, options-menu[no-focus-white].Focused:before, ui-navigation-bloc[no-focus-white].ButtonChildActive:before, options-menu[no-focus-white].ButtonChildActive:before {
+    background-color: transparent !important;
+  }
+  internal-link.Focused:before, ui-button.Focused:before, ui-navigation-bloc.Focused:before, options-menu.Focused:before, ui-navigation-bloc.ButtonChildActive:before, options-menu.ButtonChildActive:before {
+    transform: rotateX(0);
+    content: "";
+    display: block;
+    pointer-events: none;
+    position: absolute;
+    left: var(--outlineOffset);
+    top: var(--outlineOffset);
+    right: var(--outlineOffset);
+    bottom: var(--outlineOffset);
+    border: var(--outlineWidth) solid var(--enabledHoverBackgroundColor);
+    background-color: var(--color-white-op30);
+    z-index: 2;
+    animation: outlineFocusAppear 0.2s backwards;
+  }
+  internal-link.selected.Focused:before, ui-button.selected.Focused:before, ui-navigation-bloc.selected.Focused:before, options-menu.selected.Focused:before, ui-navigation-bloc.selected.ButtonChildActive:before, options-menu.selected.ButtonChildActive:before {
+    border-width: var(--quartMargin);
+  }
+  internal-link.Focused > .parent-is-highlighted, ui-button.Focused > .parent-is-highlighted, ui-navigation-bloc.Focused > .parent-is-highlighted, options-menu.Focused > .parent-is-highlighted, ui-navigation-bloc.ButtonChildActive > .parent-is-highlighted, options-menu.ButtonChildActive > .parent-is-highlighted {
+    position: relative;
+    z-index: 4;
+  }
+  
+  ui-navigation-bloc.no-outline:before, options-menu.no-outline:before, ui-navigation-bloc[auto-inside]:before, options-menu[auto-inside]:before {
+    content: none !important;
+  }
+  ui-navigation-bloc.ButtonChildActive:before, options-menu.ButtonChildActive:before {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border: none;
+  }
+  
+  icon-element {
+    height: var(--height, calc(var(--screenHeight) * (72px / 2160) ));
+    width: var(--width, calc(var(--screenHeight) * (72px / 2160) ));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--iconBGColor, rgba(0, 0, 0, 0));
+  }
+  icon-element svg.icon {
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    fill: var(--iconColor, white);
+  }
+  icon-element:not(.original-color) svg.icon path, icon-element:not(.original-color) svg.icon polygon, icon-element:not(.original-color) svg.icon rect, icon-element:not(.original-color) svg.icon circle {
+    fill: var(--iconColor, white);
+  }
+  icon-element img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  icon-element.loading {
+    animation: loadingAnimation 1s linear infinite;
+  }
+  
+  ui-element {
+    display: block;
+  }
+  
+  #fakeFooter {
+    height: calc(var(--screenHeight) * (160px / 2160) );
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--backgroundColorPanel);
+  }
+  
+  .leftAlign {
+    text-align: left;
+  }
+  
+  .rightAlign {
+    text-align: right;
+  }
+  
+  .textDropShadow {
+    text-shadow: var(--textShadow);
+  }
+  
+  .ellipsis {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  
+  html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  body {
+    -webkit-user-select: none;
+    font-family: var(--font), sans-serif;
+    font-size: var(--fontSizeParagraph);
+    color: var(--textColor);
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  body:not(.NoAppearTransition) {
+    transition: opacity ease-in-out 0.5s;
+  }
+  body > header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--screenHeight) * (160px / 2160) );
+  }
+  body > .container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--screenHeight) * (284px / 2160) );
+    bottom: 0;
+  }
+  
+  body.blur {
+    --filterBlur: blur(4px) !important;
+    filter: var(--filterBlur) var(--filterGrayscale) !important;
+    --filterShadow: none !important;
+    --textShadow: none !important;
+    --coherentAA: off !important;
+    pointer-events: none;
+  }
+  
+  body.greyed-popup:after, body.greyed-notif:after {
+    pointer-events: auto;
+    opacity: 1;
+    transition: opacity 0.15s;
+  }
+  
+  body.widget-content-popup {
+    pointer-events: auto;
+    display: none;
+  }
+  
+  body:after {
+    content: "";
+    transition: opacity 0s;
+    display: block;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    opacity: 0;
+    pointer-events: none;
+    background-color: var(--backgroundColorOverlay);
+    z-index: 1000;
+  }
+  
+  .hide,
+  .hidden,
+  .HIDDEN {
+    display: none !important;
+  }
+  
+  .HideByPause {
+    display: none !important;
+  }
+  
+  .xbox .noXbox {
+    display: none !important;
+  }
+  
+  html:not(.xbox) .onlyXbox {
+    display: none !important;
+  }
+  
+  .invisible {
+    pointer-events: none;
+    opacity: 0;
+  }
+  
+  body.contentLoading {
+    opacity: 0 !important;
+  }
+  
+  body.contentLoaded {
+    opacity: 1;
+  }
+  
+  body.disappear {
+    opacity: 0 !important;
+  }
+  body.disappear:not(.NoAppearTransition) {
+    transition: opacity 0.3s;
+  }
+  
+  .condensedPanel {
+    --optionContentWidth: calc(var(--screenHeight) * (250px / 1080) );
+  }
+  
+  .resize-handle__x-left, .resize-handle__x-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--resize-handle-size, 10px);
+    z-index: 2;
+  }
+  .resize-handle__x-left {
+    left: 0;
+  }
+  .resize-handle__x-right {
+    right: 0;
+  }
+  .resize-handle__y {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    height: var(--resize-handle-size, 10px);
+  }
+  .resize-handle__corner {
+    width: calc(var(--screenHeight) * (3px / 1080) );
+    height: calc(var(--screenHeight) * (18px / 1080) );
+    background-color: var(--enabledBackGroundColor);
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+  .resize-handle__corner:before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: calc(var(--screenHeight) * (9px / 1080) );
+    height: calc(var(--screenHeight) * (9px / 1080) );
+    bottom: 0;
+    right: 0;
+  }
+  .resize-handle__corner:after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: calc(var(--screenHeight) * (18px / 1080) );
+    height: calc(var(--screenHeight) * (3px / 1080) );
+    bottom: 0;
+    right: 0;
+    background-color: var(--enabledBackGroundColor);
+  }
+  
+
+ingame-ui#Skypad {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content: center;
+  height:99% !important;
+  width: 99% !important;
+}
+
+ingame-ui#Skypad .ingameUiContent {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  overflow:hidden !important;
+  align-items: stretch !important;
+  flex: 1 1 auto !important;
+}
+
+ingame-ui#Skypad .ingameUiWrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  overflow:hidden !important;
+  align-items: stretch !important;
+  flex: 1 1 auto !important;
+  padding: 0;
+  margin: 0;
+}
+
+ingame-ui#Skypad #refresh{
+  width: 7em;
+  height: 2.5em; position: absolute; top: 0em; left: 0em;
+}
+
+#container.disconnected{
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    border: solid black 15px;
+    border-radius: 15px;
+    margin: 0;
+    background-color: #292929;
+    right: 0;
+    bottom: 0;
+}
+
+body{
+    margin: 0;
+}
+
+#disconnected{
+    text-align: center;
+    color: white;
+    margin-top: 40vh;
+    font-size: 3vmin;
+}
+
+#refreshButton{
+    background-color: #3AB9F8;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    height: 5vh;
+    color: black;
+    padding-top:1vh;
+}

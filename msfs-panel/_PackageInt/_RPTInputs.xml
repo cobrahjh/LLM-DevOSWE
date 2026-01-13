@@ -1,0 +1,13 @@
+<RPTInputs>
+	<RPTInput Path="c:\devclaude\simwidget engine\msfs-panel\PackageSources\InGamePanels\simwidget_panel.xml">
+		<Package Name="simwidget-panel">
+			<AssetGroup Name="panel"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="c:\devclaude\simwidget engine\msfs-panel\PackageDefinitions\simwidget-panel\ContentInfo\Thumbnail.jpg">
+		<Package Name="simwidget-panel">
+			<AssetGroup Name="ContentInfo"/>
+		</Package>
+	</RPTInput>
+</RPTInputs>
+

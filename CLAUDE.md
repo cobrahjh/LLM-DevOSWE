@@ -328,10 +328,10 @@ camera-controller.js ──► detectChasePlane()
 **Starting Camera Controls:**
 ```powershell
 # 1. Start AHK helper (if using ChasePlane)
-Start-Process C:\DevOSWE\camera-helper.ahk
+Start-Process C:\LLM-DevOSWE\camera-helper.ahk
 
 # 2. Start server
-cd C:\DevOSWE\simwidget-hybrid
+cd C:\LLM-DevOSWE\simwidget-hybrid
 node backend\server.js
 ```
 

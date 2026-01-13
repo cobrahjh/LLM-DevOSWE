@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Version="2" Name="SimWidgetPanel" FolderName="Packages">
+  <OutputDirectory>Packages</OutputDirectory>
+  <TemporaryOutputDirectory>_PackageInt</TemporaryOutputDirectory>
+  <Packages>
+    <Package>
+      <PackageInfo>
+        <Name>simwidget-panel</Name>
+      </PackageInfo>
+      <SourceDir>PackageDefinitions</SourceDir>
+    </Package>
+  </Packages>
+</Project>

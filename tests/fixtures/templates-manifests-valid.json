@@ -1,0 +1,41 @@
+{
+  "allValid": true,
+  "manifests": {
+    "control-widget": {
+      "valid": true,
+      "hasRequiredFields": true,
+      "fields": {
+        "id": true,
+        "name": true,
+        "version": true,
+        "type": true,
+        "entry": true,
+        "components": true
+      }
+    },
+    "display-widget": {
+      "valid": true,
+      "hasRequiredFields": true,
+      "fields": {
+        "id": true,
+        "name": true,
+        "version": true,
+        "type": true,
+        "entry": true,
+        "components": true
+      }
+    },
+    "tool-widget": {
+      "valid": true,
+      "hasRequiredFields": true,
+      "fields": {
+        "id": true,
+        "name": true,
+        "version": true,
+        "type": true,
+        "entry": true,
+        "components": true
+      }
+    }
+  }
+}

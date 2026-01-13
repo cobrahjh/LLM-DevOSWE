@@ -6,7 +6,7 @@
  *
  * Usage: node auto-poller.js
  *
- * Path: C:\DevOSWE\Admin\relay\auto-poller.js
+ * Path: C:\LLM-DevOSWE\Admin\relay\auto-poller.js
  */
 
 const http = require('http');

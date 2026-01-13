@@ -1,0 +1,78 @@
+{
+  "timestamp": "2026-01-08T04:49:48.822Z",
+  "duration": 3044,
+  "runId": 2,
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "skipped": 6
+  },
+  "tests": [
+    {
+      "id": "plugins/discovery",
+      "status": "passed",
+      "duration": 2
+    },
+    {
+      "id": "plugins/core-manifest",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "plugins/manifests-valid",
+      "status": "passed",
+      "duration": 1
+    },
+    {
+      "id": "services/server-status",
+      "status": "passed",
+      "duration": 13
+    },
+    {
+      "id": "services/lorby-connection",
+      "status": "passed",
+      "duration": 2
+    },
+    {
+      "id": "services/lorby-simvar",
+      "status": "passed",
+      "duration": 3013
+    },
+    {
+      "id": "widgets/flight-data-widget-loads",
+      "status": "skipped",
+      "duration": 2
+    },
+    {
+      "id": "widgets/aircraft-control-loads",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "widgets/voice-control-loads",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "widgets/flight-recorder-loads",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "api/flight-data-structure",
+      "status": "error",
+      "error": "Cannot use 'in' operator to search for 'altitude' in <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/flight-data</pre>\n</body>\n</html>\n",
+      "duration": 0
+    },
+    {
+      "id": "api/plugins-list",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "api/keymaps",
+      "status": "skipped",
+      "duration": 1
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+C:\DevClaude\SimWidget Engine\dx12-overlay\SimWidgetDX12\obj\x64\Release\net48\SimWidgetDX12.csproj.AssemblyReference.cache
+C:\DevClaude\SimWidget Engine\dx12-overlay\SimWidgetDX12\obj\x64\Release\net48\SimWidgetDX12.GeneratedMSBuildEditorConfig.editorconfig
+C:\DevClaude\SimWidget Engine\dx12-overlay\SimWidgetDX12\obj\x64\Release\net48\SimWidgetDX12.AssemblyInfoInputs.cache
+C:\DevClaude\SimWidget Engine\dx12-overlay\SimWidgetDX12\obj\x64\Release\net48\SimWidgetDX12.AssemblyInfo.cs
+C:\DevClaude\SimWidget Engine\dx12-overlay\SimWidgetDX12\obj\x64\Release\net48\SimWidgetDX12.csproj.CoreCompileInputs.cache

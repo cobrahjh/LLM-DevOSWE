@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget - Flight Recorder</title>
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <h1>🎬 Flight Recorder</h1>
+            <div class="header-controls">
+                <button id="btn-transparency" class="btn-icon" title="Toggle Transparency">👁</button>
+                <button id="btn-settings" class="btn-icon" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <div class="status-section">
+            <div id="rec-status" class="rec-status">
+                <div class="rec-indicator" id="rec-indicator"></div>
+                <div class="status-info">
+                    <div class="status-label" id="status-label">Ready</div>
+                    <div class="status-duration" id="status-duration">00:00:00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <button id="btn-record" class="btn btn-record">⏺ Record</button>
+            <button id="btn-pause" class="btn btn-pause" disabled>⏸ Pause</button>
+            <button id="btn-stop" class="btn btn-stop" disabled>⏹ Stop</button>
+            <button id="btn-play" class="btn btn-play" disabled>▶ Play</button>
+        </div>
+
+        <div class="stats-section">
+            <div class="stat-row">
+                <span class="stat-label">Data Points</span>
+                <span class="stat-value" id="stat-points">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">File Size</span>
+                <span class="stat-value" id="stat-size">0 KB</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Interval</span>
+                <span class="stat-value" id="stat-interval">100ms</span>
+            </div>
+        </div>
+
+        <div class="current-data">
+            <div class="section-header">Current Position</div>
+            <div class="data-grid">
+                <div class="data-item">
+                    <span class="data-label">ALT</span>
+                    <span class="data-value" id="data-alt">0 ft</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">SPD</span>
+                    <span class="data-value" id="data-spd">0 kts</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">HDG</span>
+                    <span class="data-value" id="data-hdg">0°</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">VS</span>
+                    <span class="data-value" id="data-vs">0 fpm</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sessions-section">
+            <div class="section-header">
+                Saved Sessions
+                <span id="session-count" class="count"></span>
+            </div>
+            <div id="sessions-list" class="sessions-list">
+                <div class="no-sessions">No saved sessions</div>
+            </div>
+            <div class="session-actions">
+                <button id="btn-export" class="btn btn-small" disabled>📤 Export</button>
+                <button id="btn-import" class="btn btn-small">📥 Import</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Recording Settings</h2>
+                <button id="btn-close-settings" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Recording Interval</label>
+                    <select id="setting-interval">
+                        <option value="50">50ms (High Detail)</option>
+                        <option value="100" selected>100ms (Recommended)</option>
+                        <option value="250">250ms (Balanced)</option>
+                        <option value="500">500ms (Low Detail)</option>
+                        <option value="1000">1000ms (Minimal)</option>
+                    </select>
+                    <span class="hint">Lower = more detail, larger files</span>
+                </div>
+                <div class="setting-group">
+                    <label>Auto-stop after (minutes)</label>
+                    <input type="number" id="setting-autostop" value="0" min="0" max="180">
+                    <span class="hint">0 = no auto-stop</span>
+                </div>
+                <div class="setting-group">
+                    <label>Record Control Inputs</label>
+                    <input type="checkbox" id="setting-controls" checked>
+                    <span class="hint">Throttle, flaps, gear, etc.</span>
+                </div>
+                <div class="setting-group">
+                    <label>Record Autopilot State</label>
+                    <input type="checkbox" id="setting-autopilot" checked>
+                </div>
+                <div class="setting-group">
+                    <label>Record Lights State</label>
+                    <input type="checkbox" id="setting-lights">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-save-settings" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

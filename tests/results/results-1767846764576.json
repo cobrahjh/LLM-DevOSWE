@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-01-08T04:32:44.576Z",
+  "duration": 3034,
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 3
+  },
+  "tests": [
+    {
+      "id": "services/server-status",
+      "status": "skipped",
+      "duration": 16
+    },
+    {
+      "id": "services/lorby-connection",
+      "status": "skipped",
+      "duration": 1
+    },
+    {
+      "id": "services/lorby-simvar",
+      "status": "skipped",
+      "duration": 3015
+    }
+  ]
+}

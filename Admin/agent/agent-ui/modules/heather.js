@@ -13,7 +13,7 @@
  *   - Likes to chat during idle time
  *   - Knows the user as "Harold"
  *
- * Path: C:\DevOSWE\Admin\agent\agent-ui\modules\heather.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-ui\modules\heather.js
  * Last Updated: 2026-01-12
  */
 

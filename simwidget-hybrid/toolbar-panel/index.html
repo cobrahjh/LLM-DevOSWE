@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="/JS/coherent.js"></script>
+    <script type="text/javascript" src="/JS/common.js"></script>
+    <script type="text/javascript" src="/JS/Services/ToolBarPanels.js"></script>
+    <link rel="import" href="/templates/ingameUi/ingameUi.html" />
+    <style>
+        body { margin: 0; padding: 0; background: transparent; }
+        
+        ingame-ui#simwidget_panel {
+            display: flex;
+            flex-direction: column;
+            width: 420px !important;
+            height: 700px !important;
+        }
+        ingame-ui#simwidget_panel .ingameUiContent,
+        ingame-ui#simwidget_panel .ingameUiWrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+        
+        #panel-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #1a1a2e;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00d9ff;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        #loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #16213e;
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error { color: #e94560; }
+    </style>
+</head>
+<body class="border-box">
+    <ingamepanel-custom>
+        <ingame-ui
+            id="simwidget_panel"
+            panel-id="PANEL_SIMWIDGET"
+            class="ingameUiFrame"
+            content-fit="false"
+        >
+            <div id="loading">
+                <div class="spinner"></div>
+                <div>Connecting to SimWidget Backend...</div>
+                <div style="font-size: 12px; color: #888; margin-top: 8px;">
+                    Make sure server is running on localhost:8080
+                </div>
+            </div>
+            <iframe id="panel-frame" style="display:none;"></iframe>
+        </ingame-ui>
+    </ingamepanel-custom>
+    
+    <script>
+        // Try to load from backend server
+        const BACKEND_URL = 'http://localhost:8080';
+        const frame = document.getElementById('panel-frame');
+        const loading = document.getElementById('loading');
+        
+        function checkBackend() {
+            fetch(BACKEND_URL + '/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Backend is running, load the UI
+                    loading.style.display = 'none';
+                    frame.style.display = 'block';
+                    frame.src = BACKEND_URL;
+                })
+                .catch(err => {
+                    // Backend not available, show error
+                    loading.innerHTML = `
+                        <div class="error">Backend Not Running</div>
+                        <div style="font-size: 14px; color: #888; margin-top: 12px;">
+                            Start the backend server:<br>
+                            <code style="color: #00d9ff;">cd simwidget-hybrid/backend && npm start</code>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <button onclick="checkBackend()" style="
+                                background: #0f3460;
+                                border: none;
+                                color: white;
+                                padding: 10px 20px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                            ">Retry Connection</button>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Check backend on load
+        checkBackend();
+        
+        // Also retry every 5 seconds if not loaded
+        setInterval(() => {
+            if (frame.style.display === 'none') {
+                checkBackend();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

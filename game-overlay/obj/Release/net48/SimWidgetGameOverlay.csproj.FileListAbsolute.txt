@@ -1,0 +1,12 @@
+C:\DevClaude\SimWidget Engine\game-overlay\bin\Release\net48\SimWidgetGameOverlay.exe.config
+C:\DevClaude\SimWidget Engine\game-overlay\bin\Release\net48\SimWidgetGameOverlay.exe
+C:\DevClaude\SimWidget Engine\game-overlay\bin\Release\net48\SimWidgetGameOverlay.pdb
+C:\DevClaude\SimWidget Engine\game-overlay\bin\Release\net48\Newtonsoft.Json.dll
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidgetGameOverlay.csproj.AssemblyReference.cache
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidgetGameOverlay.GeneratedMSBuildEditorConfig.editorconfig
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidgetGameOverlay.AssemblyInfoInputs.cache
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidgetGameOverlay.AssemblyInfo.cs
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidgetGameOverlay.csproj.CoreCompileInputs.cache
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidge.D6946A04.Up2Date
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidgetGameOverlay.exe
+C:\DevClaude\SimWidget Engine\game-overlay\obj\Release\net48\SimWidgetGameOverlay.pdb

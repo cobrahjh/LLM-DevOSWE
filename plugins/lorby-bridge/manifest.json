@@ -1,0 +1,40 @@
+{
+    "id": "lorby-bridge",
+    "name": "Lorby AAO Bridge",
+    "version": "1.0.0",
+    "description": "SimVar access via Lorby Axis & Ohs WebAPI (no SimConnect required)",
+    "author": "SimWidget Team",
+    "priority": 10,
+    "enabled": true,
+    
+    "entry": "index.js",
+    
+    "dependencies": ["core"],
+    
+    "provides": [
+        "simvar-read",
+        "simvar-write",
+        "lvar-access",
+        "hevent-trigger"
+    ],
+    
+    "routes": [
+        "/api/lorby/status",
+        "/api/lorby/simvar",
+        "/api/lorby/lvar",
+        "/api/lorby/event"
+    ],
+    
+    "config": {
+        "host": "localhost",
+        "port": 43380,
+        "pollInterval": 100,
+        "autoConnect": true,
+        "fallbackToSimConnect": true
+    },
+    
+    "requirements": {
+        "software": "Lorby Axis and Ohs for MSFS 2024",
+        "note": "Must be running with WebAPI enabled"
+    }
+}

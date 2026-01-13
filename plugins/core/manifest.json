@@ -1,0 +1,51 @@
+{
+    "id": "core",
+    "name": "SimWidget Core",
+    "version": "1.0.0",
+    "description": "Essential flight data, controls, and base API",
+    "author": "SimWidget Team",
+    "priority": 0,
+    "enabled": true,
+    "required": true,
+    
+    "entry": "index.js",
+    
+    "provides": [
+        "flight-data",
+        "basic-controls",
+        "autopilot",
+        "lights",
+        "fuel-display",
+        "websocket-api",
+        "rest-api"
+    ],
+    
+    "ui": [
+        {
+            "id": "flight-data",
+            "name": "Flight Data",
+            "path": "ui/flight-data"
+        },
+        {
+            "id": "aircraft-control",
+            "name": "Aircraft Control",
+            "path": "ui/aircraft-control"
+        }
+    ],
+    
+    "routes": [
+        "/api/status",
+        "/api/flight-data",
+        "/api/command"
+    ],
+    
+    "simvars": [
+        "INDICATED ALTITUDE",
+        "AIRSPEED INDICATED",
+        "HEADING INDICATOR",
+        "VERTICAL SPEED",
+        "GROUND VELOCITY",
+        "GEAR HANDLE POSITION",
+        "FLAPS HANDLE INDEX"
+    ]
+}

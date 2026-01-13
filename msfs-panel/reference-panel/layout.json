@@ -1,0 +1,44 @@
+{
+  "content": [
+    {
+      "path": "html_ui/icons/toolbar/ICON_SKY4SIMNG.svg",
+      "size": 4267,
+      "date": 133246828459834555
+    },
+    {
+      "path": "html_ui/Sky4Sim/garminsdk.js",
+      "size": 1499454,
+      "date": 133196560837533702
+    },
+    {
+      "path": "html_ui/Sky4Sim/msfssdk.js",
+      "size": 2362564,
+      "date": 133244857058869256
+    },
+    {
+      "path": "html_ui/Sky4Sim/Sky4Sim.css",
+      "size": 27638,
+      "date": 133246826391271539
+    },
+    {
+      "path": "html_ui/Sky4Sim/Sky4Sim.html",
+      "size": 2287,
+      "date": 133246781622203830
+    },
+    {
+      "path": "html_ui/Sky4Sim/Sky4Sim.js",
+      "size": 2271084,
+      "date": 133246826391291541
+    },
+    {
+      "path": "InGamePanels/ingamepanels-sky4sim-ng.spb",
+      "size": 656,
+      "date": 133247285473012944
+    },
+    {
+      "path": "version",
+      "size": 7,
+      "date": 133246827668636907
+    }
+  ]
+}

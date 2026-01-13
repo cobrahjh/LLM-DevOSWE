@@ -6,7 +6,7 @@
  *
  * Usage: node claude-poll.js [connect|poll|disconnect]
  *
- * Path: C:\DevOSWE\Admin\claude-bridge\claude-poll.js
+ * Path: C:\LLM-DevOSWE\Admin\claude-bridge\claude-poll.js
  */
 
 const http = require('http');

@@ -1,0 +1,300 @@
+{
+    "version": "3.0",
+    "description": "SimWidget Key Mappings v3.0 - GUID-based with editable names",
+    "camera": {
+        "cam-001-cockpit-vfr": {
+            "originalId": "cockpitVFR",
+            "name": "Cockpit VFR",
+            "key": "0",
+            "trigger": "SHIFT+F",
+            "isDefault": true
+        },
+        "cam-002-cockpit-ifr": {
+            "originalId": "cockpitIFR",
+            "name": "Cockpit IFR",
+            "key": "F9",
+            "trigger": "9",
+            "isDefault": true
+        },
+        "cam-003-cockpit-landing": {
+            "originalId": "cockpitLanding",
+            "name": "Cockpit Landing",
+            "key": "F11",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-004-toggle-external": {
+            "originalId": "toggleExternal",
+            "name": "Toggle External",
+            "key": "BACKSPACE",
+            "trigger": "WINWING_FCU-32_+_EFI:BTN25",
+            "isDefault": true
+        },
+        "cam-005-drone": {
+            "originalId": "drone",
+            "name": "Drone",
+            "key": "SHIFT+X",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-006-next-fixed": {
+            "originalId": "nextFixedCam",
+            "name": "Next Fixed Cam",
+            "key": "A",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-007-prev-fixed": {
+            "originalId": "prevFixedCam",
+            "name": "Prev Fixed Cam",
+            "key": "SHIFT+A",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-008-reset-view": {
+            "originalId": "resetView",
+            "name": "Reset View",
+            "key": "F",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-009-zoom-in": {
+            "originalId": "zoomIn",
+            "name": "Zoom In",
+            "key": "=",
+            "trigger": "SHIFT+D",
+            "isDefault": true
+        },
+        "cam-010-zoom-out": {
+            "originalId": "zoomOut",
+            "name": "Zoom Out",
+            "key": "-",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-011-drone-lock": {
+            "originalId": "droneLock",
+            "name": "Drone Lock",
+            "key": "CTRL+TAB",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-012-drone-next": {
+            "originalId": "droneNextTarget",
+            "name": "Drone Next Target",
+            "key": "CTRL+PAGEUP",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-013-drone-prev": {
+            "originalId": "dronePrevTarget",
+            "name": "Drone Prev Target",
+            "key": "CTRL+PAGEDOWN",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-014-pan-left": {
+            "originalId": "panLeft",
+            "name": "Pan Left",
+            "key": "=",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-015-pan-right": {
+            "originalId": "panRight",
+            "name": "Pan Right",
+            "key": "NUMPAD6",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-016-pan-up": {
+            "originalId": "panUp",
+            "name": "Pan Up",
+            "key": "NUMPAD8",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-017-pan-down": {
+            "originalId": "panDown",
+            "name": "Pan Down",
+            "key": "NUMPAD2",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-018-save-preset-1": {
+            "originalId": "savePreset1",
+            "name": "Save Preset 1",
+            "key": "SHIFT+F5",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-019-save-preset-2": {
+            "originalId": "savePreset2",
+            "name": "Save Preset 2",
+            "key": "SHIFT+F6",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-020-save-preset-3": {
+            "originalId": "savePreset3",
+            "name": "Save Preset 3",
+            "key": "SHIFT+F7",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-021-save-preset-4": {
+            "originalId": "savePreset4",
+            "name": "Save Preset 4",
+            "key": "SHIFT+F8",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-022-load-preset-1": {
+            "originalId": "loadPreset1",
+            "name": "Load Preset 1",
+            "key": "SHIFT+F1",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-023-load-preset-2": {
+            "originalId": "loadPreset2",
+            "name": "Load Preset 2",
+            "key": "SHIFT+F2",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-024-load-preset-3": {
+            "originalId": "loadPreset3",
+            "name": "Load Preset 3",
+            "key": "SHIFT+F3",
+            "trigger": "",
+            "isDefault": true
+        },
+        "cam-025-load-preset-4": {
+            "originalId": "loadPreset4",
+            "name": "Load Preset 4",
+            "key": "SHIFT+F4",
+            "trigger": "Wireless_Controller:BTN15",
+            "isDefault": true
+        }
+    },
+    "aircraft": {
+        "acft-001-parking-brake": {
+            "originalId": "parkingBrake",
+            "name": "Parking Brake",
+            "key": "CTRL+SPACE",
+            "trigger": "",
+            "isDefault": true
+        },
+        "acft-002-gear-toggle": {
+            "originalId": "gearToggle",
+            "name": "Gear Toggle",
+            "key": "G",
+            "trigger": "",
+            "isDefault": true
+        },
+        "acft-003-flaps-up": {
+            "originalId": "flapsUp",
+            "name": "Flaps Up",
+            "key": "F5",
+            "trigger": "",
+            "isDefault": true
+        },
+        "acft-004-flaps-down": {
+            "originalId": "flapsDown",
+            "name": "Flaps Down",
+            "key": "F6",
+            "trigger": "",
+            "isDefault": true
+        },
+        "acft-005-spoilers": {
+            "originalId": "spoilers",
+            "name": "Spoilers",
+            "key": "SLASH",
+            "trigger": "",
+            "isDefault": true
+        }
+    },
+    "lights": {
+        "lgt-001-nav": {
+            "originalId": "navLights",
+            "name": "Nav Lights",
+            "key": "CTRL+N",
+            "trigger": "",
+            "isDefault": true
+        },
+        "lgt-002-beacon": {
+            "originalId": "beacon",
+            "name": "Beacon",
+            "key": "CTRL+B",
+            "trigger": "",
+            "isDefault": true
+        },
+        "lgt-003-strobes": {
+            "originalId": "strobes",
+            "name": "Strobes",
+            "key": "CTRL+O",
+            "trigger": "Wireless_Controller:BTN0",
+            "isDefault": true
+        },
+        "lgt-004-landing": {
+            "originalId": "landing",
+            "name": "Landing Lights",
+            "key": "CTRL+L",
+            "trigger": "",
+            "isDefault": true
+        },
+        "lgt-005-taxi": {
+            "originalId": "taxi",
+            "name": "Taxi Lights",
+            "key": "CTRL+T",
+            "trigger": "",
+            "isDefault": true
+        },
+        "lgt-mk47f49p-t2kr": {
+            "originalId": null,
+            "name": "sss",
+            "key": "",
+            "trigger": "Joystick_-_HOTAS_War:BTN1",
+            "isDefault": false
+        }
+    },
+    "views": {
+        "view-001-look-left": {
+            "originalId": "quickLookLeft",
+            "name": "Quick Look Left",
+            "key": "SHIFT+H",
+            "trigger": "",
+            "isDefault": true
+        },
+        "view-002-look-right": {
+            "originalId": "quickLookRight",
+            "name": "Quick Look Right",
+            "key": "SHIFT+J",
+            "trigger": "",
+            "isDefault": true
+        },
+        "view-003-look-up": {
+            "originalId": "quickLookUp",
+            "name": "Quick Look Up",
+            "key": "SHIFT+K",
+            "trigger": "",
+            "isDefault": true
+        },
+        "view-004-look-down": {
+            "originalId": "quickLookDown",
+            "name": "Quick Look Down",
+            "key": "SHIFT+I",
+            "trigger": "",
+            "isDefault": true
+        },
+        "view-005-look-rear": {
+            "originalId": "quickLookRear",
+            "name": "Quick Look Rear",
+            "key": "SHIFT+T",
+            "trigger": "",
+            "isDefault": true
+        }
+    },
+    "custom": {}
+}

@@ -1,0 +1,23 @@
+{
+  "watch": [
+    "backend/",
+    "ui/",
+    "config/",
+    "shared-ui/"
+  ],
+  "ext": "js,json,html,css",
+  "ignore": [
+    "node_modules/",
+    "*.log",
+    "test*/",
+    "*.backup",
+    "*.before-*"
+  ],
+  "delay": "500",
+  "env": {
+    "NODE_ENV": "development",
+    "HOT_RELOAD": "true"
+  },
+  "verbose": true,
+  "legacyWatch": false
+}

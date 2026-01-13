@@ -11,7 +11,7 @@
  * - Deadlock prevention
  * - Resource cleanup
  *
- * Path: C:\DevOSWE\Admin\claude-bridge\ollama-agent.js
+ * Path: C:\LLM-DevOSWE\Admin\claude-bridge\ollama-agent.js
  */
 
 const { execSync, spawn } = require('child_process');
@@ -30,7 +30,7 @@ const CONFIG = {
     fileTimeout: 5000,          // 5s max for file operations
     lockTimeout: 10000,         // 10s max wait for locks
     thinkingTimeout: 60000,     // 60s max for LLM response
-    workDir: 'C:\\DevOSWE',
+    workDir: 'C:\\LLM-DevOSWE',
     logFile: path.join(__dirname, 'ollama-agent.log')
 };
 

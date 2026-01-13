@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+	<id>KeySenderService</id>
+	<name>SimWidget KeySender</name>
+	<description>SimWidget TCP Key Sender Service for MSFS camera controls</description>
+	<executable>C:\DevClaude\SimWidget_Engine\KeySenderService\bin\Release\net8.0\KeySenderService.exe</executable>
+	<logmode>rotate</logmode>
+	<stoptimeout>10sec</stoptimeout>
+	<serviceaccount>
+		<username>LocalSystem</username>
+	</serviceaccount>
+	<workingdirectory>C:\DevClaude\SimWidget_Engine\KeySenderService\bin\Release\net8.0</workingdirectory>
+</service>

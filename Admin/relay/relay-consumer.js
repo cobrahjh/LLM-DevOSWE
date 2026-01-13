@@ -13,7 +13,7 @@
  * Usage:
  *   node relay-consumer.js
  *
- * Path: C:\DevOSWE\Admin\relay\relay-consumer.js
+ * Path: C:\LLM-DevOSWE\Admin\relay\relay-consumer.js
  * Last Updated: 2026-01-12
  */
 

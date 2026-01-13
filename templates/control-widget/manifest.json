@@ -1,0 +1,30 @@
+{
+    "id": "control-widget-template",
+    "name": "Control Widget Template",
+    "version": "1.0.0",
+    "type": "control",
+    "author": "SimWidget Team",
+    "description": "Template for widgets that control aircraft state",
+    "category": "Templates",
+    "entry": "index.html",
+    "width": 320,
+    "height": 450,
+    "minWidth": 280,
+    "minHeight": 300,
+    "resizable": true,
+    "transparent": true,
+    "components": [
+        "header",
+        "status-bar",
+        "button-grid",
+        "slider-group",
+        "panel",
+        "settings-panel"
+    ],
+    "simVars": [],
+    "commands": [],
+    "dependencies": [
+        "../shared/widget-common.css",
+        "../shared/widget-base.js"
+    ]
+}

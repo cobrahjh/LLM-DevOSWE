@@ -118,7 +118,7 @@ echo Starting Master (O) (will manage all services)...
 
 :START_ORCH
 echo [1/1] Starting Master (O) (port 8500)...
-cd /d C:\DevOSWE\Admin\orchestrator
+cd /d C:\LLM-DevOSWE\Admin\orchestrator
 if not exist node_modules (
     echo   Installing dependencies...
     npm install >nul 2>&1
@@ -128,7 +128,7 @@ timeout /t 3 /nobreak >nul
 
 echo.
 echo [2/2] Starting Relay Auto-Poller...
-start "Relay Auto-Poller" /min cmd /c "cd /d C:\DevOSWE\Admin\relay && node auto-poller.js"
+start "Relay Auto-Poller" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\relay && node auto-poller.js"
 
 echo.
 echo ========================================
@@ -147,7 +147,7 @@ goto :END
 echo.
 if %MAIN_RUNNING%==0 (
     echo [1/3] Starting Main Server (port 8080)...
-    start "SimWidget Main Server" cmd /k "cd /d C:\DevOSWE\simwidget-hybrid && npx nodemon backend/server.js"
+    start "SimWidget Main Server" cmd /k "cd /d C:\LLM-DevOSWE\simwidget-hybrid && npx nodemon backend/server.js"
     timeout /t 2 /nobreak >nul
 ) else (
     echo [1/3] Main Server already running - skipped
@@ -155,7 +155,7 @@ if %MAIN_RUNNING%==0 (
 
 if %AGENT_RUNNING%==0 (
     echo [2/3] Starting Agent Server (port 8585)...
-    start "SimWidget Agent" cmd /k "cd /d C:\DevOSWE\Admin\agent && node agent-server.js"
+    start "SimWidget Agent" cmd /k "cd /d C:\LLM-DevOSWE\Admin\agent && node agent-server.js"
     timeout /t 1 /nobreak >nul
 ) else (
     echo [2/3] Agent already running - skipped
@@ -163,13 +163,13 @@ if %AGENT_RUNNING%==0 (
 
 if %REMOTE_RUNNING%==0 (
     echo [3/3] Starting Remote Support (port 8590)...
-    start "SimWidget Remote Support" cmd /k "cd /d C:\DevOSWE\Admin\remote-support && node service.js"
+    start "SimWidget Remote Support" cmd /k "cd /d C:\LLM-DevOSWE\Admin\remote-support && node service.js"
 ) else (
     echo [3/3] Remote Support already running - skipped
 )
 
 echo [4/4] Starting Relay Auto-Poller...
-start "Relay Auto-Poller" /min cmd /c "cd /d C:\DevOSWE\Admin\relay && node auto-poller.js"
+start "Relay Auto-Poller" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\relay && node auto-poller.js"
 
 echo.
 echo ========================================

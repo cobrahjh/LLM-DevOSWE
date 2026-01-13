@@ -1,0 +1,44 @@
+{
+    "id": "voice-control",
+    "name": "Voice Control",
+    "version": "1.0.0",
+    "description": "Voice commands using Web Speech API (Chrome/Edge)",
+    "author": "SimWidget Team",
+    "priority": 50,
+    "enabled": true,
+    
+    "entry": "index.js",
+    
+    "dependencies": ["core"],
+    
+    "provides": [
+        "voice-commands",
+        "speech-recognition"
+    ],
+    
+    "ui": [
+        {
+            "id": "voice-control",
+            "name": "Voice Control",
+            "path": "ui"
+        }
+    ],
+    
+    "routes": [
+        "/api/voice/commands",
+        "/api/voice/status"
+    ],
+    
+    "config": {
+        "language": "en-US",
+        "wakeWord": "hey sim",
+        "wakeWordEnabled": false,
+        "confidenceThreshold": 0.7,
+        "continuous": true
+    },
+    
+    "requirements": {
+        "browser": ["Chrome", "Edge"],
+        "note": "Web Speech API not supported in Firefox/Safari"
+    }
+}

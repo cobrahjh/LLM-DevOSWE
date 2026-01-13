@@ -1,0 +1,6 @@
+{
+  "sqlite": {
+    "detected": true,
+    "name": "SQLite Database"
+  }
+}

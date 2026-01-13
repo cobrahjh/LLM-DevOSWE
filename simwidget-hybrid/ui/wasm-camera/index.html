@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Cinematic Camera</title>
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">🎬 Cinematic Camera</span>
+            <span class="status-dot" id="status-dot" title="WASM Module Status">●</span>
+        </div>
+        
+        <div class="main-controls">
+            <button class="btn-primary" id="btn-flyby">
+                <span class="btn-icon">✈️</span>
+                <span class="btn-label">Flyby</span>
+            </button>
+            <button class="btn-secondary" id="btn-next">
+                <span class="btn-icon">⏭️</span>
+                <span class="btn-label">Next</span>
+            </button>
+            <button class="btn-secondary" id="btn-reset">
+                <span class="btn-icon">🔄</span>
+                <span class="btn-label">Reset</span>
+            </button>
+        </div>
+        
+        <div class="slider-row">
+            <label class="slider-label">Smoothing</label>
+            <input type="range" id="smooth-slider" min="0" max="100" value="50">
+            <span class="slider-value" id="smooth-value">50%</span>
+        </div>
+        
+        <div class="preset-row">
+            <span class="preset-label">Position:</span>
+            <div class="preset-buttons">
+                <button class="preset-btn" data-preset="1">1</button>
+                <button class="preset-btn" data-preset="2">2</button>
+                <button class="preset-btn" data-preset="3">3</button>
+                <button class="preset-btn" data-preset="4">4</button>
+                <button class="preset-btn" data-preset="5">5</button>
+            </div>
+        </div>
+        
+        <div class="info-bar" id="info-bar">
+            Checking WASM module...
+        </div>
+    </div>
+    
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+    "version": "1.0.0",
+    "updated": "2025-01-07",
+    "categories": {
+        "lights": {
+            "name": "Lights",
+            "icon": "💡",
+            "color": "#fbbf24"
+        },
+        "autopilot": {
+            "name": "Autopilot",
+            "icon": "🎯",
+            "color": "#3b82f6"
+        },
+        "camera": {
+            "name": "Camera",
+            "icon": "📷",
+            "color": "#8b5cf6"
+        },
+        "systems": {
+            "name": "Systems",
+            "icon": "⚙️",
+            "color": "#ef4444"
+        }
+    },
+    "widgets": [
+        "lights/nav-toggle",
+        "lights/beacon-toggle",
+        "lights/strobe-toggle",
+        "lights/landing-toggle",
+        "lights/taxi-toggle",
+        "autopilot/ap-master",
+        "autopilot/hdg-hold",
+        "autopilot/hdg-sync",
+        "autopilot/alt-hold",
+        "autopilot/vs-hold",
+        "camera/cockpit-view",
+        "camera/external-view",
+        "camera/drone-view"
+    ]
+}

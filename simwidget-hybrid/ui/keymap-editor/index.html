@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget - Keymap Editor</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>⌨️ Keymap Editor</h1>
+                <span class="widget-brand">SimWidget</span>
+            </div>
+            <div class="header-right">
+                <span id="keysender-mode"></span>
+                <span class="connection-status" id="conn-status" title="Disconnected">●</span>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <button id="btn-refresh" class="btn">🔄 Refresh</button>
+            <button id="btn-test" class="btn">🧪 Test Selected</button>
+            <button id="btn-check-conflicts" class="btn">⚠️ Check Conflicts</button>
+            <button id="btn-scan-devices" class="btn btn-devices">🎮 Scan Devices</button>
+            <button id="btn-export" class="btn btn-success">📤 Export</button>
+            <button id="btn-import" class="btn btn-primary">📥 Import</button>
+            <input type="file" id="import-file" accept=".json" style="display: none;">
+            <a href="/" class="btn btn-secondary">← Back</a>
+        </div>
+
+        <div id="devices-panel" class="devices-panel hidden">
+            <h3>🎮 Connected Controllers</h3>
+            <p class="devices-hint">Press any button on your devices to detect them. Toggle devices ON/OFF to control which ones are read.</p>
+            <ul id="devices-list"></ul>
+            <div class="devices-actions">
+                <button id="btn-enable-all" class="btn btn-small">Enable All</button>
+                <button id="btn-disable-all" class="btn btn-small btn-secondary">Disable All</button>
+            </div>
+        </div>
+
+        <div class="info-banner">
+            <strong>⚠️ Important:</strong> These keymaps must match your MSFS keyboard bindings. 
+            Open MSFS → Options → Controls → Keyboard and check what keys are assigned to each action. 
+            SimWidget cannot read MSFS bindings directly — you must manually update these to match your simulator settings.
+            <br><br>
+            <strong>🎮 Controllers:</strong> Use "Scan Devices" to see your connected controllers and test buttons. 
+            Controller buttons can trigger widget actions, but MSFS still receives keyboard commands.
+        </div>
+
+        <div id="conflicts-panel" class="conflicts-panel hidden">
+            <h3>⚠️ Key Conflicts Detected</h3>
+            <ul id="conflicts-list"></ul>
+        </div>
+
+        <div id="categories-container">
+            <!-- Categories will be populated here -->
+        </div>
+
+        <div id="key-capture-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Press a key or button...</h3>
+                <p>Editing: <span id="editing-key"></span></p>
+                <p id="modal-hint" class="modal-hint">Press key...</p>
+                <div id="captured-key" class="captured-key">Waiting...</div>
+                <div class="modal-buttons">
+                    <button id="btn-save-key" class="btn btn-primary" disabled>Save</button>
+                    <button id="btn-clear-key" class="btn btn-secondary">Clear</button>
+                    <button id="btn-cancel-key" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="test-panel" class="test-panel">
+            <h3>🧪 Test Panel</h3>
+            <div class="test-output">
+                <div id="test-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

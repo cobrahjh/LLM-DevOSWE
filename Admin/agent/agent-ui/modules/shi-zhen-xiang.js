@@ -17,7 +17,7 @@
  *
  * Voice: Google 粵語（香港）(Cantonese Hong Kong)
  *
- * Path: C:\DevOSWE\Admin\agent\agent-ui\modules\shi-zhen-xiang.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-ui\modules\shi-zhen-xiang.js
  * Last Updated: 2026-01-12
  */
 

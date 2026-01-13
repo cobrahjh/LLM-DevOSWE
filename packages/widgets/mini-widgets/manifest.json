@@ -1,0 +1,40 @@
+{
+    "name": "Mini-Widgets Collection",
+    "id": "mini-widgets",
+    "version": "1.0.0",
+    "author": "SimWidget Team",
+    "description": "Compact floating displays for airspeed, altitude, heading, vertical speed, and G-force",
+    "category": "instruments",
+    "minEngineVersion": "1.0.0",
+    "files": {
+        "js": "widget.js",
+        "css": "widget.css"
+    },
+    "simvars": [
+        "AIRSPEED INDICATED",
+        "AIRSPEED TRUE",
+        "AIRSPEED MACH",
+        "INDICATED ALTITUDE",
+        "KOHLSMAN SETTING HG",
+        "PRESSURE ALTITUDE",
+        "HEADING INDICATOR",
+        "MAGNETIC COMPASS",
+        "GPS GROUND TRUE HEADING",
+        "VERTICAL SPEED",
+        "G FORCE"
+    ],
+    "settings": {
+        "updateRate": {
+            "type": "number",
+            "default": 100,
+            "min": 50,
+            "max": 500,
+            "label": "Update Rate (ms)"
+        },
+        "compactMode": {
+            "type": "boolean",
+            "default": false,
+            "label": "Compact Mode"
+        }
+    }
+}

@@ -1,0 +1,44 @@
+{
+  "content": [
+    {
+      "path": "contentinfo/simwidget-panel/thumbnail.jpg",
+      "size": 17247,
+      "date": 133742339660000000
+    },
+    {
+      "path": "html_ui/icons/toolbar/icon_simwidget.svg",
+      "size": 7,
+      "date": 134119222690000000
+    },
+    {
+      "path": "html_ui/ingamepanels/simwidgetpanel/index.html",
+      "size": 6653,
+      "date": 134119222690000000
+    },
+    {
+      "path": "html_ui/ingamepanels/simwidgetpanel/panel.json",
+      "size": 417,
+      "date": 134119222690000000
+    },
+    {
+      "path": "html_ui/ingamepanels/simwidgetpanel/simwidgetpanel.css",
+      "size": 4043,
+      "date": 134119222690000000
+    },
+    {
+      "path": "html_ui/ingamepanels/simwidgetpanel/simwidgetpanel.html",
+      "size": 5136,
+      "date": 134119222690000000
+    },
+    {
+      "path": "html_ui/ingamepanels/simwidgetpanel/simwidgetpanel.js",
+      "size": 5001,
+      "date": 134119222690000000
+    },
+    {
+      "path": "ingamepanels/simwidget_panel.spb",
+      "size": 435,
+      "date": 134119192910000001
+    }
+  ]
+}

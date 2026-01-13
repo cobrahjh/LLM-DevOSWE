@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SimWidget Mini</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 10px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .mini-header {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            -webkit-app-region: drag;
+        }
+        
+        .mini-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .mini-close {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 14px;
+            cursor: pointer;
+            -webkit-app-region: no-drag;
+        }
+        .mini-close:hover { color: #ef4444; }
+        
+        .mini-content {
+            padding: 10px;
+            height: calc(100% - 36px);
+            overflow: auto;
+        }
+        
+        /* Widget content styles */
+        .mini-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #38bdf8;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .mini-label {
+            font-size: 10px;
+            color: #64748b;
+            text-align: center;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="mini-header">
+        <span class="mini-title" id="mini-title">Mini Widget</span>
+        <button class="mini-close" id="mini-close">×</button>
+    </div>
+    <div class="mini-content" id="mini-content">
+        <!-- Widget content injected here -->
+    </div>
+    
+    <script>
+        // Mini widget initialization
+        let config = null;
+        
+        // Close button
+        document.getElementById('mini-close').addEventListener('click', () => {
+            window.close();
+        });
+        
+        // Receive config from main process
+        if (window.simWidget) {
+            window.simWidget.onWidgetConfig((cfg) => {
+                config = cfg;
+                document.getElementById('mini-title').textContent = cfg.title || 'Mini Widget';
+                initMiniWidget(cfg);
+            });
+        }
+        
+        function initMiniWidget(cfg) {
+            const content = document.getElementById('mini-content');
+            
+            if (cfg.type === 'value') {
+                content.innerHTML = `
+                    <div class="mini-label">${cfg.label || ''}</div>
+                    <div class="mini-value" id="mini-value">--</div>
+                `;
+                
+                // Connect to server for updates
+                connectAndUpdate(cfg);
+            }
+        }
+        
+        function connectAndUpdate(cfg) {
+            const ws = new WebSocket('ws://localhost:8484');
+            
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.type === 'simvars' && cfg.simvar) {
+                    const key = cfg.simvar.startsWith('A:') ? cfg.simvar : `A:${cfg.simvar}`;
+                    const data = msg.data[key];
+                    if (data) {
+                        const val = cfg.decimals ? data.value.toFixed(cfg.decimals) : Math.round(data.value);
+                        document.getElementById('mini-value').textContent = val + (cfg.suffix || '');
+                    }
+                }
+            };
+            
+            ws.onclose = () => {
+                setTimeout(() => connectAndUpdate(cfg), 3000);
+            };
+        }
+    </script>
+</body>
+</html>

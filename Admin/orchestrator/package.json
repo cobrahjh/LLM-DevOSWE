@@ -1,0 +1,14 @@
+{
+  "name": "simwidget-master",
+  "version": "1.0.0",
+  "description": "Master (O) service controller for SimWidget Engine",
+  "main": "orchestrator.js",
+  "scripts": {
+    "start": "node orchestrator.js",
+    "install-service": "node install-service.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-windows": "^1.0.0-beta.8"
+  }
+}

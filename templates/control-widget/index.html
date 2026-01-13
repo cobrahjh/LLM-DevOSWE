@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget - Control Widget Template</title>
+    <link rel="stylesheet" href="../shared/widget-common.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget-container">
+        <!-- HEADER -->
+        <div class="widget-header">
+            <div class="header-left">
+                <span class="widget-icon">🎮</span>
+                <h1 class="widget-title">Control Widget</h1>
+            </div>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-transparency" title="Toggle Transparency">👁</button>
+                <button class="btn-icon" id="btn-settings" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <span class="status-dot" id="status-dot"></span>
+            <span class="status-text" id="status-text">Connecting...</span>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="widget-content">
+            
+            <!-- PRIMARY ACTIONS -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Primary Controls</span>
+                </div>
+                <div class="panel-content">
+                    <div class="button-grid">
+                        <button class="btn btn-toggle" id="btn-action1" data-active="false">
+                            <span class="btn-icon">⚡</span>
+                            <span class="btn-label">Action 1</span>
+                        </button>
+                        <button class="btn btn-toggle" id="btn-action2" data-active="false">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-label">Action 2</span>
+                        </button>
+                        <button class="btn btn-toggle" id="btn-action3" data-active="false">
+                            <span class="btn-icon">⭐</span>
+                            <span class="btn-label">Action 3</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDERS -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Adjustments</span>
+                </div>
+                <div class="panel-content">
+                    <div class="slider-group">
+                        <label class="slider-label">
+                            <span class="label-text">Value 1</span>
+                            <span class="label-value" id="value1-display">50</span>
+                        </label>
+                        <input type="range" class="slider" id="slider-value1" 
+                               min="0" max="100" value="50">
+                    </div>
+                    <div class="slider-group">
+                        <label class="slider-label">
+                            <span class="label-text">Value 2</span>
+                            <span class="label-value" id="value2-display">0°</span>
+                        </label>
+                        <input type="range" class="slider" id="slider-value2" 
+                               min="0" max="359" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECONDARY ACTIONS -->
+            <div class="panel collapsible" data-collapsed="true">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    <span class="panel-title">Secondary Controls</span>
+                    <span class="panel-toggle">▶</span>
+                </div>
+                <div class="panel-content">
+                    <div class="button-row">
+                        <button class="btn btn-secondary">Option A</button>
+                        <button class="btn btn-secondary">Option B</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <div class="settings-panel" id="settings-panel" hidden>
+            <div class="settings-header">
+                <span>Settings</span>
+                <button class="btn-close" id="settings-close">✕</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-row">
+                    <label for="setting-option1">Enable Feature</label>
+                    <input type="checkbox" id="setting-option1" checked>
+                </div>
+                <div class="setting-row">
+                    <label for="setting-sensitivity">Sensitivity</label>
+                    <input type="range" id="setting-sensitivity" min="1" max="100" value="50">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/widget-base.js"></script>
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+/**
+ * Button Platform Indicator Styles v1.0.0
+ * Last Updated: 2025-01-08
+ */
+
+.button-platform-indicator {
+    position: fixed;
+    z-index: 1000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    color: #333;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    max-width: 400px;
+}
+
+.button-platform-indicator:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Positioning */
+.button-platform-indicator.top-right {
+    top: 10px;
+    right: 10px;
+}
+
+.button-platform-indicator.top-left {
+    top: 10px;
+    left: 10px;
+}
+
+.button-platform-indicator.bottom-right {
+    bottom: 10px;
+    right: 10px;
+}
+
+.button-platform-indicator.bottom-left {
+    bottom: 10px;
+    left: 10px;
+}
+
+/* Content */
+.platform-indicator-content {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 6px;
+    min-width: 120px;
+}
+
+.platform-indicator-content.reliable {
+    border-left: 3px solid #22c55e;
+}
+
+.platform-indicator-content.unreliable {
+    border-left: 3px solid #f59e0b;
+}
+
+.platform-indicator-content.error {
+    border-left: 3px solid #ef4444;
+}
+
+.platform-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.platform-label {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.expand-arrow {
+    font-size: 10px;
+    color: #666;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.expand-arrow.expanded {
+    transform: rotate(180deg);
+}
+
+/* Speed Indicator */
+.speed-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.speed-indicator.speed-excellent {
+    background: #22c55e;
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.6);
+}
+
+.speed-indicator.speed-good {
+    background: #84cc16;
+}
+
+.speed-indicator.speed-fair {
+    background: #f59e0b;
+}
+
+.speed-indicator.speed-poor {
+    background: #ef4444;
+}
+
+.speed-indicator.speed-unknown {
+    background: #6b7280;
+}
+
+/* Modes */
+.button-platform-indicator.compact .platform-label {
+    max-width: 80px;
+}
+
+.button-platform-indicator.icon-only .platform-label {
+    display: none;
+}
+
+.button-platform-indicator.icon-only .platform-indicator-content {
+    min-width: auto;
+    padding: 6px;
+}
+
+/* Details Panel */
+.platform-details {
+    border-top: 1px solid #e5e7eb;
+    padding: 16px;
+    background: rgba(249, 250, 251, 0.8);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.details-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.platform-name {
+    font-size: 11px;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* Method Cards */
+.current-method,
+.available-methods,
+.performance-info,
+.recommendations {
+    margin-bottom: 16px;
+}
+
+.current-method h4,
+.available-methods h4,
+.performance-info h4,
+.recommendations h4 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.method-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.method-card.primary {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.method-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.method-icon {
+    font-size: 14px;
+}
+
+.method-name {
+    font-weight: 500;
+    flex-grow: 1;
+}
+
+.reliability-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+}
+
+.reliability-badge.reliability-excellent {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.reliability-badge.reliability-good {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.reliability-badge.reliability-fair {
+    background: #fed7aa;
+    color: #9a3412;
+}
+
+.reliability-badge.reliability-poor,
+.reliability-badge.reliability-none {
+    background: #fecaca;
+    color: #991b1b;
+}
+
+.method-description {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.method-compatibility {
+    font-size: 10px;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 4px 6px;
+    border-radius: 3px;
+}
+
+/* Performance Info */
+.perf-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.perf-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+}
+
+.perf-label {
+    color: #6b7280;
+}
+
+.perf-value {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.perf-value.high {
+    color: #059669;
+}
+
+.perf-value.medium {
+    color: #d97706;
+}
+
+.perf-value.low {
+    color: #dc2626;
+}
+
+/* Recommendations */
+.recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recommendation {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 8px;
+    border-left-width: 3px;
+}
+
+.recommendation.priority-high {
+    border-left-color: #dc2626;
+    background: rgba(220, 38, 38, 0.02);
+}
+
+.recommendation.priority-medium {
+    border-left-color: #d97706;
+    background: rgba(217, 119, 6, 0.02);
+}
+
+.recommendation.priority-low {
+    border-left-color: #059669;
+    background: rgba(5, 150, 105, 0.02);
+}
+
+.recommendation.priority-info {
+    border-left-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.02);
+}
+
+.rec-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.rec-title {
+    font-weight: 500;
+    font-size: 11px;
+}
+
+.rec-priority {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #6b7280;
+}
+
+.rec-description {
+    font-size: 10px;
+    color: #6b7280;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.rec-benefit {
+    font-size: 10px;
+    color: #059669;
+    margin-bottom: 4px;
+}
+
+.rec-action a {
+    font-size: 10px;
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.rec-action a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .button-platform-indicator {
+        max-width: calc(100vw - 20px);
+        position: fixed;
+    }
+    
+    .button-platform-indicator.top-right,
+    .button-platform-indicator.top-left {
+        top: 5px;
+        right: 5px;
+        left: 5px;
+        max-width: none;
+    }
+    
+    .platform-details {
+        max-height: 300px;
+    }
+    
+    .platform-label {
+        display: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .button-platform-indicator {
+        background: rgba(31, 41, 55, 0.95);
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .button-platform-indicator:hover {
+        background: rgba(31, 41, 55, 1);
+    }
+    
+    .platform-details {
+        background: rgba(17, 24, 39, 0.8);
+        border-color: #374151;
+    }
+    
+    .details-header h3 {
+        color: #f9fafb;
+    }
+    
+    .current-method h4,
+    .available-methods h4,
+    .performance-info h4,
+    .recommendations h4 {
+        color: #d1d5db;
+    }
+    
+    .method-card {
+        background: #374151;
+        border-color: #4b5563;
+    }
+    
+    .method-card.primary {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
+    }
+    
+    .perf-value {
+        color: #f9fafb;
+    }
+    
+    .recommendation {
+        background: #374151;
+        border-color: #4b5563;
+    }
+}

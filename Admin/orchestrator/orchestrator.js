@@ -3,7 +3,7 @@
  *
  * Master service orchestrator - survives when child services fail
  *
- * Path: C:\DevOSWE\Admin\orchestrator\orchestrator.js
+ * Path: C:\LLM-DevOSWE\Admin\orchestrator\orchestrator.js
  * Last Updated: 2026-01-11
  *
  * v1.1.0 - Switched to Windows Services for all managed services
@@ -43,7 +43,7 @@ const app = express();
 const server = http.createServer(app);
 
 const PORT = 8500;
-const PROJECT_ROOT = 'C:\\DevOSWE';
+const PROJECT_ROOT = 'C:\\LLM-DevOSWE';
 const LOGS_DIR = path.join(__dirname, 'logs');
 
 // Ensure logs directory

@@ -1,0 +1,24 @@
+{
+  "content": [
+    {
+      "path": "html_ui/InGamePanels/SimWidgetPanel/SimWidgetPanel.html",
+      "size": 3890,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/SimWidgetPanel/SimWidgetPanel.css",
+      "size": 4532,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/SimWidgetPanel/SimWidgetPanel.js",
+      "size": 6120,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/SimWidgetPanel/panel.json",
+      "size": 450,
+      "date": 132851673600000000
+    }
+  ]
+}

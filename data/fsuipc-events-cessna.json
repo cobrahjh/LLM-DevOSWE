@@ -1,0 +1,3953 @@
+{
+  "aircraft": "Cessna",
+  "generated": "2026-01-08T04:00:13.590Z",
+  "count": 248,
+  "events": [
+    {
+      "id": 0,
+      "name": "Garmin_Alt_Alerter_1000s_DEC",
+      "script": "(L:GENERIC_ALERTER_THOUSANDTHS) 11 >  if{  (L:GENERIC_ALERTER_THOUSANDTHS, number) 11.111 - (>L:GENERIC_ALERTER_THOUSANDTHS, number)  10 div (>L:Alerter_GENERIC_ALERTER_THOUSANDTHS, number)  }  els{  (L:GENERIC_ALERTER_TEN_THOUSANDTHS) 11 >  if{  (L:GENERIC_ALERTER_TEN_THOUSANDTHS, number) 11.111 - (>L:GENERIC_ALERTER_TEN_THOUSANDTHS, number)  10 div (>L:Alerter_GENERIC_ALERTER_TEN_THOUSANDTHS, number)  99.999 (>L:GENERIC_ALERTER_THOUSANDTHS, number)  10 div (>L:Alerter_GENERIC_ALERTER_THOUSANDTHS, number)  } }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 2,
+      "lvars": [
+        "GENERIC_ALERTER_THOUSANDTHS",
+        "Alerter_GENERIC_ALERTER_THOUSANDTHS",
+        "GENERIC_ALERTER_TEN_THOUSANDTHS",
+        "Alerter_GENERIC_ALERTER_TEN_THOUSANDTHS"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 1,
+      "name": "Garmin_Alt_Alerter_1000s_INC",
+      "script": "(L:GENERIC_ALERTER_THOUSANDTHS, number) 99 <  if{  (L:GENERIC_ALERTER_THOUSANDTHS, number) 11.111 + (>L:GENERIC_ALERTER_THOUSANDTHS, number)  10 div (>L:Alerter_GENERIC_ALERTER_THOUSANDTHS, number)  }  els{  0 (>L:GENERIC_ALERTER_THOUSANDTHS, number) (>L:Alerter_GENERIC_ALERTER_THOUSANDTHS, number)  (L:GENERIC_ALERTER_TEN_THOUSANDTHS, number) 11.111 + (>L:GENERIC_ALERTER_TEN_THOUSANDTHS, number) 10 div (>L:Alerter_GENERIC_ALERTER_TEN_THOUSANDTHS, number)  }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 3,
+      "lvars": [
+        "GENERIC_ALERTER_THOUSANDTHS",
+        "Alerter_GENERIC_ALERTER_THOUSANDTHS",
+        "GENERIC_ALERTER_TEN_THOUSANDTHS",
+        "Alerter_GENERIC_ALERTER_TEN_THOUSANDTHS"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2,
+      "name": "Garmin_Alt_Alerter_100s_DEC",
+      "script": "(L:GENERIC_ALERTER_HUNDREDTHS) 11 >  if{  (L:GENERIC_ALERTER_HUNDREDTHS, number) 11.111 - (>L:GENERIC_ALERTER_HUNDREDTHS, number)  10 div (>L:Alerter_GENERIC_ALERTER_HUNDREDTHS, number)  }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 4,
+      "lvars": [
+        "GENERIC_ALERTER_HUNDREDTHS",
+        "Alerter_GENERIC_ALERTER_HUNDREDTHS"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 3,
+      "name": "Garmin_Alt_Alerter_100s_INC",
+      "script": "(L:GENERIC_ALERTER_HUNDREDTHS) 99 <  if{  (L:GENERIC_ALERTER_HUNDREDTHS, number) 11.111 + (>L:GENERIC_ALERTER_HUNDREDTHS, number)  10 div (>L:Alerter_GENERIC_ALERTER_HUNDREDTHS, number)  }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 5,
+      "lvars": [
+        "GENERIC_ALERTER_HUNDREDTHS",
+        "Alerter_GENERIC_ALERTER_HUNDREDTHS"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 4,
+      "name": "Garmin_Alt_Alerter_Altitude_Arm",
+      "script": "(L:ALT_ARM_SWITCH) ! (>L:ALT_ARM_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 6,
+      "lvars": [
+        "ALT_ARM_SWITCH"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 5,
+      "name": "Honeywell_Alt_Alerter_1000s_DEC",
+      "script": "(>H:KNOB_ALT_SEL_1000_DEC)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 7,
+      "lvars": [],
+      "hvars": [
+        "KNOB_ALT_SEL_1000_DEC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 6,
+      "name": "Honeywell_Alt_Alerter_1000s_INC",
+      "script": "(>H:KNOB_ALT_SEL_1000_INC)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 8,
+      "lvars": [],
+      "hvars": [
+        "KNOB_ALT_SEL_1000_INC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 7,
+      "name": "Honeywell_Alt_Alerter_100s_DEC",
+      "script": "(>H:KNOB_ALT_SEL_100_DEC)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 9,
+      "lvars": [],
+      "hvars": [
+        "KNOB_ALT_SEL_100_DEC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8,
+      "name": "Honeywell_Alt_Alerter_100s_INC",
+      "script": "(>H:KNOB_ALT_SEL_100_INC)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Avionics",
+      "line": 10,
+      "lvars": [],
+      "hvars": [
+        "KNOB_ALT_SEL_100_INC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2020,
+      "name": "C152_ADF_Mode_Selector_ADF",
+      "script": "2 (>L:XMLVAR_ADF_Mode)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 152",
+      "system": "Navigation",
+      "line": 2139,
+      "lvars": [
+        "XMLVAR_ADF_Mode"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2021,
+      "name": "C152_ADF_Mode_Selector_BFO",
+      "script": "0 (>L:XMLVAR_ADF_Mode)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 152",
+      "system": "Navigation",
+      "line": 2140,
+      "lvars": [
+        "XMLVAR_ADF_Mode"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2022,
+      "name": "C152_ADF_Mode_Selector_REC",
+      "script": "1 (>L:XMLVAR_ADF_Mode)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 152",
+      "system": "Navigation",
+      "line": 2141,
+      "lvars": [
+        "XMLVAR_ADF_Mode"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2023,
+      "name": "C152_ADF_Mode_Selector_TEST",
+      "script": "3 (>L:XMLVAR_ADF_Mode)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 152",
+      "system": "Navigation",
+      "line": 2142,
+      "lvars": [
+        "XMLVAR_ADF_Mode"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2024,
+      "name": "C152_DME_SOUND_TOGGLE",
+      "script": "(>K:RADIO_DME1_IDENT_TOGGLE)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 152",
+      "system": "Navigation",
+      "line": 2143,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "RADIO_DME1_IDENT_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2025,
+      "name": "C172sp_Airspeed_True_Calibrator_Knob_Dec",
+      "script": "(A:AIRSPEED TRUE CALIBRATE, degrees) -- 0 max (>A:AIRSPEED TRUE CALIBRATE, degrees)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Avionics",
+      "line": 2145,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2026,
+      "name": "C172sp_Airspeed_True_Calibrator_Knob_Inc",
+      "script": "(A:AIRSPEED TRUE CALIBRATE, degrees) ++ 30 min (>A:AIRSPEED TRUE CALIBRATE, degrees)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Avionics",
+      "line": 2146,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2027,
+      "name": "C172sp_Avionics_Bus_1_Switch_Off",
+      "script": "0 (A:CIRCUIT SWITCH ON:39, Bool) != if{ 39 (>K:ELECTRICAL_CIRCUIT_TOGGLE) } (A:CIRCUIT SWITCH ON:39, Bool) 1 (A:1:BUS CONNECTION ON:4, Bool) != if{ 4 1 (>K:2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Electrical",
+      "line": 2148,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE",
+        "2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2028,
+      "name": "C172sp_Avionics_Bus_1_Switch_On",
+      "script": "1 (A:CIRCUIT SWITCH ON:39, Bool) != if{ 39 (>K:ELECTRICAL_CIRCUIT_TOGGLE) } (A:CIRCUIT SWITCH ON:39, Bool) 1 (A:1:BUS CONNECTION ON:4, Bool) != if{ 4 1 (>K:2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Electrical",
+      "line": 2149,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE",
+        "2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2029,
+      "name": "C172sp_Avionics_Bus_2_Switch_Off",
+      "script": "0 (A:CIRCUIT SWITCH ON:40, Bool) != if{ 40 (>K:ELECTRICAL_CIRCUIT_TOGGLE) } (A:CIRCUIT SWITCH ON:40, Bool) 2 (A:1:BUS CONNECTION ON:5, Bool) != if{ 5 2 (>K:2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Electrical",
+      "line": 2150,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE",
+        "2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2030,
+      "name": "C172sp_Avionics_Bus_2_Switch_On",
+      "script": "1 (A:CIRCUIT SWITCH ON:40, Bool) != if{ 40 (>K:ELECTRICAL_CIRCUIT_TOGGLE) } (A:CIRCUIT SWITCH ON:40, Bool) 2 (A:1:BUS CONNECTION ON:5, Bool) != if{ 5 2 (>K:2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Electrical",
+      "line": 2151,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE",
+        "2:ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2031,
+      "name": "C_172_Pitot_Heat_Toggle_",
+      "script": "1 (L:DEICE_Pitot_1) ! (>K:2:PITOT_HEAT_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Anti-Ice",
+      "line": 2153,
+      "lvars": [
+        "DEICE_Pitot_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:PITOT_HEAT_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2032,
+      "name": "C_172_PITOT_HEAT_OFF",
+      "script": "(A:PITOT HEAT, Bool) 1 == if{ (>K:PITOT_HEAT_TOGGLE) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Anti-Ice",
+      "line": 2154,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PITOT_HEAT_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2033,
+      "name": "C_172_PITOT_HEAT_ON",
+      "script": "(A:PITOT HEAT, Bool) 0 == if{ (>K:PITOT_HEAT_TOGGLE) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Anti-Ice",
+      "line": 2155,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PITOT_HEAT_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2034,
+      "name": "C_172_AP",
+      "script": "(A:AUTOPILOT DISENGAGED, Bool) ! if{ (>K:AP_MASTER) (A:AUTOPILOT MASTER, Bool) if{ (A:AUTOPILOT FLIGHT DIRECTOR ACTIVE, Bool) ! if{ 1 (>K:TOGGLE_FLIGHT_DIRECTOR) } } (A:AUTOPILOT MASTER, bool) ! if{ (H:Generic_Autopilot_Manual_Off) } }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2157,
+      "lvars": [],
+      "hvars": [
+        "Generic_Autopilot_Manual_Off"
+      ],
+      "kvars": [
+        "AP_MASTER",
+        "TOGGLE_FLIGHT_DIRECTOR"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2035,
+      "name": "C_172_AP_ALT",
+      "script": "(>K:AP_ALT_HOLD)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2158,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AP_ALT_HOLD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2036,
+      "name": "C_172_AP_APR",
+      "script": "(A:AUTOPILOT APPROACH HOLD,Bool) (A:AUTOPILOT GLIDESLOPE HOLD, Bool) ! and if{ (>K:AP_APR_HOLD) } (>K:AP_APR_HOLD)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2159,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AP_APR_HOLD"
+      ],
+      "avars": [
+        "AUTOPILOT APPROACH HOLD,Bool"
+      ]
+    },
+    {
+      "id": 2037,
+      "name": "C_172_AP_FLC",
+      "script": "(>K:FLIGHT_LEVEL_CHANGE) (A:AIRSPEED INDICATED, knots) (>K:AP_SPD_VAR_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2160,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "FLIGHT_LEVEL_CHANGE",
+        "AP_SPD_VAR_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2038,
+      "name": "C_172_AP_NAV",
+      "script": "(>K:AP_NAV1_HOLD)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2161,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AP_NAV1_HOLD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2039,
+      "name": "C_172_AP_NOSE_DN",
+      "script": "(A:AUTOPILOT VERTICAL HOLD, Bool) if{ (>K:AP_VS_VAR_DEC) (>H:AP_UP) } (A:AUTOPILOT FLIGHT LEVEL CHANGE, Bool) if{ (>K:AP_SPD_VAR_DEC) } (A:AUTOPILOT PITCH HOLD, Bool) if{ (>K:AP_PITCH_REF_INC_DN) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2162,
+      "lvars": [],
+      "hvars": [
+        "AP_UP"
+      ],
+      "kvars": [
+        "AP_VS_VAR_DEC",
+        "AP_SPD_VAR_DEC",
+        "AP_PITCH_REF_INC_DN"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2040,
+      "name": "C_172_AP_NOSE_UP",
+      "script": "(A:AUTOPILOT VERTICAL HOLD, Bool) if{ (>K:AP_VS_VAR_INC) (>H:AP_DN) } (A:AUTOPILOT FLIGHT LEVEL CHANGE, Bool) if{ (>K:AP_SPD_VAR_INC) } (A:AUTOPILOT PITCH HOLD, Bool) if{ (>K:AP_PITCH_REF_INC_UP) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2163,
+      "lvars": [],
+      "hvars": [
+        "AP_DN"
+      ],
+      "kvars": [
+        "AP_VS_VAR_INC",
+        "AP_SPD_VAR_INC",
+        "AP_PITCH_REF_INC_UP"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2041,
+      "name": "C_172_AP_VS",
+      "script": "(>K:AP_PANEL_VS_HOLD)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2164,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AP_PANEL_VS_HOLD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2042,
+      "name": "C_172_FD",
+      "script": "(A:AUTOPILOT MASTER, bool) ! if{ 0 (>K:TOGGLE_FLIGHT_DIRECTOR) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2165,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_FLIGHT_DIRECTOR"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2043,
+      "name": "C_172_AP_ALT_DEC",
+      "script": "(>K:AP_ALT_VAR_DEC)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2166,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AP_ALT_VAR_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2044,
+      "name": "C_172_AP_ALT_INC",
+      "script": "(>K:AP_ALT_VAR_INC)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2167,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AP_ALT_VAR_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2045,
+      "name": "C_172_AP_HDG",
+      "script": "(>K:AP_PANEL_HEADING_HOLD)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2168,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AP_PANEL_HEADING_HOLD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2046,
+      "name": "C_172_AP_HDG_DEC",
+      "script": "(>K:HEADING_BUG_DEC)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2169,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "HEADING_BUG_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2047,
+      "name": "C_172_AP_HDG_INC",
+      "script": "(>K:HEADING_BUG_INC)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Autopilot",
+      "line": 2170,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "HEADING_BUG_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2048,
+      "name": "C_172_XPNDR_VFR",
+      "script": "1200 (>L:my xpndr code, number) (L:my xpndr code, bco16) (>K:XPNDR_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Avionics",
+      "line": 2172,
+      "lvars": [
+        "my"
+      ],
+      "hvars": [],
+      "kvars": [
+        "XPNDR_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2049,
+      "name": "C_172_AVIONICS_BUS_1_OFF",
+      "script": "0 (>K:AVIONICS_MASTER_1_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Avionics",
+      "line": 2173,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AVIONICS_MASTER_1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2050,
+      "name": "C_172_AVIONICS_BUS_1_ON",
+      "script": "1 (>K:AVIONICS_MASTER_1_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Avionics",
+      "line": 2174,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AVIONICS_MASTER_1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2051,
+      "name": "C_172_AVIONICS_BUS_2_OFF",
+      "script": "0 (>K:AVIONICS_MASTER_2_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Avionics",
+      "line": 2175,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AVIONICS_MASTER_2_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2052,
+      "name": "C_172_AVIONICS_BUS_2_ON",
+      "script": "1 (>K:AVIONICS_MASTER_2_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Avionics",
+      "line": 2176,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "AVIONICS_MASTER_2_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2053,
+      "name": "C172_ALTERNATOR_OFF",
+      "script": "(A:GENERAL ENG MASTER ALTERNATOR:1, Bool) 1 == if{ 1 (>K:TOGGLE_ALTERNATOR1) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2178,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_ALTERNATOR1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2054,
+      "name": "C172_ALTERNATOR_ON",
+      "script": "(A:GENERAL ENG MASTER ALTERNATOR:1, Bool) 0 == if{ 1 (>K:TOGGLE_ALTERNATOR1) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2179,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_ALTERNATOR1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2055,
+      "name": "C172_BATTERY_OFF",
+      "script": "(A:ELECTRICAL MASTER BATTERY:1, Bool) 1 == if{ 1 (>K:TOGGLE_MASTER_BATTERY) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2180,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_MASTER_BATTERY"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2056,
+      "name": "C172_BATTERY_ON",
+      "script": "(A:ELECTRICAL MASTER BATTERY:1, Bool) 0 == if{ 1 (>K:TOGGLE_MASTER_BATTERY) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2181,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_MASTER_BATTERY"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2057,
+      "name": "C_172_STBYBATTERY_OFF",
+      "script": "(L:XMLVAR_BatterySTBY_SwitchState) 0 == if{ 2 (>K:TOGGLE_MASTER_BATTERY) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2182,
+      "lvars": [
+        "XMLVAR_BatterySTBY_SwitchState"
+      ],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_MASTER_BATTERY"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2058,
+      "name": "C_172_STBYBATTERY_ON",
+      "script": "(L:XMLVAR_BatterySTBY_SwitchState) 1 == if{ 2 (>K:TOGGLE_MASTER_BATTERY) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2183,
+      "lvars": [
+        "XMLVAR_BatterySTBY_SwitchState"
+      ],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_MASTER_BATTERY"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2059,
+      "name": "C_172_STBYBATTERY_TEST_OFF",
+      "script": "0 (>L:XMLVAR_STBYBattery_IsHeld)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2184,
+      "lvars": [
+        "XMLVAR_STBYBattery_IsHeld"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2060,
+      "name": "C_172_STBYBATTERY_TEST_ON",
+      "script": "1 (>L:XMLVAR_STBYBattery_Test) 1 (>L:XMLVAR_STBYBattery_IsHeld)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Electrical",
+      "line": 2185,
+      "lvars": [
+        "XMLVAR_STBYBattery_Test",
+        "XMLVAR_STBYBattery_IsHeld"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2061,
+      "name": "C172_Magneto_Switch_Both",
+      "script": "3 (>K:MAGNETO1_SET) (A:GENERAL ENG STARTER:1, Bool) if{ 0 (>K:SET_STARTER1_HELD) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Engine",
+      "line": 2187,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET",
+        "SET_STARTER1_HELD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2062,
+      "name": "C172_Magneto_Switch_Left",
+      "script": "2 (>K:MAGNETO1_SET) (A:GENERAL ENG STARTER:1, Bool) if{ 0 (>K:SET_STARTER1_HELD) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Engine",
+      "line": 2188,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET",
+        "SET_STARTER1_HELD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2063,
+      "name": "C172_Magneto_Switch_Off",
+      "script": "0 (>K:MAGNETO1_SET) (A:GENERAL ENG STARTER:1, Bool) if{ 0 (>K:SET_STARTER1_HELD) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Engine",
+      "line": 2189,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET",
+        "SET_STARTER1_HELD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2064,
+      "name": "C172_Magneto_Switch_Right",
+      "script": "1 (>K:MAGNETO1_SET) (A:GENERAL ENG STARTER:1, Bool) if{ 0 (>K:SET_STARTER1_HELD) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Engine",
+      "line": 2190,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET",
+        "SET_STARTER1_HELD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2065,
+      "name": "C172_Magneto_Switch_Start",
+      "script": "3 (>K:MAGNETO1_SET) (A:GENERAL ENG STARTER:1, Bool) ! if{ 1 (>K:SET_STARTER1_HELD) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Engine",
+      "line": 2191,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET",
+        "SET_STARTER1_HELD"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2066,
+      "name": "TOGGLE_ALTERNATE_AIR",
+      "script": "(>K:TOGGLE_ALTERNATE_STATIC)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Environment",
+      "line": 2193,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_ALTERNATE_STATIC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2067,
+      "name": "C_172_BOTH_FUEL_TANKS",
+      "script": "1 (>K:FUEL_SELECTOR_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2195,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2068,
+      "name": "C_172_FUEL_PUMP_OFF",
+      "script": "0 s0 (A:GENERAL ENG FUEL PUMP SWITCH EX1:1, Enum) != if{ l0 (>K:ELECT_FUEL_PUMP1_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2196,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECT_FUEL_PUMP1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2069,
+      "name": "C_172_FUEL_PUMP_ON",
+      "script": "1 s0 (A:GENERAL ENG FUEL PUMP SWITCH EX1:1, Enum) != if{ l0 (>K:ELECT_FUEL_PUMP1_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2197,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECT_FUEL_PUMP1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2070,
+      "name": "C_172_FUEL_SHUTOFF_VALVE_CLOSE",
+      "script": "(A:GENERAL ENG FUEL VALVE:1, Bool) 1 == if{ (>K:TOGGLE_FUEL_VALVE_ENG1) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2198,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_FUEL_VALVE_ENG1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2071,
+      "name": "C_172_FUEL_SHUTOFF_VALVE_OPEN",
+      "script": "(A:GENERAL ENG FUEL VALVE:1, Bool) 0 == if{ (>K:TOGGLE_FUEL_VALVE_ENG1) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2199,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_FUEL_VALVE_ENG1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2072,
+      "name": "C_172_LEFT_FUEL_TANK",
+      "script": "2 (>K:FUEL_SELECTOR_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2200,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2073,
+      "name": "C_172_RIGHT_FUEL_TANK",
+      "script": "3 (>K:FUEL_SELECTOR_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2201,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2074,
+      "name": "C_172_FUEL_SELECTOR_BOTH_TANKS",
+      "script": "1 (>B:FUEL_SELECTOR_1_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2202,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2075,
+      "name": "C_172_FUEL_SELECTOR_LEFT_TANK",
+      "script": "0 (>B:FUEL_SELECTOR_1_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2203,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2076,
+      "name": "C_172_FUEL_SELECTOR_RIGHT_TANK",
+      "script": "2 (>B:FUEL_SELECTOR_1_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Fuel",
+      "line": 2204,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 2077,
+      "name": "C_172_AVIONICS_LIGHT_DEC",
+      "script": "(L:LIGHTING_POTENTIOMETER_4) 5 - 0 max d (>L:LIGHTING_POTENTIOMETER_4) 4 (>K:2:LIGHT_POTENTIOMETER_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2206,
+      "lvars": [
+        "LIGHTING_POTENTIOMETER_4"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:LIGHT_POTENTIOMETER_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2078,
+      "name": "C_172_AVIONICS_LIGHT_INC",
+      "script": "(L:LIGHTING_POTENTIOMETER_4) 5 + 100 min d (>L:LIGHTING_POTENTIOMETER_4) 4 (>K:2:LIGHT_POTENTIOMETER_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2207,
+      "lvars": [
+        "LIGHTING_POTENTIOMETER_4"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:LIGHT_POTENTIOMETER_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2079,
+      "name": "C_172_COPILOT_CABIN_LIGHT_DEC",
+      "script": "(A:LIGHT CABIN POWER SETTING:2, Percent) 10 - 0 max 2 (>K:2:CABIN_LIGHTS_POWER_SETTING_SET) (A:LIGHT CABIN:2, Bool) (A:LIGHT CABIN POWER SETTING:2, Percent) 0 == and if{ 2 0 (>K:2:CABIN_LIGHTS_SET) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2208,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "2:CABIN_LIGHTS_POWER_SETTING_SET",
+        "2:CABIN_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2080,
+      "name": "C_172_COPILOT_CABIN_LIGHT_INC",
+      "script": "(A:LIGHT CABIN:2, Bool) ! if{ 2 1 (>K:2:CABIN_LIGHTS_SET) } (A:LIGHT CABIN POWER SETTING:2, Percent) 10 + 100 min 2 (>K:2:CABIN_LIGHTS_POWER_SETTING_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2209,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "2:CABIN_LIGHTS_SET",
+        "2:CABIN_LIGHTS_POWER_SETTING_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2081,
+      "name": "C_172_LIGHTS_LANDING_OFF",
+      "script": "1 0 (>K:2:LANDING_LIGHTS_SET) 0 (>L:LIGHTING_LANDING_1)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2210,
+      "lvars": [
+        "LIGHTING_LANDING_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:LANDING_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2082,
+      "name": "C_172_LIGHTS_LANDING_ON",
+      "script": "1 1 (>K:2:LANDING_LIGHTS_SET) 1 (>L:LIGHTING_LANDING_1)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2211,
+      "lvars": [
+        "LIGHTING_LANDING_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:LANDING_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2083,
+      "name": "C_172_PANEL_LIGHT_DEC",
+      "script": "(L:LIGHTING_POTENTIOMETER_3, percent) 5 - 0 max d (>L:LIGHTING_POTENTIOMETER_3) 3 (>K:2:LIGHT_POTENTIOMETER_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2212,
+      "lvars": [
+        "LIGHTING_POTENTIOMETER_3"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:LIGHT_POTENTIOMETER_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2084,
+      "name": "C_172_PANEL_LIGHT_INC",
+      "script": "(L:LIGHTING_POTENTIOMETER_3, percent) 5 + 100 min d (>L:LIGHTING_POTENTIOMETER_3) 3 (>K:2:LIGHT_POTENTIOMETER_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2213,
+      "lvars": [
+        "LIGHTING_POTENTIOMETER_3"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:LIGHT_POTENTIOMETER_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2085,
+      "name": "C_172_PEDESTRAL_LIGHT_DEC",
+      "script": "(L:LIGHTING_PEDESTRAL_1) 5 - 0 max d (>L:LIGHTING_PEDESTRAL_1) 1 (>K:2:PEDESTRAL_LIGHTS_POWER_SETTING_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2214,
+      "lvars": [
+        "LIGHTING_PEDESTRAL_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:PEDESTRAL_LIGHTS_POWER_SETTING_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2086,
+      "name": "C_172_PEDESTRAL_LIGHT_INC",
+      "script": "(L:LIGHTING_PEDESTRAL_1) 5 + 100 min d (>L:LIGHTING_PEDESTRAL_1) 1 (>K:2:PEDESTRAL_LIGHTS_POWER_SETTING_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2215,
+      "lvars": [
+        "LIGHTING_PEDESTRAL_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:PEDESTRAL_LIGHTS_POWER_SETTING_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2087,
+      "name": "C_172_PILOT_CABIN_LIGHT_DEC",
+      "script": "(A:LIGHT CABIN POWER SETTING:1, Percent) 10 - 0 max 1 (>K:2:CABIN_LIGHTS_POWER_SETTING_SET) (A:LIGHT CABIN:1, Bool) (A:LIGHT CABIN POWER SETTING:1, Percent) 0 == and if{ 1 0 (>K:2:CABIN_LIGHTS_SET) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2216,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "2:CABIN_LIGHTS_POWER_SETTING_SET",
+        "2:CABIN_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2088,
+      "name": "C_172_PILOT_CABIN_LIGHT_INC",
+      "script": "(A:LIGHT CABIN:1, Bool) ! if{ 1 1 (>K:2:CABIN_LIGHTS_SET) } (A:LIGHT CABIN POWER SETTING:1, Percent) 10 + 100 min 1 (>K:2:CABIN_LIGHTS_POWER_SETTING_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2217,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "2:CABIN_LIGHTS_SET",
+        "2:CABIN_LIGHTS_POWER_SETTING_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2089,
+      "name": "C_172_STBY_INSTRUMENTS_LIGHT_DEC",
+      "script": "(A:LIGHT PANEL POWER SETTING:1, Percent) 10 - 0 max 1 (>K:2:PANEL_LIGHTS_POWER_SETTING_SET) (A:LIGHT PANEL:1, Bool) (A:LIGHT PANEL POWER SETTING:1, Percent) 0 == and if{ 1 0 (>K:2:PANEL_LIGHTS_SET) }",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2218,
+      "lvars": [
+        "1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:PANEL_LIGHTS_POWER_SETTING_SET",
+        "2:PANEL_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2090,
+      "name": "C_172_STBY_INSTRUMENTS_LIGHT_INC",
+      "script": "(A:LIGHT PANEL:1, Bool) ! if{ 1 1 (>K:2:PANEL_LIGHTS_SET) } (A:LIGHT PANEL POWER SETTING:1, Percent) 10 + 100 min 1 (>K:2:PANEL_LIGHTS_POWER_SETTING_SET)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Lights",
+      "line": 2219,
+      "lvars": [
+        "1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "2:PANEL_LIGHTS_SET",
+        "2:PANEL_LIGHTS_POWER_SETTING_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2091,
+      "name": "C172_SAFETY_Light_Test_On",
+      "script": "(>K:ANNUNCIATOR_SWITCH_ON) 0 (>L:XMLVAR_WarningsAttenuated)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Safety",
+      "line": 2221,
+      "lvars": [
+        "XMLVAR_WarningsAttenuated"
+      ],
+      "hvars": [],
+      "kvars": [
+        "ANNUNCIATOR_SWITCH_ON"
+      ],
+      "avars": []
+    },
+    {
+      "id": 2092,
+      "name": "C172_SAFETY_Lights_Test_Off",
+      "script": "(>K:ANNUNCIATOR_SWITCH_OFF) 0 (>L:XMLVAR_WarningsAttenuated)",
+      "vendor": "Asobo",
+      "aircraft": "Cessna 172",
+      "system": "Safety",
+      "line": 2222,
+      "lvars": [
+        "XMLVAR_WarningsAttenuated"
+      ],
+      "hvars": [],
+      "kvars": [
+        "ANNUNCIATOR_SWITCH_OFF"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8840,
+      "name": "ANTI-ICE_ELECT_HIGH__OFF_",
+      "script": "(A:CIRCUIT SWITCH ON:69,Bool) 0 == if{ 69 (>K:ELECTRICAL_CIRCUIT_TOGGLE) }  (A:CIRCUIT ON:69,Bool) 2 == (A:CIRCUIT ON:69,Bool) 2 == and (A:WINDSHIELD DEICE SWITCH, Bool) 1 == and if{ (>K:WINDSHIELD_DEICE_OFF) }  (A:CIRCUIT ON:69,Bool) 0 == (A:CIRCUIT ON:69,Bool) 2 == or (A:WINDSHIELD DEICE SWITCH, Bool) 0 == and if{ (>K:WINDSHIELD_DEICE_ON) } 2 (>L:GENERIC_Momentary_DEICE_ELECT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Anti-Ice",
+      "line": 9360,
+      "lvars": [
+        "GENERIC_Momentary_DEICE_ELECT"
+      ],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE",
+        "WINDSHIELD_DEICE_OFF",
+        "WINDSHIELD_DEICE_ON"
+      ],
+      "avars": [
+        "CIRCUIT SWITCH ON:69,Bool",
+        "CIRCUIT ON:69,Bool"
+      ]
+    },
+    {
+      "id": 8841,
+      "name": "ANTI-ICE_ELECT_HIGH__ON_",
+      "script": "(A:CIRCUIT SWITCH ON:69,Bool) 0 == if{ 69 (>K:ELECTRICAL_CIRCUIT_TOGGLE) }  (A:CIRCUIT ON:69,Bool) 2 == (A:CIRCUIT ON:69,Bool) 2 == and (A:WINDSHIELD DEICE SWITCH, Bool) 1 == and if{ (>K:WINDSHIELD_DEICE_OFF) }  (A:CIRCUIT ON:69,Bool) 0 == (A:CIRCUIT ON:69,Bool) 2 == or (A:WINDSHIELD DEICE SWITCH, Bool) 0 == and if{ (>K:WINDSHIELD_DEICE_ON) } 2 (>L:GENERIC_Momentary_DEICE_ELECT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Anti-Ice",
+      "line": 9361,
+      "lvars": [
+        "GENERIC_Momentary_DEICE_ELECT"
+      ],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE",
+        "WINDSHIELD_DEICE_OFF",
+        "WINDSHIELD_DEICE_ON"
+      ],
+      "avars": [
+        "CIRCUIT SWITCH ON:69,Bool",
+        "CIRCUIT ON:69,Bool"
+      ]
+    },
+    {
+      "id": 8842,
+      "name": "ANTI-ICE_ELECT_LOW__OFF_",
+      "script": "(A:CIRCUIT SWITCH ON:69,Bool) 1 == if{ 69 (>K:ELECTRICAL_CIRCUIT_TOGGLE) } 1 (>L:GENERIC_Momentary_DEICE_ELECT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Anti-Ice",
+      "line": 9362,
+      "lvars": [
+        "GENERIC_Momentary_DEICE_ELECT"
+      ],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE"
+      ],
+      "avars": [
+        "CIRCUIT SWITCH ON:69,Bool"
+      ]
+    },
+    {
+      "id": 8843,
+      "name": "ANTI-ICE_ELECT_LOW__ON_",
+      "script": "(A:CIRCUIT SWITCH ON:69,Bool) 0 == if{ 69 (>K:ELECTRICAL_CIRCUIT_TOGGLE) }   (A:CIRCUIT ON:69,Bool) 1 == (A:CIRCUIT ON:69,Bool) 0 == and (A:WINDSHIELD DEICE SWITCH, Bool) 0 == and if{ (>K:WINDSHIELD_DEICE_OFF) }  (A:CIRCUIT ON:69,Bool) 0 == (A:CIRCUIT ON:69,Bool) 0 == or (A:WINDSHIELD DEICE SWITCH, Bool) 0 == and if{ (>K:WINDSHIELD_DEICE_ON) } 0 (>L:GENERIC_Momentary_DEICE_ELECT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Anti-Ice",
+      "line": 9363,
+      "lvars": [
+        "GENERIC_Momentary_DEICE_ELECT"
+      ],
+      "hvars": [],
+      "kvars": [
+        "ELECTRICAL_CIRCUIT_TOGGLE",
+        "WINDSHIELD_DEICE_OFF",
+        "WINDSHIELD_DEICE_ON"
+      ],
+      "avars": [
+        "CIRCUIT SWITCH ON:69,Bool",
+        "CIRCUIT ON:69,Bool"
+      ]
+    },
+    {
+      "id": 8844,
+      "name": "CESSNA_414_PROP_ANTI-ICE_OFF",
+      "script": "(L:DEICE_PROP) => Loads value 1 Load int constant 100 * (1., 100) 0 (>L:DEICE_PROP) (L:DEICE_PROP,bool) 100 * 0 (L:DEICE_PROP,bool) ! (>L:DEICE_PROP, bool) 1 (>L:DEICE_PROP,bool) 0 == (A:PROP DEICE SWITCH:1 Bool) 1 == (A:PROP DEICE SWITCH:2, Bool) 1 == and if{ (>K:TOGGLE_PROPELLER_DEICE) } 0 (>L:DEICE_PROP,bool) 0 == (A:PROP DEICE SWITCH:1 Bool) 0 == (A:PROP DEICE SWITCH:2, Bool) 0 == and if{ (>K:TOGGLE_PROPELLER_DEICE) }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Anti-Ice",
+      "line": 9364,
+      "lvars": [
+        "DEICE_PROP"
+      ],
+      "hvars": [
+        "1",
+        "2"
+      ],
+      "kvars": [
+        "TOGGLE_PROPELLER_DEICE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8845,
+      "name": "CESSNA_414_PROP_ANTI-ICE_ON",
+      "script": "(L:DEICE_PROP) => Loads value 1 Load int constant 100 * (1., 100) 1 (>L:DEICE_PROP) (L:DEICE_PROP,bool) 100 * (L:DEICE_PROP,bool) ! (>L:DEICE_PROP, bool) (>L:DEICE_PROP,bool) 0 == (A:PROP DEICE SWITCH:1 Bool) 0 == (A:PROP DEICE SWITCH:2, Bool) 0 == and if{ (>K:TOGGLE_PROPELLER_DEICE) } (>L:DEICE_PROP,bool) 0 == (A:PROP DEICE SWITCH:1 Bool) 0 == (A:PROP DEICE SWITCH:2, Bool) 1 == and if{ (>K:TOGGLE_PROPELLER_DEICE) }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Anti-Ice",
+      "line": 9365,
+      "lvars": [
+        "DEICE_PROP"
+      ],
+      "hvars": [
+        "1",
+        "2"
+      ],
+      "kvars": [
+        "TOGGLE_PROPELLER_DEICE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8846,
+      "name": "Garmin_605_AP_AP",
+      "script": "(L:AP_MODE, Bool) ! (>L:AP_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9367,
+      "lvars": [
+        "AP_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8847,
+      "name": "Garmin_605_AP_APR",
+      "script": "1 (>L:APR_BTN) (L:APR_MODE, bool) ! (>L:APR_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9368,
+      "lvars": [
+        "APR_BTN",
+        "APR_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8848,
+      "name": "Garmin_605_AP_Alt",
+      "script": "1 (>L:ALT_BTN) (L:ALT_MODE, bool) ! (>L:ALT_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9369,
+      "lvars": [
+        "ALT_BTN",
+        "ALT_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8849,
+      "name": "Garmin_605_AP_BC",
+      "script": "1 (>L:BC_BTN) (L:BC_MODE, bool) ! (>L:BC_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9370,
+      "lvars": [
+        "BC_BTN",
+        "BC_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8850,
+      "name": "Garmin_605_AP_FD",
+      "script": "1 (>L:FD_BTN) (L:FD_MODE, bool) ! (>L:FD_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9371,
+      "lvars": [
+        "FD_BTN",
+        "FD_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8851,
+      "name": "Garmin_605_AP_HDG",
+      "script": "1 (>L:HDG_BTN) (L:HDG_MODE, bool) ! (>L:HDG_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9372,
+      "lvars": [
+        "HDG_BTN",
+        "HDG_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8852,
+      "name": "Garmin_605_AP_IAS",
+      "script": "1 (>L:IAS_BTN) (L:IAS_MODE, bool) ! (>L:IAS_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9373,
+      "lvars": [
+        "IAS_BTN",
+        "IAS_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8853,
+      "name": "Garmin_605_AP_NAV",
+      "script": "1 (>L:NAV_BTN) (L:NAV_MODE, bool) ! (>L:NAV_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9374,
+      "lvars": [
+        "NAV_BTN",
+        "NAV_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8854,
+      "name": "Garmin_605_AP_VS",
+      "script": "1 (>L:VS_BTN) (L:VS_MODE, bool) ! (>L:VS_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9375,
+      "lvars": [
+        "VS_BTN",
+        "VS_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8855,
+      "name": "Garmin_605_AP_WHL_DN",
+      "script": "1 (>L:AP_WHEEL_DEC)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9376,
+      "lvars": [
+        "AP_WHEEL_DEC"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8856,
+      "name": "Garmin_605_AP_WHL_UP",
+      "script": "1 (>L:AP_WHEEL_INC)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9377,
+      "lvars": [
+        "AP_WHEEL_INC"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8857,
+      "name": "Garmin_605_AP_YD",
+      "script": "(L:YD_MODE, bool) ! (>L:YD_MODE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Autopilot",
+      "line": 9378,
+      "lvars": [
+        "YD_MODE"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8858,
+      "name": "C414A_Alternator_Left_Toggle",
+      "script": "(>K:TOGGLE_ALTERNATOR1)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9380,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_ALTERNATOR1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8859,
+      "name": "C414A_Alternator_Right_Toggle",
+      "script": "(>K:TOGGLE_ALTERNATOR2)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9381,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_ALTERNATOR2"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8860,
+      "name": "C414A_Electrical_Master_Bar_Down",
+      "script": "0 s0 (>L:GENERIC_MASTER_BAR_1, Bool) l0 (>H:GENERIC_MASTER_BAR_1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9382,
+      "lvars": [
+        "GENERIC_MASTER_BAR_1"
+      ],
+      "hvars": [
+        "GENERIC_MASTER_BAR_1"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8861,
+      "name": "C414A_Electrical_Master_Bar_Up",
+      "script": "1 s0 (>L:GENERIC_MASTER_BAR_1, Bool) l0 (>H:GENERIC_MASTER_BAR_1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9383,
+      "lvars": [
+        "GENERIC_MASTER_BAR_1"
+      ],
+      "hvars": [
+        "GENERIC_MASTER_BAR_1"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8862,
+      "name": "C414A_Master_Battery_Switch_Off",
+      "script": "0 s0 (>L:GENERIC_ELECTRICAL_Switch_Battery_Master_1, Bool) l0 (>H:GENERIC_ELECTRICAL_Switch_Battery_Master_1)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9384,
+      "lvars": [
+        "GENERIC_ELECTRICAL_Switch_Battery_Master_1"
+      ],
+      "hvars": [
+        "GENERIC_ELECTRICAL_Switch_Battery_Master_1"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8863,
+      "name": "C414A_Master_Battery_Switch_On",
+      "script": "1 s0 (>L:GENERIC_ELECTRICAL_Switch_Battery_Master_1, Bool) l0 (>H:GENERIC_ELECTRICAL_Switch_Battery_Master_1)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9385,
+      "lvars": [
+        "GENERIC_ELECTRICAL_Switch_Battery_Master_1"
+      ],
+      "hvars": [
+        "GENERIC_ELECTRICAL_Switch_Battery_Master_1"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8864,
+      "name": "C414A_Master_Battery_Toggle",
+      "script": "(L:GENERIC_ELECTRICAL_Switch_Battery_Master_1, Bool) ! s0 (>L:GENERIC_ELECTRICAL_Switch_Battery_Master_1, Bool) l0 (>H:GENERIC_ELECTRICAL_Switch_Battery_Master_1)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9386,
+      "lvars": [
+        "GENERIC_ELECTRICAL_Switch_Battery_Master_1"
+      ],
+      "hvars": [
+        "GENERIC_ELECTRICAL_Switch_Battery_Master_1"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8865,
+      "name": "C414A_Master_Electrical_Bar_Toggle_",
+      "script": "(L:GENERIC_MASTER_BAR_1, Bool) ! s0 (>L:GENERIC_MASTER_BAR_1, Bool) l0 (>H:GENERIC_MASTER_BAR_1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9387,
+      "lvars": [
+        "GENERIC_MASTER_BAR_1"
+      ],
+      "hvars": [
+        "GENERIC_MASTER_BAR_1"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8866,
+      "name": "LEFT_ENGINE_LEFT_MAG_OFF",
+      "script": "0 (>A:RECIP ENG LEFT MAGNETO:1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9388,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8867,
+      "name": "LEFT_ENGINE_LEFT_MAG_ON",
+      "script": "1 (>A:RECIP ENG LEFT MAGNETO:1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9389,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8868,
+      "name": "LEFT_ENGINE_RIGHT_MAG_OFF",
+      "script": "0 (>A:RECIP ENG RIGHT MAGNETO:1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9390,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8869,
+      "name": "LEFT_ENGINE_RIGHT_MAG_ON",
+      "script": "1 (>A:RECIP ENG RIGHT MAGNETO:1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9391,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8870,
+      "name": "RIGHT_ENGINE_LEFT_MAG_OFF",
+      "script": "0 (>A:RECIP ENG LEFT MAGNETO:2, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9392,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8871,
+      "name": "RIGHT_ENGINE_LEFT_MAG_ON",
+      "script": "1 (>A:RECIP ENG LEFT MAGNETO:2, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9393,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8872,
+      "name": "RIGHT_ENGINE_RIGHT_MAG_OFF",
+      "script": "0 (>A:RECIP ENG RIGHT MAGNETO:2, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9394,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8873,
+      "name": "RIGHT_ENGINE_RIGHT_MAG_ON",
+      "script": "1 (>A:RECIP ENG RIGHT MAGNETO:2, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Electrical",
+      "line": 9395,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8874,
+      "name": "C414A_Eng_Prime__Release",
+      "script": "1 (>L:GENERIC_Momentary_PRIMER_SWITCH) (>H:GENERIC_Momentary_PRIMER_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Engines",
+      "line": 9397,
+      "lvars": [
+        "GENERIC_Momentary_PRIMER_SWITCH"
+      ],
+      "hvars": [
+        "GENERIC_Momentary_PRIMER_SWITCH"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8875,
+      "name": "C414A_Eng1_Prime__Press",
+      "script": "0 (>L:GENERIC_Momentary_PRIMER_SWITCH) (>K:TOGGLE_PRIMER1) (>H:GENERIC_Momentary_PRIMER_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Engines",
+      "line": 9398,
+      "lvars": [
+        "GENERIC_Momentary_PRIMER_SWITCH"
+      ],
+      "hvars": [
+        "GENERIC_Momentary_PRIMER_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_PRIMER1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8876,
+      "name": "C414A_Eng1_Starter_Press",
+      "script": "1 (>L:TOGGLE_STARTER1, Bool) 1 (>L:STARTER1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Engines",
+      "line": 9399,
+      "lvars": [
+        "TOGGLE_STARTER1",
+        "STARTER1"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8877,
+      "name": "C414A_Eng1_Starter_Release",
+      "script": "0 (>L:TOGGLE_STARTER1, Bool) 0 (>L:STARTER1, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Engines",
+      "line": 9400,
+      "lvars": [
+        "TOGGLE_STARTER1",
+        "STARTER1"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8878,
+      "name": "C414A_Eng2_Prime__Press",
+      "script": "2 (>L:GENERIC_Momentary_PRIMER_SWITCH) (>K:TOGGLE_PRIMER2) (>H:GENERIC_Momentary_PRIMER_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Engines",
+      "line": 9401,
+      "lvars": [
+        "GENERIC_Momentary_PRIMER_SWITCH"
+      ],
+      "hvars": [
+        "GENERIC_Momentary_PRIMER_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_PRIMER2"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8879,
+      "name": "C414A_Eng2_Starter_Press",
+      "script": "1 (>L:TOGGLE_STARTER2, Bool) 1 (>L:STARTER2, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Engines",
+      "line": 9402,
+      "lvars": [
+        "TOGGLE_STARTER2",
+        "STARTER2"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8880,
+      "name": "C414A_Eng2_Starter_Release",
+      "script": "0 (>L:TOGGLE_STARTER2, Bool) 0 (>L:STARTER2, Bool)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Engines",
+      "line": 9403,
+      "lvars": [
+        "TOGGLE_STARTER2",
+        "STARTER2"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8881,
+      "name": "C414A_Aux_Fuel_Pump_1_High",
+      "script": "2 (>L:GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH) (A:GENERAL ENG FUEL PUMP SWITCH:1, Bool) 0 == if{ (>K:TOGGLE_ELECT_FUEL_PUMP1) } (>H:GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9405,
+      "lvars": [
+        "GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH"
+      ],
+      "hvars": [
+        "1",
+        "GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_ELECT_FUEL_PUMP1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8882,
+      "name": "C414A_Aux_Fuel_Pump_1_Low",
+      "script": "0 (>L:GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH) (A:GENERAL ENG FUEL PUMP SWITCH:1, Bool) 0 == if{ (>K:TOGGLE_ELECT_FUEL_PUMP1) } (>H:GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9406,
+      "lvars": [
+        "GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH"
+      ],
+      "hvars": [
+        "1",
+        "GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_ELECT_FUEL_PUMP1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8883,
+      "name": "C414A_Aux_Fuel_Pump_1_Off",
+      "script": "1 (>L:GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH) (A:GENERAL ENG FUEL PUMP SWITCH:1, Bool) 1 == if{ (>K:TOGGLE_ELECT_FUEL_PUMP1) } (>H:GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9407,
+      "lvars": [
+        "GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH"
+      ],
+      "hvars": [
+        "1",
+        "GENERIC_Momentary_AUX_LEFT_PUMP_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_ELECT_FUEL_PUMP1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8884,
+      "name": "C414A_Aux_Fuel_Pump_2_High",
+      "script": "2 (>L:GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH) (A:GENERAL ENG FUEL PUMP SWITCH:2, Bool) 0 == if{ (>K:TOGGLE_ELECT_FUEL_PUMP2) } (>H:GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9408,
+      "lvars": [
+        "GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH"
+      ],
+      "hvars": [
+        "2",
+        "GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_ELECT_FUEL_PUMP2"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8885,
+      "name": "C414A_Aux_Fuel_Pump_2_Low",
+      "script": "0 (>L:GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH) (A:GENERAL ENG FUEL PUMP SWITCH:2, Bool) 0 == if{ (>K:TOGGLE_ELECT_FUEL_PUMP2) } (>H:GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9409,
+      "lvars": [
+        "GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH"
+      ],
+      "hvars": [
+        "2",
+        "GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_ELECT_FUEL_PUMP2"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8886,
+      "name": "C414A_Aux_Fuel_Pump_2_Off",
+      "script": "1 (>L:GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH) (A:GENERAL ENG FUEL PUMP SWITCH:2, Bool) 1 == if{ (>K:TOGGLE_ELECT_FUEL_PUMP2) } (>H:GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9410,
+      "lvars": [
+        "GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH"
+      ],
+      "hvars": [
+        "2",
+        "GENERIC_Momentary_AUX_RIGHT_PUMP_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_ELECT_FUEL_PUMP2"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8887,
+      "name": "C414A_Fuel_Selector_Left_Left_Main",
+      "script": "0 (>L:FUEL_Lever_Selector_2, Number) 0 (>K:FUEL_SELECTOR_2_LEFT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9411,
+      "lvars": [
+        "FUEL_Lever_Selector_2"
+      ],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_2_LEFT"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8888,
+      "name": "C414A_Fuel_Selector_Left_Left_Main",
+      "script": "1 (>L:FUEL_Lever_Selector_1, Number) 0 (>K:FUEL_SELECTOR_LEFT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9412,
+      "lvars": [
+        "FUEL_Lever_Selector_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_LEFT"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8889,
+      "name": "C414A_Fuel_Selector_Left_Off",
+      "script": "0 (>L:FUEL_Lever_Selector_1, Number) 0 (>K:FUEL_SELECTOR_OFF)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9413,
+      "lvars": [
+        "FUEL_Lever_Selector_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_OFF"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8890,
+      "name": "C414A_Fuel_Selector_Left_Right_Main",
+      "script": "2 (>L:FUEL_Lever_Selector_1, Number) 0 (>K:FUEL_SELECTOR_RIGHT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9414,
+      "lvars": [
+        "FUEL_Lever_Selector_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_RIGHT"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8891,
+      "name": "C414A_Fuel_Selector_Right_-_Left_Main",
+      "script": "0 (>L:FUEL_Lever_Selector_2, Number) 0 (>K:FUEL_SELECTOR_2_LEFT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9415,
+      "lvars": [
+        "FUEL_Lever_Selector_2"
+      ],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_2_LEFT"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8892,
+      "name": "C414A_Fuel_Selector_Right_-_Off",
+      "script": "0 (>L:FUEL_Lever_Selector_2, Number) 0 (>K:FUEL_SELECTOR_2_LEFT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9416,
+      "lvars": [
+        "FUEL_Lever_Selector_2"
+      ],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_2_LEFT"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8893,
+      "name": "C414A_Fuel_Selector_Right_-_Right_Main",
+      "script": "1 (>L:FUEL_Lever_Selector_2, Number) 0 (>K:FUEL_SELECTOR_2_RIGHT)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Fuel",
+      "line": 9417,
+      "lvars": [
+        "FUEL_Lever_Selector_2"
+      ],
+      "hvars": [],
+      "kvars": [
+        "FUEL_SELECTOR_2_RIGHT"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8894,
+      "name": "C414A_LANDING_LIGHTS_EXTEND",
+      "script": "0 (>K:LANDING_LIGHTS_SET) 1 (>L:GENERIC_Momentary_LIGHT_SWITCH_LANDING_1) 100 (>L:LANDING_LIGHT_MOTOR)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Lights",
+      "line": 9419,
+      "lvars": [
+        "GENERIC_Momentary_LIGHT_SWITCH_LANDING_1",
+        "LANDING_LIGHT_MOTOR"
+      ],
+      "hvars": [],
+      "kvars": [
+        "LANDING_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8895,
+      "name": "C414A_Lights_Strobe_Toggle",
+      "script": "(>K:STROBES_TOGGLE)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Lights",
+      "line": 9420,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "STROBES_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8896,
+      "name": "C414A_LANDING_LIGHTS_OFF",
+      "script": "1 (>L:GENERIC_Momentary_LIGHT_SWITCH_LANDING_1) 0 (>K:LANDING_LIGHTS_SET) (>H:GENERIC_Momentary_LIGHT_SWITCH_LANDING_1)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Lights",
+      "line": 9421,
+      "lvars": [
+        "GENERIC_Momentary_LIGHT_SWITCH_LANDING_1"
+      ],
+      "hvars": [
+        "GENERIC_Momentary_LIGHT_SWITCH_LANDING_1"
+      ],
+      "kvars": [
+        "LANDING_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8897,
+      "name": "C414A_LANDING_LIGHTS_ON",
+      "script": "2 (>L:GENERIC_Momentary_LIGHT_SWITCH_LANDING_1) 1 (>K:LANDING_LIGHTS_SET) 100 (>L:LANDING_LIGHT_MOTOR,Number) (>H:GENERIC_Momentary_LIGHT_SWITCH_LANDING_1)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Lights",
+      "line": 9422,
+      "lvars": [
+        "GENERIC_Momentary_LIGHT_SWITCH_LANDING_1",
+        "LANDING_LIGHT_MOTOR"
+      ],
+      "hvars": [
+        "GENERIC_Momentary_LIGHT_SWITCH_LANDING_1"
+      ],
+      "kvars": [
+        "LANDING_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8898,
+      "name": "C414A_LANDING_LIGHTS_RETRACT",
+      "script": "0 (>K:LANDING_LIGHTS_SET) 0 (>L:GENERIC_Momentary_LIGHT_SWITCH_LANDING_1) 0 (>L:LANDING_LIGHT_MOTOR) (>H:GENERIC_Momentary_LIGHT_SWITCH_LANDING_1)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Lights",
+      "line": 9423,
+      "lvars": [
+        "GENERIC_Momentary_LIGHT_SWITCH_LANDING_1",
+        "LANDING_LIGHT_MOTOR"
+      ],
+      "hvars": [
+        "GENERIC_Momentary_LIGHT_SWITCH_LANDING_1"
+      ],
+      "kvars": [
+        "LANDING_LIGHTS_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 8899,
+      "name": "C414A_TAXI_LIGHTS_OFF",
+      "script": "0 (>K:TAXI_LIGHTS_SET) (A:GEAR HANDLE POSITION,Bool) (L:LIGHT_TAXI, bool) ! and if{ 1 } els{ 0 } (>L:LIGHT_TAXI)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Lights",
+      "line": 9424,
+      "lvars": [
+        "LIGHT_TAXI"
+      ],
+      "hvars": [],
+      "kvars": [
+        "TAXI_LIGHTS_SET"
+      ],
+      "avars": [
+        "GEAR HANDLE POSITION,Bool"
+      ]
+    },
+    {
+      "id": 8900,
+      "name": "C414A_TAXI_LIGHTS_ON",
+      "script": "1 (>K:TAXI_LIGHTS_SET) (A:GEAR HANDLE POSITION,Bool) (L:LIGHT_TAXI, bool) ! and if{ 1 } els{ 0 } (>L:LIGHT_TAXI)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Lights",
+      "line": 9425,
+      "lvars": [
+        "LIGHT_TAXI"
+      ],
+      "hvars": [],
+      "kvars": [
+        "TAXI_LIGHTS_SET"
+      ],
+      "avars": [
+        "GEAR HANDLE POSITION,Bool"
+      ]
+    },
+    {
+      "id": 8901,
+      "name": "PMS_GTN750U1_Home_Short_Long_Press",
+      "script": "(E:SIMULATION TIME,second) 1.00 + (>L:myTimer)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9427,
+      "lvars": [
+        "myTimer"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8902,
+      "name": "PMS_GTN750U1_Home_Short_Long_Rls",
+      "script": "(E:SIMULATION TIME,second) (L:myTimer) < if{ (>H:GTN750_HomePush) } els{ (>H:GTN750_HomePushLong) }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9428,
+      "lvars": [
+        "myTimer"
+      ],
+      "hvars": [
+        "GTN750_HomePush",
+        "GTN750_HomePushLong"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8903,
+      "name": "PMS_GTN750U2_Home_Short_Long_Press",
+      "script": "(E:SIMULATION TIME,second) 1.00 + (>L:myTimer)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9429,
+      "lvars": [
+        "myTimer"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8904,
+      "name": "PMS_GTN750U2_Home_Short_Long_Rls",
+      "script": "(E:SIMULATION TIME,second) (L:myTimer) < if{ (>H:GTN750_2_HomePush) } els{ (>H:GTN750_2_HomePushLong) }",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9430,
+      "lvars": [
+        "myTimer"
+      ],
+      "hvars": [
+        "GTN750_2_HomePush",
+        "GTN750_2_HomePushLong"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8905,
+      "name": "PMS_GTN750U1_CDI_Toggle",
+      "script": "(>H:GTN750_CDI)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9431,
+      "lvars": [],
+      "hvars": [
+        "GTN750_CDI"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8906,
+      "name": "PMS_GTN750U1_Direct_to",
+      "script": "(>H:GTN750_DirectToPush)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9432,
+      "lvars": [],
+      "hvars": [
+        "GTN750_DirectToPush"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8907,
+      "name": "PMS_GTN750U1_FlightPlan",
+      "script": "(>H:GTN750_GoToPage-HOME-PageFlighPlan)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9433,
+      "lvars": [],
+      "hvars": [
+        "GTN750_GoToPage-HOME-PageFlighPlan"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8908,
+      "name": "PMS_GTN750U1_Knob_Push",
+      "script": "(>H:GTN750_KnobPush)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9434,
+      "lvars": [],
+      "hvars": [
+        "GTN750_KnobPush"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8909,
+      "name": "PMS_GTN750U1_Large_Knob_Dec",
+      "script": "(>H:GTN750_KnobLargeDec)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9435,
+      "lvars": [],
+      "hvars": [
+        "GTN750_KnobLargeDec"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8910,
+      "name": "PMS_GTN750U1_Large_Knob_Inc",
+      "script": "(>H:GTN750_KnobLargeInc)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9436,
+      "lvars": [],
+      "hvars": [
+        "GTN750_KnobLargeInc"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8911,
+      "name": "PMS_GTN750U1_Menu",
+      "script": "(>H:GTN750_GoToPage-HOME-MENU_HOME)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9437,
+      "lvars": [],
+      "hvars": [
+        "GTN750_GoToPage-HOME-MENU_HOME"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8912,
+      "name": "PMS_GTN750U1_Procedures",
+      "script": "(>H:GTN750_GoToPage-HOME-PageProcs)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9438,
+      "lvars": [],
+      "hvars": [
+        "GTN750_GoToPage-HOME-PageProcs"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8913,
+      "name": "PMS_GTN750U1_Small_Knob_Dec",
+      "script": "(>H:GTN750_KnobSmallDec)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9439,
+      "lvars": [],
+      "hvars": [
+        "GTN750_KnobSmallDec"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8914,
+      "name": "PMS_GTN750U1_Small_Knob_Inc",
+      "script": "(>H:GTN750_KnobSmallInc)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9440,
+      "lvars": [],
+      "hvars": [
+        "GTN750_KnobSmallInc"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8915,
+      "name": "PMS_GTN750U1_Transfer_Com",
+      "script": "(>H:GTN750_GTN_COM_Switch)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9441,
+      "lvars": [],
+      "hvars": [
+        "GTN750_GTN_COM_Switch"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8916,
+      "name": "PMS_GTN750U1_Transfer_Nav",
+      "script": "(>H:GTN750_GTN_NAV_Switch)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9442,
+      "lvars": [],
+      "hvars": [
+        "GTN750_GTN_NAV_Switch"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8917,
+      "name": "PMS_GTN750U2_CDI_Toggle",
+      "script": "(>H:GTN750_2_CDI)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9443,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_CDI"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8918,
+      "name": "PMS_GTN750U2_Direct_to",
+      "script": "(>H:GTN750_2_DirectToPush)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9444,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_DirectToPush"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8919,
+      "name": "PMS_GTN750U2_FlightPlan",
+      "script": "(>H:GTN750_2_GoToPage-HOME-PageFlighPlan)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9445,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_GoToPage-HOME-PageFlighPlan"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8920,
+      "name": "PMS_GTN750U2_Knob_Push",
+      "script": "(>H:GTN750_2_KnobPush)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9446,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_KnobPush"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8921,
+      "name": "PMS_GTN750U2_Large_Knob_Dec",
+      "script": "(>H:GTN750_2_KnobLargeDec)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9447,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_KnobLargeDec"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8922,
+      "name": "PMS_GTN750U2_Large_Knob_Inc",
+      "script": "(>H:GTN750_2_KnobLargeInc)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9448,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_KnobLargeInc"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8923,
+      "name": "PMS_GTN750U2_Menu",
+      "script": "(>H:GTN750_2_GoToPage-HOME-MENU_HOME)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9449,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_GoToPage-HOME-MENU_HOME"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8924,
+      "name": "PMS_GTN750U2_Procedures",
+      "script": "(>H:GTN750_2_GoToPage-HOME-PageProcs)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9450,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_GoToPage-HOME-PageProcs"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8925,
+      "name": "PMS_GTN750U2_Small_Knob_Dec",
+      "script": "(>H:GTN750_2_KnobSmallDec)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9451,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_KnobSmallDec"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8926,
+      "name": "PMS_GTN750U2_Small_Knob_Inc",
+      "script": "(>H:GTN750_2_KnobSmallInc)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9452,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_KnobSmallInc"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8927,
+      "name": "PMS_GTN750U2_Transfer_Com",
+      "script": "(>H:GTN750_2_GTN_COM_Switch)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9453,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_GTN_COM_Switch"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 8928,
+      "name": "PMS_GTN750U2_Transfer_Nav",
+      "script": "(>H:GTN750_2_GTN_NAV_Switch)",
+      "vendor": "Flysimware",
+      "aircraft": "Cessna 414A",
+      "system": "Navigation",
+      "line": 9454,
+      "lvars": [],
+      "hvars": [
+        "GTN750_2_GTN_NAV_Switch"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12605,
+      "name": "Open_Pilot_Door",
+      "script": "(L:C152X_DOOR_PILOT, 0) ! (>L:C152X_DOOR_PILOT, 1) (L:C152X_DOOR_PILOT, 1) ! (>L:C152X_DOOR_PILOT, 0)",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152",
+      "system": "Interaction",
+      "line": 13274,
+      "lvars": [
+        "C152X_DOOR_PILOT"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12606,
+      "name": "C152X_DME_Power_Toggle",
+      "script": "(L:C152X_DME_POWER) ! (>L:C152X_DME_POWER)",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Flight Instrumentation",
+      "line": 13276,
+      "lvars": [
+        "C152X_DME_POWER"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12607,
+      "name": "Old_Transponder_Power",
+      "script": "(L:C152X_XPNDR_KNOB, Number) 0 == if{ 3 (>L:C152X_XPNDR_KNOB, Number) } els{ 0 (>L:C152X_XPNDR_KNOB, Number) }",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Flight Instrumentation",
+      "line": 13277,
+      "lvars": [
+        "C152X_XPNDR_KNOB"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12608,
+      "name": "C152X-Copilot-Window-toggle",
+      "script": "(L:C152X_COPILOT_WINDOW, Number) 0 == if{ 16384 (>L:C152X_COPILOT_WINDOW, Number) } els{ 0 (>L:C152X_COPILOT_WINDOW, Number) }",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13279,
+      "lvars": [
+        "C152X_COPILOT_WINDOW"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12609,
+      "name": "C152X-Copilot-door-toggle",
+      "script": "(L:C152X_DOOR_COPILOT, Number) ! (>L:C152X_DOOR_COPILOT, Number)",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13280,
+      "lvars": [
+        "C152X_DOOR_COPILOT"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12610,
+      "name": "C152X-Pilot-Door-toggle",
+      "script": "(L:C152X_DOOR_PILOT, Number) ! (>L:C152X_DOOR_PILOT, Number)",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13281,
+      "lvars": [
+        "C152X_DOOR_PILOT"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12611,
+      "name": "C152X-Pilot-Window-toggle",
+      "script": "(L:C152X_PILOT_WINDOW, Number) 0 == if{ 16384 (>L:C152X_PILOT_WINDOW, Number) } els{ 0 (>L:C152X_PILOT_WINDOW, Number) }",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13282,
+      "lvars": [
+        "C152X_PILOT_WINDOW"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12612,
+      "name": "C152X-visor-copilot-axis-down",
+      "script": "(L:C152X-visor-copilot-axis) 16384 max 0 min (>A:LIGHT LOGO:5, Number)",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13283,
+      "lvars": [
+        "C152X-visor-copilot-axis"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12613,
+      "name": "C152X-visor-copilot-toggle",
+      "script": "(L:C152X_COPILOT_VISOR, Number) 0 == if{ 16384 (>L:C152X_COPILOT_VISOR, Number) } els{ 0 (>L:C152X_COPILOT_VISOR, Number) }",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13284,
+      "lvars": [
+        "C152X_COPILOT_VISOR"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12614,
+      "name": "C152X-visor-pilot-toggle",
+      "script": "(L:C152X_PILOT_VISOR, Number) 0 == if{ 16384 (>L:C152X_PILOT_VISOR, Number) } els{ 0 (>L:C152X_PILOT_VISOR, Number) }",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13285,
+      "lvars": [
+        "C152X_PILOT_VISOR"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12615,
+      "name": "C152X-window-copilot-handle-toggle",
+      "script": "(L:C152X_WINDOW_HANDLE_Copilot, Number) ! (>L:C152X_WINDOW_HANDLE_Copilot, Number)",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13286,
+      "lvars": [
+        "C152X_WINDOW_HANDLE_Copilot"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 12616,
+      "name": "C152X-window-pilot-handle-toggle",
+      "script": "(L:C152X_WINDOW_HANDLE_Pilot, Number) ! (>L:C152X_WINDOW_HANDLE_Pilot, Number)",
+      "vendor": "JPLogistics",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 13287,
+      "lvars": [
+        "C152X_WINDOW_HANDLE_Pilot"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15663,
+      "name": "Annunciator_Switch_OFF",
+      "script": "(>K:ANNUNCIATOR_SWITCH_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna 172",
+      "system": "Warning",
+      "line": 16511,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ANNUNCIATOR_SWITCH_OFF"
+      ],
+      "avars": []
+    },
+    {
+      "id": 15664,
+      "name": "Annunciator_Switch_ON",
+      "script": "(>K:ANNUNCIATOR_SWITCH_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna 172",
+      "system": "Warning",
+      "line": 16512,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ANNUNCIATOR_SWITCH_ON"
+      ],
+      "avars": []
+    },
+    {
+      "id": 15665,
+      "name": "__B_DEICE_WINDSHIELD_OFF",
+      "script": "(>B:DEICE_WINDSHIELD_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16514,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15666,
+      "name": "Airframe_Heat_OFF",
+      "script": "(>B:DEICE_AIRFRAME_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16515,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15667,
+      "name": "Airframe_Heat_ON",
+      "script": "(>B:DEICE_AIRFRAME_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16516,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15668,
+      "name": "Bleedair_1_OFF",
+      "script": "(>B:PNEUMATICS_BLEED_AIR_1_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16517,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15669,
+      "name": "Bleedair_1_ON",
+      "script": "(>B:PNEUMATICS_BLEED_AIR_1_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16518,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15670,
+      "name": "Pitot_Heat_OFF",
+      "script": "(>B:DEICE_PITOT_HEAT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16519,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15671,
+      "name": "Pitot_Heat_ON",
+      "script": "(>B:DEICE_PITOT_HEAT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16520,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15672,
+      "name": "Proppeler_Heat_OFF",
+      "script": "(>B:DEICE_PROPELLER_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16521,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15673,
+      "name": "Proppeler_Heat_ON",
+      "script": "(>B:DEICE_PROPELLER_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16522,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15674,
+      "name": "Windshield_ON",
+      "script": "(>B:DEICE_WINDSHIELD_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Anti Ice",
+      "line": 16523,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15675,
+      "name": "LIGHTING_TAXI_LIGHT_LANDING",
+      "script": "(>B:LIGHTING_TAXI_LIGHT_LANDING)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Autopilot",
+      "line": 16525,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15676,
+      "name": "Condition_Lever_1_",
+      "script": "@ 655.35 / 0 max 100 min s0 33 < if{  1 (>L:Condition_Lever_CutOff_1) 1 (>K:SET_FUEL_VALVE_ENG1)  1 (>A:TURB ENG CONDITION LEVER POSITION:1,enum) quit } els{  2 (>L:Condition_Lever_CutOff_1) 1 (>K:SET_FUEL_VALVE_ENG1) 2 (>A:TURB ENG CONDITION LEVER POSITION:1,enum) quit }",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Engines",
+      "line": 16527,
+      "lvars": [
+        "Condition_Lever_CutOff_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "SET_FUEL_VALVE_ENG1"
+      ],
+      "avars": [
+        "TURB ENG CONDITION LEVER POSITION:1,enum"
+      ]
+    },
+    {
+      "id": 15677,
+      "name": "Condition_Lever_1_CutOff",
+      "script": "0 (>L:Condition_Lever_CutOff_1) 0 (>K:SET_FUEL_VALVE_ENG1) 0 (>A:TURB ENG CONDITION LEVER POSITION:1,enum)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Engines",
+      "line": 16528,
+      "lvars": [
+        "Condition_Lever_CutOff_1"
+      ],
+      "hvars": [],
+      "kvars": [
+        "SET_FUEL_VALVE_ENG1"
+      ],
+      "avars": [
+        "TURB ENG CONDITION LEVER POSITION:1,enum"
+      ]
+    },
+    {
+      "id": 15678,
+      "name": "Condition_Lever_2",
+      "script": "@ 655.35 / 0 max 100 min s0 33 < if{  1 (>L:Condition_Lever_CutOff_2) 1 (>K:SET_FUEL_VALVE_ENG2)  1 (>A:TURB ENG CONDITION LEVER POSITION:2,enum) quit } els{  2 (>L:Condition_Lever_CutOff_2) 1 (>K:SET_FUEL_VALVE_ENG1) 2 (>A:TURB ENG CONDITION LEVER POSITION:2,enum) quit }",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Engines",
+      "line": 16529,
+      "lvars": [
+        "Condition_Lever_CutOff_2"
+      ],
+      "hvars": [],
+      "kvars": [
+        "SET_FUEL_VALVE_ENG2",
+        "SET_FUEL_VALVE_ENG1"
+      ],
+      "avars": [
+        "TURB ENG CONDITION LEVER POSITION:2,enum"
+      ]
+    },
+    {
+      "id": 15679,
+      "name": "Condition_Lever_2_CutOff",
+      "script": "0 (>L:Condition_Lever_CutOff_2) 0 (>K:SET_FUEL_VALVE_ENG2) 0 (>A:TURB ENG CONDITION LEVER POSITION:2,enum)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Engines",
+      "line": 16530,
+      "lvars": [
+        "Condition_Lever_CutOff_2"
+      ],
+      "hvars": [],
+      "kvars": [
+        "SET_FUEL_VALVE_ENG2"
+      ],
+      "avars": [
+        "TURB ENG CONDITION LEVER POSITION:2,enum"
+      ]
+    },
+    {
+      "id": 15680,
+      "name": "LIGHTING_CABIN_LIGHT_OFF",
+      "script": "(>B:LIGHTING_CABIN_LIGHT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16532,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15681,
+      "name": "LIGHTING_CABIN_LIGHT_ON",
+      "script": "(>B:LIGHTING_CABIN_LIGHT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16533,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15682,
+      "name": "LIGHTING_LOGO_LIGHT_OFF",
+      "script": "(>B:LIGHTING_LOGO_LIGHT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16534,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15683,
+      "name": "LIGHTING_LOGO_LIGHT_ON",
+      "script": "(>B:LIGHTING_LOGO_LIGHT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16535,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15684,
+      "name": "LIGHTING_NAVIGATION_LIGHT_BEACON",
+      "script": "(>B:LIGHTING_NAVIGATION_LIGHT_BEACON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16536,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15685,
+      "name": "LIGHTING_NAVIGATION_LIGHT_NAV",
+      "script": "(>B:LIGHTING_NAVIGATION_LIGHT_NAV)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16537,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15686,
+      "name": "LIGHTING_NAVIGATION_LIGHT_OFF",
+      "script": "(>B:LIGHTING_NAVIGATION_LIGHT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16538,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15687,
+      "name": "LIGHTING_SEATBELTS_LIGHT_OFF",
+      "script": "(>B:LIGHTING_SEATBELTS_LIGHT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16539,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15688,
+      "name": "LIGHTING_SEATBELTS_LIGHT_ON",
+      "script": "(>B:LIGHTING_SEATBELTS_LIGHT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16540,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15689,
+      "name": "LIGHTING_STROBE_LIGHT_OFF",
+      "script": "(>B:LIGHTING_STROBE_LIGHT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16541,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15690,
+      "name": "LIGHTING_STROBE_LIGHT_ON",
+      "script": "(>B:LIGHTING_STROBE_LIGHT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16542,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15691,
+      "name": "LIGHTING_STROBE_LIGHT_ON",
+      "script": "(>B:LIGHTING_STROBE_LIGHT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16543,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15692,
+      "name": "LIGHTING_TAXI_LIGHT_OFF",
+      "script": "(>B:LIGHTING_TAXI_LIGHT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16544,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15693,
+      "name": "LIGHTING_TAXI_LIGHT_ON",
+      "script": "(>B:LIGHTING_TAXI_LIGHT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16545,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15694,
+      "name": "LIGHTING_WING_LIGHT_OFF",
+      "script": "(>B:LIGHTING_WING_LIGHT_OFF)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16546,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 15695,
+      "name": "LIGHTING_WING_LIGHT_ON",
+      "script": "(>B:LIGHTING_WING_LIGHT_ON)",
+      "vendor": "Microsoft",
+      "aircraft": "Cessna C408",
+      "system": "Lights",
+      "line": 16547,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20785,
+      "name": "C152X-Instruments-AP-toggle",
+      "script": "(L:C152X_APVIZ, Number) ! (>L:C152X_APVIZ, Number)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 152X",
+      "system": "Autopilot",
+      "line": 21815,
+      "lvars": [
+        "C152X_APVIZ"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20786,
+      "name": "C152X-Door-Copilot-toggle",
+      "script": "(L:C152X_DOOR_COPILOT, Bool) ! (>L:C152X_DOOR_COPILOT, Bool)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 21817,
+      "lvars": [
+        "C152X_DOOR_COPILOT"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20787,
+      "name": "C152X-Door-Pilot-toggle",
+      "script": "(L:C152X_DOOR_PILOT, Bool) ! (>L:C152X_DOOR_PILOT, Bool)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 152X",
+      "system": "Interaction",
+      "line": 21818,
+      "lvars": [
+        "C152X_DOOR_PILOT"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20788,
+      "name": "KAP140_ALT_PRESS",
+      "script": "(>H:KAP140_ALT_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21820,
+      "lvars": [],
+      "hvars": [
+        "KAP140_ALT_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20789,
+      "name": "KAP140_ALT_RELEASE",
+      "script": "(>H:KAP140_ALT_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21821,
+      "lvars": [],
+      "hvars": [
+        "KAP140_ALT_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20790,
+      "name": "KAP140_AP_PRESS",
+      "script": "(>H:KAP140_AP_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21822,
+      "lvars": [],
+      "hvars": [
+        "KAP140_AP_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20791,
+      "name": "KAP140_AP_RELEASE",
+      "script": "(>H:KAP140_AP_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21823,
+      "lvars": [],
+      "hvars": [
+        "KAP140_AP_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20792,
+      "name": "KAP140_APR_PRESS",
+      "script": "(>H:KAP140_APR_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21824,
+      "lvars": [],
+      "hvars": [
+        "KAP140_APR_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20793,
+      "name": "KAP140_APR_RELEASE",
+      "script": "(>H:KAP140_APR_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21825,
+      "lvars": [],
+      "hvars": [
+        "KAP140_APR_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20794,
+      "name": "KAP140_ARM_PRESS",
+      "script": "(>H:KAP140_ARM_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21826,
+      "lvars": [],
+      "hvars": [
+        "KAP140_ARM_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20795,
+      "name": "KAP140_ARM_RELEASE",
+      "script": "(>H:KAP140_ARM_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21827,
+      "lvars": [],
+      "hvars": [
+        "KAP140_ARM_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20796,
+      "name": "KAP140_BARO_PRESS",
+      "script": "(>H:KAP140_BARO_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21828,
+      "lvars": [],
+      "hvars": [
+        "KAP140_BARO_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20797,
+      "name": "KAP140_BARO_RELEASE",
+      "script": "(>H:KAP140_BARO_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21829,
+      "lvars": [],
+      "hvars": [
+        "KAP140_BARO_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20798,
+      "name": "KAP140_DN_PRESS",
+      "script": "(>H:KAP140_DN_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21830,
+      "lvars": [],
+      "hvars": [
+        "KAP140_DN_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20799,
+      "name": "KAP140_DN_RELEASE",
+      "script": "(>H:KAP140_DN_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21831,
+      "lvars": [],
+      "hvars": [
+        "KAP140_DN_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20800,
+      "name": "KAP140_HDG_PRESS",
+      "script": "(>H:KAP140_HDG_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21832,
+      "lvars": [],
+      "hvars": [
+        "KAP140_HDG_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20801,
+      "name": "KAP140_HDG_RELEASE",
+      "script": "(>H:KAP140_HDG_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21833,
+      "lvars": [],
+      "hvars": [
+        "KAP140_HDG_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20802,
+      "name": "KAP140_KNOB_INNER_DEC",
+      "script": "(>H:KAP140_KNOB_INNER_DEC)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21834,
+      "lvars": [],
+      "hvars": [
+        "KAP140_KNOB_INNER_DEC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20803,
+      "name": "KAP140_KNOB_INNER_INC",
+      "script": "(>H:KAP140_KNOB_INNER_INC)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21835,
+      "lvars": [],
+      "hvars": [
+        "KAP140_KNOB_INNER_INC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20804,
+      "name": "KAP140_KNOB_OUTER_DEC",
+      "script": "(>H:KAP140_KNOB_OUTER_DEC)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21836,
+      "lvars": [],
+      "hvars": [
+        "KAP140_KNOB_OUTER_DEC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20805,
+      "name": "KAP140_KNOB_OUTER_INC",
+      "script": "(>H:KAP140_KNOB_OUTER_INC)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21837,
+      "lvars": [],
+      "hvars": [
+        "KAP140_KNOB_OUTER_INC"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20806,
+      "name": "KAP140_NAV_PRESS",
+      "script": "(>H:KAP140_NAV_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21838,
+      "lvars": [],
+      "hvars": [
+        "KAP140_NAV_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20807,
+      "name": "KAP140_NAV_RELEASE",
+      "script": "(>H:KAP140_NAV_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21839,
+      "lvars": [],
+      "hvars": [
+        "KAP140_NAV_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20808,
+      "name": "KAP140_REV_PRESS",
+      "script": "(>H:KAP140_REV_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21840,
+      "lvars": [],
+      "hvars": [
+        "KAP140_REV_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20809,
+      "name": "KAP140_REV_RELEASE",
+      "script": "(>H:KAP140_REV_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21841,
+      "lvars": [],
+      "hvars": [
+        "KAP140_REV_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20810,
+      "name": "KAP140_UP_PRESS",
+      "script": "(>H:KAP140_UP_PRESS)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21842,
+      "lvars": [],
+      "hvars": [
+        "KAP140_UP_PRESS"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20811,
+      "name": "KAP140_UP_RELEASE",
+      "script": "(>H:KAP140_UP_RELEASE)",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Autopilot",
+      "line": 21843,
+      "lvars": [],
+      "hvars": [
+        "KAP140_UP_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20812,
+      "name": "C172-analog-transponder-dec",
+      "script": "(L:172X_XPNDR_KNOB, Number) 0 > if{  (L:172X_XPNDR_KNOB, Number) 1 - (>L:172X_XPNDR_KNOB, Number) }",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Avionics",
+      "line": 21845,
+      "lvars": [
+        "172X_XPNDR_KNOB"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20813,
+      "name": "C172-analog-transponder-inc",
+      "script": "(L:172X_XPNDR_KNOB, Number) 4 < if{  (L:172X_XPNDR_KNOB, Number) 1 + (>L:172X_XPNDR_KNOB, Number) }",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Avionics",
+      "line": 21846,
+      "lvars": [
+        "172X_XPNDR_KNOB"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20814,
+      "name": "GNS530_GNS430",
+      "script": "H:C172X_530_COMSWAP_PRESS H:C172X_530_COMSWAP_RELEASE H:C172X_530_NAVSWAP_PRESS H:C172X_530_NAVSWAP_RELEASE H:C172X_530_CDI_PRESS H:C172X_530_CDI_RELEASE H:C172X_530_OBS_PRESS H:C172X_530_OBS_RELEASE H:C172X_530_MSG_PRESS H:C172X_530_MSG_RELEASE H:C172X_530_FPL_PRESS H:C172X_530_FPL_RELEASE H:C172X_530_VNAV_PRESS H:C172X_530_VNAV_RELEASE H:C172X_530_PROC_PRESS H:C172X_530_PROC_RELEASE H:C172X_530_ENT_PRESS H:C172X_530_ENT_RELEASE H:C172X_530_CLR_PRESS H:C172X_530_CLR_RELEASE H:C172X_530_MENU_PRESS H:C172X_530_MENU_RELEASE H:C172X_530_DTO_PRESS H:C172X_530_DTO_RELEASE H:C172X_530_RNG_DEZOOM_PRESS H:C172X_530_RNG_RELEASE H:C172X_530_RNG_ZOOM_PRESS H:C172X_530_RNG_RELEASE H:C172X_530_CV_LARGE_INC H:C172X_530_CV_LARGE_DEC H:C172X_530_CV_SMALL_INC H:C172X_530_CV_SMALL_DEC H:C172X_530_CV_PRESS H:C172X_530_CV_RELEASE H:C172X_530_CRSR_LARGE_INC H:C172X_530_CRSR_LARGE_DEC H:C172X_530_CRSR_SMALL_INC H:C172X_530_CRSR_SMALL_DEC H:C172X_530_CRSR_PRESS H:C172X_530_CRSR_RELEASE  H:C172X_430_COMSWAP_PRESS H:C172X_430_COMSWAP_RELEASE H:C172X_430_NAVSWAP_PRESS H:C172X_430_NAVSWAP_RELEASE H:C172X_430_CDI_PRESS H:C172X_430_CDI_RELEASE H:C172X_430_OBS_PRESS H:C172X_430_OBS_RELEASE H:C172X_430_MSG_PRESS H:C172X_430_MSG_RELEASE H:C172X_430_FPL_PRESS H:C172X_430_FPL_RELEASE H:C172X_430_PROC_PRESS H:C172X_430_PROC_RELEASE H:C172X_430_ENT_PRESS H:C172X_430_ENT_RELEASE H:C172X_430_CLR_PRESS H:C172X_430_CLR_RELEASE H:C172X_430_MENU_PRESS H:C172X_430_MENU_RELEASE H:C172X_430_DTO_PRESS H:C172X_430_DTO_RELEASE H:C172X_430_RNG_DEZOOM_PRESS H:C172X_430_RNG_RELEASE H:C172X_430_RNG_ZOOM_PRESS H:C172X_430_RNG_RELEASE H:C172X_430_CV_LARGE_INC H:C172X_430_CV_LARGE_DEC H:C172X_430_CV_SMALL_INC H:C172X_430_CV_SMALL_DEC H:C172X_430_CV_PRESS H:C172X_430_CV_RELEASE H:C172X_430_CRSR_LARGE_INC H:C172X_430_CRSR_LARGE_DEC H:C172X_430_CRSR_SMALL_INC H:C172X_430_CRSR_SMALL_DEC H:C172X_430_CRSR_PRESS H:C172X_430_CRSR_RELEASE",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Avionics",
+      "line": 21847,
+      "lvars": [],
+      "hvars": [
+        "C172X_530_COMSWAP_PRESS",
+        "C172X_530_COMSWAP_RELEASE",
+        "C172X_530_NAVSWAP_PRESS",
+        "C172X_530_NAVSWAP_RELEASE",
+        "C172X_530_CDI_PRESS",
+        "C172X_530_CDI_RELEASE",
+        "C172X_530_OBS_PRESS",
+        "C172X_530_OBS_RELEASE",
+        "C172X_530_MSG_PRESS",
+        "C172X_530_MSG_RELEASE",
+        "C172X_530_FPL_PRESS",
+        "C172X_530_FPL_RELEASE",
+        "C172X_530_VNAV_PRESS",
+        "C172X_530_VNAV_RELEASE",
+        "C172X_530_PROC_PRESS",
+        "C172X_530_PROC_RELEASE",
+        "C172X_530_ENT_PRESS",
+        "C172X_530_ENT_RELEASE",
+        "C172X_530_CLR_PRESS",
+        "C172X_530_CLR_RELEASE",
+        "C172X_530_MENU_PRESS",
+        "C172X_530_MENU_RELEASE",
+        "C172X_530_DTO_PRESS",
+        "C172X_530_DTO_RELEASE",
+        "C172X_530_RNG_DEZOOM_PRESS",
+        "C172X_530_RNG_RELEASE",
+        "C172X_530_RNG_ZOOM_PRESS",
+        "C172X_530_CV_LARGE_INC",
+        "C172X_530_CV_LARGE_DEC",
+        "C172X_530_CV_SMALL_INC",
+        "C172X_530_CV_SMALL_DEC",
+        "C172X_530_CV_PRESS",
+        "C172X_530_CV_RELEASE",
+        "C172X_530_CRSR_LARGE_INC",
+        "C172X_530_CRSR_LARGE_DEC",
+        "C172X_530_CRSR_SMALL_INC",
+        "C172X_530_CRSR_SMALL_DEC",
+        "C172X_530_CRSR_PRESS",
+        "C172X_530_CRSR_RELEASE",
+        "C172X_430_COMSWAP_PRESS",
+        "C172X_430_COMSWAP_RELEASE",
+        "C172X_430_NAVSWAP_PRESS",
+        "C172X_430_NAVSWAP_RELEASE",
+        "C172X_430_CDI_PRESS",
+        "C172X_430_CDI_RELEASE",
+        "C172X_430_OBS_PRESS",
+        "C172X_430_OBS_RELEASE",
+        "C172X_430_MSG_PRESS",
+        "C172X_430_MSG_RELEASE",
+        "C172X_430_FPL_PRESS",
+        "C172X_430_FPL_RELEASE",
+        "C172X_430_PROC_PRESS",
+        "C172X_430_PROC_RELEASE",
+        "C172X_430_ENT_PRESS",
+        "C172X_430_ENT_RELEASE",
+        "C172X_430_CLR_PRESS",
+        "C172X_430_CLR_RELEASE",
+        "C172X_430_MENU_PRESS",
+        "C172X_430_MENU_RELEASE",
+        "C172X_430_DTO_PRESS",
+        "C172X_430_DTO_RELEASE",
+        "C172X_430_RNG_DEZOOM_PRESS",
+        "C172X_430_RNG_RELEASE",
+        "C172X_430_RNG_ZOOM_PRESS",
+        "C172X_430_CV_LARGE_INC",
+        "C172X_430_CV_LARGE_DEC",
+        "C172X_430_CV_SMALL_INC",
+        "C172X_430_CV_SMALL_DEC",
+        "C172X_430_CV_PRESS",
+        "C172X_430_CV_RELEASE",
+        "C172X_430_CRSR_LARGE_INC",
+        "C172X_430_CRSR_LARGE_DEC",
+        "C172X_430_CRSR_SMALL_INC",
+        "C172X_430_CRSR_SMALL_DEC",
+        "C172X_430_CRSR_PRESS",
+        "C172X_430_CRSR_RELEASE"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20815,
+      "name": "Transponder_Standby",
+      "script": "(L:172X_XPNDR_KNOB, Number) 3 > if{  (L:172X_XPNDR_KNOB, Number) 3 - (>L:172X_XPNDR_KNOB, Number) }",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Avionics",
+      "line": 21848,
+      "lvars": [
+        "172X_XPNDR_KNOB"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 20816,
+      "name": "Transponder_mode_ALT",
+      "script": "(L:172X_XPNDR_KNOB, Number) 4 < if{  4 (>L:172X_XPNDR_KNOB, Number) }",
+      "vendor": "WB Sim",
+      "aircraft": "Cessna 172 Classic",
+      "system": "Avionics",
+      "line": 21849,
+      "lvars": [
+        "172X_XPNDR_KNOB"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    }
+  ]
+}

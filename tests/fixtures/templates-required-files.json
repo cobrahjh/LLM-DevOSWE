@@ -1,0 +1,32 @@
+{
+  "allComplete": true,
+  "templates": {
+    "control-widget": {
+      "complete": true,
+      "files": {
+        "index.html": true,
+        "widget.js": true,
+        "widget.css": true,
+        "manifest.json": true
+      }
+    },
+    "display-widget": {
+      "complete": true,
+      "files": {
+        "index.html": true,
+        "widget.js": true,
+        "widget.css": true,
+        "manifest.json": true
+      }
+    },
+    "tool-widget": {
+      "complete": true,
+      "files": {
+        "index.html": true,
+        "widget.js": true,
+        "widget.css": true,
+        "manifest.json": true
+      }
+    }
+  }
+}

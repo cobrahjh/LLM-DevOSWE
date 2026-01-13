@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Widget - SimWidget Engine</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">⛽ FUEL MANAGEMENT</span>
+            <span class="widget-brand">SimWidget</span>
+            <span class="connection-status" id="conn-status" title="Disconnected">●</span>
+        </div>
+
+        <!-- Main Fuel Display -->
+        <div class="fuel-main">
+            <div class="fuel-gauge">
+                <svg viewBox="0 0 120 120" class="gauge-svg">
+                    <circle class="gauge-bg" cx="60" cy="60" r="54" />
+                    <circle class="gauge-fill" id="gaugeFill" cx="60" cy="60" r="54" />
+                    <text x="60" y="55" class="gauge-percent" id="fuelPercent">--%</text>
+                    <text x="60" y="75" class="gauge-label">FUEL</text>
+                </svg>
+            </div>
+            <div class="fuel-stats">
+                <div class="stat-row">
+                    <span class="stat-label">Total</span>
+                    <span class="stat-value" id="fuelTotal">-- gal</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Capacity</span>
+                    <span class="stat-value" id="fuelCapacity">-- gal</span>
+                </div>
+                <div class="stat-row highlight">
+                    <span class="stat-label">Flow Rate</span>
+                    <span class="stat-value" id="fuelFlow">-- gph</span>
+                </div>
+                <div class="stat-row highlight">
+                    <span class="stat-label">Endurance</span>
+                    <span class="stat-value" id="endurance">--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tank Levels (Dynamically populated) -->
+        <div class="tanks-section">
+            <h2>Tank Levels <span class="selected-indicator">(Selected: <span id="selectedTankLabel">None</span>)</span></h2>
+            <div class="tank-selection-buttons">
+                <button class="btn-small" id="btnSelectAll">Select All</button>
+                <button class="btn-small" id="btnClearSelection">Clear</button>
+            </div>
+            <p class="hint">Click tank to toggle selection</p>
+            <div class="tanks-container" id="tanksContainer">
+                <!-- Tanks auto-detected from aircraft -->
+                <div class="tanks-loading">Detecting tanks...</div>
+            </div>
+        </div>
+
+        <!-- Fuel Controls -->
+        <div class="fuel-controls">
+            <h2>Fuel Controls</h2>
+            <div class="control-row">
+                <button class="btn btn-danger" id="btnRemoveFuel" title="Remove 10 gallons from selected tank">
+                    <span class="btn-icon">−</span>
+                    <span class="btn-text">Remove 10 gal</span>
+                </button>
+                <button class="btn btn-success" id="btnAddFuel" title="Add 10 gallons to selected tank">
+                    <span class="btn-icon">+</span>
+                    <span class="btn-text">Add 10 gal</span>
+                </button>
+            </div>
+            <div class="control-row">
+                <button class="btn btn-secondary" id="btnEmptyTanks" title="Empty ALL tanks">Empty All Tanks</button>
+                <button class="btn btn-primary" id="btnFillTanks" title="Fill ALL tanks">Fill All Tanks</button>
+            </div>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="presets-section">
+            <h2>Quick Presets <span class="selected-indicator">(Selected Tank)</span></h2>
+            <div class="presets-grid">
+                <button class="preset-btn" data-percent="25">25%</button>
+                <button class="preset-btn" data-percent="50">50%</button>
+                <button class="preset-btn" data-percent="75">75%</button>
+                <button class="preset-btn" data-percent="100">100%</button>
+            </div>
+        </div>
+
+        <!-- Status Log -->
+        <div class="status-log" id="statusLog"></div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

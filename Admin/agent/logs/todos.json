@@ -1,0 +1,52 @@
+{
+  "lists": {
+    "General": [
+      {
+        "id": "1768331764424",
+        "text": "cant change voice #btn-voice-entry",
+        "thought": "",
+        "priority": "mustdo",
+        "completed": false,
+        "createdAt": "2026-01-13T19:16:04.424Z"
+      },
+      {
+        "id": "1768322149993",
+        "text": "Cloud terminal is not submitting the tasks via the prompt",
+        "thought": "",
+        "priority": "low",
+        "completed": false,
+        "createdAt": "2026-01-13T16:35:49.993Z"
+      },
+      {
+        "id": "1768322003981",
+        "text": "> Add settings on the Claude terminal for the mic input it's too sensitive and doesn't give me enough time to speak",
+        "thought": "",
+        "priority": "medium",
+        "completed": false,
+        "createdAt": "2026-01-13T16:33:23.981Z"
+      },
+      {
+        "id": "1768321512443",
+        "text": "Give the \"claude terminal\" functionality to enter information by typing and then also via voice with an enter key to submit it as a task",
+        "thought": "",
+        "priority": "low",
+        "completed": false,
+        "createdAt": "2026-01-13T16:25:12.443Z"
+      },
+      {
+        "id": "1768321323109",
+        "text": "AIPC says that you are not communicating with it",
+        "thought": "",
+        "priority": "high",
+        "completed": false,
+        "createdAt": "2026-01-13T16:22:03.109Z"
+      }
+    ],
+    "SimWidget": [],
+    "Agent": [],
+    "Admin": [],
+    "MSFS": [],
+    "📋 All": []
+  },
+  "currentList": "General"
+}

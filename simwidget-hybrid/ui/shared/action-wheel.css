@@ -1,0 +1,186 @@
+/**
+ * Action Wheel Styles v1.0.0
+ * Last Updated: 2025-01-07
+ */
+
+.action-wheel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+}
+
+.action-wheel.hidden {
+    display: none;
+}
+
+.wheel-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.wheel-container {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    transform: translate(-50%, -50%);
+}
+
+/* Center button */
+.wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(180deg, #3f3f46 0%, #27272a 100%);
+    border: 2px solid #52525b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.wheel-title {
+    font-size: 10px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Category buttons - inner ring */
+.wheel-categories {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+}
+
+.wheel-cat-btn {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(180deg, #3f3f46 0%, #27272a 100%);
+    border: 2px solid #52525b;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(var(--angle)) translateY(-55px) rotate(calc(-1 * var(--angle)));
+    transition: all 0.15s ease;
+}
+
+.wheel-cat-btn:hover {
+    background: var(--color, #3b82f6);
+    border-color: var(--color, #3b82f6);
+    transform: rotate(var(--angle)) translateY(-55px) rotate(calc(-1 * var(--angle))) scale(1.1);
+}
+
+.wheel-cat-btn.active {
+    background: var(--color, #3b82f6);
+    border-color: var(--color, #3b82f6);
+    box-shadow: 0 0 15px var(--color, #3b82f6);
+}
+
+.cat-icon {
+    font-size: 18px;
+}
+
+/* Widget buttons - outer ring */
+.wheel-items {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+}
+
+.wheel-item-btn {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(180deg, #2a2a4a 0%, #1a1a2e 100%);
+    border: 2px solid #3f3f46;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transform: rotate(var(--angle)) translateY(-120px) rotate(calc(-1 * var(--angle)));
+    transition: all 0.15s ease;
+}
+
+.wheel-item-btn:hover {
+    background: #3f3f46;
+    transform: rotate(var(--angle)) translateY(-120px) rotate(calc(-1 * var(--angle))) scale(1.1);
+}
+
+.wheel-item-btn.active {
+    border-color: var(--color, #4ade80);
+    box-shadow: 0 0 10px var(--color, #4ade80);
+}
+
+.wheel-item-btn.flash {
+    animation: flash 0.2s ease;
+}
+
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; background: var(--color, #4ade80); }
+}
+
+.item-icon {
+    font-size: 18px;
+}
+
+.item-label {
+    font-size: 9px;
+    color: #a0a0a0;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.item-led {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: #3f3f46;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.item-led.active {
+    background: var(--color, #4ade80);
+    box-shadow: 0 0 6px var(--color, #4ade80);
+}
+
+/* Animation */
+.wheel-container {
+    animation: wheelOpen 0.2s ease-out;
+}
+
+@keyframes wheelOpen {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}

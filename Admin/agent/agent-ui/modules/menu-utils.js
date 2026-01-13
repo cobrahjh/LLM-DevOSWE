@@ -4,7 +4,7 @@
  * Standardized menu components following STANDARDS.md patterns
  * Provides context menus, dropdown menus, and submenus
  *
- * Path: C:\DevOSWE\Admin\agent\agent-ui\modules\menu-utils.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-ui\modules\menu-utils.js
  *
  * Changelog:
  * v1.1.0 - Added invisible backdrop to capture stray clicks

@@ -1,0 +1,38 @@
+{
+  "allComplete": true,
+  "templates": {
+    "control-widget": {
+      "complete": true,
+      "elements": {
+        "widget-container": true,
+        "widget-header": true,
+        "widget-content": true,
+        "btn-transparency": true,
+        "btn-settings": true,
+        "settings-panel": true
+      }
+    },
+    "display-widget": {
+      "complete": true,
+      "elements": {
+        "widget-container": true,
+        "widget-header": true,
+        "widget-content": true,
+        "btn-transparency": true,
+        "btn-settings": true,
+        "settings-panel": true
+      }
+    },
+    "tool-widget": {
+      "complete": true,
+      "elements": {
+        "widget-container": true,
+        "widget-header": true,
+        "widget-content": true,
+        "btn-transparency": true,
+        "btn-settings": true,
+        "settings-panel": true
+      }
+    }
+  }
+}

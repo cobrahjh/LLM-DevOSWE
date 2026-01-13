@@ -2,7 +2,7 @@
  * SimWidget Relay Windows Service Installer
  * v1.0.0 - 2026-01-11
  *
- * Path: C:\DevOSWE\Admin\relay\service-install.js
+ * Path: C:\LLM-DevOSWE\Admin\relay\service-install.js
  *
  * Run as Administrator:
  *   node service-install.js

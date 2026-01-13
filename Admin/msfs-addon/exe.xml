@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<SimBase.Document Type="Launch" version="1,0">
+  <Descr>Launch SimWidget Engine with MSFS 2024</Descr>
+  <Filename>exe.xml</Filename>
+  <Disabled>false</Disabled>
+  <Launch.ManualLoad>false</Launch.ManualLoad>
+  <Launch.Addon>
+    <Name>SimWidget Engine</Name>
+    <Disabled>false</Disabled>
+    <ManualLoad>false</ManualLoad>
+    <Path>C:\DevClaude\SimWidget_Engine\simwidget-hybrid\backend\start-simwidget.bat</Path>
+  </Launch.Addon>
+</SimBase.Document>

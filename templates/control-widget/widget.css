@@ -1,0 +1,75 @@
+/**
+ * Control Widget Template CSS v1.0.0
+ * 
+ * Extends widget-common.css with control-specific styles
+ * 
+ * Path: templates/control-widget/widget.css
+ * Last Updated: 2025-01-08
+ */
+
+/* Widget-specific overrides */
+.widget-container {
+    min-width: 280px;
+    max-width: 400px;
+}
+
+/* Button grid for toggle buttons */
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.button-grid .btn-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px;
+    min-height: 60px;
+}
+
+.button-grid .btn-icon {
+    font-size: 1.5em;
+    margin-bottom: 4px;
+}
+
+.button-grid .btn-label {
+    font-size: 0.75em;
+    opacity: 0.8;
+}
+
+/* Button row for secondary actions */
+.button-row {
+    display: flex;
+    gap: 8px;
+}
+
+.button-row .btn {
+    flex: 1;
+}
+
+/* Slider enhancements */
+.slider-group + .slider-group {
+    margin-top: 16px;
+}
+
+/* Collapsible panel animation */
+.panel.collapsible .panel-content {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.panel.collapsible[data-collapsed="true"] .panel-content {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.panel-toggle {
+    transition: transform 0.3s ease;
+}
+
+.panel.collapsible[data-collapsed="false"] .panel-toggle {
+    transform: rotate(90deg);
+}

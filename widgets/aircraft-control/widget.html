@@ -1,0 +1,99 @@
+<div id="acw-root">
+    <div class="acw" id="acw-panel">
+        <div class="hdr">
+            <span class="ttl">Aircraft Control</span>
+            <span class="acn" id="acw-title">SimWidget Engine</span>
+            <span class="designer-btn" title="Widget Designer">+</span>
+            <span class="settings-btn" title="Settings">≡</span>
+        </div>
+        
+        <!-- Settings Panel -->
+        <div id="acw-settings" style="display:none;">
+            <div class="settings-header">
+                <span>Settings</span>
+                <span id="acw-settings-close" class="settings-close">×</span>
+            </div>
+            <div class="settings-subtitle">Show/Hide & Reorder Sections</div>
+            <div id="acw-settings-list"></div>
+        </div>
+        
+        <!-- Designer Panel -->
+        <div id="acw-designer" style="display:none;">
+            <div class="designer-header">
+                <span>Widget Designer</span>
+                <span id="acw-designer-close" class="settings-close">×</span>
+            </div>
+            <div class="designer-layout">
+                <div class="designer-left">
+                    <div id="designer-toolbox"></div>
+                </div>
+                <div class="designer-center">
+                    <div id="designer-canvas"></div>
+                </div>
+                <div class="designer-right">
+                    <div id="designer-props"></div>
+                </div>
+            </div>
+            <div class="designer-footer">
+                <button class="designer-save-btn" id="designer-save">SAVE PANEL</button>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div id="acw-content">
+            <div class="sec" id="sec-flight">
+                <div class="sh">Flight Data</div>
+                <div class="dg">
+                    <div class="di"><div class="dl">Altitude</div><div class="dv" id="acw-alt">0 ft</div></div>
+                    <div class="di"><div class="dl">Speed</div><div class="dv cy" id="acw-spd">0 kts</div></div>
+                    <div class="di"><div class="dl">Heading</div><div class="dv" id="acw-hdg">000°</div></div>
+                    <div class="di"><div class="dl">V/S</div><div class="dv" id="acw-vs">0 fpm</div></div>
+                </div>
+            </div>
+            
+            <div class="sec" id="sec-systems">
+                <div class="sh">Systems</div>
+                <div class="sr" id="acw-systems"></div>
+            </div>
+            
+            <div class="sec" id="sec-lights">
+                <div class="sh">Lights</div>
+                <div class="sr" id="acw-lights"></div>
+            </div>
+            
+            <div class="sec" id="sec-engine">
+                <div class="sh">Engine</div>
+                <div class="dg">
+                    <div class="di"><div class="dl">Status</div><div class="dv rd" id="acw-eng">OFF</div></div>
+                    <div class="di"><div class="dl">Throttle</div><div class="dv" id="acw-thr">0%</div></div>
+                </div>
+            </div>
+            
+            <div class="sec" id="sec-fuel">
+                <div class="sh">Fuel</div>
+                <div class="dg">
+                    <div class="di"><div class="dl">Quantity</div><div class="dv" id="acw-fuelqty">0 gal</div></div>
+                    <div class="di full">
+                        <div class="dl" id="acw-fuelpct">Level (0%)</div>
+                        <div class="fbc"><div class="fb fh" id="acw-fuelbar" style="width:0%"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sec" id="sec-ap">
+                <div class="sh">Autopilot</div>
+                <div id="acw-ap"></div>
+                <div class="ams" id="acw-ap-modes"></div>
+            </div>
+            
+            <div id="acw-custom-panels"></div>
+        </div>
+        
+        <div class="ftr">
+            <span>SimWidget v1.0</span>
+            <span id="acw-time">--:--</span>
+        </div>
+        
+        <div class="resize-handle" id="acw-resize"></div>
+    </div>
+</div>

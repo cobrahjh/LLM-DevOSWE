@@ -1,0 +1,14 @@
+{
+  "blockedCount": 4,
+  "safeCount": 1,
+  "blockedFiles": [
+    "malware.exe",
+    "hack.dll",
+    "script.bat",
+    "run.ps1"
+  ],
+  "safeFiles": [
+    "safe.js"
+  ],
+  "correctlyBlocked": true
+}

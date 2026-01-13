@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-01-08T05:44:46.115Z",
+  "duration": 28,
+  "runId": null,
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 10
+  },
+  "tests": [
+    {
+      "id": "security/Security Inspector Loads",
+      "status": "skipped",
+      "duration": 5
+    },
+    {
+      "id": "security/Scan JavaScript File",
+      "status": "skipped",
+      "duration": 3
+    },
+    {
+      "id": "security/Scan Widget Directory",
+      "status": "skipped",
+      "duration": 4
+    },
+    {
+      "id": "security/Detect Dangerous Patterns",
+      "status": "skipped",
+      "duration": 0
+    },
+    {
+      "id": "security/Widget Validator Loads",
+      "status": "skipped",
+      "duration": 2
+    },
+    {
+      "id": "security/Validate Widget Template",
+      "status": "skipped",
+      "duration": 6
+    },
+    {
+      "id": "security/Validate Manifest Schema",
+      "status": "skipped",
+      "duration": 5
+    },
+    {
+      "id": "security/Detect Blocked File Types",
+      "status": "skipped",
+      "duration": 0
+    },
+    {
+      "id": "security/Hash Calculation",
+      "status": "skipped",
+      "duration": 0
+    },
+    {
+      "id": "security/Entropy Calculation",
+      "status": "skipped",
+      "duration": 0
+    }
+  ]
+}

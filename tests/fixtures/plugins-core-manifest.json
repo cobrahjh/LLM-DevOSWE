@@ -1,0 +1,13 @@
+{
+    "id": "core",
+    "required": true,
+    "provides": [
+        "autopilot",
+        "basic-controls",
+        "flight-data",
+        "fuel-display",
+        "lights",
+        "rest-api",
+        "websocket-api"
+    ]
+}

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SimWidget Panel - Browser Test</title>
+    <style>
+        body {
+            background: #1a1a2e;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .test-container {
+            display: flex;
+            gap: 20px;
+        }
+        .panel-wrapper {
+            width: 350px;
+        }
+        .controls {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            color: #fff;
+            width: 300px;
+        }
+        .controls h3 {
+            margin-top: 0;
+            color: #38bdf8;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+        .control-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .value-display {
+            font-size: 11px;
+            color: #38bdf8;
+            float: right;
+        }
+        .log-panel {
+            background: #0f0f23;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            color: #22c55e;
+        }
+        .log-entry { margin: 2px 0; }
+    </style>
+    <link rel="stylesheet" href="html_ui/InGamePanels/SimWidgetPanel/SimWidgetPanel.css">
+</head>
+<body>
+    <h2 style="color:#fff;margin-bottom:20px;">SimWidget Panel - Browser Test Mode</h2>
+    
+    <div class="test-container">
+        <!-- Panel Preview -->
+        <div class="panel-wrapper">
+            <simwidget-panel>
+                <div id="SimWidgetPanel">
+                    <div id="acw-root">
+                        <div class="acw" id="acw-panel">
+                            <div class="hdr">
+                                <span class="ttl">AIRCRAFT CONTROL</span>
+                                <span class="acn" id="acw-title">SimWidget</span>
+                            </div>
+                            <div id="acw-content">
+                                <div class="sec" id="sec-flight">
+                                    <div class="sh">Flight Data</div>
+                                    <div class="dg">
+                                        <div class="di"><div class="dl">Altitude</div><div class="dv" id="acw-alt">0 ft</div></div>
+                                        <div class="di"><div class="dl">Speed</div><div class="dv cy" id="acw-spd">0 kts</div></div>
+                                        <div class="di"><div class="dl">Heading</div><div class="dv" id="acw-hdg">000°</div></div>
+                                        <div class="di"><div class="dl">V/S</div><div class="dv" id="acw-vs">0 fpm</div></div>
+                                    </div>
+                                </div>
+                                <div class="sec" id="sec-systems">
+                                    <div class="sh">Systems</div>
+                                    <div class="sr" id="acw-systems">
+                                        <div class="btn" id="btn-brk"><div class="sd off"></div><span>P.BRK</span></div>
+                                        <div class="btn" id="btn-gear"><div class="sd off"></div><span>GEAR</span></div>
+                                        <div class="btn" id="btn-flaps"><div class="sd off"></div><span>FLAPS</span></div>
+                                    </div>
+                                </div>
+                                <div class="sec" id="sec-lights">
+                                    <div class="sh">Lights</div>
+                                    <div class="sr" id="acw-lights">
+                                        <div class="btn" id="btn-nav"><div class="sd off"></div><span>NAV</span></div>
+                                        <div class="btn" id="btn-bcn"><div class="sd off"></div><span>BCN</span></div>
+                                        <div class="btn" id="btn-strb"><div class="sd off"></div><span>STRB</span></div>
+                                        <div class="btn" id="btn-ldg"><div class="sd off"></div><span>LDG</span></div>
+                                        <div class="btn" id="btn-taxi"><div class="sd off"></div><span>TAXI</span></div>
+                                    </div>
+                                </div>
+                                <div class="sec" id="sec-engine">
+                                    <div class="sh">Engine</div>
+                                    <div class="dg">
+                                        <div class="di"><div class="dl">Status</div><div class="dv rd" id="acw-eng">OFF</div></div>
+                                        <div class="di"><div class="dl">Throttle</div><div class="dv" id="acw-thr">0%</div></div>
+                                    </div>
+                                </div>
+                                <div class="sec" id="sec-fuel">
+                                    <div class="sh">Fuel</div>
+                                    <div class="dg">
+                                        <div class="di"><div class="dl">Quantity</div><div class="dv" id="acw-fuelqty">0 gal</div></div>
+                                        <div class="di full">
+                                            <div class="dl" id="acw-fuelpct">Level (0%)</div>
+                                            <div class="fbc"><div class="fb fh" id="acw-fuelbar" style="width:0%"></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="sec" id="sec-ap">
+                                    <div class="sh">Autopilot</div>
+                                    <div id="acw-ap"><div class="apbtn" id="btn-ap">AP OFF</div></div>
+                                    <div class="ams" id="acw-ap-modes">
+                                        <div class="ambtn" id="btn-hdg">HDG</div>
+                                        <div class="ambtn" id="btn-apnav">NAV</div>
+                                        <div class="ambtn" id="btn-alt">ALT</div>
+                                        <div class="ambtn" id="btn-vs">VS</div>
+                                        <div class="ambtn" id="btn-apr">APR</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ftr">
+                                <span>SimWidget v1.0 [TEST]</span>
+                                <span id="acw-time">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </simwidget-panel>
+        </div>
+        
+        <!-- Sim Controls -->
+        <div class="controls">
+            <h3>🎮 Simulate Flight Data</h3>
+            
+            <div class="control-group">
+                <label>Altitude <span class="value-display" id="alt-val">10000</span> ft</label>
+                <input type="range" id="sim-alt" min="0" max="45000" value="10000">
+            </div>
+            
+            <div class="control-group">
+                <label>Speed <span class="value-display" id="spd-val">250</span> kts</label>
+                <input type="range" id="sim-spd" min="0" max="500" value="250">
+            </div>
+            
+            <div class="control-group">
+                <label>Heading <span class="value-display" id="hdg-val">180</span>°</label>
+                <input type="range" id="sim-hdg" min="0" max="359" value="180">
+            </div>
+            
+            <div class="control-group">
+                <label>V/S <span class="value-display" id="vs-val">0</span> fpm</label>
+                <input type="range" id="sim-vs" min="-3000" max="3000" value="0">
+            </div>
+            
+            <div class="control-group">
+                <label>Throttle <span class="value-display" id="thr-val">80</span>%</label>
+                <input type="range" id="sim-thr" min="0" max="100" value="80">
+            </div>
+            
+            <div class="control-group">
+                <label>Fuel <span class="value-display" id="fuel-val">75</span>%</label>
+                <input type="range" id="sim-fuel" min="0" max="100" value="75">
+            </div>
+            
+            <div class="control-group">
+                <label><input type="checkbox" id="sim-eng" checked> Engine Running</label>
+            </div>
+            
+            <div class="log-panel" id="log-panel">
+                <div class="log-entry">[Ready] SimVar mock initialized</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SimVar Mock -->
+    <script>
+        // Mock SimVar API
+        const simData = {
+            'INDICATED ALTITUDE': 10000,
+            'AIRSPEED INDICATED': 250,
+            'HEADING INDICATOR': 180,
+            'VERTICAL SPEED': 0,
+            'GENERAL ENG THROTTLE LEVER POSITION:1': 80,
+            'GENERAL ENG COMBUSTION:1': true,
+            'FUEL TOTAL QUANTITY': 75,
+            'FUEL TOTAL CAPACITY': 100,
+            'BRAKE PARKING POSITION': false,
+            'GEAR HANDLE POSITION': false,
+            'LIGHT NAV': false,
+            'LIGHT BEACON': false,
+            'LIGHT STROBE': false,
+            'LIGHT LANDING': false,
+            'LIGHT TAXI': false,
+            'AUTOPILOT MASTER': false,
+            'AUTOPILOT HEADING LOCK': false,
+            'AUTOPILOT NAV1 LOCK': false,
+            'AUTOPILOT ALTITUDE LOCK': false,
+            'AUTOPILOT VERTICAL HOLD': false,
+            'AUTOPILOT APPROACH HOLD': false
+        };
+        
+        window.SimVar = {
+            GetSimVarValue: (name, unit) => {
+                return simData[name] || 0;
+            },
+            SetSimVarValue: (event, type, value) => {
+                log(`[CMD] ${event} = ${value}`);
+                
+                // Toggle lights/systems based on K: events
+                const toggleMap = {
+                    'K:PARKING_BRAKES': 'BRAKE PARKING POSITION',
+                    'K:GEAR_TOGGLE': 'GEAR HANDLE POSITION',
+                    'K:TOGGLE_NAV_LIGHTS': 'LIGHT NAV',
+                    'K:TOGGLE_BEACON_LIGHTS': 'LIGHT BEACON',
+                    'K:STROBES_TOGGLE': 'LIGHT STROBE',
+                    'K:LANDING_LIGHTS_TOGGLE': 'LIGHT LANDING',
+                    'K:TOGGLE_TAXI_LIGHTS': 'LIGHT TAXI',
+                    'K:AP_MASTER': 'AUTOPILOT MASTER',
+                    'K:AP_PANEL_HEADING_HOLD': 'AUTOPILOT HEADING LOCK',
+                    'K:AP_NAV1_HOLD': 'AUTOPILOT NAV1 LOCK',
+                    'K:AP_PANEL_ALTITUDE_HOLD': 'AUTOPILOT ALTITUDE LOCK',
+                    'K:AP_PANEL_VS_HOLD': 'AUTOPILOT VERTICAL HOLD',
+                    'K:AP_APR_HOLD': 'AUTOPILOT APPROACH HOLD'
+                };
+                
+                if (toggleMap[event]) {
+                    simData[toggleMap[event]] = !simData[toggleMap[event]];
+                    log(`[SIM] ${toggleMap[event]} = ${simData[toggleMap[event]]}`);
+                }
+            }
+        };
+        
+        function log(msg) {
+            const panel = document.getElementById('log-panel');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = msg;
+            panel.appendChild(entry);
+            panel.scrollTop = panel.scrollHeight;
+        }
+        
+        // Wire up controls
+        document.getElementById('sim-alt').oninput = (e) => {
+            simData['INDICATED ALTITUDE'] = parseInt(e.target.value);
+            document.getElementById('alt-val').textContent = e.target.value;
+        };
+        document.getElementById('sim-spd').oninput = (e) => {
+            simData['AIRSPEED INDICATED'] = parseInt(e.target.value);
+            document.getElementById('spd-val').textContent = e.target.value;
+        };
+        document.getElementById('sim-hdg').oninput = (e) => {
+            simData['HEADING INDICATOR'] = parseInt(e.target.value);
+            document.getElementById('hdg-val').textContent = e.target.value;
+        };
+        document.getElementById('sim-vs').oninput = (e) => {
+            simData['VERTICAL SPEED'] = parseInt(e.target.value);
+            document.getElementById('vs-val').textContent = e.target.value;
+        };
+        document.getElementById('sim-thr').oninput = (e) => {
+            simData['GENERAL ENG THROTTLE LEVER POSITION:1'] = parseInt(e.target.value);
+            document.getElementById('thr-val').textContent = e.target.value;
+        };
+        document.getElementById('sim-fuel').oninput = (e) => {
+            simData['FUEL TOTAL QUANTITY'] = parseInt(e.target.value);
+            document.getElementById('fuel-val').textContent = e.target.value;
+        };
+        document.getElementById('sim-eng').onchange = (e) => {
+            simData['GENERAL ENG COMBUSTION:1'] = e.target.checked;
+            log(`[SIM] Engine = ${e.target.checked ? 'ON' : 'OFF'}`);
+        };
+    </script>
+    
+    <!-- Load actual panel code -->
+    <script src="html_ui/InGamePanels/SimWidgetPanel/SimWidgetPanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Data Widget - SimWidget</title>
+  <link rel="stylesheet" href="/ui/shared/widget-common.css">
+  <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+  <div class="widget-container" id="widget">
+    <div class="widget-header" id="header">
+      <div class="header-left">
+        <span class="connection-status" id="conn-status" title="Disconnected">●</span>
+        <span class="widget-title">FLIGHT DATA</span>
+        <span class="widget-brand">SimWidget</span>
+      </div>
+      <div class="header-controls">
+        <button class="control-btn" id="minimizeBtn" title="Minimize">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14"/>
+          </svg>
+        </button>
+        <button class="control-btn" id="settingsBtn" title="Settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </button>
+        <button class="control-btn close-btn" id="closeBtn" title="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="widget-content" id="content">
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="data-label">ALT</div>
+          <div class="data-value" id="altitude">---</div>
+          <div class="data-unit">ft</div>
+        </div>
+        <div class="data-card">
+          <div class="data-label">HDG</div>
+          <div class="data-value" id="heading">---</div>
+          <div class="data-unit">°</div>
+        </div>
+        <div class="data-card">
+          <div class="data-label">IAS</div>
+          <div class="data-value" id="ias">---</div>
+          <div class="data-unit">kts</div>
+        </div>
+        <div class="data-card">
+          <div class="data-label">GS</div>
+          <div class="data-value" id="groundspeed">---</div>
+          <div class="data-unit">kts</div>
+        </div>
+        <div class="data-card wide">
+          <div class="data-label">V/S</div>
+          <div class="data-value" id="vspeed">---</div>
+          <div class="data-unit">fpm</div>
+        </div>
+        <div class="data-card wide">
+          <div class="data-label">WIND</div>
+          <div class="data-value" id="wind">---</div>
+          <div class="data-unit"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scan-line"></div>
+    
+    <!-- Resize handles -->
+    <div class="resize-handle resize-handle-se" id="resizeSE"></div>
+    <div class="resize-handle resize-handle-e" id="resizeE"></div>
+    <div class="resize-handle resize-handle-s" id="resizeS"></div>
+  </div>
+
+  <script src="widget.js"></script>
+</body>
+</html>

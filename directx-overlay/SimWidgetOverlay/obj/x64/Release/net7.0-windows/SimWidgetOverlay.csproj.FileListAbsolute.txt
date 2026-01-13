@@ -1,0 +1,5 @@
+C:\DevClaude\SimWidget Engine\directx-overlay\SimWidgetOverlay\obj\x64\Release\net7.0-windows\SimWidgetOverlay.csproj.AssemblyReference.cache
+C:\DevClaude\SimWidget Engine\directx-overlay\SimWidgetOverlay\obj\x64\Release\net7.0-windows\SimWidgetOverlay.GeneratedMSBuildEditorConfig.editorconfig
+C:\DevClaude\SimWidget Engine\directx-overlay\SimWidgetOverlay\obj\x64\Release\net7.0-windows\SimWidgetOverlay.AssemblyInfoInputs.cache
+C:\DevClaude\SimWidget Engine\directx-overlay\SimWidgetOverlay\obj\x64\Release\net7.0-windows\SimWidgetOverlay.AssemblyInfo.cs
+C:\DevClaude\SimWidget Engine\directx-overlay\SimWidgetOverlay\obj\x64\Release\net7.0-windows\SimWidgetOverlay.csproj.CoreCompileInputs.cache

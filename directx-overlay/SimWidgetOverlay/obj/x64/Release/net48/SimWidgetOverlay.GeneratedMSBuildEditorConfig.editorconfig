@@ -1,0 +1,8 @@
+is_global = true
+build_property.RootNamespace = SimWidgetOverlay
+build_property.ProjectDir = C:\DevClaude\SimWidget Engine\directx-overlay\SimWidgetOverlay\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.CsWinRTUseWindowsUIXamlProjections = false
+build_property.EffectiveAnalysisLevelStyle = 
+build_property.EnableCodeStyleSeverity = 

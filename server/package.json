@@ -1,0 +1,14 @@
+{
+  "name": "simwidget-server",
+  "version": "1.0.0",
+  "description": "SimConnect bridge server for SimWidget Engine",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "node-simconnect": "^4.0.0",
+    "ws": "^8.16.0"
+  }
+}

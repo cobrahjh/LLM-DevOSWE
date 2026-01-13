@@ -1,0 +1,158 @@
+/**
+ * SimWidget Mini-Widgets Styles
+ * Version: v1.0.0
+ * Last updated: 2026-01-06
+ */
+
+#mini-widgets-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 500;
+}
+
+.mini-widget {
+    position: absolute;
+    width: 120px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    font-family: 'Segoe UI', 'Roboto Mono', monospace;
+    pointer-events: auto;
+    user-select: none;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mini-widget:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+}
+
+.mini-widget.hidden {
+    display: none;
+}
+
+/* Header */
+.mini-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 7px 7px 0 0;
+    cursor: move;
+}
+
+.mini-widget-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.mini-widget-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.mini-widget-close:hover {
+    color: #ff4444;
+}
+
+/* Body - Main Value */
+.mini-widget-body {
+    padding: 8px;
+    text-align: center;
+}
+
+.mini-widget-value {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #00ff88;
+    line-height: 1.1;
+    text-shadow: 0 0 10px currentColor;
+}
+
+.mini-widget-unit {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 2px;
+}
+
+/* Footer - Secondary Info */
+.mini-widget-footer {
+    padding: 4px 8px 6px;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Compact Mode */
+.mini-widget.compact {
+    width: 80px;
+}
+
+.mini-widget.compact .mini-widget-value {
+    font-size: 20px;
+}
+
+.mini-widget.compact .mini-widget-footer {
+    display: none;
+}
+
+/* Color Variants */
+.mini-widget[data-widget="airspeed"] .mini-widget-header {
+    border-left: 3px solid #00aaff;
+}
+
+.mini-widget[data-widget="altitude"] .mini-widget-header {
+    border-left: 3px solid #00ff88;
+}
+
+.mini-widget[data-widget="heading"] .mini-widget-header {
+    border-left: 3px solid #ffaa00;
+}
+
+.mini-widget[data-widget="vspeed"] .mini-widget-header {
+    border-left: 3px solid #aa88ff;
+}
+
+.mini-widget[data-widget="gforce"] .mini-widget-header {
+    border-left: 3px solid #ff4488;
+}
+
+/* Warning States */
+.mini-widget.warning {
+    border-color: #ffaa00;
+    animation: pulse-warning 1s infinite;
+}
+
+.mini-widget.critical {
+    border-color: #ff4444;
+    animation: pulse-critical 0.5s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 170, 0, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(255, 170, 0, 0.6); }
+}
+
+@keyframes pulse-critical {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
+    50% { box-shadow: 0 0 25px rgba(255, 68, 68, 0.8); }
+}

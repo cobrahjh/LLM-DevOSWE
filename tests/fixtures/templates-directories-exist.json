@@ -1,0 +1,8 @@
+{
+  "allExist": true,
+  "templates": {
+    "control-widget": true,
+    "display-widget": true,
+    "tool-widget": true
+  }
+}

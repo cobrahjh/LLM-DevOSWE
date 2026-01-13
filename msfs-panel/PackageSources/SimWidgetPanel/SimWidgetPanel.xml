@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SimBase.Document Type="AceXML" version="1,0">
+    <InGamePanel id="SimWidgetPanel">
+        <Widget>
+            <Type>TOOLBAR_PANEL</Type>
+            <DefaultSize>350,600</DefaultSize>
+            <DefaultPos>50,100</DefaultPos>
+            <Size>350,600</Size>
+            <Resizable>true</Resizable>
+            <Draggable>true</Draggable>
+            <AutoOpen>false</AutoOpen>
+            <HasCloseButton>true</HasCloseButton>
+            <HtmlUrl>coui://html_ui/InGamePanels/SimWidgetPanel/SimWidgetPanel.html</HtmlUrl>
+            <Icon>ICON_SIMWIDGET</Icon>
+            <IconUrl>coui://html_ui/Icons/Toolbar/ICON_SIMWIDGET.svg</IconUrl>
+            <Title>TT:SimWidget</Title>
+        </Widget>
+    </InGamePanel>
+</SimBase.Document>

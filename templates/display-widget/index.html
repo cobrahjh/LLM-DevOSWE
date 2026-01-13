@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget - Display Widget Template</title>
+    <link rel="stylesheet" href="../shared/widget-common.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget-container">
+        <!-- HEADER -->
+        <div class="widget-header">
+            <div class="header-left">
+                <span class="widget-icon">📊</span>
+                <h1 class="widget-title">Display Widget</h1>
+            </div>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-transparency" title="Toggle Transparency">👁</button>
+                <button class="btn-icon" id="btn-settings" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <span class="status-dot" id="status-dot"></span>
+            <span class="status-text" id="status-text">Connecting...</span>
+            <span class="update-indicator" id="update-indicator">●</span>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="widget-content">
+            
+            <!-- DATA GRID -->
+            <div class="data-grid">
+                <div class="data-card primary">
+                    <div class="data-icon">📏</div>
+                    <div class="data-label">Altitude</div>
+                    <div class="data-value" id="altitude">---</div>
+                    <div class="data-unit">ft</div>
+                </div>
+                
+                <div class="data-card primary">
+                    <div class="data-icon">🧭</div>
+                    <div class="data-label">Heading</div>
+                    <div class="data-value" id="heading">---</div>
+                    <div class="data-unit">°</div>
+                </div>
+                
+                <div class="data-card">
+                    <div class="data-icon">💨</div>
+                    <div class="data-label">Airspeed</div>
+                    <div class="data-value" id="airspeed">---</div>
+                    <div class="data-unit">kts</div>
+                </div>
+                
+                <div class="data-card">
+                    <div class="data-icon">⬆️</div>
+                    <div class="data-label">V/S</div>
+                    <div class="data-value" id="vs">---</div>
+                    <div class="data-unit">fpm</div>
+                </div>
+            </div>
+
+            <!-- SECONDARY DATA -->
+            <div class="data-row">
+                <div class="data-item">
+                    <span class="data-label">Ground Speed</span>
+                    <span class="data-value" id="gs">---</span>
+                    <span class="data-unit">kts</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Wind</span>
+                    <span class="data-value" id="wind">---</span>
+                    <span class="data-unit">kts</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <div class="settings-panel" id="settings-panel" hidden>
+            <div class="settings-header">
+                <span>Settings</span>
+                <button class="btn-close" id="settings-close">✕</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-row">
+                    <label for="setting-units">Units</label>
+                    <select id="setting-units">
+                        <option value="imperial">Imperial (ft, kts)</option>
+                        <option value="metric">Metric (m, km/h)</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label for="setting-decimals">Show Decimals</label>
+                    <input type="checkbox" id="setting-decimals">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/widget-base.js"></script>
+    <script src="widget.js"></script>
+</body>
+</html>

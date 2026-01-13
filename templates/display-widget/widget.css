@@ -1,0 +1,117 @@
+/**
+ * Display Widget Template CSS v1.0.0
+ * 
+ * Extends widget-common.css with display-specific styles
+ * 
+ * Path: templates/display-widget/widget.css
+ * Last Updated: 2025-01-08
+ */
+
+/* Widget-specific overrides */
+.widget-container {
+    min-width: 280px;
+    max-width: 360px;
+}
+
+/* Data grid - 2 column layout */
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+/* Data card styling */
+.data-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.data-card:hover {
+    border-color: var(--accent-color);
+}
+
+.data-card.primary {
+    background: var(--card-bg-highlight);
+}
+
+.data-card .data-icon {
+    font-size: 1.5em;
+    margin-bottom: 4px;
+}
+
+.data-card .data-label {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.data-card .data-value {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.data-card .data-unit {
+    font-size: 0.7em;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Data row - horizontal layout */
+.data-row {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.data-item {
+    text-align: center;
+}
+
+.data-item .data-label {
+    font-size: 0.7em;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.data-item .data-value {
+    font-size: 1.1em;
+    font-weight: 600;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.data-item .data-unit {
+    font-size: 0.7em;
+    color: var(--text-muted);
+    margin-left: 2px;
+}
+
+/* Update indicator */
+.update-indicator {
+    margin-left: auto;
+    color: var(--accent-color);
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+}
+
+.update-indicator.flash {
+    opacity: 1;
+}
+
+/* Status bar extension */
+.status-bar {
+    display: flex;
+    align-items: center;
+}

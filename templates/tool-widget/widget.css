@@ -1,0 +1,196 @@
+/**
+ * Tool Widget Template CSS v1.0.0
+ * 
+ * Extends widget-common.css with tool-specific styles
+ * 
+ * Path: templates/tool-widget/widget.css
+ * Last Updated: 2025-01-08
+ */
+
+/* Widget-specific overrides */
+.widget-container {
+    min-width: 300px;
+    max-width: 400px;
+}
+
+/* Status area */
+.status-area {
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+}
+
+.status-indicator .status-icon {
+    font-size: 1.2em;
+    transition: color 0.3s ease;
+}
+
+.status-indicator.ready .status-icon { color: var(--text-muted); }
+.status-indicator.running .status-icon { color: #22c55e; animation: pulse 1s infinite; }
+.status-indicator.paused .status-icon { color: #f59e0b; }
+.status-indicator.disconnected .status-icon { color: #ef4444; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Transport controls */
+.transport-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.transport-controls .btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px;
+    min-height: 50px;
+}
+
+.transport-controls .btn-icon {
+    font-size: 1.3em;
+}
+
+.transport-controls .btn-label {
+    font-size: 0.75em;
+    margin-top: 4px;
+}
+
+.btn-record { background: #22c55e; }
+.btn-record:hover:not(:disabled) { background: #16a34a; }
+.btn-pause { background: #f59e0b; }
+.btn-pause:hover:not(:disabled) { background: #d97706; }
+.btn-stop { background: #ef4444; }
+.btn-stop:hover:not(:disabled) { background: #dc2626; }
+
+/* Stats row */
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-item .stat-label {
+    font-size: 0.7em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.stat-item .stat-value {
+    font-size: 1.3em;
+    font-weight: 600;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+/* List container */
+.list-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.list-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.list-title {
+    font-weight: 600;
+    font-size: 0.85em;
+}
+
+.list-count {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+.list-header .btn-icon {
+    margin-left: auto;
+    font-size: 0.9em;
+}
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85em;
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item:hover {
+    background: var(--bg-hover);
+}
+
+.list-item .item-icon {
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+.list-item .item-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.list-item .item-meta {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-left: 8px;
+}
+
+.list-empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Action row */
+.action-row {
+    display: flex;
+    gap: 8px;
+}
+
+.action-row .btn {
+    flex: 1;
+}

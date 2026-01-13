@@ -1,0 +1,83 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\DevClaude\\SimWidget Engine\\dx12-overlay\\SimWidgetDX12\\SimWidgetDX12.csproj": {}
+  },
+  "projects": {
+    "C:\\DevClaude\\SimWidget Engine\\dx12-overlay\\SimWidgetDX12\\SimWidgetDX12.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\DevClaude\\SimWidget Engine\\dx12-overlay\\SimWidgetDX12\\SimWidgetDX12.csproj",
+        "projectName": "SimWidgetDX12",
+        "projectPath": "C:\\DevClaude\\SimWidget Engine\\dx12-overlay\\SimWidgetDX12\\SimWidgetDX12.csproj",
+        "packagesPath": "C:\\Users\\hjhar\\.nuget\\packages\\",
+        "outputPath": "C:\\DevClaude\\SimWidget Engine\\dx12-overlay\\SimWidgetDX12\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\hjhar\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net48"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "targetAlias": "net48",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net48": {
+          "targetAlias": "net48",
+          "dependencies": {
+            "EasyHook": {
+              "target": "Package",
+              "version": "[2.7.7097, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            },
+            "Vortice.D3DCompiler": {
+              "target": "Package",
+              "version": "[2.4.2, )"
+            },
+            "Vortice.DXGI": {
+              "target": "Package",
+              "version": "[2.4.2, )"
+            },
+            "Vortice.Direct2D1": {
+              "target": "Package",
+              "version": "[2.4.2, )"
+            },
+            "Vortice.Direct3D11": {
+              "target": "Package",
+              "version": "[2.4.2, )"
+            },
+            "Vortice.Direct3D12": {
+              "target": "Package",
+              "version": "[2.4.2, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

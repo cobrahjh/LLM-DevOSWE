@@ -1,0 +1,9 @@
+{
+  "detected": true,
+  "criticalIssues": 5,
+  "highIssues": 1,
+  "totalIssues": 6,
+  "foundEval": true,
+  "foundInnerHTML": true,
+  "foundFetch": true
+}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="/JS/coherent.js"></script>
+    <script type="text/javascript" src="/JS/common.js"></script>
+    <script type="text/javascript" src="/JS/simvar.js"></script>
+    <script type="text/javascript" src="/JS/Services/ToolBarPanels.js"></script>
+    <link rel="import" href="/templates/ingameUi/ingameUi.html" />
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background: transparent;
+        }
+        ingame-ui#simwidget_panel {
+            display: flex;
+            flex-direction: column;
+            width: 420px !important;
+            height: 700px !important;
+        }
+        ingame-ui#simwidget_panel .ingameUiContent {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+        ingame-ui#simwidget_panel .ingameUiWrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+        #SimWidgetPanel {
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            color: white;
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 22px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .acw { padding: 16px; }
+        .hdr { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 14px 16px; 
+            background: #16213e; 
+            border-bottom: 2px solid #0f3460; 
+        }
+        .ttl { font-weight: bold; color: #e94560; font-size: 24px; }
+        .acn { color: #00d9ff; font-size: 20px; }
+        .sec { margin: 14px 0; padding: 14px; background: #16213e; border-radius: 6px; }
+        .sh { color: #e94560; font-weight: bold; margin-bottom: 12px; font-size: 18px; }
+        .dg { display: flex; flex-direction: column; gap: 8px; }
+        .di { display: flex; justify-content: space-between; padding: 4px 0; font-size: 18px; }
+        .dl { color: #aaa; }
+        .dv { color: #00d9ff; font-weight: 500; }
+        .sr { display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 10px 16px; 
+            background: #0f3460; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+            user-select: none;
+        }
+        .btn:hover { background: #1a5a9a; }
+        .btn:active { background: #2a6aaa; }
+        .sd { width: 14px; height: 14px; border-radius: 50%; }
+        .sd.off { background: #666; }
+        .sd.on { background: #00ff00; box-shadow: 0 0 6px #00ff00; }
+        .ftr { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 12px 16px; 
+            color: #888; 
+            font-size: 14px; 
+            border-top: 1px solid #0f3460; 
+            margin-top: 14px; 
+        }
+        .rd { color: #e94560; }
+        .cy { color: #00d9ff; }
+        .gn { color: #00ff00; }
+    </style>
+    <script type="text/javascript" src="./SimWidgetPanel.js"></script>
+</head>
+<body class="border-box">
+    <ingamepanel-custom>
+        <ingame-ui
+            id="simwidget_panel"
+            panel-id="PANEL_SIMWIDGET"
+            class="ingameUiFrame"
+            content-fit="false"
+        >
+            <div id="SimWidgetPanel">
+                <div class="acw">
+                    <div class="hdr">
+                        <span class="ttl">AIRCRAFT CONTROL</span>
+                        <span class="acn">SimWidget</span>
+                    </div>
+                    
+                    <div class="sec">
+                        <div class="sh">Flight Data</div>
+                        <div class="dg">
+                            <div class="di"><span class="dl">Altitude</span><span class="dv" id="acw-alt">0 ft</span></div>
+                            <div class="di"><span class="dl">Speed</span><span class="dv cy" id="acw-spd">0 kts</span></div>
+                            <div class="di"><span class="dl">Heading</span><span class="dv" id="acw-hdg">000°</span></div>
+                            <div class="di"><span class="dl">V/S</span><span class="dv" id="acw-vs">0 fpm</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sec">
+                        <div class="sh">Systems</div>
+                        <div class="sr">
+                            <div class="btn" id="btn-brk"><div class="sd off"></div><span>P.BRK</span></div>
+                            <div class="btn" id="btn-gear"><div class="sd off"></div><span>GEAR</span></div>
+                            <div class="btn" id="btn-flaps"><div class="sd off"></div><span>FLAPS</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sec">
+                        <div class="sh">Lights</div>
+                        <div class="sr">
+                            <div class="btn" id="btn-nav"><div class="sd off"></div><span>NAV</span></div>
+                            <div class="btn" id="btn-bcn"><div class="sd off"></div><span>BCN</span></div>
+                            <div class="btn" id="btn-strb"><div class="sd off"></div><span>STRB</span></div>
+                            <div class="btn" id="btn-ldg"><div class="sd off"></div><span>LDG</span></div>
+                            <div class="btn" id="btn-taxi"><div class="sd off"></div><span>TAXI</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="sec">
+                        <div class="sh">Engine</div>
+                        <div class="dg">
+                            <div class="di"><span class="dl">Status</span><span class="dv rd" id="acw-eng">OFF</span></div>
+                            <div class="di"><span class="dl">Throttle</span><span class="dv" id="acw-thr">0%</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="ftr">
+                        <span>SimWidget v1.0</span>
+                        <span id="acw-time">--:--</span>
+                    </div>
+                </div>
+            </div>
+        </ingame-ui>
+    </ingamepanel-custom>
+</body>
+</html>

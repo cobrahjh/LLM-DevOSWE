@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SimWidget Panel</title>
+    <link rel="stylesheet" href="/InGamePanels/SimWidgetPanel/SimWidgetPanel.css">
+</head>
+<body>
+    <simwidget-panel>
+        <div id="SimWidgetPanel">
+            <div id="acw-root">
+                <div class="acw" id="acw-panel">
+                    <div class="hdr">
+                        <span class="ttl">AIRCRAFT CONTROL</span>
+                        <span class="acn" id="acw-title">SimWidget</span>
+                    </div>
+                    
+                    <div id="acw-content">
+                        <div class="sec" id="sec-flight">
+                            <div class="sh">Flight Data</div>
+                            <div class="dg">
+                                <div class="di"><div class="dl">Altitude</div><div class="dv" id="acw-alt">0 ft</div></div>
+                                <div class="di"><div class="dl">Speed</div><div class="dv cy" id="acw-spd">0 kts</div></div>
+                                <div class="di"><div class="dl">Heading</div><div class="dv" id="acw-hdg">000°</div></div>
+                                <div class="di"><div class="dl">V/S</div><div class="dv" id="acw-vs">0 fpm</div></div>
+                            </div>
+                        </div>
+                        
+                        <div class="sec" id="sec-systems">
+                            <div class="sh">Systems</div>
+                            <div class="sr" id="acw-systems">
+                                <div class="btn" id="btn-brk"><div class="sd off"></div><span>P.BRK</span></div>
+                                <div class="btn" id="btn-gear"><div class="sd off"></div><span>GEAR</span></div>
+                                <div class="btn" id="btn-flaps"><div class="sd off"></div><span>FLAPS</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="sec" id="sec-lights">
+                            <div class="sh">Lights</div>
+                            <div class="sr" id="acw-lights">
+                                <div class="btn" id="btn-nav"><div class="sd off"></div><span>NAV</span></div>
+                                <div class="btn" id="btn-bcn"><div class="sd off"></div><span>BCN</span></div>
+                                <div class="btn" id="btn-strb"><div class="sd off"></div><span>STRB</span></div>
+                                <div class="btn" id="btn-ldg"><div class="sd off"></div><span>LDG</span></div>
+                                <div class="btn" id="btn-taxi"><div class="sd off"></div><span>TAXI</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="sec" id="sec-engine">
+                            <div class="sh">Engine</div>
+                            <div class="dg">
+                                <div class="di"><div class="dl">Status</div><div class="dv rd" id="acw-eng">OFF</div></div>
+                                <div class="di"><div class="dl">Throttle</div><div class="dv" id="acw-thr">0%</div></div>
+                            </div>
+                        </div>
+                        
+                        <div class="sec" id="sec-fuel">
+                            <div class="sh">Fuel</div>
+                            <div class="dg">
+                                <div class="di"><div class="dl">Quantity</div><div class="dv" id="acw-fuelqty">0 gal</div></div>
+                                <div class="di full">
+                                    <div class="dl" id="acw-fuelpct">Level (0%)</div>
+                                    <div class="fbc"><div class="fb fh" id="acw-fuelbar" style="width:0%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sec" id="sec-ap">
+                            <div class="sh">Autopilot</div>
+                            <div id="acw-ap">
+                                <div class="apbtn" id="btn-ap">AP OFF</div>
+                            </div>
+                            <div class="ams" id="acw-ap-modes">
+                                <div class="ambtn" id="btn-hdg">HDG</div>
+                                <div class="ambtn" id="btn-apnav">NAV</div>
+                                <div class="ambtn" id="btn-alt">ALT</div>
+                                <div class="ambtn" id="btn-vs">VS</div>
+                                <div class="ambtn" id="btn-apr">APR</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ftr">
+                        <span>SimWidget v1.0</span>
+                        <span id="acw-time">--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </simwidget-panel>
+    
+    <script src="/JS/SimVar.js"></script>
+    <script src="/InGamePanels/SimWidgetPanel/SimWidgetPanel.js"></script>
+</body>
+</html>

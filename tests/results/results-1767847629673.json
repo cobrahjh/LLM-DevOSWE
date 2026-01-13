@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-01-08T04:47:09.673Z",
+  "duration": 5,
+  "runId": 1,
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "tests": [
+    {
+      "id": "plugins/discovery",
+      "status": "passed",
+      "duration": 3
+    },
+    {
+      "id": "plugins/core-manifest",
+      "status": "passed",
+      "duration": 0
+    },
+    {
+      "id": "plugins/manifests-valid",
+      "status": "passed",
+      "duration": 0
+    }
+  ]
+}

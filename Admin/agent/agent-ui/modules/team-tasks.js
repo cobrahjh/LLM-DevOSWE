@@ -18,7 +18,7 @@
  * - Tasks survive page refresh
  * - API: GET/POST /api/team-tasks
  *
- * Path: C:\DevOSWE\Admin\agent\agent-ui\modules\team-tasks.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-ui\modules\team-tasks.js
  * Last Updated: 2026-01-12
  */
 

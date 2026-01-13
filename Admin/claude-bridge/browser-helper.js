@@ -11,7 +11,7 @@
  *   GET  /api/status    - Check if UI is responding
  *
  * Port: 8621
- * Path: C:\DevOSWE\Admin\claude-bridge\browser-helper.js
+ * Path: C:\LLM-DevOSWE\Admin\claude-bridge\browser-helper.js
  */
 
 const express = require('express');

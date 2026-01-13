@@ -1,0 +1,6 @@
+{
+  "lowEntropy": "0.00",
+  "highEntropy": "5.00",
+  "lowIsLower": true,
+  "highAboveThreshold": true
+}

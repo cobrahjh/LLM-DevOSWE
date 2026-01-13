@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget - Aircraft Control</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="SimWidgetPanel">
+        <div class="widget aircraft-control">
+            <!-- Header -->
+            <div class="widget-header">
+                <span class="widget-title">✈️ AIRCRAFT CONTROL</span>
+                <span class="widget-brand">SimWidget</span>
+                <div class="header-controls">
+                    <span class="connection-status" id="conn-status">●</span>
+                    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+                </div>
+            </div>
+            
+            <!-- Flight Data Section -->
+            <div class="section">
+                <div class="section-title">Flight Data</div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <span class="data-label">Altitude</span>
+                        <span class="data-value" id="data-alt">0 ft</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Speed</span>
+                        <span class="data-value highlight-cyan" id="data-spd">0 kts</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Heading</span>
+                        <span class="data-value" id="data-hdg">000°</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">V/S</span>
+                        <span class="data-value" id="data-vs">0 fpm</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Systems Section -->
+            <div class="section">
+                <div class="section-title">Systems</div>
+                <div class="button-row">
+                    <button class="control-btn toggle-btn" id="btn-brk" data-cmd="PARKING_BRAKES">
+                        <div class="status-led off"></div>
+                        <span>P.BRK</span>
+                    </button>
+                    <button class="control-btn toggle-btn" id="btn-gear" data-cmd="GEAR_TOGGLE">
+                        <div class="status-led off"></div>
+                        <span>GEAR</span>
+                    </button>
+                    <button class="control-btn toggle-btn" id="btn-flaps" data-cmd="FLAPS_TOGGLE">
+                        <div class="status-led off"></div>
+                        <span>FLAPS</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Autopilot Section -->
+            <div class="section">
+                <div class="section-title">Autopilot</div>
+                <div class="button-row ap-master-row">
+                    <button class="control-btn ap-master-btn" id="btn-ap" data-cmd="AP_MASTER">
+                        <div class="status-led off"></div>
+                        <span>AP MASTER</span>
+                    </button>
+                </div>
+                <div class="ap-grid">
+                    <!-- Heading -->
+                    <div class="ap-item">
+                        <div class="ap-label">HDG</div>
+                        <div class="ap-control">
+                            <button class="ap-adj-btn" data-cmd="HEADING_BUG_DEC">−</button>
+                            <input type="range" class="ap-slider" id="ap-hdg-slider" 
+                                   data-cmd="HEADING_BUG_SET" min="0" max="359" value="0">
+                            <button class="ap-adj-btn" data-cmd="HEADING_BUG_INC">+</button>
+                        </div>
+                        <span class="ap-value" id="ap-hdg">000°</span>
+                        <button class="control-btn ap-mode-btn" id="btn-hdg" data-cmd="AP_HDG_HOLD">
+                            <div class="status-led off"></div>
+                            <span>HDG</span>
+                        </button>
+                    </div>
+                    <!-- Altitude -->
+                    <div class="ap-item">
+                        <div class="ap-label">ALT</div>
+                        <div class="ap-control">
+                            <button class="ap-adj-btn" data-cmd="AP_ALT_VAR_DEC">−</button>
+                            <input type="range" class="ap-slider" id="ap-alt-slider" 
+                                   data-cmd="AP_ALT_VAR_SET_ENGLISH" min="0" max="45000" step="100" value="0">
+                            <button class="ap-adj-btn" data-cmd="AP_ALT_VAR_INC">+</button>
+                        </div>
+                        <span class="ap-value" id="ap-alt">0</span>
+                        <button class="control-btn ap-mode-btn" id="btn-alt" data-cmd="AP_ALT_HOLD">
+                            <div class="status-led off"></div>
+                            <span>ALT</span>
+                        </button>
+                    </div>
+                    <!-- Vertical Speed -->
+                    <div class="ap-item">
+                        <div class="ap-label">VS</div>
+                        <div class="ap-control">
+                            <button class="ap-adj-btn" data-cmd="AP_VS_VAR_DEC">−</button>
+                            <input type="range" class="ap-slider" id="ap-vs-slider" 
+                                   data-cmd="AP_VS_VAR_SET_ENGLISH" min="-4000" max="4000" step="100" value="0">
+                            <button class="ap-adj-btn" data-cmd="AP_VS_VAR_INC">+</button>
+                        </div>
+                        <span class="ap-value" id="ap-vs">0</span>
+                        <button class="control-btn ap-mode-btn" id="btn-vs" data-cmd="AP_VS_HOLD">
+                            <div class="status-led off"></div>
+                            <span>VS</span>
+                        </button>
+                    </div>
+                    <!-- Speed -->
+                    <div class="ap-item">
+                        <div class="ap-label">SPD</div>
+                        <div class="ap-control">
+                            <button class="ap-adj-btn" data-cmd="AP_SPD_VAR_DEC">−</button>
+                            <input type="range" class="ap-slider" id="ap-spd-slider" 
+                                   data-cmd="AP_SPD_VAR_SET" min="60" max="400" step="1" value="120">
+                            <button class="ap-adj-btn" data-cmd="AP_SPD_VAR_INC">+</button>
+                        </div>
+                        <span class="ap-value" id="ap-spd">120</span>
+                        <button class="control-btn ap-mode-btn" id="btn-spd" data-cmd="AP_PANEL_SPEED_HOLD">
+                            <div class="status-led off"></div>
+                            <span>SPD</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fuel Section -->
+            <div class="section">
+                <div class="section-title">Fuel</div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <span class="data-label">Total</span>
+                        <span class="data-value" id="fuel-total">0.0 gal</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Flow</span>
+                        <span class="data-value highlight-cyan" id="fuel-flow">0.0 gph</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Left Tank</span>
+                        <span class="data-value" id="fuel-left">0.0 gal</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Right Tank</span>
+                        <span class="data-value" id="fuel-right">0.0 gal</span>
+                    </div>
+                    <div class="data-item full-width">
+                        <span class="data-label">Endurance</span>
+                        <span class="data-value highlight-yellow" id="fuel-endur">--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lights Section -->
+            <div class="section">
+                <div class="section-title">Lights</div>
+                <div class="button-row lights-row">
+                    <button class="control-btn toggle-btn" id="btn-nav" data-cmd="TOGGLE_NAV_LIGHTS">
+                        <div class="status-led off"></div>
+                        <span>NAV</span>
+                    </button>
+                    <button class="control-btn toggle-btn" id="btn-bcn" data-cmd="TOGGLE_BEACON_LIGHTS">
+                        <div class="status-led off"></div>
+                        <span>BCN</span>
+                    </button>
+                    <button class="control-btn toggle-btn" id="btn-strb" data-cmd="STROBES_TOGGLE">
+                        <div class="status-led off"></div>
+                        <span>STRB</span>
+                    </button>
+                    <button class="control-btn toggle-btn" id="btn-ldg" data-cmd="LANDING_LIGHTS_TOGGLE">
+                        <div class="status-led off"></div>
+                        <span>LDG</span>
+                    </button>
+                    <button class="control-btn toggle-btn" id="btn-taxi" data-cmd="TOGGLE_TAXI_LIGHTS">
+                        <div class="status-led off"></div>
+                        <span>TAXI</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Camera Section -->
+            <div class="section">
+                <div class="section-title">Camera</div>
+                <div class="button-row">
+                    <button class="control-btn" id="btn-view" data-cmd="VIEW_MODE">
+                        <span class="icon">🔄</span>
+                        <span>I/E</span>
+                    </button>
+                    <button class="control-btn camera-btn" id="btn-cockpit" data-action="cockpit">
+                        <span class="icon">🎯</span>
+                        <span>CKPT</span>
+                    </button>
+                    <button class="control-btn camera-btn" id="btn-external" data-action="external">
+                        <span class="icon">✈️</span>
+                        <span>EXT</span>
+                    </button>
+                    <button class="control-btn camera-btn" id="btn-drone" data-action="drone">
+                        <span class="icon">🚁</span>
+                        <span>DRN</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Flight Controls Section -->
+            <div class="section">
+                <div class="section-title">Flight Controls</div>
+                
+                <!-- Sensitivity -->
+                <div class="sensitivity-row">
+                    <label class="sens-label">Sensitivity</label>
+                    <input type="range" class="sens-slider" id="fc-sensitivity" min="10" max="100" value="50">
+                    <span class="sens-value" id="sens-value">50%</span>
+                </div>
+                
+                <!-- AxisPad (Virtual Joystick) -->
+                <div class="axispad-container">
+                    <div class="axispad" id="axispad-yoke">
+                        <div class="axispad-grid"></div>
+                        <div class="axispad-crosshair-h"></div>
+                        <div class="axispad-crosshair-v"></div>
+                        <div class="axispad-center"></div>
+                        <div class="axispad-knob" id="axispad-knob"></div>
+                    </div>
+                    <div class="axispad-labels">
+                        <span class="label-top">NOSE UP</span>
+                        <span class="label-bottom">NOSE DN</span>
+                        <span class="label-left">L</span>
+                        <span class="label-right">R</span>
+                    </div>
+                    <div class="axispad-values">
+                        <span>AIL: <span id="axispad-ail">0</span></span>
+                        <span>ELV: <span id="axispad-elv">0</span></span>
+                    </div>
+                </div>
+                
+                <!-- Rudder -->
+                <div class="rudder-control">
+                    <div class="rudder-label">RUDDER</div>
+                    <div class="rudder-slider-wrap">
+                        <span class="rudder-end">L</span>
+                        <input type="range" class="rudder-slider" id="fc-rud" 
+                               data-cmd="AXIS_RUDDER_SET" min="-100" max="100" value="0">
+                        <span class="rudder-end">R</span>
+                    </div>
+                    <span class="rudder-value" id="val-rud">0</span>
+                </div>
+                
+                <div class="button-row">
+                    <button class="control-btn center-btn" id="btn-center" data-cmd="CENTER_AILER_RUDDER">
+                        <span class="icon">↩️</span>
+                        <span>CENTER ALL</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Engine Section -->
+            <div class="section">
+                <div class="section-title">Engine</div>
+                <div class="data-grid single">
+                    <div class="data-item">
+                        <span class="data-label">Status</span>
+                        <span class="data-value highlight-red" id="data-eng">OFF</span>
+                    </div>
+                </div>
+                
+                <div class="lever-group">
+                    <div class="lever-item">
+                        <div class="lever-label">THR</div>
+                        <input type="range" class="lever throttle" id="lever-thr" 
+                               data-cmd="THROTTLE_SET" min="0" max="100" value="0" orient="vertical">
+                        <div class="lever-value" id="val-thr">0%</div>
+                    </div>
+                    <div class="lever-item">
+                        <div class="lever-label">PROP</div>
+                        <input type="range" class="lever prop" id="lever-prop" 
+                               data-cmd="PROP_PITCH_SET" min="0" max="100" value="100" orient="vertical">
+                        <div class="lever-value" id="val-prop">100%</div>
+                    </div>
+                    <div class="lever-item">
+                        <div class="lever-label">MIX</div>
+                        <input type="range" class="lever mixture" id="lever-mix" 
+                               data-cmd="MIXTURE_SET" min="0" max="100" value="100" orient="vertical">
+                        <div class="lever-value" id="val-mix">100%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="widget-footer">
+                <span>SimWidget v1.1</span>
+                <span id="sim-time">--:--</span>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/ui/shared/telemetry.js"></script>
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/feedback-section.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

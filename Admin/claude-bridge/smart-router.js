@@ -14,7 +14,7 @@
  *   POST /api/messages/:id/complete - Claude Code reports completion
  *
  * Port: 8610
- * Path: C:\DevOSWE\Admin\claude-bridge\smart-router.js
+ * Path: C:\LLM-DevOSWE\Admin\claude-bridge\smart-router.js
  */
 
 const express = require('express');

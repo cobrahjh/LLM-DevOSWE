@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\DevClaude\\SimWidget Engine\\game-overlay\\SimWidgetGameOverlay.csproj": {}
+  },
+  "projects": {
+    "C:\\DevClaude\\SimWidget Engine\\game-overlay\\SimWidgetGameOverlay.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\DevClaude\\SimWidget Engine\\game-overlay\\SimWidgetGameOverlay.csproj",
+        "projectName": "SimWidgetGameOverlay",
+        "projectPath": "C:\\DevClaude\\SimWidget Engine\\game-overlay\\SimWidgetGameOverlay.csproj",
+        "packagesPath": "C:\\Users\\hjhar\\.nuget\\packages\\",
+        "outputPath": "C:\\DevClaude\\SimWidget Engine\\game-overlay\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\hjhar\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net48"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "targetAlias": "net48",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net48": {
+          "targetAlias": "net48",
+          "dependencies": {
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101\\RuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
+        }
+      }
+    }
+  }
+}

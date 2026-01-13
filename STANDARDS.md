@@ -618,7 +618,7 @@ vJoy integration causes input conflicts with ChasePlane. ChasePlane WebSocket (p
  * Component Name vX.X.X
  * Brief description
  * 
- * Path: C:\DevOSWE\SimWidget_Engine\...
+ * Path: C:\LLM-DevOSWE\SimWidget_Engine\...
  * 
  * Changelog:
  * vX.X.X - Change description

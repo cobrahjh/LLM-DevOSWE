@@ -1,0 +1,17 @@
+{
+  "results": {
+    "js": {
+      "detected": "json",
+      "match": true
+    },
+    "html": {
+      "detected": "html",
+      "match": true
+    },
+    "css": {
+      "detected": "css",
+      "match": true
+    }
+  },
+  "allDetected": true
+}

@@ -1,0 +1,35 @@
+{
+  "version": "1.2.0",
+  "lastUpdated": "2026-01-09",
+  "title": "Quick Reference",
+  "description": "Shorthand commands and abbreviations for Kitt interaction",
+  "categories": {
+    "commands": {
+      "label": "Commands",
+      "items": {
+        "sas": "start all servers (Master O, main, agent, remote)",
+        "newchat": "start fresh, access memory & resources",
+        "ntt": "next todo task"
+      }
+    },
+    "requests": {
+      "label": "Request Modifiers",
+      "items": {
+        "br": "best recommendation",
+        "uem": "use/create/update existing methodology/structure/engine",
+        "idt": "ideas & thoughts from team leader Kitt (PM insights)",
+        "sc": "sanity check - TL reviews for existing ideas, todos, code, processes"
+      }
+    },
+    "priorities": {
+      "label": "Priority Levels",
+      "items": {
+        "mustdo": "critical, do immediately",
+        "high": "important, soon",
+        "medium": "normal priority",
+        "low": "when time permits",
+        "thought": "abstract idea, consider later"
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@
  * Manages Kitt task processing with state machine, Claude activity monitoring,
  * and proper coordination to prevent race conditions.
  *
- * Path: C:\DevOSWE\Admin\agent\agent-ui\modules\task-processor.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-ui\modules\task-processor.js
  * Last Updated: 2026-01-11
  *
  * State Machine:

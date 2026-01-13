@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget - Tool Widget Template</title>
+    <link rel="stylesheet" href="../shared/widget-common.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget-container">
+        <!-- HEADER -->
+        <div class="widget-header">
+            <div class="header-left">
+                <span class="widget-icon">🔧</span>
+                <h1 class="widget-title">Tool Widget</h1>
+            </div>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-transparency" title="Toggle Transparency">👁</button>
+                <button class="btn-icon" id="btn-settings" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <!-- STATUS AREA -->
+        <div class="status-area">
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-icon">○</span>
+                <span class="status-message" id="status-message">Ready</span>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="widget-content">
+            
+            <!-- TRANSPORT CONTROLS -->
+            <div class="transport-controls">
+                <button class="btn btn-record" id="btn-start">
+                    <span class="btn-icon">▶</span>
+                    <span class="btn-label">Start</span>
+                </button>
+                <button class="btn btn-pause" id="btn-pause" disabled>
+                    <span class="btn-icon">⏸</span>
+                    <span class="btn-label">Pause</span>
+                </button>
+                <button class="btn btn-stop" id="btn-stop" disabled>
+                    <span class="btn-icon">⏹</span>
+                    <span class="btn-label">Stop</span>
+                </button>
+            </div>
+
+            <!-- STATS / PROGRESS -->
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-label">Duration</span>
+                    <span class="stat-value" id="stat-duration">00:00</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Items</span>
+                    <span class="stat-value" id="stat-items">0</span>
+                </div>
+            </div>
+
+            <!-- RESULTS / OUTPUT LIST -->
+            <div class="list-container">
+                <div class="list-header">
+                    <span class="list-title">Results</span>
+                    <span class="list-count" id="list-count">(0)</span>
+                    <button class="btn-icon btn-small" id="btn-clear" title="Clear">🗑</button>
+                </div>
+                <ul class="list" id="results-list">
+                    <li class="list-empty">No results yet</li>
+                </ul>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-row">
+                <button class="btn btn-secondary" id="btn-export">
+                    <span class="btn-icon">📤</span> Export
+                </button>
+                <button class="btn btn-secondary" id="btn-import">
+                    <span class="btn-icon">📥</span> Import
+                </button>
+            </div>
+
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <div class="settings-panel" id="settings-panel" hidden>
+            <div class="settings-header">
+                <span>Settings</span>
+                <button class="btn-close" id="settings-close">✕</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-row">
+                    <label for="setting-autosave">Auto-save Results</label>
+                    <input type="checkbox" id="setting-autosave" checked>
+                </div>
+                <div class="setting-row">
+                    <label for="setting-interval">Update Interval (ms)</label>
+                    <input type="number" id="setting-interval" value="100" min="50" max="1000" step="50">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/widget-base.js"></script>
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-08",
+    
+    "enabled": [
+        "core",
+        "voice-control",
+        "flight-recorder",
+        "lorby-bridge"
+    ],
+    
+    "disabled": [
+        "telemetry"
+    ],
+    
+    "installProfiles": {
+        "lite": ["core"],
+        "standard": ["core", "voice-control", "flight-recorder"],
+        "pro": ["core", "voice-control", "flight-recorder", "lorby-bridge", "telemetry"],
+        "dev": ["*"]
+    },
+    
+    "settings": {
+        "autoLoadPlugins": true,
+        "checkDependencies": true,
+        "loadOrder": "priority"
+    }
+}

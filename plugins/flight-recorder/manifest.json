@@ -1,0 +1,42 @@
+{
+    "id": "flight-recorder",
+    "name": "Flight Recorder",
+    "version": "1.4.0",
+    "description": "Record and playback flight sessions with delta compression",
+    "author": "SimWidget Team",
+    "priority": 50,
+    "enabled": true,
+    
+    "entry": "index.js",
+    
+    "dependencies": ["core"],
+    
+    "provides": [
+        "flight-recording",
+        "flight-playback",
+        "session-export"
+    ],
+    
+    "ui": [
+        {
+            "id": "flight-recorder",
+            "name": "Flight Recorder",
+            "path": "ui"
+        }
+    ],
+    
+    "routes": [
+        "/api/recorder/start",
+        "/api/recorder/stop",
+        "/api/recorder/sessions"
+    ],
+    
+    "config": {
+        "recordInterval": 100,
+        "maxSessionDuration": 7200000,
+        "recordControls": true,
+        "recordAutopilot": true,
+        "recordLights": false,
+        "deltaCompression": true
+    }
+}

@@ -3,9 +3,9 @@
 	<name>SimWidget Claude Bridge</name>
 	<description>SimWidget Claude Bridge - Routes requests through Claude Code CLI using Pro subscription</description>
 	<executable>C:\Program Files\nodejs\node.exe</executable>
-	<argument>C:\DevOSWE\Admin\claude-bridge\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>C:\LLM-DevOSWE\Admin\claude-bridge\node_modules\node-windows\lib\wrapper.js</argument>
 	<argument>--file</argument>
-	<argument>C:\DevOSWE\Admin\claude-bridge\bridge-server.js</argument>
+	<argument>C:\LLM-DevOSWE\Admin\claude-bridge\bridge-server.js</argument>
 	<argument>--scriptoptions=</argument>
 	<argument>--log</argument>
 	<argument>SimWidget Claude Bridge wrapper</argument>
@@ -24,5 +24,5 @@
 	<serviceaccount>
 		<username>LocalSystem</username>
 	</serviceaccount>
-	<workingdirectory>C:\DevOSWE\Admin\claude-bridge</workingdirectory>
+	<workingdirectory>C:\LLM-DevOSWE\Admin\claude-bridge</workingdirectory>
 </service>

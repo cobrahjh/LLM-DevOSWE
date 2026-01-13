@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget - Voice Control</title>
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <h1>🎤 Voice Control</h1>
+            <div class="header-controls">
+                <button id="btn-transparency" class="btn-icon" title="Toggle Transparency">👁</button>
+                <button id="btn-settings" class="btn-icon" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <div class="status-section">
+            <div id="mic-status" class="mic-status">
+                <div class="mic-icon" id="mic-icon">🎤</div>
+                <div class="status-text" id="status-text">Click to Start</div>
+            </div>
+            <button id="btn-listen" class="btn-listen">Start Listening</button>
+        </div>
+
+        <div class="transcript-section">
+            <div class="section-header">Last Command</div>
+            <div id="transcript" class="transcript">—</div>
+            <div id="matched-command" class="matched-command"></div>
+        </div>
+
+        <div class="commands-section">
+            <div class="section-header">
+                Available Commands
+                <span id="command-count" class="count"></span>
+            </div>
+            <div id="commands-list" class="commands-list"></div>
+        </div>
+
+        <div class="log-section">
+            <div class="section-header">Activity Log</div>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Voice Settings</h2>
+                <button id="btn-close-settings" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Language</label>
+                    <select id="setting-language">
+                        <option value="en-US">English (US)</option>
+                        <option value="en-GB">English (UK)</option>
+                        <option value="de-DE">German</option>
+                        <option value="fr-FR">French</option>
+                        <option value="es-ES">Spanish</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Continuous Listening</label>
+                    <input type="checkbox" id="setting-continuous" checked>
+                    <span class="hint">Keep listening after each command</span>
+                </div>
+                <div class="setting-group">
+                    <label>Confidence Threshold</label>
+                    <input type="range" id="setting-confidence" min="0" max="100" value="60">
+                    <span id="confidence-value">60%</span>
+                </div>
+                <div class="setting-group">
+                    <label>Wake Word (optional)</label>
+                    <input type="text" id="setting-wakeword" placeholder="e.g., 'hey sim'">
+                    <span class="hint">Say this first to activate commands</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-save-settings" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

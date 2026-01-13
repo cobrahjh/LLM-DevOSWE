@@ -5,7 +5,7 @@
  * Works with TaskProcessor for state management.
  * Now with minimizable bubbles and state persistence.
  *
- * Path: C:\DevOSWE\Admin\agent\agent-ui\modules\task-bubbles.js
+ * Path: C:\LLM-DevOSWE\Admin\agent\agent-ui\modules\task-bubbles.js
  * Last Updated: 2026-01-11
  */
 

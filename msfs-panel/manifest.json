@@ -1,0 +1,16 @@
+{
+  "dependencies": [],
+  "content_type": "MISC",
+  "title": "SimWidget Panel",
+  "manufacturer": "SimWidget Engine",
+  "creator": "DevClaude",
+  "package_version": "1.0.0",
+  "minimum_game_version": "1.18.0",
+  "release_notes": {
+    "neutral": {
+      "LastUpdate": "Aircraft Control Panel for MSFS",
+      "OlderHistory": ""
+    }
+  },
+  "total_package_size": "00000000000000015000"
+}

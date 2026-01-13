@@ -2,7 +2,7 @@
  * SimWidget Relay Windows Service Uninstaller
  * v1.0.0 - 2026-01-11
  *
- * Path: C:\DevOSWE\Admin\relay\service-uninstall.js
+ * Path: C:\LLM-DevOSWE\Admin\relay\service-uninstall.js
  *
  * Run as Administrator:
  *   node service-uninstall.js

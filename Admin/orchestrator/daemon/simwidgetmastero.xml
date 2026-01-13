@@ -3,9 +3,9 @@
 	<name>SimWidget Master O</name>
 	<description>SimWidget Engine Master Orchestrator - Service supervisor and watchdog</description>
 	<executable>C:\Program Files\nodejs\node.exe</executable>
-	<argument>C:\DevOSWE\Admin\orchestrator\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>C:\LLM-DevOSWE\Admin\orchestrator\node_modules\node-windows\lib\wrapper.js</argument>
 	<argument>--file</argument>
-	<argument>C:\DevOSWE\Admin\orchestrator\orchestrator.js</argument>
+	<argument>C:\LLM-DevOSWE\Admin\orchestrator\orchestrator.js</argument>
 	<argument>--scriptoptions=</argument>
 	<argument>--log</argument>
 	<argument>SimWidget Master O wrapper</argument>
@@ -24,5 +24,5 @@
 	<serviceaccount>
 		<username>LocalSystem</username>
 	</serviceaccount>
-	<workingdirectory>C:\DevOSWE\Admin\orchestrator</workingdirectory>
+	<workingdirectory>C:\LLM-DevOSWE\Admin\orchestrator</workingdirectory>
 </service>

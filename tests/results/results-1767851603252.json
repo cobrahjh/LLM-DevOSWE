@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-01-08T05:53:23.252Z",
+  "duration": 9,
+  "runId": null,
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "tests": [
+    {
+      "id": "templates/directories-exist",
+      "status": "updated",
+      "duration": 1
+    },
+    {
+      "id": "templates/shared-files",
+      "status": "updated",
+      "duration": 0
+    },
+    {
+      "id": "templates/required-files",
+      "status": "updated",
+      "duration": 1
+    },
+    {
+      "id": "templates/manifests-valid",
+      "status": "updated",
+      "duration": 1
+    },
+    {
+      "id": "templates/html-structure",
+      "status": "updated",
+      "duration": 1
+    },
+    {
+      "id": "templates/css-variables",
+      "status": "updated",
+      "duration": 0
+    },
+    {
+      "id": "templates/base-class-methods",
+      "status": "updated",
+      "duration": 0
+    }
+  ]
+}

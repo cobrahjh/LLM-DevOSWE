@@ -1,0 +1,33 @@
+{
+    "name": "Aviation Data",
+    "id": "aviation-data",
+    "version": "1.0.0",
+    "author": "SimWidget Team",
+    "description": "Real-time METAR, TAF, NOTAMs, and airport information",
+    "category": "information",
+    "minEngineVersion": "1.0.0",
+    "files": {
+        "js": "widget.js",
+        "css": "widget.css"
+    },
+    "permissions": ["network"],
+    "settings": {
+        "avwxApiKey": {
+            "type": "string",
+            "default": "",
+            "label": "AVWX API Key (optional)"
+        },
+        "autoFetchNearest": {
+            "type": "boolean",
+            "default": true,
+            "label": "Auto-fetch nearest airport data"
+        },
+        "cacheMinutes": {
+            "type": "number",
+            "default": 10,
+            "min": 5,
+            "max": 60,
+            "label": "Cache duration (minutes)"
+        }
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "allPresent": true,
+  "variables": {
+    "--bg-primary": true,
+    "--text-primary": true,
+    "--accent-color": true,
+    "--border-color": true,
+    "--header-height": true
+  }
+}

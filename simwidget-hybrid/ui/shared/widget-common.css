@@ -1,0 +1,134 @@
+/**
+ * Widget Shared Styles v1.0.0
+ * Last Updated: 2025-01-07
+ * 
+ * Common styles for all SimWidget widgets.
+ * Include in your widget: <link rel="stylesheet" href="/ui/shared/widget-common.css">
+ */
+
+/* Transparency Mode */
+body.transparent {
+    background: transparent !important;
+}
+
+body.transparent .widget-container {
+    background: rgba(26, 26, 46, 0.50);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 16px;
+}
+
+/* Header Controls */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #3f3f46;
+    background: #27272a;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+    background: #3f3f46;
+}
+
+.btn-icon.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+}
+
+/* ==================== CONNECTION STATUS ==================== */
+.connection-status {
+    font-size: 12px;
+    color: #f87171; /* Red = disconnected by default */
+    transition: color 0.3s ease;
+    cursor: help;
+}
+
+.connection-status.connected {
+    color: #4ade80; /* Green = connected */
+}
+
+.connection-status.connecting {
+    color: #fbbf24; /* Yellow = connecting */
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ==================== WIDGET HEADER ==================== */
+.widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #2a2a4a 0%, #1a1a2e 100%);
+    border-bottom: 1px solid #3f3f46;
+    border-radius: 8px 8px 0 0;
+}
+
+.widget-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e0e0e0;
+    letter-spacing: 0.5px;
+}
+
+.widget-brand {
+    font-size: 10px;
+    color: #7ec8e3;
+    font-weight: 500;
+}
+
+/* Platform visibility classes */
+.desktop-only { display: block; }
+.mobile-only { display: none; }
+.msfs-panel-only { display: none; }
+
+@media (max-width: 768px) {
+    .desktop-only { display: none; }
+    .mobile-only { display: block; }
+}
+
+/* Header Controls Group */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Settings Cog Button */
+.settings-btn {
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.6;
+    transition: opacity 0.2s, transform 0.3s;
+    padding: 0;
+    color: #a0a0a0;
+}
+
+.settings-btn:hover {
+    opacity: 1;
+    transform: rotate(45deg);
+    color: #e0e0e0;
+}

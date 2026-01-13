@@ -1,0 +1,6549 @@
+{
+  "aircraft": "Comanche",
+  "generated": "2026-01-08T04:00:13.576Z",
+  "count": 427,
+  "events": [
+    {
+      "id": 45,
+      "name": "PA24_250_Clima_Cabin_Heat_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:CabinTempControl, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 52,
+      "lvars": [
+        "CabinTempControl"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 46,
+      "name": "PA24_250_Clima_Cabin_Vent_Left_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:CabinVentLeftLever, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 53,
+      "lvars": [
+        "CabinVentLeftLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 47,
+      "name": "PA24_250_Clima_Cabin_Vent_Right_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:CabinVentRightLever, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 54,
+      "lvars": [
+        "CabinVentRightLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 48,
+      "name": "PA24_250_Clima_Windshield_Defrost_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:WindowDefrosterControlKnob, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 55,
+      "lvars": [
+        "WindowDefrosterControlKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 49,
+      "name": "PA24_250_Clima_Cabin_Heat_Dec",
+      "script": "(L:CabinTempControl, percent) 5 - 0 max (>L:CabinTempControl, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 56,
+      "lvars": [
+        "CabinTempControl"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 50,
+      "name": "PA24_250_Clima_Cabin_Heat_Inc",
+      "script": "(L:CabinTempControl, percent) 5 + 100 min (>L:CabinTempControl, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 57,
+      "lvars": [
+        "CabinTempControl"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 51,
+      "name": "PA24_250_Clima_Cabin_Vent_Left_Dec",
+      "script": "(L:CabinVentLeftLever, percent) 5 - 0 max (>L:CabinVentLeftLever, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 58,
+      "lvars": [
+        "CabinVentLeftLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 52,
+      "name": "PA24_250_Clima_Cabin_Vent_Left_Inc",
+      "script": "(L:CabinVentLeftLever, percent) 5 + 100 min (>L:CabinVentLeftLever, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 59,
+      "lvars": [
+        "CabinVentLeftLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 53,
+      "name": "PA24_250_Clima_Cabin_Vent_Right_Dec",
+      "script": "(L:CabinVentRightLever, percent) 5 - 0 max (>L:CabinVentRightLever, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 60,
+      "lvars": [
+        "CabinVentRightLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 54,
+      "name": "PA24_250_Clima_Cabin_Vent_Right_Inc",
+      "script": "(L:CabinVentRightLever, percent) 5 + 100 min (>L:CabinVentRightLever, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 61,
+      "lvars": [
+        "CabinVentRightLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 55,
+      "name": "PA24_250_Clima_Windshield_Defrost_Dec",
+      "script": "(L:WindowDefrosterControlKnob, percent) 5 - 0 max (>L:WindowDefrosterControlKnob, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 62,
+      "lvars": [
+        "WindowDefrosterControlKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 56,
+      "name": "PA24_250_Clima_Windshield_Defrost_Inc",
+      "script": "(L:WindowDefrosterControlKnob, percent) 5 + 100 min (>L:WindowDefrosterControlKnob, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Air Condition and Pressurization",
+      "line": 63,
+      "lvars": [
+        "WindowDefrosterControlKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 57,
+      "name": "PA24_250_Defrost_Toggle",
+      "script": "(L:WindowDefrosterControlKnob, percent) 0 == if{ 100 (>L:WindowDefrosterControlKnob, percent) } els{ 0 (>L:WindowDefrosterControlKnob, percent) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Anti Ice",
+      "line": 65,
+      "lvars": [
+        "WindowDefrosterControlKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 58,
+      "name": "PA24_250_Carbheat_Toggle",
+      "script": "(L:Eng1_CarbHeatSwitch, Number) 0 == if{ 100 (>L:Eng1_CarbHeatSwitch, Number) } els{ 0 (>L:Eng1_CarbHeatSwitch, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Anti-Ice",
+      "line": 67,
+      "lvars": [
+        "Eng1_CarbHeatSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 59,
+      "name": "PA24_250_External_Pitot_Toggle",
+      "script": "(L:PitotTubeCover, bool) ! (>L:PitotTubeCover, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Anti-Ice",
+      "line": 68,
+      "lvars": [
+        "PitotTubeCover"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 60,
+      "name": "PA24_250_Pitot_Heat_Off",
+      "script": "1 (>K:PITOT_HEAT_OFF)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Anti-Ice",
+      "line": 69,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PITOT_HEAT_OFF"
+      ],
+      "avars": []
+    },
+    {
+      "id": 61,
+      "name": "PA24_250_Pitot_Heat_On",
+      "script": "1 (>K:PITOT_HEAT_ON)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Anti-Ice",
+      "line": 70,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PITOT_HEAT_ON"
+      ],
+      "avars": []
+    },
+    {
+      "id": 62,
+      "name": "PA24_250_Pitot_Heat_Toggle",
+      "script": "1 (>K:PITOT_HEAT_TOGGLE)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Anti-Ice",
+      "line": 71,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PITOT_HEAT_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 63,
+      "name": "PA24_250_Primer_Lock",
+      "script": "0 (>L:PrimerState, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Anti-Ice",
+      "line": 72,
+      "lvars": [
+        "PrimerState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 64,
+      "name": "PA24_250_Headphones_Nc_Off",
+      "script": "0 (>L:NoiseCancellingSwitch, Number) (L:Headphones, Number) 2 == if{ 1 (>L:Headphones, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Audio",
+      "line": 74,
+      "lvars": [
+        "NoiseCancellingSwitch",
+        "Headphones"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 65,
+      "name": "PA24_250_Headphones_Nc_On",
+      "script": "1 (>L:NoiseCancellingSwitch, Number) (L:Headphones, Number) 1 == if{ 2 (>L:Headphones, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Audio",
+      "line": 75,
+      "lvars": [
+        "NoiseCancellingSwitch",
+        "Headphones"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 66,
+      "name": "PA24_250_Headphones_Nc_Toggle",
+      "script": "(L:NoiseCancellingSwitch, Number) ! (>L:NoiseCancellingSwitch, Number) (L:Headphones, Number) 2 == if{ 1 (>L:Headphones, Number) } els{ (L:Headphones, Number) 1 == if{ 2 (>L:Headphones, Number) } }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Audio",
+      "line": 76,
+      "lvars": [
+        "NoiseCancellingSwitch",
+        "Headphones"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 67,
+      "name": "PA24_250_Headphones_Off",
+      "script": "0 (>L:Headphones, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Audio",
+      "line": 77,
+      "lvars": [
+        "Headphones"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 68,
+      "name": "PA24_250_Headphones_On",
+      "script": "1 (L:NoiseCancellingSwitch, Number) == if{ 2 (>L:Headphones, Number) } els{ 1 (>L:Headphones, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Audio",
+      "line": 78,
+      "lvars": [
+        "NoiseCancellingSwitch",
+        "Headphones"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 69,
+      "name": "PA24_250_Headphones_Toggle",
+      "script": "(L:Headphones, Number) 1 >= if{ 0 (>L:Headphones, Number) } els{ 1 (L:NoiseCancellingSwitch, Number) == if{ 2 (>L:Headphones, Number) } els{ 1 (>L:Headphones, Number) } }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Audio",
+      "line": 79,
+      "lvars": [
+        "Headphones",
+        "NoiseCancellingSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 70,
+      "name": "PA24_250_Ap_Alt_Use",
+      "script": "1 (>L:APAltSwitch, Number) 0 (>L:APAltSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 81,
+      "lvars": [
+        "APAltSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 71,
+      "name": "PA24_250_Ap_Disconnect_Push",
+      "script": "1 (>L:ApDisconnectSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 82,
+      "lvars": [
+        "ApDisconnectSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 72,
+      "name": "PA24_250_Ap_Disconnect_Release",
+      "script": "0 (>L:ApDisconnectSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 83,
+      "lvars": [
+        "ApDisconnectSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 73,
+      "name": "PA24_250_Ap_Disconnect_Use",
+      "script": "1 (>L:ApDisconnectSwitch, Number) 0 (>L:ApDisconnectSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 84,
+      "lvars": [
+        "ApDisconnectSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 74,
+      "name": "PA24_250_Ap_Master_Off",
+      "script": "0 (>H:A2A_AP_MASTER) 0 (>L:ApMaster, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 85,
+      "lvars": [
+        "ApMaster"
+      ],
+      "hvars": [
+        "A2A_AP_MASTER"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 75,
+      "name": "PA24_250_Ap_Master_On",
+      "script": "1 (>H:A2A_AP_MASTER) 1 (>L:ApMaster, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 86,
+      "lvars": [
+        "ApMaster"
+      ],
+      "hvars": [
+        "A2A_AP_MASTER"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 76,
+      "name": "PA24_250_Ap_Master_Toggle",
+      "script": "(L:ApMaster, Number) ! d (>H:A2A_AP_MASTER) (>L:ApMaster, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 87,
+      "lvars": [
+        "ApMaster"
+      ],
+      "hvars": [
+        "A2A_AP_MASTER"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 77,
+      "name": "PA24_250_Ap_Mode_Push",
+      "script": "1 (>L:ApModePushSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 88,
+      "lvars": [
+        "ApModePushSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 78,
+      "name": "PA24_250_Ap_Mode_Release",
+      "script": "0 (>L:ApModePushSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 89,
+      "lvars": [
+        "ApModePushSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 79,
+      "name": "PA24_250_Ap_Mode_Turn_Center",
+      "script": "0 (>L:ApTurnKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 90,
+      "lvars": [
+        "ApTurnKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 80,
+      "name": "PA24_250_Ap_Mode_Turn_Left",
+      "script": "(L:ApTurnKnob, Number) 5 - -50 max (>L:ApTurnKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 91,
+      "lvars": [
+        "ApTurnKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 81,
+      "name": "PA24_250_Ap_Mode_Turn_Right",
+      "script": "(L:ApTurnKnob, Number) 5 + 50 min (>L:ApTurnKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 92,
+      "lvars": [
+        "ApTurnKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 82,
+      "name": "PA24_250_Ap_Mode_Use",
+      "script": "1 (>L:ApModePushSwitch, Number) 0 (>L:ApModePushSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Autopilot",
+      "line": 93,
+      "lvars": [
+        "ApModePushSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 83,
+      "name": "PA24_250_KLN90B_Left_Cursor_Button_Press",
+      "script": "(>H:KLN90B_LeftCursor_Toggle) 100 (>L:BUTTON_KLN90B_CRSR_L, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 95,
+      "lvars": [
+        "BUTTON_KLN90B_CRSR_L"
+      ],
+      "hvars": [
+        "KLN90B_LeftCursor_Toggle"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 84,
+      "name": "PA24_250_KLN90B_Left_Cursor_Button_Release",
+      "script": "0 (>L:BUTTON_KLN90B_CRSR_L, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 96,
+      "lvars": [
+        "BUTTON_KLN90B_CRSR_L"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 85,
+      "name": "PA24_250_Avionics_Master_Off",
+      "script": "(A:AVIONICS MASTER SWITCH:1, Bool) 1 == if{ 1 (>K:TOGGLE_AVIONICS_MASTER) 1 (>H:A2A_AVIONICS_SWITCH) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 97,
+      "lvars": [],
+      "hvars": [
+        "1",
+        "A2A_AVIONICS_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_AVIONICS_MASTER"
+      ],
+      "avars": []
+    },
+    {
+      "id": 86,
+      "name": "PA24_250_Avionics_Master_On",
+      "script": "(A:AVIONICS MASTER SWITCH:1, Bool) 0 == if{ 1 (>K:TOGGLE_AVIONICS_MASTER) 1 (>H:A2A_AVIONICS_SWITCH) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 98,
+      "lvars": [],
+      "hvars": [
+        "1",
+        "A2A_AVIONICS_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_AVIONICS_MASTER"
+      ],
+      "avars": []
+    },
+    {
+      "id": 87,
+      "name": "PA24_250_Avionics_Master_Toggle",
+      "script": "1 (>K:TOGGLE_AVIONICS_MASTER) 1 (>H:A2A_AVIONICS_SWITCH)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 99,
+      "lvars": [],
+      "hvars": [
+        "A2A_AVIONICS_SWITCH"
+      ],
+      "kvars": [
+        "TOGGLE_AVIONICS_MASTER"
+      ],
+      "avars": []
+    },
+    {
+      "id": 88,
+      "name": "PA24_250_Edm_830_Both_Push",
+      "script": "1 (>L:BUTTON_EDM730_Step, enum) 1 (>L:BUTTON_EDM730_LF, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 100,
+      "lvars": [
+        "BUTTON_EDM730_Step",
+        "BUTTON_EDM730_LF"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 89,
+      "name": "PA24_250_Edm_830_Both_Release",
+      "script": "0 (>L:BUTTON_EDM730_Step, enum) 0 (>L:BUTTON_EDM730_LF, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 101,
+      "lvars": [
+        "BUTTON_EDM730_Step",
+        "BUTTON_EDM730_LF"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 90,
+      "name": "PA24_250_Edm_830_Lf_Push",
+      "script": "1 (>L:BUTTON_EDM730_LF, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 102,
+      "lvars": [
+        "BUTTON_EDM730_LF"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 91,
+      "name": "PA24_250_Edm_830_Lf_Release",
+      "script": "0 (>L:BUTTON_EDM730_LF, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 103,
+      "lvars": [
+        "BUTTON_EDM730_LF"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 92,
+      "name": "PA24_250_Edm_830_Step_Push",
+      "script": "1 (>L:BUTTON_EDM730_Step, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 104,
+      "lvars": [
+        "BUTTON_EDM730_Step"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 93,
+      "name": "PA24_250_Edm_830_Step_Release",
+      "script": "0 (>L:BUTTON_EDM730_Step, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 105,
+      "lvars": [
+        "BUTTON_EDM730_Step"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 94,
+      "name": "PA24_250_Tablet_Avionics_Config_0_No_Gps",
+      "script": "0 (>L:AvionicsConfiguration, Number) 0 (>L:AvionicsConfigurationSaved, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 106,
+      "lvars": [
+        "AvionicsConfiguration",
+        "AvionicsConfigurationSaved"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 95,
+      "name": "PA24_250_Tablet_Avionics_Config_1_430",
+      "script": "1 (>L:AvionicsConfiguration, Number) 1 (>L:AvionicsConfigurationSaved, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 107,
+      "lvars": [
+        "AvionicsConfiguration",
+        "AvionicsConfigurationSaved"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 96,
+      "name": "PA24_250_Tablet_Avionics_Config_2_530",
+      "script": "2 (>L:AvionicsConfiguration, Number) 2 (>L:AvionicsConfigurationSaved, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 108,
+      "lvars": [
+        "AvionicsConfiguration",
+        "AvionicsConfigurationSaved"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 97,
+      "name": "PA24_250_Tablet_Avionics_Config_2_530_430",
+      "script": "3 (>L:AvionicsConfiguration, Number) 3 (>L:AvionicsConfigurationSaved, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 109,
+      "lvars": [
+        "AvionicsConfiguration",
+        "AvionicsConfigurationSaved"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 98,
+      "name": "PA24_250_Tablet_Avionics_Config_4_750",
+      "script": "4 (>L:AvionicsConfiguration, Number) 4 (>L:AvionicsConfigurationSaved, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Avionics",
+      "line": 110,
+      "lvars": [
+        "AvionicsConfiguration",
+        "AvionicsConfigurationSaved"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 99,
+      "name": "PA24_250_Flaps_Axis",
+      "script": "(L:PA24-flaps_axis) 0 max 3 min (>L:LandFlapsPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 112,
+      "lvars": [
+        "PA24-flaps_axis",
+        "LandFlapsPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 100,
+      "name": "PA24_250_Flaps_Dec",
+      "script": "(L:LandFlapsPos, Number) 1 - 0 max (>L:LandFlapsPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 113,
+      "lvars": [
+        "LandFlapsPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 101,
+      "name": "PA24_250_Flaps_Inc",
+      "script": "(L:LandFlapsPos, Number) 1 + 3 min (>L:LandFlapsPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 114,
+      "lvars": [
+        "LandFlapsPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 102,
+      "name": "PA24_250_Flaps_To_0",
+      "script": "0 (>L:LandFlapsPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 115,
+      "lvars": [
+        "LandFlapsPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 103,
+      "name": "PA24_250_Flaps_To_09",
+      "script": "1 (>L:LandFlapsPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 116,
+      "lvars": [
+        "LandFlapsPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 104,
+      "name": "PA24_250_Flaps_To_18",
+      "script": "2 (>L:LandFlapsPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 117,
+      "lvars": [
+        "LandFlapsPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 105,
+      "name": "PA24_250_Flaps_To_27",
+      "script": "3 (>L:LandFlapsPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 118,
+      "lvars": [
+        "LandFlapsPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 106,
+      "name": "PA24_250_Rudder_Trim_Neutral",
+      "script": "0 (>A:RUDDER TRIM PCT, percent scaler 16k)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 119,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 107,
+      "name": "PA24_250_Rudder_Trim_To_Left",
+      "script": "(A:RUDDER TRIM PCT, percent scaler 16k) 100 - -16384 max (>A:RUDDER TRIM PCT, percent scaler 16k)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 120,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 108,
+      "name": "PA24_250_Rudder_Trim_To_Right",
+      "script": "(A:RUDDER TRIM PCT, percent scaler 16k) 100 + 16384 min (>A:RUDDER TRIM PCT, percent scaler 16k)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 121,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 109,
+      "name": "PA24_250_Yoke_Left_Hide",
+      "script": "1 (>L:YokeLeftVis, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 122,
+      "lvars": [
+        "YokeLeftVis"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 110,
+      "name": "PA24_250_Yoke_Left_Show",
+      "script": "0 (>L:YokeLeftVis, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 123,
+      "lvars": [
+        "YokeLeftVis"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 111,
+      "name": "PA24_250_Yoke_Left_Toggle",
+      "script": "(L:YokeLeftVis, Number) ! (>L:YokeLeftVis, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 124,
+      "lvars": [
+        "YokeLeftVis"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 112,
+      "name": "PA24_250_Yoke_Right_Hide",
+      "script": "1 (>L:YokeRightVis, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 125,
+      "lvars": [
+        "YokeRightVis"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 113,
+      "name": "PA24_250_Yoke_Right_Show",
+      "script": "0 (>L:YokeRightVis, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 126,
+      "lvars": [
+        "YokeRightVis"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 114,
+      "name": "PA24_250_Yoke_Right_Toggle",
+      "script": "(L:YokeRightVis, Number) ! (>L:YokeRightVis, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Controls",
+      "line": 127,
+      "lvars": [
+        "YokeRightVis"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 115,
+      "name": "PA24_250_Battery_Off",
+      "script": "0 (>L:Battery1Switch, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 129,
+      "lvars": [
+        "Battery1Switch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 116,
+      "name": "PA24_250_Battery_On",
+      "script": "1 (>L:Battery1Switch, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 130,
+      "lvars": [
+        "Battery1Switch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 117,
+      "name": "PA24_250_Battery_Toggle",
+      "script": "(L:Battery1Switch, Bool) ! (>L:Battery1Switch, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 131,
+      "lvars": [
+        "Battery1Switch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 118,
+      "name": "PA24_250_Cb_01_Landing_Gear_Motor_In",
+      "script": "1 (>L:BreakerLandingGearMotor, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 132,
+      "lvars": [
+        "BreakerLandingGearMotor"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 119,
+      "name": "PA24_250_Cb_01_Landing_Gear_Motor_Out",
+      "script": "0 (>L:BreakerLandingGearMotor, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 133,
+      "lvars": [
+        "BreakerLandingGearMotor"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 120,
+      "name": "PA24_250_Cb_01_Landing_Gear_Motor_Toggle",
+      "script": "(L:BreakerLandingGearMotor, bool) ! (>L:BreakerLandingGearMotor, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 134,
+      "lvars": [
+        "BreakerLandingGearMotor"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 121,
+      "name": "PA24_250_Cb_02_Landing_Gear_Indicator_In",
+      "script": "1 (>L:BreakerLandingGearIndicator, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 135,
+      "lvars": [
+        "BreakerLandingGearIndicator"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 122,
+      "name": "PA24_250_Cb_02_Landing_Gear_Indicator_Out",
+      "script": "0 (>L:BreakerLandingGearIndicator, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 136,
+      "lvars": [
+        "BreakerLandingGearIndicator"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 123,
+      "name": "PA24_250_Cb_02_Landing_Gear_Indicator_Toggle",
+      "script": "(L:BreakerLandingGearIndicator, bool) ! (>L:BreakerLandingGearIndicator, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 137,
+      "lvars": [
+        "BreakerLandingGearIndicator"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 124,
+      "name": "PA24_250_Cb_03_Generator_In",
+      "script": "1 (>L:BreakerGeneratorOutput, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 138,
+      "lvars": [
+        "BreakerGeneratorOutput"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 125,
+      "name": "PA24_250_Cb_03_Generator_Out",
+      "script": "0 (>L:BreakerGeneratorOutput, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 139,
+      "lvars": [
+        "BreakerGeneratorOutput"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 126,
+      "name": "PA24_250_Cb_03_Generator_Toggle",
+      "script": "(L:BreakerGeneratorOutput, bool) ! (>L:BreakerGeneratorOutput, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 140,
+      "lvars": [
+        "BreakerGeneratorOutput"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 127,
+      "name": "PA24_250_Cb_04_Light_Nav_In",
+      "script": "1 (>L:BreakerLightNav, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 141,
+      "lvars": [
+        "BreakerLightNav"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 128,
+      "name": "PA24_250_Cb_04_Light_Nav_Out",
+      "script": "0 (>L:BreakerLightNav, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 142,
+      "lvars": [
+        "BreakerLightNav"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 129,
+      "name": "PA24_250_Cb_04_Light_Nav_Toggle",
+      "script": "(L:BreakerLightNav, bool) ! (>L:BreakerLightNav, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 143,
+      "lvars": [
+        "BreakerLightNav"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 130,
+      "name": "PA24_250_Cb_05_Gauges_Dome_In",
+      "script": "1 (>L:BreakerGaugesEngine, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 144,
+      "lvars": [
+        "BreakerGaugesEngine"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 131,
+      "name": "PA24_250_Cb_05_Gauges_Dome_Out",
+      "script": "0 (>L:BreakerGaugesEngine, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 145,
+      "lvars": [
+        "BreakerGaugesEngine"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 132,
+      "name": "PA24_250_Cb_05_Gauges_Dome_Toggle",
+      "script": "(L:BreakerGaugesEngine, bool) ! (>L:BreakerGaugesEngine, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 146,
+      "lvars": [
+        "BreakerGaugesEngine"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 133,
+      "name": "PA24_250_Cb_06_Light_Landing_In",
+      "script": "1 (>L:BreakerLightLanding, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 147,
+      "lvars": [
+        "BreakerLightLanding"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 134,
+      "name": "PA24_250_Cb_06_Light_Landing_Out",
+      "script": "0 (>L:BreakerLightLanding, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 148,
+      "lvars": [
+        "BreakerLightLanding"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 135,
+      "name": "PA24_250_Cb_06_Light_Landing_Toggle",
+      "script": "(L:BreakerLightLanding, bool) ! (>L:BreakerLightLanding, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 149,
+      "lvars": [
+        "BreakerLightLanding"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 136,
+      "name": "PA24_250_Cb_07_Light_Beacon_In",
+      "script": "1 (>L:BreakerLightBeacon, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 150,
+      "lvars": [
+        "BreakerLightBeacon"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 137,
+      "name": "PA24_250_Cb_07_Light_Beacon_Out",
+      "script": "0 (>L:BreakerLightBeacon, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 151,
+      "lvars": [
+        "BreakerLightBeacon"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 138,
+      "name": "PA24_250_Cb_07_Light_Beacon_Toggle",
+      "script": "(L:BreakerLightBeacon, bool) ! (>L:BreakerLightBeacon, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 152,
+      "lvars": [
+        "BreakerLightBeacon"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 139,
+      "name": "PA24_250_Cb_08_Pitot_In",
+      "script": "1 (>L:BreakerPitotHeat, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 153,
+      "lvars": [
+        "BreakerPitotHeat"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 140,
+      "name": "PA24_250_Cb_08_Pitot_Out",
+      "script": "0 (>L:BreakerPitotHeat, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 154,
+      "lvars": [
+        "BreakerPitotHeat"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 141,
+      "name": "PA24_250_Cb_08_Pitot_Toggle",
+      "script": "(L:BreakerPitotHeat, bool) ! (>L:BreakerPitotHeat, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 155,
+      "lvars": [
+        "BreakerPitotHeat"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 142,
+      "name": "PA24_250_Cb_09_Nav_Com_2_In",
+      "script": "(L:AvionicsConfiguration, Number) 0 == if{ 1 (>L:BreakerNavCom2, bool) } els{ 1 (>L:BreakerNavCom1, bool) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 156,
+      "lvars": [
+        "AvionicsConfiguration",
+        "BreakerNavCom2",
+        "BreakerNavCom1"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 143,
+      "name": "PA24_250_Cb_09_Nav_Com_2_Out",
+      "script": "(L:AvionicsConfiguration, Number) 0 == if{ 0 (>L:BreakerNavCom2, bool) } els{ 0 (>L:BreakerNavCom1, bool) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 157,
+      "lvars": [
+        "AvionicsConfiguration",
+        "BreakerNavCom2",
+        "BreakerNavCom1"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 144,
+      "name": "PA24_250_Cb_09_Nav_Com_2_Toggle",
+      "script": "(L:AvionicsConfiguration, Number) 0 == if{ (L:BreakerNavCom2, bool) ! (>L:BreakerNavCom2, bool) } els{ (L:BreakerNavCom1, bool) ! (>L:BreakerNavCom1, bool) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 158,
+      "lvars": [
+        "AvionicsConfiguration",
+        "BreakerNavCom2",
+        "BreakerNavCom1"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 145,
+      "name": "PA24_250_Cb_10_Nav_Com_1_In",
+      "script": "(L:AvionicsConfiguration, Number) 0 == if{ 1 (>L:BreakerNavCom1, bool) } els{ 1 (>L:BreakerNavCom2, bool) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 159,
+      "lvars": [
+        "AvionicsConfiguration",
+        "BreakerNavCom1",
+        "BreakerNavCom2"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 146,
+      "name": "PA24_250_Cb_10_Nav_Com_1_Out",
+      "script": "(L:AvionicsConfiguration, Number) 0 == if{ 0 (>L:BreakerNavCom1, bool) } els{ 0 (>L:BreakerNavCom2, bool) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 160,
+      "lvars": [
+        "AvionicsConfiguration",
+        "BreakerNavCom1",
+        "BreakerNavCom2"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 147,
+      "name": "PA24_250_Cb_10_Nav_Com_1_Toggle",
+      "script": "(L:BreakerNavCom2, bool) ! (>L:BreakerNavCom2, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 161,
+      "lvars": [
+        "BreakerNavCom2"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 148,
+      "name": "PA24_250_Cb_11_Stall_Warning_In",
+      "script": "1 (>L:BreakerWarningStall, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 162,
+      "lvars": [
+        "BreakerWarningStall"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 149,
+      "name": "PA24_250_Cb_11_Stall_Warning_Out",
+      "script": "0 (>L:BreakerWarningStall, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 163,
+      "lvars": [
+        "BreakerWarningStall"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 150,
+      "name": "PA24_250_Cb_11_Stall_Warning_Toggle",
+      "script": "(L:BreakerWarningStall, bool) ! (>L:BreakerWarningStall, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 164,
+      "lvars": [
+        "BreakerWarningStall"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 151,
+      "name": "PA24_250_Cb_12_Starter_In",
+      "script": "1 (>L:BreakerStarter, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 165,
+      "lvars": [
+        "BreakerStarter"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 152,
+      "name": "PA24_250_Cb_12_Starter_Out",
+      "script": "0 (>L:BreakerStarter, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 166,
+      "lvars": [
+        "BreakerStarter"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 153,
+      "name": "PA24_250_Cb_12_Starter_Toggle",
+      "script": "(L:BreakerStarter, bool) ! (>L:BreakerStarter, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 167,
+      "lvars": [
+        "BreakerStarter"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 154,
+      "name": "PA24_250_Cb_13_Autopilot_In",
+      "script": "1 (>L:BreakerAutopilot, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 168,
+      "lvars": [
+        "BreakerAutopilot"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 155,
+      "name": "PA24_250_Cb_13_Autopilot_Out",
+      "script": "0 (>L:BreakerAutopilot, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 169,
+      "lvars": [
+        "BreakerAutopilot"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 156,
+      "name": "PA24_250_Cb_13_Autopilot_Toggle",
+      "script": "(L:BreakerAutopilot, bool) ! (>L:BreakerAutopilot, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 170,
+      "lvars": [
+        "BreakerAutopilot"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 157,
+      "name": "PA24_250_Cb_14_Gauges_Turncoord_In",
+      "script": "1 (>L:BreakerGaugesTurnCoord, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 171,
+      "lvars": [
+        "BreakerGaugesTurnCoord"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 158,
+      "name": "PA24_250_Cb_14_Gauges_Turncoord_Out",
+      "script": "0 (>L:BreakerGaugesTurnCoord, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 172,
+      "lvars": [
+        "BreakerGaugesTurnCoord"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 159,
+      "name": "PA24_250_Cb_14_Gauges_Turncoord_Toggle",
+      "script": "(L:BreakerGaugesTurnCoord, bool) ! (>L:BreakerGaugesTurnCoord, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 173,
+      "lvars": [
+        "BreakerGaugesTurnCoord"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 160,
+      "name": "PA24_250_Magneto_Both",
+      "script": "3 (>K:MAGNETO1_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 174,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 161,
+      "name": "PA24_250_Magneto_Left",
+      "script": "2 (>K:MAGNETO1_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 175,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 162,
+      "name": "PA24_250_Magneto_Off",
+      "script": "0 (>K:MAGNETO1_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 176,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 163,
+      "name": "PA24_250_Magneto_Right",
+      "script": "1 (>K:MAGNETO1_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Electrical",
+      "line": 177,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "MAGNETO1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 164,
+      "name": "PA24_250_Carbheat_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:Eng1_CarbHeatSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 179,
+      "lvars": [
+        "Eng1_CarbHeatSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 165,
+      "name": "PA24_250_Carbheat_Dec",
+      "script": "(L:Eng1_CarbHeatSwitch, Number) 10 - 0 max (>L:Eng1_CarbHeatSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 180,
+      "lvars": [
+        "Eng1_CarbHeatSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 166,
+      "name": "PA24_250_Carbheat_Inc",
+      "script": "(L:Eng1_CarbHeatSwitch, Number) 10 + 100 min (>L:Eng1_CarbHeatSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 181,
+      "lvars": [
+        "Eng1_CarbHeatSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 167,
+      "name": "PA24_250_Carbheat_Off",
+      "script": "0 (>L:Eng1_CarbHeatSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 182,
+      "lvars": [
+        "Eng1_CarbHeatSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 168,
+      "name": "PA24_250_Carbheat_On",
+      "script": "100 (>L:Eng1_CarbHeatSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 183,
+      "lvars": [
+        "Eng1_CarbHeatSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 169,
+      "name": "PA24_250_Primer_Prime",
+      "script": "1 (>K:TOGGLE_PRIMER1)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 184,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_PRIMER1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 170,
+      "name": "PA24_250_Primer_Unlock",
+      "script": "1 (>L:PrimerState, enum)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 185,
+      "lvars": [
+        "PrimerState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 171,
+      "name": "PA24_250_Primer_Unlock_And_Prime",
+      "script": "1 (>K:PA24-primer_unlock) 1 (>K:TOGGLE_PRIMER1)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 186,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PA24-primer_unlock",
+        "TOGGLE_PRIMER1"
+      ],
+      "avars": []
+    },
+    {
+      "id": 172,
+      "name": "PA24_250_Starter_Push",
+      "script": "1 (>H:A2A_ENG1_STARTER_SWITCH) 1 (>L:Eng1_StarterSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 187,
+      "lvars": [
+        "Eng1_StarterSwitch"
+      ],
+      "hvars": [
+        "A2A_ENG1_STARTER_SWITCH"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 173,
+      "name": "PA24_250_Starter_Release",
+      "script": "1 (>H:A2A_ENG1_STARTER_SWITCH) 0 (>L:Eng1_StarterSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Engine",
+      "line": 188,
+      "lvars": [
+        "Eng1_StarterSwitch"
+      ],
+      "hvars": [
+        "A2A_ENG1_STARTER_SWITCH"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 174,
+      "name": "PA24_250_Hsi_Knob_To_Left",
+      "script": "(L:HeadingSelectorPush, bool) if{ 1 (>K:GYRO_DRIFT_INC) } els{ 1 (>K:HEADING_BUG_DEC) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 190,
+      "lvars": [
+        "HeadingSelectorPush"
+      ],
+      "hvars": [],
+      "kvars": [
+        "GYRO_DRIFT_INC",
+        "HEADING_BUG_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 175,
+      "name": "PA24_250_Hsi_Knob_To_Right",
+      "script": "(L:HeadingSelectorPush, bool) if{ 1 (>K:GYRO_DRIFT_DEC) } els{ 1 (>K:HEADING_BUG_INC) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 191,
+      "lvars": [
+        "HeadingSelectorPush"
+      ],
+      "hvars": [],
+      "kvars": [
+        "GYRO_DRIFT_DEC",
+        "HEADING_BUG_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 176,
+      "name": "PA24_250_Hsi_Mode_Toggle",
+      "script": "(L:HeadingSelectorPush, bool) ! (>L:HeadingSelectorPush, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 192,
+      "lvars": [
+        "HeadingSelectorPush"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 177,
+      "name": "PA24_250_Marker_Inner_Turn_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:PushToTestMBIKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 193,
+      "lvars": [
+        "PushToTestMBIKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 178,
+      "name": "PA24_250_Marker_Middle_Turn_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:PushToTestMBMKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 194,
+      "lvars": [
+        "PushToTestMBMKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 179,
+      "name": "PA24_250_Hsi_Course_Dec",
+      "script": "1 (>K:VOR1_OBI_DEC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 195,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "VOR1_OBI_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 180,
+      "name": "PA24_250_Hsi_Course_Inc",
+      "script": "1 (>K:VOR1_OBI_INC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 196,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "VOR1_OBI_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 181,
+      "name": "PA24_250_Hsi_Drift_Dec",
+      "script": "1 (>K:GYRO_DRIFT_DEC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 197,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "GYRO_DRIFT_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 182,
+      "name": "PA24_250_Hsi_Drift_Inc",
+      "script": "1 (>K:GYRO_DRIFT_INC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 198,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "GYRO_DRIFT_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 183,
+      "name": "PA24_250_Hsi_Drift_To_Magnetic_Cheat",
+      "script": "1 (>K:HEADING_GYRO_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 199,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "HEADING_GYRO_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 184,
+      "name": "PA24_250_Hsi_Heading_Dec",
+      "script": "1 (>K:HEADING_BUG_DEC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 200,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "HEADING_BUG_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 185,
+      "name": "PA24_250_Hsi_Heading_Inc",
+      "script": "1 (>K:HEADING_BUG_INC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 201,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "HEADING_BUG_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 186,
+      "name": "PA24_250_Hsi_Heading_To_Magnetic_Cheat",
+      "script": "0 (A:PLANE HEADING DEGREES MAGNETIC, Degrees) near (>K:2:HEADING_BUG_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 202,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "2:HEADING_BUG_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 187,
+      "name": "PA24_250_Hsi_Mode_Gyro",
+      "script": "1 (>L:HeadingSelectorPush, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 203,
+      "lvars": [
+        "HeadingSelectorPush"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 188,
+      "name": "PA24_250_Hsi_Mode_Heading",
+      "script": "0 (>L:HeadingSelectorPush, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 204,
+      "lvars": [
+        "HeadingSelectorPush"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 189,
+      "name": "PA24_250_Marker_All_Test",
+      "script": "1 (>K:PA24-marker_inner_knob_use) 1 (>K:PA24-marker_outer_knob_use) 1 (>K:PA24-marker_middle_knob_use)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 205,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PA24-marker_inner_knob_use",
+        "PA24-marker_outer_knob_use",
+        "PA24-marker_middle_knob_use"
+      ],
+      "avars": []
+    },
+    {
+      "id": 190,
+      "name": "PA24_250_Marker_Inner_Knob_Push",
+      "script": "1 (>L:PushToTestMBI, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 206,
+      "lvars": [
+        "PushToTestMBI"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 191,
+      "name": "PA24_250_Marker_Inner_Knob_Release",
+      "script": "0 (>L:PushToTestMBI, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 207,
+      "lvars": [
+        "PushToTestMBI"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 192,
+      "name": "PA24_250_Marker_Inner_Knob_Use",
+      "script": "1 (>L:PushToTestMBI, Number) 0 (>L:PushToTestMBI, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 208,
+      "lvars": [
+        "PushToTestMBI"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 193,
+      "name": "PA24_250_Marker_Inner_Turn_Left",
+      "script": "(L:PushToTestMBIKnob, Number) 5 + 100 min (>L:PushToTestMBIKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 209,
+      "lvars": [
+        "PushToTestMBIKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 194,
+      "name": "PA24_250_Marker_Inner_Turn_Right",
+      "script": "(L:PushToTestMBIKnob, Number) 5 - 15 max (>L:PushToTestMBIKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 210,
+      "lvars": [
+        "PushToTestMBIKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 195,
+      "name": "PA24_250_Marker_Middle_Knob_Push",
+      "script": "1 (>L:PushToTestMBM, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 211,
+      "lvars": [
+        "PushToTestMBM"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 196,
+      "name": "PA24_250_Marker_Middle_Knob_Release",
+      "script": "0 (>L:PushToTestMBM, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 212,
+      "lvars": [
+        "PushToTestMBM"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 197,
+      "name": "PA24_250_Marker_Middle_Knob_Use",
+      "script": "1 (>L:PushToTestMBM, Number) 0 (>L:PushToTestMBM, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 213,
+      "lvars": [
+        "PushToTestMBM"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 198,
+      "name": "PA24_250_Marker_Middle_Turn_Left",
+      "script": "(L:PushToTestMBMKnob, Number) 5 + 100 min (>L:PushToTestMBMKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 214,
+      "lvars": [
+        "PushToTestMBMKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 199,
+      "name": "PA24_250_Marker_Middle_Turn_Right",
+      "script": "(L:PushToTestMBMKnob, Number) 5 - 15 max (>L:PushToTestMBMKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 215,
+      "lvars": [
+        "PushToTestMBMKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 200,
+      "name": "PA24_250_Marker_Outer_Knob_Push",
+      "script": "1 (>L:PushToTestMBO, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 216,
+      "lvars": [
+        "PushToTestMBO"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 201,
+      "name": "PA24_250_Marker_Outer_Knob_Release",
+      "script": "0 (>L:PushToTestMBO, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 217,
+      "lvars": [
+        "PushToTestMBO"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 202,
+      "name": "PA24_250_Marker_Outer_Knob_Use",
+      "script": "1 (>L:PushToTestMBO, Number) 0 (>L:PushToTestMBO, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 218,
+      "lvars": [
+        "PushToTestMBO"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 203,
+      "name": "PA24_250_Marker_Outer_Turn_Axis",
+      "script": "(L:PA24-marker_outer_turn_axis) 15 max 100 min (>L:PushToTestMBOKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 219,
+      "lvars": [
+        "PA24-marker_outer_turn_axis",
+        "PushToTestMBOKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 204,
+      "name": "PA24_250_Marker_Outer_Turn_Left",
+      "script": "(L:PushToTestMBOKnob, Number) 5 + 100 min (>L:PushToTestMBOKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 220,
+      "lvars": [
+        "PushToTestMBOKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 205,
+      "name": "PA24_250_Marker_Outer_Turn_Right",
+      "script": "(L:PushToTestMBOKnob, Number) 5 - 15 max (>L:PushToTestMBOKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Flight Instrumentation",
+      "line": 221,
+      "lvars": [
+        "PushToTestMBOKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 206,
+      "name": "Fuel_Valve_Left_Axis",
+      "script": "@ 300 / 0 max 100 min (>L:FSelComancheLeftState, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 223,
+      "lvars": [
+        "FSelComancheLeftState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 207,
+      "name": "Fuel_Valve_Right_Axis",
+      "script": "@ 300 / 0 max 100 min (>L:FSelComancheRightState, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 224,
+      "lvars": [
+        "FSelComancheRightState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 208,
+      "name": "PA24_250_Toggle_Aux_Fuel_Gauge_L_F",
+      "script": "(>B:Switch_Fuel_Indicator_2States_Toggle)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 225,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 209,
+      "name": "PA24_250_Fuel_Indicator_Switch_Left_Aux",
+      "script": "0 (>L:FuelIndicatorSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 226,
+      "lvars": [
+        "FuelIndicatorSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 210,
+      "name": "PA24_250_Fuel_Indicator_Switch_Right_Aux",
+      "script": "1 (>L:FuelIndicatorSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 227,
+      "lvars": [
+        "FuelIndicatorSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 211,
+      "name": "PA24_250_Fuel_Indicator_Switch_Toggle",
+      "script": "(L:FuelIndicatorSwitch, Number) ! (>L:FuelIndicatorSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 228,
+      "lvars": [
+        "FuelIndicatorSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 212,
+      "name": "PA24_250_Fuel_Pump_Off",
+      "script": "0 (>K:ELECT_FUEL_PUMP1_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 229,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECT_FUEL_PUMP1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 213,
+      "name": "PA24_250_Fuel_Pump_On",
+      "script": "1 (>K:ELECT_FUEL_PUMP1_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 230,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECT_FUEL_PUMP1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 214,
+      "name": "PA24_250_Fuel_Pump_Toggle",
+      "script": "(A:GENERAL ENG FUEL PUMP SWITCH EX1:1, Bool) ! (>K:ELECT_FUEL_PUMP1_SET)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 231,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "ELECT_FUEL_PUMP1_SET"
+      ],
+      "avars": []
+    },
+    {
+      "id": 215,
+      "name": "PA24_250_Fuel_Tank_Left_Down",
+      "script": "(L:FSelComancheLeftState, Number) 1 - 0 max (>L:FSelComancheLeftState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 232,
+      "lvars": [
+        "FSelComancheLeftState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 216,
+      "name": "PA24_250_Fuel_Tank_Left_Main",
+      "script": "2 (>L:FSelComancheLeftState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 233,
+      "lvars": [
+        "FSelComancheLeftState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 217,
+      "name": "PA24_250_Fuel_Tank_Left_Off",
+      "script": "0 (>L:FSelComancheLeftState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 234,
+      "lvars": [
+        "FSelComancheLeftState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 218,
+      "name": "PA24_250_Fuel_Tank_Left_Tip",
+      "script": "1 (>L:FSelComancheLeftState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 235,
+      "lvars": [
+        "FSelComancheLeftState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 219,
+      "name": "PA24_250_Fuel_Tank_Left_Up",
+      "script": "(L:FSelComancheLeftState, Number) 1 + 2 min (>L:FSelComancheLeftState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 236,
+      "lvars": [
+        "FSelComancheLeftState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 220,
+      "name": "PA24_250_Fuel_Tank_Right_Down",
+      "script": "(L:FSelComancheRightState, Number) 1 - 0 max (>L:FSelComancheRightState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 237,
+      "lvars": [
+        "FSelComancheRightState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 221,
+      "name": "PA24_250_Fuel_Tank_Right_Main",
+      "script": "2 (>L:FSelComancheRightState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 238,
+      "lvars": [
+        "FSelComancheRightState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 222,
+      "name": "PA24_250_Fuel_Tank_Right_Off",
+      "script": "0 (>L:FSelComancheRightState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 239,
+      "lvars": [
+        "FSelComancheRightState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 223,
+      "name": "PA24_250_Fuel_Tank_Right_Tip",
+      "script": "1 (>L:FSelComancheRightState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 240,
+      "lvars": [
+        "FSelComancheRightState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 224,
+      "name": "PA24_250_Fuel_Tank_Right_Up",
+      "script": "(L:FSelComancheRightState, Number) 1 + 2 min (>L:FSelComancheRightState, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Fuel",
+      "line": 241,
+      "lvars": [
+        "FSelComancheRightState"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 225,
+      "name": "PA24_250_Parking_Brake_Toggle",
+      "script": "(L:ParkingBrakePosition, bool) ! s0 (>L:ParkingBrakePosition, bool) l0 (>L:ParkingBrakeActive, bool) (>H:A2A_PARKING_BRAKE_POSITION)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 243,
+      "lvars": [
+        "ParkingBrakePosition",
+        "ParkingBrakeActive"
+      ],
+      "hvars": [
+        "A2A_PARKING_BRAKE_POSITION"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 226,
+      "name": "PA24_Parking_Brake_Off",
+      "script": "0 s0 (>L:ParkingBrakePosition, bool) l0 (>L:ParkingBrakeActive, bool) (>H:A2A_PARKING_BRAKE_POSITION)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 244,
+      "lvars": [
+        "ParkingBrakePosition",
+        "ParkingBrakeActive"
+      ],
+      "hvars": [
+        "A2A_PARKING_BRAKE_POSITION"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 227,
+      "name": "PA24_Parking_Brake_On",
+      "script": "1 s0 (>L:ParkingBrakePosition, bool) l0 (>L:ParkingBrakeActive, bool) (>H:A2A_PARKING_BRAKE_POSITION)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 245,
+      "lvars": [
+        "ParkingBrakePosition",
+        "ParkingBrakeActive"
+      ],
+      "hvars": [
+        "A2A_PARKING_BRAKE_POSITION"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 228,
+      "name": "PA24_250_Gear_Emergency_Extend",
+      "script": "1 (>L:EmergencyGearLever, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 246,
+      "lvars": [
+        "EmergencyGearLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 229,
+      "name": "PA24_250_Gear_Emergency_Retract",
+      "script": "0 (>L:EmergencyGearLever, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 247,
+      "lvars": [
+        "EmergencyGearLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 230,
+      "name": "PA24_250_Gear_Emergency_Toggle",
+      "script": "(L:EmergencyGearLever, Number) ! (>L:EmergencyGearLever, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 248,
+      "lvars": [
+        "EmergencyGearLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 231,
+      "name": "PA24_250_Gear_Landing_Down",
+      "script": "2 (>L:LandingGearLeverPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 249,
+      "lvars": [
+        "LandingGearLeverPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 232,
+      "name": "PA24_250_Gear_Landing_Off",
+      "script": "1 (>L:LandingGearLeverPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 250,
+      "lvars": [
+        "LandingGearLeverPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 233,
+      "name": "PA24_250_Gear_Landing_Up",
+      "script": "0 (>L:LandingGearLeverPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 251,
+      "lvars": [
+        "LandingGearLeverPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 234,
+      "name": "PA24_250_Parking_Brake_Realistic_Toggle",
+      "script": "(L:RealisticParkingBrake, Number) 0 == if{ (L:ParkingBrakePosition, bool) ! (>L:ParkingBrakePosition, bool) 1 (>H:A2A_PARKING_BRAKE_POSITION) } els{ (L:ParkingBrakePosition, bool) 1 == if{ 0 (>L:ParkingBrakePosition, bool) 1 (>H:A2A_PARKING_BRAKE_POSITION) } els{ (L:BrakeLPosition, percent) 25 > (L:BrakeRPosition, percent) 25 > || if{ 1 (>L:ParkingBrakePosition, bool) 1 (>H:A2A_PARKING_BRAKE_POSITION) } } }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Gear",
+      "line": 252,
+      "lvars": [
+        "RealisticParkingBrake",
+        "ParkingBrakePosition",
+        "BrakeLPosition",
+        "BrakeRPosition"
+      ],
+      "hvars": [
+        "A2A_PARKING_BRAKE_POSITION"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 235,
+      "name": "PA24_250_Light_Portable_Dim_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:PortableLamp_Dimmer, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 254,
+      "lvars": [
+        "PortableLamp_Dimmer"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 236,
+      "name": "PA24_250_Light_Portable_Direction_Horizontal_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:PortableLamp_Main_DragX, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 255,
+      "lvars": [
+        "PortableLamp_Main_DragX"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 237,
+      "name": "PA24_250_Light_Beacon_Off",
+      "script": "1 (>K:BEACON_LIGHTS_OFF)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 256,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "BEACON_LIGHTS_OFF"
+      ],
+      "avars": []
+    },
+    {
+      "id": 238,
+      "name": "PA24_250_Light_Beacon_On",
+      "script": "1 (>K:BEACON_LIGHTS_ON)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 257,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "BEACON_LIGHTS_ON"
+      ],
+      "avars": []
+    },
+    {
+      "id": 239,
+      "name": "PA24_250_Light_Beacon_Toggle",
+      "script": "1 (>K:TOGGLE_BEACON_LIGHTS)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 258,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "TOGGLE_BEACON_LIGHTS"
+      ],
+      "avars": []
+    },
+    {
+      "id": 240,
+      "name": "PA24_250_Light_Flood_Red_Off",
+      "script": "0 (>L:CabinRedLightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 259,
+      "lvars": [
+        "CabinRedLightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 241,
+      "name": "PA24_250_Light_Flood_Red_On",
+      "script": "1 (>L:CabinRedLightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 260,
+      "lvars": [
+        "CabinRedLightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 242,
+      "name": "PA24_250_Light_Flood_Red_Toggle",
+      "script": "(L:CabinRedLightSwitch, bool) ! (>L:CabinRedLightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 261,
+      "lvars": [
+        "CabinRedLightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 243,
+      "name": "PA24_250_Light_Flood1_Off",
+      "script": "0 (>L:CabinFlood1LightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 262,
+      "lvars": [
+        "CabinFlood1LightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 244,
+      "name": "PA24_250_Light_Flood1_On",
+      "script": "1 (>L:CabinFlood1LightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 263,
+      "lvars": [
+        "CabinFlood1LightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 245,
+      "name": "PA24_250_Light_Flood1_Toggle",
+      "script": "(L:CabinFlood1LightSwitch, bool) ! (>L:CabinFlood1LightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 264,
+      "lvars": [
+        "CabinFlood1LightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 246,
+      "name": "PA24_250_Light_Flood2_Off",
+      "script": "0 (>L:CabinFlood2LightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 265,
+      "lvars": [
+        "CabinFlood2LightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 247,
+      "name": "PA24_250_Light_Flood2_On",
+      "script": "1 (>L:CabinFlood2LightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 266,
+      "lvars": [
+        "CabinFlood2LightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 248,
+      "name": "PA24_250_Light_Flood2_Toggle",
+      "script": "(L:CabinFlood2LightSwitch, bool) ! (>L:CabinFlood2LightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 267,
+      "lvars": [
+        "CabinFlood2LightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 249,
+      "name": "PA24_250_Light_Landing_Left_Off",
+      "script": "0 (>L:LandingLightLeftSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 268,
+      "lvars": [
+        "LandingLightLeftSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 250,
+      "name": "PA24_250_Light_Landing_Left_On",
+      "script": "1 (>L:LandingLightLeftSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 269,
+      "lvars": [
+        "LandingLightLeftSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 251,
+      "name": "PA24_250_Light_Landing_Left_Toggle",
+      "script": "(L:LandingLightLeftSwitch, bool) ! (>L:LandingLightLeftSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 270,
+      "lvars": [
+        "LandingLightLeftSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 252,
+      "name": "PA24_250_Light_Landing_Right_Off",
+      "script": "0 (>L:LandingLightRightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 271,
+      "lvars": [
+        "LandingLightRightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 253,
+      "name": "PA24_250_Light_Landing_Right_On",
+      "script": "1 (>L:LandingLightRightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 272,
+      "lvars": [
+        "LandingLightRightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 254,
+      "name": "PA24_250_Light_Landing_Right_Toggle",
+      "script": "(L:LandingLightRightSwitch, bool) ! (>L:LandingLightRightSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 273,
+      "lvars": [
+        "LandingLightRightSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 255,
+      "name": "PA24_250_Light_Nav_100",
+      "script": "100 (>L:NavInstrLightSwitchPct, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 274,
+      "lvars": [
+        "NavInstrLightSwitchPct"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 256,
+      "name": "PA24_250_Light_Nav_Dec",
+      "script": "(L:NavInstrLightSwitchPct, percent) 10 - 0 max (>L:NavInstrLightSwitchPct, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 275,
+      "lvars": [
+        "NavInstrLightSwitchPct"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 257,
+      "name": "PA24_250_Light_Nav_Inc",
+      "script": "(L:NavInstrLightSwitchPct, percent) 10 + 100 min (>L:NavInstrLightSwitchPct, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 276,
+      "lvars": [
+        "NavInstrLightSwitchPct"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 258,
+      "name": "PA24_250_Light_Nav_Off",
+      "script": "0 (>L:NavInstrLightSwitchPct, percent)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 277,
+      "lvars": [
+        "NavInstrLightSwitchPct"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 259,
+      "name": "PA24_250_Light_Nav_Toggle",
+      "script": "(L:NavInstrLightSwitchPct, percent) 0 > if{ 0 (>L:NavInstrLightSwitchPct, percent) } els{ 100 (>L:NavInstrLightSwitchPct, percent) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 278,
+      "lvars": [
+        "NavInstrLightSwitchPct"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 260,
+      "name": "PA24_250_Light_Portable_Colour_Red",
+      "script": "1 (>L:PortableLamp_ColourSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 279,
+      "lvars": [
+        "PortableLamp_ColourSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 261,
+      "name": "PA24_250_Light_Portable_Colour_Toggle",
+      "script": "(L:PortableLamp_ColourSwitch, Number) ! (>L:PortableLamp_ColourSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 280,
+      "lvars": [
+        "PortableLamp_ColourSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 262,
+      "name": "PA24_250_Light_Portable_Colour_White",
+      "script": "0 (>L:PortableLamp_ColourSwitch, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 281,
+      "lvars": [
+        "PortableLamp_ColourSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 263,
+      "name": "PA24_250_Light_Portable_Dim_Dec",
+      "script": "(L:PortableLamp_Dimmer, Number) 5 - 0 max (>L:PortableLamp_Dimmer, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 282,
+      "lvars": [
+        "PortableLamp_Dimmer"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 264,
+      "name": "PA24_250_Light_Portable_Dim_Inc",
+      "script": "(L:PortableLamp_Dimmer, Number) 5 + 100 min (>L:PortableLamp_Dimmer, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 283,
+      "lvars": [
+        "PortableLamp_Dimmer"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 265,
+      "name": "PA24_250_Light_Portable_Direction_Center",
+      "script": "1 (>K:PA24-light_portable_direction_horizontal_center) 1 (>K:PA24-light_portable_direction_vertical_center)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 284,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PA24-light_portable_direction_horizontal_center",
+        "PA24-light_portable_direction_vertical_center"
+      ],
+      "avars": []
+    },
+    {
+      "id": 266,
+      "name": "PA24_250_Light_Portable_Direction_Horizontal_Center",
+      "script": "0 (>L:PortableLamp_Main_DragX, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 285,
+      "lvars": [
+        "PortableLamp_Main_DragX"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 267,
+      "name": "PA24_250_Light_Portable_Direction_Horizontal_Dec",
+      "script": "(L:PortableLamp_Main_DragX, Number) 5 - -50 max (>L:PortableLamp_Main_DragX, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 286,
+      "lvars": [
+        "PortableLamp_Main_DragX"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 268,
+      "name": "PA24_250_Light_Portable_Direction_Horizontal_Inc",
+      "script": "(L:PortableLamp_Main_DragX, Number) 5 + 50 min (>L:PortableLamp_Main_DragX, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 287,
+      "lvars": [
+        "PortableLamp_Main_DragX"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 269,
+      "name": "PA24_250_Light_Portable_Direction_Vertical_Axis",
+      "script": "(L:PA24-light_portable_direction_vertical_axis) -50 max 50 min (>L:PortableLamp_Main_DragY, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 288,
+      "lvars": [
+        "PA24-light_portable_direction_vertical_axis",
+        "PortableLamp_Main_DragY"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 270,
+      "name": "PA24_250_Light_Portable_Direction_Vertical_Center",
+      "script": "0 (>L:PortableLamp_Main_DragY, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 289,
+      "lvars": [
+        "PortableLamp_Main_DragY"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 271,
+      "name": "PA24_250_Light_Portable_Direction_Vertical_Dec",
+      "script": "(L:PortableLamp_Main_DragY, Number) 5 - -50 max (>L:PortableLamp_Main_DragY, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 290,
+      "lvars": [
+        "PortableLamp_Main_DragY"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 272,
+      "name": "PA24_250_Light_Portable_Direction_Vertical_Inc",
+      "script": "(L:PortableLamp_Main_DragY, Number) 5 + 50 min (>L:PortableLamp_Main_DragY, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 291,
+      "lvars": [
+        "PortableLamp_Main_DragY"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 273,
+      "name": "PA24_250_Light_Strobe_Off",
+      "script": "1 (>K:STROBES_OFF)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 292,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "STROBES_OFF"
+      ],
+      "avars": []
+    },
+    {
+      "id": 274,
+      "name": "PA24_250_Light_Strobe_On",
+      "script": "1 (>K:STROBES_ON)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 293,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "STROBES_ON"
+      ],
+      "avars": []
+    },
+    {
+      "id": 275,
+      "name": "PA24_250_Light_Strobe_Toggle",
+      "script": "1 (>K:STROBES_TOGGLE)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Lights",
+      "line": 294,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "STROBES_TOGGLE"
+      ],
+      "avars": []
+    },
+    {
+      "id": 276,
+      "name": "PA24_250_Tablet_Position_Horizontal_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:TabletHorizontalPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 296,
+      "lvars": [
+        "TabletHorizontalPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 277,
+      "name": "PA24_250_Visor_Left_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:VisorLeftPercent, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 297,
+      "lvars": [
+        "VisorLeftPercent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 278,
+      "name": "PA24_250_Visor_Right_Axis",
+      "script": "@ 15 - 10.0 / 0 max 100 min (>L:VisorRightPercent, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 298,
+      "lvars": [
+        "VisorRightPercent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 279,
+      "name": "PA24_250_Controls_Locks_Dismount",
+      "script": "0 (>L:ControlsLockLever, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 299,
+      "lvars": [
+        "ControlsLockLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 280,
+      "name": "PA24_250_Controls_Locks_Mount",
+      "script": "1 (>L:ControlsLockLever, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 300,
+      "lvars": [
+        "ControlsLockLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 281,
+      "name": "PA24_250_Controls_Locks_Toggle",
+      "script": "(L:ControlsLockLever, Number) ! (>L:ControlsLockLever, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 301,
+      "lvars": [
+        "ControlsLockLever"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 282,
+      "name": "PA24_250_Door_Complete_Close",
+      "script": "1 (>K:PA24-door_latch_unlock) 1 (>K:PA24-door_handle_open) 1 (>K:PA24-door_latch_lock)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 302,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PA24-door_latch_unlock",
+        "PA24-door_handle_open",
+        "PA24-door_latch_lock"
+      ],
+      "avars": []
+    },
+    {
+      "id": 283,
+      "name": "PA24_250_Door_Complete_Open",
+      "script": "1 (>K:PA24-door_latch_unlock) 1 (>K:PA24-door_handle_open)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 303,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PA24-door_latch_unlock",
+        "PA24-door_handle_open"
+      ],
+      "avars": []
+    },
+    {
+      "id": 284,
+      "name": "PA24_250_Door_Complete_Toggle",
+      "script": "(L:Door1Open, bool) ! if{ 1 (>K:PA24-door_complete_open) } els{ 1 (>K:PA24-door_complete_close) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 304,
+      "lvars": [
+        "Door1Open"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-door_complete_open",
+        "PA24-door_complete_close"
+      ],
+      "avars": []
+    },
+    {
+      "id": 285,
+      "name": "PA24_250_Door_Handle_Close",
+      "script": "(L:Door1Handle, bool) ! (>L:Door1Handle, bool) 0 (>L:Door1Open, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 305,
+      "lvars": [
+        "Door1Handle",
+        "Door1Open"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 286,
+      "name": "PA24_250_Door_Handle_Open",
+      "script": "(L:Door1Handle, bool) ! (>L:Door1Handle, bool) (L:Door1Latch, bool) 0 == if{ 1 (>L:Door1Open, bool) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 306,
+      "lvars": [
+        "Door1Handle",
+        "Door1Latch",
+        "Door1Open"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 287,
+      "name": "PA24_250_Door_Handle_Toggle",
+      "script": "(L:Door1Open, bool) 0 == if{ 1 (>K:PA24-door_handle_open) } els{ 1 (>K:PA24-door_handle_close) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 307,
+      "lvars": [
+        "Door1Open"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-door_handle_open",
+        "PA24-door_handle_close"
+      ],
+      "avars": []
+    },
+    {
+      "id": 288,
+      "name": "PA24_250_Door_Latch_Lock",
+      "script": "1 (>L:Door1Latch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 308,
+      "lvars": [
+        "Door1Latch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 289,
+      "name": "PA24_250_Door_Latch_Toggle",
+      "script": "(L:Door1Latch, bool) ! (>L:Door1Latch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 309,
+      "lvars": [
+        "Door1Latch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 290,
+      "name": "PA24_250_Door_Latch_Unlock",
+      "script": "0 (>L:Door1Latch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 310,
+      "lvars": [
+        "Door1Latch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 291,
+      "name": "PA24_250_Ext_Wheel_Chockl_Hide",
+      "script": "0 (>L:vis_WheelChockL, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 311,
+      "lvars": [
+        "vis_WheelChockL"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 292,
+      "name": "PA24_250_External_Chock_Left_Toggle",
+      "script": "(L:vis_WheelChockL, Number) ! (>L:vis_WheelChockL, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 312,
+      "lvars": [
+        "vis_WheelChockL"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 293,
+      "name": "PA24_250_External_Chock_Right_Toggle",
+      "script": "(L:vis_WheelChockR, Number) ! (>L:vis_WheelChockR, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 313,
+      "lvars": [
+        "vis_WheelChockR"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 294,
+      "name": "PA24_250_External_Chocks_Toggle",
+      "script": "(L:vis_WheelChockR, Number) 0 == if{ 1 (>L:vis_WheelChockR, Number) 1 (>L:vis_WheelChockL, Number) } els{ 0 (>L:vis_WheelChockR, Number) 0 (>L:vis_WheelChockL, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 314,
+      "lvars": [
+        "vis_WheelChockR",
+        "vis_WheelChockL"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 295,
+      "name": "PA24_250_External_Tiedown_Tail_Toggle",
+      "script": "(L:vis_Tail_TieDown, Number) ! (>L:vis_Tail_TieDown, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 315,
+      "lvars": [
+        "vis_Tail_TieDown"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 296,
+      "name": "PA24_250_External_Tiedown_Wing_Left_Toggle",
+      "script": "(L:vis_WingLeft_TieDown, Number) ! (>L:vis_WingLeft_TieDown, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 316,
+      "lvars": [
+        "vis_WingLeft_TieDown"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 297,
+      "name": "PA24_250_External_Tiedown_Wing_Right_Toggle",
+      "script": "(L:vis_WingRight_TieDown, Number) ! (>L:vis_WingRight_TieDown, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 317,
+      "lvars": [
+        "vis_WingRight_TieDown"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 298,
+      "name": "PA24_250_External_Tiedowns_Toggle",
+      "script": "(L:vis_WingRight_TieDown, Number) 0 == if{ 1 (>L:vis_WingRight_TieDown, Number) 1 (>L:vis_WingLeft_TieDown, Number) 1 (>L:vis_Tail_TieDown, Number) } els{ 0 (>L:vis_WingRight_TieDown, Number) 0 (>L:vis_WingLeft_TieDown, Number) 0 (>L:vis_Tail_TieDown, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 318,
+      "lvars": [
+        "vis_WingRight_TieDown",
+        "vis_WingLeft_TieDown",
+        "vis_Tail_TieDown"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 299,
+      "name": "PA24_250_Tablet_Hide",
+      "script": "0 (>L:TabletStation, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 319,
+      "lvars": [
+        "TabletStation"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 300,
+      "name": "PA24_250_Tablet_Position_Depth_Axis",
+      "script": "(L:PA24-tablet_position_depth_axis) -50 max 25 min (>L:TabletDepthPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 320,
+      "lvars": [
+        "PA24-tablet_position_depth_axis",
+        "TabletDepthPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 301,
+      "name": "PA24_250_Tablet_Position_Depth_Dec",
+      "script": "(L:TabletDepthPosition, Number) 5 - -50 max (>L:TabletDepthPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 321,
+      "lvars": [
+        "TabletDepthPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 302,
+      "name": "PA24_250_Tablet_Position_Depth_Inc",
+      "script": "(L:TabletDepthPosition, Number) 5 + 25 min (>L:TabletDepthPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 322,
+      "lvars": [
+        "TabletDepthPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 303,
+      "name": "PA24_250_Tablet_Position_Horizontal_Dec",
+      "script": "(L:TabletHorizontalPosition, Number) 5 - 0 max (>L:TabletHorizontalPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 323,
+      "lvars": [
+        "TabletHorizontalPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 304,
+      "name": "PA24_250_Tablet_Position_Horizontal_Inc",
+      "script": "(L:TabletHorizontalPosition, Number) 5 + 100 min (>L:TabletHorizontalPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 324,
+      "lvars": [
+        "TabletHorizontalPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 305,
+      "name": "PA24_250_Tablet_Position_Reset",
+      "script": "-36 (>L:TabletVerticalPosition, Number) 0 (>L:TabletHorizontalPosition, Number) 0 (>L:TabletDepthPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 325,
+      "lvars": [
+        "TabletVerticalPosition",
+        "TabletHorizontalPosition",
+        "TabletDepthPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 306,
+      "name": "PA24_250_Tablet_Position_Vertical_Axis",
+      "script": "(L:PA24-tablet_position_vertical_axis) -39 max 36 min (>L:TabletVerticalPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 326,
+      "lvars": [
+        "PA24-tablet_position_vertical_axis",
+        "TabletVerticalPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 307,
+      "name": "PA24_250_Tablet_Position_Vertical_Dec",
+      "script": "(L:TabletVerticalPosition, Number) 5 - -39 max 36 min (>L:TabletVerticalPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 327,
+      "lvars": [
+        "TabletVerticalPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 308,
+      "name": "PA24_250_Tablet_Position_Vertical_Inc",
+      "script": "(L:TabletVerticalPosition, Number) 5 + -39 max 36 min (>L:TabletVerticalPosition, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 328,
+      "lvars": [
+        "TabletVerticalPosition"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 309,
+      "name": "PA24_250_Tablet_Show",
+      "script": "1 (>L:TabletStation, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 329,
+      "lvars": [
+        "TabletStation"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 310,
+      "name": "PA24_250_Tablet_Toggle",
+      "script": "(L:TabletStation, Number) ! (>L:TabletStation, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 330,
+      "lvars": [
+        "TabletStation"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 311,
+      "name": "PA24_250_Tablet_Weight_Baggage_050Lbs",
+      "script": "50 (>L:BaggageWeight, lbs)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 331,
+      "lvars": [
+        "BaggageWeight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 312,
+      "name": "PA24_250_Tablet_Weight_Baggage_100Lbs",
+      "script": "100 (>L:BaggageWeight, lbs)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 332,
+      "lvars": [
+        "BaggageWeight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 313,
+      "name": "PA24_250_Tablet_Weight_Baggage_150Lbs",
+      "script": "150 (>L:BaggageWeight, lbs)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 333,
+      "lvars": [
+        "BaggageWeight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 314,
+      "name": "PA24_250_Tablet_Weight_Baggage_200Lbs",
+      "script": "200 (>L:BaggageWeight, lbs)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 334,
+      "lvars": [
+        "BaggageWeight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 315,
+      "name": "PA24_250_Tablet_Weight_Baggage_Axis",
+      "script": "(L:PA24-tablet_weight_baggage_axis) 0 max 300 min (>L:BaggageWeight, lbs)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 335,
+      "lvars": [
+        "PA24-tablet_weight_baggage_axis",
+        "BaggageWeight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 316,
+      "name": "PA24_250_Tablet_Weight_Fuel_0_Light",
+      "script": "3 (>L:FuelLeftTipTank, gallon) 15 (>L:FuelLeftWingTank, gallon) 15 (>L:FuelRightWingTank, gallon) 3 (>L:FuelRightTipTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 336,
+      "lvars": [
+        "FuelLeftTipTank",
+        "FuelLeftWingTank",
+        "FuelRightWingTank",
+        "FuelRightTipTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 317,
+      "name": "PA24_250_Tablet_Weight_Fuel_1_Medium",
+      "script": "3 (>L:FuelLeftTipTank, gallon) 30 (>L:FuelLeftWingTank, gallon) 30 (>L:FuelRightWingTank, gallon) 3 (>L:FuelRightTipTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 337,
+      "lvars": [
+        "FuelLeftTipTank",
+        "FuelLeftWingTank",
+        "FuelRightWingTank",
+        "FuelRightTipTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 318,
+      "name": "PA24_250_Tablet_Weight_Fuel_2_Heavy",
+      "script": "15 (>L:FuelLeftTipTank, gallon) 30 (>L:FuelLeftWingTank, gallon) 30 (>L:FuelRightWingTank, gallon) 15 (>L:FuelRightTipTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 338,
+      "lvars": [
+        "FuelLeftTipTank",
+        "FuelLeftWingTank",
+        "FuelRightWingTank",
+        "FuelRightTipTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 319,
+      "name": "PA24_250_Tablet_Weight_Fuel_Left_Tip_Dec",
+      "script": "(L:FuelLeftTipTank, gallon) 1 - 0 max (>L:FuelLeftTipTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 339,
+      "lvars": [
+        "FuelLeftTipTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 320,
+      "name": "PA24_250_Tablet_Weight_Fuel_Left_Tip_Inc",
+      "script": "(L:FuelLeftTipTank, gallon) 1 + 15 min (>L:FuelLeftTipTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 340,
+      "lvars": [
+        "FuelLeftTipTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 321,
+      "name": "PA24_250_Tablet_Weight_Fuel_Left_Wing_Dec",
+      "script": "(L:FuelLeftWingTank, gallon) 1 - 0 max (>L:FuelLeftWingTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 341,
+      "lvars": [
+        "FuelLeftWingTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 322,
+      "name": "PA24_250_Tablet_Weight_Fuel_Left_Wing_Inc",
+      "script": "(L:FuelLeftWingTank, gallon) 1 + 30 min (>L:FuelLeftWingTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 342,
+      "lvars": [
+        "FuelLeftWingTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 323,
+      "name": "PA24_250_Tablet_Weight_Fuel_Right_Tip_Dec",
+      "script": "(L:FuelRightTipTank, gallon) 1 - 0 max (>L:FuelRightTipTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 343,
+      "lvars": [
+        "FuelRightTipTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 324,
+      "name": "PA24_250_Tablet_Weight_Fuel_Right_Tip_Inc",
+      "script": "(L:FuelRightTipTank, gallon) 1 + 15 min (>L:FuelRightTipTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 344,
+      "lvars": [
+        "FuelRightTipTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 325,
+      "name": "PA24_250_Tablet_Weight_Fuel_Right_Wing_Dec",
+      "script": "(L:FuelRightWingTank, gallon) 1 - 0 max (>L:FuelRightWingTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 345,
+      "lvars": [
+        "FuelRightWingTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 326,
+      "name": "PA24_250_Tablet_Weight_Fuel_Right_Wing_Inc",
+      "script": "(L:FuelRightWingTank, gallon) 1 + 30 min (>L:FuelRightWingTank, gallon)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 346,
+      "lvars": [
+        "FuelRightWingTank"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 327,
+      "name": "PA24_250_Tablet_Weight_Seat_1_Toggle",
+      "script": "(L:Seat1Character, Number) 0 == if{ 1 (>L:Seat1Character, Number) } els{ 0 (>L:Seat1Character, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 347,
+      "lvars": [
+        "Seat1Character"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 328,
+      "name": "PA24_250_Tablet_Weight_Seat_2_Toggle",
+      "script": "(L:Seat2Character, Number) 0 == if{ 2 (>L:Seat2Character, Number) } els{ 0 (>L:Seat2Character, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 348,
+      "lvars": [
+        "Seat2Character"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 329,
+      "name": "PA24_250_Tablet_Weight_Seat_3_Toggle",
+      "script": "(L:Seat3Character, Number) 0 == if{ 3 (>L:Seat3Character, Number) } els{ 0 (>L:Seat3Character, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 349,
+      "lvars": [
+        "Seat3Character"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 330,
+      "name": "PA24_250_Tablet_Weight_Seat_4_Toggle",
+      "script": "(L:Seat4Character, Number) 0 == if{ 4 (>L:Seat4Character, Number) } els{ 0 (>L:Seat4Character, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 350,
+      "lvars": [
+        "Seat4Character"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 331,
+      "name": "PA24_250_Visor_Left_Down",
+      "script": "(L:VisorLeftPercent, number) 5 + 100 min (>L:VisorLeftPercent, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 351,
+      "lvars": [
+        "VisorLeftPercent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 332,
+      "name": "PA24_250_Visor_Left_Up",
+      "script": "(L:VisorLeftPercent, number) 5 - 0 max (>L:VisorLeftPercent, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 352,
+      "lvars": [
+        "VisorLeftPercent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 333,
+      "name": "PA24_250_Visor_Right_Down",
+      "script": "(L:VisorRightPercent, number) 5 + 100 min (>L:VisorRightPercent, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 353,
+      "lvars": [
+        "VisorRightPercent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 334,
+      "name": "PA24_250_Visor_Right_Up",
+      "script": "(L:VisorRightPercent, number) 5 - 0 max (>L:VisorRightPercent, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 354,
+      "lvars": [
+        "VisorRightPercent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 335,
+      "name": "PA24_250_Walkaround_02_Flaps_Right",
+      "script": "100 (>L:WALKAROUND_FlapR_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 355,
+      "lvars": [
+        "WALKAROUND_FlapR_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 336,
+      "name": "PA24_250_Walkaround_03_Aileron_Right",
+      "script": "100 (>L:WALKAROUND_AileronR_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 356,
+      "lvars": [
+        "WALKAROUND_AileronR_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 337,
+      "name": "PA24_250_Walkaround_04_Fuel_Tip_Right_Close",
+      "script": "0 (>L:FuelTipTankOpeningRightCap, Bool) 0 (>L:FuelTipTankOpeningRight, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 357,
+      "lvars": [
+        "FuelTipTankOpeningRightCap",
+        "FuelTipTankOpeningRight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 338,
+      "name": "PA24_250_Walkaround_04_Fuel_Tip_Right_Open",
+      "script": "1 (>L:FuelTipTankOpeningRight, Bool) 1 (>L:FuelTipTankOpeningRightCap, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 358,
+      "lvars": [
+        "FuelTipTankOpeningRight",
+        "FuelTipTankOpeningRightCap"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 339,
+      "name": "PA24_250_Walkaround_04_Fuel_Tip_Toggle",
+      "script": "(L:FuelTipTankOpeningRight, Bool) 0 == if{ 1 (>K:PA24-walkaround_04_fuel_tip_right_open) } els{ 1 (>K:PA24-walkaround_04_fuel_tip_right_close) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 359,
+      "lvars": [
+        "FuelTipTankOpeningRight"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-walkaround_04_fuel_tip_right_open",
+        "PA24-walkaround_04_fuel_tip_right_close"
+      ],
+      "avars": []
+    },
+    {
+      "id": 340,
+      "name": "PA24_250_Walkaround_05_Bottle_Clear",
+      "script": "0 (>L:WALKAROUND_BottleR_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 360,
+      "lvars": [
+        "WALKAROUND_BottleR_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 341,
+      "name": "PA24_250_Walkaround_05_Bottle_Fill",
+      "script": "100 (>L:WALKAROUND_BottleR_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 361,
+      "lvars": [
+        "WALKAROUND_BottleR_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 342,
+      "name": "PA24_250_Walkaround_05_Bottle_Toggle",
+      "script": "(L:WALKAROUND_BottleR_Drag, Number) 0 > if{ 0 (>L:WALKAROUND_BottleR_Drag, Number) } els{ 100 (>L:WALKAROUND_BottleR_Drag, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 362,
+      "lvars": [
+        "WALKAROUND_BottleR_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 343,
+      "name": "PA24_250_Walkaround_07_Fix_Light_R",
+      "script": "0 (>L:F_LandingLight2, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 363,
+      "lvars": [
+        "F_LandingLight2"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 344,
+      "name": "PA24_250_Walkaround_08_Toggle_Tiedown",
+      "script": "(L:vis_WingRight_TieDown, Bool) ! (>L:vis_WingRight_TieDown, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 364,
+      "lvars": [
+        "vis_WingRight_TieDown"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 345,
+      "name": "PA24_250_Walkaround_09_Fuel_Right_Close",
+      "script": "0 (>L:FuelTankOpeningRightCap, Bool) 0 (>L:FuelTankOpeningRight, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 365,
+      "lvars": [
+        "FuelTankOpeningRightCap",
+        "FuelTankOpeningRight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 346,
+      "name": "PA24_250_Walkaround_09_Fuel_Right_Open",
+      "script": "1 (>L:FuelTankOpeningRight, Bool) 1 (>L:FuelTankOpeningRightCap, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 366,
+      "lvars": [
+        "FuelTankOpeningRight",
+        "FuelTankOpeningRightCap"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 347,
+      "name": "PA24_250_Walkaround_09_Fuel_Right_Toggle",
+      "script": "(L:FuelTankOpeningRight, Bool) 0 == if{ 1 (>K:PA24-walkaround_09_fuel_right_open) } els{ 1 (>K:PA24-walkaround_09_fuel_right_close) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 367,
+      "lvars": [
+        "FuelTankOpeningRight"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-walkaround_09_fuel_right_open",
+        "PA24-walkaround_09_fuel_right_close"
+      ],
+      "avars": []
+    },
+    {
+      "id": 348,
+      "name": "PA24_250_Walkaround_10_Wheel_Chock_Toggle",
+      "script": "(L:vis_WheelChockR, Bool) ! (>L:vis_WheelChockR, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 368,
+      "lvars": [
+        "vis_WheelChockR"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 349,
+      "name": "PA24_250_Walkaround_11_Bottle_Clear",
+      "script": "0 (>L:WALKAROUND_BottleC_Drag, Number) 0 (>L:FuelCheckPanel, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 369,
+      "lvars": [
+        "WALKAROUND_BottleC_Drag",
+        "FuelCheckPanel"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 350,
+      "name": "PA24_250_Walkaround_11_Bottle_Fill",
+      "script": "1 (>L:FuelCheckPanel, Bool) 100 (>L:WALKAROUND_BottleC_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 370,
+      "lvars": [
+        "FuelCheckPanel",
+        "WALKAROUND_BottleC_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 351,
+      "name": "PA24_250_Walkaround_11_Bottle_Fill_And_Clear",
+      "script": "1 (>K:PA24-walkaround_11_bottle_fill) 1 (>K:PA24-walkaround_11_bottle_clear)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 371,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "PA24-walkaround_11_bottle_fill",
+        "PA24-walkaround_11_bottle_clear"
+      ],
+      "avars": []
+    },
+    {
+      "id": 352,
+      "name": "PA24_250_Walkaround_11_Bottle_Toggle",
+      "script": "(L:FuelCheckPanel, Bool) 0 == if{ 1 (>K:PA24-walkaround_11_bottle_fill) } els{ 1 (>K:PA24-walkaround_11_bottle_clear) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 372,
+      "lvars": [
+        "FuelCheckPanel"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-walkaround_11_bottle_fill",
+        "PA24-walkaround_11_bottle_clear"
+      ],
+      "avars": []
+    },
+    {
+      "id": 353,
+      "name": "PA24_250_Walkaround_12_Rag_Clean",
+      "script": "0 (>L:F_RagIntake, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 373,
+      "lvars": [
+        "F_RagIntake"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 354,
+      "name": "PA24_250_Walkaround_13_Oil_Close",
+      "script": "0 (>L:OilInspectionStick, Bool) 0 (>L:OilInspectionPanel, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 374,
+      "lvars": [
+        "OilInspectionStick",
+        "OilInspectionPanel"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 355,
+      "name": "PA24_250_Walkaround_13_Oil_Open",
+      "script": "1 (>L:OilInspectionPanel, Bool) 1 (>L:OilInspectionStick, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 375,
+      "lvars": [
+        "OilInspectionPanel",
+        "OilInspectionStick"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 356,
+      "name": "PA24_250_Walkaround_13_Oil_Toggle",
+      "script": "(L:OilInspectionStick, Bool) 0 == if{ 1 (>K:PA24-walkaround_13_oil_open) } els{ 1 (>K:PA24-walkaround_13_oil_close) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 376,
+      "lvars": [
+        "OilInspectionStick"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-walkaround_13_oil_open",
+        "PA24-walkaround_13_oil_close"
+      ],
+      "avars": []
+    },
+    {
+      "id": 357,
+      "name": "PA24_250_Walkaround_14_Fuel_Left_Close",
+      "script": "0 (>L:FuelTankOpeningLeftCap, Bool) 0 (>L:FuelTankOpeningLeft, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 377,
+      "lvars": [
+        "FuelTankOpeningLeftCap",
+        "FuelTankOpeningLeft"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 358,
+      "name": "PA24_250_Walkaround_14_Fuel_Left_Open",
+      "script": "1 (>L:FuelTankOpeningLeft, Bool) 1 (>L:FuelTankOpeningLeftCap, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 378,
+      "lvars": [
+        "FuelTankOpeningLeft",
+        "FuelTankOpeningLeftCap"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 359,
+      "name": "PA24_250_Walkaround_14_Fuel_Left_Toggle",
+      "script": "(L:FuelTankOpeningLeft, Bool) 0 == if{ 1 (>K:PA24-walkaround_14_fuel_left_open) } els{ 1 (>K:PA24-walkaround_14_fuel_left_close) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 379,
+      "lvars": [
+        "FuelTankOpeningLeft"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-walkaround_14_fuel_left_open",
+        "PA24-walkaround_14_fuel_left_close"
+      ],
+      "avars": []
+    },
+    {
+      "id": 360,
+      "name": "PA24_250_Walkaround_15_Wheel_Chock_Left_Toggle",
+      "script": "(L:vis_WheelChockL, Bool) ! (>L:vis_WheelChockL, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 380,
+      "lvars": [
+        "vis_WheelChockL"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 361,
+      "name": "PA24_250_Walkaround_16_Pitot_Test_Start",
+      "script": "1 (>L:PitotHeatCheck, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 381,
+      "lvars": [
+        "PitotHeatCheck"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 362,
+      "name": "PA24_250_Walkaround_16_Pitot_Test_Stop",
+      "script": "0 (>L:PitotHeatCheck, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 382,
+      "lvars": [
+        "PitotHeatCheck"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 363,
+      "name": "PA24_250_Walkaround_16_Stall_Warn_Test_Start",
+      "script": "1 (>L:Action_StallWarning,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 383,
+      "lvars": [
+        "Action_StallWarning"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 364,
+      "name": "PA24_250_Walkaround_16_Stall_Warn_Test_Stop",
+      "script": "0 (>L:Action_StallWarning,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 384,
+      "lvars": [
+        "Action_StallWarning"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 365,
+      "name": "PA24_250_Walkaround_16_Tie_Pitot_Toggle",
+      "script": "(L:vis_WingLeft_TieDown, Bool) 0 == if{ 1 (>L:vis_WingLeft_TieDown, Bool) 1 (>L:PitotTubeCover, Bool) } els{ 0 (>L:vis_WingLeft_TieDown, Bool) 0 (>L:PitotTubeCover, Bool) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 385,
+      "lvars": [
+        "vis_WingLeft_TieDown",
+        "PitotTubeCover"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 366,
+      "name": "PA24_250_Walkaround_17_Fix_Light_L",
+      "script": "0 (>L:F_LandingLight1, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 386,
+      "lvars": [
+        "F_LandingLight1"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 367,
+      "name": "PA24_250_Walkaround_19_Fuel_Tip_Left_Close",
+      "script": "0 (>L:FuelTipTankOpeningLeftCap, Bool) 0 (>L:FuelTipTankOpeningLeft, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 387,
+      "lvars": [
+        "FuelTipTankOpeningLeftCap",
+        "FuelTipTankOpeningLeft"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 368,
+      "name": "PA24_250_Walkaround_19_Fuel_Tip_Left_Open",
+      "script": "1 (>L:FuelTipTankOpeningLeft, Bool) 1 (>L:FuelTipTankOpeningLeftCap, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 388,
+      "lvars": [
+        "FuelTipTankOpeningLeft",
+        "FuelTipTankOpeningLeftCap"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 369,
+      "name": "PA24_250_Walkaround_19_Fuel_Tip_Left_Toggle",
+      "script": "(L:FuelTipTankOpeningLeft, Bool) 0 == if{ 1 (>K:PA24-walkaround_19_fuel_tip_left_open) } els{ 1 (>K:PA24-walkaround_19_fuel_tip_left_close) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 389,
+      "lvars": [
+        "FuelTipTankOpeningLeft"
+      ],
+      "hvars": [],
+      "kvars": [
+        "PA24-walkaround_19_fuel_tip_left_open",
+        "PA24-walkaround_19_fuel_tip_left_close"
+      ],
+      "avars": []
+    },
+    {
+      "id": 370,
+      "name": "PA24_250_Walkaround_20_Bottle_Clear",
+      "script": "0 (>L:WALKAROUND_BottleL_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 390,
+      "lvars": [
+        "WALKAROUND_BottleL_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 371,
+      "name": "PA24_250_Walkaround_20_Bottle_Fill",
+      "script": "100 (>L:WALKAROUND_BottleL_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 391,
+      "lvars": [
+        "WALKAROUND_BottleL_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 372,
+      "name": "PA24_250_Walkaround_20_Bottle_Toggle",
+      "script": "(L:WALKAROUND_BottleL_Drag, Number) 0 > if{ 0 (>L:WALKAROUND_BottleL_Drag, Number) } els{ 100 (>L:WALKAROUND_BottleL_Drag, Number) }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 392,
+      "lvars": [
+        "WALKAROUND_BottleL_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 373,
+      "name": "PA24_250_Walkaround_21_Aileron_Left",
+      "script": "100 (>L:WALKAROUND_AileronL_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 393,
+      "lvars": [
+        "WALKAROUND_AileronL_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 374,
+      "name": "PA24_250_Walkaround_22_Flaps_Left",
+      "script": "100 (>L:WALKAROUND_FlapL_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 394,
+      "lvars": [
+        "WALKAROUND_FlapL_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 375,
+      "name": "PA24_250_Walkaround_23_Static_Port_Left_Clear",
+      "script": "0 (>L:F_StaticPort1, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 395,
+      "lvars": [
+        "F_StaticPort1"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 376,
+      "name": "PA24_250_Walkaround_24_Rudder_Elevator",
+      "script": "100 (>L:WALKAROUND_Rudder_Drag, Number) 100 (>L:WALKAROUND_Elevator_Drag, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 396,
+      "lvars": [
+        "WALKAROUND_Rudder_Drag",
+        "WALKAROUND_Elevator_Drag"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 377,
+      "name": "PA24_250_Walkaround_24_Toggle_Tiedown_Tail",
+      "script": "(L:vis_Tail_TieDown, Bool) ! (>L:vis_Tail_TieDown, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 397,
+      "lvars": [
+        "vis_Tail_TieDown"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 378,
+      "name": "PA24_250_Walkaround_25_Static_Port_Right_Clear",
+      "script": "0 (>L:F_StaticPort2, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 398,
+      "lvars": [
+        "F_StaticPort2"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 379,
+      "name": "PA24_250_Walkaround_26_Baggage_Door_Toggle",
+      "script": "(L:WALKAROUND_BaggageDoor_Click, Bool) ! (>L:WALKAROUND_BaggageDoor_Click, Bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 399,
+      "lvars": [
+        "WALKAROUND_BaggageDoor_Click"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 380,
+      "name": "PA24_250_Walkaround_Begin",
+      "script": "2 (>A:CAMERA VIEW TYPE AND INDEX:0, Enum) 5 (>A:CAMERA VIEW TYPE AND INDEX:1, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 400,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 381,
+      "name": "PA24_250_Walkaround_End",
+      "script": "1 (>A:CAMERA VIEW TYPE AND INDEX:0, Enum) 1 (>A:CAMERA VIEW TYPE AND INDEX:1, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 401,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 382,
+      "name": "PA24_250_Walkaround_Next",
+      "script": "(A:CAMERA VIEW TYPE AND INDEX:0, Enum) 2 != (A:CAMERA VIEW TYPE AND INDEX:1, Number) 5 < or if{ 2 (>A:CAMERA VIEW TYPE AND INDEX:0, Enum) 5 (>A:CAMERA VIEW TYPE AND INDEX:1, Number) } els{ (A:CAMERA VIEW TYPE AND INDEX:1, Number) 29 < if{ (A:CAMERA VIEW TYPE AND INDEX:1, Number) 1 + (>A:CAMERA VIEW TYPE AND INDEX:1, Number) } els{ 1 (>A:CAMERA VIEW TYPE AND INDEX:0, Enum) 1 (>A:CAMERA VIEW TYPE AND INDEX:1, Number) } }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 402,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 383,
+      "name": "PA24_250_Walkaround_Previous",
+      "script": "(A:CAMERA VIEW TYPE AND INDEX:0, Enum) 2 != (A:CAMERA VIEW TYPE AND INDEX:1, Number) 5 < or if{ 2 (>A:CAMERA VIEW TYPE AND INDEX:0, Enum) 29 (>A:CAMERA VIEW TYPE AND INDEX:1, Number) } els{ (A:CAMERA VIEW TYPE AND INDEX:1, Number) 5 > if{ (A:CAMERA VIEW TYPE AND INDEX:1, Number) 1 - (>A:CAMERA VIEW TYPE AND INDEX:1, Number) } els{ 1 (>A:CAMERA VIEW TYPE AND INDEX:0, Enum) 1 (>A:CAMERA VIEW TYPE AND INDEX:1, Number) } }",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 403,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 384,
+      "name": "PA24_250_Window_Left_Close",
+      "script": "0 (>L:WindowLeft, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 404,
+      "lvars": [
+        "WindowLeft"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 385,
+      "name": "PA24_250_Window_Left_Open",
+      "script": "1 (>L:WindowLeft, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 405,
+      "lvars": [
+        "WindowLeft"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 386,
+      "name": "PA24_250_Window_Left_Toggle",
+      "script": "(L:WindowLeft, bool) ! (>L:WindowLeft, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 406,
+      "lvars": [
+        "WindowLeft"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 387,
+      "name": "PA24_250_Window_Right_Close",
+      "script": "0 (>L:WindowRight, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 407,
+      "lvars": [
+        "WindowRight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 388,
+      "name": "PA24_250_Window_Right_Open",
+      "script": "1 (>L:WindowRight, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 408,
+      "lvars": [
+        "WindowRight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 389,
+      "name": "PA24_250_Window_Right_Toggle",
+      "script": "(L:WindowRight, bool) ! (>L:WindowRight, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Miscellaneous",
+      "line": 409,
+      "lvars": [
+        "WindowRight"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 390,
+      "name": "Inner_Marker_Beacon_Push_To_Test",
+      "script": "1 (>L:PushToTestMBI, bool) 0 (>L:PushToTestMBI, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 411,
+      "lvars": [
+        "PushToTestMBI"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 391,
+      "name": "Middle_Marker_Beacon_push_to_test",
+      "script": "1 (>L:PushToTestMBM, bool) 0 (>L:PushToTestMBM, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 412,
+      "lvars": [
+        "PushToTestMBM"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 392,
+      "name": "Outer_Marker_Beacon_push_to_test",
+      "script": "1 (>L:PushToTestMBO, bool) 0 (>L:PushToTestMBO, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 413,
+      "lvars": [
+        "PushToTestMBO"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 393,
+      "name": "PA24_250_KLN90B_ALT_button_press",
+      "script": "(>H:KLN90B_ALT_Push) 100 (>L:BUTTON_KLN90B_ALT, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 414,
+      "lvars": [
+        "BUTTON_KLN90B_ALT"
+      ],
+      "hvars": [
+        "KLN90B_ALT_Push"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 394,
+      "name": "PA24_250_KLN90B_ALT_button_release",
+      "script": "0 (>L:BUTTON_KLN90B_ALT, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 415,
+      "lvars": [
+        "BUTTON_KLN90B_ALT"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 395,
+      "name": "PA24_250_KLN90B_CLR_button_press",
+      "script": "(>H:KLN90B_CLR_Push) 100 (>L:BUTTON_KLN90B_CLR, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 416,
+      "lvars": [
+        "BUTTON_KLN90B_CLR"
+      ],
+      "hvars": [
+        "KLN90B_CLR_Push"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 396,
+      "name": "PA24_250_KLN90B_CLR_button_release",
+      "script": "0 (>L:BUTTON_KLN90B_CLR, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 417,
+      "lvars": [
+        "BUTTON_KLN90B_CLR"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 397,
+      "name": "PA24_250_KLN90B_Direct_To_button_push",
+      "script": "(>H:KLN90B_DCT_Push) 100 (>L:BUTTON_KLN90B_D, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 418,
+      "lvars": [
+        "BUTTON_KLN90B_D"
+      ],
+      "hvars": [
+        "KLN90B_DCT_Push"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 398,
+      "name": "PA24_250_KLN90B_Direct_To_button_release",
+      "script": "0 (>L:BUTTON_KLN90B_D, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 419,
+      "lvars": [
+        "BUTTON_KLN90B_D"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 399,
+      "name": "PA24_250_KLN90B_ENT_button_push",
+      "script": "(>H:KLN90B_ENT_Push) 100 (>L:BUTTON_KLN90B_ENT, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 420,
+      "lvars": [
+        "BUTTON_KLN90B_ENT"
+      ],
+      "hvars": [
+        "KLN90B_ENT_Push"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 400,
+      "name": "PA24_250_KLN90B_ENT_button_release",
+      "script": "0 (>L:BUTTON_KLN90B_ENT, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 421,
+      "lvars": [
+        "BUTTON_KLN90B_ENT"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 401,
+      "name": "PA24_250_KLN90B_MSG_button_press",
+      "script": "(>H:KLN90B_MSG_Push) 100 (>L:BUTTON_KLN90B_MSG, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 422,
+      "lvars": [
+        "BUTTON_KLN90B_MSG"
+      ],
+      "hvars": [
+        "KLN90B_MSG_Push"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 402,
+      "name": "PA24_250_KLN90B_MSG_button_release",
+      "script": "0 (>L:BUTTON_KLN90B_MSG, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 423,
+      "lvars": [
+        "BUTTON_KLN90B_MSG"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 403,
+      "name": "PA24_250_KLN90B_Right_Cursor_Button_Press",
+      "script": "(>H:KLN90B_RightCursor_Toggle) 100 (>L:BUTTON_KLN90B_CRSR_R, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 424,
+      "lvars": [
+        "BUTTON_KLN90B_CRSR_R"
+      ],
+      "hvars": [
+        "KLN90B_RightCursor_Toggle"
+      ],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 404,
+      "name": "PA24_250_KLN90B_Right_Cursor_Button_Release",
+      "script": "0 (>L:BUTTON_KLN90B_CRSR_R, number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 425,
+      "lvars": [
+        "BUTTON_KLN90B_CRSR_R"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 405,
+      "name": "PA24_250_Ncs812_Nav_Ident_Pull",
+      "script": "1 (>L:Nav1PullIdent, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 426,
+      "lvars": [
+        "Nav1PullIdent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 406,
+      "name": "PA24_250_Kt76_Xpdr_Ident_Dim_Axis",
+      "script": "(L:PA24-kt76_xpdr_ident_dim_axis) 15 max 100 min (>L:XpdrIdentKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 427,
+      "lvars": [
+        "PA24-kt76_xpdr_ident_dim_axis",
+        "XpdrIdentKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 407,
+      "name": "PA24_250_Kt76_Xpdr_Ident_Dim_Dec",
+      "script": "(L:XpdrIdentKnob, Number) 5 - 15 max (>L:XpdrIdentKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 428,
+      "lvars": [
+        "XpdrIdentKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 408,
+      "name": "PA24_250_Kt76_Xpdr_Ident_Dim_Inc",
+      "script": "(L:XpdrIdentKnob, Number) 5 + 100 min (>L:XpdrIdentKnob, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 429,
+      "lvars": [
+        "XpdrIdentKnob"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 409,
+      "name": "PA24_250_Kt76_Xpdr_Mode_0_Off",
+      "script": "0 (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 430,
+      "lvars": [
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 410,
+      "name": "PA24_250_Kt76_Xpdr_Mode_1_Standby",
+      "script": "1 (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 431,
+      "lvars": [
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 411,
+      "name": "PA24_250_Kt76_Xpdr_Mode_2_On",
+      "script": "2 (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 432,
+      "lvars": [
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 412,
+      "name": "PA24_250_Kt76_Xpdr_Mode_3_Alt",
+      "script": "3 (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 433,
+      "lvars": [
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 413,
+      "name": "PA24_250_Kt76_Xpdr_Mode_4_Tst",
+      "script": "4 (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 434,
+      "lvars": [
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 414,
+      "name": "PA24_250_Kt76_Xpdr_Mode_Axis",
+      "script": "(L:PA24-kt76_xpdr_mode_axis) 0 max 4 min (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 435,
+      "lvars": [
+        "PA24-kt76_xpdr_mode_axis",
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 415,
+      "name": "PA24_250_Kt76_Xpdr_Mode_Dec",
+      "script": "(L:XpdrModeKnobPos, Number) 1 - 0 max (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 436,
+      "lvars": [
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 416,
+      "name": "PA24_250_Kt76_Xpdr_Mode_Inc",
+      "script": "(L:XpdrModeKnobPos, Number) 1 + 4 min (>L:XpdrModeKnobPos, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 437,
+      "lvars": [
+        "XpdrModeKnobPos"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 417,
+      "name": "PA24_250_Ncs812_Dme_Function_0_Frq",
+      "script": "0 (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 438,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 418,
+      "name": "PA24_250_Ncs812_Dme_Function_1_Dst",
+      "script": "1 (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 439,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 419,
+      "name": "PA24_250_Ncs812_Dme_Function_2_Gs",
+      "script": "2 (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 440,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 420,
+      "name": "PA24_250_Ncs812_Dme_Function_3_Tts",
+      "script": "3 (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 441,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 421,
+      "name": "PA24_250_Ncs812_Dme_Function_4_Hld",
+      "script": "4 (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 442,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 422,
+      "name": "PA24_250_Ncs812_Dme_Function_5_Hldfrq",
+      "script": "5 (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 443,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 423,
+      "name": "PA24_250_Ncs812_Dme_Function_Dec",
+      "script": "(L:DmeFunction) -- 0 max 5 min (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 444,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 424,
+      "name": "PA24_250_Ncs812_Dme_Function_Inc",
+      "script": "(L:DmeFunction) ++ 0 max 5 min (>L:DmeFunction)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 445,
+      "lvars": [
+        "DmeFunction"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 425,
+      "name": "PA24_250_Ncs812_Nav_Ident_Push_Brg",
+      "script": "0 (>L:Nav1PullIdent, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 446,
+      "lvars": [
+        "Nav1PullIdent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 426,
+      "name": "PA24_250_Ncs812_Nav_Ident_Toggle",
+      "script": "(L:Nav1PullIdent, bool) ! (>L:Nav1PullIdent, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 447,
+      "lvars": [
+        "Nav1PullIdent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 427,
+      "name": "PA24_250_Ncs812_Nav_Swap_Push",
+      "script": "1 (>L:Nav1StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 448,
+      "lvars": [
+        "Nav1StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 428,
+      "name": "PA24_250_Ncs812_Nav_Swap_Release",
+      "script": "0 (>L:Nav1StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 449,
+      "lvars": [
+        "Nav1StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 429,
+      "name": "PA24_250_Ncs812_Nav_Swap_Use",
+      "script": "1 (>L:Nav1StbySwitch, bool) 0 (>L:Nav1StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 450,
+      "lvars": [
+        "Nav1StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 430,
+      "name": "PA24_250_Vor1_Course_Dec",
+      "script": "1 (>K:VOR1_OBI_DEC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 451,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "VOR1_OBI_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 431,
+      "name": "PA24_250_Vor1_Course_Inc",
+      "script": "1 (>K:VOR1_OBI_INC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 452,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "VOR1_OBI_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 432,
+      "name": "PA24_250_Vor2_Course_Dec",
+      "script": "1 (>K:VOR2_OBI_DEC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 453,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "VOR2_OBI_DEC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 433,
+      "name": "PA24_250_Vor2_Course_Inc",
+      "script": "1 (>K:VOR2_OBI_INC)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Navigation",
+      "line": 454,
+      "lvars": [],
+      "hvars": [],
+      "kvars": [
+        "VOR2_OBI_INC"
+      ],
+      "avars": []
+    },
+    {
+      "id": 434,
+      "name": "Marker_Beacon_Sensitivity_Hi",
+      "script": "1 (>L:AudioSensSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 456,
+      "lvars": [
+        "AudioSensSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 435,
+      "name": "Marker_Beacon_Sensitivity_Lo",
+      "script": "0 (>L:AudioSensSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 457,
+      "lvars": [
+        "AudioSensSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 436,
+      "name": "Marker_Mute",
+      "script": "1 (>L:AudioMkrMuteSwitch, bool) 0 (>L:AudioMkrMuteSwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 458,
+      "lvars": [
+        "AudioMkrMuteSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 437,
+      "name": "PA24_250_COM_Audio_ADF_Button_Toggle",
+      "script": "(L:AudioAdf1HpSwitch,bool) ! (>L:AudioAdf1HpSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 459,
+      "lvars": [
+        "AudioAdf1HpSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 438,
+      "name": "PA24_250_COM_Audio_BOTH_Button_Toggle",
+      "script": "(L:AudioBothHpSwitch,bool) ! (>L:AudioBothHpSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 460,
+      "lvars": [
+        "AudioBothHpSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 439,
+      "name": "PA24_250_COM_Audio_COM1__COM2_Toggle",
+      "script": "(L:AudioComSwitch,bool) ! (>L:AudioComSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 461,
+      "lvars": [
+        "AudioComSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 440,
+      "name": "PA24_250_COM_Audio_COM1_Button_Activate",
+      "script": "0 (>L:AudioComSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 462,
+      "lvars": [
+        "AudioComSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 441,
+      "name": "PA24_250_COM_Audio_COM2_Button_Activate",
+      "script": "1 (>L:AudioComSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 463,
+      "lvars": [
+        "AudioComSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 442,
+      "name": "PA24_250_COM_Audio_MKR_DME_Button_Toggle",
+      "script": "(L:AudioMkrHpSwitch,bool) ! (>L:AudioMkrHpSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 464,
+      "lvars": [
+        "AudioMkrHpSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 443,
+      "name": "PA24_250_COM_Audio_NAV1_Button_Toggle",
+      "script": "(L:AudioNav1HpSwitch,bool) ! (>L:AudioNav1HpSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 465,
+      "lvars": [
+        "AudioNav1HpSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 444,
+      "name": "PA24_250_COM_Audio_NAV2_Button_Toggle",
+      "script": "(L:AudioNav2HpSwitch,bool) ! (>L:AudioNav2HpSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 466,
+      "lvars": [
+        "AudioNav2HpSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 445,
+      "name": "PA24_250_COM_Audio_SPKR_Button_Toggle",
+      "script": "(L:AudioSpkrSwitch,bool) ! (>L:AudioSpkrSwitch,bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 467,
+      "lvars": [
+        "AudioSpkrSwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 446,
+      "name": "PA24_250_Mk12_Com_Swap_Push",
+      "script": "1 (>L:Com2StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 468,
+      "lvars": [
+        "Com2StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 447,
+      "name": "PA24_250_Mk12_Com_Swap_Release",
+      "script": "0 (>L:Com2StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 469,
+      "lvars": [
+        "Com2StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 448,
+      "name": "PA24_250_Mk12_Com_Swap_Use",
+      "script": "1 (>L:Com2StbySwitch, bool) 0 (>L:Com2StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 470,
+      "lvars": [
+        "Com2StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 449,
+      "name": "PA24_250_Mk12_Com_Volume_Axis",
+      "script": "(L:PA24-mk12_com_volume_axis) 0 max 100 min d (>L:Com2OnOffVolume, Number) 0 > (>L:Com2OnOff, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 471,
+      "lvars": [
+        "PA24-mk12_com_volume_axis",
+        "Com2OnOffVolume",
+        "Com2OnOff"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 450,
+      "name": "PA24_250_Mk12_Com_Volume_Dec",
+      "script": "(L:Com2OnOffVolume, Number) 5 - 0 max d (>L:Com2OnOffVolume, Number) 0 > (>L:Com2OnOff, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 472,
+      "lvars": [
+        "Com2OnOffVolume",
+        "Com2OnOff"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 451,
+      "name": "PA24_250_Mk12_Com_Volume_Inc",
+      "script": "(L:Com2OnOffVolume, Number) 5 + 100 min (>L:Com2OnOffVolume, Number) 1 (>L:Com2OnOff, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 473,
+      "lvars": [
+        "Com2OnOffVolume",
+        "Com2OnOff"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 452,
+      "name": "PA24_250_Mk12_Nav_Ident_Pull",
+      "script": "1 (>L:Nav2PullIdent, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 474,
+      "lvars": [
+        "Nav2PullIdent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 453,
+      "name": "PA24_250_Mk12_Nav_Ident_Push_Brg",
+      "script": "0 (>L:Nav2PullIdent, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 475,
+      "lvars": [
+        "Nav2PullIdent"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 454,
+      "name": "PA24_250_Mk12_Nav_Swap_Push",
+      "script": "1 (>L:Nav2StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 476,
+      "lvars": [
+        "Nav2StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 455,
+      "name": "PA24_250_Mk12_Nav_Swap_Release",
+      "script": "0 (>L:Nav2StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 477,
+      "lvars": [
+        "Nav2StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 456,
+      "name": "PA24_250_Mk12_Nav_Swap_Use",
+      "script": "1 (>L:Nav2StbySwitch, bool) 0 (>L:Nav2StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 478,
+      "lvars": [
+        "Nav2StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 457,
+      "name": "PA24_250_Mk12_Onoff_Pull",
+      "script": "1 (>L:Com2OnOffPull, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 479,
+      "lvars": [
+        "Com2OnOffPull"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 458,
+      "name": "PA24_250_Mk12_Onoff_Push",
+      "script": "0 (>L:Com2OnOffPull, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 480,
+      "lvars": [
+        "Com2OnOffPull"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 459,
+      "name": "PA24_250_Mk12_Onoff_Push_Toggle",
+      "script": "(L:Com2OnOffPull, Number) ! (>L:Com2OnOffPull, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 481,
+      "lvars": [
+        "Com2OnOffPull"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 460,
+      "name": "PA24_250_Ncs812_Com_Swap_Push",
+      "script": "1 (>L:Com1StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 482,
+      "lvars": [
+        "Com1StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 461,
+      "name": "PA24_250_Ncs812_Com_Swap_Release",
+      "script": "0 (>L:Com1StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 483,
+      "lvars": [
+        "Com1StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 462,
+      "name": "PA24_250_Ncs812_Com_Swap_Use",
+      "script": "1 (>L:Com1StbySwitch, bool) 0 (>L:Com1StbySwitch, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 484,
+      "lvars": [
+        "Com1StbySwitch"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 463,
+      "name": "PA24_250_Ncs812_Com_Volume_Axis",
+      "script": "(L:PA24-ncs812_com_volume_axis) 0 max 100 min d (>L:Com1OnOffVolume, Number) 0 > (>L:Com1OnOff, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 485,
+      "lvars": [
+        "PA24-ncs812_com_volume_axis",
+        "Com1OnOffVolume",
+        "Com1OnOff"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 464,
+      "name": "PA24_250_Ncs812_Com_Volume_Dec",
+      "script": "(L:Com1OnOffVolume, Number) 5 - 0 max d (>L:Com1OnOffVolume, Number) 0 > (>L:Com1OnOff, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 486,
+      "lvars": [
+        "Com1OnOffVolume",
+        "Com1OnOff"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 465,
+      "name": "PA24_250_Ncs812_Com_Volume_Inc",
+      "script": "(L:Com1OnOffVolume, Number) 5 + 100 min (>L:Com1OnOffVolume, Number) 1 (>L:Com1OnOff, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 487,
+      "lvars": [
+        "Com1OnOffVolume",
+        "Com1OnOff"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 466,
+      "name": "PA24_250_Ncs812_Onoff_Pull",
+      "script": "1 (>L:Com1OnOffPull, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 488,
+      "lvars": [
+        "Com1OnOffPull"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 467,
+      "name": "PA24_250_Ncs812_Onoff_Push",
+      "script": "0 (>L:Com1OnOffPull, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 489,
+      "lvars": [
+        "Com1OnOffPull"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 468,
+      "name": "PA24_250_Ncs812_Onoff_Push_Toggle",
+      "script": "(L:Com1OnOffPull, Number) ! (>L:Com1OnOffPull, Number)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 490,
+      "lvars": [
+        "Com1OnOffPull"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 469,
+      "name": "PA24_250_Radio_Channel_Spacing_25",
+      "script": "0 (>L:ComChannelSpacing, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 491,
+      "lvars": [
+        "ComChannelSpacing"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 470,
+      "name": "PA24_250_Radio_Channel_Spacing_833",
+      "script": "1 (>L:ComChannelSpacing, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 492,
+      "lvars": [
+        "ComChannelSpacing"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    },
+    {
+      "id": 471,
+      "name": "PA24_250_Radio_Channel_Spacing_Toggle",
+      "script": "(L:ComChannelSpacing, bool) ! (>L:ComChannelSpacing, bool)",
+      "vendor": "A2A SIM",
+      "aircraft": "Comanche 250",
+      "system": "Radio",
+      "line": 493,
+      "lvars": [
+        "ComChannelSpacing"
+      ],
+      "hvars": [],
+      "kvars": [],
+      "avars": []
+    }
+  ]
+}

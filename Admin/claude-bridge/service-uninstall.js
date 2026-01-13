@@ -2,7 +2,7 @@
  * SimWidget Claude Bridge Windows Service Uninstaller
  * v1.0.0 - 2026-01-11
  *
- * Path: C:\DevOSWE\Admin\claude-bridge\service-uninstall.js
+ * Path: C:\LLM-DevOSWE\Admin\claude-bridge\service-uninstall.js
  *
  * Run as Administrator:
  *   node service-uninstall.js

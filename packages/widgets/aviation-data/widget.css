@@ -1,0 +1,214 @@
+/**
+ * SimWidget Aviation Data Styles
+ * Version: v1.0.0
+ * Last updated: 2026-01-06
+ */
+
+.aviation-panel {
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    font-family: 'Segoe UI', sans-serif;
+    width: 320px;
+    max-height: 400px;
+    overflow: hidden;
+}
+
+.aviation-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.aviation-header span {
+    font-weight: 600;
+    color: #fff;
+    flex: 1;
+}
+
+#icao-input {
+    width: 60px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    color: #fff;
+    text-transform: uppercase;
+    font-family: monospace;
+}
+
+#fetch-btn {
+    padding: 4px 12px;
+    background: #0066cc;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+}
+
+#fetch-btn:hover {
+    background: #0077ee;
+}
+
+/* Tabs */
+.aviation-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.aviation-tabs .tab {
+    flex: 1;
+    padding: 8px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.aviation-tabs .tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.aviation-tabs .tab.active {
+    color: #00aaff;
+    border-bottom: 2px solid #00aaff;
+}
+
+/* Content */
+.aviation-content {
+    padding: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    color: #fff;
+}
+
+.aviation-content .placeholder,
+.aviation-content .loading,
+.aviation-content .error,
+.aviation-content .info {
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.aviation-content .error {
+    color: #ff6666;
+}
+
+/* METAR Display */
+.metar-raw {
+    font-family: monospace;
+    font-size: 11px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px;
+    border-radius: 4px;
+    word-break: break-all;
+    margin-bottom: 12px;
+    color: #88ff88;
+}
+
+.metar-decoded {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.metar-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.metar-item label {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 2px;
+}
+
+.flight-rules {
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.flight-rules.vfr { background: #00aa00; }
+.flight-rules.mvfr { background: #0066cc; }
+.flight-rules.ifr { background: #cc0000; }
+.flight-rules.lifr { background: #aa00aa; }
+
+/* NOTAM List */
+.notam-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notam-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    border-left: 3px solid #666;
+}
+
+.notam-item.priority-5 { border-left-color: #ff0000; }
+.notam-item.priority-4 { border-left-color: #ff6600; }
+.notam-item.priority-3 { border-left-color: #ffaa00; }
+
+.notam-category {
+    font-size: 9px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+.notam-text {
+    font-size: 11px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Airport Info */
+.airport-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+}
+
+.airport-info > p {
+    margin: 0 0 12px 0;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.airport-details {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.airport-details label {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.runway-list h4 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+}
+
+.runway {
+    font-family: monospace;
+    font-size: 11px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<SimBase.Document Type="InGamePanels" version="1,0">
+
+	<Filename>simwidget_panel.spb</Filename>
+
+	<InGamePanels.InGamePanelDefinition
+  		id="PANEL_SIMWIDGET"
+		Name="SimWidget"
+		url="html_ui/InGamePanels/SimWidgetPanel/index.html"
+		icon="ICON_SIMWIDGET">
+	</InGamePanels.InGamePanelDefinition>
+
+</SimBase.Document>

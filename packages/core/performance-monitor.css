@@ -1,0 +1,75 @@
+/**
+ * Performance Monitor Styles
+ * Version: v1.0.0
+ */
+
+.perf-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    font-family: 'Segoe UI', monospace;
+    font-size: 11px;
+    z-index: 9999;
+}
+
+.perf-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 7px 7px 0 0;
+    color: #fff;
+    font-weight: 600;
+}
+
+.perf-header button {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+}
+
+.perf-content {
+    padding: 8px;
+}
+
+.perf-metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.perf-metric label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.perf-metric span {
+    color: #00ff88;
+    font-weight: 600;
+}
+
+.perf-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.perf-actions button {
+    flex: 1;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.perf-actions button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
