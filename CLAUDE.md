@@ -42,14 +42,17 @@ curl -X POST http://localhost:8600/api/messages/MESSAGE_ID/respond \
 
 **Message Protection:** Pending/processing messages cannot be deleted without `?force=true`. Use `cleanup` to only remove completed tasks.
 
-### Local LLM Setup (Ollama + Qwen2.5-Coder)
+### Local LLM Setup (Ollama + Qwen3-Coder)
 
-**Models installed:**
-- `qwen2.5-coder:7b` - 172 tok/s (blazing fast, quick tasks)
-- `qwen2.5-coder:14b` - 87 tok/s (quality work, sweet spot)
-- `qwen2.5-coder:32b` - 6.5 tok/s (too slow, skip)
+**Kitt Agent Model:**
+- `qwen3-coder:latest` - 34 tok/s (30.5B params, Q4_K_M) - **Primary Kitt agent**
 
-**Run model:** `ollama run qwen2.5-coder:14b "your prompt"`
+**Other models:**
+- `qwen2.5-coder:7b` - 172 tok/s (blazing fast, simple tasks)
+- `qwen2.5-coder:14b` - 87 tok/s (backup)
+- `kitt:latest` - Custom fine-tuned model
+
+**Run Kitt:** `ollama run qwen3-coder:latest "your prompt"`
 
 **Open WebUI (ChatGPT-like interface):**
 ```bash
