@@ -1,0 +1,12 @@
+{
+  "name": "terminal-bridge",
+  "version": "1.0.0",
+  "description": "WebSocket bridge to stream Claude Code terminal output to Command Center",
+  "main": "terminal-bridge.js",
+  "scripts": {
+    "start": "node terminal-bridge.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2"
+  }
+}

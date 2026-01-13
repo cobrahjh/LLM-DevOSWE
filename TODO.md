@@ -1,0 +1,371 @@
+# SimWidget Engine - TODO List
+**Version:** v2.6.0  
+**Last updated:** 2026-01-09
+
+> 📋 **See [PROJECT-PLAN.md](PROJECT-PLAN.md) for full roadmap & milestones**
+
+---
+
+## 🧠 Memory & Standards Backup
+
+### Status: 📋 TODO
+
+**Goal:** Persist CLAUDE.md and STANDARDS.md to SQLite database with versioning.
+
+**Why:** Critical project knowledge must not be lost. Database provides:
+- Version history
+- Change detection (hash comparison)
+- Session tracking
+- Recovery capability
+
+**Tasks:**
+- [ ] Create `Admin/relay/knowledge.db` with schema
+- [ ] Add backup API endpoint to relay service (`POST /api/knowledge/backup`)
+- [ ] Add restore API endpoint (`GET /api/knowledge/restore/:type`)
+- [ ] Add `syncmem` command handler in agent-server.js
+- [ ] Add "Sync Memory" button to Quick Actions
+- [ ] Auto-backup on session end (hook or reminder)
+- [ ] Show backup status in Activity Monitor
+- [ ] Add diff view for comparing versions
+
+**Schema:** See CLAUDE.md "Memory & Standards Persistence" section.
+
+---
+
+## 💭 Design Thoughts
+
+### No Hardcoded Values (Priority: Thought)
+**Principle:** Avoid hardcoded values in webpages/modules/widgets that users may want or need to change.
+
+**Apply to:**
+- Port numbers (8080, 8500, 8585, 8590)
+- IP addresses (192.168.1.42)
+- File paths
+- API endpoints
+- Timing/intervals (watchdog 30s, cooldowns)
+- Limits (max retries, buffer sizes)
+- Colors/themes
+- Labels/text
+
+**Solution Pattern:**
+- Centralized config file (`config.json` or `.env`)
+- Runtime config API (`/api/config`)
+- UI settings panel for user-adjustable values
+- Environment variable overrides
+
+**Status:** Abstract idea - implement incrementally as modules are touched.
+
+---
+
+## WASM Camera Module
+
+### Status: ✅ COMPILED & INSTALLED
+
+Custom WASM module for ChasePlane-like smooth camera control.
+
+**Location:** `wasm-camera/`
+
+- [x] Create project structure
+- [x] Write camera state management (simwidget_camera.cpp v0.2.0)
+- [x] Implement flyby position calculation (5 presets)
+- [x] Add smooth interpolation logic
+- [x] Create LVar communication protocol
+- [x] Write build scripts (build_v4.bat)
+- [x] Create MSFS package structure
+- [x] Create camera-bridge.js for server integration
+- [x] Install VS 2022 MSFS SDK plugin
+- [x] **Compile WASM module** ✅ 11.5KB
+- [x] Install to MSFS Community folder
+- [x] Add server API endpoints (/api/wasm-camera)
+- [x] Create WASM Camera Widget UI
+- [ ] **Test in MSFS 2024** ← NEXT STEP
+- [ ] Add tower view mode
+- [ ] Add more cinematic presets
+
+**LVars (Server → WASM):**
+- `L:SIMWIDGET_CAM_CMD` - Commands: 0=none, 1=flyby, 3=toggle, 4=next, 5=reset
+- `L:SIMWIDGET_CAM_SMOOTH` - Smoothing factor 0-100
+
+**LVars (WASM → Server):**
+- `L:SIMWIDGET_CAM_READY` - Module loaded flag
+- `L:SIMWIDGET_CAM_STATUS` - Current mode
+- `L:SIMWIDGET_CAM_REL_X/Y/Z` - Relative camera offset (feet)
+- `L:SIMWIDGET_CAM_REL_PITCH/HDG` - Camera orientation
+
+---
+
+## Flow Pro Parity Roadmap
+
+See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
+
+### Phase 1: Core Flight ✅ COMPLETE
+- [x] Autopilot (HDG, ALT, VS, SPD, master)
+- [x] Cameras (views, zoom, pan, presets)
+- [x] Engine controls (throttle, prop, mixture)
+- [x] Basic lights (nav, beacon, strobe, landing, taxi)
+- [x] Basic controls (gear, flaps, spoilers, parking brake)
+- [x] Fuel display (quantity, flow, endurance)
+- [x] Keymap Editor v3.0 (GUID-based, add/delete/rename)
+- [x] Flow Pro API compatibility layer
+
+### Phase 2: Complete Controls 🔶 IN PROGRESS
+- [ ] Additional lights (logo, wing, cabin, panel, recognition, ice)
+- [ ] Trim controls (aileron, elevator, rudder trim)
+- [ ] Cowl flaps, carb heat, pitot heat
+- [ ] Doors (main, cargo, emergency exits)
+- [ ] Electrical (battery, alternator, avionics master)
+
+### Phase 3: Radio & Navigation
+- [ ] COM1/COM2 (active, standby, swap)
+- [ ] NAV1/NAV2 (active, standby, swap)
+- [ ] ADF frequency
+- [ ] Transponder (code, mode)
+- [ ] DME
+
+### Phase 4: Information & HUD
+- [ ] Instrument overlays
+- [ ] G-force display
+- [ ] Wind vector
+- [ ] Control input visualization
+- [ ] Altitude/speed tape
+
+### Phase 5: Environment
+- [ ] Time of day controls
+- [ ] Weather presets
+- [ ] Position/teleport
+
+### Phase 6: Advanced (Optional)
+- [ ] MSFS panel launcher
+- [ ] Interaction wheel UI
+- [ ] Otto search bar
+- [ ] Portal (friends/teleport)
+
+---
+
+## High Priority
+
+### AxisPad (Joystick) Component Implementation
+- [x] **Create AxisPad component class** ✓ IMPLEMENTED 2025-01-05
+- [x] **Add to shared-ui for testing** ✓ ADDED
+- [ ] **Full MSFS testing** - verify aileron/elevator control
+
+### Smart Installer / First-Run Setup Wizard
+- [ ] **Auto-detection on first run:**
+  - Detect MSFS version (2020 vs 2024)
+  - Detect ChasePlane installation
+  - Detect AutoHotKey installation
+  - Detect existing keybindings
+  
+- [ ] **User questionnaire:**
+  - Flight sim selection
+  - Camera addon selection
+  - Keybinding configuration
+  - Auto-start preference
+  
+- [ ] **Conditional component installation**
+- [ ] **Save user configuration to config.json**
+
+### Camera Controls Compatibility Testing
+- [ ] **Test native MSFS camera controls WITHOUT ChasePlane**
+- [ ] Document which native MSFS keybindings are required
+- [ ] **Public release must support users without ChasePlane**
+
+---
+
+## Known Limitations (Workarounds Needed)
+
+### Browser Extension JS Execution
+- **Issue:** Cannot execute JavaScript directly in browser tabs due to extension permission conflicts
+- **Impact:** Can't clear localStorage, run diagnostics, or manipulate DOM directly
+- **Workaround:** Added `clearTaskState()` function exposed globally - user must run in console
+- **Future:** Create MCP endpoint or admin API to handle these operations server-side
+
+### Future Resources to Build
+- [ ] Admin API for browser state management (clear cache, localStorage, etc.)
+- [ ] Server-side task state reset endpoint
+- [ ] Health check endpoint that auto-clears stale state
+- [ ] CLI commands for common operations
+
+---
+
+## UI Feature Requests
+
+### Active Tasks - Claude Code Integration
+- [ ] **Track Claude Code activity** - Record tasks when user talks to Claude directly (not via Kitt)
+- [ ] **Claude Code status API** - Endpoint to report current task from Claude Code session
+- [ ] **Unified task view** - Show all tasks regardless of source (Kitt, Relay, Claude Code)
+- [ ] **Activity reconciliation** - All Claude work flows to Recent Activity on completion
+- [ ] **Claude activity in Activity Monitor** - Show Claude's current work in the Activity Monitor panel
+- [ ] **Claude activity in server logs** - Log Claude activity to agent server logs for debugging
+
+### Live Activity Stream (Comprehensive)
+- [ ] **Relay consumer 100% uptime** - Re-engineer relay consumer for reliability:
+  - Auto-restart on crash
+  - Health monitoring
+  - Run as Windows service
+  - Watchdog process
+- [ ] **Real-time activity panel** - WebSocket-based live updates showing:
+  - Task submitted → Relay received → Consumer picked up → Response sent
+  - Actual timestamps for each stage
+  - Message content preview
+- [ ] **Relay consumer log streaming** - Stream consumer stdout to UI via WebSocket
+- [ ] **Claude thinking indicator** - Show when Claude is actively processing vs idle
+- [ ] **Activity history** - Scrollable log of recent activity with filters
+- [ ] **Stage timing** - Show how long each stage took (queue time, processing time, etc.)
+
+### Debug Inspector
+- [ ] **Input prompts for debug items** - When adding debug items that require input (e.g., "fix X", "change Y to Z"), prompt user for the specific input before sending command
+
+### Claude Code Terminal Integration
+- [ ] **Show Claude Code terminal on CC** - Stream current Claude Code session output to Command Center:
+  - Create WebSocket bridge from Claude Code CLI to Admin UI
+  - Display real-time terminal output in Claude Tasks card or dedicated panel
+  - Show current working directory, command history
+  - Allow sending commands from CC to active Claude Code session
+  - Bidirectional communication (CC ↔ Claude Code)
+
+### Window Management
+- [ ] **Dockable windows** - Update design for all dashboard cards/panels to be dockable:
+  - Drag windows to screen edges to snap/dock
+  - Dock windows together (side-by-side, tabbed)
+  - Save/restore dock layouts
+  - Undock to floating mode
+  - Minimize to dock bar
+- [ ] **Window snapping** - Snap zones for corners and edges (already partial in ClaudeTerminal)
+- [ ] **Layout presets** - Save and switch between different window arrangements
+
+### TODO System Enhancement
+- [ ] **Master TODO sync** - Import tasks from master TODO.md into session todo list
+- [ ] **GUID-based task IDs** - All tasks use unique GUID (e.g., `task-{timestamp}-{random6}`) for tracking across flat files and session data
+- [ ] **Smart priority recommendation** - If priority not set, auto-recommend based on:
+  - Project phase (from PROJECT-PLAN.md)
+  - Current active tasks
+  - Task dependencies
+  - Task age/staleness
+- [ ] **Unified task format** - Standardize task structure:
+  - `id`: GUID
+  - `content`: Task description
+  - `priority`: high/normal/low (auto if not set)
+  - `source`: master/session/user
+  - `status`: pending/in_progress/completed
+  - `createdAt`: ISO timestamp
+  - `linkedTo`: Reference to master TODO item (if imported)
+- [ ] **Flat file persistence** - Save session tasks to JSON with GUID references
+- [ ] **Master TODO parser** - Parse TODO.md markdown into importable task objects
+
+### Kitt Task Processing Rewrite (Admin UI) ✅ IMPLEMENTED 2026-01-11
+- [x] **Rewrite bubble task handling** - New task-bubbles.js module with state-based rendering
+- [x] **Claude activity monitoring** - TaskProcessor polls relay/kitt status every 3s
+- [x] **Task queue coordination** - TaskProcessor queues tasks when Claude is busy
+- [x] **State machine for task flow** - States: idle → queued → waiting_for_claude → claude_processing → complete/error
+- [x] **Visual feedback** - TaskBubbles shows progress bars, status dots, queue position
+- [x] **Timeout handling** - 5min pickup timeout, 30min processing timeout
+
+**New Modules:**
+- `modules/task-processor.js` - State machine, queue management, Claude monitoring
+- `modules/task-bubbles.js` - Visual bubble rendering with state colors
+
+**Fixed Issues:**
+- Claude activity detected via relay queue + kitt status API
+- Task bubbles update in real-time with state transitions
+- Race conditions prevented by task queue coordination
+
+---
+
+## Medium Priority
+
+### ChasePlane API Integration
+- [ ] Discover ChasePlane REST/WebSocket API on port 42042
+- [ ] Replace AHK helper with direct API calls if available
+
+### Startup Automation
+- [x] Auto-start camera-helper.ahk when server starts ✓ v1.2
+- [ ] Add AHK helper status to `/api/status` endpoint
+- [x] **MSFS EXE.xml addon** - Auto-launch SimWidget with MSFS (2026-01-09)
+- [x] **start-simwidget.bat** - Manual start script (2026-01-09)
+- [x] **stop-simwidget.bat** - Manual stop script (2026-01-09)
+- [x] **simwidget-manage.ps1** - PowerShell management start/stop/restart/status (2026-01-09)
+- [ ] **Windows Service installer** - Optional service mode for always-on
+
+---
+
+## Low Priority
+
+### Project Management Philosophy
+- [ ] **Consider todo priority as lowest priority** - Focus on core functionality over task management overhead. TODOs should guide development but not become a burden that slows progress. Prefer working code over perfect documentation.
+
+### Documentation
+- [x] FLOW-PRO-REFERENCE.md - Complete category/widget docs
+- [x] STANDARDS.md - Project conventions and patterns
+- [ ] Update CLAUDE.md with camera controller architecture
+- [ ] Add troubleshooting guide for camera controls
+
+---
+
+## Completed ✓
+
+### 2026-01-11
+- [x] **Kitt Task Processor v1.0.0** - State machine for task lifecycle management
+- [x] **Task Bubbles UI v1.0.0** - Visual state rendering with progress bars
+- [x] **Claude Activity Monitor** - Detects when Claude is busy via relay/kitt APIs
+- [x] **Task Queue System** - Queues tasks when Claude is busy, auto-processes when available
+- [x] **Core.js Integration** - sendViaTaskProcessor() with event-based response handling
+- [x] **Debug Inspector v2.3** - Added DIM (Data Interface Manager) menu with status modals
+  - DIM status check (health endpoint)
+  - Open SimWidget UI
+  - Restart DIM service
+  - SimConnect connection status
+  - Flight data viewer
+- [x] **Relay Cleanup Endpoint** - `/api/queue/cleanup` clears stale processing items
+
+### 2026-01-09
+- [x] **Master (O) v1.0.0** - Service orchestrator on port 8500
+- [x] **Service Standards v1.2.0** - Logging buffer, /api/log, /api/shutdown, crash protection
+- [x] **Remote Support v1.1.0** - Added missing standard patterns
+- [x] **start-all-servers.bat v2.0** - Detects running services, O/K/G/L/Q menu
+- [x] **Kitt UI Abbreviations** - Added ss/br/uem/newchat/ntt to admin menu
+
+### 2025-01-08 (Session 2)
+- [x] **Services Panel Widget v1.0.0** - New widget at /ui/services-panel/
+- [x] **Server v1.9.0** - Added /api/services endpoint for service control
+- [x] **Agent Server v1.0.5** - Fixed express.static for HTML serving
+- [x] **Agent UI Update** - Added ☰ hamburger menu with admin commands
+- [x] **Agent UI Update** - Added ⚙️ services panel with status dots
+- [x] **Agent UI Update** - Compact status dots in header (SimWidget/Agent/Remote)
+- [x] **Service Control API** - Start/stop/restart services via REST
+
+### 2025-01-08
+- [x] **Plugin Architecture v1.0** - Modular plugin system
+- [x] **plugin-loader.js** - Dynamic plugin discovery & loading
+- [x] **Core Plugin** - Essential flight data & controls
+- [x] **Voice Control Plugin** - Refactored as optional plugin
+- [x] **Flight Recorder Plugin** - Refactored as optional plugin
+- [x] **Lorby Bridge Plugin** - SimVar access via HTTP
+- [x] **PLUGINS.md** - Plugin system documentation
+- [x] **Install Profiles** - Lite/Standard/Pro/Dev tiers
+- [x] **RESOURCES.md** - Integration APIs documentation
+- [x] **Lorby AAO API testing** - Connection verified
+- [x] **Test Framework v1.0** - Automated tests with fixtures
+- [x] **Supabase Integration** - Cloud sync for test results
+- [x] **Security Inspector** - Multi-file scanner
+- [x] **Widget Validator** - Community widget validation
+
+### Earlier
+- [x] Keymap Editor v3.0 - GUID-based with editable names
+- [x] Flow Pro API layer - shared-ui/flow-api.js
+- [x] STANDARDS.md - Project conventions document
+- [x] TinyWidget Architecture - Single-function micro-widgets
+- [x] DLL Inspector - Node.js PE parser for native DLL exports
+- [x] Smart camera controller with ChasePlane detection
+- [x] AHK helper for ChasePlane keystroke injection
+
+---
+
+## Notes
+
+**Flow Pro Widget Count:** ~170 items across 20 categories
+
+**Camera Control Test Environments:**
+1. MSFS 2024 + ChasePlane ✓ TESTED
+2. MSFS 2024 without ChasePlane - TODO
+3. MSFS 2020 variants - future

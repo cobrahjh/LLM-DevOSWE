@@ -1,0 +1,78 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/DevOSWE/Admin/terminal-bridge/hooks/output-hook.js"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(powershell:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(findstr:*)",
+      "Bash(start:*)",
+      "Bash(git:*)",
+      "Bash(dir:*)",
+      "Bash(dotnet:*)",
+      "Bash(sc:*)",
+      "Bash(net:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(cat:*)",
+      "Bash(type:*)",
+      "Bash(echo:*)",
+      "Bash(cmd:*)",
+      "Bash(wmic:*)",
+      "Bash(nc:*)",
+      "Bash(claude:*)",
+      "Bash(./simwidget*:*)",
+      "Bash(test:*)",
+      "Bash(mkdir:*)",
+      "Bash(rmdir:*)",
+      "Bash(del:*)",
+      "Bash(copy:*)",
+      "Bash(move:*)",
+      "Bash(ren:*)",
+      "Bash(cd:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(tail:*)",
+      "Bash(head:*)",
+      "Bash(which:*)",
+      "Bash(where:*)",
+      "Skill(frontend-design)",
+      "Bash(python:*)",
+      "Bash(.json$)",
+      "Bash(.md$ \")",
+      "Bash(ipconfig:*)",
+      "Bash(Select-String \"IPv4\")",
+      "Bash(netsh advfirewall firewall show:*)",
+      "Bash(/dev/null -exec sh -c 'echo \"\"=== {} ===\"\" && head -3 \"\"{}\"\" && grep \"\"serverUrl\"\" \"\"{}\"\" | head -1' ;)",
+      "Bash(pkill:*)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(**/secrets/**)",
+      "Read(**/*credentials*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}

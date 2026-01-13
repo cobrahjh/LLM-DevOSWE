@@ -55,6 +55,7 @@
                 <span class="claude-status-text" id="header-claude-status">Ready</span>
                 <button class="header-btn voice-toggle" id="btn-voice-toggle" onclick="toggleVoiceEnabled()" title="Toggle Voice">🔊</button>
             </div>
+            <button class="header-btn" id="btn-terminal-stream" onclick="TerminalStream.toggle()" title="Terminal Stream">💻</button>
             <button class="header-btn" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
             <button class="header-btn" id="btn-voice-entry" onclick="showVoiceEntryModal()" title="Voice Entry">🎤</button>
             <button class="header-btn" id="btn-settings" title="Settings">⚙️</button>
@@ -340,6 +341,7 @@
     <script src="modules/debug-inspector.js"></script>
     <script src="modules/voice-engine.js"></script>
     <script src="modules/claude-terminal.js"></script>
+    <script src="modules/terminal-stream.js"></script>
     <script src="modules/relay-ws.js"></script>
     <script src="modules/heather.js"></script>
     <script src="modules/shi-zhen-xiang.js"></script>
@@ -1536,6 +1538,31 @@
             return content.length > 60 ? content.substring(40, 100) + '...' : '';
         }
 
+        // Average task duration in ms (default 2 minutes, updated from completed tasks)
+        let avgTaskDuration = parseInt(localStorage.getItem('cc-avg-task-duration')) || 120000;
+        let completedTaskTimes = JSON.parse(localStorage.getItem('cc-task-times') || '[]');
+
+        function formatDuration(ms) {
+            if (ms < 0) return '0s';
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (minutes > 0) return `${minutes}m ${secs}s`;
+            return `${secs}s`;
+        }
+
+        function calculateEstimate(processingAt) {
+            if (!processingAt) return null;
+            const startTime = new Date(processingAt).getTime();
+            const elapsed = Date.now() - startTime;
+            const remaining = avgTaskDuration - elapsed;
+            return {
+                elapsed,
+                remaining: Math.max(0, remaining),
+                progress: Math.min(100, (elapsed / avgTaskDuration) * 100)
+            };
+        }
+
         async function refreshTaskList() {
             const listEl = document.getElementById('claude-tasks-list');
             if (!listEl) return;
@@ -1563,6 +1590,24 @@
                     const desc = getTaskDescription(task.preview || task.content);
                     const status = task.status || 'pending';
 
+                    // Calculate estimate for processing tasks
+                    let timeInfo = '';
+                    if (status === 'processing' && task.processingAt) {
+                        const est = calculateEstimate(task.processingAt);
+                        if (est) {
+                            const remainingText = est.remaining > 0 ? `~${formatDuration(est.remaining)} left` : 'completing...';
+                            timeInfo = `
+                                <div class="claude-task-time">
+                                    <span class="task-elapsed">⏱ ${formatDuration(est.elapsed)}</span>
+                                    <span class="task-remaining">${remainingText}</span>
+                                    <div class="task-progress-bar">
+                                        <div class="task-progress-fill" style="width: ${est.progress}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+
                     return `
                         <div class="claude-task-item">
                             <div class="claude-task-status ${status}"></div>
@@ -1573,6 +1618,7 @@
                                 </div>
                                 <div class="claude-task-name">${escapeHtmlSimple(name)}</div>
                                 ${desc ? `<div class="claude-task-desc">${escapeHtmlSimple(desc)}</div>` : ''}
+                                ${timeInfo}
                             </div>
                         </div>
                     `;
