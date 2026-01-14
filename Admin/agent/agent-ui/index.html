@@ -737,8 +737,8 @@
                 modal.id = 'voice-entry-modal';
                 modal.className = 'modal-overlay';
                 modal.innerHTML = `
-                    <div class="modal" style="width: 450px;">
-                        <div class="modal-header">
+                    <div class="modal modal-floating" style="width: 450px; position: absolute;">
+                        <div class="modal-header" data-drag-handle="true">
                             <h3>🎤 Voice Entry</h3>
                             <button class="modal-close" onclick="closeVoiceEntryModal()">✕</button>
                         </div>
@@ -847,6 +847,36 @@
                     }
                 `;
                 document.head.appendChild(style);
+
+                // Make modal draggable
+                const floatingModal = modal.querySelector('.modal-floating');
+                const dragHandle = modal.querySelector('[data-drag-handle]');
+                if (floatingModal && dragHandle) {
+                    let isDragging = false;
+                    let offsetX = 0, offsetY = 0;
+
+                    dragHandle.addEventListener('mousedown', (e) => {
+                        if (e.target.closest('.modal-close')) return;
+                        isDragging = true;
+                        const rect = floatingModal.getBoundingClientRect();
+                        offsetX = e.clientX - rect.left;
+                        offsetY = e.clientY - rect.top;
+                        floatingModal.style.transition = 'none';
+                    });
+
+                    document.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+                        const x = e.clientX - offsetX;
+                        const y = e.clientY - offsetY;
+                        floatingModal.style.left = Math.max(0, Math.min(x, window.innerWidth - floatingModal.offsetWidth)) + 'px';
+                        floatingModal.style.top = Math.max(0, Math.min(y, window.innerHeight - floatingModal.offsetHeight)) + 'px';
+                    });
+
+                    document.addEventListener('mouseup', () => {
+                        isDragging = false;
+                        floatingModal.style.transition = '';
+                    });
+                }
             }
             modal.classList.add('active');
 
