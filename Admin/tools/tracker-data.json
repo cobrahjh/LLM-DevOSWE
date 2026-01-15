@@ -9,7 +9,13 @@
       "description": "KittBox web application"
     }
   },
-  "phases": ["planning", "development", "testing", "review", "completed"],
+  "phases": [
+    "planning",
+    "development",
+    "testing",
+    "review",
+    "completed"
+  ],
   "tasks": [
     {
       "id": 1736956800000,
@@ -33,9 +39,18 @@
       "id": 1736956800002,
       "project": "LLM-DevOSWE",
       "title": "Create project task tracker",
-      "phase": "development",
+      "phase": "completed",
       "notes": "Track tasks by project, day, phase",
       "created": "2026-01-15T11:00:00.000Z",
+      "completedAt": "2026-01-15T16:10:14.681Z"
+    },
+    {
+      "id": 1768493472967,
+      "project": "kittbox-web",
+      "title": "Setup initial project structure",
+      "phase": "planning",
+      "notes": null,
+      "created": "2026-01-15T16:11:12.967Z",
       "completedAt": null
     }
   ]
