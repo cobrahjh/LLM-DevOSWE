@@ -33,6 +33,18 @@ When we hit a limitation (cost, API restrictions, third-party dependencies, plat
 
 We control our own destiny. No waiting for vendors, no subscription traps, no artificial limits. If the tool doesn't exist, we create it.
 
+### Integration Principles
+
+**"Keep it simple, make KittBox better"**
+
+All integrations, processes, and development must:
+- **Don't over-complicate** - Simple solutions over complex ones
+- **Don't recreate** - Use existing infrastructure (relay, Oracle, Ollama)
+- **Don't overstep** - Respect existing environments and workflows
+- **Stay focused** - Every feature should make KittBox better
+
+Review all work against these principles before committing.
+
 ### 🎉 Milestone: First Real Application (2026-01-14)
 
 **Twitch Accessibility Browser Extension** - The first external project built using the LLM-DevOSWE framework!
