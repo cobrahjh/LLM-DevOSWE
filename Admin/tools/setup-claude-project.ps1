@@ -29,7 +29,7 @@ echo.
 echo   === $Name ===
 echo   [$colorLabel]
 echo.
-claude --continue
+claude --resume --dangerously-skip-permissions %*
 pause
 "@
 

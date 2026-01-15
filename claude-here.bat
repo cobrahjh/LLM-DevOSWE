@@ -5,5 +5,5 @@ cd /d C:\LLM-DevOSWE
 echo.
 echo   [LLM-DevOSWE] BLUE
 echo.
-claude --continue
+claude --resume --dangerously-skip-permissions %*
 pause
