@@ -180,7 +180,7 @@ async function typeInTab(tabId, selector, text) {
     return await chrome.scripting.executeScript({
         target: { tabId },
         func: (sel, txt) => {
-            const el = selector ? document.querySelector(sel) : document.activeElement;
+            const el = sel ? document.querySelector(sel) : document.activeElement;
             if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) {
                 el.focus();
 
