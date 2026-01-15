@@ -3,7 +3,13 @@ title Claude Code - LLM-DevOSWE
 color 1F
 cd /d C:\LLM-DevOSWE
 echo.
-echo   === LLM-DevOSWE ===
+echo   ██╗     ██╗     ███╗   ███╗
+echo   ██║     ██║     ████╗ ████║
+echo   ██║     ██║     ██╔████╔██║
+echo   ██║     ██║     ██║╚██╔╝██║
+echo   ███████╗███████╗██║ ╚═╝ ██║
+echo   ╚══════╝╚══════╝╚═╝     ╚═╝
+echo   LLM-DevOSWE [BLUE]
 echo.
 claude --continue
 pause
