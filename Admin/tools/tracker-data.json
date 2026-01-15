@@ -1,0 +1,42 @@
+{
+  "projects": {
+    "LLM-DevOSWE": {
+      "color": "blue",
+      "description": "SimWidget Engine framework"
+    },
+    "kittbox-web": {
+      "color": "red",
+      "description": "KittBox web application"
+    }
+  },
+  "phases": ["planning", "development", "testing", "review", "completed"],
+  "tasks": [
+    {
+      "id": 1736956800000,
+      "project": "LLM-DevOSWE",
+      "title": "Add Windows Terminal profiles for project identification",
+      "phase": "completed",
+      "notes": "Colored tabs for quick visual ID",
+      "created": "2026-01-15T09:00:00.000Z",
+      "completedAt": "2026-01-15T10:30:00.000Z"
+    },
+    {
+      "id": 1736956800001,
+      "project": "LLM-DevOSWE",
+      "title": "Create unified project launcher",
+      "phase": "completed",
+      "notes": "start-all-projects.bat with menu",
+      "created": "2026-01-15T10:30:00.000Z",
+      "completedAt": "2026-01-15T11:00:00.000Z"
+    },
+    {
+      "id": 1736956800002,
+      "project": "LLM-DevOSWE",
+      "title": "Create project task tracker",
+      "phase": "development",
+      "notes": "Track tasks by project, day, phase",
+      "created": "2026-01-15T11:00:00.000Z",
+      "completedAt": null
+    }
+  ]
+}
