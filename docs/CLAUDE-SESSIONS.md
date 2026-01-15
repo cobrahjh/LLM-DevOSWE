@@ -65,18 +65,26 @@ powershell -ExecutionPolicy Bypass -File create-shortcut.ps1
 
 ## Adding New Projects
 
-1. Add profile to Windows Terminal settings.json:
-   - Generate unique GUID
-   - Set tabColor for identification
-   - Point commandline to claude-here.bat
+Use the setup script to generate all files:
 
-2. Create `claude-here.bat` in project root:
-   - Add ASCII banner for the project
-   - Set color code (1F blue, 4F red, 2F green, etc.)
+```powershell
+cd C:\LLM-DevOSWE\Admin\tools
+.\setup-claude-project.ps1 -Name "MyProject" -Path "C:\MyProject" -Color "2F" -TabColor "#00CC66"
+```
 
-3. Create `create-shortcut.ps1`:
-   - Use GUID (not name) for reliable launching
-   - Run to create desktop shortcut
+**Parameters:**
+| Param | Description | Example |
+|-------|-------------|---------|
+| Name | Project display name | "MyProject" |
+| Path | Project root directory | "C:\MyProject" |
+| Color | CMD color code | 1F=blue, 2F=green, 4F=red |
+| TabColor | Windows Terminal tab hex | "#0066CC" |
+| Guid | Optional, auto-generated | "{guid-here}" |
+
+**The script creates:**
+1. `claude-here.bat` - Launch script with color
+2. `create-shortcut.ps1` - Desktop shortcut creator
+3. Outputs Windows Terminal profile JSON to add manually
 
 ## Claude CLI Flags
 
