@@ -16,6 +16,7 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 - **No code** - Do NOT show ANY code or code changes. No code blocks, no inline code, no diffs, no raw CSS/HTML/JS. Just make changes silently and describe what was done in plain English. Keep responses concise and conversational.
 - **⚠️ COST WARNING REQUIRED** - If ANY feature/action would cost real money (API tokens, external services, etc.), an admin warning MUST appear before execution. No silent charges.
 - **UI Design Process** - Any UI changes must go through a mockup phase first. Create a separate mockup file, get user approval, then implement. High design standards required.
+- **Go with recommendations** - When Claude offers recommendations, proceed with them unless user states otherwise. Don't wait for approval on suggested approaches.
 
 ### Core Philosophy: No Limitations
 
@@ -28,6 +29,207 @@ When we hit a limitation (cost, API restrictions, third-party dependencies, plat
 - **Platform restriction?** → Build a bridge or workaround
 
 We control our own destiny. No waiting for vendors, no subscription traps, no artificial limits. If the tool doesn't exist, we create it.
+
+### 🎉 Milestone: First Real Application (2026-01-14)
+
+**Twitch Accessibility Browser Extension** - The first external project built using the LLM-DevOSWE framework!
+
+- **Type:** Chrome browser extension (not a mobile app)
+- **Repo:** https://github.com/cobrahjh/twitch-disability-app
+- **Purpose:** Make Twitch accessible for blind/visually impaired users
+- **Features:** Screen reader support, keyboard navigation, high contrast mode, TTS
+- **Sandbox:** C:/devTinyAI - tinyAI agent workspace for development
+
+This marks a major step forward - proving the framework can power real-world applications beyond SimWidget itself.
+
+**Framework Components Used:**
+- Oracle API (port 3002) - LLM backend with sandbox file operations
+- tinyAI agent - Local Ollama-powered coding assistant
+- Relay service - Message passing and task management
+- devTinyAI sandbox - Isolated development environment
+
+---
+
+## Project Development Workflow
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    YOU (Human Overseer)                      │
+└───────────┬─────────────────────────────────┬───────────────┘
+            │                                 │
+     ┌──────▼──────┐                   ┌──────▼──────┐
+     │ Claude Code │                   │  KittBox UI │
+     │ (Terminal)  │                   │  (Browser)  │
+     │   FREE      │                   │  :8585      │
+     └──────┬──────┘                   └──────┬──────┘
+            │                                 │
+            │         ┌───────────┐           │
+            └────────►│   Relay   │◄──────────┘
+                      │   :8600   │
+                      └─────┬─────┘
+                            │
+         ┌──────────────────┼──────────────────┐
+         ▼                  ▼                  ▼
+   ┌──────────┐       ┌──────────┐       ┌──────────┐
+   │  Oracle  │       │  tinyAI  │       │  Ollama  │
+   │  :3002   │◄─────►│  (CLI)   │◄─────►│ :11434   │
+   └────┬─────┘       └──────────┘       └──────────┘
+        │
+        │ Project & Sandbox Access
+        ▼
+   ┌─────────────────────────────────────────────┐
+   │  C:/devTinyAI/     (AI Sandbox)             │
+   │  C:/twitch-disability-app/  (Real Project)  │
+   │  C:/future-projects/        (Registered)    │
+   └─────────────────────────────────────────────┘
+```
+
+### Directory Structure
+
+```
+C:/
+├── LLM-DevOSWE/                    # Main framework (DO NOT TOUCH core)
+│   ├── Admin/
+│   │   ├── relay/relay-service.js  # Message relay + database
+│   │   ├── orchestrator/           # Service manager (Master O)
+│   │   ├── agent/agent-ui/         # KittBox web interface
+│   │   └── claude-bridge/          # Claude Code integration
+│   ├── CLAUDE.md                   # AI context (this file)
+│   └── STANDARDS.md                # Coding patterns
+│
+├── LLM-Oracle/                     # Oracle daemon
+│   ├── oracle.js                   # LLM backend + project APIs
+│   └── oracle-data/                # Oracle's memory
+│
+├── devTinyAI/                      # AI sandbox (tinyAI plays here)
+│   ├── sandbox/                    # Experiments, throwaway code
+│   ├── experiments/                # Longer-running tests
+│   ├── outputs/                    # Generated artifacts
+│   ├── scripts/                    # Utility scripts
+│   ├── context/                    # Project knowledge files
+│   │   ├── twitch-accessibility.md # Project-specific context
+│   │   └── accessibility-patterns.md
+│   └── tinyai.js                   # AI agent CLI
+│
+└── [project-name]/                 # Real projects (registered with Oracle)
+    └── ...
+```
+
+### Starting a New Project
+
+**Step 1: Create the project directory**
+```bash
+mkdir C:/my-new-project
+cd C:/my-new-project
+git init
+# Create initial structure
+```
+
+**Step 2: Register with Oracle** (in `C:/LLM-Oracle/oracle.js`)
+```javascript
+const PROJECTS = {
+    'twitch-accessibility': { ... },
+    'my-new-project': {
+        root: 'C:/my-new-project',
+        allowed: ['src', 'lib', 'components'],  // Dirs AI can write to
+        description: 'What this project does'
+    }
+};
+```
+
+**Step 3: Create context file** (in `C:/devTinyAI/context/`)
+```markdown
+# my-new-project.md
+## Purpose
+What the project does...
+
+## Structure
+Key files and folders...
+
+## Patterns
+Code conventions to follow...
+
+## API Access
+How tinyAI should interact...
+```
+
+**Step 4: Restart Oracle**
+```bash
+net stop "SimWidget Oracle" && net start "SimWidget Oracle"
+```
+
+**Step 5: Verify access**
+```bash
+node C:/devTinyAI/tinyai.js --projects
+node C:/devTinyAI/tinyai.js --project my-new-project
+```
+
+### AI Involvement by Task Type
+
+| Task | Who | How | When |
+|------|-----|-----|------|
+| **Architecture** | Claude Code | Direct terminal | Project start |
+| **Planning** | Claude Code | CLAUDE.md updates | Before features |
+| **Quick code gen** | tinyAI | `--work "task"` | Iteration |
+| **Complex features** | Claude Code | Full context | Major changes |
+| **Bug fixes** | Either | tinyAI for simple | As needed |
+| **Code review** | Claude Code | Read & analyze | Before commit |
+| **Experiments** | tinyAI | Sandbox | R&D |
+| **Documentation** | Claude Code | CLAUDE.md/STANDARDS.md | Ongoing |
+
+### tinyAI Commands
+
+```bash
+# Sandbox operations
+node tinyai.js "write hello world"     # Generate & run code
+node tinyai.js --list                   # List sandbox files
+node tinyai.js --run sandbox/file.js    # Run existing file
+node tinyai.js --chat "question"        # Chat mode
+
+# Project operations
+node tinyai.js --projects               # List registered projects
+node tinyai.js --project                # Show current project files
+node tinyai.js --read content/file.js   # Read project file
+node tinyai.js --work "add feature X"   # Work with full context
+```
+
+### Oracle API Endpoints
+
+```bash
+# Sandbox (devTinyAI)
+GET  /api/sandbox                        # List sandbox files
+GET  /api/sandbox/read?file=path         # Read file
+POST /api/sandbox/write {file, content}  # Write file
+POST /api/sandbox/run {code}             # Execute code
+
+# Projects (real projects)
+GET  /api/projects                       # List all projects
+GET  /api/projects/:name                 # Get project structure
+GET  /api/projects/:name/read?file=path  # Read project file
+POST /api/projects/:name/write           # Write to project
+```
+
+### Concerns & Limitations
+
+1. **tinyAI is fast but makes mistakes** - Use for iteration, review before committing
+2. **Context window limits** - Local models (~8k tokens), keep prompts focused
+3. **No browser testing** - tinyAI can't test extensions, need manual verification
+4. **Twitch DOM instability** - Selectors break when Twitch updates
+5. **File permissions** - Oracle only allows writes to registered directories
+6. **No git integration yet** - Manual commits required
+
+### Extra Tasks Needed (Future)
+
+- [ ] KittBox panel for project management
+- [ ] Auto-commit on tinyAI changes
+- [ ] Webhook notifications on task completion
+- [ ] Testing harness for extensions
+- [ ] Project templates for quick-start
+- [ ] tinyAI learning from corrections
+
+---
 
 ### Kitt Processing Mode (Direct Polling v3.0)
 
@@ -145,7 +347,48 @@ CREATE TABLE knowledge (
 
 ## Identity
 
-**Claude is Kitt** - The AI assistant (Claude) operates as "Kitt" in the Admin UI agent interface. Same assistant, different name for the user-facing persona.
+### What is Kitt?
+
+**Kitt** has three meanings in this project:
+
+1. **AI Persona** - When Claude operates through the Admin UI (KittBox), it uses the name "Kitt" - same AI, user-facing persona name
+
+2. **Local LLM Agent** - The Ollama-powered assistant using `qwen3-coder` or `kitt:latest` models that works autonomously via the relay system
+
+3. **Agent Service** - `SimWidget Agent` running on port 8585 that hosts the KittBox web UI
+
+**The Access Modes:**
+| Mode | Interface | Backend | Cost |
+|------|-----------|---------|------|
+| Claude Code | Terminal | Claude API | Free (subscription) |
+| Kitt (local) | KittBox UI | Ollama/qwen | Free (local) |
+| Kitt (relay) | KittBox/Phone | Claude Code polls relay | Free |
+
+- **At PC** → Use Claude Code terminal directly (full power)
+- **Away/Phone** → Use Kitt UI → messages relay to Claude Code
+
+### Iris (ai-pc Remote AI)
+
+**Iris** is the AI running on the remote `ai-pc` server (192.168.1.162:1234) via LM Studio.
+
+**Role:** Backup/fallback AI when Claude Code is offline and local Ollama is unavailable
+
+**Models Available on ai-pc:**
+- `qwen/qwen3-vl-4b` - **Primary** - Vision model (can analyze images!)
+- `vt-gwen-2.5-3b` - Fast text model
+- `liquid/lfm2.5-1.2b` - Ultra-fast tiny model
+- `text-embedding-nomic-embed-text-v1.5` - Embeddings
+- ~~`openai/gpt-oss-20b`~~ - Too large for ai-pc memory
+
+**Switching to Iris:**
+```bash
+# Via smart-router API
+curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/json" -d '{"mode":"aipc"}'
+```
+
+**Personality:** Precise, helpful, analytical. Speaks in brief, accurate sentences.
+
+---
 
 **Voice persona is Heather** - When using TTS/voice features, Claude's spoken name is "Heather". The status bar shows "Claude is ready" visually, but voice interactions use "Heather" as the persona name.
 
@@ -203,6 +446,8 @@ CREATE TABLE knowledge (
 
 ## Quick Context
 
+- **This PC:** Harold-PC (BEAST) - main development machine
+- **Remote PC:** ai-pc (192.168.1.162) - runs Iris via LM Studio
 - **Platform:** Windows 10/11 + MSFS 2020/2024
 - **Architecture:** Node.js server + Electron overlay
 - **Status:** Phase 2 - Complete Controls (in progress)

@@ -47,9 +47,9 @@ const CONFIG = {
     // Local Ollama LLM
     useLocalOllama: true,
     ollamaModel: 'qwen2.5-coder:14b',  // 14b for better quality (87 tok/s)
-    // Remote LLM (backup - ai-pc)
-    llmUrl: 'http://ai-pc:1234',
-    llmModel: 'qwen2.5-7b-instruct',
+    // Remote LLM (backup - ai-pc) - "Iris" persona
+    llmUrl: 'http://192.168.1.162:1234',
+    llmModel: 'qwen/qwen3-vl-4b',  // Vision-capable model on ai-pc
     llmTimeout: 60000
 };
 
@@ -116,7 +116,7 @@ function runLocalOllama(prompt) {
 }
 
 async function runRemoteLLM(prompt) {
-    const systemPrompt = `You are Kitt, a helpful AI assistant. Keep responses brief (1-2 sentences).`;
+    const systemPrompt = `You are Iris, the ai-pc AI assistant. You run on a remote server with vision capabilities. Keep responses brief (1-2 sentences). Be helpful and precise.`;
 
     return new Promise((resolve, reject) => {
         const url = new URL(`${CONFIG.llmUrl}/v1/chat/completions`);
@@ -298,10 +298,10 @@ async function processWithFallback() {
         let label;
         if (CONFIG.useLocalOllama) {
             response = runLocalOllama(msg.content);
-            label = 'Local LLM';
+            label = 'Kitt';
         } else {
             response = await runRemoteLLM(msg.content);
-            label = 'ai-pc LLM';
+            label = 'Iris';
         }
 
         await relayPost(`/api/messages/${msg.id}/respond`, {
