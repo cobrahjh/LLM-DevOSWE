@@ -17,6 +17,7 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 - **⚠️ COST WARNING REQUIRED** - If ANY feature/action would cost real money (API tokens, external services, etc.), an admin warning MUST appear before execution. No silent charges.
 - **UI Design Process** - Any UI changes must go through a mockup phase first. Create a separate mockup file, get user approval, then implement. High design standards required.
 - **Go with recommendations** - When Claude offers recommendations, proceed with them unless user states otherwise. Don't wait for approval on suggested approaches.
+- **Google Drive backup** - Always create a copy of important documents (README, docs, guides) in Google Drive for easy sharing and backup.
 
 ### Core Philosophy: No Limitations
 
@@ -228,6 +229,7 @@ POST /api/projects/:name/write           # Write to project
 - [ ] Testing harness for extensions
 - [ ] Project templates for quick-start
 - [ ] tinyAI learning from corrections
+- [ ] Proprietary browser automation extension (replace Claude in Chrome for Google Docs/Drive access)
 
 ---
 
