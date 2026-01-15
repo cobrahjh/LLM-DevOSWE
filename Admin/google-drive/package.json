@@ -1,0 +1,15 @@
+{
+  "name": "kitt-google-drive",
+  "version": "1.0.0",
+  "description": "Google Drive API integration for Kitt",
+  "main": "drive-service.js",
+  "scripts": {
+    "auth": "node drive-service.js auth",
+    "start": "node drive-service.js server",
+    "create": "node drive-service.js create",
+    "list": "node drive-service.js list"
+  },
+  "dependencies": {
+    "googleapis": "^126.0.0"
+  }
+}
