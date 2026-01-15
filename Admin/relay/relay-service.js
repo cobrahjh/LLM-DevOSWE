@@ -600,13 +600,27 @@ function enforceTimeouts() {
 }
 
 function moveToDeadLetter(task, reason) {
+    // Store in dead_letters for audit trail
     db.prepare(`
         INSERT INTO dead_letters (id, task_id, reason, failed_at, original_content)
         VALUES (?, ?, ?, ?, ?)
     `).run(generateId(), task.id, reason, Date.now(), task.content);
 
-    db.prepare(`UPDATE tasks SET status = 'failed', error = ? WHERE id = ?`).run(reason, task.id);
-    log(`Task ${task.id} moved to dead letter: ${reason}`, 'WARN');
+    // Flag for review instead of just failing - gives admin chance to resubmit or reject
+    db.prepare(`
+        UPDATE tasks SET status = 'needs_review', error = ?
+        WHERE id = ?
+    `).run(`[NEEDS_REVIEW] ${reason}`, task.id);
+
+    log(`Task ${task.id} needs review: ${reason}`, 'WARN');
+
+    // Broadcast for UI updates
+    broadcast('task:needs_review', {
+        id: task.id,
+        sessionId: task.session_id,
+        reason,
+        previousStatus: task.status
+    });
 }
 
 // Run timeout checks every 30 seconds
@@ -624,6 +638,8 @@ app.get('/api/health', (req, res) => {
             COALESCE(SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END), 0) as processing,
             COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) as completed,
             COALESCE(SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END), 0) as failed,
+            COALESCE(SUM(CASE WHEN status = 'needs_review' THEN 1 ELSE 0 END), 0) as needs_review,
+            COALESCE(SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END), 0) as rejected,
             COUNT(*) as total
         FROM tasks
     `).get();
@@ -1481,6 +1497,154 @@ app.post('/api/queue/cleanup', (req, res) => {
         cleared: { completed: completed.changes, failed: failed.changes },
         protected: protected.count
     });
+});
+
+// ==================== TASK LIFECYCLE MANAGEMENT ====================
+
+// Reject a task with documented reason (keeps history, removes from active queue)
+app.post('/api/tasks/:id/reject', (req, res) => {
+    const { id } = req.params;
+    const { reason, category } = req.body;
+
+    const task = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(id);
+    if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+
+    if (task.status === 'rejected') {
+        return res.status(400).json({ error: 'Task already rejected' });
+    }
+
+    const rejectedAt = Date.now();
+    const rejectReason = reason || 'No reason provided';
+    const rejectCategory = category || 'unknown'; // bad_input, no_consumer, unclear, duplicate, other
+
+    db.prepare(`
+        UPDATE tasks
+        SET status = 'rejected',
+            error = ?,
+            completed_at = ?,
+            response = ?
+        WHERE id = ?
+    `).run(
+        `[REJECTED: ${rejectCategory}] ${rejectReason}`,
+        rejectedAt,
+        JSON.stringify({ rejectedAt, reason: rejectReason, category: rejectCategory, previousStatus: task.status }),
+        id
+    );
+
+    log(`Task ${id} rejected: [${rejectCategory}] ${rejectReason}`);
+
+    broadcast('task:rejected', {
+        id,
+        sessionId: task.session_id,
+        reason: rejectReason,
+        category: rejectCategory
+    });
+
+    res.json({ success: true, id, status: 'rejected', reason: rejectReason, category: rejectCategory });
+});
+
+// Flag task for manual review
+app.post('/api/tasks/:id/review', (req, res) => {
+    const { id } = req.params;
+    const { note } = req.body;
+
+    const task = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(id);
+    if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const reviewNote = note || 'Flagged for review';
+
+    db.prepare(`
+        UPDATE tasks
+        SET status = 'needs_review',
+            error = ?
+        WHERE id = ?
+    `).run(`[REVIEW] ${reviewNote} (was: ${task.status})`, id);
+
+    log(`Task ${id} flagged for review: ${reviewNote}`);
+
+    broadcast('task:needs_review', {
+        id,
+        sessionId: task.session_id,
+        note: reviewNote,
+        previousStatus: task.status
+    });
+
+    res.json({ success: true, id, status: 'needs_review', note: reviewNote });
+});
+
+// Get tasks needing review
+app.get('/api/queue/review', (req, res) => {
+    const tasks = db.prepare(`
+        SELECT * FROM tasks
+        WHERE status IN ('needs_review', 'failed')
+        ORDER BY created_at DESC
+        LIMIT 50
+    `).all();
+
+    res.json({
+        tasks: tasks.map(t => ({
+            id: t.id,
+            sessionId: t.session_id,
+            status: t.status,
+            preview: t.content.substring(0, 100) + (t.content.length > 100 ? '...' : ''),
+            content: t.content,
+            error: t.error,
+            createdAt: new Date(t.created_at).toISOString(),
+            retryCount: t.retry_count
+        })),
+        total: tasks.length
+    });
+});
+
+// Resubmit a task (optionally with modified content)
+app.post('/api/tasks/:id/resubmit', (req, res) => {
+    const { id } = req.params;
+    const { content, priority } = req.body;
+
+    const task = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(id);
+    if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const resubmittableStates = ['failed', 'needs_review', 'rejected'];
+    if (!resubmittableStates.includes(task.status)) {
+        return res.status(400).json({
+            error: `Cannot resubmit task in '${task.status}' state`,
+            hint: `Task must be in: ${resubmittableStates.join(', ')}`
+        });
+    }
+
+    const newContent = content || task.content;
+    const newPriority = priority || task.priority;
+
+    db.prepare(`
+        UPDATE tasks
+        SET status = 'pending',
+            content = ?,
+            priority = ?,
+            error = NULL,
+            consumer_id = NULL,
+            processing_at = NULL,
+            completed_at = NULL,
+            response = NULL,
+            retry_count = 0
+        WHERE id = ?
+    `).run(newContent, newPriority, id);
+
+    log(`Task ${id} resubmitted (was: ${task.status})`);
+
+    broadcast('task:resubmitted', {
+        id,
+        sessionId: task.session_id,
+        previousStatus: task.status,
+        modified: content ? true : false
+    });
+
+    res.json({ success: true, id, status: 'pending', modified: content ? true : false });
 });
 
 // Reset stuck processing tasks (force clear)
