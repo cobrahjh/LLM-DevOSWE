@@ -18,6 +18,8 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 - **UI Design Process** - Any UI changes must go through a mockup phase first. Create a separate mockup file, get user approval, then implement. High design standards required.
 - **Go with recommendations** - When Claude offers recommendations, proceed with them unless user states otherwise. Don't wait for approval on suggested approaches.
 - **Google Drive backup** - Always create a copy of important documents (README, docs, guides) in Google Drive for easy sharing and backup.
+- **Document every process** - Every service, API, workflow, and setup procedure must be documented. Include setup steps, API endpoints, configuration options, and troubleshooting tips. Documentation lives alongside code.
+- **Browser Bridge notifications** - When Kitt Browser Bridge is being used, Windows toast notifications must appear showing the action being performed. User must always know when browser automation is active.
 
 ### Core Philosophy: No Limitations
 

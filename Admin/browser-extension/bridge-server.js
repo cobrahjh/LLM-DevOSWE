@@ -17,8 +17,43 @@
 
 const http = require('http');
 const WebSocket = require('ws');
+const { exec } = require('child_process');
 
 const PORT = 8620;
+
+// Windows toast notification
+function notify(title, message) {
+    const ps = `
+        [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+        [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+        $template = '<toast><visual><binding template="ToastText02"><text id="1">${title}</text><text id="2">${message}</text></binding></visual></toast>'
+        $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+        $xml.LoadXml($template)
+        $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Kitt Browser Bridge').Show($toast)
+    `.replace(/\n/g, ' ');
+
+    exec(`powershell -Command "${ps}"`, { windowsHide: true }, (err) => {
+        if (err) console.log('[Notify] Toast failed, using console');
+    });
+
+    console.log(`[Bridge] 🔔 ${title}: ${message}`);
+}
+
+// Action descriptions for notifications
+const ACTION_NAMES = {
+    getTabs: 'Listing tabs',
+    getActiveTab: 'Getting active tab',
+    navigate: 'Navigating',
+    newTab: 'Opening new tab',
+    closeTab: 'Closing tab',
+    click: 'Clicking element',
+    type: 'Typing text',
+    setInputValue: 'Setting input',
+    readPage: 'Reading page',
+    executeScript: 'Running script',
+    screenshot: 'Taking screenshot'
+};
 
 // State
 let extensionSocket = null;
@@ -30,6 +65,7 @@ const wss = new WebSocket.Server({ noServer: true });
 
 wss.on('connection', (ws) => {
     console.log('[Bridge] Extension connected');
+    notify('Kitt Browser Bridge', 'Extension connected ✓');
     extensionSocket = ws;
 
     ws.on('message', (data) => {
@@ -70,6 +106,11 @@ function sendToExtension(action, params = {}) {
             reject(new Error('Extension not connected'));
             return;
         }
+
+        // Show notification
+        const actionName = ACTION_NAMES[action] || action;
+        const detail = params.url || params.selector || params.text?.substring(0, 30) || '';
+        notify('Kitt Browser', `${actionName}${detail ? ': ' + detail : ''}`);
 
         const id = ++requestId;
         const timeout = setTimeout(() => {
