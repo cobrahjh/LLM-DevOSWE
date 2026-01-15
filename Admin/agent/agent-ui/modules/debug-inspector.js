@@ -279,12 +279,17 @@ const DebugInspector = (function() {
 
         menu.innerHTML = html;
         menu.style.display = 'block';
+        menu.style.maxHeight = (window.innerHeight - 40) + 'px';
+        menu.style.overflowY = 'auto';
 
-        // Position menu
+        // Position menu - measure actual height after render
+        const menuRect = menu.getBoundingClientRect();
         let mx = x;
         let my = y;
-        if (mx + 200 > window.innerWidth) mx = window.innerWidth - 210;
-        if (my + 450 > window.innerHeight) my = window.innerHeight - 460;
+        if (mx + menuRect.width > window.innerWidth) mx = window.innerWidth - menuRect.width - 10;
+        if (my + menuRect.height > window.innerHeight) my = window.innerHeight - menuRect.height - 10;
+        if (my < 10) my = 10;
+        if (mx < 10) mx = 10;
         menu.style.left = mx + 'px';
         menu.style.top = my + 'px';
 
@@ -343,12 +348,22 @@ const DebugInspector = (function() {
 
         submenu.innerHTML = html;
         submenu.style.display = 'block';
+        submenu.style.maxHeight = (window.innerHeight - 40) + 'px';
+        submenu.style.overflowY = 'auto';
 
-        // Position submenu
+        // Position submenu - measure actual height after render
+        const submenuRect = submenu.getBoundingClientRect();
         let sx = rect.right + 4;
         let sy = rect.top;
-        if (sx + 160 > window.innerWidth) sx = rect.left - 164;
-        if (sy + items.length * 40 > window.innerHeight) sy = window.innerHeight - items.length * 40 - 10;
+
+        // Horizontal: flip to left if overflows right
+        if (sx + submenuRect.width > window.innerWidth) sx = rect.left - submenuRect.width - 4;
+        if (sx < 10) sx = 10;
+
+        // Vertical: ensure doesn't overflow bottom or top
+        if (sy + submenuRect.height > window.innerHeight) sy = window.innerHeight - submenuRect.height - 10;
+        if (sy < 10) sy = 10;
+
         submenu.style.left = sx + 'px';
         submenu.style.top = sy + 'px';
 

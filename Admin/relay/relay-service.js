@@ -159,6 +159,109 @@ function initDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_conversation_logs_persona ON conversation_logs(persona)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_conversation_logs_spoken ON conversation_logs(spoken_at DESC)`);
 
+    // ========== LLM Training & Evaluation Tables ==========
+
+    // Prompt library - store and manage prompts for teaching LLMs
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS prompt_library (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            category TEXT DEFAULT 'general',
+            prompt_text TEXT NOT NULL,
+            tags TEXT DEFAULT '[]',
+            rating REAL DEFAULT 0,
+            use_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER,
+            last_used INTEGER
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_prompts_category ON prompt_library(category)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_prompts_rating ON prompt_library(rating DESC)`);
+
+    // Benchmarks - test suites for evaluating LLM performance
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS benchmarks (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            category TEXT DEFAULT 'general',
+            test_cases TEXT NOT NULL DEFAULT '[]',
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER,
+            run_count INTEGER DEFAULT 0
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_benchmarks_category ON benchmarks(category)`);
+
+    // Benchmark runs - results from running benchmarks against models
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS benchmark_runs (
+            id TEXT PRIMARY KEY,
+            benchmark_id TEXT NOT NULL,
+            model TEXT NOT NULL,
+            results TEXT NOT NULL DEFAULT '[]',
+            passed INTEGER DEFAULT 0,
+            failed INTEGER DEFAULT 0,
+            total_time INTEGER DEFAULT 0,
+            avg_tokens INTEGER DEFAULT 0,
+            run_at INTEGER NOT NULL,
+            FOREIGN KEY (benchmark_id) REFERENCES benchmarks(id)
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_benchmark_runs_benchmark ON benchmark_runs(benchmark_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_benchmark_runs_model ON benchmark_runs(model)`);
+
+    // Training examples - curated input/output pairs for fine-tuning
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS training_examples (
+            id TEXT PRIMARY KEY,
+            input_text TEXT NOT NULL,
+            output_text TEXT NOT NULL,
+            source TEXT DEFAULT 'manual',
+            category TEXT DEFAULT 'general',
+            rating INTEGER DEFAULT 0,
+            approved INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_training_approved ON training_examples(approved)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_training_source ON training_examples(source)`);
+
+    // Training sessions - group exports of training data
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS training_sessions (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            example_count INTEGER DEFAULT 0,
+            approved_count INTEGER DEFAULT 0,
+            export_format TEXT,
+            exported_at INTEGER,
+            created_at INTEGER NOT NULL
+        )
+    `);
+
+    // Training metrics - track loss, perplexity, accuracy over time
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS training_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            model TEXT NOT NULL,
+            epoch INTEGER,
+            loss REAL,
+            perplexity REAL,
+            accuracy REAL,
+            val_loss REAL,
+            val_perplexity REAL,
+            learning_rate REAL,
+            notes TEXT,
+            timestamp INTEGER NOT NULL
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_metrics_model ON training_metrics(model)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON training_metrics(timestamp)`);
+
     log(`Database initialized: ${DB_FILE}`);
 }
 
@@ -1926,6 +2029,572 @@ app.get('/', (req, res) => {
 </body>
 </html>
     `);
+});
+
+// ============================================
+// LLM TRAINING & EVALUATION API
+// ============================================
+
+// === PROMPT LIBRARY ===
+
+// List all prompts
+app.get('/api/prompts', (req, res) => {
+    try {
+        const { category, search } = req.query;
+        let sql = 'SELECT * FROM prompt_library';
+        const params = [];
+
+        if (category) {
+            sql += ' WHERE category = ?';
+            params.push(category);
+        }
+        if (search) {
+            sql += category ? ' AND' : ' WHERE';
+            sql += ' (name LIKE ? OR prompt_text LIKE ?)';
+            params.push(`%${search}%`, `%${search}%`);
+        }
+        sql += ' ORDER BY rating DESC, use_count DESC';
+
+        const prompts = db.prepare(sql).all(...params);
+        res.json({ prompts: prompts.map(p => ({ ...p, tags: JSON.parse(p.tags || '[]') })) });
+    } catch (err) {
+        log(`Error listing prompts: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get single prompt
+app.get('/api/prompts/:id', (req, res) => {
+    try {
+        const prompt = db.prepare('SELECT * FROM prompt_library WHERE id = ?').get(req.params.id);
+        if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
+        prompt.tags = JSON.parse(prompt.tags || '[]');
+        res.json(prompt);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create prompt
+app.post('/api/prompts', (req, res) => {
+    try {
+        const { name, category, prompt_text, tags } = req.body;
+        if (!name || !prompt_text) {
+            return res.status(400).json({ error: 'name and prompt_text required' });
+        }
+        const id = `prompt_${Date.now()}`;
+        db.prepare(`
+            INSERT INTO prompt_library (id, name, category, prompt_text, tags, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(id, name, category || 'general', prompt_text, JSON.stringify(tags || []), Date.now());
+
+        broadcast('prompt:created', { id, name, category });
+        res.json({ success: true, id });
+    } catch (err) {
+        log(`Error creating prompt: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update prompt
+app.put('/api/prompts/:id', (req, res) => {
+    try {
+        const { name, category, prompt_text, tags, rating } = req.body;
+        const existing = db.prepare('SELECT * FROM prompt_library WHERE id = ?').get(req.params.id);
+        if (!existing) return res.status(404).json({ error: 'Prompt not found' });
+
+        db.prepare(`
+            UPDATE prompt_library SET
+                name = COALESCE(?, name),
+                category = COALESCE(?, category),
+                prompt_text = COALESCE(?, prompt_text),
+                tags = COALESCE(?, tags),
+                rating = COALESCE(?, rating),
+                updated_at = ?
+            WHERE id = ?
+        `).run(name, category, prompt_text, tags ? JSON.stringify(tags) : null, rating, Date.now(), req.params.id);
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete prompt
+app.delete('/api/prompts/:id', (req, res) => {
+    try {
+        db.prepare('DELETE FROM prompt_library WHERE id = ?').run(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Test prompt against Ollama
+app.post('/api/prompts/:id/test', async (req, res) => {
+    try {
+        const prompt = db.prepare('SELECT * FROM prompt_library WHERE id = ?').get(req.params.id);
+        if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
+
+        const { model, test_input } = req.body;
+        const modelName = model || 'qwen3-coder:latest';
+        const fullPrompt = prompt.prompt_text + (test_input ? `\n\nUser: ${test_input}` : '');
+
+        const startTime = Date.now();
+        const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: modelName, prompt: fullPrompt, stream: false })
+        });
+
+        const data = await response.json();
+        const elapsed = Date.now() - startTime;
+
+        // Update use count
+        db.prepare('UPDATE prompt_library SET use_count = use_count + 1, last_used = ? WHERE id = ?')
+            .run(Date.now(), req.params.id);
+
+        res.json({
+            response: data.response,
+            model: modelName,
+            elapsed_ms: elapsed,
+            tokens: data.eval_count || 0
+        });
+    } catch (err) {
+        log(`Error testing prompt: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// === BENCHMARKS ===
+
+// List benchmarks
+app.get('/api/benchmarks', (req, res) => {
+    try {
+        const { category } = req.query;
+        let sql = 'SELECT * FROM benchmarks';
+        if (category) sql += ' WHERE category = ?';
+        sql += ' ORDER BY created_at DESC';
+
+        const benchmarks = category
+            ? db.prepare(sql).all(category)
+            : db.prepare(sql).all();
+
+        res.json({
+            benchmarks: benchmarks.map(b => ({
+                ...b,
+                test_cases: JSON.parse(b.test_cases || '[]')
+            }))
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get single benchmark with run history
+app.get('/api/benchmarks/:id', (req, res) => {
+    try {
+        const benchmark = db.prepare('SELECT * FROM benchmarks WHERE id = ?').get(req.params.id);
+        if (!benchmark) return res.status(404).json({ error: 'Benchmark not found' });
+
+        benchmark.test_cases = JSON.parse(benchmark.test_cases || '[]');
+        const runs = db.prepare(`
+            SELECT * FROM benchmark_runs WHERE benchmark_id = ? ORDER BY run_at DESC LIMIT 20
+        `).all(req.params.id);
+
+        res.json({
+            ...benchmark,
+            runs: runs.map(r => ({ ...r, results: JSON.parse(r.results || '[]') }))
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create benchmark
+app.post('/api/benchmarks', (req, res) => {
+    try {
+        const { name, description, category, test_cases } = req.body;
+        if (!name || !test_cases || !Array.isArray(test_cases)) {
+            return res.status(400).json({ error: 'name and test_cases array required' });
+        }
+
+        const id = `bench_${Date.now()}`;
+        db.prepare(`
+            INSERT INTO benchmarks (id, name, description, category, test_cases, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(id, name, description || '', category || 'general', JSON.stringify(test_cases), Date.now());
+
+        broadcast('benchmark:created', { id, name });
+        res.json({ success: true, id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Run benchmark against a model
+app.post('/api/benchmarks/:id/run', async (req, res) => {
+    try {
+        const benchmark = db.prepare('SELECT * FROM benchmarks WHERE id = ?').get(req.params.id);
+        if (!benchmark) return res.status(404).json({ error: 'Benchmark not found' });
+
+        const { model } = req.body;
+        const modelName = model || 'qwen3-coder:latest';
+        const testCases = JSON.parse(benchmark.test_cases || '[]');
+
+        const results = [];
+        let passed = 0, failed = 0, totalTime = 0, totalTokens = 0;
+
+        for (const tc of testCases) {
+            const startTime = Date.now();
+            try {
+                const response = await fetch('http://localhost:11434/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: modelName, prompt: tc.input, stream: false })
+                });
+                const data = await response.json();
+                const elapsed = Date.now() - startTime;
+                totalTime += elapsed;
+                totalTokens += data.eval_count || 0;
+
+                // Check if output contains expected (simple substring match)
+                const success = tc.expected
+                    ? data.response.toLowerCase().includes(tc.expected.toLowerCase())
+                    : true;
+
+                if (success) passed++; else failed++;
+                results.push({
+                    input: tc.input,
+                    expected: tc.expected,
+                    actual: data.response,
+                    passed: success,
+                    time_ms: elapsed,
+                    tokens: data.eval_count || 0
+                });
+            } catch (err) {
+                failed++;
+                results.push({
+                    input: tc.input,
+                    expected: tc.expected,
+                    error: err.message,
+                    passed: false
+                });
+            }
+        }
+
+        // Save run
+        const runId = `run_${Date.now()}`;
+        db.prepare(`
+            INSERT INTO benchmark_runs (id, benchmark_id, model, results, passed, failed, total_time, avg_tokens, run_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(runId, req.params.id, modelName, JSON.stringify(results), passed, failed, totalTime, Math.round(totalTokens / testCases.length), Date.now());
+
+        // Update run count
+        db.prepare('UPDATE benchmarks SET run_count = run_count + 1, updated_at = ? WHERE id = ?')
+            .run(Date.now(), req.params.id);
+
+        broadcast('benchmark:completed', { id: runId, benchmark_id: req.params.id, model: modelName, passed, failed });
+
+        res.json({
+            run_id: runId,
+            model: modelName,
+            passed,
+            failed,
+            total: testCases.length,
+            pass_rate: testCases.length ? Math.round((passed / testCases.length) * 100) : 0,
+            total_time_ms: totalTime,
+            avg_tokens: Math.round(totalTokens / testCases.length),
+            results
+        });
+    } catch (err) {
+        log(`Error running benchmark: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Compare benchmark runs across models
+app.get('/api/benchmarks/:id/compare', (req, res) => {
+    try {
+        const runs = db.prepare(`
+            SELECT * FROM benchmark_runs WHERE benchmark_id = ? ORDER BY run_at DESC
+        `).all(req.params.id);
+
+        // Group by model
+        const byModel = {};
+        for (const run of runs) {
+            if (!byModel[run.model]) byModel[run.model] = [];
+            byModel[run.model].push({
+                ...run,
+                results: JSON.parse(run.results || '[]'),
+                pass_rate: run.passed + run.failed > 0 ? Math.round((run.passed / (run.passed + run.failed)) * 100) : 0
+            });
+        }
+
+        res.json({ comparison: byModel });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// === TRAINING DATA ===
+
+// List training examples
+app.get('/api/training/examples', (req, res) => {
+    try {
+        const { source, approved, category, limit } = req.query;
+        let sql = 'SELECT * FROM training_examples WHERE 1=1';
+        const params = [];
+
+        if (source) { sql += ' AND source = ?'; params.push(source); }
+        if (approved !== undefined) { sql += ' AND approved = ?'; params.push(approved === 'true' ? 1 : 0); }
+        if (category) { sql += ' AND category = ?'; params.push(category); }
+        sql += ' ORDER BY created_at DESC';
+        if (limit) sql += ` LIMIT ${parseInt(limit)}`;
+
+        const examples = db.prepare(sql).all(...params);
+        res.json({ examples, total: examples.length });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create training example
+app.post('/api/training/examples', (req, res) => {
+    try {
+        const { input_text, output_text, source, category, rating } = req.body;
+        if (!input_text || !output_text) {
+            return res.status(400).json({ error: 'input_text and output_text required' });
+        }
+
+        const id = `train_${Date.now()}`;
+        db.prepare(`
+            INSERT INTO training_examples (id, input_text, output_text, source, category, rating, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(id, input_text, output_text, source || 'manual', category || 'general', rating || 0, Date.now());
+
+        broadcast('training:example_created', { id, source });
+        res.json({ success: true, id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update training example (rate/approve)
+app.put('/api/training/examples/:id', (req, res) => {
+    try {
+        const { rating, approved, category } = req.body;
+        db.prepare(`
+            UPDATE training_examples SET
+                rating = COALESCE(?, rating),
+                approved = COALESCE(?, approved),
+                category = COALESCE(?, category),
+                updated_at = ?
+            WHERE id = ?
+        `).run(rating, approved, category, Date.now(), req.params.id);
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete training example
+app.delete('/api/training/examples/:id', (req, res) => {
+    try {
+        db.prepare('DELETE FROM training_examples WHERE id = ?').run(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Export training data as JSONL
+app.post('/api/training/export', (req, res) => {
+    try {
+        const { format, approved_only, category, session_name } = req.body;
+        let sql = 'SELECT * FROM training_examples WHERE 1=1';
+        const params = [];
+
+        if (approved_only) { sql += ' AND approved = 1'; }
+        if (category) { sql += ' AND category = ?'; params.push(category); }
+
+        const examples = db.prepare(sql).all(...params);
+
+        // Create session record
+        const sessionId = `session_${Date.now()}`;
+        db.prepare(`
+            INSERT INTO training_sessions (id, name, example_count, approved_count, export_format, exported_at, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+            sessionId,
+            session_name || `Export ${new Date().toISOString().slice(0, 10)}`,
+            examples.length,
+            examples.filter(e => e.approved).length,
+            format || 'jsonl',
+            Date.now(),
+            Date.now()
+        );
+
+        // Format output
+        let output;
+        if (format === 'jsonl' || !format) {
+            // OpenAI fine-tuning format
+            output = examples.map(e => JSON.stringify({
+                messages: [
+                    { role: 'user', content: e.input_text },
+                    { role: 'assistant', content: e.output_text }
+                ]
+            })).join('\n');
+        } else if (format === 'csv') {
+            output = 'input,output\n' + examples.map(e =>
+                `"${e.input_text.replace(/"/g, '""')}","${e.output_text.replace(/"/g, '""')}"`
+            ).join('\n');
+        } else {
+            output = JSON.stringify(examples, null, 2);
+        }
+
+        res.json({
+            session_id: sessionId,
+            format: format || 'jsonl',
+            count: examples.length,
+            data: output
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get training sessions
+app.get('/api/training/sessions', (req, res) => {
+    try {
+        const sessions = db.prepare('SELECT * FROM training_sessions ORDER BY created_at DESC').all();
+        res.json({ sessions });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Auto-capture toggle state (in-memory)
+let autoCapture = { enabled: false, source: 'relay' };
+
+app.get('/api/training/capture', (req, res) => {
+    res.json(autoCapture);
+});
+
+app.post('/api/training/capture', (req, res) => {
+    const { enabled, source } = req.body;
+    autoCapture = { enabled: !!enabled, source: source || 'relay' };
+    broadcast('training:capture_toggled', autoCapture);
+    res.json({ success: true, ...autoCapture });
+});
+
+// Hook to capture from task completions (call this when a task completes)
+function captureTrainingExample(input, output, source = 'relay') {
+    if (!autoCapture.enabled) return null;
+
+    const id = `train_${Date.now()}`;
+    db.prepare(`
+        INSERT INTO training_examples (id, input_text, output_text, source, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    `).run(id, input, output, source, Date.now());
+
+    broadcast('training:auto_captured', { id, source });
+    return id;
+}
+
+// ============================================
+// TRAINING METRICS (Loss/Perplexity Tracking)
+// ============================================
+
+// GET /api/training/metrics - get training metrics
+app.get('/api/training/metrics', (req, res) => {
+    try {
+        const { model, limit = 100 } = req.query;
+        let query = 'SELECT * FROM training_metrics';
+        const params = [];
+
+        if (model) {
+            query += ' WHERE model = ?';
+            params.push(model);
+        }
+
+        query += ' ORDER BY timestamp DESC LIMIT ?';
+        params.push(parseInt(limit));
+
+        const metrics = db.prepare(query).all(...params);
+
+        // Get distinct models for filter dropdown
+        const models = db.prepare('SELECT DISTINCT model FROM training_metrics ORDER BY model').all();
+
+        res.json({
+            metrics,
+            models: models.map(m => m.model)
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/training/metrics - record new metric
+app.post('/api/training/metrics', (req, res) => {
+    try {
+        const {
+            model,
+            epoch,
+            loss,
+            perplexity,
+            accuracy,
+            val_loss,
+            val_perplexity,
+            learning_rate,
+            notes
+        } = req.body;
+
+        if (!model) {
+            return res.status(400).json({ error: 'Model name is required' });
+        }
+
+        const stmt = db.prepare(`
+            INSERT INTO training_metrics
+            (model, epoch, loss, perplexity, accuracy, val_loss, val_perplexity, learning_rate, notes, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const result = stmt.run(
+            model,
+            epoch || null,
+            loss || null,
+            perplexity || null,
+            accuracy || null,
+            val_loss || null,
+            val_perplexity || null,
+            learning_rate || null,
+            notes || null,
+            Date.now()
+        );
+
+        broadcast('training:metric_recorded', { id: result.lastInsertRowid, model });
+
+        res.json({
+            success: true,
+            id: result.lastInsertRowid,
+            message: `Metric recorded for ${model}`
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/training/metrics/:id - delete a metric
+app.delete('/api/training/metrics/:id', (req, res) => {
+    try {
+        const { id } = req.params;
+        db.prepare('DELETE FROM training_metrics WHERE id = ?').run(id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ============================================

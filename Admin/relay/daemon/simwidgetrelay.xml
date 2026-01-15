@@ -1,9 +1,10 @@
 <service>
 	<id>simwidgetrelay.exe</id>
 	<name>SimWidget Relay</name>
-	<description>SimWidget Relay Service - Routes requests between agents and Claude</description>
+	<description>SimWidget Relay Service</description>
 	<executable>C:\Program Files\nodejs\node.exe</executable>
-	<argument>C:\LLM-DevOSWE\Admin\relay\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>--harmony</argument>
+	<argument>C:\LLM-DevOSWE\Admin\agent\node_modules\node-windows\lib\wrapper.js</argument>
 	<argument>--file</argument>
 	<argument>C:\LLM-DevOSWE\Admin\relay\relay-service.js</argument>
 	<argument>--scriptoptions=</argument>
@@ -22,7 +23,9 @@
 	<logmode>rotate</logmode>
 	<stoptimeout>30sec</stoptimeout>
 	<serviceaccount>
-		<username>LocalSystem</username>
+		<domain>HAROLD-PC</domain>
+		<user>LocalSystem</user>
+		<password></password>
 	</serviceaccount>
 	<workingdirectory>C:\LLM-DevOSWE\Admin\relay</workingdirectory>
 </service>

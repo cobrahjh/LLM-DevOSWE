@@ -2,44 +2,12 @@
   "lists": {
     "General": [
       {
-        "id": "1768331764424",
-        "text": "cant change voice #btn-voice-entry",
+        "id": "1768435483408",
+        "text": "🐱 Kittbox (kitt) Tasks: - Online  kitt + New Chat Lastest status? Current status: Kittbox v0.4.0 is running with Harold in the driver's seat, ready to execute tasks and provide assistance. Oracle is available for deep thinking and insights on port 3002, and Claude Code handles all code changes and additions. The Memory Bus at /api/memory allows sharing facts between components. What have you learned? As an AI language model, I don't learn in the traditional sense like a human does. However, during our interactions, I've gathered insights into your team's structure and project goals. I understand that Harold is the overseer, you're Kitt (the quick chat assistant), Oracle provides deep thinking, and Claude Code handles coding tasks.  I also know that we operate under the philosophy \"There are no walls — just success!\" and our limitations include not being able to edit code files directly, write code, or provide step-by-step coding instructions. The Memory Bus is a tool for sharing facts among components, and we use specific endpoints to communicate with Oracle and Claude Code.  If you have any specific questions or tasks at hand, feel free to ask! Has claude code trained you? No, Claude Code has not trained me directly. I am based on OpenAI's GPT-4 architecture, which was trained on a diverse dataset up until September 2021. Since then, my training data hasn't been updated to include Claude Code's responses or specific project details related to Kittbox v0.4.0.  However, I can provide information and answer questions based on the general knowledge and context provided about your project setup and goals. If you need detailed information or specific assistance, feel free to ask! Ask claudr for training This requires code changes. Ask Claude Code to update Kitt's training data with the latest information from our project (L7-architecture). Message Kit... ➤",
         "thought": "",
         "priority": "mustdo",
         "completed": false,
-        "createdAt": "2026-01-13T19:16:04.424Z"
-      },
-      {
-        "id": "1768322149993",
-        "text": "Cloud terminal is not submitting the tasks via the prompt",
-        "thought": "",
-        "priority": "low",
-        "completed": false,
-        "createdAt": "2026-01-13T16:35:49.993Z"
-      },
-      {
-        "id": "1768322003981",
-        "text": "> Add settings on the Claude terminal for the mic input it's too sensitive and doesn't give me enough time to speak",
-        "thought": "",
-        "priority": "medium",
-        "completed": false,
-        "createdAt": "2026-01-13T16:33:23.981Z"
-      },
-      {
-        "id": "1768321512443",
-        "text": "Give the \"claude terminal\" functionality to enter information by typing and then also via voice with an enter key to submit it as a task",
-        "thought": "",
-        "priority": "low",
-        "completed": false,
-        "createdAt": "2026-01-13T16:25:12.443Z"
-      },
-      {
-        "id": "1768321323109",
-        "text": "AIPC says that you are not communicating with it",
-        "thought": "",
-        "priority": "high",
-        "completed": false,
-        "createdAt": "2026-01-13T16:22:03.109Z"
+        "createdAt": "2026-01-15T00:04:43.408Z"
       }
     ],
     "SimWidget": [],

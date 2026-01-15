@@ -1,8 +1,9 @@
 <service>
 	<id>simwidgetagent.exe</id>
 	<name>SimWidget Agent</name>
-	<description>SimWidget Agent - Claude Assistant for dev environment</description>
+	<description>SimWidget Agent (Kitt)</description>
 	<executable>C:\Program Files\nodejs\node.exe</executable>
+	<argument>--harmony</argument>
 	<argument>C:\LLM-DevOSWE\Admin\agent\node_modules\node-windows\lib\wrapper.js</argument>
 	<argument>--file</argument>
 	<argument>C:\LLM-DevOSWE\Admin\agent\agent-server.js</argument>
@@ -22,7 +23,9 @@
 	<logmode>rotate</logmode>
 	<stoptimeout>30sec</stoptimeout>
 	<serviceaccount>
-		<username>LocalSystem</username>
+		<domain>HAROLD-PC</domain>
+		<user>LocalSystem</user>
+		<password></password>
 	</serviceaccount>
 	<workingdirectory>C:\LLM-DevOSWE\Admin\agent</workingdirectory>
 </service>

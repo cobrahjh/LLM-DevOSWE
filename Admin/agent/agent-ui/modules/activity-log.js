@@ -128,6 +128,7 @@ const ActivityLog = (function() {
             <div class="log-header">
                 <span class="log-title">📊 Activity Monitor</span>
                 <div class="log-controls">
+                    <button class="log-btn" id="log-reset-pos" title="Reset Position">📍</button>
                     <button class="log-btn pin-btn" id="log-pin" title="Pin/Hover mode">📌</button>
                     <button class="log-btn" id="log-refresh" title="Refresh">🔄</button>
                     <button class="log-btn" id="log-copy" title="Copy All">📋</button>
@@ -173,6 +174,7 @@ const ActivityLog = (function() {
         document.getElementById('log-refresh').onclick = refreshLogs;
         document.getElementById('log-copy').onclick = copyAll;
         document.getElementById('log-pin').onclick = togglePin;
+        document.getElementById('log-reset-pos').onclick = resetPosition;
 
         // Tab handlers
         logPanel.querySelectorAll('.log-tab').forEach(tab => {
@@ -344,6 +346,15 @@ const ActivityLog = (function() {
             left: logPanel.style.left,
             top: logPanel.style.top
         }));
+    }
+
+    function resetPosition() {
+        logPanel.style.left = '';
+        logPanel.style.top = '';
+        logPanel.style.right = '20px';
+        logPanel.style.bottom = '60px';
+        localStorage.removeItem('activity-log-position');
+        log('info', 'Position reset');
     }
 
     function loadPosition() {

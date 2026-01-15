@@ -202,8 +202,9 @@ function callClaudeCLI(message, sessionId) {
         // Build args - use print mode for non-interactive
         const args = ['-p', message];
 
-        const claude = spawn('claude', args, {
-            shell: true,
+        const claudePath = process.env.CLAUDE_PATH || 'C:\\Users\\hjhar\\.local\\bin\\claude.exe';
+        const claude = spawn(claudePath, args, {
+            shell: false,
             env: { ...process.env },
             cwd: config.workingDir
         });

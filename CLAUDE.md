@@ -17,6 +17,18 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 - **⚠️ COST WARNING REQUIRED** - If ANY feature/action would cost real money (API tokens, external services, etc.), an admin warning MUST appear before execution. No silent charges.
 - **UI Design Process** - Any UI changes must go through a mockup phase first. Create a separate mockup file, get user approval, then implement. High design standards required.
 
+### Core Philosophy: No Limitations
+
+**"There are no walls — just success!"**
+
+When we hit a limitation (cost, API restrictions, third-party dependencies, platform constraints), we build our own solution:
+- **Cost barrier?** → Build local/free alternative (Ollama instead of paid APIs)
+- **API limitation?** → Create our own service
+- **Third-party dependency?** → Write our own implementation
+- **Platform restriction?** → Build a bridge or workaround
+
+We control our own destiny. No waiting for vendors, no subscription traps, no artificial limits. If the tool doesn't exist, we create it.
+
 ### Kitt Processing Mode (Direct Polling v3.0)
 
 Two ways to use Kitt:

@@ -84,9 +84,10 @@ class ClaudeWorker {
 
             console.log(`[${this.name}] Spawning: claude --print "${content.substring(0, 30)}..."`);
 
-            this.process = spawn('claude', args, {
+            const claudePath = process.env.CLAUDE_PATH || 'C:\\Users\\hjhar\\.local\\bin\\claude.exe';
+            this.process = spawn(claudePath, args, {
                 cwd: WORKING_DIR,
-                shell: true,
+                shell: false,
                 env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' }
             });
 
