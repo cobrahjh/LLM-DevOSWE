@@ -475,6 +475,49 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 - `docs/COMPONENT-ARCHITECTURE.md` - Component specs & naming
 - `docs/SIMVARS-REFERENCE.md` - SimConnect variables
 - `docs/FLOW-PRO-REFERENCE.md` - Widget API & categories
+- `docs/CLAUDE-SESSIONS.md` - Session launcher guide
+
+## Developer Tools
+
+### Create New Project (Full Setup)
+
+**Script:** `Admin/tools/create-project.ps1`
+
+One command to create a new project with everything configured:
+
+```powershell
+.\create-project.ps1 -Name "MyProject" -Path "C:\MyProject" -Description "What it does"
+```
+
+**Auto-handles:**
+1. Creates directory + folder structure (src, docs, tests)
+2. Initializes git repository
+3. Creates README.md
+4. Runs terminal launcher setup (claude-here.bat)
+5. Auto-assigns next color from rotation
+6. Outputs Oracle registration snippet
+
+**Color rotation:** Blue → Red → Green → Purple → Yellow → Cyan (auto-assigned)
+
+**Flags:** `-SkipGit` skip git init, `-SkipOracle` skip Oracle reminder
+
+### Terminal Launcher Only
+
+**Script:** `Admin/tools/setup-claude-project.ps1`
+
+For existing projects that just need terminal setup:
+
+```powershell
+.\setup-claude-project.ps1 -Name "ProjectName" -Path "C:\ProjectPath" -Color "1F" -TabColor "#0066CC"
+```
+
+**Color codes:** `1F`=Blue, `2F`=Green, `4F`=Red, `5F`=Purple, `6F`=Yellow
+
+**Current projects:**
+| Project | Color | Tab |
+|---------|-------|-----|
+| LLM-DevOSWE | Blue (1F) | #0066CC |
+| kittbox-web | Red (4F) | #CC3300 |
 
 ## Security Tools
 
