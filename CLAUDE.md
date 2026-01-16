@@ -307,6 +307,85 @@ node Admin/relay/message-notifier.js
 - `overlay/renderer/copilot-ui.js` - Overlay copilot → Relay mode
 - `packages/core/agents.js` - Core agents → Relay mode
 
+### Google Drive Sync (DocSync)
+
+**Purpose:** Automatically backup important docs to Google Drive for sharing and persistence.
+
+**Location:** `G:\My Drive\AI Development`
+
+**Watched Files:**
+- Root: `CLAUDE.md`, `STANDARDS.md`, `SERVICE-REGISTRY.md`, `PROJECT-INDEX.md`, `ARCHITECTURE.md`, `TODO.md`
+- Docs: `C:\LLM-DevOSWE\docs\*.md`
+- Tools: `C:\LLM-DevOSWE\Admin\tools\*`
+
+**Commands:**
+```bash
+# Start DocSync watcher (background)
+Admin\docsync\docsync-watch.bat
+
+# Manual sync run
+node Admin\docsync\docsync-agent.js
+
+# Check sync state
+type Admin\docsync\docsync-state.json
+```
+
+**Process:**
+1. DocSync watches for file changes (5 second poll)
+2. Changed files are copied to `G:\My Drive\AI Development\[project]\`
+3. AI summaries generated via Ollama (optional)
+4. State saved to `docsync-state.json`
+
+**When to sync manually:**
+- After creating new important docs (SERVICE-REGISTRY.md, etc.)
+- After major CLAUDE.md or STANDARDS.md updates
+- Before ending a significant work session
+
+## Disaster / Sanity Check
+
+**Problem:** Services can fail silently, causing outages without notification.
+
+**Solution:** Hive health monitoring with alerts.
+
+### Quick Health Check
+```bash
+# Run hive-status.bat for instant status
+C:\LLM-DevOSWE\hive-status.bat
+
+# Or use curl
+curl http://localhost:3002/api/health   # Oracle
+curl http://localhost:8600/api/status   # Relay
+curl http://localhost:8686/              # Kitt Live
+```
+
+### Monitoring Tools
+| Tool | Port | Purpose |
+|------|------|---------|
+| Hive-Mind | 8700 | Real-time activity monitor |
+| Hive Guardian | service | Auto-healing (restarts dead services) |
+| hive-status.bat | - | Quick CLI status check |
+
+### Alert Methods (TODO)
+- [ ] Windows toast notifications on service failure
+- [ ] Sound alert on critical issues
+- [ ] Log file with rotation (`Admin/hive-guardian/hive-guardian.log`)
+- [ ] Email/SMS for remote monitoring (future)
+
+### Common Issues
+1. **Service won't start** - Check if port is already in use: `netstat -ano | findstr :PORT`
+2. **Oracle timeout** - Ollama might be loading model, wait 30s
+3. **Relay disconnected** - Check if Claude Code is polling
+4. **Kitt Live error** - Usually Oracle is down, restart Oracle first
+
+### Recovery
+```bash
+# Full restart
+C:\LLM-DevOSWE\stop-hive.bat
+C:\LLM-DevOSWE\start-hive.bat
+
+# Or let Guardian auto-heal (if installed as service)
+```
+
 ## User Shortcuts
 
 - `msg` - check messages - poll relay for pending Kitt messages
@@ -469,7 +548,44 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 - **Status:** Phase 2 - Complete Controls (in progress)
 - **Goal:** Run Flow Pro widgets without Flow Pro
 
+## Services Quick Reference
+
+| Port | Service | Purpose |
+|------|---------|---------|
+| 3002 | Oracle | LLM backend, project API, tinyAI |
+| 8080 | SimWidget Main | MSFS SimConnect bridge, WebSocket |
+| 8500 | Master Orchestrator | Health watchdog, auto-restart |
+| 8585 | Agent/KittBox | Command Center UI, task execution |
+| 8590 | Remote Support | Remote commands, file ops |
+| 8600 | Relay | Message queue, task persistence |
+| 8610 | Smart Router | LLM routing (Claude/Ollama/Iris) |
+| 8620 | Browser Bridge | Browser automation API |
+| 8700 | Claude Bridge | WebSocket to Claude Code CLI |
+| 8701 | Terminal Bridge | Stream Claude output to UI |
+| 11434 | Ollama | Local LLM (qwen3-coder) |
+| 1234 | Iris (ai-pc) | Remote LLM fallback |
+
+**Start all:** `C:\LLM-DevOSWE\start-all-servers.bat`
+**Full details:** See `SERVICE-REGISTRY.md`
+
+## Project Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `C:\LLM-DevOSWE` | Main framework, services |
+| `C:\LLM-Oracle` | Oracle daemon |
+| `C:\kittbox-modules` | Desktop apps (Kitt Live) |
+| `C:\kittbox-web` | KittBox web interface |
+| `C:\twitch-disability-app` | Accessibility extension |
+| `C:\devTinyAI` | AI sandbox |
+
+**Full details:** See `PROJECT-INDEX.md`
+
 ## Documentation Index
+
+**START HERE (Single Source of Truth):**
+- `SERVICE-REGISTRY.md` - **All services, ports, endpoints, health checks**
+- `PROJECT-INDEX.md` - **All projects, directories, quick commands**
 
 **Core Documentation:**
 - `PROJECT-PLAN.md` - Project roadmap & milestones

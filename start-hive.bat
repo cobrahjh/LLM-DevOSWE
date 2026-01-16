@@ -35,8 +35,13 @@ start "KittBox [8585]" cmd /k "cd /d C:\LLM-DevOSWE\Admin\agent\agent-ui && colo
 timeout /t 1 /nobreak >nul
 
 :: Start Kitt Live
-echo  [5/5] Starting Kitt Live (port 8686)...
+echo  [5/6] Starting Kitt Live (port 8686)...
 start "Kitt Live [8686]" cmd /k "cd /d C:\kittbox-modules\kitt-live && color 0C && node server.js"
+timeout /t 1 /nobreak >nul
+
+:: Start Hive-Mind Monitor
+echo  [6/6] Starting Hive-Mind (port 8701)...
+start "Hive-Mind [8701]" cmd /k "cd /d C:\LLM-DevOSWE\Admin\hive-mind && color 0D && node hive-mind-server.js"
 
 echo.
 echo  ========================================
@@ -48,6 +53,7 @@ echo    Oracle:    http://localhost:3002
 echo    Relay:     http://localhost:8600
 echo    KittBox:   http://localhost:8585
 echo    Kitt Live: http://localhost:8686
+echo    Hive-Mind: http://localhost:8701
 echo.
 echo  Press any key to close this window...
 pause >nul
