@@ -2762,6 +2762,110 @@ app.delete('/api/training/metrics/:id', (req, res) => {
 });
 
 // ============================================
+// KITT LIVE UPDATES API
+// ============================================
+
+const UPDATES_DIR = path.join(__dirname, 'updates');
+if (!fs.existsSync(UPDATES_DIR)) {
+    fs.mkdirSync(UPDATES_DIR, { recursive: true });
+}
+
+// GET /api/updates/:app - Get update manifest for an app
+app.get('/api/updates/:app', (req, res) => {
+    try {
+        const appName = req.params.app;
+        const manifestPath = path.join(UPDATES_DIR, appName, 'manifest.json');
+
+        if (!fs.existsSync(manifestPath)) {
+            return res.status(404).json({ error: 'No updates available' });
+        }
+
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        res.json(manifest);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/updates/:app/download/:file - Download update file
+app.get('/api/updates/:app/download/:file', (req, res) => {
+    try {
+        const { app: appName, file } = req.params;
+        const filePath = path.join(UPDATES_DIR, appName, 'files', file);
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        res.download(filePath);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/updates/:app/publish - Publish a new update (for dev use)
+app.post('/api/updates/:app/publish', (req, res) => {
+    try {
+        const appName = req.params.app;
+        const { version, changelog, files, type } = req.body;
+
+        if (!version) {
+            return res.status(400).json({ error: 'Version is required' });
+        }
+
+        const appDir = path.join(UPDATES_DIR, appName);
+        const filesDir = path.join(appDir, 'files');
+
+        if (!fs.existsSync(filesDir)) {
+            fs.mkdirSync(filesDir, { recursive: true });
+        }
+
+        const manifest = {
+            version,
+            changelog: changelog || `Update to version ${version}`,
+            type: type || 'incremental',
+            publishedAt: new Date().toISOString(),
+            files: files || [],
+            downloadUrl: `http://localhost:${PORT}/api/updates/${appName}/download/update.zip`
+        };
+
+        fs.writeFileSync(
+            path.join(appDir, 'manifest.json'),
+            JSON.stringify(manifest, null, 2)
+        );
+
+        broadcast('update:published', { app: appName, version });
+        log(`Update published: ${appName} v${version}`);
+
+        res.json({ success: true, manifest });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/updates - List all apps with updates
+app.get('/api/updates', (req, res) => {
+    try {
+        const apps = [];
+
+        if (fs.existsSync(UPDATES_DIR)) {
+            const dirs = fs.readdirSync(UPDATES_DIR);
+            for (const dir of dirs) {
+                const manifestPath = path.join(UPDATES_DIR, dir, 'manifest.json');
+                if (fs.existsSync(manifestPath)) {
+                    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+                    apps.push({ app: dir, ...manifest });
+                }
+            }
+        }
+
+        res.json(apps);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
 // START SERVER
 // ============================================
 

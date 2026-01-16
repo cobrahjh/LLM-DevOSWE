@@ -20,6 +20,8 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 - **Google Drive backup** - Always create a copy of important documents (README, docs, guides) in Google Drive for easy sharing and backup.
 - **Document every process** - Every service, API, workflow, and setup procedure must be documented. Include setup steps, API endpoints, configuration options, and troubleshooting tips. Documentation lives alongside code.
 - **Browser Bridge notifications** - When Kitt Browser Bridge is being used, Windows toast notifications must appear showing the action being performed. User must always know when browser automation is active.
+- **Core services MUST be Windows services** - If it's a core part of the hive (Relay, Oracle, KittBox, Hive-Mind, etc.), it MUST run as a Windows service with auto-start on boot. No terminal windows that "need to stay open". Services should be self-healing and manageable via `services.msc`.
+- **Kitt Live features as standard** - All AI bot prompts/UIs must include Kitt Live's features: model selector dropdown, performance metrics bar (response time, tokens, speed), voice settings panel (Microsoft Natural voices, rate/pitch/volume), and localStorage persistence. See http://localhost:8686 as reference.
 
 ### Core Philosophy: No Limitations
 
@@ -410,6 +412,7 @@ C:\LLM-DevOSWE\start-hive.bat
 - `dinsp` - debug inspector - refers to Debug Inspector tool/menu
 - `wpan` - window/panel - refers to floating windows or panels
 - `rvw` - review - review code for issues, clean up, optimize
+- `hivesanitycheck` - hive sanity check - check all hive info (services status, ports, health, logs)
 
 ## Memory & Standards Persistence
 
