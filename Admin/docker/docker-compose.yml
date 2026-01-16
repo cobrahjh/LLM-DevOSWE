@@ -1,0 +1,107 @@
+version: '3.8'
+
+# Hive Services - Docker Compose
+# Run with: docker-compose up -d
+# Stop with: docker-compose down
+# Restart: docker-compose restart
+# Logs: docker-compose logs -f [service]
+
+services:
+  oracle:
+    image: node:20-alpine
+    container_name: hive-oracle
+    working_dir: /app
+    volumes:
+      - /mnt/c/LLM-Oracle:/app
+      - oracle_data:/app/oracle-data
+    ports:
+      - "3002:3002"
+    command: node oracle.js
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3002/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  relay:
+    image: node:20-alpine
+    container_name: hive-relay
+    working_dir: /app
+    volumes:
+      - /mnt/c/LLM-DevOSWE/Admin/relay:/app
+    ports:
+      - "8600:8600"
+    command: node relay-service.js
+    restart: unless-stopped
+    depends_on:
+      - oracle
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8600/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  kittbox:
+    image: node:20-alpine
+    container_name: hive-kittbox
+    working_dir: /app
+    volumes:
+      - /mnt/c/LLM-DevOSWE/Admin/agent:/app
+    ports:
+      - "8585:8585"
+    command: node agent-server.js
+    restart: unless-stopped
+    depends_on:
+      - relay
+
+  kittlive:
+    image: node:20-alpine
+    container_name: hive-kittlive
+    working_dir: /app
+    volumes:
+      - /mnt/c/kittbox-modules/kitt-live:/app
+    ports:
+      - "8686:8686"
+    command: node server.js
+    restart: unless-stopped
+    depends_on:
+      - oracle
+
+  hivemind:
+    image: node:20-alpine
+    container_name: hive-mind
+    working_dir: /app
+    volumes:
+      - /mnt/c/LLM-DevOSWE/Admin/hive-mind:/app
+    ports:
+      - "8701:8701"
+    command: node hive-mind-server.js
+    restart: unless-stopped
+    depends_on:
+      - relay
+      - oracle
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: hive-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  oracle_data:
+  ollama_models:
+
+networks:
+  default:
+    name: hive-network
