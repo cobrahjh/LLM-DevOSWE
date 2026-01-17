@@ -6,7 +6,26 @@
 const BRIDGE_URL = 'ws://localhost:8620';
 let ws = null;
 let reconnectTimer = null;
+let keepaliveTimer = null;
 let isConnected = false;
+
+// Keepalive - send ping every 20 seconds to prevent service worker sleep
+function startKeepalive() {
+    stopKeepalive();
+    keepaliveTimer = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+            console.log('[Kitt Bridge] Keepalive ping');
+        }
+    }, 20000);
+}
+
+function stopKeepalive() {
+    if (keepaliveTimer) {
+        clearInterval(keepaliveTimer);
+        keepaliveTimer = null;
+    }
+}
 
 // Connect to bridge server
 function connect() {
@@ -19,6 +38,9 @@ function connect() {
             console.log('[Kitt Bridge] Connected to server');
             isConnected = true;
             clearTimeout(reconnectTimer);
+
+            // Start keepalive to prevent service worker termination
+            startKeepalive();
 
             // Announce connection
             ws.send(JSON.stringify({
@@ -55,6 +77,7 @@ function connect() {
         ws.onclose = () => {
             console.log('[Kitt Bridge] Disconnected');
             isConnected = false;
+            stopKeepalive();
             scheduleReconnect();
         };
 

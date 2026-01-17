@@ -262,6 +262,19 @@ function initDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_metrics_model ON training_metrics(model)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON training_metrics(timestamp)`);
 
+    // Kitt conversations - persistent chat history per session
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp INTEGER NOT NULL
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_session ON conversations(session_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_timestamp ON conversations(timestamp)`);
+
     log(`Database initialized: ${DB_FILE}`);
 }
 
@@ -2860,6 +2873,76 @@ app.get('/api/updates', (req, res) => {
         }
 
         res.json(apps);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// CONVERSATION API (Kitt session memory)
+// ============================================
+
+// Get conversation history for a session
+app.get('/api/conversations/:sessionId', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const limit = parseInt(req.query.limit) || 20;
+
+        const messages = db.prepare(`
+            SELECT role, content, timestamp
+            FROM conversations
+            WHERE session_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        `).all(sessionId, limit);
+
+        // Return in chronological order
+        res.json({ sessionId, messages: messages.reverse() });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add message to conversation
+app.post('/api/conversations/:sessionId', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { role, content } = req.body;
+
+        if (!role || !content) {
+            return res.status(400).json({ error: 'role and content required' });
+        }
+
+        const timestamp = Date.now();
+        db.prepare(`
+            INSERT INTO conversations (session_id, role, content, timestamp)
+            VALUES (?, ?, ?, ?)
+        `).run(sessionId, role, content, timestamp);
+
+        // Keep only last 50 messages per session
+        db.prepare(`
+            DELETE FROM conversations
+            WHERE session_id = ?
+            AND id NOT IN (
+                SELECT id FROM conversations
+                WHERE session_id = ?
+                ORDER BY timestamp DESC
+                LIMIT 50
+            )
+        `).run(sessionId, sessionId);
+
+        res.json({ success: true, sessionId, role, timestamp });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Clear conversation history for a session
+app.delete('/api/conversations/:sessionId', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const result = db.prepare('DELETE FROM conversations WHERE session_id = ?').run(sessionId);
+        res.json({ success: true, deleted: result.changes });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -9,12 +9,22 @@ const path = require('path');
 const WebSocket = require('ws');
 
 const PORT = 8701;
+const SERVER_START_TIME = Date.now();
 
 // Create HTTP server
 const server = http.createServer((req, res) => {
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
     if (req.url === '/' || req.url === '/index.html') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(fs.readFileSync(path.join(__dirname, 'hive-mind.html')));
+    } else if (req.url === '/api/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', service: 'Hive-Mind', clients: clients.size, uptime: Date.now() - SERVER_START_TIME }));
+    } else if (req.url === '/api/uptime') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ startTime: SERVER_START_TIME, uptime: Date.now() - SERVER_START_TIME }));
     } else {
         res.writeHead(404);
         res.end('Not Found');
@@ -107,7 +117,7 @@ async function checkServices() {
     broadcast({ source: 'system', type: 'health', data: status });
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`
 ╔══════════════════════════════════════╗
 ║         Hive-Mind MONITOR            ║

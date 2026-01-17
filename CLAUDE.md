@@ -11,9 +11,11 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 ## ⚠️ Important Rules
 
 - **NEVER use Anthropic API key for Kitt agent** - not cost effective. Use relay mode or direct Claude Code instead.
+- **NEVER change ports without asking** - Do NOT modify ports for any process, service, or API unless explicitly approved by Harold. Changing ports breaks URLs and paths that are already memorized/bookmarked.
 - **Continue changes without prompting** - Don't ask for confirmation, just make the changes and report what was done.
 - **NEVER ask for permissions** - Just do it. No confirmation dialogs, no "shall I proceed?", no permission requests.
 - **No code** - Do NOT show ANY code or code changes. No code blocks, no inline code, no diffs, no raw CSS/HTML/JS. Just make changes silently and describe what was done in plain English. Keep responses concise and conversational.
+- **ALWAYS TEST** - After making any change, TEST IT. Run the service, call the endpoint, check the UI, verify it works. Never assume code works - prove it works. If a test fails, fix it before moving on.
 - **⚠️ COST WARNING REQUIRED** - If ANY feature/action would cost real money (API tokens, external services, etc.), an admin warning MUST appear before execution. No silent charges.
 - **UI Design Process** - Any UI changes must go through a mockup phase first. Create a separate mockup file, get user approval, then implement. High design standards required.
 - **Go with recommendations** - When Claude offers recommendations, proceed with them unless user states otherwise. Don't wait for approval on suggested approaches.
@@ -25,6 +27,61 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
   - **Docker mode:** Containers via `Admin/docker/` compose files (for WSL2/Docker capable PCs - no reboots needed)
   - Installer should auto-detect and use the best available option. No terminal windows that "need to stay open".
 - **Kitt Live features as standard** - All AI bot prompts/UIs must include Kitt Live's features: model selector dropdown, performance metrics bar (response time, tokens, speed), voice settings panel (Microsoft Natural voices, rate/pitch/volume), and localStorage persistence. See http://localhost:8686 as reference.
+- **Hive AI Intelligence Standard** - ALL AI agents in the hive (Oracle, Kitt, tinyAI, and any future AI) MUST have:
+  - **Hive awareness** - Know all services, ports, endpoints in the hive
+  - **Tool calling** - Execute actions, not just suggest URLs or commands
+  - **Status checking** - Query health endpoints and report actual results
+  - **Context injection** - Receive current hive state in system prompts
+  - **Command execution** - Run allowed commands and return output
+  - **Service control** - Start/stop/restart services when asked
+  - **Memory** - Remember conversation context
+  - **Smart routing** - Escalate complex questions to Claude Code via relay
+  - No AI should be "simple" or just a basic chat wrapper. Every AI must be useful and capable of taking action.
+- **Auto-reload on webpage changes** - When a webpage file is modified, check for that page running in browser(s) and trigger a reload. No manual refresh needed during development.
+- **Dual Linux instances minimum** - A Hive must have at least two Linux instances available at all times (WSL Ubuntu + Docker, or multiple VMs). Redundancy ensures no single point of failure and enables failover.
+- **Auto-discover before asking** - Never ask the user for information that can be discovered (IPs, hostnames, ports, file paths). Ping, scan, or query first. Only ask if discovery fails.
+- **Try first, ask later** - Always attempt to solve problems independently first, then ask the Hive (other services/agents) for assistance, and only ask the user as a last resort.
+- **Security over convenience** - Never grant blanket sudo/admin access for convenience. Use principle of least privilege:
+  - Dedicated service accounts with minimal permissions
+  - Specific sudoers rules for only required commands
+  - No passwordless root access
+  - All services run as non-root users
+  - Audit logging for privileged operations
+
+### Core Philosophy: Continuous AI Evolution
+
+**"Every AI gets smarter, every day"**
+
+Making AI smarter is NOT a one-time task - it's an ongoing process and core philosophy:
+- **Learn from every interaction** - When an AI gives a dumb response, improve it
+- **Add tools iteratively** - Each new capability makes all AI more useful
+- **Share intelligence** - Improvements to one AI should propagate to others
+- **Context is king** - Always inject current hive state into prompts
+- **Action over suggestion** - AI should DO things, not just tell users what to do
+- **Fail forward** - When something doesn't work, add handling for it
+- **Document patterns** - Successful AI behaviors become standards
+
+This applies to Oracle, Kitt, tinyAI, and ALL future AI born in the hive. Intelligence is inherited and improved upon.
+
+**AI Must Follow Standards & Memory:**
+- All AI MUST read and follow CLAUDE.md and STANDARDS.md
+- AI behaviors, patterns, and capabilities are documented and shared
+- New AI inherit existing standards - no reinventing the wheel
+- When an AI learns something new, it gets added to docs for all AI
+- Memory persists across sessions via relay database
+- AI should reference past conversations when relevant
+
+**AI Communication Logging & Claude Review:**
+- **ALL communication from ALL AI** is logged/recorded in the database
+- Claude reviews ALL logs in real-time from Oracle, Kitt, and all other AI
+- Logs include: queries, responses, tool calls, status checks, errors
+- Claude performs complete analysis of AI interactions across the hive
+- Claude makes recommendations referenced to specific logged records
+- Recommendations are proposed to Harold for approval
+- Once approved, recommendation is recorded and implementation task(s) created
+- ALL AI are taught the recommended improvements/patterns
+- Updates added to Harold's update report for visibility
+- This creates a continuous feedback loop: AI acts → Claude analyzes → Harold approves → All AI improve
 
 ### Core Philosophy: No Limitations
 
@@ -240,8 +297,98 @@ POST /api/projects/:name/write           # Write to project
 5. **File permissions** - Oracle only allows writes to registered directories
 6. **No git integration yet** - Manual commits required
 
+### Master Mind (Future Feature)
+
+**Concept:** Parallel AI orchestrator that queries ALL available intelligence sources simultaneously:
+
+**Sources:**
+- Local LLMs: Ollama (kitt, qwen), LM Studio (Iris)
+- External LLMs: GPT-4, Claude API, Gemini (with cost warnings)
+- Search Engines: Google, Bing, DuckDuckGo, Perplexity
+- Specialized: Wolfram Alpha, Wikipedia, Stack Overflow
+
+**Flow:**
+```
+User Query → Master Mind Prompt Engineering
+                    ↓
+    ┌───────────────┼───────────────┐
+    ↓               ↓               ↓
+ Ollama         LM Studio       Web Search
+    ↓               ↓               ↓
+    └───────────────┼───────────────┘
+                    ↓
+         Result Aggregation & Ranking
+                    ↓
+         Synthesized Response
+```
+
+**Features:**
+- Parallel async queries to all sources
+- Smart result merging (dedupe, rank, synthesize)
+- Source attribution in responses
+- Cost tracking for paid APIs
+- Fallback chain if sources fail
+
+---
+
+### Hive Brain (Admin Control Center)
+
+**Concept:** Centralized admin interface for managing the entire Hive network with autonomous capabilities.
+
+**Core Features:**
+
+1. **Infection (Auto-Discovery & Install)**
+   - Network scanner (ARP, mDNS, ping sweep)
+   - Device fingerprinting (OS, CPU, RAM, services)
+   - Push-install via SSH or agent download link
+   - Enrollment queue with approval workflow
+   - 24/7 background scanning for new devices
+
+2. **Colony Management**
+   - Device health dashboard (CPU, memory, disk, uptime)
+   - Service deployment & rolling updates
+   - Resource allocation across nodes
+   - Load balancing rules
+   - Device grouping (by role, location, capability)
+
+3. **Hivemind Control**
+   - Task distribution & routing rules
+   - Message queue management
+   - Failover configuration
+   - Service dependency mapping
+
+4. **Security Center**
+   - API key rotation & management
+   - Access control lists per device/service
+   - Audit logging & alerts
+   - Certificate management (future TLS)
+
+5. **Telemetry & Logs**
+   - Centralized log aggregation
+   - Performance metrics & graphs
+   - Custom alert rules
+   - Historical data retention
+
+**Infection Workflow:**
+```
+Network Scan → Device Found → Fingerprint
+                                ↓
+                    Enrollment Queue (approval optional)
+                                ↓
+                    Push Install (SSH) or Generate Link
+                                ↓
+                    Device Reports to Hive Brain
+                                ↓
+                    Added to Colony → Services Deployed
+```
+
+---
+
 ### Extra Tasks Needed (Future)
 
+- [ ] Hive Brain admin UI
+- [ ] Infection network scanner
+- [ ] Master Mind implementation
 - [ ] KittBox panel for project management
 - [ ] Auto-commit on tinyAI changes
 - [ ] Webhook notifications on task completion
@@ -288,6 +435,12 @@ curl -X POST http://localhost:8600/api/messages/MESSAGE_ID/respond \
 - `kitt:latest` - Custom fine-tuned model
 
 **Run Kitt:** `ollama run qwen3-coder:latest "your prompt"`
+
+**LM Studio Models Location:** `C:\Users\hjhar\.lmstudio\models`
+- Check this directory every minute for new models
+- Automatically load new models into the hive for use
+- Always test new LLMs for: suggestions, metrics, performance review
+- Report findings to Harold before recommending for production use
 
 **Open WebUI (ChatGPT-like interface):**
 ```bash
@@ -567,7 +720,9 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 | 8610 | Smart Router | LLM routing (Claude/Ollama/Iris) |
 | 8620 | Browser Bridge | Browser automation API |
 | 8700 | Claude Bridge | WebSocket to Claude Code CLI |
-| 8701 | Terminal Bridge | Stream Claude output to UI |
+| 8701 | Hive-Mind | Real-time activity monitor |
+| 8800 | Hive Brain | Device discovery, colony management |
+| 8850 | Hive Oracle | Distributed LLM orchestrator |
 | 11434 | Ollama | Local LLM (qwen3-coder) |
 | 1234 | Iris (ai-pc) | Remote LLM fallback |
 
@@ -584,6 +739,12 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 | `C:\kittbox-web` | KittBox web interface |
 | `C:\twitch-disability-app` | Accessibility extension |
 | `C:\devTinyAI` | AI sandbox |
+
+**User Desktops (sync shortcuts to both):**
+- `C:\Users\hjhar\Desktop` - Local desktop
+- `C:\Users\hjhar\OneDrive\Desktop` - OneDrive synced desktop
+
+**Hive-Services shortcuts folder** exists on both desktops with service starters, status checks, and UI openers.
 
 **Full details:** See `PROJECT-INDEX.md`
 
@@ -679,7 +840,73 @@ Service Management:
         ┌──────────────┼──────────────┬───────────────┐
         ▼              ▼              ▼               ▼
    Main Server     Agent (Kitt)   Remote Support   [Future]
-   (8080)          (8585)         (8590)           
+   (8080)          (8585)         (8590)
+```
+
+### Hive Colony Architecture
+
+```
+                    ┌─────────────────────────────────────┐
+                    │          HIVE BRAIN (:8800)         │
+                    │   Device Discovery & Management     │
+                    │   - Network scanning (192.168.x.x)  │
+                    │   - SSH push-install ("Infection")  │
+                    │   - Colony health monitoring        │
+                    └──────────────┬──────────────────────┘
+                                   │ discovers/manages
+         ┌─────────────────────────┼─────────────────────────┐
+         ▼                         ▼                         ▼
+   ┌───────────┐            ┌───────────┐            ┌───────────┐
+   │Harold-PC  │            │morpu-pc   │            │  ai-pc    │
+   │(primary)  │            │(secondary)│            │(fallback) │
+   │:8585 Kitt │            │:8585 Kitt │            │:1234 LM   │
+   │:11434 Oll │            │:11434 Oll │            │Studio     │
+   └───────────┘            └───────────┘            └───────────┘
+```
+
+### Hive Oracle (Distributed LLM)
+
+```
+           ┌─────────────────────────────────────┐
+           │      HIVE ORACLE (:8850)            │
+           │  Distributed LLM Orchestrator       │
+           │  - Auto-discover LLM nodes          │
+           │  - Load balancing                   │
+           │  - Master Mind (parallel query)     │
+           │  - Distributed memory               │
+           └──────────────┬──────────────────────┘
+                          │ routes queries to
+       ┌──────────────────┼──────────────────┐
+       ▼                  ▼                  ▼
+   ┌─────────┐      ┌─────────┐      ┌─────────┐
+   │Harold-PC│      │morpu-pc │      │ ai-pc   │
+   │ Ollama  │      │ Ollama  │      │LM Studio│
+   │qwen3-cod│      │qwen:4b  │      │ Iris    │
+   │34 tok/s │      │170 tok/s│      │ 4b vis  │
+   └─────────┘      └─────────┘      └─────────┘
+```
+
+### Hive Communication Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER INTERFACES                          │
+│   Command Center (:8585)  │  Kitt Live (Alt+K)  │  Phone App     │
+└──────────────┬────────────────────┬─────────────────┬───────────┘
+               │                    │                 │
+               ▼                    ▼                 ▼
+          ┌────────────────────────────────────────────────┐
+          │                RELAY (:8600)                   │
+          │   Message queue, WebSocket events, SQLite      │
+          └────────────────────────┬───────────────────────┘
+                                   │
+          ┌────────────────────────┼────────────────────────┐
+          ▼                        ▼                        ▼
+   ┌─────────────┐          ┌─────────────┐          ┌─────────────┐
+   │ Hive Brain  │          │ Hive Oracle │          │ Hive-Mind   │
+   │   :8800     │          │   :8850     │          │   :8701     │
+   │ Device Mgmt │          │ LLM Routing │          │  Monitoring │
+   └─────────────┘          └─────────────┘          └─────────────┘
 ```
 
 ## Project Structure

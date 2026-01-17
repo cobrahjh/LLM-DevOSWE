@@ -227,11 +227,23 @@
 
     <script>
         const feed = document.getElementById('feed');
-        const startTime = Date.now();
+        let serverStartTime = Date.now(); // Will be updated from server
         let eventCount = 0;
         let taskCount = 0;
         let queryCount = 0;
         let wsRelay = null;
+
+        // Fetch server uptime (persists across page refreshes)
+        async function fetchServerUptime() {
+            try {
+                const resp = await fetch('/api/uptime');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    serverStartTime = data.startTime;
+                }
+            } catch (e) {}
+        }
+        fetchServerUptime();
 
         // Service health checks
         const services = {
@@ -247,12 +259,14 @@
             document.getElementById('clock').textContent = new Date().toLocaleTimeString();
         }, 1000);
 
-        // Uptime
+        // Uptime (uses server start time, not page load)
         setInterval(() => {
-            const secs = Math.floor((Date.now() - startTime) / 1000);
+            const secs = Math.floor((Date.now() - serverStartTime) / 1000);
             const mins = Math.floor(secs / 60);
             const hrs = Math.floor(mins / 60);
-            if (hrs > 0) document.getElementById('uptime').textContent = `${hrs}h ${mins % 60}m`;
+            const days = Math.floor(hrs / 24);
+            if (days > 0) document.getElementById('uptime').textContent = `${days}d ${hrs % 24}h`;
+            else if (hrs > 0) document.getElementById('uptime').textContent = `${hrs}h ${mins % 60}m`;
             else if (mins > 0) document.getElementById('uptime').textContent = `${mins}m ${secs % 60}s`;
             else document.getElementById('uptime').textContent = `${secs}s`;
         }, 1000);
