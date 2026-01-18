@@ -436,6 +436,11 @@ curl -X POST http://localhost:8600/api/messages/MESSAGE_ID/respond \
 
 **Run Kitt:** `ollama run qwen3-coder:latest "your prompt"`
 
+**LM Studio (Local):** `http://localhost:1234`
+- `bartowski/qwen2.5-coder-14b-instruct` - **Primary coding model** (Q4_K_M, 8.4GB)
+- Runs on Harold-PC for fast local inference
+- OpenAI-compatible API at `/v1/chat/completions`
+
 **LM Studio Models Location:** `C:\Users\hjhar\.lmstudio\models`
 - Check this directory every minute for new models
 - Automatically load new models into the hive for use
@@ -724,7 +729,7 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 | 8800 | Hive Brain | Device discovery, colony management |
 | 8850 | Hive Oracle | Distributed LLM orchestrator |
 | 11434 | Ollama | Local LLM (qwen3-coder) |
-| 1234 | Iris (ai-pc) | Remote LLM fallback |
+| 1234 | LM Studio | Local LLM (qwen2.5-coder-14b) |
 
 **Start all:** `C:\LLM-DevOSWE\start-all-servers.bat`
 **Full details:** See `SERVICE-REGISTRY.md`
@@ -880,9 +885,9 @@ Service Management:
        ▼                  ▼                  ▼
    ┌─────────┐      ┌─────────┐      ┌─────────┐
    │Harold-PC│      │morpu-pc │      │ ai-pc   │
-   │ Ollama  │      │ Ollama  │      │LM Studio│
+   │Ollama+LM│      │ Ollama  │      │LM Studio│
    │qwen3-cod│      │qwen:4b  │      │ Iris    │
-   │34 tok/s │      │170 tok/s│      │ 4b vis  │
+   │qwen2.5  │      │170 tok/s│      │ 4b vis  │
    └─────────┘      └─────────┘      └─────────┘
 ```
 

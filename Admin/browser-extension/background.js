@@ -42,12 +42,16 @@ function connect() {
             // Start keepalive to prevent service worker termination
             startKeepalive();
 
-            // Announce connection
-            ws.send(JSON.stringify({
-                type: 'connect',
-                agent: 'kitt-browser-bridge',
-                version: '1.0.0'
-            }));
+            // Announce connection (with small delay to ensure OPEN state)
+            setTimeout(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'connect',
+                        agent: 'kitt-browser-bridge',
+                        version: '1.0.0'
+                    }));
+                }
+            }, 50);
         };
 
         ws.onmessage = async (event) => {

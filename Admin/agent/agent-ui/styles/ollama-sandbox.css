@@ -127,7 +127,8 @@ body::before {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: 10000;
+    pointer-events: auto;
 }
 
 .logo {
@@ -312,6 +313,9 @@ body::before {
     justify-content: center;
     font-size: 16px;
     transition: all 0.2s;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
 }
 
 .header-btn:hover {
