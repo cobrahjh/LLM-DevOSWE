@@ -275,6 +275,20 @@ function initDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_session ON conversations(session_id)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_timestamp ON conversations(timestamp)`);
 
+    // Knowledge backup - CLAUDE.md and STANDARDS.md versioning
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS knowledge (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL,
+            content TEXT NOT NULL,
+            hash TEXT NOT NULL,
+            session_id TEXT,
+            created_at INTEGER NOT NULL
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_knowledge_type ON knowledge(type)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_knowledge_created ON knowledge(created_at)`);
+
     log(`Database initialized: ${DB_FILE}`);
 }
 
@@ -2943,6 +2957,239 @@ app.delete('/api/conversations/:sessionId', (req, res) => {
         const { sessionId } = req.params;
         const result = db.prepare('DELETE FROM conversations WHERE session_id = ?').run(sessionId);
         res.json({ success: true, deleted: result.changes });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// KNOWLEDGE BACKUP API
+// ============================================
+
+const crypto = require('crypto');
+
+// Backup CLAUDE.md or STANDARDS.md
+app.post('/api/knowledge/backup', (req, res) => {
+    try {
+        const { type, sessionId } = req.body;
+
+        if (!type || !['claude_md', 'standards_md'].includes(type)) {
+            return res.status(400).json({ error: 'type must be claude_md or standards_md' });
+        }
+
+        // Determine file path
+        const filePath = type === 'claude_md'
+            ? path.join(__dirname, '..', '..', 'CLAUDE.md')
+            : path.join(__dirname, '..', '..', 'STANDARDS.md');
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: `File not found: ${filePath}` });
+        }
+
+        const content = fs.readFileSync(filePath, 'utf8');
+        const hash = crypto.createHash('sha256').update(content).digest('hex');
+
+        // Check if content has changed since last backup
+        const lastBackup = db.prepare(`
+            SELECT hash FROM knowledge WHERE type = ? ORDER BY created_at DESC LIMIT 1
+        `).get(type);
+
+        if (lastBackup && lastBackup.hash === hash) {
+            return res.json({
+                success: true,
+                message: 'No changes detected, skipping backup',
+                hash,
+                changed: false
+            });
+        }
+
+        // Insert new backup
+        const timestamp = Date.now();
+        db.prepare(`
+            INSERT INTO knowledge (type, content, hash, session_id, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        `).run(type, content, hash, sessionId || null, timestamp);
+
+        // Count total backups for this type
+        const count = db.prepare(`SELECT COUNT(*) as count FROM knowledge WHERE type = ?`).get(type);
+
+        log(`Knowledge backup: ${type} (hash: ${hash.substring(0, 8)}...)`);
+        res.json({
+            success: true,
+            type,
+            hash,
+            timestamp,
+            changed: true,
+            totalBackups: count.count
+        });
+    } catch (err) {
+        log(`Knowledge backup error: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// List all backups for a type
+app.get('/api/knowledge/list/:type', (req, res) => {
+    try {
+        const { type } = req.params;
+
+        if (!['claude_md', 'standards_md'].includes(type)) {
+            return res.status(400).json({ error: 'type must be claude_md or standards_md' });
+        }
+
+        const backups = db.prepare(`
+            SELECT id, hash, session_id, created_at, LENGTH(content) as size
+            FROM knowledge
+            WHERE type = ?
+            ORDER BY created_at DESC
+            LIMIT 50
+        `).all(type);
+
+        res.json({ type, count: backups.length, backups });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get specific backup or latest
+app.get('/api/knowledge/restore/:type', (req, res) => {
+    try {
+        const { type } = req.params;
+        const { id } = req.query;
+
+        if (!['claude_md', 'standards_md'].includes(type)) {
+            return res.status(400).json({ error: 'type must be claude_md or standards_md' });
+        }
+
+        let backup;
+        if (id) {
+            backup = db.prepare(`SELECT * FROM knowledge WHERE type = ? AND id = ?`).get(type, id);
+        } else {
+            backup = db.prepare(`SELECT * FROM knowledge WHERE type = ? ORDER BY created_at DESC LIMIT 1`).get(type);
+        }
+
+        if (!backup) {
+            return res.status(404).json({ error: `No backup found for ${type}` });
+        }
+
+        res.json({
+            id: backup.id,
+            type: backup.type,
+            content: backup.content,
+            hash: backup.hash,
+            sessionId: backup.session_id,
+            createdAt: backup.created_at
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Restore a backup to file
+app.post('/api/knowledge/restore/:type', (req, res) => {
+    try {
+        const { type } = req.params;
+        const { id } = req.body;
+
+        if (!['claude_md', 'standards_md'].includes(type)) {
+            return res.status(400).json({ error: 'type must be claude_md or standards_md' });
+        }
+
+        let backup;
+        if (id) {
+            backup = db.prepare(`SELECT * FROM knowledge WHERE type = ? AND id = ?`).get(type, id);
+        } else {
+            backup = db.prepare(`SELECT * FROM knowledge WHERE type = ? ORDER BY created_at DESC LIMIT 1`).get(type);
+        }
+
+        if (!backup) {
+            return res.status(404).json({ error: `No backup found for ${type}` });
+        }
+
+        // Write to file
+        const filePath = type === 'claude_md'
+            ? path.join(__dirname, '..', '..', 'CLAUDE.md')
+            : path.join(__dirname, '..', '..', 'STANDARDS.md');
+
+        fs.writeFileSync(filePath, backup.content, 'utf8');
+
+        log(`Knowledge restored: ${type} from backup ${backup.id}`);
+        res.json({
+            success: true,
+            type,
+            backupId: backup.id,
+            hash: backup.hash,
+            restoredAt: Date.now()
+        });
+    } catch (err) {
+        log(`Knowledge restore error: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Backup both files at once (syncmem)
+app.post('/api/knowledge/sync', (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        const results = [];
+
+        for (const type of ['claude_md', 'standards_md']) {
+            const filePath = type === 'claude_md'
+                ? path.join(__dirname, '..', '..', 'CLAUDE.md')
+                : path.join(__dirname, '..', '..', 'STANDARDS.md');
+
+            if (!fs.existsSync(filePath)) {
+                results.push({ type, error: 'File not found' });
+                continue;
+            }
+
+            const content = fs.readFileSync(filePath, 'utf8');
+            const hash = crypto.createHash('sha256').update(content).digest('hex');
+
+            const lastBackup = db.prepare(`
+                SELECT hash FROM knowledge WHERE type = ? ORDER BY created_at DESC LIMIT 1
+            `).get(type);
+
+            if (lastBackup && lastBackup.hash === hash) {
+                results.push({ type, changed: false, hash });
+            } else {
+                const timestamp = Date.now();
+                db.prepare(`
+                    INSERT INTO knowledge (type, content, hash, session_id, created_at)
+                    VALUES (?, ?, ?, ?, ?)
+                `).run(type, content, hash, sessionId || null, timestamp);
+                results.push({ type, changed: true, hash, timestamp });
+            }
+        }
+
+        const changed = results.filter(r => r.changed).length;
+        log(`Knowledge sync: ${changed} file(s) backed up`);
+        res.json({ success: true, results, changed });
+    } catch (err) {
+        log(`Knowledge sync error: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get backup status (for UI display)
+app.get('/api/knowledge/status', (req, res) => {
+    try {
+        const status = {};
+
+        for (const type of ['claude_md', 'standards_md']) {
+            const latest = db.prepare(`
+                SELECT hash, created_at FROM knowledge WHERE type = ? ORDER BY created_at DESC LIMIT 1
+            `).get(type);
+            const count = db.prepare(`SELECT COUNT(*) as count FROM knowledge WHERE type = ?`).get(type);
+
+            status[type] = {
+                lastBackup: latest ? latest.created_at : null,
+                lastHash: latest ? latest.hash.substring(0, 8) : null,
+                totalBackups: count.count
+            };
+        }
+
+        res.json({ success: true, status });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

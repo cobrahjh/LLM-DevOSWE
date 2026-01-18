@@ -52,19 +52,19 @@
 
         <div class="header-actions">
             <div class="header-claude-status">
-                <button class="header-btn" id="btn-output" onclick="OutputBubble.toggle()" title="Claude Activity">🤖</button>
+                <button class="header-btn" id="btn-output" onclick="typeof OutputBubble!=='undefined'&&OutputBubble.toggle()" title="Claude Activity">🤖</button>
                 <span class="claude-status-text" id="header-claude-status">Ready</span>
-                <button class="header-btn voice-toggle" id="btn-voice-toggle" onclick="toggleVoiceEnabled()" title="Toggle Voice">🔊</button>
-                <select class="header-llm-select" id="llm-select" onchange="switchLLM(this.value)" title="Select LLM">
+                <button class="header-btn voice-toggle" id="btn-voice-toggle" onclick="typeof toggleVoiceEnabled==='function'&&toggleVoiceEnabled()" title="Toggle Voice">🔊</button>
+                <select class="header-llm-select" id="llm-select" onchange="typeof switchLLM==='function'&&switchLLM(this.value)" title="Select LLM">
                     <option value="local">🖥️ Local</option>
                     <option value="aipc">🌐 ai-pc</option>
                     <option value="claude">🧠 Claude</option>
                 </select>
             </div>
-            <button class="header-btn" id="btn-terminal-stream" onclick="TerminalStream.toggle()" title="Terminal Stream">💻</button>
-            <button class="header-btn" id="btn-claude-tasks" onclick="toggleClaudeTasksPanel()" title="Claude Tasks">🤖</button>
-            <button class="header-btn" id="btn-todo" onclick="TodoModule.toggle()" title="TODO List">📋</button>
-            <button class="header-btn" id="btn-voice-entry" onclick="showVoiceEntryModal()" title="Voice Entry">🎤</button>
+            <button class="header-btn" id="btn-terminal-stream" onclick="typeof TerminalStream!=='undefined'&&TerminalStream.toggle()" title="Terminal Stream">💻</button>
+            <button class="header-btn" id="btn-claude-tasks" onclick="typeof toggleClaudeTasksPanel==='function'&&toggleClaudeTasksPanel()" title="Claude Tasks">🤖</button>
+            <button class="header-btn" id="btn-todo" onclick="typeof TodoModule!=='undefined'&&TodoModule.toggle()" title="TODO List">📋</button>
+            <button class="header-btn" id="btn-voice-entry" onclick="typeof showVoiceEntryModal==='function'&&showVoiceEntryModal()" title="Voice Entry">🎤</button>
             <button class="header-btn" id="btn-help" title="Help">❓</button>
         </div>
     </header>
@@ -126,6 +126,10 @@
                     <div class="nav-item" onclick="AdminKitt.sendQuick('sync to github')">
                         <span class="icon">📤</span>
                         <span class="label">Git Sync</span>
+                    </div>
+                    <div class="nav-item" onclick="syncMemory()">
+                        <span class="icon">💾</span>
+                        <span class="label">Sync Memory</span>
                     </div>
                 </div>
 
@@ -375,29 +379,38 @@
     <script src="../hot-update/hot-client.js"></script>
 
     <script>
+        // Global error handler to prevent script breakage
+        window.onerror = function(msg, url, line) {
+            console.error('[GlobalError]', msg, 'at', url, line);
+            return false;
+        };
+
         // v3.0 Command Center initialization
         console.log('[CommandCenter] Script loaded');
         document.addEventListener('DOMContentLoaded', function() {
             console.log('[CommandCenter] DOMContentLoaded fired');
+
             // Initialize TODO module
-            if (typeof TodoModule !== 'undefined') {
-                TodoModule.init(null, {
-                    assistantName: 'Kitt',
-                    inputSelector: '#message-input'
-                });
-            }
+            try {
+                if (typeof TodoModule !== 'undefined') {
+                    TodoModule.init(null, {
+                        assistantName: 'Kitt',
+                        inputSelector: '#message-input'
+                    });
+                }
+            } catch(e) { console.error('[Init] TodoModule failed:', e); }
 
             // Initialize services grid
-            initServicesGrid();
+            try { initServicesGrid(); } catch(e) { console.error('[Init] ServicesGrid failed:', e); }
 
             // Setup nav item clicks
-            setupNavigation();
+            try { setupNavigation(); } catch(e) { console.error('[Init] Navigation failed:', e); }
 
             // Start service polling
-            startServicePolling();
+            try { startServicePolling(); } catch(e) { console.error('[Init] ServicePolling failed:', e); }
 
             // Start MSFS data polling
-            startMSFSPolling();
+            try { startMSFSPolling(); } catch(e) { console.error('[Init] MSFSPolling failed:', e); }
         });
 
         // Services configuration
@@ -454,8 +467,8 @@
             console.log('[ServicePoll] Checking services...');
 
             try {
-                // Get all service statuses from Master O - use 127.0.0.1 to avoid DNS issues
-                const masterUrl = 'http://127.0.0.1:8500/api/status';
+                // Get all service statuses from Master O
+                const masterUrl = `http://${location.hostname}:8500/api/status`;
                 console.log('[ServicePoll] Fetching from:', masterUrl);
                 const masterResp = await fetch(masterUrl);
                 console.log('[ServicePoll] Master response:', masterResp.status);
@@ -484,10 +497,22 @@
                     }
                 }
             } catch (err) {
-                // Master O unreachable - mark all offline
-                console.error('[ServicePoll] Fetch error:', err.message, 'URL:', `http://${location.hostname}:8500/api/status`);
-                for (const id of Object.keys(SERVICES)) {
-                    updateServiceUI(id, false);
+                // Master O unreachable - check services directly
+                console.log('[ServicePoll] Master O unavailable, checking services directly...');
+                updateServiceUI('master', false);
+
+                for (const [id, svc] of Object.entries(SERVICES)) {
+                    if (id === 'master' || !svc.port) continue;
+                    try {
+                        const resp = await fetch(`http://${location.hostname}:${svc.port}/api/health`, {
+                            signal: AbortSignal.timeout(2000)
+                        });
+                        const isOnline = resp.ok;
+                        updateServiceUI(id, isOnline);
+                        if (isOnline) onlineCount++;
+                    } catch {
+                        updateServiceUI(id, false);
+                    }
                 }
             }
 
@@ -1458,6 +1483,32 @@
                 UIPanels.clearLog();
             } else {
                 console.log('[CommandCenter] Clear logs - not yet implemented in v3.0');
+            }
+        }
+
+        async function syncMemory() {
+            console.log('[CommandCenter] Syncing memory (CLAUDE.md + STANDARDS.md)...');
+            addActivityItem('info', 'Syncing memory...', 'now');
+            try {
+                const res = await fetch('http://127.0.0.1:8600/api/knowledge/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: 'kittbox-' + Date.now() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const changed = data.results.filter(r => r.changed).length;
+                    if (changed > 0) {
+                        addActivityItem('success', `Memory synced: ${changed} file(s) backed up`, 'now');
+                    } else {
+                        addActivityItem('info', 'Memory already up to date', 'now');
+                    }
+                } else {
+                    addActivityItem('error', 'Memory sync failed: ' + (data.error || 'Unknown error'), 'now');
+                }
+            } catch (err) {
+                console.error('[CommandCenter] Memory sync failed:', err);
+                addActivityItem('error', 'Memory sync failed: ' + err.message, 'now');
             }
         }
 

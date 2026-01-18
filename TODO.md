@@ -8,7 +8,7 @@
 
 ## 🧠 Memory & Standards Backup
 
-### Status: 📋 TODO
+### Status: ✅ DONE (Core) / 📋 Enhancements Pending
 
 **Goal:** Persist CLAUDE.md and STANDARDS.md to SQLite database with versioning.
 
@@ -18,15 +18,27 @@
 - Session tracking
 - Recovery capability
 
-**Tasks:**
-- [ ] Create `Admin/relay/knowledge.db` with schema
-- [ ] Add backup API endpoint to relay service (`POST /api/knowledge/backup`)
-- [ ] Add restore API endpoint (`GET /api/knowledge/restore/:type`)
-- [ ] Add `syncmem` command handler in agent-server.js
-- [ ] Add "Sync Memory" button to Quick Actions
+**Completed:**
+- [x] Create `knowledge` table in relay SQLite database
+- [x] Add backup API endpoint (`POST /api/knowledge/backup`)
+- [x] Add restore API endpoint (`GET /api/knowledge/restore/:type`)
+- [x] Add sync API endpoint (`POST /api/knowledge/sync`)
+- [x] Add status API endpoint (`GET /api/knowledge/status`)
+- [x] Add list API endpoint (`GET /api/knowledge/list/:type`)
+- [x] Add "Sync Memory" button to Quick Actions in KittBox
+
+**Remaining Enhancements:**
 - [ ] Auto-backup on session end (hook or reminder)
 - [ ] Show backup status in Activity Monitor
 - [ ] Add diff view for comparing versions
+
+**API Endpoints:**
+- `POST /api/knowledge/sync` - Backup both files at once
+- `POST /api/knowledge/backup` - Backup single file
+- `GET /api/knowledge/status` - Get backup status
+- `GET /api/knowledge/list/:type` - List all backups
+- `GET /api/knowledge/restore/:type` - Get backup content
+- `POST /api/knowledge/restore/:type` - Restore to file
 
 **Schema:** See CLAUDE.md "Memory & Standards Persistence" section.
 
@@ -185,6 +197,61 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 - [ ] Server-side task state reset endpoint
 - [ ] Health check endpoint that auto-clears stale state
 - [ ] CLI commands for common operations
+
+---
+
+## Kitt Live Voice & TTS Features
+
+### Voice Engine Enhancements
+- [ ] **Microsoft Natural Voices priority** - Show Natural voices at top with star icon ✅ DONE
+- [ ] **Voice categories/filtering** - Filter by language, gender, accent
+- [ ] **Voice preview on hover** - Play sample when hovering over voice option
+- [ ] **Voice presets** - Save favorite voice+rate+pitch+volume combinations
+- [ ] **Quick preset buttons** - "Heather", "Shǐ zhēn xiāng", "Professional", "Fast"
+- [ ] **ElevenLabs integration** - Premium cloud voices (with cost warning)
+- [ ] **Azure Neural TTS** - Microsoft Azure voices (with cost warning)
+- [ ] **Coqui TTS local** - Free offline neural voices
+- [ ] **Voice cloning** - Clone user's voice locally (Coqui/Tortoise)
+
+### Speech Recognition Enhancements
+- [ ] **Whisper model selector** - tiny/base/small/medium/large
+- [ ] **Language detection** - Auto-detect spoken language
+- [ ] **Continuous listening mode** - Keep transcribing without click-to-stop
+- [ ] **Wake word** - "Hey Kitt" to activate
+- [ ] **Noise suppression** - Filter background noise before transcription
+- [ ] **Speaker diarization** - Identify different speakers
+
+### Kitt Intelligence & Tool Use
+- [ ] **Hive-aware responses** - Kitt knows about all services, can check status directly
+- [ ] **Tool calling** - Kitt can execute commands, not just suggest URLs
+- [ ] **Status command** - Actually query service health endpoints and report results
+- [ ] **Context injection** - Feed Kitt current hive state (services, ports, health)
+- [ ] **Command execution** - Run allowed bash commands and return results
+- [ ] **File reading** - Read logs, configs when asked
+- [ ] **Service control** - Start/stop/restart services via voice
+- [ ] **Smart routing** - Route complex questions to Claude Code via relay
+- [ ] **Memory recall** - Remember conversation context across sessions
+- [ ] **Proactive alerts** - Notify when services go down
+
+### Voice Persona System
+- [ ] **Persona manager** - Create/edit/delete voice personas
+- [ ] **Per-persona settings** - Voice, rate, pitch, volume, personality prompt
+- [ ] **Persona shortcuts** - Quick-switch hotkeys
+- [ ] **Conversation history per persona** - Track what each persona has said
+
+### Responsive & Device-Specific Layouts
+- [ ] **Desktop PC layout** - Full-featured, multi-panel, keyboard shortcuts
+- [ ] **Tablet layout** - Touch-optimized, larger buttons, swipe gestures
+- [ ] **Mobile portrait** - Single column, bottom input, thumb-friendly
+- [ ] **Mobile landscape** - Side-by-side chat/controls
+- [ ] **Android PWA** - Install as app, native feel, push notifications
+- [ ] **iOS PWA** - Safari Add to Home Screen support
+- [ ] **TV/Large display** - Voice-first, minimal UI, large text
+- [ ] **Electron desktop** - Native window controls, system tray, hotkeys
+- [ ] **Auto-detect device** - MediaQuery + UserAgent detection
+- [ ] **Layout switcher** - Manual override in settings
+- [ ] **Touch vs mouse** - Different interaction patterns
+- [ ] **Orientation handling** - Smooth portrait/landscape transitions
 
 ---
 
