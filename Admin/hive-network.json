@@ -1,0 +1,95 @@
+{
+  "hive": {
+    "name": "DevOSWE Hive",
+    "version": "1.0.0"
+  },
+  "nodes": {
+    "harold-pc": {
+      "type": "desktop",
+      "role": "development",
+      "ip": "localhost",
+      "os": "windows",
+      "services": {
+        "oracle": { "port": 3002, "enabled": true },
+        "relay": { "port": 8600, "enabled": true },
+        "kittbox": { "port": 8585, "enabled": true },
+        "kittlive": { "port": 8686, "enabled": true },
+        "hivemind": { "port": 8701, "enabled": true },
+        "ollama": { "port": 11434, "enabled": true },
+        "docsync": { "port": null, "enabled": true, "type": "background" },
+        "hive-preview": { "port": 8800, "enabled": true }
+      },
+      "priority": 2,
+      "alwaysOn": false,
+      "notes": "Main development machine, runs when user is working"
+    },
+    "morpu-pc": {
+      "type": "micro-pc",
+      "role": "always-on-hub",
+      "ip": "192.168.1.42",
+      "os": "windows",
+      "services": {
+        "remote-exec": { "port": 8888, "enabled": true, "apiKey": "9036c4b39c12e233b43f4a700117b2614bd24f204bed23dedf1693524bf76867" },
+        "oracle": { "port": 3002, "enabled": false },
+        "relay": { "port": 8600, "enabled": false },
+        "kittbox": { "port": 8585, "enabled": false },
+        "hivemind": { "port": 8701, "enabled": false }
+      },
+      "priority": 1,
+      "alwaysOn": true,
+      "notes": "Dedicated 24/7 hive node, remote-exec active"
+    },
+    "ai-pc": {
+      "type": "2-in-1",
+      "role": "ai-backup",
+      "ip": "192.168.1.162",
+      "os": "windows",
+      "services": {
+        "lmstudio": { "port": 1234, "enabled": true, "model": "qwen3-vl-4b" },
+        "hive-bridge": { "port": 3003, "enabled": true }
+      },
+      "priority": 3,
+      "alwaysOn": true,
+      "notes": "Vision AI capabilities, backup LLM when Ollama unavailable"
+    },
+    "s25-ultra": {
+      "type": "phone",
+      "role": "mobile-client",
+      "ip": "dynamic",
+      "os": "android",
+      "services": {},
+      "priority": 0,
+      "alwaysOn": false,
+      "notes": "Mobile access via KittBox web UI"
+    },
+    "rock-pc": {
+      "type": "desktop",
+      "role": "hive-node",
+      "ip": "192.168.1.192",
+      "os": "windows",
+      "services": {
+        "relay": { "port": 8600, "enabled": true },
+        "hivemind": { "port": 8701, "enabled": true },
+        "oracle": { "port": 3002, "enabled": true }
+      },
+      "priority": 2,
+      "alwaysOn": false,
+      "notes": "New hive node via smart-install"
+    }
+  },
+  "routing": {
+    "primary": "morpu-pc",
+    "fallback": ["harold-pc", "ai-pc"],
+    "mobileTarget": "morpu-pc"
+  },
+  "ports": {
+    "oracle": 3002,
+    "relay": 8600,
+    "kittbox": 8585,
+    "kittlive": 8686,
+    "hivemind": 8701,
+    "ollama": 11434,
+    "lmstudio": 1234,
+    "hive-preview": 8800
+  }
+}
