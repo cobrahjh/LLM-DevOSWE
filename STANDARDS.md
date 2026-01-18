@@ -2007,3 +2007,107 @@ function process(data) {
     // actual logic
 }
 ```
+
+---
+
+## Testing Standards
+
+### Testing Philosophy
+
+**"Test it, don't assume it works"** - Every change should be verified before moving on.
+
+### Testing Lessons Learned
+
+#### LLM Backend Testing
+
+1. **Always test chat completions endpoints** - Different models need different API formats:
+   - Ollama: `/api/generate` or `/api/chat` (proprietary format)
+   - LM Studio: `/v1/chat/completions` (OpenAI-compatible format)
+   - Instruct models need chat format, not raw completions
+
+2. **Health check endpoints vary by service:**
+   - Ollama: `/api/tags`
+   - LM Studio: `/v1/models`
+   - Hive services: `/api/health` or `/api/status`
+
+3. **Verify backend is actually being used:**
+   ```bash
+   curl http://localhost:3002/api/health   # Check Oracle's current backend
+   ```
+
+#### Service Integration Testing
+
+1. **Test after configuration changes:**
+   - Changed ports → Test connectivity
+   - Changed backends → Verify responses work
+   - Changed endpoints → Confirm data format
+
+2. **WebSocket race conditions:**
+   - Never send on WebSocket before `readyState === OPEN`
+   - Use `setTimeout` with state check for reliable connection
+
+3. **Health check frequency:**
+   - Don't poll too frequently (can cause log noise)
+   - Use appropriate timeouts (2-5 seconds for local, 10+ for remote)
+
+#### UI Testing
+
+1. **CSS z-index stacking:**
+   - Overlays (like scan lines) can block clicks
+   - Test clickability after adding overlay elements
+   - Use `pointer-events: auto` on interactive elements
+
+2. **Test on actual page load:**
+   - Don't assume CSS works - refresh and click
+   - Check multiple browsers if possible
+
+3. **Form submission testing:**
+   - Test Enter key behavior
+   - Test button click
+   - Verify state updates correctly
+
+#### API Testing Checklist
+
+Before declaring an API integration "done":
+- [ ] Test success path with valid data
+- [ ] Test with empty/null responses
+- [ ] Test network timeout handling
+- [ ] Test wrong endpoint (404) handling
+- [ ] Verify response parsing works
+- [ ] Check error messages are helpful
+
+### Quick Verification Commands
+
+```bash
+# Oracle health
+curl -s http://localhost:3002/api/health | jq .
+
+# Relay status
+curl -s http://localhost:8600/api/status | jq .
+
+# LM Studio models
+curl -s http://localhost:1234/v1/models | jq .
+
+# Ollama models
+curl -s http://localhost:11434/api/tags | jq .
+
+# Test LLM response (via Oracle)
+curl -s -X POST http://localhost:3002/api/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"test"}' | jq .answer
+```
+
+### Testing Order
+
+1. **Unit** - Test individual functions first
+2. **Integration** - Test service connections
+3. **E2E** - Test full user flows
+4. **Smoke** - Quick sanity check after deployment
+
+### Known Test Gotchas
+
+1. **Ollama model loading** - First request after model switch may take 30+ seconds
+2. **Port conflicts** - Always check `netstat -ano | findstr :PORT` before assuming service is dead
+3. **Browser cache** - Force refresh (`Ctrl+Shift+R`) when testing UI changes
+4. **Windows services** - Use `net stop/start` not just restart for full cleanup
+5. **LM Studio endpoints** - Uses OpenAI format, not Ollama format

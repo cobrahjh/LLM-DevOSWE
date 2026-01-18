@@ -647,6 +647,28 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 
 **Personality:** Precise, helpful, analytical. Speaks in brief, accurate sentences.
 
+### Nova (Local LM Studio AI)
+
+**Nova** is the AI running on the local Harold-PC via LM Studio (localhost:1234).
+
+**Role:** Primary local LLM for Oracle when Claude Code isn't directly available. Fast, always-on coding assistant.
+
+**Models Available Locally:**
+- `bartowski/qwen2.5-coder-14b-instruct` - **Primary** - Coding specialist (Q4_K_M, 8.4GB)
+- `rombos-coder-v2.5-qwen-14b` - Alternative coding model
+- `qwen/qwen2.5-coder-14b` - Base Qwen coder
+
+**Switching to Nova:**
+```bash
+# Set Oracle to use LM Studio
+# In oracle.js: LLM_BACKEND = 'lmstudio'
+# Or via environment: set LLM_BACKEND=lmstudio
+```
+
+**Personality:** Fast, confident, code-focused. Prefers showing solutions over explaining. Direct and efficient.
+
+**Note:** Unlike Iris (remote fallback), Nova is the primary local backbone when the hive operates autonomously.
+
 ---
 
 **Voice persona is Heather** - When using TTS/voice features, Claude's spoken name is "Heather". The status bar shows "Claude is ready" visually, but voice interactions use "Heather" as the persona name.
