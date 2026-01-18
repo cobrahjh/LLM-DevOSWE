@@ -574,7 +574,7 @@ C:\LLM-DevOSWE\start-hive.bat
 - `wpan` - window/panel - refers to floating windows or panels
 - `rvw` - review - review code for issues, clean up, optimize
 - `hivesanitycheck` - hive sanity check - check all hive info (services status, ports, health, logs)
-- `cs` - check screenshots - look at C:\Users\hjhar\OneDrive\Pictures\screenshoots
+- `cs` - check screenshots - look at C:\Users\hjhar\OneDrive\Pictures\screenshoots (move read screenshots to backup/ subfolder after processing)
 
 ## Memory & Standards Persistence
 
