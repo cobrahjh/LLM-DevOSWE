@@ -5,5 +5,5 @@ cd /d C:\LLM-DevOSWE
 echo.
 echo   [LLM-DevOSWE] BLUE
 echo.
-claude --resume --dangerously-skip-permissions %*
+claude --model opus --resume --dangerously-skip-permissions %*
 pause
