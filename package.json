@@ -8,7 +8,14 @@
     "lint:fix": "eslint Admin/**/*.js --fix",
     "test": "jest",
     "test:watch": "jest --watch",
-    "health": "node scripts/health-check.js"
+    "test:coverage": "jest --coverage",
+    "health": "node scripts/health-check.js",
+    "setup-hooks": "node scripts/setup-hooks.js",
+    "monitor": "node scripts/monitor.js",
+    "benchmark": "node scripts/benchmark.js",
+    "migrate": "node scripts/migrate.js",
+    "migrate:status": "node scripts/migrate.js --status",
+    "migrate:create": "node scripts/migrate.js --create"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.0",

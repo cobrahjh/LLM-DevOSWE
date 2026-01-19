@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run lint on staged files
+npm run lint
+
+# Run unit tests
+npm test -- --testPathPattern=unit --passWithNoTests
