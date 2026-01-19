@@ -931,6 +931,14 @@ function positionMenu(menu, triggerEl) {
 - **Deferred restarts** → Queue service restarts for after task completion
   - Prevents connection loss mid-task
 
+- **Input history (arrow keys)** → Up/Down arrows recall previous inputs
+  - Store history in array, track index
+  - Up arrow: move back in history, populate input
+  - Down arrow: move forward in history, populate input
+  - On submit: push to history, reset index
+  - Max 50 entries, persist to localStorage
+  - Essential for chat inputs, command fields, search boxes
+
 ### Panel/Window Features
 
 Every floating panel should include:
