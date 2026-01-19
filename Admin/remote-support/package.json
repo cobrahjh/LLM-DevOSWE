@@ -5,6 +5,8 @@
   "main": "service.js",
   "scripts": {
     "start": "node service.js",
+    "dev": "node --watch service.js",
+    "lint": "npx eslint *.js --config ../../.eslintrc.json",
     "install-service": "node install-service.js",
     "uninstall-service": "node uninstall-service.js"
   },

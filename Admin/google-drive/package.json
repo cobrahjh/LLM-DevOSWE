@@ -4,8 +4,10 @@
   "description": "Google Drive API integration for Kitt",
   "main": "drive-service.js",
   "scripts": {
-    "auth": "node drive-service.js auth",
     "start": "node drive-service.js server",
+    "dev": "node --watch drive-service.js server",
+    "lint": "npx eslint *.js --config ../../.eslintrc.json",
+    "auth": "node drive-service.js auth",
     "create": "node drive-service.js create",
     "list": "node drive-service.js list"
   },

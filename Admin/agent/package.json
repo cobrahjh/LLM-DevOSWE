@@ -4,7 +4,9 @@
   "description": "Self-hosted Claude assistant for SimWidget development",
   "main": "agent-server.js",
   "scripts": {
-    "start": "node agent-server.js"
+    "start": "node agent-server.js",
+    "dev": "node --watch agent-server.js",
+    "lint": "npx eslint *.js --config ../../.eslintrc.json"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",

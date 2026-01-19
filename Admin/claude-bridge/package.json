@@ -5,6 +5,8 @@
   "main": "bridge-service.js",
   "scripts": {
     "start": "node bridge-service.js",
+    "dev": "node --watch bridge-service.js",
+    "lint": "npx eslint *.js --config ../../.eslintrc.json",
     "install-service": "node service-install.js",
     "uninstall-service": "node service-uninstall.js"
   },

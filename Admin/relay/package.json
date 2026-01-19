@@ -4,7 +4,9 @@
   "description": "Message relay between Agent Kitt and Claude Desktop",
   "main": "relay-service.js",
   "scripts": {
-    "start": "node relay-service.js"
+    "start": "node relay-service.js",
+    "dev": "node --watch relay-service.js",
+    "lint": "npx eslint *.js --config ../../.eslintrc.json"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.0",
