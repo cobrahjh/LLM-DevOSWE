@@ -1,0 +1,24 @@
+{
+    "id": "engine-display",
+    "name": "Engine Display",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Engine instruments - throttle, N1/RPM, fuel flow, oil temp/pressure",
+    "type": "widget",
+    "size": {
+        "width": 260,
+        "height": 280
+    },
+    "minSize": {
+        "width": 220,
+        "height": 240
+    },
+    "simvars": [
+        "GENERAL ENG THROTTLE LEVER POSITION:1",
+        "ENG N1 RPM:1",
+        "GENERAL ENG FUEL FLOW GPH:1",
+        "GENERAL ENG OIL TEMPERATURE:1",
+        "GENERAL ENG OIL PRESSURE:1",
+        "FUEL TOTAL QUANTITY"
+    ]
+}

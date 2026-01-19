@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Display</title>
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget engine-display">
+        <div class="widget-header">
+            <span class="conn-status" id="conn">●</span>
+            <span class="widget-title">ENGINE</span>
+            <span class="engine-status" id="eng-status">OFF</span>
+        </div>
+
+        <div class="widget-content">
+            <!-- Throttle Gauge -->
+            <div class="gauge-section">
+                <div class="gauge throttle-gauge">
+                    <div class="gauge-label">THR</div>
+                    <div class="gauge-arc">
+                        <svg viewBox="0 0 100 60">
+                            <path class="arc-bg" d="M10,55 A45,45 0 0,1 90,55"/>
+                            <path class="arc-fill" id="thr-arc" d="M10,55 A45,45 0 0,1 90,55"/>
+                        </svg>
+                    </div>
+                    <div class="gauge-value" id="throttle">0%</div>
+                </div>
+
+                <div class="gauge n1-gauge">
+                    <div class="gauge-label">N1</div>
+                    <div class="gauge-arc">
+                        <svg viewBox="0 0 100 60">
+                            <path class="arc-bg" d="M10,55 A45,45 0 0,1 90,55"/>
+                            <path class="arc-fill green" id="n1-arc" d="M10,55 A45,45 0 0,1 90,55"/>
+                        </svg>
+                    </div>
+                    <div class="gauge-value" id="n1">0%</div>
+                </div>
+            </div>
+
+            <!-- Readings -->
+            <div class="readings-grid">
+                <div class="reading">
+                    <div class="reading-icon">⛽</div>
+                    <div class="reading-info">
+                        <div class="reading-label">FUEL FLOW</div>
+                        <div class="reading-value" id="fuel-flow">0 GPH</div>
+                    </div>
+                </div>
+
+                <div class="reading">
+                    <div class="reading-icon">🛢️</div>
+                    <div class="reading-info">
+                        <div class="reading-label">FUEL QTY</div>
+                        <div class="reading-value" id="fuel-qty">0 GAL</div>
+                    </div>
+                </div>
+
+                <div class="reading">
+                    <div class="reading-icon">🌡️</div>
+                    <div class="reading-info">
+                        <div class="reading-label">OIL TEMP</div>
+                        <div class="reading-value" id="oil-temp">0°C</div>
+                    </div>
+                </div>
+
+                <div class="reading">
+                    <div class="reading-icon">⏱️</div>
+                    <div class="reading-info">
+                        <div class="reading-label">OIL PRESS</div>
+                        <div class="reading-value" id="oil-press">0 PSI</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel Bar -->
+            <div class="fuel-section">
+                <div class="fuel-header">
+                    <span class="fuel-label">FUEL LEVEL</span>
+                    <span class="fuel-pct" id="fuel-pct">0%</span>
+                </div>
+                <div class="fuel-bar-container">
+                    <div class="fuel-bar" id="fuel-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

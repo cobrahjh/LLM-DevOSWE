@@ -1,0 +1,61 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: transparent;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.miniwidget {
+    background: rgba(13, 17, 23, 0.9);
+    border: 1px solid rgba(100, 180, 255, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    position: relative;
+    min-width: 90px;
+}
+
+.mini-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mini-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #22c55e;
+    font-family: 'Consolas', 'Monaco', monospace;
+    line-height: 1.2;
+}
+
+.mini-unit {
+    font-size: 8px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.mini-conn {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 8px;
+    color: #ef4444;
+}
+
+.mini-conn.connected {
+    color: #22c55e;
+}
+
+/* Speed specific - green */
+.miniwidget.speed .mini-value {
+    color: #22c55e;
+}

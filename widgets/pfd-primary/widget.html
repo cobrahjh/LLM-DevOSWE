@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primary Flight Display</title>
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget pfd">
+        <div class="widget-header">
+            <span class="conn-status" id="conn">●</span>
+            <span class="widget-title">PRIMARY FLIGHT</span>
+        </div>
+
+        <div class="widget-content">
+            <!-- Altitude -->
+            <div class="instrument altitude">
+                <div class="inst-header">ALT</div>
+                <div class="inst-value" id="altitude">0</div>
+                <div class="inst-unit">FT</div>
+                <div class="alt-tape" id="alt-tape">
+                    <div class="tape-marker" id="alt-marker"></div>
+                </div>
+            </div>
+
+            <!-- Airspeed -->
+            <div class="instrument airspeed">
+                <div class="inst-header">IAS</div>
+                <div class="inst-value" id="airspeed">0</div>
+                <div class="inst-unit">KTS</div>
+                <div class="spd-arc" id="spd-arc">
+                    <svg viewBox="0 0 100 50">
+                        <path class="arc-bg" d="M10,50 A40,40 0 0,1 90,50"/>
+                        <path class="arc-fill" id="spd-fill" d="M10,50 A40,40 0 0,1 90,50"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Heading -->
+            <div class="instrument heading">
+                <div class="inst-header">HDG</div>
+                <div class="inst-value" id="heading">000</div>
+                <div class="inst-unit">°</div>
+                <div class="hdg-compass" id="hdg-compass">
+                    <div class="compass-rose" id="compass-rose"></div>
+                    <div class="compass-needle"></div>
+                </div>
+            </div>
+
+            <!-- Vertical Speed -->
+            <div class="instrument vspeed">
+                <div class="inst-header">V/S</div>
+                <div class="inst-value" id="vspeed">0</div>
+                <div class="inst-unit">FPM</div>
+                <div class="vs-gauge">
+                    <div class="vs-bar" id="vs-bar"></div>
+                    <div class="vs-zero"></div>
+                </div>
+            </div>
+
+            <!-- Ground Speed -->
+            <div class="instrument groundspeed">
+                <div class="inst-header">GS</div>
+                <div class="inst-value" id="groundspeed">0</div>
+                <div class="inst-unit">KTS</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

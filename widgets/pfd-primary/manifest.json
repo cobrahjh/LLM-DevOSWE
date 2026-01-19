@@ -1,0 +1,23 @@
+{
+    "id": "pfd-primary",
+    "name": "Primary Flight Display",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Core flight instruments - altitude, airspeed, heading, vertical speed",
+    "type": "widget",
+    "size": {
+        "width": 280,
+        "height": 320
+    },
+    "minSize": {
+        "width": 220,
+        "height": 260
+    },
+    "simvars": [
+        "INDICATED ALTITUDE",
+        "AIRSPEED INDICATED",
+        "HEADING INDICATOR",
+        "VERTICAL SPEED",
+        "GROUND VELOCITY"
+    ]
+}

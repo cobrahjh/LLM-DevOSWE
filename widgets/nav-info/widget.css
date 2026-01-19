@@ -1,0 +1,178 @@
+:root {
+    --bg-dark: #0d1117;
+    --bg-panel: #1a1f2e;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-cyan: #22d3ee;
+    --accent-green: #22c55e;
+    --accent-red: #ef4444;
+    --accent-yellow: #eab308;
+    --border-subtle: rgba(100, 180, 255, 0.2);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: transparent;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+
+.widget {
+    background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-dark) 100%);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+    width: 240px;
+}
+
+.widget-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.conn-status {
+    font-size: 10px;
+    color: var(--accent-red);
+    transition: color 0.3s;
+}
+
+.conn-status.connected {
+    color: var(--accent-green);
+}
+
+.widget-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+}
+
+.widget-content {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Position Section */
+.nav-section {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.nav-header {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.coords {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.coord {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.coord-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.coord-value {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Consolas', monospace;
+    color: var(--accent-cyan);
+}
+
+/* Track & Wind Row */
+.nav-row {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-item {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+}
+
+.nav-item.wind {
+    position: relative;
+}
+
+.nav-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.nav-value {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Consolas', monospace;
+    color: var(--text-primary);
+}
+
+.wind-arrow {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 14px;
+    color: var(--accent-cyan);
+    transition: transform 0.3s ease;
+}
+
+/* Time Section */
+.time-section {
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.time-item {
+    flex: 1;
+    text-align: center;
+}
+
+.time-label {
+    display: block;
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.time-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Consolas', monospace;
+    color: var(--accent-green);
+}

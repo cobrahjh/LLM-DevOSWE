@@ -1,0 +1,32 @@
+{
+    "id": "autopilot-panel",
+    "name": "Autopilot Panel",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Full autopilot control - master, HDG, ALT, VS, NAV, APR modes",
+    "type": "widget",
+    "size": {
+        "width": 300,
+        "height": 200
+    },
+    "minSize": {
+        "width": 260,
+        "height": 180
+    },
+    "simvars": [
+        "AUTOPILOT MASTER",
+        "AUTOPILOT HEADING LOCK",
+        "AUTOPILOT ALTITUDE LOCK",
+        "AUTOPILOT VERTICAL HOLD",
+        "AUTOPILOT NAV1 LOCK",
+        "AUTOPILOT APPROACH HOLD"
+    ],
+    "commands": [
+        "AP_MASTER",
+        "AP_HDG_HOLD",
+        "AP_ALT_HOLD",
+        "AP_VS_HOLD",
+        "AP_NAV1_HOLD",
+        "AP_APR_HOLD"
+    ]
+}

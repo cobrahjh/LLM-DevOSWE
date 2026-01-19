@@ -1,0 +1,15 @@
+{
+    "id": "mini-heading",
+    "name": "Heading Mini",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Compact heading display - always visible",
+    "type": "miniwidget",
+    "size": {
+        "width": 100,
+        "height": 60
+    },
+    "alwaysOnTop": true,
+    "transparent": true,
+    "simvars": ["HEADING INDICATOR"]
+}

@@ -1,0 +1,24 @@
+{
+    "id": "nav-info",
+    "name": "Navigation Info",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Navigation information - GPS coordinates, track, wind, time",
+    "type": "widget",
+    "size": {
+        "width": 240,
+        "height": 200
+    },
+    "minSize": {
+        "width": 200,
+        "height": 180
+    },
+    "simvars": [
+        "GPS POSITION LAT",
+        "GPS POSITION LON",
+        "GPS GROUND TRUE TRACK",
+        "AMBIENT WIND DIRECTION",
+        "AMBIENT WIND VELOCITY",
+        "LOCAL TIME"
+    ]
+}

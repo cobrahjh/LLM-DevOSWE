@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lights & Systems</title>
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="widget lights-systems">
+        <div class="widget-header">
+            <span class="conn-status" id="conn">●</span>
+            <span class="widget-title">LIGHTS & SYSTEMS</span>
+        </div>
+
+        <div class="widget-content">
+            <!-- Lights Section -->
+            <div class="section">
+                <div class="section-header">LIGHTS</div>
+                <div class="button-row">
+                    <button class="light-btn" id="btn-nav" data-cmd="TOGGLE_NAV_LIGHTS">
+                        <span class="light-indicator" id="ind-nav"></span>
+                        <span class="light-label">NAV</span>
+                    </button>
+                    <button class="light-btn" id="btn-bcn" data-cmd="TOGGLE_BEACON_LIGHTS">
+                        <span class="light-indicator" id="ind-bcn"></span>
+                        <span class="light-label">BCN</span>
+                    </button>
+                    <button class="light-btn" id="btn-strb" data-cmd="STROBES_TOGGLE">
+                        <span class="light-indicator" id="ind-strb"></span>
+                        <span class="light-label">STRB</span>
+                    </button>
+                    <button class="light-btn" id="btn-ldg" data-cmd="LANDING_LIGHTS_TOGGLE">
+                        <span class="light-indicator" id="ind-ldg"></span>
+                        <span class="light-label">LDG</span>
+                    </button>
+                    <button class="light-btn" id="btn-taxi" data-cmd="TOGGLE_TAXI_LIGHTS">
+                        <span class="light-indicator" id="ind-taxi"></span>
+                        <span class="light-label">TAXI</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Systems Section -->
+            <div class="section">
+                <div class="section-header">SYSTEMS</div>
+                <div class="systems-row">
+                    <!-- Gear -->
+                    <div class="system-item">
+                        <button class="system-btn" id="btn-gear" data-cmd="GEAR_TOGGLE">
+                            <span class="system-indicator" id="ind-gear"></span>
+                            <span class="system-label">GEAR</span>
+                        </button>
+                        <span class="system-status" id="gear-status">UP</span>
+                    </div>
+
+                    <!-- Flaps -->
+                    <div class="system-item flaps-item">
+                        <div class="flaps-controls">
+                            <button class="flaps-btn" id="btn-flaps-up" data-cmd="FLAPS_UP">▲</button>
+                            <span class="flaps-value" id="flaps-value">0</span>
+                            <button class="flaps-btn" id="btn-flaps-dn" data-cmd="FLAPS_DOWN">▼</button>
+                        </div>
+                        <span class="system-label">FLAPS</span>
+                    </div>
+
+                    <!-- Parking Brake -->
+                    <div class="system-item">
+                        <button class="system-btn brake" id="btn-brake" data-cmd="PARKING_BRAKES">
+                            <span class="system-indicator" id="ind-brake"></span>
+                            <span class="system-label">P.BRK</span>
+                        </button>
+                        <span class="system-status" id="brake-status">OFF</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

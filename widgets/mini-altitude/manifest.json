@@ -1,0 +1,15 @@
+{
+    "id": "mini-altitude",
+    "name": "Altitude Mini",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Compact altitude display - always visible",
+    "type": "miniwidget",
+    "size": {
+        "width": 100,
+        "height": 60
+    },
+    "alwaysOnTop": true,
+    "transparent": true,
+    "simvars": ["INDICATED ALTITUDE"]
+}

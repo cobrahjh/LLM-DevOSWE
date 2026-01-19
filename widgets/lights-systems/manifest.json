@@ -1,0 +1,37 @@
+{
+    "id": "lights-systems",
+    "name": "Lights & Systems",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Aircraft lights and systems control - NAV, beacon, strobe, landing, taxi, gear, flaps, brake",
+    "type": "widget",
+    "size": {
+        "width": 280,
+        "height": 220
+    },
+    "minSize": {
+        "width": 240,
+        "height": 200
+    },
+    "simvars": [
+        "LIGHT NAV",
+        "LIGHT BEACON",
+        "LIGHT STROBE",
+        "LIGHT LANDING",
+        "LIGHT TAXI",
+        "GEAR HANDLE POSITION",
+        "FLAPS HANDLE INDEX",
+        "BRAKE PARKING POSITION"
+    ],
+    "commands": [
+        "TOGGLE_NAV_LIGHTS",
+        "TOGGLE_BEACON_LIGHTS",
+        "STROBES_TOGGLE",
+        "LANDING_LIGHTS_TOGGLE",
+        "TOGGLE_TAXI_LIGHTS",
+        "GEAR_TOGGLE",
+        "FLAPS_UP",
+        "FLAPS_DOWN",
+        "PARKING_BRAKES"
+    ]
+}
