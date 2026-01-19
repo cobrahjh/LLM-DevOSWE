@@ -1,6 +1,6 @@
 # SimWidget Engine
-**Version:** v1.13.0
-**Last updated:** 2026-01-13
+**Version:** v1.14.0
+**Last updated:** 2026-01-19
 
 Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 
@@ -575,6 +575,7 @@ C:\LLM-DevOSWE\start-hive.bat
 - `rvw` - review - review code for issues, clean up, optimize
 - `hivesanitycheck` - hive sanity check - check all hive info (services status, ports, health, logs)
 - `cs` - check screenshots - look at C:\Users\hjhar\OneDrive\Pictures\screenshoots (move read screenshots to backup/ subfolder after processing)
+- `scg` - check Google Drive screenshots - look at G:\My Drive\AI Development\Screenshots (move read screenshots to backup/ subfolder after processing)
 
 ## Memory & Standards Persistence
 
@@ -757,20 +758,67 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 **Start all:** `C:\LLM-DevOSWE\start-all-servers.bat`
 **Full details:** See `SERVICE-REGISTRY.md`
 
-## Project Directories
+## Project Directories (Entity Registry)
 
-| Directory | Purpose |
-|-----------|---------|
-| `C:\LLM-DevOSWE` | Main framework, services |
-| `C:\LLM-Oracle` | Oracle daemon |
-| `C:\kittbox-modules` | Desktop apps (Kitt Live) |
-| `C:\kittbox-web` | KittBox web interface |
-| `C:\twitch-disability-app` | Accessibility extension |
-| `C:\devTinyAI` | AI sandbox |
+### Primary Projects
 
-**User Desktops (sync shortcuts to both):**
+| Project | Path | Size | Type | Status |
+|---------|------|------|------|--------|
+| **LLM-DevOSWE** | `C:\LLM-DevOSWE` | 607MB | Framework | Active - Main hive |
+| **LLM-Oracle** | `C:\LLM-Oracle` | 4.2MB | Service | Active - LLM daemon |
+| **kittbox-modules** | `C:\kittbox-modules` | 382MB | Desktop Apps | Active - Kitt Live |
+| **kittbox-web** | `C:\kittbox-web` | 20KB | Web UI | Active - KittBox web |
+| **twitch-disability-app** | `C:\twitch-disability-app` | 397KB | Extension | Active - First external app |
+| **devTinyAI** | `C:\devTinyAI` | 130KB | Sandbox | Active - AI experiments |
+
+### Project Details
+
+**LLM-DevOSWE** - Main Framework
+- Services: Relay, Agent, Orchestrator, Hive-Mind, Hive-Brain, Hive-Oracle
+- Docs: CLAUDE.md, STANDARDS.md, SERVICE-REGISTRY.md, DEPLOYMENT.md
+- Git: https://github.com/cobrahjh/LLM-DevOSWE
+
+**LLM-Oracle** - LLM Backend Daemon
+- Port: 3002
+- Backend: LM Studio (primary), Ollama (fallback)
+- Features: Tool detection, project APIs, sandbox access
+- Git: https://github.com/cobrahjh/LLM-Oracle
+
+**kittbox-modules** - Desktop Applications
+- Kitt Live: Electron chat app (Alt+K hotkey)
+- Port: 8686 (web server mode)
+- Git: https://github.com/cobrahjh/kittbox-modules
+
+**kittbox-web** - Web Interface
+- Standalone KittBox web UI
+- Git: https://github.com/cobrahjh/kittbox-web
+
+**twitch-disability-app** - Accessibility Extension
+- Chrome extension for Twitch accessibility
+- Features: Screen reader, keyboard nav, high contrast, TTS
+- Git: https://github.com/cobrahjh/twitch-disability-app
+
+**devTinyAI** - AI Sandbox
+- tinyAI agent workspace
+- Safe experimentation area
+- Registered with Oracle for file ops
+
+### Network Machines
+
+| Machine | IP | Role | Services |
+|---------|-----|------|----------|
+| **Harold-PC** | 192.168.1.42 | Primary | All services, Ollama, LM Studio |
+| **morpu-pc** | 192.168.1.xxx | Secondary | Relay, Oracle, Ollama |
+| **ai-pc** | 192.168.1.162 | Fallback | LM Studio (Iris) |
+
+### User Locations
+
+**Desktops (sync shortcuts to both):**
 - `C:\Users\hjhar\Desktop` - Local desktop
 - `C:\Users\hjhar\OneDrive\Desktop` - OneDrive synced desktop
+
+**Screenshots:** `C:\Users\hjhar\OneDrive\Pictures\screenshoots`
+- Processed screenshots move to `backup/` subfolder
 
 **Hive-Services shortcuts folder** exists on both desktops with service starters, status checks, and UI openers.
 
@@ -787,6 +835,7 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 - `STANDARDS.md` - Patterns, timing defaults, conventions
 - `CLAUDE.md` - This file - AI context
 - `ARCHITECTURE.md` - System architecture v3.0
+- `DEPLOYMENT.md` - Deployment guide (single/multi-machine, Docker)
 - `TODO.md` - Development backlog
 
 **Reference Guides:**
