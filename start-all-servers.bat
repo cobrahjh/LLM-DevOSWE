@@ -51,6 +51,26 @@ echo Starting Hive Oracle (port 8850)...
 start "Hive Oracle" cmd /c "cd /d C:\LLM-DevOSWE\Admin\hive-oracle && node server.js"
 timeout /t 2 /nobreak >nul
 
+REM Start Auto-Responder (Ollama auto-reply for relay messages)
+echo Starting Auto-Responder...
+start "Auto-Responder" cmd /c "cd /d C:\LLM-DevOSWE\Admin\relay && node auto-responder.js"
+timeout /t 1 /nobreak >nul
+
+REM Start Message Notifier (Toast notifications for relay messages)
+echo Starting Message Notifier...
+start "Message Notifier" cmd /c "cd /d C:\LLM-DevOSWE\Admin\relay && node message-notifier.js"
+timeout /t 1 /nobreak >nul
+
+REM Start Browser Bridge (port 8620)
+echo Starting Browser Bridge...
+start "Browser Bridge" cmd /c "cd /d C:\LLM-DevOSWE\Admin\browser-extension && node bridge-server.js"
+timeout /t 1 /nobreak >nul
+
+REM Start Whisper Server (port 8660)
+echo Starting Whisper Server...
+start "Whisper Server" cmd /c "cd /d C:\LLM-DevOSWE\Admin\whisper-server && python server.py"
+timeout /t 1 /nobreak >nul
+
 REM Start Kitt Live Desktop App
 echo Starting Kitt Live...
 start "Kitt Live" cmd /c "cd /d C:\kittbox-modules\kitt-live && npm start"

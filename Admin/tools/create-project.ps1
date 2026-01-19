@@ -86,6 +86,76 @@ Created with LLM-DevOSWE framework.
     Write-Host "[OK] Created README.md" -ForegroundColor Green
 }
 
+# Step 4b: Create CLAUDE.md with hive memory integration
+$claudeMdPath = Join-Path $Path "CLAUDE.md"
+if (!(Test-Path $claudeMdPath)) {
+    $claudeMd = @"
+# $Name
+**Project:** $Name
+**Created:** $(Get-Date -Format "yyyy-MM-dd")
+
+## Project Purpose
+$Description
+
+## Hive Memory Integration
+
+This project is part of the LLM-DevOSWE Hive. Access shared memory via:
+
+### Sync Memory (backup to database)
+``````bash
+curl -X POST http://localhost:8600/api/knowledge/sync
+``````
+
+### Load Memory from Database
+``````bash
+# Get latest CLAUDE.md from hive
+curl http://localhost:8600/api/knowledge/restore/claude_md
+
+# Get latest STANDARDS.md from hive
+curl http://localhost:8600/api/knowledge/restore/standards_md
+
+# Check backup status
+curl http://localhost:8600/api/knowledge/status
+``````
+
+### Hive Services
+| Service | Port | Purpose |
+|---------|------|---------|
+| Oracle | 3002 | LLM backend |
+| Relay | 8600 | Message queue, memory DB |
+| KittBox | 8585 | Command center |
+| Hive-Mind | 8701 | Activity monitor |
+
+## Project Rules
+
+- Follow patterns from main STANDARDS.md (C:\LLM-DevOSWE\STANDARDS.md)
+- Use `syncmem` to backup important changes
+- Document significant patterns here
+
+## Development Notes
+
+(Add project-specific notes below)
+
+"@
+    Set-Content -Path $claudeMdPath -Value $claudeMd -Encoding UTF8
+    Write-Host "[OK] Created CLAUDE.md with hive memory integration" -ForegroundColor Green
+}
+
+# Step 4c: Create memory sync script
+$syncScriptPath = Join-Path $Path "sync-memory.bat"
+if (!(Test-Path $syncScriptPath)) {
+    $syncScript = @"
+@echo off
+echo Syncing memory with Hive...
+curl -X POST http://localhost:8600/api/knowledge/sync -H "Content-Type: application/json" -d "{\"sessionId\":\"$Name\"}"
+echo.
+echo Memory synced!
+pause
+"@
+    Set-Content -Path $syncScriptPath -Value $syncScript -Encoding UTF8
+    Write-Host "[OK] Created sync-memory.bat" -ForegroundColor Green
+}
+
 # Step 5: Run Claude terminal setup
 Write-Host ""
 Write-Host "Setting up Claude terminal launcher..." -ForegroundColor Cyan
@@ -113,7 +183,13 @@ if (!$SkipOracle) {
 Write-Host ""
 Write-Host "=== Setup Complete ===" -ForegroundColor Green
 Write-Host "1. Terminal launcher created (claude-here.bat)"
-Write-Host "2. Run create-shortcut.ps1 in $Path for desktop shortcut"
-Write-Host "3. Add Windows Terminal profile from output above"
-Write-Host "4. Register with Oracle if using tinyAI"
+Write-Host "2. CLAUDE.md created with hive memory integration"
+Write-Host "3. sync-memory.bat created for quick memory sync"
+Write-Host "4. Run create-shortcut.ps1 in $Path for desktop shortcut"
+Write-Host "5. Add Windows Terminal profile from output above"
+Write-Host "6. Register with Oracle if using tinyAI"
+Write-Host ""
+Write-Host "Memory Commands:" -ForegroundColor Cyan
+Write-Host "  syncmem     - Backup CLAUDE.md/STANDARDS.md to database"
+Write-Host "  loadmem     - Restore from database (run sync-memory.bat)"
 Write-Host ""

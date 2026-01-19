@@ -245,13 +245,14 @@
         }
         fetchServerUptime();
 
-        // Service health checks
+        // Service health checks - use current hostname for remote access
+        const host = location.hostname;
         const services = {
-            ollama: { port: 11434, url: 'http://localhost:11434/api/tags' },
-            oracle: { port: 3002, url: 'http://localhost:3002/api/health' },
-            relay: { port: 8600, url: 'http://localhost:8600/api/status' },
-            kittbox: { port: 8585, url: 'http://localhost:8585/' },
-            kittlive: { port: 8686, url: 'http://localhost:8686/' }
+            ollama: { port: 11434, url: `http://${host}:11434/api/tags` },
+            oracle: { port: 3002, url: `http://${host}:3002/api/health` },
+            relay: { port: 8600, url: `http://${host}:8600/api/status` },
+            kittbox: { port: 8585, url: `http://${host}:8585/` },
+            kittlive: { port: 8686, url: `http://${host}:8686/` }
         };
 
         // Clock
@@ -327,7 +328,7 @@
         // Connect to Relay WebSocket for real-time events
         function connectRelay() {
             try {
-                wsRelay = new WebSocket('ws://localhost:8600');
+                wsRelay = new WebSocket(`ws://${host}:8600`);
                 wsRelay.onopen = () => {
                     addActivity('system', 'Connected to Relay WebSocket');
                 };
@@ -364,7 +365,7 @@
         // Poll Oracle for activity
         async function pollOracle() {
             try {
-                const resp = await fetch('http://localhost:3002/api/health');
+                const resp = await fetch(`http://${host}:3002/api/health`);
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data.lastQuery) {
@@ -387,7 +388,7 @@
         async function loadExistingMetrics() {
             // Get task count from Relay
             try {
-                const relayResp = await fetch('http://localhost:8600/api/status');
+                const relayResp = await fetch(`http://${host}:8600/api/status`);
                 if (relayResp.ok) {
                     const relayData = await relayResp.json();
                     if (relayData.stats) {
@@ -410,7 +411,7 @@
 
             // Get Oracle stats
             try {
-                const oracleResp = await fetch('http://localhost:3002/api/health');
+                const oracleResp = await fetch(`http://${host}:3002/api/health`);
                 if (oracleResp.ok) {
                     const oracleData = await oracleResp.json();
                     if (oracleData.queries || oracleData.requestCount) {
@@ -428,7 +429,7 @@
 
             // Get Ollama model count
             try {
-                const ollamaResp = await fetch('http://localhost:11434/api/tags');
+                const ollamaResp = await fetch(`http://${host}:11434/api/tags`);
                 if (ollamaResp.ok) {
                     const ollamaData = await ollamaResp.json();
                     if (ollamaData.models) {
