@@ -1,5 +1,5 @@
 # Service Registry
-**Last Updated:** 2026-01-16
+**Last Updated:** 2026-01-19
 **Single source of truth for all services, ports, and endpoints**
 
 ---

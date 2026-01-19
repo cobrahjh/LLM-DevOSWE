@@ -42,3 +42,8 @@ tmpclaude-*/
 
 # API keys
 *API*key*.txt
+.env
+
+# Windows NUL artifacts
+NUL
+nul
