@@ -37,7 +37,7 @@
  * v1.0.1 - Fixed PowerShell command execution
  */
 
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const express = require('express');
 const http = require('http');
 const https = require('https');
@@ -661,6 +661,33 @@ const AGENT_LOG = path.join(LOGS_DIR, 'agent-server.log');
 // Agent log buffer (captures console output)
 const agentLogBuffer = [];
 const MAX_LOG_LINES = 500;
+const MAX_LOG_SIZE = 500 * 1024; // 500KB max log size before rotation
+const MAX_LOG_BACKUPS = 3; // Keep 3 backup files
+
+function rotateLogIfNeeded(logFile) {
+    try {
+        if (!fs.existsSync(logFile)) return;
+        const stats = fs.statSync(logFile);
+        if (stats.size > MAX_LOG_SIZE) {
+            // Rotate existing backups
+            for (let i = MAX_LOG_BACKUPS - 1; i >= 1; i--) {
+                const oldFile = `${logFile}.${i}`;
+                const newFile = `${logFile}.${i + 1}`;
+                if (fs.existsSync(oldFile)) {
+                    if (i === MAX_LOG_BACKUPS - 1) {
+                        fs.unlinkSync(oldFile); // Delete oldest
+                    } else {
+                        fs.renameSync(oldFile, newFile);
+                    }
+                }
+            }
+            // Current log becomes .1
+            fs.renameSync(logFile, `${logFile}.1`);
+        }
+    } catch (e) {
+        // Ignore rotation errors
+    }
+}
 
 function logToFile(msg) {
     const timestamp = new Date().toISOString();
@@ -669,7 +696,8 @@ function logToFile(msg) {
     if (agentLogBuffer.length > MAX_LOG_LINES) {
         agentLogBuffer.shift();
     }
-    // Also append to file
+    // Rotate if needed, then append
+    rotateLogIfNeeded(AGENT_LOG);
     fs.appendFileSync(AGENT_LOG, line + '\n');
 }
 
@@ -958,9 +986,30 @@ const tools = [
 // TOOL EXECUTION
 // ============================================
 
-function resolvePath(p) {
-    if (path.isAbsolute(p)) return p;
-    return path.join(PROJECT_ROOT, p);
+// Security: Allowed directories for file operations
+const ALLOWED_DIRS = (process.env.ALLOWED_DIRS || 'C:/LLM-DevOSWE,C:/LLM-Oracle,C:/devTinyAI,C:/kittbox-modules,C:/kittbox-web')
+    .split(',')
+    .map(d => path.normalize(d.trim()).toLowerCase());
+
+function isPathAllowed(filePath) {
+    const normalizedPath = path.normalize(filePath).toLowerCase();
+    return ALLOWED_DIRS.some(dir => normalizedPath.startsWith(dir));
+}
+
+function resolvePath(p, checkSecurity = true) {
+    let resolved;
+    if (path.isAbsolute(p)) {
+        resolved = path.normalize(p);
+    } else {
+        resolved = path.normalize(path.join(PROJECT_ROOT, p));
+    }
+
+    // Security check: ensure path is within allowed directories
+    if (checkSecurity && !isPathAllowed(resolved)) {
+        throw new Error(`Access denied: path '${resolved}' is outside allowed directories`);
+    }
+
+    return resolved;
 }
 
 function runPowerShell(command, cwd = null) {
