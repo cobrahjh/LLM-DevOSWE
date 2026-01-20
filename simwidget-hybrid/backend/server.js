@@ -149,6 +149,10 @@ app.use('/ui', express.static(uiPath), serveIndex(uiPath, { icons: true }));
 app.use('/config', express.static(configPath), serveIndex(configPath, { icons: true }));
 app.use('/backend', express.static(backendPath), serveIndex(backendPath, { icons: true }));
 
+// Serve root widgets folder
+const widgetsPath = path.join(__dirname, '../../widgets');
+app.use('/widgets', express.static(widgetsPath), serveIndex(widgetsPath, { icons: true }));
+
 // Root index page
 app.get('/', (req, res) => {
     res.send(`
