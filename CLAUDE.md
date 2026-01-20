@@ -1,5 +1,5 @@
 # SimWidget Engine
-**Version:** v1.14.0
+**Version:** v1.15.0
 **Last updated:** 2026-01-20
 
 Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
@@ -9,19 +9,20 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 ## 🧠 Quick Reference (Harold's Cheat Sheet)
 
 ### Hive Services - "What port is that?"
-| Port | Service | URL |
-|------|---------|-----|
-| 3002 | Oracle (LLM backend) | http://localhost:3002 |
-| 8080 | SimWidget (MSFS) | http://localhost:8080 |
-| 8500 | Master O (watchdog) | http://localhost:8500 |
-| 8585 | KittBox (Command Center) | http://localhost:8585 |
-| 8600 | Relay (messages/tasks) | http://localhost:8600 |
-| 8701 | Hive-Mind (monitor) | http://localhost:8701 |
-| 8771 | Terminal Hub | http://localhost:8771 |
-| 8800 | Hive Brain (colony) | http://localhost:8800 |
-| 8850 | Hive Oracle (LLM routing) | http://localhost:8850 |
-| 11434 | Ollama | http://localhost:11434 |
-| 1234 | LM Studio | http://localhost:1234 |
+| Port | Service | Internal | External (HTTPS) |
+|------|---------|----------|------------------|
+| 3002 | Oracle (LLM backend) | http://localhost:3002 | https://hive.local/oracle |
+| 8080 | SimWidget (MSFS) | http://localhost:8080 | https://hive.local/simwidget |
+| 8500 | Master O (watchdog) | http://localhost:8500 | https://hive.local/master |
+| 8585 | KittBox (Command Center) | http://localhost:8585 | https://hive.local/kitt |
+| 8600 | Relay (messages/tasks) | http://localhost:8600 | https://hive.local/relay |
+| 8701 | Hive-Mind (monitor) | http://localhost:8701 | https://hive.local/hivemind |
+| 8771 | Terminal Hub | http://localhost:8771 | https://hive.local/terminal |
+| 8800 | Hive Brain (colony) | http://localhost:8800 | https://hive.local/brain |
+| 8850 | Hive Oracle (LLM routing) | http://localhost:8850 | https://hive.local/hiveoracle |
+| 11434 | Ollama | http://localhost:11434 | https://hive.local/ollama |
+| 1234 | LM Studio | http://localhost:1234 | https://hive.local/lmstudio |
+| 443 | **Caddy (SSL proxy)** | - | https://hive.local |
 
 ### Quick Commands
 ```bash
@@ -89,6 +90,14 @@ curl -X POST http://localhost:8500/api/services/hiveoracle/restart
   - **Windows mode:** NSSM services via `Admin/services/` scripts (for PCs without VM capability)
   - **Docker mode:** Containers via `Admin/docker/` compose files (for WSL2/Docker capable PCs - no reboots needed)
   - Installer should auto-detect and use the best available option. No terminal windows that "need to stay open".
+- **SSL/HTTPS via Caddy reverse proxy** - All Hive services (current and future) are accessible via HTTPS through Caddy:
+  - **Internal services stay HTTP** - Simpler development, no cert management per service
+  - **Caddy handles SSL termination** - Single point for certificates, auto-renewal
+  - **Access pattern:** `https://hive.local/[service]/...` routes to internal HTTP ports
+  - **Mobile/external access:** Always use HTTPS URLs through Caddy
+  - **Caddy config location:** `Admin/caddy/Caddyfile`
+  - **Port 443:** Main HTTPS entry point for all services
+  - When adding new services: add route to Caddyfile, no SSL code needed in service
 - **Kitt Live features as standard** - All AI bot prompts/UIs must include Kitt Live's features: model selector dropdown, performance metrics bar (response time, tokens, speed), voice settings panel (Microsoft Natural voices, rate/pitch/volume), and localStorage persistence. See http://localhost:8686 as reference.
 - **Hive AI Intelligence Standard** - ALL AI agents in the hive (Oracle, Kitt, tinyAI, and any future AI) MUST have:
   - **Hive awareness** - Know all services, ports, endpoints in the hive
@@ -874,9 +883,45 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 | 8850 | Hive Oracle | Distributed LLM orchestrator |
 | 11434 | Ollama | Local LLM (qwen3-coder) |
 | 1234 | LM Studio | Local LLM (qwen2.5-coder-14b) |
+| 443 | Caddy | SSL reverse proxy for all services |
 
 **Start all:** `C:\LLM-DevOSWE\start-all-servers.bat`
 **Full details:** See `SERVICE-REGISTRY.md`
+
+## SSL/HTTPS (Caddy Reverse Proxy)
+
+All Hive services are accessible via HTTPS through Caddy reverse proxy.
+
+**Architecture:**
+```
+Mobile/External ──► https://hive.local/[service] ──► Caddy (:443) ──► Internal HTTP service
+```
+
+**Caddyfile Location:** `Admin/caddy/Caddyfile`
+
+**Route Mapping:**
+| HTTPS URL | Routes To |
+|-----------|-----------|
+| https://hive.local/oracle/* | localhost:3002 |
+| https://hive.local/relay/* | localhost:8600 |
+| https://hive.local/kitt/* | localhost:8585 |
+| https://hive.local/simwidget/* | localhost:8080 |
+| https://hive.local/hivemind/* | localhost:8701 |
+| https://hive.local/brain/* | localhost:8800 |
+| https://hive.local/hiveoracle/* | localhost:8850 |
+| https://hive.local/ollama/* | localhost:11434 |
+| https://hive.local/lmstudio/* | localhost:1234 |
+
+**Setup:**
+1. Install Caddy: `choco install caddy` or download from caddyserver.com
+2. Add `hive.local` to hosts file pointing to PC IP
+3. Run: `caddy run --config Admin/caddy/Caddyfile`
+4. Trust the Caddy root cert on mobile devices
+
+**Adding New Services:**
+1. Add route to Caddyfile: `route /newservice/* { reverse_proxy localhost:PORT }`
+2. Reload Caddy: `caddy reload`
+3. No SSL code needed in the service itself
 
 ## Project Directories (Entity Registry)
 

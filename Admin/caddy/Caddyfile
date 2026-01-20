@@ -1,0 +1,105 @@
+# Hive SSL Reverse Proxy Configuration
+# All internal HTTP services accessible via HTTPS through this proxy
+#
+# Usage:
+#   caddy run --config Admin/caddy/Caddyfile
+#   caddy reload (after changes)
+#
+# Setup:
+#   1. Add to hosts file: 192.168.1.42 hive.local
+#   2. Trust Caddy's root cert on mobile devices
+#   3. Start Caddy as a service or manually
+
+hive.local {
+    # Oracle - LLM backend, project API
+    handle_path /oracle/* {
+        reverse_proxy localhost:3002
+    }
+
+    # Relay - Message queue, task persistence
+    handle_path /relay/* {
+        reverse_proxy localhost:8600
+    }
+
+    # KittBox - Command Center UI
+    handle_path /kitt/* {
+        reverse_proxy localhost:8585
+    }
+
+    # SimWidget - MSFS SimConnect bridge
+    handle_path /simwidget/* {
+        reverse_proxy localhost:8080
+    }
+
+    # Master Orchestrator - Health watchdog
+    handle_path /master/* {
+        reverse_proxy localhost:8500
+    }
+
+    # Hive-Mind - Real-time activity monitor
+    handle_path /hivemind/* {
+        reverse_proxy localhost:8701
+    }
+
+    # Hive Brain - Device discovery, colony management
+    handle_path /brain/* {
+        reverse_proxy localhost:8800
+    }
+
+    # Hive Oracle - Distributed LLM orchestrator
+    handle_path /hiveoracle/* {
+        reverse_proxy localhost:8850
+    }
+
+    # Ollama - Local LLM
+    handle_path /ollama/* {
+        reverse_proxy localhost:11434
+    }
+
+    # LM Studio - Local LLM
+    handle_path /lmstudio/* {
+        reverse_proxy localhost:1234
+    }
+
+    # Smart Router - LLM routing
+    handle_path /router/* {
+        reverse_proxy localhost:8610
+    }
+
+    # Browser Bridge - Browser automation
+    handle_path /browser/* {
+        reverse_proxy localhost:8620
+    }
+
+    # Claude Bridge - WebSocket to Claude Code
+    handle_path /claude/* {
+        reverse_proxy localhost:8700
+    }
+
+    # Terminal Hub
+    handle_path /terminal/* {
+        reverse_proxy localhost:8771
+    }
+
+    # Widgets - Direct access to MSFS widgets
+    handle_path /widgets/* {
+        reverse_proxy localhost:8080
+    }
+
+    # Default - serve a status page or redirect to KittBox
+    handle {
+        respond "Hive is alive. Available routes: /oracle, /relay, /kitt, /simwidget, /hivemind, /brain, /hiveoracle, /widgets" 200
+    }
+
+    # Enable WebSocket support for all routes
+    @websockets {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    handle @websockets {
+        reverse_proxy localhost:8080
+    }
+
+    # TLS configuration (Caddy auto-generates self-signed for .local domains)
+    tls internal
+}
