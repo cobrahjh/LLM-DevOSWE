@@ -1,7 +1,10 @@
 /**
  * SimWidget Glass Morphism Theme
  * MSFS 2024 Inspired Design System
- * Version 1.0.0
+ * Version 2.0.0 - Responsive Edition
+ *
+ * REQUIRED: Add this to your HTML <head>:
+ * <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
  */
 
 :root {
@@ -44,38 +47,77 @@
     --sw-blur: blur(20px);
     --sw-blur-strong: blur(40px);
 
-    /* Spacing */
-    --sw-radius-sm: 6px;
-    --sw-radius-md: 10px;
-    --sw-radius-lg: 14px;
-    --sw-radius-xl: 20px;
+    /* Spacing - Fluid */
+    --sw-radius-sm: clamp(4px, 1vw, 6px);
+    --sw-radius-md: clamp(6px, 1.5vw, 10px);
+    --sw-radius-lg: clamp(10px, 2vw, 14px);
+    --sw-radius-xl: clamp(14px, 3vw, 20px);
 
-    /* Typography */
+    /* Typography - Fluid with clamp() */
     --sw-font-display: 'Inter', 'Segoe UI', sans-serif;
     --sw-font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --sw-text-xs: clamp(8px, 2vw, 9px);
+    --sw-text-sm: clamp(10px, 2.5vw, 11px);
+    --sw-text-md: clamp(11px, 3vw, 13px);
+    --sw-text-lg: clamp(14px, 3.5vw, 16px);
+    --sw-text-xl: clamp(16px, 4vw, 20px);
+    --sw-text-2xl: clamp(20px, 5vw, 28px);
+    --sw-text-3xl: clamp(28px, 6vw, 36px);
+
+    /* Spacing - Fluid */
+    --sw-space-xs: clamp(4px, 1vw, 6px);
+    --sw-space-sm: clamp(6px, 1.5vw, 10px);
+    --sw-space-md: clamp(10px, 2.5vw, 16px);
+    --sw-space-lg: clamp(14px, 3vw, 20px);
+    --sw-space-xl: clamp(20px, 4vw, 32px);
+
+    /* Touch Target - Minimum 44px for accessibility */
+    --sw-touch-min: 44px;
 
     /* Transitions */
     --sw-transition-fast: 0.15s ease;
     --sw-transition-normal: 0.25s ease;
     --sw-transition-slow: 0.4s ease;
+
+    /* Container query breakpoints */
+    --sw-bp-xs: 200px;
+    --sw-bp-sm: 300px;
+    --sw-bp-md: 400px;
+    --sw-bp-lg: 500px;
 }
 
 /* Base Reset */
-* {
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
-    margin: 0;
-    background: transparent;
-    font-family: var(--sw-font-display);
-    -webkit-font-smoothing: antialiased;
+html {
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
-/* Glass Widget Container */
+body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: var(--sw-font-display);
+    font-size: var(--sw-text-md);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Safe area insets for notched devices */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    /* Use dynamic viewport height */
+    min-height: 100dvh;
+}
+
+/* Glass Widget Container - Now a container query context */
 .sw-widget {
+    container-type: inline-size;
+    container-name: widget;
     background: var(--sw-bg-glass);
     backdrop-filter: var(--sw-blur);
     -webkit-backdrop-filter: var(--sw-blur);
@@ -86,6 +128,20 @@ body {
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
     overflow: hidden;
     transition: all var(--sw-transition-normal);
+    /* Responsive width */
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Full-screen widget mode */
+.sw-widget.sw-fullscreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    border-radius: 0;
+    z-index: 9999;
 }
 
 .sw-widget:hover {
@@ -368,13 +424,14 @@ body {
 .sw-gap-md { gap: 10px; }
 .sw-gap-lg { gap: 16px; }
 
-/* Text Utilities */
-.sw-text-xs { font-size: 9px; }
-.sw-text-sm { font-size: 11px; }
-.sw-text-md { font-size: 13px; }
-.sw-text-lg { font-size: 16px; }
-.sw-text-xl { font-size: 20px; }
-.sw-text-2xl { font-size: 28px; }
+/* Text Utilities - Fluid */
+.sw-text-xs { font-size: var(--sw-text-xs); }
+.sw-text-sm { font-size: var(--sw-text-sm); }
+.sw-text-md { font-size: var(--sw-text-md); }
+.sw-text-lg { font-size: var(--sw-text-lg); }
+.sw-text-xl { font-size: var(--sw-text-xl); }
+.sw-text-2xl { font-size: var(--sw-text-2xl); }
+.sw-text-3xl { font-size: var(--sw-text-3xl); }
 .sw-text-mono { font-family: var(--sw-font-mono); }
 .sw-text-center { text-align: center; }
 .sw-text-muted { color: var(--sw-text-muted); }
@@ -400,3 +457,230 @@ body {
 .sw-animate-fade { animation: fade-in 0.3s ease; }
 .sw-animate-slide { animation: slide-up 0.4s ease; }
 .sw-animate-glow { animation: glow-pulse 2s infinite; }
+
+/* ===========================================
+   RESPONSIVE DESIGN - Container Queries
+   =========================================== */
+
+/* Container query context for nested components */
+.sw-container {
+    container-type: inline-size;
+}
+
+/* Extra small widget (< 200px) */
+@container widget (max-width: 199px) {
+    .sw-header {
+        padding: 8px 10px;
+        gap: 6px;
+    }
+    .sw-header-title {
+        font-size: var(--sw-text-xs);
+    }
+    .sw-content {
+        padding: 10px;
+    }
+    .sw-data-value {
+        font-size: var(--sw-text-lg);
+    }
+    .sw-btn {
+        padding: 8px 10px;
+        font-size: var(--sw-text-xs);
+        min-height: var(--sw-touch-min);
+    }
+    .sw-grid-2, .sw-grid-3, .sw-grid-4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Small widget (200px - 299px) */
+@container widget (min-width: 200px) and (max-width: 299px) {
+    .sw-header {
+        padding: 10px 12px;
+    }
+    .sw-content {
+        padding: 12px;
+    }
+    .sw-data-value {
+        font-size: var(--sw-text-xl);
+    }
+    .sw-grid-3, .sw-grid-4 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Medium widget (300px - 399px) */
+@container widget (min-width: 300px) and (max-width: 399px) {
+    .sw-data-value {
+        font-size: var(--sw-text-2xl);
+    }
+    .sw-grid-4 {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+/* Large widget (400px+) */
+@container widget (min-width: 400px) {
+    .sw-header {
+        padding: 14px 18px;
+    }
+    .sw-content {
+        padding: 18px;
+    }
+    .sw-data-value {
+        font-size: var(--sw-text-3xl);
+    }
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN - Media Queries (Viewport)
+   =========================================== */
+
+/* Mobile Portrait (< 480px) */
+@media screen and (max-width: 479px) {
+    :root {
+        --sw-blur: blur(12px);
+    }
+    .sw-widget {
+        border-radius: var(--sw-radius-md);
+    }
+}
+
+/* Mobile Landscape / Small Tablet (480px - 767px) */
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .sw-widget {
+        max-width: 420px;
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+    .sw-widget {
+        max-width: 500px;
+    }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+    .sw-widget {
+        max-width: 600px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .sw-btn {
+        min-height: var(--sw-touch-min);
+        min-width: var(--sw-touch-min);
+    }
+    .sw-toggle {
+        width: 52px;
+        height: 28px;
+    }
+    .sw-toggle::after {
+        width: 20px;
+        height: 20px;
+    }
+    .sw-toggle.active::after {
+        left: 28px;
+    }
+    /* Increase tap targets */
+    .sw-conn {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    :root {
+        --sw-border-subtle: rgba(0, 212, 255, 0.4);
+        --sw-border-medium: rgba(0, 212, 255, 0.6);
+        --sw-text-muted: #9BA8B8;
+    }
+}
+
+/* Dark mode (already default, but explicit) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+}
+
+/* ===========================================
+   RESPONSIVE UTILITIES
+   =========================================== */
+
+/* Hide on small containers */
+@container widget (max-width: 250px) {
+    .sw-hide-xs { display: none !important; }
+}
+
+/* Hide on medium containers */
+@container widget (max-width: 350px) {
+    .sw-hide-sm { display: none !important; }
+}
+
+/* Show only on large containers */
+@container widget (min-width: 400px) {
+    .sw-show-lg { display: block !important; }
+}
+
+/* Stack on small */
+.sw-stack-sm {
+    display: flex;
+    flex-direction: row;
+    gap: var(--sw-space-sm);
+}
+
+@container widget (max-width: 299px) {
+    .sw-stack-sm {
+        flex-direction: column;
+    }
+}
+
+/* Auto-fit grid */
+.sw-grid-auto {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+    gap: var(--sw-space-sm);
+}
+
+/* Aspect ratio containers */
+.sw-aspect-square { aspect-ratio: 1 / 1; }
+.sw-aspect-video { aspect-ratio: 16 / 9; }
+.sw-aspect-radar { aspect-ratio: 1 / 1; }
+
+/* Scrollable container */
+.sw-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for scroll containers */
+.sw-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sw-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sw-scroll::-webkit-scrollbar-thumb {
+    background: var(--sw-border-medium);
+    border-radius: 3px;
+}
+
+.sw-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--sw-border-active);
+}
