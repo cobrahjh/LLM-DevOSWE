@@ -90,6 +90,71 @@ class AutopilotWidget {
                 });
             }
         });
+
+        // Scrollable value controls
+        this.setupScrollControls();
+    }
+
+    setupScrollControls() {
+        const scrollables = document.querySelectorAll('.ap-scrollable');
+
+        scrollables.forEach(el => {
+            const param = el.dataset.param;
+            const step = parseInt(el.dataset.step) || 1;
+            const min = parseInt(el.dataset.min) || 0;
+            const max = parseInt(el.dataset.max) || 99999;
+            const wrap = el.dataset.wrap === 'true';
+
+            // Wheel event for scrolling
+            el.addEventListener('wheel', (e) => {
+                e.preventDefault();
+
+                const direction = e.deltaY < 0 ? 1 : -1;
+                const multiplier = e.shiftKey ? 10 : 1; // Shift for faster adjustment
+                const delta = step * multiplier * direction;
+
+                this.adjustValue(param, delta, min, max, wrap);
+
+                // Visual feedback
+                el.classList.add('scrolling');
+                clearTimeout(el._scrollTimeout);
+                el._scrollTimeout = setTimeout(() => {
+                    el.classList.remove('scrolling');
+                }, 150);
+            });
+
+            // Prevent context menu on right-click for potential future use
+            el.addEventListener('contextmenu', (e) => e.preventDefault());
+        });
+    }
+
+    adjustValue(param, delta, min, max, wrap) {
+        const dataKey = param + 'Set';
+        let newValue = this.data[dataKey] + delta;
+
+        if (wrap) {
+            // Wrap around for heading
+            if (newValue < min) newValue = max;
+            if (newValue > max) newValue = min;
+        } else {
+            // Clamp for other values
+            newValue = Math.max(min, Math.min(max, newValue));
+        }
+
+        this.data[dataKey] = newValue;
+        this.updateUI();
+
+        // Send command to sim
+        const commands = {
+            hdg: 'HEADING_BUG_SET',
+            alt: 'AP_ALT_VAR_SET_ENGLISH',
+            vs: 'AP_VS_VAR_SET_ENGLISH',
+            spd: 'AP_SPD_VAR_SET'
+        };
+
+        if (commands[param]) {
+            this.sendCommand(commands[param], newValue);
+        }
     }
 
     connect() {

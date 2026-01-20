@@ -62,29 +62,33 @@
 
             <!-- Settings Display -->
             <div class="ap-settings">
-                <div class="ap-setting">
+                <div class="ap-setting ap-scrollable" data-param="hdg" data-step="1" data-min="0" data-max="359" data-wrap="true">
                     <span class="ap-setting-label">HDG</span>
                     <span class="ap-setting-value" id="hdg-set">---</span>
                     <span class="ap-setting-unit">°</span>
+                    <span class="ap-scroll-hint">⟳</span>
                 </div>
-                <div class="ap-setting">
+                <div class="ap-setting ap-scrollable" data-param="alt" data-step="100" data-min="0" data-max="50000">
                     <span class="ap-setting-label">ALT</span>
                     <span class="ap-setting-value" id="alt-set">-----</span>
                     <span class="ap-setting-unit">ft</span>
+                    <span class="ap-scroll-hint">⟳</span>
                 </div>
-                <div class="ap-setting">
+                <div class="ap-setting ap-scrollable" data-param="vs" data-step="100" data-min="-6000" data-max="6000">
                     <span class="ap-setting-label">VS</span>
                     <span class="ap-setting-value" id="vs-set">----</span>
                     <span class="ap-setting-unit">fpm</span>
+                    <span class="ap-scroll-hint">⟳</span>
                 </div>
             </div>
 
             <!-- Speed Setting -->
             <div class="ap-speed-row">
-                <div class="ap-setting wide">
+                <div class="ap-setting wide ap-scrollable" data-param="spd" data-step="1" data-min="60" data-max="400">
                     <span class="ap-setting-label">SPD</span>
                     <span class="ap-setting-value cyan" id="spd-set">---</span>
                     <span class="ap-setting-unit">kt</span>
+                    <span class="ap-scroll-hint">⟳</span>
                 </div>
                 <button class="ap-spd-btn" id="btn-spd" data-cmd="AP_SPD_HOLD">
                     <span class="ap-mode-ind" id="ind-spd"></span>

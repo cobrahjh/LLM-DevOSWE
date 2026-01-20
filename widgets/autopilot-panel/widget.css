@@ -193,6 +193,46 @@
     color: var(--sw-text-muted);
 }
 
+/* Scrollable Settings */
+.ap-scrollable {
+    position: relative;
+    cursor: ns-resize;
+    user-select: none;
+    border-radius: var(--sw-radius-sm);
+    transition: all var(--sw-transition-fast);
+}
+
+.ap-scrollable:hover {
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.ap-scrollable:hover .ap-setting-value {
+    color: var(--sw-accent-cyan);
+    text-shadow: 0 0 10px var(--sw-accent-cyan);
+}
+
+.ap-scrollable.scrolling {
+    background: rgba(0, 212, 255, 0.2);
+}
+
+.ap-scrollable.scrolling .ap-setting-value {
+    transform: scale(1.1);
+}
+
+.ap-scroll-hint {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 8px;
+    color: var(--sw-text-dim);
+    opacity: 0;
+    transition: opacity var(--sw-transition-fast);
+}
+
+.ap-scrollable:hover .ap-scroll-hint {
+    opacity: 1;
+}
+
 /* Speed Row */
 .ap-speed-row {
     display: flex;
