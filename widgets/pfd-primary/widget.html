@@ -2,68 +2,113 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Primary Flight Display</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
     <link rel="stylesheet" href="widget.css">
 </head>
 <body>
-    <div class="widget pfd">
-        <div class="widget-header">
-            <span class="conn-status" id="conn">●</span>
-            <span class="widget-title">PRIMARY FLIGHT</span>
+    <div class="sw-widget pfd-primary">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">PFD</span>
+            <span class="pfd-flight-phase" id="flight-phase">GND</span>
         </div>
 
-        <div class="widget-content">
-            <!-- Altitude -->
-            <div class="instrument altitude">
-                <div class="inst-header">ALT</div>
-                <div class="inst-value" id="altitude">0</div>
-                <div class="inst-unit">FT</div>
-                <div class="alt-tape" id="alt-tape">
-                    <div class="tape-marker" id="alt-marker"></div>
+        <div class="sw-content">
+            <!-- Top Row: Speed & Altitude -->
+            <div class="pfd-row">
+                <!-- Airspeed -->
+                <div class="pfd-inst pfd-speed">
+                    <div class="pfd-inst-label">IAS</div>
+                    <div class="pfd-inst-value" id="airspeed">---</div>
+                    <div class="pfd-inst-unit">KT</div>
+                    <div class="pfd-speed-arc">
+                        <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet">
+                            <path class="pfd-arc-bg" d="M10,50 A40,40 0 0,1 90,50"/>
+                            <path class="pfd-arc-fill" id="spd-fill" d="M10,50 A40,40 0 0,1 90,50"/>
+                        </svg>
+                    </div>
+                    <div class="pfd-speed-trend">
+                        <span class="pfd-trend-label">GS</span>
+                        <span class="pfd-trend-value" id="groundspeed">---</span>
+                    </div>
+                </div>
+
+                <!-- Altitude -->
+                <div class="pfd-inst pfd-alt">
+                    <div class="pfd-inst-label">ALT</div>
+                    <div class="pfd-inst-value" id="altitude">-----</div>
+                    <div class="pfd-inst-unit">FT</div>
+                    <div class="pfd-alt-tape">
+                        <div class="pfd-tape-marks">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                        <div class="pfd-tape-marker" id="alt-marker"></div>
+                    </div>
+                    <div class="pfd-alt-trend">
+                        <span class="pfd-trend-label">V/S</span>
+                        <span class="pfd-trend-value" id="vspeed-small">----</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Airspeed -->
-            <div class="instrument airspeed">
-                <div class="inst-header">IAS</div>
-                <div class="inst-value" id="airspeed">0</div>
-                <div class="inst-unit">KTS</div>
-                <div class="spd-arc" id="spd-arc">
-                    <svg viewBox="0 0 100 50">
-                        <path class="arc-bg" d="M10,50 A40,40 0 0,1 90,50"/>
-                        <path class="arc-fill" id="spd-fill" d="M10,50 A40,40 0 0,1 90,50"/>
-                    </svg>
+            <!-- Center: Heading -->
+            <div class="pfd-heading">
+                <div class="pfd-hdg-display">
+                    <span class="pfd-hdg-value" id="heading">---</span>
+                    <span class="pfd-hdg-unit">°</span>
+                </div>
+                <div class="pfd-compass">
+                    <div class="pfd-compass-bg"></div>
+                    <div class="pfd-compass-rose" id="compass-rose">
+                        <span class="pfd-compass-n">N</span>
+                        <span class="pfd-compass-e">E</span>
+                        <span class="pfd-compass-s">S</span>
+                        <span class="pfd-compass-w">W</span>
+                    </div>
+                    <div class="pfd-compass-needle"></div>
+                    <div class="pfd-compass-plane">▲</div>
                 </div>
             </div>
 
-            <!-- Heading -->
-            <div class="instrument heading">
-                <div class="inst-header">HDG</div>
-                <div class="inst-value" id="heading">000</div>
-                <div class="inst-unit">°</div>
-                <div class="hdg-compass" id="hdg-compass">
-                    <div class="compass-rose" id="compass-rose"></div>
-                    <div class="compass-needle"></div>
+            <!-- Bottom Row: VS & Data -->
+            <div class="pfd-row">
+                <!-- Vertical Speed -->
+                <div class="pfd-inst pfd-vs">
+                    <div class="pfd-inst-label">V/S</div>
+                    <div class="pfd-inst-value" id="vspeed">----</div>
+                    <div class="pfd-inst-unit">FPM</div>
+                    <div class="pfd-vs-gauge">
+                        <div class="pfd-vs-scale">
+                            <span>+2</span>
+                            <span>+1</span>
+                            <span>0</span>
+                            <span>-1</span>
+                            <span>-2</span>
+                        </div>
+                        <div class="pfd-vs-bar-container">
+                            <div class="pfd-vs-bar" id="vs-bar"></div>
+                            <div class="pfd-vs-zero"></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Vertical Speed -->
-            <div class="instrument vspeed">
-                <div class="inst-header">V/S</div>
-                <div class="inst-value" id="vspeed">0</div>
-                <div class="inst-unit">FPM</div>
-                <div class="vs-gauge">
-                    <div class="vs-bar" id="vs-bar"></div>
-                    <div class="vs-zero"></div>
+                <!-- Flight Data -->
+                <div class="pfd-inst pfd-data">
+                    <div class="pfd-data-item">
+                        <span class="pfd-data-label">MACH</span>
+                        <span class="pfd-data-value" id="mach">---</span>
+                    </div>
+                    <div class="pfd-data-item">
+                        <span class="pfd-data-label">TAS</span>
+                        <span class="pfd-data-value" id="tas">---</span>
+                    </div>
+                    <div class="pfd-data-item">
+                        <span class="pfd-data-label">OAT</span>
+                        <span class="pfd-data-value" id="oat">--°C</span>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Ground Speed -->
-            <div class="instrument groundspeed">
-                <div class="inst-header">GS</div>
-                <div class="inst-value" id="groundspeed">0</div>
-                <div class="inst-unit">KTS</div>
             </div>
         </div>
     </div>
