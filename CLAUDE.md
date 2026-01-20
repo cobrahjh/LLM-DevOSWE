@@ -1,8 +1,70 @@
 # SimWidget Engine
 **Version:** v1.14.0
-**Last updated:** 2026-01-19
+**Last updated:** 2026-01-20
 
 Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
+
+---
+
+## 🧠 Quick Reference (Harold's Cheat Sheet)
+
+### Hive Services - "What port is that?"
+| Port | Service | URL |
+|------|---------|-----|
+| 3002 | Oracle (LLM backend) | http://localhost:3002 |
+| 8080 | SimWidget (MSFS) | http://localhost:8080 |
+| 8500 | Master O (watchdog) | http://localhost:8500 |
+| 8585 | KittBox (Command Center) | http://localhost:8585 |
+| 8600 | Relay (messages/tasks) | http://localhost:8600 |
+| 8701 | Hive-Mind (monitor) | http://localhost:8701 |
+| 8771 | Terminal Hub | http://localhost:8771 |
+| 8800 | Hive Brain (colony) | http://localhost:8800 |
+| 8850 | Hive Oracle (LLM routing) | http://localhost:8850 |
+| 11434 | Ollama | http://localhost:11434 |
+| 1234 | LM Studio | http://localhost:1234 |
+
+### Quick Commands
+```bash
+# Start everything
+C:\LLM-DevOSWE\start-all-servers.bat
+
+# Check hive health
+curl http://localhost:8600/api/health   # Relay
+curl http://localhost:8500/api/status   # All services
+
+# Check messages (from phone)
+curl http://localhost:8600/api/messages/pending
+
+# Restart a service via Master O
+curl -X POST http://localhost:8500/api/services/hiveoracle/restart
+```
+
+### Key Directories
+| Path | What |
+|------|------|
+| `C:\LLM-DevOSWE` | Main framework |
+| `C:\LLM-Oracle` | Oracle daemon |
+| `C:\kittbox-modules` | Desktop apps (Kitt Live) |
+| `C:\devTinyAI` | AI sandbox |
+
+### LLMs Available
+- **Local:** Ollama (qwen3-coder), LM Studio (qwen2.5-coder-14b)
+- **Remote:** Iris @ 192.168.1.162:1234 (ai-pc fallback)
+
+### User Shortcuts (say these to Claude)
+- `msg` - check relay messages
+- `mem` - add to CLAUDE.md
+- `mst` - add to STANDARDS.md
+- `ts` - test this
+- `ntt` - next todo task
+- `hivesanitycheck` - full hive status
+- `syncmem` - backup docs to database
+
+### Personas
+- **Heather** - Voice persona (Google UK English Female)
+- **Shǐ zhēn xiāng** - Alt persona (Cantonese, self-deprecating programmer)
+
+---
 
 ## ⚠️ Before Starting Any Work
 
