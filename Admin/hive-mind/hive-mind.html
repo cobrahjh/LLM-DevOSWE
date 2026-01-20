@@ -166,6 +166,75 @@
             padding: 40px;
             color: #444;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            .header { padding: 12px 10px; flex-wrap: wrap; gap: 8px; }
+            .header h1 { font-size: 16px; }
+            .services {
+                padding: 8px 10px;
+                gap: 6px;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            .service {
+                min-width: 80px;
+                padding: 6px 8px;
+                flex-shrink: 0;
+            }
+            .service-name { font-size: 9px; }
+            .service-status { font-size: 10px; }
+            .main {
+                flex-direction: column;
+                height: calc(100vh - 110px);
+            }
+            .activity-feed {
+                flex: 1;
+                padding: 8px 10px;
+                min-height: 0;
+            }
+            .sidebar {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #2a2a4a;
+                padding: 8px 10px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .sidebar h3 {
+                width: 100%;
+                margin-bottom: 4px;
+                margin-top: 0 !important;
+            }
+            .stat-row {
+                flex: 1 1 45%;
+                min-width: 100px;
+            }
+            .activity-item { padding: 6px 8px; }
+            .activity-source { font-size: 11px; }
+            .activity-time { font-size: 9px; }
+            .activity-content { font-size: 12px; }
+        }
+
+        /* S25 Ultra / Large Phone Portrait */
+        @media (max-width: 480px) {
+            .header h1 { font-size: 14px; }
+            .services { gap: 4px; }
+            .service { min-width: 70px; padding: 5px 6px; }
+            .stat-row { flex: 1 1 100%; }
+        }
+
+        /* Safe area support for notched phones */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .header {
+                padding-top: calc(12px + env(safe-area-inset-top));
+            }
+            .sidebar {
+                padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            }
+        }
     </style>
 </head>
 <body>
@@ -456,5 +525,6 @@
             addActivity('system', 'Monitoring active. Waiting for hive activity...');
         }, 2000);
     </script>
+    <script src="mobile-engine.js"></script>
 </body>
 </html>

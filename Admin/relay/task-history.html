@@ -348,11 +348,43 @@
             }
             .task-id, .task-priority, .task-actions { display: none; }
         }
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            h1 { font-size: 20px; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .btn { padding: 10px 14px; min-height: 44px; }
+        }
         @media (max-width: 600px) {
             .stats-bar { flex-direction: column; }
-            .stat-card { width: 100%; }
+            .stat-card { width: 100%; min-height: 44px; }
             .filters { flex-direction: column; }
             .search-box { max-width: none; }
+            .task-header, .task-row {
+                grid-template-columns: 1fr 80px;
+            }
+            .task-time { display: none; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 8px; }
+            h1 { font-size: 18px; }
+            h1 .icon { font-size: 22px; }
+            .stat-value { font-size: 24px; }
+            .stat-label { font-size: 11px; }
+        }
+
+        /* Safe area support for notched phones */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .container {
+                padding-top: calc(20px + env(safe-area-inset-top));
+                padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Touch-friendly tap targets */
+        @media (pointer: coarse) {
+            .btn, .stat-card, .task-row { min-height: 44px; }
+            .task-action-btn { min-width: 44px; min-height: 44px; }
         }
     </style>
 </head>
@@ -725,5 +757,6 @@ ${task.completedAt ? `Completed: ${formatTime(task.completedAt)}` : ''}
         // Auto-refresh every 30 seconds
         setInterval(loadTasks, 30000);
     </script>
+    <script src="mobile-engine.js"></script>
 </body>
 </html>

@@ -44,6 +44,11 @@ echo Starting Hive-Mind (port 8701)...
 start "Hive-Mind" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\hive-mind && node hive-mind-server.js"
 call :healthcheck 8701 "Hive-Mind"
 
+REM Start Terminal Hub
+echo Starting Terminal Hub (port 8771)...
+start "Terminal Hub" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\terminal-hub && node terminal-hub-server.js"
+call :healthcheck 8771 "Terminal Hub"
+
 REM Start Hive Brain Admin
 echo Starting Hive Brain (port 8800)...
 start "Hive Brain" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\hive-brain && node server.js"
@@ -112,6 +117,7 @@ curl -s http://localhost:3002/api/health >nul 2>&1 && (echo   [OK] Oracle      :
 curl -s http://localhost:8500/api/health >nul 2>&1 && (echo   [OK] Master O    :8500) || (echo   [!!] Master O    :8500 OFFLINE)
 curl -s http://localhost:8585/api/health >nul 2>&1 && (echo   [OK] KittBox     :8585) || (echo   [!!] KittBox     :8585 OFFLINE)
 curl -s http://localhost:8701/api/health >nul 2>&1 && (echo   [OK] Hive-Mind   :8701) || (echo   [!!] Hive-Mind   :8701 OFFLINE)
+curl -s http://localhost:8771/api/health >nul 2>&1 && (echo   [OK] Term Hub    :8771) || (echo   [!!] Term Hub    :8771 OFFLINE)
 curl -s http://localhost:11434/api/tags >nul 2>&1 && (echo   [OK] Ollama      :11434) || (echo   [--] Ollama      :11434 not running)
 curl -s http://localhost:1234/v1/models >nul 2>&1 && (echo   [OK] LM Studio   :1234) || (echo   [--] LM Studio   :1234 not running)
 echo.
@@ -122,6 +128,7 @@ echo.
 echo Web UIs:
 echo   - KittBox:    http://localhost:8585
 echo   - Hive-Mind:  http://localhost:8701
+echo   - Term Hub:   http://localhost:8771
 echo   - Master O:   http://localhost:8500
 echo.
 goto :eof

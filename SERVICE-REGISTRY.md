@@ -1,5 +1,5 @@
 # Service Registry
-**Last Updated:** 2026-01-19
+**Last Updated:** 2026-01-20
 **Single source of truth for all services, ports, and endpoints**
 
 ---
@@ -19,6 +19,7 @@
 | 8621 | Google Drive | Optional | `node C:\LLM-DevOSWE\Admin\google-drive\drive-service.js` |
 | 8700 | Claude Bridge | Optional | `node C:\LLM-DevOSWE\Admin\claude-bridge\bridge-service.js` |
 | 8701 | Hive-Mind | Core | `node C:\LLM-DevOSWE\Admin\hive-mind\hive-mind-server.js` |
+| 8771 | Terminal Hub | Core | `node C:\LLM-DevOSWE\Admin\terminal-hub\terminal-hub-server.js` |
 | 8800 | Hive Brain | Core | `node C:\LLM-DevOSWE\Admin\hive-brain\server.js` |
 | 8850 | Hive Oracle | Core | `node C:\LLM-DevOSWE\Admin\hive-oracle\server.js` |
 | 11434 | Ollama | External | `ollama serve` |
@@ -85,6 +86,31 @@
   - `GET /api/health` - Health check
   - `GET /api/hive/status` - All services status
   - `GET /api/activity` - Activity log
+
+### Terminal Hub (Port 8771)
+- **Location:** `C:\LLM-DevOSWE\Admin\terminal-hub\terminal-hub-server.js`
+- **Purpose:** Web-based terminal manager, multi-shell support, process monitoring
+- **UI:** `http://localhost:8771`
+- **HTTPS:** `https://192.168.1.42:8443/terminal/` (via Caddy)
+- **WebSocket:** Real-time terminal I/O
+- **Endpoints:**
+  - `GET /api/health` - Health check
+  - `GET /api/terminals` - List all terminals
+  - `POST /api/terminals` - Create new terminal
+  - `DELETE /api/terminals/:id` - Kill terminal
+  - `GET /api/terminals/:id/buffer` - Get terminal output buffer
+  - `POST /api/terminals/wt` - Launch terminal in Windows Terminal
+  - `POST /api/terminals/bridge` - Receive bridged output from WT
+  - `GET /api/processes` - List running processes
+  - `POST /api/processes/attach` - Attach to process (monitor)
+  - `POST /api/processes/kill` - Kill a process
+  - `GET /api/wt/windows` - List Windows Terminal windows
+- **Features:**
+  - Multi-shell support (PowerShell, CMD, Git Bash)
+  - Real-time output streaming via WebSocket
+  - Process list with CPU/RAM/window title
+  - Windows Terminal integration with output bridging
+  - Mobile responsive UI
 
 ### Hive Brain (Port 8800)
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-brain\server.js`
