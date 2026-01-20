@@ -1,61 +1,73 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/**
+ * Speed Mini Widget
+ * SimWidget Engine v2.0.0 - Responsive Edition
+ * Uses glass-theme.css design system
+ */
 
-body {
-    margin: 0;
-    background: transparent;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-.miniwidget {
-    background: rgba(13, 17, 23, 0.9);
-    border: 1px solid rgba(100, 180, 255, 0.3);
-    border-radius: 8px;
-    padding: 8px 12px;
+.sw-mini {
+    padding: var(--sw-space-sm) var(--sw-space-md);
     text-align: center;
     position: relative;
-    min-width: 90px;
+    min-width: 100px;
+}
+
+.sw-mini .sw-conn {
+    position: absolute;
+    top: var(--sw-space-xs);
+    right: var(--sw-space-xs);
 }
 
 .mini-label {
-    font-size: 9px;
+    font-size: var(--sw-text-xs);
     font-weight: 600;
-    color: #64748b;
+    color: var(--sw-text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .mini-value {
-    font-size: 22px;
+    font-size: var(--sw-text-2xl);
     font-weight: 700;
-    color: #22c55e;
-    font-family: 'Consolas', 'Monaco', monospace;
+    font-family: var(--sw-font-mono);
     line-height: 1.2;
 }
 
 .mini-unit {
-    font-size: 8px;
+    font-size: var(--sw-text-xs);
     font-weight: 600;
-    color: #64748b;
+    color: var(--sw-text-muted);
     text-transform: uppercase;
 }
 
-.mini-conn {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    font-size: 8px;
-    color: #ef4444;
-}
-
-.mini-conn.connected {
-    color: #22c55e;
-}
-
 /* Speed specific - green */
-.miniwidget.speed .mini-value {
-    color: #22c55e;
+.mini-speed .mini-value {
+    color: var(--sw-accent-green);
+}
+
+/* ===========================================
+   RESPONSIVE - Container Queries
+   =========================================== */
+
+/* Extra small (< 80px) */
+@container widget (max-width: 79px) {
+    .sw-mini {
+        padding: var(--sw-space-xs);
+    }
+    .mini-value {
+        font-size: var(--sw-text-lg);
+    }
+    .mini-label,
+    .mini-unit {
+        font-size: 7px;
+    }
+}
+
+/* Large (120px+) */
+@container widget (min-width: 120px) {
+    .mini-value {
+        font-size: var(--sw-text-3xl);
+    }
+    .mini-label {
+        font-size: var(--sw-text-sm);
+    }
 }

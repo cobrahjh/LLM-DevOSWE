@@ -2,87 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Engine Display</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
     <link rel="stylesheet" href="widget.css">
 </head>
 <body>
-    <div class="widget engine-display">
-        <div class="widget-header">
-            <span class="conn-status" id="conn">●</span>
-            <span class="widget-title">ENGINE</span>
-            <span class="engine-status" id="eng-status">OFF</span>
+    <div class="sw-widget engine-display">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">ENGINE</span>
+            <span class="eng-status" id="eng-status">OFF</span>
         </div>
 
-        <div class="widget-content">
-            <!-- Throttle Gauge -->
-            <div class="gauge-section">
-                <div class="gauge throttle-gauge">
-                    <div class="gauge-label">THR</div>
-                    <div class="gauge-arc">
-                        <svg viewBox="0 0 100 60">
-                            <path class="arc-bg" d="M10,55 A45,45 0 0,1 90,55"/>
-                            <path class="arc-fill" id="thr-arc" d="M10,55 A45,45 0 0,1 90,55"/>
+        <div class="sw-content">
+            <!-- Gauge Section -->
+            <div class="eng-gauges">
+                <div class="eng-gauge">
+                    <div class="eng-gauge-label">THR</div>
+                    <div class="eng-gauge-arc">
+                        <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
+                            <path class="eng-arc-bg" d="M10,55 A45,45 0 0,1 90,55"/>
+                            <path class="eng-arc-fill cyan" id="thr-arc" d="M10,55 A45,45 0 0,1 90,55"/>
                         </svg>
                     </div>
-                    <div class="gauge-value" id="throttle">0%</div>
+                    <div class="eng-gauge-value" id="throttle">0%</div>
                 </div>
 
-                <div class="gauge n1-gauge">
-                    <div class="gauge-label">N1</div>
-                    <div class="gauge-arc">
-                        <svg viewBox="0 0 100 60">
-                            <path class="arc-bg" d="M10,55 A45,45 0 0,1 90,55"/>
-                            <path class="arc-fill green" id="n1-arc" d="M10,55 A45,45 0 0,1 90,55"/>
+                <div class="eng-gauge">
+                    <div class="eng-gauge-label">N1</div>
+                    <div class="eng-gauge-arc">
+                        <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
+                            <path class="eng-arc-bg" d="M10,55 A45,45 0 0,1 90,55"/>
+                            <path class="eng-arc-fill green" id="n1-arc" d="M10,55 A45,45 0 0,1 90,55"/>
                         </svg>
                     </div>
-                    <div class="gauge-value" id="n1">0%</div>
+                    <div class="eng-gauge-value green" id="n1">0%</div>
                 </div>
             </div>
 
-            <!-- Readings -->
-            <div class="readings-grid">
-                <div class="reading">
-                    <div class="reading-icon">⛽</div>
-                    <div class="reading-info">
-                        <div class="reading-label">FUEL FLOW</div>
-                        <div class="reading-value" id="fuel-flow">0 GPH</div>
+            <!-- Readings Grid -->
+            <div class="eng-readings">
+                <div class="eng-reading">
+                    <span class="eng-reading-icon">⛽</span>
+                    <div class="eng-reading-info">
+                        <span class="eng-reading-label">FUEL FLOW</span>
+                        <span class="eng-reading-value" id="fuel-flow">0 GPH</span>
                     </div>
                 </div>
 
-                <div class="reading">
-                    <div class="reading-icon">🛢️</div>
-                    <div class="reading-info">
-                        <div class="reading-label">FUEL QTY</div>
-                        <div class="reading-value" id="fuel-qty">0 GAL</div>
+                <div class="eng-reading">
+                    <span class="eng-reading-icon">🛢️</span>
+                    <div class="eng-reading-info">
+                        <span class="eng-reading-label">FUEL QTY</span>
+                        <span class="eng-reading-value" id="fuel-qty">0 GAL</span>
                     </div>
                 </div>
 
-                <div class="reading">
-                    <div class="reading-icon">🌡️</div>
-                    <div class="reading-info">
-                        <div class="reading-label">OIL TEMP</div>
-                        <div class="reading-value" id="oil-temp">0°C</div>
+                <div class="eng-reading">
+                    <span class="eng-reading-icon">🌡️</span>
+                    <div class="eng-reading-info">
+                        <span class="eng-reading-label">OIL TEMP</span>
+                        <span class="eng-reading-value" id="oil-temp">0°C</span>
                     </div>
                 </div>
 
-                <div class="reading">
-                    <div class="reading-icon">⏱️</div>
-                    <div class="reading-info">
-                        <div class="reading-label">OIL PRESS</div>
-                        <div class="reading-value" id="oil-press">0 PSI</div>
+                <div class="eng-reading">
+                    <span class="eng-reading-icon">⏱️</span>
+                    <div class="eng-reading-info">
+                        <span class="eng-reading-label">OIL PRESS</span>
+                        <span class="eng-reading-value" id="oil-press">0 PSI</span>
                     </div>
                 </div>
             </div>
 
             <!-- Fuel Bar -->
-            <div class="fuel-section">
-                <div class="fuel-header">
-                    <span class="fuel-label">FUEL LEVEL</span>
-                    <span class="fuel-pct" id="fuel-pct">0%</span>
+            <div class="eng-fuel">
+                <div class="eng-fuel-header">
+                    <span class="eng-fuel-label">FUEL LEVEL</span>
+                    <span class="eng-fuel-pct" id="fuel-pct">0%</span>
                 </div>
-                <div class="fuel-bar-container">
-                    <div class="fuel-bar" id="fuel-bar"></div>
+                <div class="eng-fuel-bar-container">
+                    <div class="eng-fuel-bar" id="fuel-bar"></div>
                 </div>
             </div>
         </div>

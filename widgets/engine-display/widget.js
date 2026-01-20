@@ -1,6 +1,6 @@
 /**
  * Engine Display Widget
- * SimWidget Engine v1.0.0
+ * SimWidget Engine v2.0.0 - Responsive Edition
  */
 
 class EngineWidget {
@@ -23,6 +23,7 @@ class EngineWidget {
     init() {
         this.cacheElements();
         this.connect();
+        this.startMockUpdate();
     }
 
     cacheElements() {
@@ -47,7 +48,6 @@ class EngineWidget {
         this.ws = new WebSocket(`ws://${host}:8080`);
 
         this.ws.onopen = () => {
-            console.log('[ENG] Connected to SimWidget');
             this.elements.conn.classList.add('connected');
         };
 
@@ -57,19 +57,12 @@ class EngineWidget {
                 if (msg.type === 'flightData') {
                     this.updateData(msg.data);
                 }
-            } catch (e) {
-                console.error('[ENG] Parse error:', e);
-            }
+            } catch (e) {}
         };
 
         this.ws.onclose = () => {
-            console.log('[ENG] Disconnected');
             this.elements.conn.classList.remove('connected');
             setTimeout(() => this.connect(), 3000);
-        };
-
-        this.ws.onerror = (err) => {
-            console.error('[ENG] WebSocket error:', err);
         };
     }
 
@@ -127,6 +120,28 @@ class EngineWidget {
         } else if (fuelPct < 30) {
             this.elements.fuelBar.classList.add('low');
         }
+    }
+
+    startMockUpdate() {
+        // Generate mock data for testing without sim
+        this.data = {
+            throttle: 75,
+            n1: 82.5,
+            fuelFlow: 28.4,
+            fuelQty: 65,
+            fuelCapacity: 100,
+            oilTemp: 85,
+            oilPress: 55,
+            engineRunning: true
+        };
+        this.updateUI();
+
+        // Animate values slowly
+        setInterval(() => {
+            this.data.n1 = 80 + Math.sin(Date.now() / 2000) * 5;
+            this.data.fuelFlow = 25 + Math.sin(Date.now() / 3000) * 5;
+            this.updateUI();
+        }, 100);
     }
 }
 

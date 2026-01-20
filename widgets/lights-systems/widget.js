@@ -1,6 +1,6 @@
 /**
  * Lights & Systems Widget
- * SimWidget Engine v1.0.0
+ * SimWidget Engine v2.0.0 - Responsive Edition
  */
 
 class LightsSystemsWidget {
@@ -24,6 +24,7 @@ class LightsSystemsWidget {
         this.cacheElements();
         this.setupEvents();
         this.connect();
+        this.startMockUpdate();
     }
 
     cacheElements() {
@@ -40,14 +41,6 @@ class LightsSystemsWidget {
             btnFlapsUp: document.getElementById('btn-flaps-up'),
             btnFlapsDn: document.getElementById('btn-flaps-dn'),
             btnBrake: document.getElementById('btn-brake'),
-            // Indicators
-            indNav: document.getElementById('ind-nav'),
-            indBcn: document.getElementById('ind-bcn'),
-            indStrb: document.getElementById('ind-strb'),
-            indLdg: document.getElementById('ind-ldg'),
-            indTaxi: document.getElementById('ind-taxi'),
-            indGear: document.getElementById('ind-gear'),
-            indBrake: document.getElementById('ind-brake'),
             // Status
             gearStatus: document.getElementById('gear-status'),
             flapsValue: document.getElementById('flaps-value'),
@@ -63,20 +56,59 @@ class LightsSystemsWidget {
                 this.elements[btn].addEventListener('click', (e) => {
                     const cmd = e.currentTarget.dataset.cmd;
                     if (cmd) this.sendCommand(cmd);
+                    // Toggle locally for demo
+                    const key = btn.replace('btn', '').toLowerCase();
+                    const dataKey = key === 'nav' ? 'navLight' :
+                                   key === 'bcn' ? 'beaconLight' :
+                                   key === 'strb' ? 'strobeLight' :
+                                   key === 'ldg' ? 'landingLight' :
+                                   key === 'taxi' ? 'taxiLight' : null;
+                    if (dataKey) {
+                        this.data[dataKey] = !this.data[dataKey];
+                        this.updateUI();
+                    }
                 });
             }
         });
 
-        // System buttons
-        const systemButtons = ['btnGear', 'btnFlapsUp', 'btnFlapsDn', 'btnBrake'];
-        systemButtons.forEach(btn => {
-            if (this.elements[btn]) {
-                this.elements[btn].addEventListener('click', (e) => {
-                    const cmd = e.currentTarget.dataset.cmd;
-                    if (cmd) this.sendCommand(cmd);
-                });
-            }
-        });
+        // Gear button
+        if (this.elements.btnGear) {
+            this.elements.btnGear.addEventListener('click', (e) => {
+                const cmd = e.currentTarget.dataset.cmd;
+                if (cmd) this.sendCommand(cmd);
+                this.data.gearDown = !this.data.gearDown;
+                this.updateUI();
+            });
+        }
+
+        // Flaps buttons
+        if (this.elements.btnFlapsUp) {
+            this.elements.btnFlapsUp.addEventListener('click', (e) => {
+                const cmd = e.currentTarget.dataset.cmd;
+                if (cmd) this.sendCommand(cmd);
+                this.data.flapsIndex = Math.max(0, this.data.flapsIndex - 1);
+                this.updateUI();
+            });
+        }
+
+        if (this.elements.btnFlapsDn) {
+            this.elements.btnFlapsDn.addEventListener('click', (e) => {
+                const cmd = e.currentTarget.dataset.cmd;
+                if (cmd) this.sendCommand(cmd);
+                this.data.flapsIndex = Math.min(4, this.data.flapsIndex + 1);
+                this.updateUI();
+            });
+        }
+
+        // Brake button
+        if (this.elements.btnBrake) {
+            this.elements.btnBrake.addEventListener('click', (e) => {
+                const cmd = e.currentTarget.dataset.cmd;
+                if (cmd) this.sendCommand(cmd);
+                this.data.parkingBrake = !this.data.parkingBrake;
+                this.updateUI();
+            });
+        }
     }
 
     connect() {
@@ -84,7 +116,6 @@ class LightsSystemsWidget {
         this.ws = new WebSocket(`ws://${host}:8080`);
 
         this.ws.onopen = () => {
-            console.log('[LS] Connected to SimWidget');
             this.elements.conn.classList.add('connected');
         };
 
@@ -94,19 +125,12 @@ class LightsSystemsWidget {
                 if (msg.type === 'flightData') {
                     this.updateData(msg.data);
                 }
-            } catch (e) {
-                console.error('[LS] Parse error:', e);
-            }
+            } catch (e) {}
         };
 
         this.ws.onclose = () => {
-            console.log('[LS] Disconnected');
             this.elements.conn.classList.remove('connected');
             setTimeout(() => this.connect(), 3000);
-        };
-
-        this.ws.onerror = (err) => {
-            console.error('[LS] WebSocket error:', err);
         };
     }
 
@@ -151,6 +175,21 @@ class LightsSystemsWidget {
         // Parking Brake
         this.elements.btnBrake.classList.toggle('active', this.data.parkingBrake);
         this.elements.brakeStatus.textContent = this.data.parkingBrake ? 'SET' : 'OFF';
+    }
+
+    startMockUpdate() {
+        // Generate mock data for testing without sim
+        this.data = {
+            navLight: true,
+            beaconLight: true,
+            strobeLight: false,
+            landingLight: false,
+            taxiLight: false,
+            gearDown: true,
+            flapsIndex: 0,
+            parkingBrake: true
+        };
+        this.updateUI();
     }
 }
 

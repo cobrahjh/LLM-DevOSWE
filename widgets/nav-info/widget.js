@@ -1,6 +1,6 @@
 /**
  * Navigation Info Widget
- * SimWidget Engine v1.0.0
+ * SimWidget Engine v2.0.0 - Responsive Edition
  */
 
 class NavInfoWidget {
@@ -12,8 +12,7 @@ class NavInfoWidget {
             lon: 0,
             track: 0,
             windDir: 0,
-            windSpd: 0,
-            localTime: 0
+            windSpd: 0
         };
         this.init();
     }
@@ -22,6 +21,7 @@ class NavInfoWidget {
         this.cacheElements();
         this.connect();
         this.startTimeUpdate();
+        this.startMockUpdate();
     }
 
     cacheElements() {
@@ -39,11 +39,13 @@ class NavInfoWidget {
 
     startTimeUpdate() {
         // Update real-world time every second
-        setInterval(() => {
+        const updateTime = () => {
             const now = new Date();
             this.elements.utcTime.textContent = now.toUTCString().slice(17, 25);
             this.elements.localTime.textContent = now.toLocaleTimeString('en-US', { hour12: false });
-        }, 1000);
+        };
+        updateTime();
+        setInterval(updateTime, 1000);
     }
 
     connect() {
@@ -51,7 +53,6 @@ class NavInfoWidget {
         this.ws = new WebSocket(`ws://${host}:8080`);
 
         this.ws.onopen = () => {
-            console.log('[NAV] Connected to SimWidget');
             this.elements.conn.classList.add('connected');
         };
 
@@ -61,19 +62,12 @@ class NavInfoWidget {
                 if (msg.type === 'flightData') {
                     this.updateData(msg.data);
                 }
-            } catch (e) {
-                console.error('[NAV] Parse error:', e);
-            }
+            } catch (e) {}
         };
 
         this.ws.onclose = () => {
-            console.log('[NAV] Disconnected');
             this.elements.conn.classList.remove('connected');
             setTimeout(() => this.connect(), 3000);
-        };
-
-        this.ws.onerror = (err) => {
-            console.error('[NAV] WebSocket error:', err);
         };
     }
 
@@ -116,6 +110,25 @@ class NavInfoWidget {
 
         // Rotate wind arrow to show direction wind is coming FROM
         this.elements.windArrow.style.transform = `rotate(${this.data.windDir}deg)`;
+    }
+
+    startMockUpdate() {
+        // Generate mock data for testing without sim
+        this.data = {
+            lat: 47.4502,
+            lon: -122.3088,
+            track: 270,
+            windDir: 315,
+            windSpd: 12
+        };
+        this.updateUI();
+
+        // Animate track slowly
+        setInterval(() => {
+            this.data.track = (this.data.track + 0.1) % 360;
+            this.data.windDir = (this.data.windDir + 0.05) % 360;
+            this.updateUI();
+        }, 100);
     }
 }
 
