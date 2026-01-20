@@ -1,0 +1,10 @@
+{
+    "id": "checklist",
+    "name": "Checklist",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Interactive flight checklists with auto-detection",
+    "type": "widget",
+    "size": { "width": 260, "height": 380 },
+    "minSize": { "width": 220, "height": 320 }
+}

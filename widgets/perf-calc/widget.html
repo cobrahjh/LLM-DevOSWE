@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Performance Calculator</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="sw-widget perf-calc">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">PERF</span>
+            <div class="pc-mode-tabs">
+                <button class="pc-tab active" data-mode="takeoff">T/O</button>
+                <button class="pc-tab" data-mode="landing">LDG</button>
+            </div>
+        </div>
+
+        <div class="sw-content">
+            <!-- Input Section -->
+            <div class="pc-inputs">
+                <div class="pc-input-row">
+                    <label>Weight</label>
+                    <input type="number" id="weight" value="65000" step="1000">
+                    <span class="pc-unit">kg</span>
+                </div>
+                <div class="pc-input-row">
+                    <label>Elevation</label>
+                    <input type="number" id="elevation" value="0" step="100">
+                    <span class="pc-unit">ft</span>
+                </div>
+                <div class="pc-input-row">
+                    <label>Temp</label>
+                    <input type="number" id="temp" value="15" step="1">
+                    <span class="pc-unit">C</span>
+                </div>
+                <div class="pc-input-row">
+                    <label>Wind</label>
+                    <input type="number" id="wind" value="0" step="5">
+                    <span class="pc-unit">kt</span>
+                </div>
+                <div class="pc-input-row">
+                    <label>Flaps</label>
+                    <select id="flaps">
+                        <option value="1">1</option>
+                        <option value="5" selected>5</option>
+                        <option value="15">15</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="pc-calc-btn" id="calculate">CALCULATE</button>
+
+            <!-- Takeoff Results -->
+            <div class="pc-results" id="takeoff-results">
+                <div class="pc-vspeeds">
+                    <div class="pc-vspeed">
+                        <span class="pc-v-label">V1</span>
+                        <span class="pc-v-value" id="v1">---</span>
+                    </div>
+                    <div class="pc-vspeed">
+                        <span class="pc-v-label">Vr</span>
+                        <span class="pc-v-value" id="vr">---</span>
+                    </div>
+                    <div class="pc-vspeed">
+                        <span class="pc-v-label">V2</span>
+                        <span class="pc-v-value" id="v2">---</span>
+                    </div>
+                </div>
+                <div class="pc-runway">
+                    <span class="pc-rwy-label">TODR</span>
+                    <span class="pc-rwy-value" id="todr">----</span>
+                    <span class="pc-rwy-unit">m</span>
+                </div>
+                <div class="pc-flex">
+                    <span class="pc-flex-label">FLEX</span>
+                    <span class="pc-flex-value" id="flex">--</span>
+                    <span class="pc-flex-unit">C</span>
+                </div>
+            </div>
+
+            <!-- Landing Results -->
+            <div class="pc-results hidden" id="landing-results">
+                <div class="pc-vspeeds">
+                    <div class="pc-vspeed">
+                        <span class="pc-v-label">Vapp</span>
+                        <span class="pc-v-value" id="vapp">---</span>
+                    </div>
+                    <div class="pc-vspeed">
+                        <span class="pc-v-label">Vref</span>
+                        <span class="pc-v-value" id="vref">---</span>
+                    </div>
+                </div>
+                <div class="pc-runway">
+                    <span class="pc-rwy-label">LDR</span>
+                    <span class="pc-rwy-value" id="ldr">----</span>
+                    <span class="pc-rwy-unit">m</span>
+                </div>
+                <div class="pc-config">
+                    <span class="pc-cfg-label">CONFIG</span>
+                    <span class="pc-cfg-value" id="config">FULL</span>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="pc-status" id="status">Ready</div>
+        </div>
+    </div>
+    <script src="widget.js"></script>
+</body>
+</html>

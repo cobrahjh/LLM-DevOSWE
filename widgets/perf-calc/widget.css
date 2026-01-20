@@ -1,0 +1,210 @@
+.perf-calc {
+    width: 280px;
+}
+
+/* Mode Tabs */
+.pc-mode-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.pc-tab {
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--sw-text-muted);
+    background: transparent;
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.pc-tab:hover {
+    color: var(--sw-text-primary);
+    border-color: var(--sw-border-medium);
+}
+
+.pc-tab.active {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}
+
+/* Inputs */
+.pc-inputs {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.pc-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.pc-input-row:last-child {
+    margin-bottom: 0;
+}
+
+.pc-input-row label {
+    width: 60px;
+    font-size: 11px;
+    color: var(--sw-text-muted);
+}
+
+.pc-input-row input,
+.pc-input-row select {
+    flex: 1;
+    height: 26px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-primary);
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    outline: none;
+}
+
+.pc-input-row input:focus,
+.pc-input-row select:focus {
+    border-color: var(--sw-accent-cyan);
+}
+
+.pc-unit {
+    width: 24px;
+    font-size: 10px;
+    color: var(--sw-text-dim);
+}
+
+/* Calculate Button */
+.pc-calc-btn {
+    width: 100%;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sw-text-primary);
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.1) 100%);
+    border: 1px solid var(--sw-accent-cyan);
+    border-radius: var(--sw-radius-md);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+    margin-bottom: 10px;
+}
+
+.pc-calc-btn:hover {
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.3) 0%, rgba(0, 212, 255, 0.15) 100%);
+}
+
+.pc-calc-btn:active {
+    transform: scale(0.98);
+}
+
+/* Results */
+.pc-results {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.pc-results.hidden {
+    display: none;
+}
+
+/* V-Speeds */
+.pc-vspeeds {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--sw-border-subtle);
+}
+
+.pc-vspeed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.pc-v-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--sw-accent-cyan);
+}
+
+.pc-v-value {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-primary);
+}
+
+/* Runway */
+.pc-runway,
+.pc-flex,
+.pc-config {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.pc-rwy-label,
+.pc-flex-label,
+.pc-cfg-label {
+    font-size: 10px;
+    color: var(--sw-text-muted);
+}
+
+.pc-rwy-value {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-green);
+}
+
+.pc-rwy-unit,
+.pc-flex-unit {
+    font-size: 10px;
+    color: var(--sw-text-dim);
+}
+
+.pc-flex-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-yellow);
+}
+
+.pc-cfg-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sw-text-primary);
+}
+
+/* Status */
+.pc-status {
+    text-align: center;
+    font-size: 10px;
+    color: var(--sw-text-dim);
+    padding: 6px;
+    background: var(--sw-bg-tertiary);
+    border-radius: var(--sw-radius-sm);
+}
+
+.pc-status.calculated {
+    color: var(--sw-accent-green);
+}
+
+.pc-status.error {
+    color: var(--sw-accent-red);
+}

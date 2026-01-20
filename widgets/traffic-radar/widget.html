@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Traffic Radar</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="sw-widget traffic-radar">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">Traffic</span>
+            <span class="tr-count" id="traffic-count">0</span>
+        </div>
+
+        <div class="sw-content">
+            <!-- Radar Display -->
+            <div class="tr-radar">
+                <canvas id="traffic-canvas" width="228" height="180"></canvas>
+                <div class="tr-overlay">
+                    <div class="tr-aircraft">▲</div>
+                    <div class="tr-range" id="radar-range">10 NM</div>
+                </div>
+            </div>
+
+            <!-- Range Control -->
+            <div class="tr-controls">
+                <button class="tr-range-btn" data-range="5">5</button>
+                <button class="tr-range-btn active" data-range="10">10</button>
+                <button class="tr-range-btn" data-range="20">20</button>
+                <button class="tr-range-btn" data-range="40">40</button>
+                <span class="tr-range-label">NM</span>
+            </div>
+
+            <!-- Traffic List -->
+            <div class="tr-list" id="traffic-list">
+                <!-- Traffic items populated by JS -->
+            </div>
+
+            <!-- Legend -->
+            <div class="tr-legend">
+                <div class="tr-legend-item"><span class="tr-icon proximate">◇</span>Proximate</div>
+                <div class="tr-legend-item"><span class="tr-icon ta">○</span>TA</div>
+                <div class="tr-legend-item"><span class="tr-icon ra">■</span>RA</div>
+            </div>
+        </div>
+    </div>
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+    "id": "weather-radar",
+    "name": "Weather Radar",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Weather radar display with METAR and wind layers",
+    "type": "widget",
+    "size": { "width": 280, "height": 320 },
+    "minSize": { "width": 240, "height": 280 }
+}

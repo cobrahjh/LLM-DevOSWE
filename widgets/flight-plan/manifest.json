@@ -1,0 +1,10 @@
+{
+    "id": "flight-plan",
+    "name": "Flight Plan",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Active flight plan with waypoints, ETE/ETA, and direct-to",
+    "type": "widget",
+    "size": { "width": 280, "height": 360 },
+    "minSize": { "width": 240, "height": 300 }
+}

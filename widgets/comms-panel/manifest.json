@@ -1,0 +1,10 @@
+{
+    "id": "comms-panel",
+    "name": "Comms Panel",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Radio communications panel with ATC frequencies",
+    "type": "widget",
+    "size": { "width": 260, "height": 280 },
+    "minSize": { "width": 220, "height": 240 }
+}

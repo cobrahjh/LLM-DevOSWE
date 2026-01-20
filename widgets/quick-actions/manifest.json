@@ -1,0 +1,10 @@
+{
+    "id": "quick-actions",
+    "name": "Quick Actions",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Radial menu for quick access to common flight actions",
+    "type": "widget",
+    "size": { "width": 260, "height": 260 },
+    "minSize": { "width": 220, "height": 220 }
+}

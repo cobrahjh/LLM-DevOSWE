@@ -1,0 +1,129 @@
+.moving-map {
+    width: 300px;
+}
+
+/* Range Buttons */
+.mm-range-btns {
+    display: flex;
+    gap: 3px;
+}
+
+.mm-range-btn {
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--sw-text-muted);
+    background: transparent;
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.mm-range-btn:hover {
+    color: var(--sw-text-primary);
+    border-color: var(--sw-border-medium);
+}
+
+.mm-range-btn.active {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}
+
+/* Map Container */
+.mm-map-container {
+    position: relative;
+    background: rgba(0, 20, 40, 0.9);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+#map-canvas {
+    display: block;
+    width: 100%;
+    height: 220px;
+}
+
+.mm-compass {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-cyan);
+    background: rgba(0, 20, 40, 0.8);
+    border: 1px solid var(--sw-accent-cyan);
+    border-radius: var(--sw-radius-sm);
+}
+
+/* Info Bar */
+.mm-info-bar {
+    display: flex;
+    justify-content: space-around;
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.mm-info-item {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.mm-info-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--sw-text-dim);
+}
+
+.mm-info-value {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-primary);
+}
+
+.mm-info-unit {
+    font-size: 9px;
+    color: var(--sw-text-dim);
+}
+
+/* Mode Buttons */
+.mm-mode-btns {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+.mm-mode-btn {
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--sw-text-muted);
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.mm-mode-btn:hover {
+    color: var(--sw-text-primary);
+    border-color: var(--sw-border-medium);
+}
+
+.mm-mode-btn.active {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}

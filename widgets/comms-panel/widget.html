@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Comms Panel</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="sw-widget comms-panel">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">Communications</span>
+        </div>
+
+        <div class="sw-content">
+            <!-- COM1 -->
+            <div class="radio-block">
+                <div class="radio-header">
+                    <span class="radio-label">COM1</span>
+                    <span class="radio-active" id="com1-active">118.700</span>
+                </div>
+                <div class="radio-standby">
+                    <span class="radio-stby-label">STBY</span>
+                    <input type="text" class="radio-input" id="com1-stby" value="121.500">
+                    <button class="radio-swap" id="com1-swap">⇄</button>
+                </div>
+            </div>
+
+            <!-- COM2 -->
+            <div class="radio-block">
+                <div class="radio-header">
+                    <span class="radio-label">COM2</span>
+                    <span class="radio-active" id="com2-active">124.850</span>
+                </div>
+                <div class="radio-standby">
+                    <span class="radio-stby-label">STBY</span>
+                    <input type="text" class="radio-input" id="com2-stby" value="122.800">
+                    <button class="radio-swap" id="com2-swap">⇄</button>
+                </div>
+            </div>
+
+            <!-- NAV1 -->
+            <div class="radio-block nav">
+                <div class="radio-header">
+                    <span class="radio-label">NAV1</span>
+                    <span class="radio-active" id="nav1-active">110.50</span>
+                </div>
+                <div class="radio-standby">
+                    <span class="radio-stby-label">STBY</span>
+                    <input type="text" class="radio-input" id="nav1-stby" value="108.00">
+                    <button class="radio-swap" id="nav1-swap">⇄</button>
+                </div>
+            </div>
+
+            <!-- Quick Frequencies -->
+            <div class="freq-presets">
+                <div class="freq-header">QUICK TUNE</div>
+                <div class="freq-grid">
+                    <button class="freq-btn" data-freq="121.500">EMER</button>
+                    <button class="freq-btn" data-freq="122.800">UNICOM</button>
+                    <button class="freq-btn" data-freq="123.450">AIR-AIR</button>
+                    <button class="freq-btn" data-freq="118.000">ATIS</button>
+                </div>
+            </div>
+
+            <!-- Transponder -->
+            <div class="xpdr-block">
+                <div class="xpdr-header">
+                    <span class="radio-label">XPDR</span>
+                    <div class="xpdr-mode">
+                        <button class="xpdr-mode-btn" data-mode="stby">STBY</button>
+                        <button class="xpdr-mode-btn active" data-mode="alt">ALT</button>
+                    </div>
+                </div>
+                <div class="xpdr-code">
+                    <input type="text" class="xpdr-input" id="xpdr-code" value="1200" maxlength="4">
+                    <button class="sw-btn sw-btn-sm" id="xpdr-ident">IDENT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="widget.js"></script>
+</body>
+</html>

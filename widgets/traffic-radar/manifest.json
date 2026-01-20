@@ -1,0 +1,10 @@
+{
+    "id": "traffic-radar",
+    "name": "Traffic Radar",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "TCAS-style traffic display with nearby aircraft",
+    "type": "widget",
+    "size": { "width": 260, "height": 300 },
+    "minSize": { "width": 220, "height": 260 }
+}

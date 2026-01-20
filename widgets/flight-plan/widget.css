@@ -1,0 +1,180 @@
+.flight-plan {
+    width: 280px;
+}
+
+.fp-progress {
+    margin-bottom: 12px;
+}
+
+.fp-progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.fp-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--sw-text-muted);
+}
+
+.fp-value {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-cyan);
+}
+
+/* Next Waypoint */
+.fp-next {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.fp-next-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.sw-btn-sm {
+    padding: 4px 10px;
+    font-size: 10px;
+}
+
+.fp-waypoint-name {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-cyan);
+    margin-bottom: 8px;
+}
+
+.fp-waypoint-info {
+    display: flex;
+    gap: 16px;
+}
+
+.fp-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fp-info-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+}
+
+.fp-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-primary);
+}
+
+.fp-info-value.green {
+    color: var(--sw-accent-green);
+}
+
+/* Waypoint List */
+.fp-list {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.fp-list-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+}
+
+.fp-list-body {
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.fp-list-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-secondary);
+    border-bottom: 1px solid var(--sw-border-subtle);
+    transition: all var(--sw-transition-fast);
+}
+
+.fp-list-item:last-child {
+    border-bottom: none;
+}
+
+.fp-list-item:hover {
+    background: rgba(0, 212, 255, 0.05);
+}
+
+.fp-list-item.active {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--sw-accent-cyan);
+}
+
+.fp-list-item.passed {
+    color: var(--sw-text-dim);
+    opacity: 0.6;
+}
+
+/* Destination */
+.fp-destination {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-medium);
+    border-radius: var(--sw-radius-md);
+    padding: 10px 12px;
+}
+
+.fp-dest-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fp-dest-row:first-child {
+    margin-bottom: 8px;
+}
+
+.fp-dest-icao {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-green);
+}
+
+/* Scrollbar */
+.fp-list-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.fp-list-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fp-list-body::-webkit-scrollbar-thumb {
+    background: var(--sw-border-medium);
+    border-radius: 2px;
+}

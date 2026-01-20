@@ -1,0 +1,10 @@
+{
+    "id": "moving-map",
+    "name": "Moving Map",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Simple moving map with aircraft position and waypoints",
+    "type": "widget",
+    "size": { "width": 300, "height": 300 },
+    "minSize": { "width": 250, "height": 250 }
+}

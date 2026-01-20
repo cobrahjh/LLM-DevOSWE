@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Moving Map</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="sw-widget moving-map">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">MAP</span>
+            <div class="mm-range-btns">
+                <button class="mm-range-btn" data-range="10">10</button>
+                <button class="mm-range-btn active" data-range="25">25</button>
+                <button class="mm-range-btn" data-range="50">50</button>
+                <button class="mm-range-btn" data-range="100">100</button>
+            </div>
+        </div>
+
+        <div class="sw-content">
+            <!-- Map Canvas -->
+            <div class="mm-map-container">
+                <canvas id="map-canvas" width="268" height="220"></canvas>
+                <div class="mm-compass">
+                    <span id="compass-hdg">360</span>
+                </div>
+            </div>
+
+            <!-- Info Bar -->
+            <div class="mm-info-bar">
+                <div class="mm-info-item">
+                    <span class="mm-info-label">GS</span>
+                    <span class="mm-info-value" id="ground-speed">---</span>
+                    <span class="mm-info-unit">kt</span>
+                </div>
+                <div class="mm-info-item">
+                    <span class="mm-info-label">TRK</span>
+                    <span class="mm-info-value" id="track">---</span>
+                    <span class="mm-info-unit">&deg;</span>
+                </div>
+                <div class="mm-info-item">
+                    <span class="mm-info-label">ALT</span>
+                    <span class="mm-info-value" id="altitude">-----</span>
+                    <span class="mm-info-unit">ft</span>
+                </div>
+            </div>
+
+            <!-- Mode Buttons -->
+            <div class="mm-mode-btns">
+                <button class="mm-mode-btn active" data-mode="north">N UP</button>
+                <button class="mm-mode-btn" data-mode="track">TRK UP</button>
+                <button class="mm-mode-btn" data-mode="hdg">HDG UP</button>
+            </div>
+        </div>
+    </div>
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+    "id": "perf-calc",
+    "name": "Performance Calculator",
+    "version": "1.0.0",
+    "author": "SimWidget",
+    "description": "Takeoff and landing performance calculator",
+    "type": "widget",
+    "size": { "width": 280, "height": 380 },
+    "minSize": { "width": 240, "height": 320 }
+}
