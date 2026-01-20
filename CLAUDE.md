@@ -551,31 +551,44 @@ C:\LLM-DevOSWE\start-hive.bat
 
 ## User Shortcuts
 
-- `msg` - check messages - poll relay for pending Kitt messages
-- `mem` - memory - add to CLAUDE.md for future reference
-- `ntt` - next todo task - work on next item from todo list
-- `br` - add to todo options - add feature/option to todo module
-- `mst` - make standard - add pattern/convention to STANDARDS.md
-- `memstandards` - session reflection - review work and add patterns to STANDARDS.md
-- `psreflect` - project reflection - give recommendations based on experience
-- `ts` - test this - run tests on recent changes
-- `rst` - reset - reset stuck services/state
-- `rfr` - refactor from standards - refactor code to follow STANDARDS.md
-- `chk` - check/verify - check status, syntax, or state
-- `opn` - open UI - open browser to test
-- `syn` - sync - test sync/reconcile features
-- `cls` - clear/clean - clear stuck queues, logs, cache
-- `idt` - I don't think/know - signals uncertainty, needs clarification
-- `adi` - add debug item - add item to Debug Inspector
-- `vl` - voice log - show/manage voice output history
-- `syncmem` - sync memory - backup CLAUDE.md and STANDARDS.md to database
-- `ayb` - are you busy? - check if Claude is ready for next task
-- `dinsp` - debug inspector - refers to Debug Inspector tool/menu
-- `wpan` - window/panel - refers to floating windows or panels
-- `rvw` - review - review code for issues, clean up, optimize
-- `hivesanitycheck` - hive sanity check - check all hive info (services status, ports, health, logs)
-- `cs` - check screenshots - look at C:\Users\hjhar\OneDrive\Pictures\screenshoots (move read screenshots to backup/ subfolder after processing)
-- `scg` - check Google Drive screenshots - look at G:\My Drive\AI Development\Screenshots (move read screenshots to backup/ subfolder after processing)
+### Memory & Documentation
+- `mem` - add to CLAUDE.md for future reference
+- `mst` - add pattern/convention to STANDARDS.md
+- `memstandards` - review session work, add patterns to STANDARDS.md
+- `syncmem` - backup CLAUDE.md and STANDARDS.md to database
+- `syncmemproj` - merge and backup project docs to database
+- `syncmemall` - merge and backup all projects docs to database
+
+### Tasks & Workflow
+- `ntt` - work on next item from todo list
+- `br` - add feature/option to todo module
+- `ts` - run tests on recent changes
+- `rvw` - review code for issues, clean up, optimize
+- `rfr` - refactor code to follow STANDARDS.md
+- `psreflect` - give recommendations based on experience
+
+### Communication
+- `msg` - poll relay for pending Kitt messages
+- `ayb` - check if Claude is ready for next task
+- `idt` - signals uncertainty, needs clarification
+
+### Development
+- `chk` - check status, syntax, or state
+- `opn` - open browser to test
+- `syn` - test sync/reconcile features
+- `cls` - clear stuck queues, logs, cache
+- `rst` - reset stuck services/state
+
+### Debug & Tools
+- `adi` - add item to Debug Inspector
+- `dinsp` - open Debug Inspector tool/menu
+- `vl` - show/manage voice output history
+- `wpan` - refers to floating windows or panels
+
+### System & Screenshots
+- `hivesanitycheck` - check all hive info (services, ports, health, logs)
+- `cs` - check OneDrive screenshots (move to backup/ after processing)
+- `scg` - check Google Drive screenshots (move to backup/ after processing)
 
 ## Memory & Standards Persistence
 
@@ -890,6 +903,15 @@ For existing projects that just need terminal setup:
 |---------|-------|-----|
 | LLM-DevOSWE | Blue (1F) | #0066CC |
 | kittbox-web | Red (4F) | #CC3300 |
+
+### Browser Testing & Debugging
+
+**Chrome DevTools** - Built-in browser troubleshooting and mobile preview:
+- Open DevTools: F12 or Ctrl+Shift+I
+- Mobile preview: Ctrl+Shift+M (Device Mode)
+- Presets: Samsung Galaxy S20 Ultra, iPhone, iPad, or custom dimensions
+- Network throttling, console, DOM inspection, Performance profiling
+- No installation needed - instant mobile layout testing
 
 ## Security Tools
 
