@@ -661,6 +661,59 @@ When documenting lists of commands, shortcuts, or features, organize by category
 - Debug & Tools
 - System & Screenshots
 
+### Responsive Design Prototype
+All widgets and web UIs must follow modern responsive standards:
+
+**Required HTML:**
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+```
+
+**Required CSS Variables:**
+```css
+:root {
+    /* Fluid Typography with clamp() */
+    --text-sm: clamp(10px, 2.5vw, 11px);
+    --text-md: clamp(11px, 3vw, 13px);
+    --text-lg: clamp(14px, 3.5vw, 16px);
+    --text-xl: clamp(16px, 4vw, 20px);
+
+    /* Fluid Spacing */
+    --space-sm: clamp(6px, 1.5vw, 10px);
+    --space-md: clamp(10px, 2.5vw, 16px);
+
+    /* Touch Target Minimum */
+    --touch-min: 44px;
+}
+```
+
+**Container Queries (Component-Based):**
+```css
+.widget {
+    container-type: inline-size;
+    container-name: widget;
+}
+
+@container widget (max-width: 299px) {
+    /* Small widget styles */
+}
+
+@container widget (min-width: 300px) {
+    /* Medium widget styles */
+}
+```
+
+**Required Features:**
+- Container queries for component-based responsiveness
+- Fluid typography with `clamp()`
+- Touch targets minimum 44px
+- Dynamic viewport units (`dvh`, `svh`)
+- Safe area insets: `env(safe-area-inset-*)`
+- Reduced motion support: `@media (prefers-reduced-motion)`
+- High contrast support: `@media (prefers-contrast: high)`
+
+**Reference:** `widgets/shared/glass-theme.css` v2.0.0
+
 ---
 
 ## Adding New Standards

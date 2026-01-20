@@ -1096,11 +1096,35 @@ SimWidget_Engine/
 │   ├── preload.js            
 │   └── renderer/             
 ├── widgets/                   # User widgets go here
+│   └── shared/glass-theme.css # Responsive design system v2.0.0
 ├── CLAUDE.md                  # This file
 ├── ARCHITECTURE-V2.md         # System architecture v2.1
 ├── TODO.md                    # Development todo list
 └── README.md                  # User documentation
 ```
+
+## Widget Design System
+
+**Glass Theme v2.0.0** (`widgets/shared/glass-theme.css`)
+
+MSFS 2024-inspired responsive design system with:
+- CSS Container Queries for component-based responsiveness
+- Fluid typography with `clamp()`
+- Touch targets minimum 44px
+- Dynamic viewport units (`dvh`)
+- Safe area insets for notched devices
+- Reduced motion & high contrast support
+
+**Required viewport meta:**
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+```
+
+**Prototype widgets using this system:**
+- flight-plan, weather-radar, checklist, comms-panel
+- traffic-radar, perf-calc, moving-map, quick-actions
+
+See `STANDARDS.md` → Responsive Design Prototype for full implementation details.
 
 ## Key Components
 
