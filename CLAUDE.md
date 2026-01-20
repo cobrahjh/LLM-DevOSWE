@@ -52,6 +52,7 @@ curl -X POST http://localhost:8500/api/services/hiveoracle/restart
 - **Remote:** Iris @ 192.168.1.162:1234 (ai-pc fallback)
 
 ### User Shortcuts (say these to Claude)
+- `sqr` - show quick reference (this cheat sheet)
 - `msg` - check relay messages
 - `mem` - add to CLAUDE.md
 - `mst` - add to STANDARDS.md
