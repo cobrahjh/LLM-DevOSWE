@@ -1,11 +1,13 @@
 /**
- * SimWidget Master (O) v1.1.0
+ * SimWidget Master (O) v1.2.0
  *
  * Master service orchestrator - survives when child services fail
  *
  * Path: C:\LLM-DevOSWE\Admin\orchestrator\orchestrator.js
- * Last Updated: 2026-01-11
+ * Last Updated: 2026-01-20
  *
+ * v1.2.0 - Added Hive-Mind, Terminal Hub, Hive Brain, Hive Oracle to watchdog
+ *        - Added spawn fallback for services without Windows Services
  * v1.1.0 - Switched to Windows Services for all managed services
  *        - Removed spawn fallback (all services are Windows Services now)
  * 
@@ -142,6 +144,50 @@ const SERVICES = {
         priority: 6,
         autoRestart: true,
         type: 'native'  // Flag for native Windows service (no Node.js)
+    },
+    hivemind: {
+        id: 'hivemind',
+        name: 'Hive-Mind Monitor',
+        port: 8701,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-mind'),
+        start: 'node hive-mind-server.js',
+        winService: null,  // No Windows Service yet
+        healthEndpoint: '/api/health',
+        priority: 7,
+        autoRestart: true
+    },
+    terminalhub: {
+        id: 'terminalhub',
+        name: 'Terminal Hub',
+        port: 8771,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'terminal-hub'),
+        start: 'node terminal-hub-server.js',
+        winService: null,  // No Windows Service yet
+        healthEndpoint: '/api/health',
+        priority: 8,
+        autoRestart: true
+    },
+    hivebrain: {
+        id: 'hivebrain',
+        name: 'Hive Brain Admin',
+        port: 8800,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-brain'),
+        start: 'node server.js',
+        winService: null,  // No Windows Service yet
+        healthEndpoint: '/api/health',
+        priority: 9,
+        autoRestart: true
+    },
+    hiveoracle: {
+        id: 'hiveoracle',
+        name: 'Hive Oracle (LLM)',
+        port: 8850,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-oracle'),
+        start: 'node server.js',
+        winService: null,  // No Windows Service yet
+        healthEndpoint: '/api/health',
+        priority: 10,
+        autoRestart: true
     }
 };
 
@@ -344,30 +390,40 @@ async function startService(serviceId) {
 
     log(`[Service] Starting ${svc.name}...`);
 
-    // All services are Windows Services now
-    if (!svc.winService) {
-        log(`[Service] ${svc.name} has no Windows Service configured`, 'ERROR');
-        return { success: false, error: 'No Windows Service configured' };
+    // Try Windows Service first if configured
+    if (svc.winService) {
+        const winSvcExists = await checkWinServiceExists(svc.winService);
+        if (winSvcExists) {
+            log(`[Service] Starting Windows Service: ${svc.winService}`);
+            const result = await startViaWinService(svc.winService);
+            if (result.success) {
+                state.lastStart = new Date().toISOString();
+                state.startMethod = 'winservice';
+                log(`[Service] ${svc.name} ${result.message}`);
+                return result;
+            }
+            log(`[Service] Windows Service start failed: ${result.error}, trying spawn...`, 'WARN');
+        } else {
+            log(`[Service] Windows Service ${svc.winService} not installed, using spawn`, 'WARN');
+        }
     }
 
-    const winSvcExists = await checkWinServiceExists(svc.winService);
-    if (!winSvcExists) {
-        log(`[Service] Windows Service ${svc.winService} not installed`, 'ERROR');
-        state.error = 'Windows Service not installed';
-        return { success: false, error: 'Windows Service not installed. Run service-install.js' };
+    // Fallback to spawn for services without Windows Services or when winservice fails
+    if (svc.start && svc.dir) {
+        log(`[Service] Starting via spawn: ${svc.start}`);
+        const result = await startViaSpawn(svc, state);
+        if (result.success) {
+            state.startMethod = 'spawn';
+            log(`[Service] ${svc.name} started via spawn (PID: ${result.pid})`);
+        } else {
+            log(`[Service] Failed to start ${svc.name}: ${result.error}`, 'ERROR');
+            state.error = result.error;
+        }
+        return result;
     }
 
-    log(`[Service] Starting Windows Service: ${svc.winService}`);
-    const result = await startViaWinService(svc.winService);
-    if (result.success) {
-        state.lastStart = new Date().toISOString();
-        state.startMethod = 'winservice';
-        log(`[Service] ${svc.name} ${result.message}`);
-    } else {
-        log(`[Service] Failed to start ${svc.name}: ${result.error}`, 'ERROR');
-        state.error = result.error;
-    }
-    return result;
+    log(`[Service] ${svc.name} has no start configuration`, 'ERROR');
+    return { success: false, error: 'No start configuration' };
 }
 
 async function stopService(serviceId, graceful = true) {
