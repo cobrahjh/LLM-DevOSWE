@@ -2743,6 +2743,45 @@ const TodoModule = (function() {
 
         // Always load todos on init (fixes dropdown not populated issue)
         loadTodos();
+
+        // Merge with TaskProcessor (Claude Tasks)
+        if (typeof TaskProcessor !== 'undefined') {
+            TaskProcessor.on('taskStateChange', ({ task, newState }) => {
+                syncTaskToTodo(task, newState);
+            });
+            // Initial sync of existing tasks
+            setTimeout(() => {
+                const tasks = TaskProcessor.getAllTasks?.() || [];
+                tasks.forEach(t => syncTaskToTodo(t, t.state));
+            }, 1000);
+        }
+    }
+
+    function syncTaskToTodo(task, state) {
+        if (!allLists['Claude']) allLists['Claude'] = [];
+        const list = allLists['Claude'];
+        const existing = list.find(t => t.id === task.id);
+
+        if (existing) {
+            existing.completed = (state === 'complete');
+            existing.text = task.content;
+        } else if (state !== 'complete' && state !== 'cancelled') {
+            list.push({
+                id: task.id,
+                text: task.content,
+                priority: task.priority === 'high' ? 'high' : 'medium',
+                completed: false,
+                createdAt: task.createdAt
+            });
+        }
+
+        if (currentListName === 'Claude' || currentListName === ALL_LISTS_KEY) {
+            todos = currentListName === ALL_LISTS_KEY
+                ? Object.values(allLists).flat()
+                : allLists[currentListName] || [];
+            render();
+        }
+        populateListSelector();
     }
 
     return {

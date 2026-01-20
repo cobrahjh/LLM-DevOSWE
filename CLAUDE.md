@@ -158,6 +158,50 @@ When we hit a limitation (cost, API restrictions, third-party dependencies, plat
 
 We control our own destiny. No waiting for vendors, no subscription traps, no artificial limits. If the tool doesn't exist, we create it.
 
+### Core Philosophy: Continuous Intel Gathering
+
+**"Research resources make the Hive stronger, smarter, and unstoppable."**
+
+Oracle autonomously gathers intelligence to keep the Hive ahead of the curve:
+
+**Active Intel Sources:**
+| Source | Frequency | Purpose |
+|--------|-----------|---------|
+| Hacker News API | 6 hours | AI/tech news, emerging trends |
+| Ollama Model Registry | Daily | New model discoveries |
+| GitHub Releases | 12 hours | Track updates to key repos |
+| Hive Health Metrics | 60 seconds | Anomaly detection, patterns |
+
+**Watched GitHub Repos:**
+- ollama/ollama, anthropics/claude-code, anthropics/anthropic-sdk-python
+- openai/openai-node, EvenAR/node-simconnect, nodejs/node
+- lmstudio-ai/lmstudio, nicedoc/electron
+
+**Future Intel Sources (TODO):**
+- **Hugging Face** - New model releases, trending models
+- **Reddit r/LocalLLaMA** - Community discoveries, optimization tips
+- **ArXiv RSS** - AI research papers (cs.AI, cs.LG)
+- **Product Hunt** - New AI tools and services
+- **Tech RSS Feeds** - Ars Technica, The Verge, TechCrunch AI sections
+- **Model Benchmarks** - Track LMSYS leaderboard changes
+- **Security Feeds** - CVE alerts for dependencies
+
+**Intel API Endpoints:**
+```bash
+curl http://localhost:3002/api/intel              # Current intel summary
+curl http://localhost:3002/api/intel/briefing     # Latest daily briefing
+curl http://localhost:3002/api/intel/news         # Hacker News data
+curl http://localhost:3002/api/intel/models       # Model discoveries
+curl http://localhost:3002/api/intel/github       # GitHub releases
+curl http://localhost:3002/api/intel/health       # Health trends
+curl -X POST http://localhost:3002/api/intel/refresh  # Force refresh all
+curl -X POST http://localhost:3002/api/intel/fetch/github  # Fetch GitHub only
+```
+
+**Storage:** `C:\LLM-Oracle\oracle-workspace\memory\intelligence.json`
+
+The Hive learns. The Hive adapts. The Hive never stops improving.
+
 ### Integration Principles
 
 **"Keep it simple, make KittBox better"**

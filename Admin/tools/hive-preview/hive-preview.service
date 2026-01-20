@@ -1,0 +1,21 @@
+[Unit]
+Description=Hive Device Preview Server
+After=network.target
+
+[Service]
+Type=simple
+User=hjhar
+Group=hjhar
+WorkingDirectory=/mnt/c/LLM-DevOSWE/Admin/tools/hive-preview
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/hive/preview.log
+StandardError=append:/var/log/hive/preview.error.log
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/log/hive
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+[Unit]
+Description=Hive DocSync Document Synchronization
+After=network.target hive-relay.service
+
+[Service]
+Type=simple
+User=hjhar
+Group=hjhar
+WorkingDirectory=/mnt/c/LLM-DevOSWE/Admin/docsync
+ExecStart=/usr/bin/node docsync-agent.js --watch
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/hive/docsync.log
+StandardError=append:/var/log/hive/docsync.error.log
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/log/hive /mnt/c/LLM-DevOSWE/Admin/docsync
+
+[Install]
+WantedBy=multi-user.target

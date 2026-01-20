@@ -1,0 +1,13 @@
+{
+  "lists": {
+    "General": [
+      { "id": "import1", "text": "Imported item from backup", "priority": "high", "completed": false, "createdAt": "2026-01-10T12:00:00.000Z" },
+      { "id": "test1", "text": "Test item 1 - DUPLICATE", "priority": "high", "completed": false, "createdAt": "2026-01-10T12:00:00.000Z" }
+    ],
+    "ImportedList": [
+      { "id": "import2", "text": "Item in new imported list", "priority": "medium", "completed": false, "createdAt": "2026-01-10T12:00:00.000Z" }
+    ]
+  },
+  "currentList": "General",
+  "exportedAt": "2026-01-10T12:00:00.000Z"
+}

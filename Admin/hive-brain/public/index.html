@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Brain - Admin Control Center</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            border-bottom: 2px solid #ff6b35;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { color: #ff6b35; font-size: 24px; }
+        header h1 span { color: #00d9ff; }
+        .status-bar { display: flex; gap: 20px; font-size: 14px; }
+        .status-bar .online { color: #00ff88; }
+        .status-bar .offline { color: #ff4444; }
+
+        /* Main Layout */
+        main {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: #1a1a2e;
+            padding: 20px;
+            border-right: 1px solid #333;
+        }
+        .sidebar h2 { color: #00d9ff; font-size: 14px; margin-bottom: 15px; text-transform: uppercase; }
+
+        /* Buttons */
+        button {
+            background: #ff6b35;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+        button:hover { background: #ff8555; }
+        button:disabled { background: #444; cursor: not-allowed; }
+        button.secondary { background: #16213e; border: 1px solid #333; }
+        button.secondary:hover { background: #1f2d47; }
+        button.danger { background: #cc3333; }
+        button.success { background: #00aa55; }
+
+        /* Cards */
+        .card {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #333;
+        }
+        .card.pending { border-left-color: #ffd700; }
+        .card.online { border-left-color: #00ff88; }
+        .card.offline { border-left-color: #ff4444; }
+        .card.master { border-left-color: #ff6b35; }
+        .card h3 { font-size: 14px; margin-bottom: 8px; }
+        .card .ip { color: #00d9ff; font-family: monospace; }
+        .card .meta { font-size: 12px; color: #888; margin-top: 8px; }
+        .card .services { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+        .card .services span {
+            background: #0f0f1a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+        .card .actions { margin-top: 10px; display: flex; gap: 5px; }
+        .card .actions button { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
+
+        /* Content Area */
+        .content {
+            padding: 20px;
+        }
+        .content h2 { color: #fff; margin-bottom: 20px; }
+
+        /* Grid */
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        /* Progress */
+        .progress-bar {
+            background: #0f0f1a;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar .fill {
+            background: linear-gradient(90deg, #ff6b35, #00d9ff);
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .tabs button {
+            width: auto;
+            background: transparent;
+            border: 1px solid #333;
+            padding: 10px 20px;
+        }
+        .tabs button.active {
+            background: #ff6b35;
+            border-color: #ff6b35;
+        }
+
+        /* Log */
+        .log {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log .entry { padding: 4px 0; border-bottom: 1px solid #1a1a2e; }
+        .log .time { color: #666; }
+        .log .success { color: #00ff88; }
+        .log .error { color: #ff4444; }
+        .log .info { color: #00d9ff; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .modal-content h2 { margin-bottom: 20px; }
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            background: #0f0f1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .empty h3 { color: #888; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🧠 Hive <span>Brain</span></h1>
+        <div class="status-bar">
+            <span>Colony: <strong id="deviceCount">0</strong> devices</span>
+            <span>Pending: <strong id="pendingCount">0</strong></span>
+            <span id="scanStatus"></span>
+        </div>
+    </header>
+
+    <main>
+        <aside class="sidebar">
+            <h2>Infection Control</h2>
+            <button onclick="startScan()" id="scanBtn">🔍 Scan Network</button>
+            <div id="scanProgress" style="display:none;">
+                <div class="progress-bar"><div class="fill" id="scanFill"></div></div>
+                <small id="scanText">Scanning...</small>
+            </div>
+
+            <button onclick="showAddModal()" class="secondary">+ Add Device Manually</button>
+            <button onclick="showInstallLinks()" class="secondary">📋 Install Commands</button>
+
+            <h2 style="margin-top: 30px;">Pending Approval</h2>
+            <div id="pendingList"></div>
+
+            <h2 style="margin-top: 30px;">Activity Log</h2>
+            <div class="log" id="log"></div>
+        </aside>
+
+        <section class="content">
+            <div class="tabs">
+                <button class="active" onclick="showTab('colony')">Colony</button>
+                <button onclick="showTab('health')">Health Check</button>
+                <button onclick="showTab('settings')">Settings</button>
+            </div>
+
+            <div id="tab-colony">
+                <h2>Colony Devices</h2>
+                <div class="device-grid" id="deviceGrid"></div>
+            </div>
+
+            <div id="tab-health" style="display:none;">
+                <h2>Health Monitor</h2>
+                <button onclick="checkAllHealth()" style="width:auto; margin-bottom:20px;">🔄 Check All</button>
+                <div id="healthResults"></div>
+            </div>
+
+            <div id="tab-settings" style="display:none;">
+                <h2>Settings</h2>
+                <div class="card">
+                    <h3>Network Scan Range</h3>
+                    <input type="text" id="subnet" value="192.168.1" placeholder="Subnet (e.g., 192.168.1)">
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="startIp" value="1" placeholder="Start">
+                        <input type="number" id="endIp" value="254" placeholder="End">
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Install URL</h3>
+                    <input type="text" id="installUrl" value="https://github.com/cobrahjh/hive-universal-install" readonly>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add Device Modal -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h2>Add Device Manually</h2>
+            <input type="text" id="newIp" placeholder="IP Address (e.g., 192.168.1.100)">
+            <input type="text" id="newHostname" placeholder="Hostname (optional)">
+            <select id="newOs" style="width:100%; padding:12px; background:#0f0f1a; border:1px solid #333; border-radius:6px; color:#fff; margin-bottom:15px;">
+                <option value="linux">Linux</option>
+                <option value="windows">Windows</option>
+                <option value="android">Android (Termux)</option>
+                <option value="macos">macOS</option>
+                <option value="unknown">Unknown</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <button onclick="addDevice()">Add Device</button>
+                <button onclick="hideAddModal()" class="secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Links Modal -->
+    <div class="modal" id="installModal">
+        <div class="modal-content">
+            <h2>Install Commands</h2>
+            <div class="card">
+                <h3>One-Liner (Linux/Mac)</h3>
+                <code style="display:block; background:#0f0f1a; padding:10px; border-radius:4px; font-size:11px; word-break:break-all;">curl -fsSL https://raw.githubusercontent.com/cobrahjh/hive-universal-install/master/quick-install.sh | bash</code>
+            </div>
+            <div class="card">
+                <h3>Docker</h3>
+                <code style="display:block; background:#0f0f1a; padding:10px; border-radius:4px; font-size:11px;">git clone https://github.com/cobrahjh/hive-universal-install && cd hive-universal-install && docker compose up -d</code>
+            </div>
+            <div class="card">
+                <h3>NPM</h3>
+                <code style="display:block; background:#0f0f1a; padding:10px; border-radius:4px; font-size:11px;">npx degit cobrahjh/hive-universal-install hive && cd hive && npm start</code>
+            </div>
+            <button onclick="hideInstallModal()" style="margin-top:15px;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const API = window.location.origin;
+        let ws;
+        let colony = { devices: [], pending: [] };
+
+        // ============== WEBSOCKET ==============
+        function connectWs() {
+            ws = new WebSocket(`ws://${window.location.host}`);
+
+            ws.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                handleWsMessage(msg);
+            };
+
+            ws.onclose = () => setTimeout(connectWs, 3000);
+        }
+
+        function handleWsMessage(msg) {
+            switch(msg.type) {
+                case 'init':
+                    colony = msg.colony;
+                    render();
+                    break;
+                case 'scan_start':
+                    document.getElementById('scanProgress').style.display = 'block';
+                    document.getElementById('scanBtn').disabled = true;
+                    log('info', `Scanning ${msg.subnet}.*`);
+                    break;
+                case 'scan_progress':
+                    const pct = Math.round((msg.scanned / msg.total) * 100);
+                    document.getElementById('scanFill').style.width = pct + '%';
+                    document.getElementById('scanText').textContent = `${msg.scanned}/${msg.total} (${pct}%)`;
+                    break;
+                case 'scan_complete':
+                    document.getElementById('scanProgress').style.display = 'none';
+                    document.getElementById('scanBtn').disabled = false;
+                    log('success', `Scan complete: ${msg.found} hosts, ${msg.pending} new devices`);
+                    break;
+                case 'device_found':
+                    colony.pending.push(msg.device);
+                    render();
+                    log('info', `Found: ${msg.device.ip}`);
+                    break;
+                case 'device_approved':
+                case 'device_added':
+                    colony.devices.push(msg.device);
+                    colony.pending = colony.pending.filter(d => d.ip !== msg.device.ip);
+                    render();
+                    log('success', `Added: ${msg.device.ip}`);
+                    break;
+                case 'infect_start':
+                    log('info', `Installing on ${msg.ip}...`);
+                    break;
+                case 'infect_success':
+                    log('success', `Infected: ${msg.ip}`);
+                    break;
+                case 'infect_failed':
+                    log('error', `Failed: ${msg.ip} - ${msg.error}`);
+                    break;
+            }
+        }
+
+        // ============== RENDER ==============
+        function render() {
+            document.getElementById('deviceCount').textContent = colony.devices.length;
+            document.getElementById('pendingCount').textContent = colony.pending.length;
+
+            // Pending list
+            const pendingHtml = colony.pending.map(d => `
+                <div class="card pending">
+                    <h3>${d.hostname || 'Unknown'}</h3>
+                    <div class="ip">${d.ip}</div>
+                    <div class="meta">OS: ${d.os} | Ports: ${d.services.join(', ') || 'none'}</div>
+                    <div class="actions">
+                        <button class="success" onclick="approveDevice('${d.ip}')">✓ Approve</button>
+                        <button class="danger" onclick="rejectDevice('${d.ip}')">✗</button>
+                    </div>
+                </div>
+            `).join('') || '<div class="empty"><small>No pending devices</small></div>';
+            document.getElementById('pendingList').innerHTML = pendingHtml;
+
+            // Device grid
+            const deviceHtml = colony.devices.map(d => `
+                <div class="card ${d.type === 'master' ? 'master' : (d.hiveReady ? 'online' : 'offline')}">
+                    <h3>${d.hostname || 'Unknown'} ${d.type === 'master' ? '👑' : ''}</h3>
+                    <div class="ip">${d.ip}</div>
+                    <div class="meta">
+                        OS: ${d.os} | ${d.hiveReady ? '🐝 Hive Ready' : 'Not installed'}
+                    </div>
+                    <div class="services">
+                        ${d.services.map(p => `<span>${p}</span>`).join('')}
+                    </div>
+                    <div class="actions">
+                        ${!d.hiveReady ? `<button onclick="infectDevice('${d.ip}')">🦠 Infect</button>` : ''}
+                        <button class="secondary" onclick="checkHealth('${d.ip}')">❤️</button>
+                        ${d.type !== 'master' ? `<button class="danger" onclick="removeDevice('${d.ip}')">✗</button>` : ''}
+                    </div>
+                </div>
+            `).join('') || '<div class="empty"><h3>No devices in colony</h3><p>Start a network scan to discover devices</p></div>';
+            document.getElementById('deviceGrid').innerHTML = deviceHtml;
+        }
+
+        // ============== ACTIONS ==============
+        async function startScan() {
+            const subnet = document.getElementById('subnet').value;
+            const start = parseInt(document.getElementById('startIp').value);
+            const end = parseInt(document.getElementById('endIp').value);
+
+            await fetch(`${API}/api/scan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subnet, start, end })
+            });
+        }
+
+        async function approveDevice(ip) {
+            await fetch(`${API}/api/approve/${ip}`, { method: 'POST' });
+        }
+
+        async function rejectDevice(ip) {
+            await fetch(`${API}/api/pending/${ip}`, { method: 'DELETE' });
+            colony.pending = colony.pending.filter(d => d.ip !== ip);
+            render();
+        }
+
+        async function infectDevice(ip) {
+            if (!confirm(`Install Hive on ${ip}?`)) return;
+            await fetch(`${API}/api/infect/${ip}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ method: 'ssh' })
+            });
+        }
+
+        async function removeDevice(ip) {
+            if (!confirm(`Remove ${ip} from colony?`)) return;
+            await fetch(`${API}/api/device/${ip}`, { method: 'DELETE' });
+            colony.devices = colony.devices.filter(d => d.ip !== ip);
+            render();
+        }
+
+        async function checkHealth(ip) {
+            const res = await fetch(`${API}/api/device/${ip}/health`).then(r => r.json());
+            alert(JSON.stringify(res, null, 2));
+        }
+
+        async function checkAllHealth() {
+            const res = await fetch(`${API}/api/health/all`).then(r => r.json());
+            document.getElementById('healthResults').innerHTML = `<pre>${JSON.stringify(res, null, 2)}</pre>`;
+        }
+
+        async function addDevice() {
+            const ip = document.getElementById('newIp').value;
+            const hostname = document.getElementById('newHostname').value;
+            const os = document.getElementById('newOs').value;
+
+            if (!ip) return alert('IP required');
+
+            await fetch(`${API}/api/device`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ip, hostname, os })
+            });
+
+            hideAddModal();
+        }
+
+        // ============== UI ==============
+        function showTab(tab) {
+            document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`tab-${tab}`).style.display = 'block';
+        }
+
+        function showAddModal() { document.getElementById('addModal').classList.add('show'); }
+        function hideAddModal() { document.getElementById('addModal').classList.remove('show'); }
+        function showInstallLinks() { document.getElementById('installModal').classList.add('show'); }
+        function hideInstallModal() { document.getElementById('installModal').classList.remove('show'); }
+
+        function log(type, msg) {
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logEl.innerHTML = `<div class="entry"><span class="time">${time}</span> <span class="${type}">${msg}</span></div>` + logEl.innerHTML;
+        }
+
+        // ============== INIT ==============
+        connectWs();
+    </script>
+</body>
+</html>

@@ -27,7 +27,7 @@
             "originalId": "toggleExternal",
             "name": "Toggle External",
             "key": "BACKSPACE",
-            "trigger": "WINWING_FCU-32_+_EFI:BTN25",
+            "trigger": "P",
             "isDefault": true
         },
         "cam-005-drone": {

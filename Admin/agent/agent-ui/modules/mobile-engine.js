@@ -72,8 +72,12 @@ const MobileEngine = (function() {
         const pixelRatio = window.devicePixelRatio || 1;
 
         // Check for specific devices
-        if (ua.includes('sm-s92')) {
+        // S25 Ultra: SM-S938x, S24 Ultra: SM-S928x, S23 Ultra: SM-S918x
+        if (ua.includes('sm-s938') || ua.includes('sm-s93')) {
             currentDevice = { ...DEVICE_PROFILES['s25ultra'], detected: 's25ultra' };
+        } else if (ua.includes('sm-s928') || ua.includes('sm-s918')) {
+            // S24/S23 Ultra - similar specs, use s25ultra profile
+            currentDevice = { ...DEVICE_PROFILES['s25ultra'], detected: 's24ultra', name: 'Samsung Galaxy S24/S23 Ultra' };
         } else if (ua.includes('sm-t') || ua.includes('galaxy tab')) {
             currentDevice = { ...DEVICE_PROFILES['galaxytab'], detected: 'galaxytab' };
         } else if (ua.includes('navo')) {

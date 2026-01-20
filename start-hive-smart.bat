@@ -10,14 +10,24 @@ echo.
 echo  Detecting best deployment mode...
 echo.
 
-:: Check for Docker
+:: Check for Docker Desktop
 docker info >nul 2>&1
 if %errorLevel% equ 0 (
-    echo  [DETECTED] Docker is available
+    echo  [DETECTED] Docker Desktop is available
     echo  [SELECTED] Docker mode (no reboots needed!)
     echo.
     cd /d %~dp0Admin\docker
     docker-compose up -d
+    goto :success
+)
+
+:: Check for WSL Ubuntu with systemd services
+wsl -d Ubuntu -- test -f /etc/systemd/system/hive-oracle.service >nul 2>&1
+if %errorLevel% equ 0 (
+    echo  [DETECTED] WSL Ubuntu with Hive services
+    echo  [SELECTED] WSL mode (systemd services)
+    echo.
+    wsl -d Ubuntu -- sudo systemctl start hive-oracle hive-relay hive-kittbox hive-kittlive hive-mind hive-docsync
     goto :success
 )
 

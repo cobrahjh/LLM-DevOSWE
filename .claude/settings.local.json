@@ -77,7 +77,11 @@
       "Bash(.bak$)",
       "Bash(.backup$ \")",
       "Bash(pm2 list:*)",
-      "Bash(nssm status:*)"
+      "Bash(nssm status:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(cmd.exe /c \"cd /d C:\\\\LLM-DevOSWE && claude --help | findstr resume\")",
+      "Bash(cmd.exe /c \"claude --help\")",
+      "Bash(python3:*)"
     ],
     "deny": [
       "Read(.env)",

@@ -44,6 +44,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const Database = require('better-sqlite3');
 
+// Load environment variables
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+
 const app = express();
 const PORT = 8600;
 const server = http.createServer(app);
@@ -52,8 +55,54 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const wsClients = new Set();
 
-app.use(cors());
+// Security: API Key authentication
+const API_KEY = process.env.HIVE_API_KEY;
+const PUBLIC_ENDPOINTS = ['/api/health', '/api/status', '/', '/task-history.html'];
+
+function apiKeyAuth(req, res, next) {
+    // Skip auth for public endpoints
+    if (PUBLIC_ENDPOINTS.some(ep => req.path === ep || req.path.startsWith('/api/health'))) {
+        return next();
+    }
+
+    // Skip auth if no API key configured (backwards compatibility)
+    if (!API_KEY) {
+        return next();
+    }
+
+    const providedKey = req.headers['x-api-key'] || req.query.apikey;
+    if (providedKey === API_KEY) {
+        return next();
+    }
+
+    // Allow localhost without auth for development
+    const clientIP = req.ip || req.connection.remoteAddress;
+    if (clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1') {
+        return next();
+    }
+
+    console.log(`[Security] Unauthorized request from ${clientIP} to ${req.path}`);
+    return res.status(401).json({ error: 'Unauthorized - API key required' });
+}
+
+// Security: Restricted CORS
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
+const corsOptions = {
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        // Allow if in allowed list or if no restrictions configured
+        if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
+app.use(apiKeyAuth);
 app.use(express.static(__dirname)); // Serve static files (task-history.html)
 
 // ============================================

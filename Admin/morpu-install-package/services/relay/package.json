@@ -1,0 +1,16 @@
+{
+  "name": "simwidget-relay",
+  "version": "1.0.0",
+  "description": "Message relay between Agent Kitt and Claude Desktop",
+  "main": "relay-service.js",
+  "scripts": {
+    "start": "node relay-service.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-windows": "^1.0.0-beta.8",
+    "ws": "^8.19.0"
+  }
+}

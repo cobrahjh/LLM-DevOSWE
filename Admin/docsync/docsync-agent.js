@@ -14,8 +14,9 @@ const CONFIG = {
     googleDrive: 'G:\\My Drive\\AI Development',
     projects: {
         'LLM-DevOSWE': {
-            watchPaths: ['C:\\LLM-DevOSWE\\docs', 'C:\\LLM-DevOSWE\\Admin\\tools'],
-            patterns: ['*.md', '*.json', '*.bat', '*.ps1']
+            watchPaths: ['C:\\LLM-DevOSWE', 'C:\\LLM-DevOSWE\\docs', 'C:\\LLM-DevOSWE\\Admin\\tools'],
+            patterns: ['*.md', '*.json', '*.bat', '*.ps1'],
+            rootFiles: ['CLAUDE.md', 'STANDARDS.md', 'SERVICE-REGISTRY.md', 'PROJECT-INDEX.md', 'ARCHITECTURE.md', 'TODO.md']
         },
         'kittbox-web': {
             watchPaths: ['C:\\kittbox-web'],

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Mind</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #0a0a12;
+            color: #e0e0e0;
+            font-size: 12px;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #1a0a2e, #0a1a2e);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a2a4a;
+        }
+        .header h1 {
+            font-size: 14px;
+            color: #a855f7;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header h1 .pulse {
+            width: 8px; height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+        }
+
+        .services {
+            display: flex;
+            gap: 8px;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.3);
+            overflow-x: auto;
+        }
+        .service {
+            background: #12121f;
+            border: 1px solid #2a2a4a;
+            border-radius: 6px;
+            padding: 8px 12px;
+            min-width: 100px;
+            text-align: center;
+        }
+        .service.online { border-color: #4ade80; }
+        .service.offline { border-color: #ef4444; opacity: 0.5; }
+        .service.busy { border-color: #f59e0b; }
+        .service-name { font-size: 10px; color: #888; margin-bottom: 4px; }
+        .service-status { font-size: 11px; font-weight: bold; }
+        .service.online .service-status { color: #4ade80; }
+        .service.offline .service-status { color: #ef4444; }
+        .service.busy .service-status { color: #f59e0b; }
+
+        .main {
+            display: flex;
+            height: calc(100vh - 90px);
+        }
+
+        .activity-feed {
+            flex: 1;
+            padding: 10px 15px;
+            overflow-y: auto;
+        }
+        .activity-item {
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            background: #12121f;
+            border-left: 3px solid #a855f7;
+            border-radius: 0 4px 4px 0;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .activity-item.oracle { border-color: #f59e0b; }
+        .activity-item.relay { border-color: #3b82f6; }
+        .activity-item.kitt { border-color: #ef4444; }
+        .activity-item.kittbox { border-color: #4ade80; }
+        .activity-item.system { border-color: #888; }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .activity-source {
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+        .activity-item.oracle .activity-source { color: #f59e0b; }
+        .activity-item.relay .activity-source { color: #3b82f6; }
+        .activity-item.kitt .activity-source { color: #ef4444; }
+        .activity-item.kittbox .activity-source { color: #4ade80; }
+        .activity-item.system .activity-source { color: #888; }
+
+        .activity-time {
+            font-size: 10px;
+            color: #666;
+        }
+        .activity-content {
+            color: #ccc;
+            word-break: break-word;
+        }
+        .activity-content.thinking {
+            color: #a855f7;
+            font-style: italic;
+        }
+
+        .thinking-indicator {
+            display: inline-flex;
+            gap: 3px;
+            margin-left: 8px;
+        }
+        .thinking-indicator span {
+            width: 4px; height: 4px;
+            background: #a855f7;
+            border-radius: 50%;
+            animation: bounce 1s infinite;
+        }
+        .thinking-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        .sidebar {
+            width: 200px;
+            background: #0f0f1a;
+            border-left: 1px solid #2a2a4a;
+            padding: 10px;
+        }
+        .sidebar h3 {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a2a;
+        }
+        .stat-label { color: #666; }
+        .stat-value { color: #4ade80; font-weight: bold; }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="pulse"></span> Hive-Mind</h1>
+        <span id="clock" style="color: #666;">--:--:--</span>
+    </div>
+
+    <div class="services" id="services">
+        <div class="service" id="svc-ollama" data-port="11434">
+            <div class="service-name">Ollama</div>
+            <div class="service-status">...</div>
+        </div>
+        <div class="service" id="svc-oracle" data-port="3002">
+            <div class="service-name">Oracle</div>
+            <div class="service-status">...</div>
+        </div>
+        <div class="service" id="svc-relay" data-port="8600">
+            <div class="service-name">Relay</div>
+            <div class="service-status">...</div>
+        </div>
+        <div class="service" id="svc-kittbox" data-port="8585">
+            <div class="service-name">KittBox</div>
+            <div class="service-status">...</div>
+        </div>
+        <div class="service" id="svc-kittlive" data-port="8686">
+            <div class="service-name">Kitt Live</div>
+            <div class="service-status">...</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="activity-feed" id="feed">
+            <div class="empty-state">Connecting to hive services...</div>
+        </div>
+        <div class="sidebar">
+            <h3>Statistics</h3>
+            <div class="stat-row">
+                <span class="stat-label">Uptime</span>
+                <span class="stat-value" id="uptime">0s</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Events</span>
+                <span class="stat-value" id="eventCount">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Tasks</span>
+                <span class="stat-value" id="taskCount">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Queries</span>
+                <span class="stat-value" id="queryCount">0</span>
+            </div>
+
+            <h3 style="margin-top: 15px;">Active</h3>
+            <div id="activeList" style="color: #666; font-size: 11px;">None</div>
+        </div>
+    </div>
+
+    <script>
+        const feed = document.getElementById('feed');
+        let serverStartTime = Date.now(); // Will be updated from server
+        let eventCount = 0;
+        let taskCount = 0;
+        let queryCount = 0;
+        let wsRelay = null;
+
+        // Fetch server uptime (persists across page refreshes)
+        async function fetchServerUptime() {
+            try {
+                const resp = await fetch('/api/uptime');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    serverStartTime = data.startTime;
+                }
+            } catch (e) {}
+        }
+        fetchServerUptime();
+
+        // Service health checks
+        const services = {
+            ollama: { port: 11434, url: 'http://localhost:11434/api/tags' },
+            oracle: { port: 3002, url: 'http://localhost:3002/api/health' },
+            relay: { port: 8600, url: 'http://localhost:8600/api/status' },
+            kittbox: { port: 8585, url: 'http://localhost:8585/' },
+            kittlive: { port: 8686, url: 'http://localhost:8686/' }
+        };
+
+        // Clock
+        setInterval(() => {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+        }, 1000);
+
+        // Uptime (uses server start time, not page load)
+        setInterval(() => {
+            const secs = Math.floor((Date.now() - serverStartTime) / 1000);
+            const mins = Math.floor(secs / 60);
+            const hrs = Math.floor(mins / 60);
+            const days = Math.floor(hrs / 24);
+            if (days > 0) document.getElementById('uptime').textContent = `${days}d ${hrs % 24}h`;
+            else if (hrs > 0) document.getElementById('uptime').textContent = `${hrs}h ${mins % 60}m`;
+            else if (mins > 0) document.getElementById('uptime').textContent = `${mins}m ${secs % 60}s`;
+            else document.getElementById('uptime').textContent = `${secs}s`;
+        }, 1000);
+
+        // Add activity to feed
+        function addActivity(source, content, isThinking = false) {
+            const empty = feed.querySelector('.empty-state');
+            if (empty) empty.remove();
+
+            eventCount++;
+            document.getElementById('eventCount').textContent = eventCount;
+
+            const item = document.createElement('div');
+            item.className = `activity-item ${source}`;
+            item.innerHTML = `
+                <div class="activity-header">
+                    <span class="activity-source">${source}${isThinking ? '<span class="thinking-indicator"><span></span><span></span><span></span></span>' : ''}</span>
+                    <span class="activity-time">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="activity-content ${isThinking ? 'thinking' : ''}">${escapeHtml(content)}</div>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+
+            // Keep max 100 items
+            while (feed.children.length > 100) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Check service health
+        async function checkService(name) {
+            const svc = services[name];
+            const el = document.getElementById(`svc-${name}`);
+            try {
+                const resp = await fetch(svc.url, { method: 'GET', mode: 'no-cors' });
+                el.className = 'service online';
+                el.querySelector('.service-status').textContent = 'ONLINE';
+                return true;
+            } catch (e) {
+                el.className = 'service offline';
+                el.querySelector('.service-status').textContent = 'OFFLINE';
+                return false;
+            }
+        }
+
+        async function checkAllServices() {
+            for (const name of Object.keys(services)) {
+                await checkService(name);
+            }
+        }
+
+        // Connect to Relay WebSocket for real-time events
+        function connectRelay() {
+            try {
+                wsRelay = new WebSocket('ws://localhost:8600');
+                wsRelay.onopen = () => {
+                    addActivity('system', 'Connected to Relay WebSocket');
+                };
+                wsRelay.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        handleRelayEvent(data);
+                    } catch (err) {}
+                };
+                wsRelay.onclose = () => {
+                    addActivity('system', 'Relay WebSocket disconnected, reconnecting...');
+                    setTimeout(connectRelay, 5000);
+                };
+                wsRelay.onerror = () => {};
+            } catch (e) {}
+        }
+
+        function handleRelayEvent(data) {
+            if (data.type === 'task:created') {
+                taskCount++;
+                document.getElementById('taskCount').textContent = taskCount;
+                addActivity('relay', `New task: ${data.data?.content?.substring(0, 80) || 'Unknown'}`);
+            } else if (data.type === 'task:processing') {
+                addActivity('relay', `Processing: ${data.data?.id || 'task'}`);
+                updateActive(`Task ${data.data?.id?.substring(0, 8)}`);
+            } else if (data.type === 'task:completed') {
+                addActivity('relay', `Completed: ${data.data?.response?.substring(0, 80) || 'Done'}`);
+                clearActive();
+            } else if (data.type) {
+                addActivity('relay', `${data.type}: ${JSON.stringify(data.data || {}).substring(0, 60)}`);
+            }
+        }
+
+        // Poll Oracle for activity
+        async function pollOracle() {
+            try {
+                const resp = await fetch('http://localhost:3002/api/health');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.lastQuery) {
+                        queryCount++;
+                        document.getElementById('queryCount').textContent = queryCount;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function updateActive(text) {
+            document.getElementById('activeList').innerHTML = `<div style="color: #f59e0b;">${text}</div>`;
+        }
+
+        function clearActive() {
+            document.getElementById('activeList').textContent = 'None';
+        }
+
+        // Load existing metrics from services on startup
+        async function loadExistingMetrics() {
+            // Get task count from Relay
+            try {
+                const relayResp = await fetch('http://localhost:8600/api/status');
+                if (relayResp.ok) {
+                    const relayData = await relayResp.json();
+                    if (relayData.stats) {
+                        taskCount = relayData.stats.total || relayData.stats.completed || 0;
+                        document.getElementById('taskCount').textContent = taskCount;
+                        addActivity('system', `Loaded ${taskCount} historical tasks from Relay`);
+                    }
+                    // Check for pending/processing tasks
+                    if (relayData.pending > 0) {
+                        addActivity('relay', `${relayData.pending} pending task(s)`);
+                    }
+                    if (relayData.processing > 0) {
+                        addActivity('relay', `${relayData.processing} task(s) in progress`);
+                        updateActive(`Processing ${relayData.processing} task(s)`);
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load Relay metrics');
+            }
+
+            // Get Oracle stats
+            try {
+                const oracleResp = await fetch('http://localhost:3002/api/health');
+                if (oracleResp.ok) {
+                    const oracleData = await oracleResp.json();
+                    if (oracleData.queries || oracleData.requestCount) {
+                        queryCount = oracleData.queries || oracleData.requestCount || 0;
+                        document.getElementById('queryCount').textContent = queryCount;
+                        addActivity('system', `Oracle has processed ${queryCount} queries`);
+                    }
+                    if (oracleData.model) {
+                        addActivity('oracle', `Active model: ${oracleData.model}`);
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load Oracle metrics');
+            }
+
+            // Get Ollama model count
+            try {
+                const ollamaResp = await fetch('http://localhost:11434/api/tags');
+                if (ollamaResp.ok) {
+                    const ollamaData = await ollamaResp.json();
+                    if (ollamaData.models) {
+                        addActivity('system', `Ollama has ${ollamaData.models.length} models available`);
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load Ollama metrics');
+            }
+        }
+
+        // Initialize
+        addActivity('system', 'Hive Mind initializing...');
+        checkAllServices();
+        loadExistingMetrics();
+        connectRelay();
+
+        // Periodic checks
+        setInterval(checkAllServices, 10000);
+        setInterval(pollOracle, 5000);
+
+        // Startup message
+        setTimeout(() => {
+            addActivity('system', 'Monitoring active. Waiting for hive activity...');
+        }, 2000);
+    </script>
+</body>
+</html>
