@@ -1,5 +1,5 @@
 /**
- * Kitt Browser Bridge Server
+ * Kitt Browser Bridge Server v1.1.0
  * HTTP API that communicates with browser extension via WebSocket
  *
  * Port: 8620
@@ -13,6 +13,14 @@
  *   POST /read            - Read page content
  *   POST /execute         - Execute JavaScript
  *   POST /screenshot      - Capture tab
+ *
+ * Tab Grouping (v1.1.0):
+ *   GET  /groups          - List all tab groups
+ *   POST /group           - Create group from tabs {tabIds[], title?, color?}
+ *   POST /group/add       - Add tabs to group {groupId, tabIds[]}
+ *   POST /opengroup       - Open URLs in new group {urls[], title?, color?}
+ *   POST /ungroup         - Remove tabs from group {tabIds[]}
+ *   POST /group/collapse  - Collapse/expand group {groupId, collapsed?}
  */
 
 const http = require('http');
@@ -47,12 +55,19 @@ const ACTION_NAMES = {
     navigate: 'Navigating',
     newTab: 'Opening new tab',
     closeTab: 'Closing tab',
+    focusTab: 'Focusing tab',
     click: 'Clicking element',
     type: 'Typing text',
     setInputValue: 'Setting input',
     readPage: 'Reading page',
     executeScript: 'Running script',
-    screenshot: 'Taking screenshot'
+    screenshot: 'Taking screenshot',
+    createGroup: 'Creating tab group',
+    addToGroup: 'Adding to group',
+    openUrlsInGroup: 'Opening URLs in group',
+    listGroups: 'Listing groups',
+    ungroupTabs: 'Ungrouping tabs',
+    collapseGroup: 'Collapsing group'
 };
 
 // State
@@ -183,6 +198,10 @@ const server = http.createServer(async (req, res) => {
                 result = await sendToExtension('closeTab', params);
                 break;
 
+            case '/focus':
+                result = await sendToExtension('focusTab', params);
+                break;
+
             case '/click':
                 result = await sendToExtension('click', params);
                 break;
@@ -205,6 +224,31 @@ const server = http.createServer(async (req, res) => {
 
             case '/screenshot':
                 result = await sendToExtension('screenshot', params);
+                break;
+
+            // Tab grouping endpoints
+            case '/group':
+                result = await sendToExtension('createGroup', params);
+                break;
+
+            case '/group/add':
+                result = await sendToExtension('addToGroup', params);
+                break;
+
+            case '/opengroup':
+                result = await sendToExtension('openUrlsInGroup', params);
+                break;
+
+            case '/groups':
+                result = await sendToExtension('listGroups', params);
+                break;
+
+            case '/ungroup':
+                result = await sendToExtension('ungroupTabs', params);
+                break;
+
+            case '/group/collapse':
+                result = await sendToExtension('collapseGroup', params);
                 break;
 
             default:
@@ -250,4 +294,12 @@ server.listen(PORT, () => {
     console.log('  POST /read       - {tabId, selector?}');
     console.log('  POST /execute    - {tabId, code}');
     console.log('  POST /screenshot - {tabId?}');
+    console.log('');
+    console.log('Tab Grouping:');
+    console.log('  GET  /groups        - List all groups');
+    console.log('  POST /group         - {tabIds[], title?, color?}');
+    console.log('  POST /group/add     - {groupId, tabIds[]}');
+    console.log('  POST /opengroup     - {urls[], title?, color?}');
+    console.log('  POST /ungroup       - {tabIds[]}');
+    console.log('  POST /group/collapse- {groupId, collapsed?}');
 });
