@@ -632,6 +632,35 @@ Each major directory should have a `CLAUDE.md` with:
 - API endpoints (if applicable)
 - Dependencies
 
+### Categorized List Prototype
+When documenting lists of commands, shortcuts, or features, organize by category:
+
+```markdown
+## Section Name
+
+### Category 1
+- `item` - brief description
+- `item2` - brief description
+
+### Category 2
+- `item3` - brief description
+- `item4` - brief description
+```
+
+**Benefits:**
+- Easier to scan and find items
+- Related items grouped together
+- Cleaner than one long list
+- Categories self-document purpose
+
+**Example categories for shortcuts:**
+- Memory & Documentation
+- Tasks & Workflow
+- Communication
+- Development
+- Debug & Tools
+- System & Screenshots
+
 ---
 
 ## Adding New Standards
