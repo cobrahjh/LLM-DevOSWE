@@ -57,6 +57,7 @@ curl -X POST http://localhost:8500/api/services/hiveoracle/restart
 - `msg` - check relay messages
 - `mem` - add to CLAUDE.md
 - `mst` - add to STANDARDS.md
+- `ss` - save session (commit & push)
 - `ts` - test this
 - `ntt` - next todo task
 - `hivesanitycheck` - full hive status
@@ -672,6 +673,7 @@ C:\LLM-DevOSWE\start-hive.bat
 - `mst` - add pattern/convention to STANDARDS.md
 - `memstandards` - review session work, add patterns to STANDARDS.md
 - `syncmem` - backup CLAUDE.md and STANDARDS.md to database
+- `ss` - save session (commit & push current work)
 - `syncmemproj` - merge and backup project docs to database
 - `syncmemall` - merge and backup all projects docs to database
 
