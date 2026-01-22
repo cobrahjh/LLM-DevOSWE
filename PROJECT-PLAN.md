@@ -107,7 +107,7 @@
 | Transponder code | HIGH | ✅ | XPNDR_SET (octal) |
 | Transponder mode | HIGH | ✅ | OFF/STBY/ON/ALT modes |
 | Frequency swap | HIGH | ✅ | COM_STBY_RADIO_SWAP, NAV1_RADIO_SWAP |
-| ADF frequency | MEDIUM | ❌ | ADF_SET (future) |
+| ADF frequency | MEDIUM | ✅ | ADF_ACTIVE_SET, data in flightData |
 | DME | LOW | ❌ | - (future) |
 
 **Phase 3 Deliverables:**

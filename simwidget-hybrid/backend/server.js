@@ -12,6 +12,7 @@
  * - WASM cinematic camera support
  * 
  * Changelog:
+ * v1.13.0 - Added radio frequency API (COM1/2, NAV1/2, ADF, transponder)
  * v1.12.0 - Added Phase 6 widgets to command center index
  * v1.11.0 - Added plugin system with discovery and management
  * v1.10.0 - Added /api/logs/:service endpoint for log viewing
@@ -50,7 +51,7 @@ const pluginsDir = path.join(__dirname, '../plugins');
 const pluginLoader = new PluginLoader(pluginsDir);
 const pluginAPI = new PluginAPI();
 
-const SERVER_VERSION = '1.12.0';
+const SERVER_VERSION = '1.13.0';
 
 // SimConnect - will be loaded dynamically
 let simConnect = null;
@@ -141,7 +142,19 @@ let flightData = {
     longitude: 0,
     altitudeMSL: 0,
     pitch: 0,
-    bank: 0
+    bank: 0,
+    // Radio frequencies
+    com1Active: 0,
+    com1Standby: 0,
+    com2Active: 0,
+    com2Standby: 0,
+    nav1Active: 0,
+    nav1Standby: 0,
+    nav2Active: 0,
+    nav2Standby: 0,
+    adfActive: 0,
+    adfStandby: 0,
+    transponder: 0
 };
 
 // Directory structure (DEBUG - TODO: disable directory listing for production)
@@ -719,6 +732,145 @@ app.post('/api/hevent', (req, res) => {
         method: 'logged',
         note: 'H: events require InputEvent system for full support',
         event
+    });
+});
+
+// Radio frequency API
+// Frequency values: COM/NAV in MHz (e.g., 121.5), ADF in KHz (e.g., 394), XPNDR in octal (e.g., 1200)
+app.post('/api/radio/:radio/:action', (req, res) => {
+    const { radio, action } = req.params;
+    const { frequency, code } = req.body;
+
+    console.log(`[Radio] ${radio} ${action}:`, frequency || code);
+
+    if (!isSimConnected || !simConnectConnection) {
+        return res.json({ success: true, mock: true });
+    }
+
+    // Map radio/action to event name and convert frequency
+    let eventName = null;
+    let eventValue = 0;
+
+    switch (`${radio.toLowerCase()}_${action.toLowerCase()}`) {
+        // COM1
+        case 'com1_active':
+            eventName = 'COM_RADIO_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'com1_standby':
+            eventName = 'COM_STBY_RADIO_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'com1_swap':
+            eventName = 'COM_STBY_RADIO_SWAP';
+            eventValue = 0;
+            break;
+        // COM2
+        case 'com2_active':
+            eventName = 'COM2_RADIO_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'com2_standby':
+            eventName = 'COM2_STBY_RADIO_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'com2_swap':
+            eventName = 'COM2_STBY_RADIO_SWAP';
+            eventValue = 0;
+            break;
+        // NAV1
+        case 'nav1_active':
+            eventName = 'NAV1_RADIO_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'nav1_standby':
+            eventName = 'NAV1_STBY_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'nav1_swap':
+            eventName = 'NAV1_RADIO_SWAP';
+            eventValue = 0;
+            break;
+        // NAV2
+        case 'nav2_active':
+            eventName = 'NAV2_RADIO_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'nav2_standby':
+            eventName = 'NAV2_STBY_SET';
+            eventValue = freqToBCD16(frequency);
+            break;
+        case 'nav2_swap':
+            eventName = 'NAV2_RADIO_SWAP';
+            eventValue = 0;
+            break;
+        // ADF
+        case 'adf_active':
+            eventName = 'ADF_SET';
+            eventValue = adfToBCD16(frequency);
+            break;
+        // Transponder
+        case 'xpndr_set':
+        case 'transponder_set':
+            eventName = 'XPNDR_SET';
+            eventValue = parseInt(code, 8); // Convert octal string to decimal
+            break;
+        default:
+            return res.status(400).json({ success: false, error: `Unknown radio action: ${radio}/${action}` });
+    }
+
+    const eventId = eventMap[eventName];
+    if (eventId !== undefined) {
+        try {
+            simConnectConnection.transmitClientEvent(0, eventId, eventValue, 1, 16);
+            console.log(`[Radio] ${eventName} = ${eventValue}`);
+            res.json({ success: true, event: eventName, value: eventValue });
+        } catch (e) {
+            console.error(`[Radio] Error:`, e.message);
+            res.status(500).json({ success: false, error: e.message });
+        }
+    } else {
+        res.status(400).json({ success: false, error: `Event ${eventName} not mapped` });
+    }
+});
+
+// Convert COM/NAV frequency (MHz) to BCD16 format
+// e.g., 121.500 -> 0x2150 (121.50 with 1 implied)
+function freqToBCD16(freq) {
+    // COM frequencies: 118.000 - 136.975 MHz
+    // NAV frequencies: 108.00 - 117.95 MHz
+    // Remove the leading "1" and convert to BCD
+    const mhz = parseFloat(freq);
+    const adjusted = Math.round((mhz - 100) * 100); // e.g., 121.50 -> 2150
+    // Convert to BCD16
+    const digits = adjusted.toString().padStart(4, '0');
+    let bcd = 0;
+    for (let i = 0; i < 4; i++) {
+        bcd = (bcd << 4) | parseInt(digits[i]);
+    }
+    return bcd;
+}
+
+// Convert ADF frequency (KHz) to BCD16 format
+function adfToBCD16(freq) {
+    const khz = parseInt(freq);
+    const digits = khz.toString().padStart(4, '0');
+    let bcd = 0;
+    for (let i = 0; i < 4; i++) {
+        bcd = (bcd << 4) | parseInt(digits[i]);
+    }
+    return bcd;
+}
+
+// Get current radio frequencies
+app.get('/api/radio', (req, res) => {
+    res.json({
+        com1: { active: flightData.com1Active, standby: flightData.com1Standby },
+        com2: { active: flightData.com2Active, standby: flightData.com2Standby },
+        nav1: { active: flightData.nav1Active, standby: flightData.nav1Standby },
+        nav2: { active: flightData.nav2Active, standby: flightData.nav2Standby },
+        adf: { active: flightData.adfActive, standby: flightData.adfStandby },
+        transponder: flightData.transponder
     });
 });
 
@@ -1527,7 +1679,22 @@ async function initSimConnect() {
             // Slew mode for flight recorder playback
             'SLEW_TOGGLE',
             'SLEW_ON',
-            'SLEW_OFF'
+            'SLEW_OFF',
+            // Radio frequency events
+            'COM_RADIO_SET',
+            'COM_STBY_RADIO_SET',
+            'COM2_RADIO_SET',
+            'COM2_STBY_RADIO_SET',
+            'NAV1_RADIO_SET',
+            'NAV1_STBY_SET',
+            'NAV2_RADIO_SET',
+            'NAV2_STBY_SET',
+            'COM_STBY_RADIO_SWAP',
+            'COM2_STBY_RADIO_SWAP',
+            'NAV1_RADIO_SWAP',
+            'NAV2_RADIO_SWAP',
+            'ADF_SET',
+            'XPNDR_SET'
             // Note: Fuel control uses writable SimVars, not events
         ];
         
@@ -1609,7 +1776,19 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'PLANE ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'PLANE PITCH DEGREES', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'PLANE BANK DEGREES', 'degrees', SimConnectDataType.FLOAT64, 0);
-        
+        // Radio frequencies
+        handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'COM STANDBY FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'COM STANDBY FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV ACTIVE FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV STANDBY FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV ACTIVE FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV STANDBY FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ADF ACTIVE FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ADF STANDBY FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TRANSPONDER CODE:1', 'BCO16', SimConnectDataType.INT32, 0);
+
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
         // Tank key to definition ID mapping
@@ -1735,6 +1914,18 @@ async function initSimConnect() {
                         altitudeMSL: d.readFloat64(),
                         pitch: d.readFloat64(),
                         bank: d.readFloat64(),
+                        // Radio frequencies (MHz for COM/NAV, KHz for ADF)
+                        com1Active: d.readFloat64(),
+                        com1Standby: d.readFloat64(),
+                        com2Active: d.readFloat64(),
+                        com2Standby: d.readFloat64(),
+                        nav1Active: d.readFloat64(),
+                        nav1Standby: d.readFloat64(),
+                        nav2Active: d.readFloat64(),
+                        nav2Standby: d.readFloat64(),
+                        adfActive: d.readFloat64(),
+                        adfStandby: d.readFloat64(),
+                        transponder: d.readInt32(),
                         connected: true
                     };
                     broadcastFlightData();
