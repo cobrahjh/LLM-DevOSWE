@@ -1,0 +1,34 @@
+{
+    "id": "example-checklist",
+    "name": "Flight Checklist",
+    "version": "1.0.0",
+    "description": "Interactive pre-flight and landing checklists",
+    "author": "SimWidget Team",
+    "category": "utility",
+    "entry": "index.html",
+    "icon": "checklist.png",
+    "commands": [
+        {
+            "name": "preflight",
+            "description": "Open pre-flight checklist"
+        },
+        {
+            "name": "landing",
+            "description": "Open landing checklist"
+        }
+    ],
+    "settings": [
+        {
+            "key": "autoAdvance",
+            "type": "boolean",
+            "default": true,
+            "label": "Auto-advance on completion"
+        },
+        {
+            "key": "soundEffects",
+            "type": "boolean",
+            "default": true,
+            "label": "Play sound effects"
+        }
+    ]
+}

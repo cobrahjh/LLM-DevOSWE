@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Manager - SimWidget</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Plugin Manager</h1>
+            <button class="refresh-btn" id="refreshBtn" title="Scan for plugins">Refresh</button>
+        </header>
+
+        <div class="plugin-grid" id="pluginGrid">
+            <!-- Plugins will be populated by JS -->
+        </div>
+
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">&#128268;</div>
+            <div class="empty-text">No plugins found</div>
+            <div class="empty-hint">Add plugins to the <code>plugins/</code> folder</div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -150,15 +150,15 @@
 
 ---
 
-### Phase 6: Advanced (In Progress)
-**Timeline:** 2026-01-22 (Started)
+### Phase 6: Advanced ✅ COMPLETE
+**Timeline:** Completed 2026-01-22
 
 | Feature | Priority | Status | Notes |
 |---------|----------|--------|-------|
 | Panel Launcher | LOW | ✅ | G1000 soft keys, avionics power, quick actions |
 | Interaction Wheel | LOW | ✅ | Radial menu for common flight controls |
 | Otto Search Bar | LOW | ✅ | Command palette with 45+ commands |
-| Plugin system | LOW | ❌ | Third-party widgets (backlog) |
+| Plugin System | LOW | ✅ | Third-party widget discovery and management |
 
 **Phase 6 Deliverables:**
 - [x] Panel Launcher widget (`ui/panel-launcher/`)
@@ -177,6 +177,13 @@
   - Fuzzy search by name, description, keywords
   - Category filters (flight, lights, autopilot, engine, camera, radio)
   - Keyboard navigation (arrows, enter, escape)
+- [x] Plugin System (`backend/plugin-system/`, `ui/plugin-manager/`)
+  - Plugin discovery from `plugins/` folder
+  - Manifest-based plugin registration (plugin.json)
+  - Enable/disable plugins via API and UI
+  - Plugin Manager widget with status indicators
+  - Example checklist plugin with flight checklists
+  - REST API: GET/POST `/api/plugins`, enable/disable, refresh
 
 ---
 

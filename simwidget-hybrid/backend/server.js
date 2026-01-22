@@ -12,6 +12,7 @@
  * - WASM cinematic camera support
  * 
  * Changelog:
+ * v1.11.0 - Added plugin system with discovery and management
  * v1.10.0 - Added /api/logs/:service endpoint for log viewing
  * v1.9.0 - Added Services Panel widget and /api/services endpoint
  * v1.8.0 - Added WASM cinematic camera API
@@ -37,11 +38,18 @@ const { executeCamera, checkVJoy, isCameraCommand } = require('./vjoy-camera');
 const TroubleshootEngine = require('../../Admin/shared/troubleshoot-engine');
 const cameraSystem = require('./camera-system');
 const { HotReloadManager } = require('./hot-reload');
+const PluginLoader = require('./plugin-system/plugin-loader');
+const PluginAPI = require('./plugin-system/plugin-api');
 
 // Hot reload manager (development only)
 const hotReloadManager = new HotReloadManager();
 
-const SERVER_VERSION = '1.10.0';
+// Plugin system
+const pluginsDir = path.join(__dirname, '../plugins');
+const pluginLoader = new PluginLoader(pluginsDir);
+const pluginAPI = new PluginAPI();
+
+const SERVER_VERSION = '1.11.0';
 
 // SimConnect - will be loaded dynamically
 let simConnect = null;
@@ -153,6 +161,9 @@ app.use('/backend', express.static(backendPath), serveIndex(backendPath, { icons
 const widgetsPath = path.join(__dirname, '../../widgets');
 app.use('/widgets', express.static(widgetsPath), serveIndex(widgetsPath, { icons: true }));
 
+// Serve plugins static files
+app.use('/plugins', express.static(pluginsDir), serveIndex(pluginsDir, { icons: true }));
+
 // Root index page
 app.get('/', (req, res) => {
     res.send(`
@@ -211,6 +222,7 @@ app.get('/', (req, res) => {
             <ul>
                 <li><a href="/ui/keymap-editor/">⌨️ Keymap Editor</a></li>
                 <li><a href="/ui/services-panel/">🔧 Services Panel</a></li>
+                <li><a href="/ui/plugin-manager/">🔌 Plugin Manager</a></li>
                 <li><a href="/ui/voice-control/">🎤 Voice Control</a></li>
                 <li><a href="/config/">📁 Config Files</a></li>
             </ul>
@@ -255,6 +267,12 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
+
+// Initialize plugin system
+pluginLoader.discover();
+pluginLoader.loadConfig(path.join(__dirname, '../plugins-config.json'));
+pluginAPI.registerRoutes(app, pluginLoader);
+console.log(`[Plugins] Discovered ${pluginLoader.getAll().length} plugins`);
 
 // REST API endpoints
 
@@ -308,6 +326,13 @@ app.get('/api', (req, res) => {
     <div class="endpoint"><span class="method">GET</span> /api/keymaps/:category <span class="desc">- Get keymaps for category</span></div>
     <div class="endpoint"><span class="method post">POST</span> /api/keymaps/:category/:action <span class="desc">- Update keymap { key }</span></div>
     
+    <h2>Plugins</h2>
+    <div class="endpoint"><span class="method">GET</span> <a href="/api/plugins">/api/plugins</a> <span class="desc">- List all plugins</span></div>
+    <div class="endpoint"><span class="method">GET</span> /api/plugins/:id <span class="desc">- Get plugin details</span></div>
+    <div class="endpoint"><span class="method post">POST</span> /api/plugins/:id/enable <span class="desc">- Enable plugin</span></div>
+    <div class="endpoint"><span class="method post">POST</span> /api/plugins/:id/disable <span class="desc">- Disable plugin</span></div>
+    <div class="endpoint"><span class="method post">POST</span> /api/plugins/refresh <span class="desc">- Rescan plugins folder</span></div>
+
     <h2>Debug</h2>
     <div class="endpoint"><span class="method">GET</span> <a href="/api/debug/history">/api/debug/history</a> <span class="desc">- Key send history</span></div>
     <div class="endpoint"><span class="method delete">DELETE</span> /api/debug/history <span class="desc">- Clear history</span></div>

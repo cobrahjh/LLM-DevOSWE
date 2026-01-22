@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Checklist - SimWidget Plugin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .container { max-width: 400px; margin: 0 auto; }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 16px; background: rgba(255,255,255,0.05);
+            border-radius: 12px; margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 16px; color: #00d4ff; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tab {
+            flex: 1; padding: 10px; text-align: center;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .tab:hover { background: rgba(255,255,255,0.1); }
+        .tab.active { background: rgba(0,212,255,0.2); border-color: #00d4ff; color: #00d4ff; }
+        .checklist { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; }
+        .checklist-title { font-size: 14px; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .item {
+            display: flex; align-items: center; padding: 12px;
+            background: rgba(255,255,255,0.02); border-radius: 8px;
+            margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+        }
+        .item:hover { background: rgba(255,255,255,0.06); }
+        .item.completed { opacity: 0.5; }
+        .item.completed .check { background: #00ff88; border-color: #00ff88; }
+        .item.completed .check::after { content: '\u2713'; color: #000; font-weight: bold; }
+        .check {
+            width: 24px; height: 24px; border: 2px solid #444;
+            border-radius: 6px; margin-right: 12px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .item-text { flex: 1; }
+        .item-action { font-size: 12px; color: #00d4ff; }
+        .progress { margin-top: 16px; }
+        .progress-bar {
+            height: 8px; background: rgba(255,255,255,0.1);
+            border-radius: 4px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #00d4ff, #00ff88);
+            transition: width 0.3s;
+        }
+        .progress-text { font-size: 12px; color: #666; margin-top: 8px; text-align: center; }
+        .reset-btn {
+            width: 100%; padding: 12px; margin-top: 16px;
+            background: rgba(255,100,100,0.2); border: 1px solid rgba(255,100,100,0.3);
+            border-radius: 8px; color: #ff6666; cursor: pointer;
+            font-size: 13px; transition: all 0.2s;
+        }
+        .reset-btn:hover { background: rgba(255,100,100,0.3); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Flight Checklist</h1>
+            <span id="status"></span>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-list="preflight">Pre-Flight</div>
+            <div class="tab" data-list="takeoff">Takeoff</div>
+            <div class="tab" data-list="landing">Landing</div>
+        </div>
+
+        <div class="checklist" id="checklist"></div>
+
+        <div class="progress">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-text" id="progressText">0 / 0 complete</div>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">Reset Checklist</button>
+    </div>
+
+    <script>
+        const CHECKLISTS = {
+            preflight: [
+                { text: 'Parking Brake', action: 'SET', command: 'PARKING_BRAKES' },
+                { text: 'Battery', action: 'ON', command: 'TOGGLE_MASTER_BATTERY' },
+                { text: 'Avionics', action: 'ON', command: 'TOGGLE_AVIONICS_MASTER' },
+                { text: 'Beacon Light', action: 'ON', command: 'TOGGLE_BEACON_LIGHTS' },
+                { text: 'Fuel Quantity', action: 'CHECK', command: null },
+                { text: 'Flight Controls', action: 'FREE', command: null },
+                { text: 'Instruments', action: 'CHECK', command: null }
+            ],
+            takeoff: [
+                { text: 'Flaps', action: 'SET', command: 'FLAPS_INCR' },
+                { text: 'Trim', action: 'SET', command: null },
+                { text: 'Throttle', action: 'FULL', command: 'THROTTLE_FULL' },
+                { text: 'Airspeed', action: 'ALIVE', command: null },
+                { text: 'Rotate', action: 'Vr', command: null },
+                { text: 'Gear', action: 'UP', command: 'GEAR_TOGGLE' },
+                { text: 'Flaps', action: 'UP', command: 'FLAPS_DECR' }
+            ],
+            landing: [
+                { text: 'ATIS', action: 'CHECK', command: null },
+                { text: 'Altimeter', action: 'SET', command: null },
+                { text: 'Gear', action: 'DOWN', command: 'GEAR_TOGGLE' },
+                { text: 'Flaps', action: 'SET', command: 'FLAPS_INCR' },
+                { text: 'Speed', action: 'Vref', command: null },
+                { text: 'Landing Lights', action: 'ON', command: 'LANDING_LIGHTS_TOGGLE' },
+                { text: 'Autopilot', action: 'OFF', command: 'AP_MASTER' }
+            ]
+        };
+
+        let currentList = 'preflight';
+        let completed = { preflight: [], takeoff: [], landing: [] };
+
+        function renderChecklist() {
+            const container = document.getElementById('checklist');
+            const items = CHECKLISTS[currentList];
+            const done = completed[currentList];
+
+            container.textContent = '';
+
+            const title = document.createElement('div');
+            title.className = 'checklist-title';
+            title.textContent = currentList.charAt(0).toUpperCase() + currentList.slice(1) + ' Checklist';
+            container.appendChild(title);
+
+            items.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'item' + (done.includes(idx) ? ' completed' : '');
+                div.dataset.index = idx;
+
+                const check = document.createElement('div');
+                check.className = 'check';
+
+                const text = document.createElement('div');
+                text.className = 'item-text';
+                text.textContent = item.text;
+
+                const action = document.createElement('div');
+                action.className = 'item-action';
+                action.textContent = item.action;
+
+                div.appendChild(check);
+                div.appendChild(text);
+                div.appendChild(action);
+
+                div.addEventListener('click', () => toggleItem(idx, item.command));
+                container.appendChild(div);
+            });
+
+            updateProgress();
+        }
+
+        function toggleItem(idx, command) {
+            const done = completed[currentList];
+            const i = done.indexOf(idx);
+            if (i === -1) {
+                done.push(idx);
+                if (command) sendCommand(command);
+            } else {
+                done.splice(i, 1);
+            }
+            renderChecklist();
+        }
+
+        function updateProgress() {
+            const total = CHECKLISTS[currentList].length;
+            const done = completed[currentList].length;
+            const pct = total > 0 ? (done / total) * 100 : 0;
+
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressText').textContent = done + ' / ' + total + ' complete';
+        }
+
+        async function sendCommand(command) {
+            try {
+                await fetch('http://localhost:8080/api/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command, value: 0 })
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentList = tab.dataset.list;
+                renderChecklist();
+            });
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            completed[currentList] = [];
+            renderChecklist();
+        });
+
+        renderChecklist();
+    </script>
+</body>
+</html>
