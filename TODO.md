@@ -365,7 +365,7 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 - [x] STANDARDS.md - Project conventions and patterns
 - [x] CAMERA-TROUBLESHOOTING.md - Camera control troubleshooting guide
 - [x] PLUGIN-DEVELOPMENT.md - Plugin development guide
-- [ ] Update CLAUDE.md with camera controller architecture
+- [x] Update CLAUDE.md with camera controller architecture
 
 ---
 

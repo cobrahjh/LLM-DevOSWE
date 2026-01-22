@@ -155,6 +155,48 @@ Config: `Admin/caddy/Caddyfile`
 
 ---
 
+## SimWidget Camera Architecture
+
+### Input Methods (Priority Order)
+
+| Method | Latency | Reliability | When Used |
+|--------|---------|-------------|-----------|
+| TCP KeySenderService | ~5ms | Excellent | If service running on port 9999 |
+| FastKeySender | ~32ms | Good | Persistent PowerShell process |
+| PowerShell | ~400ms | Fair | Fallback for all platforms |
+
+### Key Components
+
+| File | Purpose |
+|------|---------|
+| `camera-controller.js` | Platform detection, ChasePlane detection, input routing |
+| `key-sender.js` v3.2.0 | GUID-based keymaps, multi-method key sending |
+| `fast-key-sender.js` | Persistent PowerShell for fast key input |
+| `platform-detector.js` | Detects vJoy, SendKeys, SimConnect availability |
+| `keymaps.json` | Camera view mappings (configurable via Keymap Editor) |
+
+### Camera Modes
+
+- **Native MSFS** - Works without ChasePlane via PowerShell key sending
+- **ChasePlane** - Auto-detected, uses AHK helper for smooth camera control
+- **WASM Module** - Custom flyby/cinematic cameras (in MSFS Community folder)
+
+### API Endpoints
+
+```
+GET  /api/status          # Includes camera mode and AHK status
+GET  /api/camera/status   # Camera-specific status
+POST /api/camera/:action  # Trigger camera view (cockpitVFR, drone, etc.)
+GET  /api/wasm-camera/status  # WASM module status
+POST /api/wasm-camera/:cmd    # WASM camera commands
+```
+
+### Troubleshooting
+
+See [docs/CAMERA-TROUBLESHOOTING.md](docs/CAMERA-TROUBLESHOOTING.md)
+
+---
+
 ## Quick Context
 
 - **This PC:** Harold-PC (192.168.1.42)
