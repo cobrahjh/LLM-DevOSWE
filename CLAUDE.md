@@ -148,6 +148,7 @@ Config: `Admin/caddy/Caddyfile`
 | [SERVICE-REGISTRY.md](SERVICE-REGISTRY.md) | All services, ports, endpoints |
 | [STANDARDS.md](STANDARDS.md) | Code patterns, timing, conventions |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture diagrams |
+| [docs/HIVE-PROTOCOLS.md](docs/HIVE-PROTOCOLS.md) | **Required protocols for all Hive AI** |
 | [docs/PERSONAS.md](docs/PERSONAS.md) | AI personas and voice settings |
 | [docs/INTEL-SOURCES.md](docs/INTEL-SOURCES.md) | Intel gathering configuration |
 | [docs/CLAUDE-CODE-GUIDE.md](docs/CLAUDE-CODE-GUIDE.md) | CLI reference, hooks, MCP |
