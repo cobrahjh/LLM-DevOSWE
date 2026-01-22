@@ -223,10 +223,12 @@
 **Goal:** Add comprehensive health check endpoint
 **Completed:** `/api/health` with camera, plugins, memory, uptime
 
-### Documentation Updates
-- [ ] Troubleshooting guide for camera controls
-- [ ] Widget development tutorial video
-- [ ] MSFS SDK event reference expansion
+### Documentation Updates ✅ MOSTLY COMPLETE
+- [x] Troubleshooting guide for camera controls (`docs/CAMERA-TROUBLESHOOTING.md`)
+- [x] Plugin development guide (`docs/PLUGIN-DEVELOPMENT.md`)
+- [x] SimWidget README updated (`simwidget-hybrid/README.md`)
+- [ ] Widget development tutorial video (future)
+- [ ] MSFS SDK event reference expansion (future)
 
 ---
 

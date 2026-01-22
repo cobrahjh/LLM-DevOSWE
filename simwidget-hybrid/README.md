@@ -1,33 +1,38 @@
 # SimWidget Hybrid
 
-A dual-development setup for MSFS 2024 aircraft control widget with:
-- **Fast browser development** (instant refresh)
-- **MSFS toolbar panel** (fullscreen compatible)
+Flow Pro replacement for MSFS 2024 - modular widget overlay system.
 
-Both share the same UI code and connect to a common backend server.
+**Server Version:** v1.11.0
+**Status:** All 6 phases complete
 
 ---
 
-## Dual-PC Development Setup
+## Quick Start
 
-This project uses a **two-PC workflow** with Google Drive sync:
+### 1. Start Server
 
-| PC | Role | Path |
-|----|------|------|
-| **Development PC** | Edit code, Claude AI | `C:\LLM-DevOSWE\SimWidget Engine\simwidget-hybrid\` |
-| **Remote PC** | Run MSFS, test UI | `G:\Other computers\Claude Development Enviroment\DevClaude\SimWidget Engine\simwidget-hybrid\` |
+```bash
+cd simwidget-hybrid/backend
+node server.js
+```
 
-### How It Works
-1. **Development PC** has Google Drive sync enabled on `C:\LLM-DevOSWE\`
-2. **Remote PC** accesses the shared folder via `G:\Other computers\Claude Development Enviroment\DevClaude\`
-3. Files edited on Development PC automatically sync to Remote PC
-4. Remote PC runs the backend server and MSFS for testing
+Server runs on `http://localhost:8080`
 
-### Workflow
-1. Edit files on **Development PC** (via Claude AI or manually)
-2. Files sync via Google Drive
-3. Restart server on **Remote PC** or refresh browser
-4. Test changes immediately
+### 2. Open Command Center
+
+Browse to: http://localhost:8080
+
+### 3. Launch Widgets
+
+| Widget | URL | Description |
+|--------|-----|-------------|
+| Aircraft Control | `/ui/aircraft-control/` | Lights, gear, flaps, AP |
+| Camera | `/ui/camera-widget/` | Camera views & presets |
+| Flight Data | `/ui/flight-data-widget/` | Instruments & HUD |
+| Fuel | `/ui/fuel-widget/` | Fuel management |
+| Radio Stack | `/ui/radio-stack/` | COM, NAV, transponder |
+| Plugin Manager | `/ui/plugin-manager/` | Third-party plugins |
+| Otto Search | `/ui/otto-search/` | Command palette |
 
 ---
 
@@ -36,48 +41,94 @@ This project uses a **two-PC workflow** with Google Drive sync:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│  ┌──────────────┐                    ┌──────────────────┐  │
-│  │   Browser    │────┐               │                  │  │
-│  │ localhost:8080│    │   WebSocket  │   SimConnect     │  │
-│  └──────────────┘    ├──────────────►│     (MSFS)       │  │
-│                      │               │                  │  │
-│  ┌──────────────┐    │               └──────────────────┘  │
-│  │   Toolbar    │────┘                        ▲            │
-│  │    Panel     │                             │            │
-│  └──────────────┘         ┌───────────────────┘            │
-│                           │                                │
-│                    ┌──────┴───────┐                        │
-│                    │   Backend    │                        │
-│                    │   Server     │                        │
-│                    │  (Node.js)   │                        │
-│                    └──────────────┘                        │
-│                                                             │
+│  ┌──────────────┐          WebSocket       ┌─────────────┐ │
+│  │   Widgets    │◄─────────────────────────►│  Backend    │ │
+│  │  (Browser)   │         :8080             │   Server    │ │
+│  └──────────────┘                           └──────┬──────┘ │
+│                                                    │        │
+│  ┌──────────────┐                           SimConnect      │
+│  │   Plugins    │◄─────────────────────────┐       │        │
+│  │  (3rd party) │                          │       ▼        │
+│  └──────────────┘                      ┌───┴───────────┐   │
+│                                        │   MSFS 2024   │   │
+│                                        └───────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Quick Start
+## Features
 
-### On Remote PC (MSFS Testing)
+### Phase 1: Core Flight
+- Autopilot (HDG, ALT, VS, SPD)
+- Engine controls (throttle, prop, mixture)
+- Gear, flaps, parking brake
+- Basic lights
 
-1. **Start the server** - Double-click:
-   ```
-   G:\Other computers\Claude Development Enviroment\DevClaude\SimWidget Engine\simwidget-hybrid\start-server.bat
-   ```
+### Phase 2: Complete Controls
+- All 11 aircraft lights
+- Trim controls (aileron, elevator, rudder)
+- Electrical systems
+- Door controls
 
-2. **Open browser:** http://localhost:8080
+### Phase 3: Radio & Navigation
+- COM1/COM2 frequencies
+- NAV1/NAV2 frequencies
+- Transponder with presets
 
-3. **(Optional) Start MSFS** for live SimConnect data
+### Phase 4: Flight Instruments
+- Attitude indicator
+- Speed/altitude tapes
+- G-force display
+- Wind vector
 
-### On Development PC (Code Editing)
+### Phase 5: Environment
+- Time of day control
+- Weather presets
+- Sim rate control
+- Slew mode
 
-Edit files in:
+### Phase 6: Advanced
+- Panel Launcher (G1000 keys)
+- Interaction Wheel (radial menu)
+- Otto Search (command palette)
+- Plugin System
+
+---
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/status` | GET | Flight data & connection |
+| `/api/health` | GET | Full system health check |
+| `/api/plugins` | GET | List all plugins |
+| `/api/command` | POST | Send SimConnect command |
+| `/api/keymaps` | GET | Keyboard mappings |
+| `/api/camsys/state` | GET | Camera system state |
+
+### WebSocket
+
+Connect to `ws://localhost:8080` for real-time flight data:
+
+```javascript
+const ws = new WebSocket('ws://localhost:8080');
+
+ws.onmessage = (event) => {
+    const { type, data } = JSON.parse(event.data);
+    if (type === 'flightData') {
+        console.log('Altitude:', data.altitude);
+        console.log('Speed:', data.speed);
+    }
+};
+
+// Send command
+ws.send(JSON.stringify({
+    type: 'command',
+    command: 'GEAR_TOGGLE',
+    value: 0
+}));
 ```
-C:\LLM-DevOSWE\SimWidget Engine\simwidget-hybrid\shared-ui\
-```
-
-Changes sync automatically via Google Drive.
 
 ---
 
@@ -86,143 +137,87 @@ Changes sync automatically via Google Drive.
 ```
 simwidget-hybrid/
 ├── backend/
-│   ├── package.json      # Node.js dependencies
-│   └── server.js         # WebSocket + SimConnect server
-│
-├── shared-ui/            # UI code (works in both browser & panel)
-│   ├── index.html        # Main HTML
-│   ├── styles.css        # Styles
-│   └── app.js            # WebSocket client + UI logic
-│
-├── toolbar-panel/        # MSFS toolbar panel wrapper
-│   └── index.html        # Loads shared-ui from localhost
-│
-├── start-server.bat      # Launch script for Remote PC
-└── README.md
+│   ├── server.js           # Main server (v1.11.0)
+│   ├── camera-system.js    # Camera controls
+│   ├── key-sender.js       # Keyboard simulation
+│   └── plugin-system/      # Plugin loader & API
+├── ui/
+│   ├── aircraft-control/   # Main control widget
+│   ├── camera-widget/      # Camera controls
+│   ├── flight-data-widget/ # Flight instruments
+│   ├── fuel-widget/        # Fuel management
+│   ├── radio-stack/        # Radio frequencies
+│   ├── plugin-manager/     # Plugin management UI
+│   ├── otto-search/        # Command palette
+│   ├── interaction-wheel/  # Radial quick menu
+│   └── panel-launcher/     # G1000 soft keys
+├── plugins/
+│   └── example-checklist/  # Example plugin
+├── config/
+│   └── keymaps.json        # Keyboard mappings
+└── shared-ui/              # Common components
 ```
 
 ---
 
-## Features
+## Requirements
 
-### Flight Data
-- Altitude, Speed, Heading, Vertical Speed
-- Real-time updates via WebSocket
-- V/S color coding (green=climb, orange=descent)
+- **Node.js 18+**
+- **Windows 10/11**
+- **MSFS 2020/2024** (for SimConnect)
 
-### Systems Control
-- Parking Brake toggle
-- Landing Gear toggle
-- Flaps toggle
+### Optional (for enhanced camera control)
 
-### Lights Control
-- NAV, BCN, STRB, LDG, TAXI
-- Click to toggle on/off
-- Green indicator = ON
-
-### Engine Status
-- Running state (ON/OFF)
-- Throttle percentage
-
-### Connection Status
-- 🟢 Green dot = Connected to MSFS
-- 🟡 Yellow dot = Mock mode (no MSFS)
-- 🔴 Red dot = Backend disconnected
+- vJoy - Fastest camera input
+- ChasePlane - Cinematic modes
+- AutoHotKey - Key simulation
 
 ---
 
-## Backend API
+## Plugin System
 
-### WebSocket (ws://localhost:8080)
+Create third-party plugins in `plugins/` folder:
 
-**Incoming Messages:**
+```
+plugins/my-plugin/
+├── plugin.json    # Manifest
+└── index.html     # Entry point
+```
+
+Manifest example:
 ```json
 {
-  "type": "flightData",
-  "data": {
-    "altitude": 5000,
-    "speed": 120,
-    "heading": 270,
-    "verticalSpeed": 500,
-    "parkingBrake": false,
-    "gearDown": true,
-    ...
-  }
+    "id": "my-plugin",
+    "name": "My Plugin",
+    "version": "1.0.0",
+    "description": "Plugin description",
+    "author": "Your Name",
+    "category": "utility"
 }
 ```
 
-**Outgoing Commands:**
-```json
-{
-  "type": "command",
-  "command": "TOGGLE_NAV_LIGHTS",
-  "value": 0
-}
+See `docs/PLUGIN-DEVELOPMENT.md` for full guide.
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| `docs/WIDGET-CREATION-GUIDE.md` | Create custom widgets |
+| `docs/PLUGIN-DEVELOPMENT.md` | Plugin development |
+| `docs/CAMERA-TROUBLESHOOTING.md` | Camera control issues |
+| `docs/SIMVARS-REFERENCE.md` | SimConnect variables |
+
+---
+
+## Health Check
+
+```bash
+curl http://localhost:8080/api/health
 ```
 
-### REST API
-
-**GET /api/status**
-Returns current flight data and connection status.
-
-**POST /api/command**
-```json
-{
-  "command": "GEAR_TOGGLE",
-  "value": 0
-}
-```
-
----
-
-## Customization
-
-### Adding New SimVars
-
-1. Edit `backend/server.js`
-2. Add to `handle.addToDataDefinition()`
-3. Update `flightData` object in data handler
-4. Update `shared-ui/app.js` `updateUI()` method
-5. Add UI elements in `shared-ui/index.html`
-
-### Styling
-
-Edit `shared-ui/styles.css`. Changes sync via Google Drive and appear after browser refresh.
-
----
-
-## Troubleshooting
-
-### "Backend Not Running" in toolbar panel
-- Run `start-server.bat` on Remote PC
-- Check that port 8080 is not blocked
-
-### Port 8080 already in use
-- Close any existing server windows
-- Or run in cmd: `taskkill /F /IM node.exe`
-
-### No SimConnect data
-- Make sure MSFS 2024 is running
-- Backend shows "Running in MOCK mode" if MSFS not detected
-
-### Files not syncing
-- Check Google Drive sync status on Development PC
-- Ensure Remote PC has network access to Google Drive folder
-
-### WebSocket connection failed
-- Check firewall settings for localhost:8080
-- Try restarting the backend server
-
----
-
-## Path Reference
-
-| Description | Development PC | Remote PC |
-|-------------|----------------|-----------|
-| Project Root | `C:\LLM-DevOSWE\SimWidget Engine\simwidget-hybrid\` | `G:\Other computers\Claude Development Enviroment\DevClaude\SimWidget Engine\simwidget-hybrid\` |
-| Shared UI | `...\shared-ui\` | `...\shared-ui\` |
-| Backend | `...\backend\` | `...\backend\` |
-| Start Script | N/A | `...\start-server.bat` |
+Returns server version, uptime, SimConnect status, plugin count, and memory usage.
 
 ---
 
