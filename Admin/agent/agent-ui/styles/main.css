@@ -1704,6 +1704,23 @@ body::before {
     color: rgba(255,255,255,0.7);
 }
 
+.model-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: 10px;
+    opacity: 0.7;
+}
+
+.model-badge:hover {
+    opacity: 1;
+}
+
 .chat-quick-actions {
     padding: 12px 16px;
     border-top: 1px solid var(--border-dim);

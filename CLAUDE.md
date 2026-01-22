@@ -1,6 +1,6 @@
 # SimWidget Engine
-**Version:** v1.15.0
-**Last updated:** 2026-01-20
+**Version:** v1.16.0
+**Last updated:** 2026-01-22
 
 Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 
@@ -9,6 +9,8 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 ## 🧠 Quick Reference (Harold's Cheat Sheet)
 
 ### Hive Services - "What port is that?"
+
+**LLM-DevOSWE Services (NSSM):**
 | Port | Service | Internal | External (HTTPS) |
 |------|---------|----------|------------------|
 | 3002 | Oracle (LLM backend) | http://localhost:3002 | https://hive.local/oracle |
@@ -17,14 +19,21 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 | 8585 | KittBox (Command Center) | http://localhost:8585 | https://hive.local/kitt |
 | 8600 | Relay (messages/tasks) | http://localhost:8600 | https://hive.local/relay |
 | 8701 | Hive-Mind (monitor) | http://localhost:8701 | https://hive.local/hivemind |
-| 8771 | Terminal Hub | http://localhost:8771 | https://hive.local/terminal |
-| 8800 | Hive Brain (colony) | http://localhost:8800 | https://hive.local/brain |
 | 8850 | Hive Oracle (LLM routing) | http://localhost:8850 | https://hive.local/hiveoracle |
 | 8860 | MCP Bridge (tool hub) | http://localhost:8860 | https://hive.local/mcpbridge |
 | 8899 | Hive Dashboard | http://localhost:8899 | https://hive.local/dashboard |
 | 11434 | Ollama | http://localhost:11434 | https://hive.local/ollama |
 | 1234 | LM Studio | http://localhost:1234 | https://hive.local/lmstudio |
 | 443 | **Caddy (SSL proxy)** | - | https://hive.local |
+
+**DevClaude Hivemind Services (HiveImmortal):**
+| Port | Service | Purpose |
+|------|---------|---------|
+| 8700 | Hivemind | Activity coordination |
+| 8750 | Mesh | Peer network, real-time events |
+| 8760 | Pulse | Heartbeat monitoring |
+| 8770 | Personas | AI persona management |
+| 8800 | Oracle (agents) | Agent orchestration (16 agents) |
 
 ### Quick Commands
 ```bash
@@ -50,8 +59,9 @@ curl -X POST http://localhost:8860/api/tool/read_file -H "Content-Type: applicat
 ### Key Directories
 | Path | What |
 |------|------|
-| `C:\LLM-DevOSWE` | Main framework |
-| `C:\LLM-Oracle` | Oracle daemon |
+| `C:\LLM-DevOSWE` | Main framework (NSSM services) |
+| `C:\LLM-Oracle` | Oracle daemon (port 3002) |
+| `C:\DevClaude` | Hivemind system (HiveImmortal services) |
 | `C:\kittbox-modules` | Desktop apps (Kitt Live) |
 | `C:\devTinyAI` | AI sandbox |
 
@@ -83,23 +93,13 @@ curl -X POST http://localhost:8860/api/tool/read_file -H "Content-Type: applicat
 | test-writer-fixer | cc-marketplace | Test automation |
 | backend-architect | cc-marketplace | Architecture design |
 
-**MCP Servers (14):**
+**MCP Servers (2):**
 | Server | Purpose | Status |
 |--------|---------|--------|
-| filesystem | File operations | Configured |
-| memory | Persistent memory | Configured |
 | github | GitHub integration | ✅ Active |
-| puppeteer | Browser automation | Configured |
-| fetch | HTTP requests | Configured |
-| sqlite | SQLite database | Configured |
-| postgres | PostgreSQL | Needs connection string |
 | slack | Slack integration | ✅ Active |
-| git | Git operations | Configured |
-| brave-search | Web search | Needs API key |
-| sequential-thinking | Reasoning | Configured |
-| everything | Multi-tool | Configured |
-| time | Time operations | Configured |
-| sentry | Error tracking | Needs auth |
+
+*Note: Removed redundant MCP servers - Claude Code has native tools for files (Read/Write/Edit/Glob/Grep), web (WebFetch), and git (Bash). Only external service integrations kept.*
 
 **Plugin Marketplaces:**
 - `claude-plugins-official` (Anthropic)
@@ -115,17 +115,25 @@ curl -X POST http://localhost:8860/api/tool/read_file -H "Content-Type: applicat
 | `/mcp-tools` | List all available MCP tools (79 across 10 servers) |
 | `/sync-memory` | Backup CLAUDE.md/STANDARDS.md to database |
 
-**Active Hooks (`.claude/settings.json`):**
+**Active Hooks (`.claude/settings.json`):** ✅ Verified Working
 | Hook Event | Purpose |
 |------------|---------|
 | SessionStart | Inject Hive status into context |
-| PostToolUse | Log all tool calls to Relay |
+| PostToolUse | Log all tool calls to Relay `/api/logs` |
 | Stop | Sync memory on session end |
 
 **Hook Scripts (`Admin/hooks/`):**
 - `inject-hive-context.py` - SessionStart context injection
-- `log-to-relay.py` - PostToolUse logging
+- `log-to-relay.py` - PostToolUse logging (filters Read/Glob/Grep)
 - `session-sync.py` - Stop memory backup
+
+**Tool Logging API (Relay):**
+```bash
+GET  /api/logs              # Recent tool logs
+GET  /api/logs/stats        # Usage stats by tool
+POST /api/logs              # Log tool usage (used by hooks)
+DELETE /api/logs?days=7     # Cleanup old logs
+```
 
 **Plugin Location:** `Admin/hive-plugin/`
 
@@ -274,18 +282,27 @@ claude mcp add-from-claude-desktop
 
 **Scopes:** `--scope local` (default), `--scope project` (team), `--scope user` (all projects)
 
-### User Shortcuts (say these to Claude)
-- `sqr` - show quick reference (this cheat sheet)
-- `msg` - check relay messages
-- `mem` - add to CLAUDE.md
-- `mst` - add to STANDARDS.md
-- `ss` - save session (commit & push)
-- `css` - create session shortcut on desktop
-- `ts` - test this
-- `ntt` - next todo task
-- `hivesanitycheck` - full hive status
-- `syncmem` - backup docs to database
-- `eod` - end of day session wrap (TODO: implement)
+### Skills (Slash Commands)
+
+All shortcuts are now Claude Code skills. Use `/command` syntax:
+
+| Command | Purpose |
+|---------|---------|
+| `/msg` | Check relay messages |
+| `/mem` | Add to CLAUDE.md |
+| `/mst` | Add to STANDARDS.md |
+| `/ss` | Save session (commit & push) |
+| `/sc` | Check screenshots |
+| `/hivesanitycheck` | Full hive health check |
+| `/syncmem` | Backup docs to database |
+| `/ntt` | Next todo task |
+| `/eod` | End of day wrap |
+| `/rvw` | Review code |
+| `/rfr` | Refactor to standards |
+| `/cls` | Clear stuck queues/logs |
+| `/rst` | Reset stuck services |
+
+Skills location: `.claude/skills/*.md`
 
 ### Personas
 - **Heather** - Voice persona (Google UK English Female)
@@ -303,6 +320,13 @@ claude mcp add-from-claude-desktop
 - **NEVER change ports without asking** - Do NOT modify ports for any process, service, or API unless explicitly approved by Harold. Changing ports breaks URLs and paths that are already memorized/bookmarked.
 - **Continue changes without prompting** - Don't ask for confirmation, just make the changes and report what was done.
 - **NEVER ask for permissions** - Just do it. No confirmation dialogs, no "shall I proceed?", no permission requests.
+- **Proactively review & recommend improvements** - When working on any task, actively check for conflicts or better approaches in:
+  - **Policies** (rules in CLAUDE.md)
+  - **Standards** (patterns in STANDARDS.md)
+  - **Procedures** (documented workflows)
+  - **Processes** (how things are done)
+
+  If you find a conflict, outdated info, or a better way: flag it immediately with a recommendation. Don't wait to be asked. Continuous improvement is expected.
 - **No code** - Do NOT show ANY code or code changes. No code blocks, no inline code, no diffs, no raw CSS/HTML/JS. Just make changes silently and describe what was done in plain English. Keep responses concise and conversational.
 - **ALWAYS TEST** - After making any change, TEST IT. Run the service, call the endpoint, check the UI, verify it works. Never assume code works - prove it works. If a test fails, fix it before moving on.
 - **⚠️ COST WARNING REQUIRED** - If ANY feature/action would cost real money (API tokens, external services, etc.), an admin warning MUST appear before execution. No silent charges.
@@ -901,48 +925,21 @@ C:\LLM-DevOSWE\start-hive.bat
 # Or let Guardian auto-heal (if installed as service)
 ```
 
-## User Shortcuts
+## Skills (Claude Code Commands)
 
-### Memory & Documentation
-- `mem` - add to CLAUDE.md for future reference
-- `mst` - add pattern/convention to STANDARDS.md
-- `memstandards` - review session work, add patterns to STANDARDS.md
-- `syncmem` - backup CLAUDE.md and STANDARDS.md to database
-- `ss` - save session (commit & push current work)
-- `css` - create session shortcut on desktop
-- `syncmemproj` - merge and backup project docs to database
-- `syncmemall` - merge and backup all projects docs to database
+All shortcuts are now skills in `.claude/skills/`. Use `/command` syntax.
 
-### Tasks & Workflow
-- `ntt` - work on next item from todo list
-- `br` - add feature/option to todo module
-- `ts` - run tests on recent changes
-- `rvw` - review code for issues, clean up, optimize
-- `rfr` - refactor code to follow STANDARDS.md
-- `psreflect` - give recommendations based on experience
+**Full skill list:** Run `ls .claude/skills/` or check the skills directory.
 
-### Communication
-- `msg` - poll relay for pending Kitt messages
-- `ayb` - check if Claude is ready for next task
-- `idt` - signals uncertainty, needs clarification
+### Memory Management Rule
 
-### Development
-- `chk` - check status, syntax, or state
-- `opn` - open browser to test
-- `syn` - test sync/reconcile features
-- `cls` - clear stuck queues, logs, cache
-- `rst` - reset stuck services/state
+**When adding new items to CLAUDE.md:**
+1. First ask: "Is this a repeatable action/command?"
+2. If YES → Create a skill file in `.claude/skills/` instead
+3. If NO → Add to CLAUDE.md as reference information
 
-### Debug & Tools
-- `adi` - add item to Debug Inspector
-- `dinsp` - open Debug Inspector tool/menu
-- `vl` - show/manage voice output history
-- `wpan` - refers to floating windows or panels
-
-### System & Screenshots
-- `hivesanitycheck` - check all hive info (services, ports, health, logs)
-- `cs` - check OneDrive screenshots (move to backup/ after processing)
-- `scg` - check Google Drive screenshots (move to backup/ after processing)
+**Skills are for:** Actions, commands, workflows, things you DO
+**Memory is for:** Facts, architecture, configuration, things you KNOW
 
 ## Memory & Standards Persistence
 
@@ -1127,6 +1124,68 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 
 **Start all:** `C:\LLM-DevOSWE\start-all-servers.bat`
 **Full details:** See `SERVICE-REGISTRY.md`
+
+## Hive Service Management (Two Systems)
+
+**⚠️ IMPORTANT:** There are TWO independent hive systems running on Harold-PC with DIFFERENT service managers. Do NOT create duplicate services.
+
+### System 1: LLM-DevOSWE (NSSM Managed)
+
+| Service | Port | NSSM Name | Location |
+|---------|------|-----------|----------|
+| Oracle | 3002 | HiveOracle | `C:\LLM-Oracle\oracle.js` |
+| Relay | 8600 | HiveRelay | `C:\LLM-DevOSWE\Admin\relay\relay-service.js` |
+| KittBox | 8585 | HiveKittBox | `C:\LLM-DevOSWE\Admin\agent\agent-server.js` |
+| Hive-Mind | 8701 | HiveMind | `C:\LLM-DevOSWE\Admin\hive-mind\hive-mind-server.js` |
+| Hive-Oracle | 8850 | - | Distributed LLM routing |
+| DocSync | - | HiveDocSync | `C:\LLM-DevOSWE\Admin\docsync\docsync-agent.js` |
+| Remote Support | 8590 | HiveRemoteSupport | `C:\LLM-DevOSWE\Admin\remote-support\service.js` |
+| Kitt Live | 8686 | HiveKittLive | `C:\kittbox-modules\kitt-live\server.js` |
+| Caddy | 443 | HiveCaddy | SSL reverse proxy |
+
+**Commands:**
+```bash
+nssm list                          # List all NSSM services
+nssm restart HiveRelay             # Restart a service
+nssm stop HiveKittBox              # Stop a service
+```
+
+### System 2: DevClaude Hivemind (HiveImmortal Managed)
+
+**Manager:** HiveImmortal (`C:\DevClaude\Hivemind\bootstrap\immortal.js`) - runs as NSSM service
+
+| Service | Port | Script | Purpose |
+|---------|------|--------|---------|
+| mesh | 8750 | `mesh\mesh.js` | Peer network, real-time events |
+| hivemind | 8700 | `hivemind.js` | Activity coordination |
+| oracle | 8800 | `Oracle\oracle.js` | Agent orchestration (16 agents) |
+| personas | 8770 | `personas\personas.js` | AI persona management |
+| pulse | 8760 | `pulse\pulse.js` | Heartbeat monitoring |
+| health | - | `health\health.js` | Health checks |
+| growth | - | `growth\growth.js` | Auto-scaling |
+| healer | - | `healing\healer.js` | Self-repair |
+| momentum | - | `momentum\engine.js` | Task momentum |
+| mind | - | `proactive\mind.js` | Proactive actions |
+| redundancy | - | `redundancy\redundancy.js` | Failover |
+| review | - | `review\review.js` | Code review |
+
+**Location:** `C:\DevClaude\Hivemind\`
+
+**Commands:**
+```bash
+nssm restart HiveImmortal          # Restart all DevClaude services
+rm C:\DevClaude\Hivemind\bootstrap\immortal-state.json  # Reset restart counts
+```
+
+### Port Conflict Prevention
+
+| Port | Owner | DO NOT duplicate |
+|------|-------|------------------|
+| 8750 | HiveImmortal mesh | ❌ No NSSM HiveMesh |
+| 8800 | HiveImmortal oracle | ❌ Dashboard calls this "Hive-Brain" |
+| 8700 | HiveImmortal hivemind | ❌ Different from HiveMind (8701) |
+
+**Rule:** If HiveImmortal manages it, do NOT create an NSSM service for it.
 
 ## SSL/HTTPS (Caddy Reverse Proxy)
 

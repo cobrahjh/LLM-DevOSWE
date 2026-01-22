@@ -75,9 +75,11 @@ function apiKeyAuth(req, res, next) {
         return next();
     }
 
-    // Allow localhost without auth for development
+    // Allow localhost and local network without auth for development
     const clientIP = req.ip || req.connection.remoteAddress;
-    if (clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1') {
+    const isLocalhost = clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
+    const isLocalNetwork = clientIP?.includes('192.168.1.') || clientIP?.includes('::ffff:192.168.1.');
+    if (isLocalhost || isLocalNetwork) {
         return next();
     }
 
@@ -1268,7 +1270,14 @@ app.get('/api/tasks/history', (req, res) => {
         GROUP BY status
     `).all();
 
-    const statsMap = {};
+    // Ensure all expected statuses have values (default 0)
+    const statsMap = {
+        pending: 0,
+        processing: 0,
+        completed: 0,
+        failed: 0,
+        needs_review: 0
+    };
     stats.forEach(s => statsMap[s.status] = s.count);
 
     res.json({

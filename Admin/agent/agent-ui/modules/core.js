@@ -133,7 +133,7 @@ const AdminKitt = (function() {
 
             case 'response':
                 hideThinking();
-                addMessage('assistant', msg.content);
+                addMessage('assistant', msg.content, { model: msg.model });
                 // TTS - speak the response
                 if (typeof VoiceEngine !== 'undefined') VoiceEngine.speakResponse(msg.content);
                 if (typeof Troubleshooting !== 'undefined') Troubleshooting.clearAlerts();
@@ -143,7 +143,7 @@ const AdminKitt = (function() {
                 updateHeaderCost();
                 elements.status.textContent = 'Connected';
                 elements.status.className = 'status connected';
-                if (AL) AL.receive(`Response received (${msg.content.length} chars)`);
+                if (AL) AL.receive(`Response received (${msg.content.length} chars) via ${msg.model || 'unknown'}`);
                 break;
 
             case 'error':
@@ -459,13 +459,22 @@ const AdminKitt = (function() {
     function addMessage(role, content, options = {}) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
-        
+
         const div = document.createElement('div');
         div.className = `message ${role}`;
         content = content.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre>$2</pre>');
         content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
         div.innerHTML = content;
-        
+
+        // Add model badge for assistant messages
+        if (role === 'assistant' && options.model) {
+            const badge = document.createElement('div');
+            badge.className = 'model-badge';
+            badge.textContent = options.model;
+            badge.title = `Response from: ${options.model}`;
+            div.appendChild(badge);
+        }
+
         if (role === 'user' || role === 'assistant') {
             const actions = document.createElement('div');
             actions.className = 'message-actions';
@@ -476,7 +485,7 @@ const AdminKitt = (function() {
             `;
             wrapper.appendChild(actions);
         }
-        
+
         wrapper.appendChild(div);
         elements.chat.appendChild(wrapper);
         elements.chat.scrollTop = elements.chat.scrollHeight;

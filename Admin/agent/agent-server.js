@@ -2982,7 +2982,8 @@ async function processChatMessage(sessionId, content, ws) {
         }
         logChat(sessionId, 'assistant', response);
         autoLogTask(content, response); // Auto-log completed tasks
-        ws.send(JSON.stringify({ type: 'response', content: response }));
+        const modelName = MODEL_CONFIG.options[MODEL_CONFIG.current]?.name || MODEL_CONFIG.current;
+        ws.send(JSON.stringify({ type: 'response', content: response, model: modelName }));
     } finally {
         setKittBusy(false);
     }
