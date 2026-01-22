@@ -1,5 +1,5 @@
 # Service Registry
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-01-22
 **Single source of truth for all services, ports, and endpoints**
 
 ---
@@ -20,8 +20,11 @@
 | 8700 | Claude Bridge | Optional | `node C:\LLM-DevOSWE\Admin\claude-bridge\bridge-service.js` |
 | 8701 | Hive-Mind | Core | `node C:\LLM-DevOSWE\Admin\hive-mind\hive-mind-server.js` |
 | 8771 | Terminal Hub | Core | `node C:\LLM-DevOSWE\Admin\terminal-hub\terminal-hub-server.js` |
-| 8800 | Hive Brain | Core | `node C:\LLM-DevOSWE\Admin\hive-brain\server.js` |
+| 8800 | Agents (HiveImmortal) | Core | DevClaude Hivemind Oracle (16 agents) |
+| 8810 | Hive Brain | Core | `node C:\LLM-DevOSWE\Admin\hive-brain\hive-brain.js` |
+| 8820 | Master Mind | Core | `node C:\LLM-DevOSWE\Admin\master-mind\master-mind.js` |
 | 8850 | Hive Oracle | Core | `node C:\LLM-DevOSWE\Admin\hive-oracle\server.js` |
+| 8830 | PMS50 GTN750 | Optional | `node C:\PMS50-Prototype\server.js` |
 | 11434 | Ollama | External | `ollama serve` |
 | 1234 | Iris (ai-pc) | External | LM Studio on 192.168.1.162 |
 
@@ -112,25 +115,60 @@
   - Windows Terminal integration with output bridging
   - Mobile responsive UI
 
-### Hive Brain (Port 8800)
-- **Location:** `C:\LLM-DevOSWE\Admin\hive-brain\server.js`
-- **Purpose:** Central admin control center, device discovery, infection (auto-install)
-- **UI:** `http://localhost:8800`
-- **WebSocket:** Real-time colony updates
+### Agents / HiveImmortal Oracle (Port 8800)
+- **Location:** `C:\DevClaude\Hivemind\Oracle\oracle.js` (managed by HiveImmortal)
+- **Purpose:** Agent orchestration for DevClaude Hivemind
+- **Endpoints:**
+  - `GET /api/health` - Health check (returns agent count)
+- **Features:**
+  - 16 agents for task orchestration
+  - Part of DevClaude Hivemind system
+
+### Hive Brain (Port 8810)
+- **Location:** `C:\LLM-DevOSWE\Admin\hive-brain\hive-brain.js`
+- **NSSM Service:** HiveBrain
+- **Purpose:** Device discovery and colony management
+- **UI:** `http://localhost:8810`
 - **Endpoints:**
   - `GET /api/health` - Health check
-  - `GET /api/colony` - List all devices
-  - `POST /api/scan` - Start network scan
-  - `GET /api/pending` - Devices awaiting approval
-  - `POST /api/approve/:ip` - Approve device
-  - `POST /api/infect/:ip` - Install Hive on device
-  - `POST /api/device` - Add device manually
-  - `GET /api/device/:ip/health` - Check device health
+  - `POST /api/discover` - Trigger network scan
+  - `GET /api/devices` - List all devices (known + discovered)
+  - `GET /api/devices/:ip` - Get specific device
+  - `POST /api/devices/:ip/approve` - Approve device to known
+  - `DELETE /api/devices/:ip` - Remove device
+  - `GET /api/enrollment` - Enrollment queue
+  - `POST /api/scan/:ip` - Scan specific IP
+  - `GET /api/colony` - All Hive nodes
 - **Features:**
-  - Network scanner (192.168.x.x)
-  - Device fingerprinting (OS, ports, services)
-  - SSH push-install or manual link
-  - Colony health monitoring
+  - Network ping sweep (192.168.1.x)
+  - Port scanning for Hive services
+  - Device fingerprinting (OS, services)
+  - Approval workflow for new devices
+  - Background scanning every 5 minutes
+
+### Master Mind (Port 8820)
+- **Location:** `C:\LLM-DevOSWE\Admin\master-mind\master-mind.js`
+- **NSSM Service:** HiveMasterMind
+- **Purpose:** Parallel LLM orchestrator
+- **UI:** `http://localhost:8820`
+- **Endpoints:**
+  - `GET /api/health` - Health check with backend status
+  - `GET /api/backends` - List all LLM backends
+  - `POST /api/backends/:id/toggle` - Enable/disable backend
+  - `POST /api/query/parallel` - Query ALL backends simultaneously
+  - `POST /api/query/smart` - First response wins (fastest)
+  - `POST /api/query/:backend` - Query specific backend
+  - `GET /api/stats` - Query statistics
+  - `POST /api/stats/reset` - Reset statistics
+- **Backends:**
+  - Ollama (localhost:11434) - qwen3:8b
+  - Nova (localhost:1234) - LM Studio local
+  - Iris (192.168.1.162:1234) - LM Studio remote
+- **Features:**
+  - Parallel queries to all backends
+  - Smart query (first response wins)
+  - Result aggregation and consensus detection
+  - Cost tracking for paid APIs (future)
 
 ### Hive Oracle (Port 8850)
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-oracle\server.js`
@@ -176,6 +214,32 @@
 ### Terminal Bridge (Port 8701)
 - **Location:** `C:\LLM-DevOSWE\Admin\terminal-bridge\terminal-bridge.js`
 - **Purpose:** Streams Claude Code output to Command Center
+
+### PMS50 GTN750 (Port 8830)
+- **Location:** `C:\PMS50-Prototype\server.js`
+- **NSSM Service:** PMS50GTN750
+- **Purpose:** GTN750 avionics prototype for MSFS 2024
+- **UI:** `http://localhost:8830`
+- **WebSocket:** Real-time flight data updates
+- **Endpoints:**
+  - `GET /api/health` - Service health
+  - `GET /api/state` - Aircraft & nav state
+  - `GET /api/flightplan` - Current flight plan
+  - `POST /api/flightplan` - Set flight plan
+  - `POST /api/direct` - Direct-to waypoint
+- **Features:**
+  - GTN750 UI mockup with authentic styling
+  - Map display with aircraft symbol
+  - Navigation data fields (GS, DTK, TRK, DIS, ETE, BRG, ALT)
+  - Flight plan line and waypoint display
+  - CDI (Course Deviation Indicator)
+  - Page tabs (MAP, TFC, WPT, AUX, FPL, PROC, NRST)
+- **Planned:**
+  - SimConnect integration for real MSFS data
+  - Flight plan import (SimBrief, FMS)
+  - Procedures (SID/STAR/Approaches)
+  - Traffic display (TCAS)
+  - Terrain awareness
 
 ---
 
