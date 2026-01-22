@@ -371,6 +371,55 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// Health check endpoint with full system status
+const serverStartTime = Date.now();
+
+app.get('/api/health', (req, res) => {
+    const uptime = Math.floor((Date.now() - serverStartTime) / 1000);
+    const memUsage = process.memoryUsage();
+
+    res.json({
+        status: 'ok',
+        version: SERVER_VERSION,
+        uptime: uptime,
+        uptimeFormatted: formatUptime(uptime),
+        simconnect: {
+            connected: isSimConnected,
+            mock: !isSimConnected
+        },
+        camera: {
+            system: cameraSystem.getState(),
+            controller: cameraController.getStatus()
+        },
+        plugins: {
+            discovered: pluginLoader.getAll().length,
+            enabled: pluginLoader.getActive().length,
+            list: pluginLoader.getAll().map(p => ({ id: p.id, name: p.name, enabled: p.enabled }))
+        },
+        websocket: {
+            clients: wss.clients.size
+        },
+        memory: {
+            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + ' MB',
+            heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + ' MB',
+            rss: Math.round(memUsage.rss / 1024 / 1024) + ' MB'
+        },
+        timestamp: new Date().toISOString()
+    });
+});
+
+function formatUptime(seconds) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (days > 0) return `${days}d ${hours}h ${mins}m`;
+    if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+    if (mins > 0) return `${mins}m ${secs}s`;
+    return `${secs}s`;
+}
+
 // Detection API for setup wizard
 app.get('/api/detect', async (req, res) => {
     const results = {

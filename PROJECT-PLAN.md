@@ -219,9 +219,9 @@
 **Status:** Port 42042 discovered, read-only confirmed  
 **Next:** Investigate alternative control methods
 
-### Status Endpoint Enhancement
-**Goal:** Add AHK helper status to /api/status  
-**Task:** Include camera system state in health check
+### Status Endpoint Enhancement ✅ COMPLETE
+**Goal:** Add comprehensive health check endpoint
+**Completed:** `/api/health` with camera, plugins, memory, uptime
 
 ### Documentation Updates
 - [ ] Troubleshooting guide for camera controls
