@@ -49,10 +49,20 @@ echo Starting Terminal Hub (port 8771)...
 start "Terminal Hub" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\terminal-hub && node terminal-hub-server.js"
 call :healthcheck 8771 "Terminal Hub"
 
-REM Start Hive Brain Admin
-echo Starting Hive Brain (port 8800)...
-start "Hive Brain" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\hive-brain && node server.js"
-call :healthcheck 8800 "Hive Brain"
+REM Start Hive Brain (Device Discovery)
+echo Starting Hive Brain (port 8810)...
+start "Hive Brain" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\hive-brain && node hive-brain.js"
+call :healthcheck 8810 "Hive Brain"
+
+REM Start Master Mind (Parallel LLM)
+echo Starting Master Mind (port 8820)...
+start "Master Mind" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\master-mind && node master-mind.js"
+call :healthcheck 8820 "Master Mind"
+
+REM Start PMS50 GTN750 (MSFS Avionics)
+echo Starting PMS50 GTN750 (port 8830)...
+start "PMS50 GTN750" /min cmd /c "cd /d C:\PMS50-Prototype && node server.js"
+call :healthcheck 8830 "PMS50"
 
 REM Start Hive Oracle (Distributed LLM)
 echo Starting Hive Oracle (port 8850)...
@@ -128,7 +138,9 @@ curl -s http://localhost:8500/api/health >nul 2>&1 && (echo   [OK] Master O    :
 curl -s http://localhost:8585/api/health >nul 2>&1 && (echo   [OK] KittBox     :8585) || (echo   [!!] KittBox     :8585 OFFLINE)
 curl -s http://localhost:8701/api/health >nul 2>&1 && (echo   [OK] Hive-Mind   :8701) || (echo   [!!] Hive-Mind   :8701 OFFLINE)
 curl -s http://localhost:8771/api/health >nul 2>&1 && (echo   [OK] Term Hub    :8771) || (echo   [!!] Term Hub    :8771 OFFLINE)
-curl -s http://localhost:8800/api/health >nul 2>&1 && (echo   [OK] Hive Brain  :8800) || (echo   [!!] Hive Brain  :8800 OFFLINE)
+curl -s http://localhost:8810/api/health >nul 2>&1 && (echo   [OK] Hive Brain  :8810) || (echo   [!!] Hive Brain  :8810 OFFLINE)
+curl -s http://localhost:8820/api/health >nul 2>&1 && (echo   [OK] Master Mind :8820) || (echo   [!!] Master Mind :8820 OFFLINE)
+curl -s http://localhost:8830/api/health >nul 2>&1 && (echo   [OK] PMS50       :8830) || (echo   [!!] PMS50       :8830 OFFLINE)
 curl -s http://localhost:8850/api/health >nul 2>&1 && (echo   [OK] Hive Oracle :8850) || (echo   [!!] Hive Oracle :8850 OFFLINE)
 curl -s http://localhost:8899/ >nul 2>&1 && (echo   [OK] Dashboard   :8899) || (echo   [!!] Dashboard   :8899 OFFLINE)
 curl -s http://localhost:8860/api/health >nul 2>&1 && (echo   [OK] MCP Bridge  :8860) || (echo   [!!] MCP Bridge  :8860 OFFLINE)
@@ -140,13 +152,15 @@ echo   Startup complete!
 echo ========================================
 echo.
 echo Web UIs:
-echo   - Dashboard:  http://localhost:8899
-echo   - KittBox:    http://localhost:8585
-echo   - Hive-Mind:  http://localhost:8701
-echo   - Term Hub:   http://localhost:8771
-echo   - Hive Brain: http://localhost:8800
-echo   - Hive Oracle:http://localhost:8850
-echo   - MCP Bridge: http://localhost:8860
-echo   - Master O:   http://localhost:8500
+echo   - Dashboard:   http://localhost:8899
+echo   - KittBox:     http://localhost:8585
+echo   - Hive-Mind:   http://localhost:8701
+echo   - Term Hub:    http://localhost:8771
+echo   - Hive Brain:  http://localhost:8810
+echo   - Master Mind: http://localhost:8820
+echo   - PMS50:       http://localhost:8830
+echo   - Hive Oracle: http://localhost:8850
+echo   - MCP Bridge:  http://localhost:8860
+echo   - Master O:    http://localhost:8500
 echo.
 goto :eof

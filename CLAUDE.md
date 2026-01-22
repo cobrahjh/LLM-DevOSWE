@@ -1151,6 +1151,9 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 | Relay | 8600 | HiveRelay | `C:\LLM-DevOSWE\Admin\relay\relay-service.js` |
 | KittBox | 8585 | HiveKittBox | `C:\LLM-DevOSWE\Admin\agent\agent-server.js` |
 | Hive-Mind | 8701 | HiveMind | `C:\LLM-DevOSWE\Admin\hive-mind\hive-mind-server.js` |
+| Hive Brain | 8810 | HiveBrain | `C:\LLM-DevOSWE\Admin\hive-brain\hive-brain.js` |
+| Master Mind | 8820 | HiveMasterMind | `C:\LLM-DevOSWE\Admin\master-mind\master-mind.js` |
+| PMS50 GTN750 | 8830 | PMS50GTN750 | `C:\PMS50-Prototype\server.js` |
 | Hive-Oracle | 8850 | - | Distributed LLM routing |
 | DocSync | - | HiveDocSync | `C:\LLM-DevOSWE\Admin\docsync\docsync-agent.js` |
 | Remote Support | 8590 | HiveRemoteSupport | `C:\LLM-DevOSWE\Admin\remote-support\service.js` |
