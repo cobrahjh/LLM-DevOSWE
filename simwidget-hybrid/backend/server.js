@@ -230,9 +230,10 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/panel-launcher/">🎛️ Panel Launcher</a></li>
                 <li><a href="/ui/interaction-wheel/">⚙️ Interaction Wheel</a></li>
                 <li><a href="/ui/otto-search/">🔍 Otto Search</a></li>
+                <li><a href="/ui/radio-stack/">📻 Radio Stack</a></li>
             </ul>
         </div>
-        
+
         <div class="section">
             <h2>⚙️ Configuration</h2>
             <ul>
