@@ -810,6 +810,14 @@ app.post('/api/radio/:radio/:action', (req, res) => {
             eventName = 'ADF_SET';
             eventValue = adfToBCD16(frequency);
             break;
+        case 'adf_standby':
+            eventName = 'ADF_STBY_SET';
+            eventValue = adfToBCD16(frequency);
+            break;
+        case 'adf_swap':
+            eventName = 'ADF1_RADIO_SWAP';
+            eventValue = 0;
+            break;
         // Transponder
         case 'xpndr_set':
         case 'transponder_set':
@@ -1695,6 +1703,8 @@ async function initSimConnect() {
             'NAV1_RADIO_SWAP',
             'NAV2_RADIO_SWAP',
             'ADF_SET',
+            'ADF_STBY_SET',
+            'ADF1_RADIO_SWAP',
             'XPNDR_SET'
             // Note: Fuel control uses writable SimVars, not events
         ];
