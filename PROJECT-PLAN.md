@@ -15,7 +15,7 @@
 - [x] All Phase 1-6 widgets functional
 - [x] Camera controls work with/without ChasePlane
 - [x] Smart installer for first-run setup
-- [ ] Sub-50ms latency for control inputs (currently ~385ms via PowerShell)
+- [x] Sub-50ms latency for control inputs (achieved ~32ms via FastKeySender)
 - [x] Professional UI matching Flow Pro quality
 
 ---

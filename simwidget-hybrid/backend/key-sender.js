@@ -5,6 +5,7 @@
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\backend\key-sender.js
  * 
  * Changelog:
+ * v3.2.0 - Added FastKeySender with persistent PowerShell (~50ms vs ~400ms)
  * v3.1.0 - Import/Export keymaps with automatic backup
  * v3.0.0 - GUID-based keymaps with editable names, add/delete/rename support
  * v2.0.0 - Switched to TCP KeySenderService (major performance improvement)
@@ -16,8 +17,9 @@ const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const { exec, spawn } = require('child_process');
+const FastKeySender = require('./fast-key-sender');
 
-const VERSION = '3.1.0';
+const VERSION = '3.2.0';
 const KEYMAPS_PATH = path.join(__dirname, '..', 'config', 'keymaps.json');
 const SERVICE_HOST = '127.0.0.1';
 const SERVICE_PORT = 9999;
@@ -35,11 +37,13 @@ class KeySender {
         this.reconnectTimer = null;
         this.pendingCallbacks = new Map();
         this.requestId = 0;
-        this.mode = 'tcp'; // 'tcp' or 'powershell'
-        
+        this.mode = 'tcp'; // 'tcp', 'fast', or 'powershell'
+        this.fastKeySender = new FastKeySender();
+
         this.validateKeymaps();
         this.watchConfig();
         this.startService();
+        this.startFastKeySender();
     }
 
     // Build lookup map: originalId -> { category, id }
@@ -153,6 +157,11 @@ class KeySender {
         this.client.on('error', (err) => {
             this.log(`Connection error: ${err.message}`);
             this.connected = false;
+            // Fall back to FastKeySender if available
+            if (this.fastKeySender && this.fastKeySender.ready) {
+                this.mode = 'fast';
+                this.log('Falling back to FastKeySender');
+            }
         });
 
         this.client.on('close', () => {
@@ -168,6 +177,26 @@ class KeySender {
             this.reconnectTimer = null;
             this.connect();
         }, 3000);
+    }
+
+    async startFastKeySender() {
+        try {
+            await this.fastKeySender.start();
+            // If TCP service not connected, use FastKeySender
+            if (!this.connected) {
+                this.mode = 'fast';
+                this.log('✓ Using FastKeySender (persistent PowerShell, ~50ms)');
+            }
+        } catch (err) {
+            this.log(`FastKeySender failed to start: ${err.message}`);
+            this.mode = 'powershell';
+        }
+    }
+
+    getMode() {
+        if (this.mode === 'tcp' && this.connected) return 'tcp';
+        if (this.fastKeySender && this.fastKeySender.ready) return 'fast';
+        return 'powershell';
     }
 
     loadKeymaps() {
@@ -389,10 +418,42 @@ class KeySender {
 
     // Send key via TCP (fast) or PowerShell (fallback)
     sendKey(key) {
-        if (this.mode === 'tcp' && this.connected) {
+        const mode = this.getMode();
+        if (mode === 'tcp') {
             return this.sendKeyTCP(key);
+        } else if (mode === 'fast') {
+            return this.sendKeyFast(key);
         } else {
             return this.sendKeyPowerShell(key);
+        }
+    }
+
+    async sendKeyFast(key) {
+        const entry = {
+            timestamp: new Date().toISOString(),
+            key: key,
+            mode: 'fast',
+            status: 'pending',
+            error: null,
+            duration: null
+        };
+
+        try {
+            const result = await this.fastKeySender.send(key);
+            entry.status = 'success';
+            entry.duration = result.latency;
+            this.log(`✓ Sent: ${key} via FastKeySender (${result.latency}ms)`);
+            this.history.unshift(entry);
+            if (this.history.length > this.maxHistory) this.history.pop();
+            return result;
+        } catch (err) {
+            entry.status = 'error';
+            entry.error = err.message;
+            entry.duration = 0;
+            this.log(`❌ ${key}: ${err.message}`);
+            this.history.unshift(entry);
+            if (this.history.length > this.maxHistory) this.history.pop();
+            throw err;
         }
     }
 
@@ -523,9 +584,11 @@ class KeySender {
     getStatus() {
         return {
             version: VERSION,
-            mode: this.mode,
+            mode: this.getMode(),
             connected: this.connected,
-            servicePort: SERVICE_PORT
+            servicePort: SERVICE_PORT,
+            fastKeySenderReady: this.fastKeySender ? this.fastKeySender.ready : false,
+            fastKeySenderStats: this.fastKeySender ? this.fastKeySender.getStats() : null
         };
     }
 
