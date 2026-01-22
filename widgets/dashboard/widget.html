@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>SimWidget Dashboard</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="sw-widget dashboard">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">SIMWIDGET DASHBOARD</span>
+            <span class="sw-version">v2.0</span>
+        </div>
+
+        <div class="sw-content">
+            <!-- Connection Status -->
+            <div class="dash-status">
+                <div class="dash-status-item">
+                    <span class="dash-status-icon" id="sim-status">⚪</span>
+                    <span class="dash-status-label">MSFS</span>
+                </div>
+                <div class="dash-status-item">
+                    <span class="dash-status-icon" id="ws-status">⚪</span>
+                    <span class="dash-status-label">Server</span>
+                </div>
+                <div class="dash-status-item dash-status-time">
+                    <span class="dash-status-value" id="local-time">--:--</span>
+                    <span class="dash-status-label">Local</span>
+                </div>
+            </div>
+
+            <!-- Widget Categories -->
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <span>FLIGHT CONTROLS</span>
+                </div>
+                <div class="dash-grid">
+                    <a href="../lights-systems/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">💡</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Lights & Systems</span>
+                            <span class="dash-card-desc">Lights, gear, flaps, electrical, trim</span>
+                        </div>
+                    </a>
+                    <a href="../radio-stack/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">📻</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Radio Stack</span>
+                            <span class="dash-card-desc">COM, NAV, Transponder</span>
+                        </div>
+                    </a>
+                    <a href="../autopilot-panel/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">🎛️</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Autopilot</span>
+                            <span class="dash-card-desc">HDG, ALT, VS, SPD controls</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <span>INSTRUMENTS</span>
+                </div>
+                <div class="dash-grid">
+                    <a href="../flight-instruments/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">🛫</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Flight Instruments</span>
+                            <span class="dash-card-desc">PFD tapes, attitude, G-force</span>
+                        </div>
+                    </a>
+                    <a href="../engine-display/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">⚙️</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Engine Display</span>
+                            <span class="dash-card-desc">RPM, fuel, temps</span>
+                        </div>
+                    </a>
+                    <a href="../nav-info/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">🧭</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Nav Info</span>
+                            <span class="dash-card-desc">GPS, waypoints, ETA</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <span>ENVIRONMENT</span>
+                </div>
+                <div class="dash-grid">
+                    <a href="../environment/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">🌤️</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Environment</span>
+                            <span class="dash-card-desc">Time, weather, sim rate</span>
+                        </div>
+                    </a>
+                    <a href="../weather-radar/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">🌧️</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Weather Radar</span>
+                            <span class="dash-card-desc">Precipitation, clouds</span>
+                        </div>
+                    </a>
+                    <a href="../moving-map/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">🗺️</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Moving Map</span>
+                            <span class="dash-card-desc">Position, track, terrain</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="dash-section">
+                <div class="dash-section-header">
+                    <span>UTILITIES</span>
+                </div>
+                <div class="dash-grid">
+                    <a href="../checklist/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">✅</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Checklist</span>
+                            <span class="dash-card-desc">Preflight, takeoff, landing</span>
+                        </div>
+                    </a>
+                    <a href="../quick-actions/widget.html" class="dash-card" target="_blank">
+                        <div class="dash-card-icon">⚡</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Quick Actions</span>
+                            <span class="dash-card-desc">Common commands</span>
+                        </div>
+                    </a>
+                    <a href="../setup-wizard/widget.html" class="dash-card dash-card-setup" target="_blank">
+                        <div class="dash-card-icon">⚙️</div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-title">Setup Wizard</span>
+                            <span class="dash-card-desc">Configure SimWidget</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Flight Data -->
+            <div class="dash-flight-strip">
+                <div class="dash-flight-item">
+                    <span class="dash-flight-value" id="altitude">---</span>
+                    <span class="dash-flight-label">ALT</span>
+                </div>
+                <div class="dash-flight-item">
+                    <span class="dash-flight-value" id="speed">---</span>
+                    <span class="dash-flight-label">IAS</span>
+                </div>
+                <div class="dash-flight-item">
+                    <span class="dash-flight-value" id="heading">---</span>
+                    <span class="dash-flight-label">HDG</span>
+                </div>
+                <div class="dash-flight-item">
+                    <span class="dash-flight-value" id="vs">---</span>
+                    <span class="dash-flight-label">V/S</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

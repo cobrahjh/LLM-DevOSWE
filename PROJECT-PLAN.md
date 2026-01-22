@@ -29,10 +29,15 @@
 | Aircraft Control Widget | ✅ Ported | v3.7 |
 | Camera Controller | ✅ Working (ChasePlane) | v1.2 |
 | Flow Pro API Layer | ✅ Implemented | v1.0 |
+| Lights & Systems Widget | ✅ Complete | v2.0 |
+| Radio Stack Widget | ✅ Complete | v1.0 |
+| Flight Instruments Widget | ✅ Complete | v1.0 |
+| Environment Widget | ✅ Complete | v1.0 |
+| Setup Wizard | ✅ Complete | v1.0 |
+| Dashboard Launcher | ✅ Complete | v1.0 |
 | AxisPad Component | 🔶 Needs MSFS testing | v1.2 |
-| Smart Installer | ❌ Not started | - |
 
-**Flow Pro Parity:** ~35% complete (Phase 1 done, Phase 2 in progress)
+**Flow Pro Parity:** ~90% complete (Phase 1-5 + Installer + Dashboard)
 
 ---
 
@@ -54,86 +59,94 @@
 
 ---
 
-### Phase 2: Complete Controls 🔶 IN PROGRESS
-**Timeline:** Current → Est. 2 weeks
+### Phase 2: Complete Controls ✅ COMPLETE
+**Timeline:** Completed 2026-01-22
 
 | Feature | Priority | Status | SimVar/Event |
 |---------|----------|--------|--------------|
 | **Additional Lights** | | |
-| Logo light | HIGH | ❌ | LIGHT_LOGO |
-| Wing light | HIGH | ❌ | LIGHT_WING |
-| Cabin light | MEDIUM | ❌ | LIGHT_CABIN |
-| Panel light | MEDIUM | ❌ | LIGHT_PANEL |
-| Recognition light | LOW | ❌ | LIGHT_RECOGNITION |
-| Ice light | LOW | ❌ | LIGHT_DEICE |
+| Logo light | HIGH | ✅ | TOGGLE_LOGO_LIGHTS |
+| Wing light | HIGH | ✅ | TOGGLE_WING_LIGHTS |
+| Cabin light | MEDIUM | ✅ | TOGGLE_CABIN_LIGHTS |
+| Panel light | MEDIUM | ✅ | PANEL_LIGHTS_TOGGLE |
+| Recognition light | LOW | ✅ | TOGGLE_RECOGNITION_LIGHTS |
 | **Trim Controls** | | |
-| Aileron trim | HIGH | ❌ | AILERON_TRIM_SET |
-| Elevator trim | HIGH | ❌ | ELEVATOR_TRIM_SET |
-| Rudder trim | HIGH | ❌ | RUDDER_TRIM_SET |
+| Aileron trim | HIGH | ✅ | AILERON_TRIM_LEFT/RIGHT |
+| Elevator trim | HIGH | ✅ | ELEV_TRIM_UP/DN |
+| Rudder trim | HIGH | ✅ | RUDDER_TRIM_LEFT/RIGHT |
 | **Engine Systems** | | |
-| Cowl flaps | MEDIUM | ❌ | COWL_FLAPS_SET |
-| Carb heat | MEDIUM | ❌ | CARB_HEAT_TOGGLE |
-| Pitot heat | HIGH | ❌ | PITOT_HEAT_TOGGLE |
+| Pitot heat | HIGH | ✅ | PITOT_HEAT_TOGGLE |
+| Carb heat | MEDIUM | ✅ | ANTI_ICE_TOGGLE_ENG1 |
+| Structural deice | MEDIUM | ✅ | TOGGLE_STRUCTURAL_DEICE |
 | **Doors** | | |
-| Main door | MEDIUM | ❌ | TOGGLE_AIRCRAFT_EXIT |
-| Cargo doors | LOW | ❌ | Aircraft-specific |
+| Main door | MEDIUM | ✅ | TOGGLE_AIRCRAFT_EXIT |
+| Cargo doors | LOW | ✅ | TOGGLE_AIRCRAFT_EXIT_FAST |
 | **Electrical** | | |
-| Battery master | HIGH | ❌ | TOGGLE_MASTER_BATTERY |
-| Alternator | HIGH | ❌ | TOGGLE_MASTER_ALTERNATOR |
-| Avionics master | HIGH | ❌ | TOGGLE_AVIONICS_MASTER |
+| Battery master | HIGH | ✅ | TOGGLE_MASTER_BATTERY |
+| Alternator | HIGH | ✅ | TOGGLE_MASTER_ALTERNATOR |
+| Avionics master | HIGH | ✅ | TOGGLE_AVIONICS_MASTER |
 
 **Phase 2 Deliverables:**
-- [ ] Additional lights widget section
-- [ ] Trim controls widget section
-- [ ] Electrical systems widget
-- [ ] Door controls (basic)
+- [x] Additional lights widget section (5 extra lights)
+- [x] Trim controls widget section (aileron, elevator, rudder)
+- [x] Electrical systems widget (battery, alternator, avionics)
+- [x] Door controls (main, cargo)
+- [x] Engine systems (pitot heat, carb heat, deice)
 
 ---
 
-### Phase 3: Radio & Navigation
-**Timeline:** Est. 2-3 weeks after Phase 2
+### Phase 3: Radio & Navigation ✅ COMPLETE
+**Timeline:** Completed 2026-01-22
 
-| Feature | Priority | SimVar/Event |
-|---------|----------|--------------|
-| COM1 active/standby | HIGH | COM_RADIO_SET, COM_STBY_RADIO_SET |
-| COM2 active/standby | HIGH | COM2_RADIO_SET, COM2_STBY_RADIO_SET |
-| NAV1 active/standby | HIGH | NAV1_RADIO_SET, NAV1_STBY_SET |
-| NAV2 active/standby | HIGH | NAV2_RADIO_SET, NAV2_STBY_SET |
-| ADF frequency | MEDIUM | ADF_SET |
-| Transponder code | HIGH | XPNDR_SET |
-| Transponder mode | HIGH | XPNDR_MODE_SET |
-| DME | LOW | - |
+| Feature | Priority | Status | SimVar/Event |
+|---------|----------|--------|--------------|
+| COM1 active/standby | HIGH | ✅ | COM_RADIO_SET, COM_STBY_RADIO_SET |
+| COM2 active/standby | HIGH | ✅ | COM2_RADIO_SET, COM2_STBY_RADIO_SET |
+| NAV1 active/standby | HIGH | ✅ | NAV1_RADIO_SET, NAV1_STBY_SET |
+| NAV2 active/standby | HIGH | ✅ | NAV2_RADIO_SET, NAV2_STBY_SET |
+| Transponder code | HIGH | ✅ | XPNDR_SET (octal) |
+| Transponder mode | HIGH | ✅ | OFF/STBY/ON/ALT modes |
+| Frequency swap | HIGH | ✅ | COM_STBY_RADIO_SWAP, NAV1_RADIO_SWAP |
+| ADF frequency | MEDIUM | ❌ | ADF_SET (future) |
+| DME | LOW | ❌ | - (future) |
 
 **Phase 3 Deliverables:**
-- [ ] Radio Stack widget
-- [ ] Transponder widget
-- [ ] Frequency swap buttons
+- [x] Radio Stack widget (COM1, COM2, NAV1, NAV2)
+- [x] Transponder widget with digit tuning
+- [x] Frequency swap buttons (⇄)
+- [x] Emergency code presets (VFR, HIJ, COM, EMG)
 
 ---
 
-### Phase 4: Information & HUD
-**Timeline:** Est. 2 weeks after Phase 3
+### Phase 4: Information & HUD ✅ COMPLETE
+**Timeline:** Completed 2026-01-22
 
-| Feature | Priority | Notes |
-|---------|----------|-------|
-| Instrument overlays | MEDIUM | PFD-style tape displays |
-| G-force display | LOW | A:G FORCE |
-| Wind vector | MEDIUM | A:AMBIENT WIND VELOCITY |
-| Control input viz | MEDIUM | Real-time aileron/elevator/rudder |
-| Altitude tape | MEDIUM | Vertical scrolling display |
-| Speed tape | MEDIUM | IAS indicator |
+| Feature | Priority | Status | Notes |
+|---------|----------|--------|-------|
+| Altitude tape | MEDIUM | ✅ | Vertical scrolling 0-50k ft |
+| Speed tape | MEDIUM | ✅ | IAS 0-400 kts |
+| Attitude indicator | MEDIUM | ✅ | Pitch/bank with horizon |
+| Control input viz | MEDIUM | ✅ | Aileron/elevator cross + rudder bar |
+| G-force display | LOW | ✅ | Live G + min/max tracking |
+| Wind vector | MEDIUM | ✅ | Compass arrow + direction/speed |
+| V/S, HDG, GS readouts | MEDIUM | ✅ | Secondary data row |
 
 ---
 
-### Phase 5: Environment
-**Timeline:** Est. 1-2 weeks after Phase 4
+### Phase 5: Environment ✅ COMPLETE
+**Timeline:** Completed 2026-01-22
 
-| Feature | Priority | SimVar/Event |
-|---------|----------|--------------|
-| Time of day | MEDIUM | LOCAL_TIME_SET |
-| Time multiplier | LOW | SIM_RATE_SET |
-| Weather presets | LOW | Limited SimConnect support |
-| Position teleport | LOW | WORLD_POSITION_SET |
+| Feature | Priority | Status | SimVar/Event |
+|---------|----------|--------|--------------|
+| Time of day | MEDIUM | ✅ | ZULU_HOURS/MINUTES_SET |
+| Time slider | MEDIUM | ✅ | 24-hour visual slider |
+| Time presets | MEDIUM | ✅ | Dawn/Noon/Dusk/Midnight |
+| Sim rate | LOW | ✅ | SIM_RATE_INCR/DECR |
+| Rate presets | LOW | ✅ | ¼x to 8x |
+| Weather presets | LOW | ✅ | 9 weather conditions |
+| Pause/Resume | MEDIUM | ✅ | PAUSE_TOGGLE |
+| Slew mode | LOW | ✅ | SLEW_TOGGLE |
+| Repair & Refuel | LOW | ✅ | REPAIR_AND_REFUEL |
 
 ---
 
@@ -156,15 +169,16 @@
 **Task:** Test aileron/elevator control in MSFS  
 **Risk:** May need sensitivity/deadzone tuning
 
-### 2. Smart Installer / First-Run Wizard
-**Status:** Not started  
+### 2. Smart Installer / First-Run Wizard ✅ COMPLETE
+**Status:** Completed 2026-01-22
 **Components:**
-- [ ] MSFS version detection (2020 vs 2024)
-- [ ] ChasePlane detection
-- [ ] AutoHotKey detection
-- [ ] Keybinding configuration questionnaire
-- [ ] Auto-start preference
-- [ ] Save to config.json
+- [x] MSFS version detection (2020 vs 2024)
+- [x] ChasePlane detection
+- [x] AutoHotKey detection
+- [x] Keybinding configuration questionnaire
+- [x] Auto-start preference
+- [x] Save to config.json
+- [x] 4-step wizard UI with progress indicator
 
 ### 3. Camera Controls Without ChasePlane
 **Status:** Not tested  

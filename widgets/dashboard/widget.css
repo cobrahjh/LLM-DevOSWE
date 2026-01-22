@@ -1,0 +1,222 @@
+/**
+ * SimWidget Dashboard
+ * Central hub for all widgets
+ */
+
+.dashboard {
+    width: 400px;
+    max-width: 100%;
+}
+
+.sw-version {
+    font-size: var(--sw-text-xs);
+    color: var(--sw-text-dim);
+    margin-left: auto;
+}
+
+/* ===========================================
+   CONNECTION STATUS
+   =========================================== */
+
+.dash-status {
+    display: flex;
+    justify-content: space-around;
+    padding: var(--sw-space-sm);
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    margin-bottom: var(--sw-space-md);
+}
+
+.dash-status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.dash-status-icon {
+    font-size: 20px;
+}
+
+.dash-status-label {
+    font-size: var(--sw-text-xs);
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+}
+
+.dash-status-time .dash-status-value {
+    font-size: var(--sw-text-lg);
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-cyan);
+}
+
+/* ===========================================
+   SECTIONS
+   =========================================== */
+
+.dash-section {
+    margin-bottom: var(--sw-space-md);
+}
+
+.dash-section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--sw-space-xs);
+}
+
+.dash-section-header span {
+    font-size: var(--sw-text-xs);
+    font-weight: 600;
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ===========================================
+   WIDGET GRID
+   =========================================== */
+
+.dash-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sw-space-xs);
+}
+
+.dash-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--sw-space-sm);
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    text-decoration: none;
+    transition: all var(--sw-transition-fast);
+    cursor: pointer;
+}
+
+.dash-card:hover {
+    border-color: var(--sw-accent-cyan);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 255, 0.1);
+}
+
+.dash-card:active {
+    transform: translateY(0);
+}
+
+.dash-card-icon {
+    font-size: 28px;
+    margin-bottom: var(--sw-space-xs);
+}
+
+.dash-card-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.dash-card-title {
+    font-size: var(--sw-text-xs);
+    font-weight: 600;
+    color: var(--sw-text-primary);
+    margin-bottom: 2px;
+}
+
+.dash-card-desc {
+    font-size: 9px;
+    color: var(--sw-text-dim);
+    line-height: 1.3;
+}
+
+/* Special Cards */
+.dash-card-setup {
+    border-color: var(--sw-accent-yellow);
+    border-style: dashed;
+}
+
+.dash-card-setup:hover {
+    border-color: var(--sw-accent-yellow);
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.1);
+}
+
+/* ===========================================
+   FLIGHT DATA STRIP
+   =========================================== */
+
+.dash-flight-strip {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--sw-space-sm);
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.05), rgba(0, 255, 136, 0.05));
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    margin-top: var(--sw-space-md);
+}
+
+.dash-flight-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.dash-flight-value {
+    font-size: var(--sw-text-lg);
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-primary);
+}
+
+.dash-flight-label {
+    font-size: 9px;
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@container widget (max-width: 340px) {
+    .dash-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .dash-card {
+        padding: var(--sw-space-xs);
+    }
+    .dash-card-icon {
+        font-size: 24px;
+    }
+    .dash-card-desc {
+        display: none;
+    }
+    .dash-flight-strip {
+        flex-wrap: wrap;
+    }
+    .dash-flight-item {
+        flex: 0 0 50%;
+        padding: var(--sw-space-xs);
+    }
+}
+
+@container widget (min-width: 450px) {
+    .dash-grid {
+        gap: var(--sw-space-sm);
+    }
+    .dash-card {
+        padding: var(--sw-space-md);
+    }
+    .dash-card-icon {
+        font-size: 32px;
+    }
+    .dash-card-title {
+        font-size: var(--sw-text-sm);
+    }
+    .dash-card-desc {
+        font-size: var(--sw-text-xs);
+    }
+}

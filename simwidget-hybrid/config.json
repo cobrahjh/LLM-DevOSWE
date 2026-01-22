@@ -1,0 +1,6 @@
+{
+  "cameraMode": "auto",
+  "autoStart": true,
+  "port": 8080,
+  "theme": "dark"
+}

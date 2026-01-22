@@ -261,3 +261,118 @@
         font-size: var(--sw-text-sm);
     }
 }
+
+/* ===========================================
+   ELECTRICAL SECTION
+   =========================================== */
+
+.ls-elec.active {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--sw-accent-blue);
+}
+
+.ls-elec.active .ls-indicator {
+    background: var(--sw-accent-blue);
+    box-shadow: 0 0 10px var(--sw-accent-blue);
+}
+
+/* ===========================================
+   TRIM CONTROLS
+   =========================================== */
+
+.ls-trim-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sw-space-xs);
+}
+
+.ls-trim-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px var(--sw-space-xs);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--sw-radius-sm);
+}
+
+.ls-trim-label {
+    font-size: var(--sw-text-xs);
+    font-weight: 600;
+    color: var(--sw-text-secondary);
+    min-width: 36px;
+}
+
+.ls-trim-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--sw-space-xs);
+}
+
+.ls-trim-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    color: var(--sw-text-primary);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+    font-size: var(--sw-text-sm);
+}
+
+.ls-trim-btn:hover {
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}
+
+.ls-trim-btn:active {
+    transform: scale(0.95);
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.ls-trim-value {
+    font-size: var(--sw-text-sm);
+    font-weight: 600;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-cyan);
+    min-width: 42px;
+    text-align: center;
+}
+
+/* ===========================================
+   ENGINE SYSTEMS
+   =========================================== */
+
+.ls-engine.active {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: var(--sw-accent-orange);
+}
+
+.ls-engine.active .ls-indicator {
+    background: var(--sw-accent-orange);
+    box-shadow: 0 0 10px var(--sw-accent-orange);
+}
+
+/* ===========================================
+   DOORS
+   =========================================== */
+
+.ls-door.active {
+    background: rgba(168, 85, 247, 0.2);
+    border-color: #a855f7;
+}
+
+.ls-door.active .ls-indicator {
+    background: #a855f7;
+    box-shadow: 0 0 10px #a855f7;
+}
+
+/* Extra lights row spacing */
+.ls-lights-extra {
+    margin-top: var(--sw-space-xs);
+    padding-top: var(--sw-space-xs);
+    border-top: 1px solid var(--sw-border-subtle);
+}

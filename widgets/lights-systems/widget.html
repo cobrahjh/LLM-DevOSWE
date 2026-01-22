@@ -40,6 +40,29 @@
                         <span class="ls-label">TAXI</span>
                     </button>
                 </div>
+                <!-- Additional Lights Row -->
+                <div class="ls-button-row ls-lights-extra">
+                    <button class="ls-btn" id="btn-logo" data-cmd="TOGGLE_LOGO_LIGHTS">
+                        <span class="ls-indicator" id="ind-logo"></span>
+                        <span class="ls-label">LOGO</span>
+                    </button>
+                    <button class="ls-btn" id="btn-wing" data-cmd="TOGGLE_WING_LIGHTS">
+                        <span class="ls-indicator" id="ind-wing"></span>
+                        <span class="ls-label">WING</span>
+                    </button>
+                    <button class="ls-btn" id="btn-cabin" data-cmd="TOGGLE_CABIN_LIGHTS">
+                        <span class="ls-indicator" id="ind-cabin"></span>
+                        <span class="ls-label">CABIN</span>
+                    </button>
+                    <button class="ls-btn" id="btn-panel" data-cmd="PANEL_LIGHTS_TOGGLE">
+                        <span class="ls-indicator" id="ind-panel"></span>
+                        <span class="ls-label">PNL</span>
+                    </button>
+                    <button class="ls-btn" id="btn-recog" data-cmd="TOGGLE_RECOGNITION_LIGHTS">
+                        <span class="ls-indicator" id="ind-recog"></span>
+                        <span class="ls-label">RCG</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Systems Section -->
@@ -73,6 +96,93 @@
                         </button>
                         <span class="ls-status" id="brake-status">OFF</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Electrical Section -->
+            <div class="ls-section">
+                <div class="ls-section-header">ELECTRICAL</div>
+                <div class="ls-button-row">
+                    <button class="ls-btn ls-elec" id="btn-batt" data-cmd="TOGGLE_MASTER_BATTERY">
+                        <span class="ls-indicator" id="ind-batt"></span>
+                        <span class="ls-label">BATT</span>
+                    </button>
+                    <button class="ls-btn ls-elec" id="btn-alt" data-cmd="TOGGLE_MASTER_ALTERNATOR">
+                        <span class="ls-indicator" id="ind-alt"></span>
+                        <span class="ls-label">ALT</span>
+                    </button>
+                    <button class="ls-btn ls-elec" id="btn-avio" data-cmd="TOGGLE_AVIONICS_MASTER">
+                        <span class="ls-indicator" id="ind-avio"></span>
+                        <span class="ls-label">AVIO</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Trim Section -->
+            <div class="ls-section">
+                <div class="ls-section-header">TRIM</div>
+                <div class="ls-trim-row">
+                    <!-- Aileron Trim -->
+                    <div class="ls-trim-item">
+                        <span class="ls-trim-label">AIL</span>
+                        <div class="ls-trim-controls">
+                            <button class="ls-trim-btn" id="btn-ail-l" data-cmd="AILERON_TRIM_LEFT">◀</button>
+                            <span class="ls-trim-value" id="ail-trim">0%</span>
+                            <button class="ls-trim-btn" id="btn-ail-r" data-cmd="AILERON_TRIM_RIGHT">▶</button>
+                        </div>
+                    </div>
+                    <!-- Elevator Trim -->
+                    <div class="ls-trim-item">
+                        <span class="ls-trim-label">ELV</span>
+                        <div class="ls-trim-controls">
+                            <button class="ls-trim-btn" id="btn-elv-dn" data-cmd="ELEV_TRIM_DN">▼</button>
+                            <span class="ls-trim-value" id="elv-trim">0%</span>
+                            <button class="ls-trim-btn" id="btn-elv-up" data-cmd="ELEV_TRIM_UP">▲</button>
+                        </div>
+                    </div>
+                    <!-- Rudder Trim -->
+                    <div class="ls-trim-item">
+                        <span class="ls-trim-label">RUD</span>
+                        <div class="ls-trim-controls">
+                            <button class="ls-trim-btn" id="btn-rud-l" data-cmd="RUDDER_TRIM_LEFT">◀</button>
+                            <span class="ls-trim-value" id="rud-trim">0%</span>
+                            <button class="ls-trim-btn" id="btn-rud-r" data-cmd="RUDDER_TRIM_RIGHT">▶</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Engine Systems Section -->
+            <div class="ls-section">
+                <div class="ls-section-header">ENGINE SYSTEMS</div>
+                <div class="ls-button-row">
+                    <button class="ls-btn ls-engine" id="btn-pitot" data-cmd="PITOT_HEAT_TOGGLE">
+                        <span class="ls-indicator" id="ind-pitot"></span>
+                        <span class="ls-label">PITOT</span>
+                    </button>
+                    <button class="ls-btn ls-engine" id="btn-carb" data-cmd="ANTI_ICE_TOGGLE_ENG1">
+                        <span class="ls-indicator" id="ind-carb"></span>
+                        <span class="ls-label">CARB</span>
+                    </button>
+                    <button class="ls-btn ls-engine" id="btn-deice" data-cmd="TOGGLE_STRUCTURAL_DEICE">
+                        <span class="ls-indicator" id="ind-deice"></span>
+                        <span class="ls-label">DEICE</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Doors Section -->
+            <div class="ls-section">
+                <div class="ls-section-header">DOORS</div>
+                <div class="ls-button-row">
+                    <button class="ls-btn ls-door" id="btn-door-main" data-cmd="TOGGLE_AIRCRAFT_EXIT">
+                        <span class="ls-indicator" id="ind-door-main"></span>
+                        <span class="ls-label">MAIN</span>
+                    </button>
+                    <button class="ls-btn ls-door" id="btn-door-cargo" data-cmd="TOGGLE_AIRCRAFT_EXIT_FAST">
+                        <span class="ls-indicator" id="ind-door-cargo"></span>
+                        <span class="ls-label">CARGO</span>
+                    </button>
                 </div>
             </div>
         </div>

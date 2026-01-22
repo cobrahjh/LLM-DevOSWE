@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>SimWidget Setup Wizard</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="sw-widget setup-wizard">
+        <div class="sw-header">
+            <span class="sw-header-title">SIMWIDGET SETUP</span>
+        </div>
+
+        <div class="sw-content">
+            <!-- Progress Steps -->
+            <div class="wiz-progress">
+                <div class="wiz-step active" data-step="1">
+                    <span class="wiz-step-num">1</span>
+                    <span class="wiz-step-label">Welcome</span>
+                </div>
+                <div class="wiz-step" data-step="2">
+                    <span class="wiz-step-num">2</span>
+                    <span class="wiz-step-label">Detect</span>
+                </div>
+                <div class="wiz-step" data-step="3">
+                    <span class="wiz-step-num">3</span>
+                    <span class="wiz-step-label">Configure</span>
+                </div>
+                <div class="wiz-step" data-step="4">
+                    <span class="wiz-step-num">4</span>
+                    <span class="wiz-step-label">Finish</span>
+                </div>
+            </div>
+
+            <!-- Step 1: Welcome -->
+            <div class="wiz-panel active" id="step-1">
+                <div class="wiz-icon">✈️</div>
+                <h2 class="wiz-title">Welcome to SimWidget</h2>
+                <p class="wiz-desc">
+                    Let's configure SimWidget for your flight simulator setup.
+                    This wizard will detect your installed software and optimize settings.
+                </p>
+                <div class="wiz-features">
+                    <div class="wiz-feature">
+                        <span class="wiz-feature-icon">🎮</span>
+                        <span>Touch-friendly controls</span>
+                    </div>
+                    <div class="wiz-feature">
+                        <span class="wiz-feature-icon">📱</span>
+                        <span>Phone/tablet support</span>
+                    </div>
+                    <div class="wiz-feature">
+                        <span class="wiz-feature-icon">🎥</span>
+                        <span>Camera controls</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Detection -->
+            <div class="wiz-panel" id="step-2">
+                <h2 class="wiz-title">Detecting Software</h2>
+                <p class="wiz-desc">Scanning your system for flight sim software...</p>
+
+                <div class="wiz-detect-list">
+                    <div class="wiz-detect-item" id="detect-msfs">
+                        <span class="wiz-detect-icon">⏳</span>
+                        <span class="wiz-detect-name">Microsoft Flight Simulator</span>
+                        <span class="wiz-detect-status" id="msfs-status">Checking...</span>
+                    </div>
+                    <div class="wiz-detect-item" id="detect-chaseplane">
+                        <span class="wiz-detect-icon">⏳</span>
+                        <span class="wiz-detect-name">ChasePlane</span>
+                        <span class="wiz-detect-status" id="chaseplane-status">Checking...</span>
+                    </div>
+                    <div class="wiz-detect-item" id="detect-ahk">
+                        <span class="wiz-detect-icon">⏳</span>
+                        <span class="wiz-detect-name">AutoHotKey</span>
+                        <span class="wiz-detect-status" id="ahk-status">Checking...</span>
+                    </div>
+                    <div class="wiz-detect-item" id="detect-simconnect">
+                        <span class="wiz-detect-icon">⏳</span>
+                        <span class="wiz-detect-name">SimConnect SDK</span>
+                        <span class="wiz-detect-status" id="simconnect-status">Checking...</span>
+                    </div>
+                </div>
+
+                <div class="wiz-detect-summary" id="detect-summary" style="display: none;">
+                    <div class="wiz-summary-icon" id="summary-icon">✅</div>
+                    <div class="wiz-summary-text" id="summary-text">Detection complete!</div>
+                </div>
+            </div>
+
+            <!-- Step 3: Configuration -->
+            <div class="wiz-panel" id="step-3">
+                <h2 class="wiz-title">Configuration</h2>
+                <p class="wiz-desc">Customize your SimWidget experience:</p>
+
+                <div class="wiz-config-group">
+                    <label class="wiz-config-label">Camera System</label>
+                    <div class="wiz-config-options">
+                        <label class="wiz-radio">
+                            <input type="radio" name="camera" value="chaseplane" id="cam-chaseplane">
+                            <span class="wiz-radio-mark"></span>
+                            <span>ChasePlane (via AHK helper)</span>
+                        </label>
+                        <label class="wiz-radio">
+                            <input type="radio" name="camera" value="native" id="cam-native" checked>
+                            <span class="wiz-radio-mark"></span>
+                            <span>Native MSFS Camera</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="wiz-config-group">
+                    <label class="wiz-config-label">Auto-Start Options</label>
+                    <div class="wiz-config-options">
+                        <label class="wiz-checkbox">
+                            <input type="checkbox" id="autostart-server">
+                            <span class="wiz-check-mark"></span>
+                            <span>Start server with Windows</span>
+                        </label>
+                        <label class="wiz-checkbox">
+                            <input type="checkbox" id="autostart-overlay">
+                            <span class="wiz-check-mark"></span>
+                            <span>Launch overlay with MSFS</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="wiz-config-group">
+                    <label class="wiz-config-label">Server Port</label>
+                    <div class="wiz-config-input">
+                        <input type="number" id="server-port" value="8080" min="1024" max="65535">
+                        <span class="wiz-input-hint">Default: 8080</span>
+                    </div>
+                </div>
+
+                <div class="wiz-config-group">
+                    <label class="wiz-config-label">Theme</label>
+                    <div class="wiz-theme-options">
+                        <button class="wiz-theme-btn active" data-theme="dark">🌙 Dark</button>
+                        <button class="wiz-theme-btn" data-theme="light">☀️ Light</button>
+                        <button class="wiz-theme-btn" data-theme="auto">🔄 Auto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Finish -->
+            <div class="wiz-panel" id="step-4">
+                <div class="wiz-icon">🎉</div>
+                <h2 class="wiz-title">Setup Complete!</h2>
+                <p class="wiz-desc">SimWidget is ready to use.</p>
+
+                <div class="wiz-config-summary">
+                    <div class="wiz-summary-item">
+                        <span class="wiz-summary-label">MSFS Version:</span>
+                        <span class="wiz-summary-value" id="final-msfs">-</span>
+                    </div>
+                    <div class="wiz-summary-item">
+                        <span class="wiz-summary-label">Camera Mode:</span>
+                        <span class="wiz-summary-value" id="final-camera">-</span>
+                    </div>
+                    <div class="wiz-summary-item">
+                        <span class="wiz-summary-label">Server Port:</span>
+                        <span class="wiz-summary-value" id="final-port">-</span>
+                    </div>
+                </div>
+
+                <div class="wiz-next-steps">
+                    <h3>Next Steps:</h3>
+                    <ol>
+                        <li>Start MSFS and load a flight</li>
+                        <li>Open SimWidget overlay or web UI</li>
+                        <li>Enjoy your flight! ✈️</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="wiz-nav">
+                <button class="wiz-btn wiz-btn-back" id="btn-back" style="visibility: hidden;">
+                    ← Back
+                </button>
+                <button class="wiz-btn wiz-btn-next" id="btn-next">
+                    Next →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

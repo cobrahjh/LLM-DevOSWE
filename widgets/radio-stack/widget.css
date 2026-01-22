@@ -1,0 +1,327 @@
+/**
+ * Radio Stack Widget
+ * SimWidget Engine v2.0.0 - Phase 3: Radio & Navigation
+ */
+
+.radio-stack {
+    width: 320px;
+}
+
+/* Radio Section */
+.rs-radio {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    padding: var(--sw-space-sm);
+    margin-bottom: var(--sw-space-sm);
+}
+
+.rs-radio:last-of-type {
+    margin-bottom: var(--sw-space-sm);
+}
+
+.rs-nav {
+    border-left: 3px solid var(--sw-accent-green);
+}
+
+/* Radio Header */
+.rs-radio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--sw-space-xs);
+}
+
+.rs-radio-label {
+    font-size: var(--sw-text-sm);
+    font-weight: 700;
+    color: var(--sw-accent-cyan);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rs-swap-btn {
+    width: 32px;
+    height: 24px;
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    color: var(--sw-text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.rs-swap-btn:hover {
+    background: var(--sw-accent-cyan);
+    color: var(--sw-bg-primary);
+    border-color: var(--sw-accent-cyan);
+}
+
+.rs-swap-btn:active {
+    transform: scale(0.95);
+}
+
+/* Frequency Row */
+.rs-freq-row {
+    display: flex;
+    gap: var(--sw-space-sm);
+    margin-bottom: var(--sw-space-xs);
+}
+
+.rs-freq {
+    flex: 1;
+    text-align: center;
+    padding: var(--sw-space-xs);
+    border-radius: var(--sw-radius-sm);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.rs-freq.active {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid var(--sw-accent-green);
+}
+
+.rs-freq.standby {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--sw-border-subtle);
+}
+
+.rs-freq-value {
+    display: block;
+    font-size: var(--sw-text-xl);
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-primary);
+    letter-spacing: 1px;
+}
+
+.rs-freq.active .rs-freq-value {
+    color: var(--sw-accent-green);
+    text-shadow: 0 0 10px var(--sw-accent-green);
+}
+
+.rs-freq-label {
+    display: block;
+    font-size: var(--sw-text-xs);
+    color: var(--sw-text-dim);
+    margin-top: 2px;
+}
+
+/* Tuner Controls */
+.rs-tuner {
+    display: flex;
+    justify-content: center;
+    gap: var(--sw-space-md);
+}
+
+.rs-tune-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.rs-tune-btn {
+    width: 36px;
+    height: 28px;
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    color: var(--sw-text-primary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.rs-tune-btn:hover {
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}
+
+.rs-tune-btn:active {
+    transform: scale(0.95);
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.rs-tune-label {
+    font-size: var(--sw-text-xs);
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+}
+
+/* ===========================================
+   TRANSPONDER
+   =========================================== */
+
+.rs-xpdr {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    padding: var(--sw-space-sm);
+    border-left: 3px solid var(--sw-accent-yellow);
+}
+
+.rs-xpdr .rs-radio-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sw-space-xs);
+}
+
+.rs-xpdr .rs-radio-label {
+    color: var(--sw-accent-yellow);
+}
+
+/* Mode Buttons */
+.rs-xpdr-mode {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+}
+
+.rs-mode-btn {
+    flex: 1;
+    padding: 6px 8px;
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    color: var(--sw-text-secondary);
+    font-size: var(--sw-text-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.rs-mode-btn:hover {
+    border-color: var(--sw-text-dim);
+}
+
+.rs-mode-btn.active {
+    background: rgba(234, 179, 8, 0.2);
+    border-color: var(--sw-accent-yellow);
+    color: var(--sw-accent-yellow);
+}
+
+/* Code Digits */
+.rs-xpdr-code {
+    display: flex;
+    justify-content: center;
+    gap: var(--sw-space-xs);
+    margin: var(--sw-space-sm) 0;
+}
+
+.rs-code-digit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.rs-code-btn {
+    width: 36px;
+    height: 24px;
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    color: var(--sw-text-primary);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.rs-code-btn:hover {
+    border-color: var(--sw-accent-yellow);
+    color: var(--sw-accent-yellow);
+}
+
+.rs-code-btn:active {
+    transform: scale(0.95);
+}
+
+.rs-code-val {
+    font-size: var(--sw-text-2xl);
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-yellow);
+    text-shadow: 0 0 8px var(--sw-accent-yellow);
+    min-width: 36px;
+    text-align: center;
+    padding: 4px 0;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: var(--sw-radius-sm);
+}
+
+/* Presets */
+.rs-xpdr-presets {
+    display: flex;
+    gap: 4px;
+}
+
+.rs-preset-btn {
+    flex: 1;
+    padding: 8px 4px;
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    color: var(--sw-text-secondary);
+    font-size: var(--sw-text-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.rs-preset-btn:hover {
+    border-color: var(--sw-text-dim);
+    color: var(--sw-text-primary);
+}
+
+.rs-preset-btn[data-code="7500"]:hover {
+    border-color: var(--sw-accent-orange);
+    color: var(--sw-accent-orange);
+}
+
+.rs-preset-btn[data-code="7600"]:hover {
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}
+
+.rs-preset-btn[data-code="7700"]:hover {
+    border-color: var(--sw-accent-red);
+    color: var(--sw-accent-red);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@container widget (max-width: 280px) {
+    .rs-freq-value {
+        font-size: var(--sw-text-lg);
+    }
+    .rs-tune-btn {
+        width: 30px;
+        height: 24px;
+    }
+    .rs-code-val {
+        font-size: var(--sw-text-xl);
+        min-width: 30px;
+    }
+    .rs-code-btn {
+        width: 30px;
+    }
+}
+
+@container widget (min-width: 360px) {
+    .rs-freq-value {
+        font-size: var(--sw-text-2xl);
+    }
+    .rs-tune-btn {
+        width: 44px;
+        height: 32px;
+    }
+    .rs-code-val {
+        font-size: 28px;
+        min-width: 44px;
+    }
+}

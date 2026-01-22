@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Radio Stack</title>
+    <link rel="stylesheet" href="../shared/glass-theme.css">
+    <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+    <div class="sw-widget radio-stack">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">RADIO STACK</span>
+        </div>
+
+        <div class="sw-content">
+            <!-- COM1 -->
+            <div class="rs-radio" id="com1-section">
+                <div class="rs-radio-header">
+                    <span class="rs-radio-label">COM1</span>
+                    <button class="rs-swap-btn" id="com1-swap" title="Swap Active/Standby">⇄</button>
+                </div>
+                <div class="rs-freq-row">
+                    <div class="rs-freq active" id="com1-active">
+                        <span class="rs-freq-value" id="com1-active-val">118.000</span>
+                        <span class="rs-freq-label">ACTIVE</span>
+                    </div>
+                    <div class="rs-freq standby" id="com1-standby">
+                        <span class="rs-freq-value" id="com1-stby-val">121.500</span>
+                        <span class="rs-freq-label">STBY</span>
+                    </div>
+                </div>
+                <div class="rs-tuner">
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="com1" data-dir="up" data-digit="mhz">▲</button>
+                        <span class="rs-tune-label">MHz</span>
+                        <button class="rs-tune-btn" data-radio="com1" data-dir="down" data-digit="mhz">▼</button>
+                    </div>
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="com1" data-dir="up" data-digit="khz">▲</button>
+                        <span class="rs-tune-label">kHz</span>
+                        <button class="rs-tune-btn" data-radio="com1" data-dir="down" data-digit="khz">▼</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COM2 -->
+            <div class="rs-radio" id="com2-section">
+                <div class="rs-radio-header">
+                    <span class="rs-radio-label">COM2</span>
+                    <button class="rs-swap-btn" id="com2-swap" title="Swap Active/Standby">⇄</button>
+                </div>
+                <div class="rs-freq-row">
+                    <div class="rs-freq active" id="com2-active">
+                        <span class="rs-freq-value" id="com2-active-val">118.000</span>
+                        <span class="rs-freq-label">ACTIVE</span>
+                    </div>
+                    <div class="rs-freq standby" id="com2-standby">
+                        <span class="rs-freq-value" id="com2-stby-val">121.500</span>
+                        <span class="rs-freq-label">STBY</span>
+                    </div>
+                </div>
+                <div class="rs-tuner">
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="com2" data-dir="up" data-digit="mhz">▲</button>
+                        <span class="rs-tune-label">MHz</span>
+                        <button class="rs-tune-btn" data-radio="com2" data-dir="down" data-digit="mhz">▼</button>
+                    </div>
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="com2" data-dir="up" data-digit="khz">▲</button>
+                        <span class="rs-tune-label">kHz</span>
+                        <button class="rs-tune-btn" data-radio="com2" data-dir="down" data-digit="khz">▼</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAV1 -->
+            <div class="rs-radio rs-nav" id="nav1-section">
+                <div class="rs-radio-header">
+                    <span class="rs-radio-label">NAV1</span>
+                    <button class="rs-swap-btn" id="nav1-swap" title="Swap Active/Standby">⇄</button>
+                </div>
+                <div class="rs-freq-row">
+                    <div class="rs-freq active" id="nav1-active">
+                        <span class="rs-freq-value" id="nav1-active-val">108.00</span>
+                        <span class="rs-freq-label">ACTIVE</span>
+                    </div>
+                    <div class="rs-freq standby" id="nav1-standby">
+                        <span class="rs-freq-value" id="nav1-stby-val">108.00</span>
+                        <span class="rs-freq-label">STBY</span>
+                    </div>
+                </div>
+                <div class="rs-tuner">
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="nav1" data-dir="up" data-digit="mhz">▲</button>
+                        <span class="rs-tune-label">MHz</span>
+                        <button class="rs-tune-btn" data-radio="nav1" data-dir="down" data-digit="mhz">▼</button>
+                    </div>
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="nav1" data-dir="up" data-digit="khz">▲</button>
+                        <span class="rs-tune-label">kHz</span>
+                        <button class="rs-tune-btn" data-radio="nav1" data-dir="down" data-digit="khz">▼</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAV2 -->
+            <div class="rs-radio rs-nav" id="nav2-section">
+                <div class="rs-radio-header">
+                    <span class="rs-radio-label">NAV2</span>
+                    <button class="rs-swap-btn" id="nav2-swap" title="Swap Active/Standby">⇄</button>
+                </div>
+                <div class="rs-freq-row">
+                    <div class="rs-freq active" id="nav2-active">
+                        <span class="rs-freq-value" id="nav2-active-val">108.00</span>
+                        <span class="rs-freq-label">ACTIVE</span>
+                    </div>
+                    <div class="rs-freq standby" id="nav2-standby">
+                        <span class="rs-freq-value" id="nav2-stby-val">108.00</span>
+                        <span class="rs-freq-label">STBY</span>
+                    </div>
+                </div>
+                <div class="rs-tuner">
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="nav2" data-dir="up" data-digit="mhz">▲</button>
+                        <span class="rs-tune-label">MHz</span>
+                        <button class="rs-tune-btn" data-radio="nav2" data-dir="down" data-digit="mhz">▼</button>
+                    </div>
+                    <div class="rs-tune-group">
+                        <button class="rs-tune-btn" data-radio="nav2" data-dir="up" data-digit="khz">▲</button>
+                        <span class="rs-tune-label">kHz</span>
+                        <button class="rs-tune-btn" data-radio="nav2" data-dir="down" data-digit="khz">▼</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transponder -->
+            <div class="rs-xpdr" id="xpdr-section">
+                <div class="rs-radio-header">
+                    <span class="rs-radio-label">XPDR</span>
+                    <div class="rs-xpdr-mode">
+                        <button class="rs-mode-btn" id="xpdr-off" data-mode="0">OFF</button>
+                        <button class="rs-mode-btn" id="xpdr-stby" data-mode="1">STBY</button>
+                        <button class="rs-mode-btn active" id="xpdr-on" data-mode="3">ON</button>
+                        <button class="rs-mode-btn" id="xpdr-alt" data-mode="4">ALT</button>
+                    </div>
+                </div>
+                <div class="rs-xpdr-code">
+                    <div class="rs-code-digit" data-digit="0">
+                        <button class="rs-code-btn" data-dir="up">▲</button>
+                        <span class="rs-code-val" id="xpdr-d0">1</span>
+                        <button class="rs-code-btn" data-dir="down">▼</button>
+                    </div>
+                    <div class="rs-code-digit" data-digit="1">
+                        <button class="rs-code-btn" data-dir="up">▲</button>
+                        <span class="rs-code-val" id="xpdr-d1">2</span>
+                        <button class="rs-code-btn" data-dir="down">▼</button>
+                    </div>
+                    <div class="rs-code-digit" data-digit="2">
+                        <button class="rs-code-btn" data-dir="up">▲</button>
+                        <span class="rs-code-val" id="xpdr-d2">0</span>
+                        <button class="rs-code-btn" data-dir="down">▼</button>
+                    </div>
+                    <div class="rs-code-digit" data-digit="3">
+                        <button class="rs-code-btn" data-dir="up">▲</button>
+                        <span class="rs-code-val" id="xpdr-d3">0</span>
+                        <button class="rs-code-btn" data-dir="down">▼</button>
+                    </div>
+                </div>
+                <div class="rs-xpdr-presets">
+                    <button class="rs-preset-btn" data-code="1200">VFR</button>
+                    <button class="rs-preset-btn" data-code="7500">HIJ</button>
+                    <button class="rs-preset-btn" data-code="7600">COM</button>
+                    <button class="rs-preset-btn" data-code="7700">EMG</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

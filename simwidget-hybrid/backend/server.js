@@ -339,11 +339,110 @@ function getApiIndex() {
 }
 
 app.get('/api/status', (req, res) => {
-    res.json({ 
+    res.json({
         connected: isSimConnected,
         camera: cameraController.getStatus(),
-        flightData 
+        flightData
     });
+});
+
+// Detection API for setup wizard
+app.get('/api/detect', async (req, res) => {
+    const results = {
+        msfs: { detected: false, version: null },
+        chaseplane: { detected: false },
+        ahk: { detected: false },
+        simconnect: { detected: isSimConnected }
+    };
+
+    // Check for MSFS process
+    try {
+        const { stdout } = await new Promise((resolve, reject) => {
+            exec('tasklist /FI "IMAGENAME eq FlightSimulator.exe" /FO CSV /NH', (err, stdout, stderr) => {
+                if (err) reject(err);
+                else resolve({ stdout, stderr });
+            });
+        });
+        if (stdout.includes('FlightSimulator.exe')) {
+            results.msfs.detected = true;
+            results.msfs.version = 'MSFS 2024';
+        }
+    } catch (e) {
+        // Try MSFS 2020
+        try {
+            const { stdout } = await new Promise((resolve, reject) => {
+                exec('tasklist /FI "IMAGENAME eq FlightSimulator2020.exe" /FO CSV /NH', (err, stdout, stderr) => {
+                    if (err) reject(err);
+                    else resolve({ stdout, stderr });
+                });
+            });
+            if (stdout.includes('FlightSimulator')) {
+                results.msfs.detected = true;
+                results.msfs.version = 'MSFS 2020';
+            }
+        } catch (e2) {}
+    }
+
+    // Check for ChasePlane
+    try {
+        const { stdout } = await new Promise((resolve, reject) => {
+            exec('tasklist /FI "IMAGENAME eq CP MSFS Bridge.exe" /FO CSV /NH', (err, stdout, stderr) => {
+                if (err) reject(err);
+                else resolve({ stdout, stderr });
+            });
+        });
+        results.chaseplane.detected = stdout.includes('CP MSFS Bridge');
+    } catch (e) {}
+
+    // Check for AutoHotKey
+    try {
+        const { stdout } = await new Promise((resolve, reject) => {
+            exec('where autohotkey', (err, stdout, stderr) => {
+                resolve({ stdout: stdout || '', stderr });
+            });
+        });
+        results.ahk.detected = stdout.trim().length > 0;
+    } catch (e) {
+        // Also check if AHK is running
+        try {
+            const { stdout } = await new Promise((resolve, reject) => {
+                exec('tasklist /FI "IMAGENAME eq AutoHotkey*.exe" /FO CSV /NH', (err, stdout, stderr) => {
+                    resolve({ stdout: stdout || '', stderr });
+                });
+            });
+            results.ahk.detected = stdout.includes('AutoHotkey');
+        } catch (e2) {}
+    }
+
+    // SimConnect detected if we have a connection or if MSFS is running
+    results.simconnect.detected = isSimConnected || results.msfs.detected;
+
+    res.json(results);
+});
+
+// Config API for setup wizard
+const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
+
+app.get('/api/config', (req, res) => {
+    try {
+        if (fs.existsSync(CONFIG_PATH)) {
+            const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+            res.json(config);
+        } else {
+            res.json({});
+        }
+    } catch (e) {
+        res.json({});
+    }
+});
+
+app.post('/api/config', (req, res) => {
+    try {
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(req.body, null, 2));
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Graceful shutdown endpoint
