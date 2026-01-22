@@ -578,6 +578,7 @@
                         <button class="btn secondary small" onclick="openService('Master-O', 8500)" title="Service watchdog, Auto-restart, Health monitoring">Open Master-O :8500</button>
                         <button class="btn secondary small" onclick="openService('Ollama', 11434)" title="Local LLM server (qwen models)">Open Ollama :11434</button>
                         <button class="btn secondary small" onclick="openService('LM-Studio', 1234)" title="Local LLM server (Nova)">Open LM-Studio :1234</button>
+                        <button class="btn secondary small" onclick="openService('PMS50', 8830)" title="GTN750 Avionics Prototype for MSFS 2024">Open PMS50 :8830</button>
                         <div style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;">Actions</div>
                         <button class="btn small" onclick="generateBriefing()" title="Generate a fresh daily briefing with latest intel">Generate New Briefing</button>
                     </div>
@@ -622,13 +623,16 @@
             { name: 'Relay', port: 8600, endpoint: '/api/health', path: '/', desc: 'Message queue, Tasks', hive: true },
             { name: 'KittBox', port: 8585, endpoint: '/api/health', path: '/', desc: 'Command Center UI', hive: true },
             { name: 'Hive-Mind', port: 8701, endpoint: '/api/health', path: '/', desc: 'Activity Monitor', hive: true },
-            { name: 'Hive-Brain', port: 8800, endpoint: '/api/health', path: '/', desc: 'Colony Management', hive: true },
+            { name: 'Hive-Brain', port: 8810, endpoint: '/api/health', path: '/', desc: 'Device Discovery', hive: true },
+            { name: 'Master-Mind', port: 8820, endpoint: '/api/health', path: '/', desc: 'Parallel LLM', hive: true },
+            { name: 'Agents', port: 8800, endpoint: '/api/health', path: '/', desc: 'Agent Orchestrator (16)', hive: true },
             { name: 'Hive-Oracle', port: 8850, endpoint: '/health', path: '/', desc: 'Distributed LLM', hive: true },
             { name: 'Hive-Mesh', port: 8750, endpoint: '/health', path: '/', desc: 'Peer Network', hive: true },
             // External / Utility Services
             { name: 'Master-O', port: 8500, endpoint: '/api/status', path: '/', desc: 'Service Watchdog', hive: false },
             { name: 'Ollama', port: 11434, endpoint: '/api/tags', path: '/', desc: 'Local LLM (qwen)', hive: false },
-            { name: 'LM-Studio', port: 1234, endpoint: '/v1/models', path: '/', desc: 'Local LLM (Nova)', hive: false }
+            { name: 'LM-Studio', port: 1234, endpoint: '/v1/models', path: '/', desc: 'Local LLM (Nova)', hive: false },
+            { name: 'PMS50', port: 8830, endpoint: '/api/health', path: '/', desc: 'GTN750 Avionics', hive: false }
         ];
 
         let intelData = {};

@@ -1,6 +1,6 @@
 {
   "name": "llm-devoswe",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "description": "LLM-DevOSWE Hive - AI development framework",
   "scripts": {
     "start": "node Admin/relay/relay-service.js",
