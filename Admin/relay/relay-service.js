@@ -3358,6 +3358,109 @@ app.get('/api/knowledge/status', (req, res) => {
 });
 
 // ============================================
+// INTEL API (Intelligence Database)
+// ============================================
+
+// Get intel summary from database
+app.get('/api/intel/db', (req, res) => {
+    try {
+        const news = db.prepare('SELECT COUNT(*) as count FROM intel_news').get();
+        const github = db.prepare('SELECT COUNT(*) as count FROM intel_github').get();
+        const models = db.prepare('SELECT COUNT(*) as count FROM intel_models').get();
+        const health = db.prepare('SELECT COUNT(*) as count FROM intel_health').get();
+        const briefings = db.prepare('SELECT COUNT(*) as count FROM intel_briefings').get();
+
+        res.json({
+            tables: {
+                news: news.count,
+                github: github.count,
+                models: models.count,
+                health: health.count,
+                briefings: briefings.count
+            },
+            total: news.count + github.count + models.count + health.count + briefings.count
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get news from database
+app.get('/api/intel/db/news', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const aiOnly = req.query.ai === 'true';
+
+        let query = 'SELECT * FROM intel_news';
+        if (aiOnly) query += ' WHERE is_ai_related = 1';
+        query += ' ORDER BY published_at DESC LIMIT ?';
+
+        const rows = db.prepare(query).all(limit);
+        res.json({ count: rows.length, items: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get GitHub releases from database
+app.get('/api/intel/db/github', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const repo = req.query.repo;
+
+        let query = 'SELECT * FROM intel_github';
+        const params = [];
+        if (repo) {
+            query += ' WHERE repo LIKE ?';
+            params.push(`%${repo}%`);
+        }
+        query += ' ORDER BY discovered_at DESC LIMIT ?';
+        params.push(limit);
+
+        const rows = db.prepare(query).all(...params);
+        res.json({ count: rows.length, items: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get health anomalies from database
+app.get('/api/intel/db/health', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 100;
+        const rows = db.prepare('SELECT * FROM intel_health ORDER BY timestamp DESC LIMIT ?').all(limit);
+        res.json({ count: rows.length, items: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Store intel item (used by Oracle)
+app.post('/api/intel/db/store', (req, res) => {
+    try {
+        const { type, data } = req.body;
+
+        if (type === 'news') {
+            const stmt = db.prepare('INSERT OR IGNORE INTO intel_news (source, external_id, title, url, score, is_ai_related, published_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            stmt.run(data.source, data.external_id, data.title, data.url, data.score, data.is_ai_related ? 1 : 0, data.published_at);
+        } else if (type === 'github') {
+            const stmt = db.prepare('INSERT OR IGNORE INTO intel_github (repo, tag, name, url, release_type, published_at, discovered_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            stmt.run(data.repo, data.tag, data.name, data.url, data.release_type, data.published_at, data.discovered_at);
+        } else if (type === 'health') {
+            const stmt = db.prepare('INSERT INTO intel_health (timestamp, type, services, severity) VALUES (?, ?, ?, ?)');
+            stmt.run(data.timestamp, data.type, JSON.stringify(data.services), data.severity);
+        } else if (type === 'model') {
+            const stmt = db.prepare('INSERT OR IGNORE INTO intel_models (name, size, digest, source, discovered_at) VALUES (?, ?, ?, ?, ?)');
+            stmt.run(data.name, data.size, data.digest, data.source || 'ollama', data.discovered_at);
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
 // START SERVER
 // ============================================
 
