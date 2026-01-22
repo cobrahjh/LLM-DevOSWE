@@ -20,6 +20,29 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe C:/LLM-DevOSWE/Admin/hooks/validate-bash.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe C:/LLM-DevOSWE/Admin/hooks/forward-notifications.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "*",

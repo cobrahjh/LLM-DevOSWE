@@ -119,13 +119,21 @@ curl -X POST http://localhost:8860/api/tool/read_file -H "Content-Type: applicat
 | Hook Event | Purpose |
 |------------|---------|
 | SessionStart | Inject Hive status into context |
+| PreToolUse | Validate Bash commands for security |
 | PostToolUse | Log all tool calls to Relay `/api/logs` |
+| Notification | Forward notifications to Relay/KittBox |
 | Stop | Sync memory on session end |
 
 **Hook Scripts (`Admin/hooks/`):**
 - `inject-hive-context.py` - SessionStart context injection
+- `validate-bash.py` - PreToolUse security validation (blocks dangerous commands)
 - `log-to-relay.py` - PostToolUse logging (filters Read/Glob/Grep)
+- `forward-notifications.py` - Forward notifications to Hive services
 - `session-sync.py` - Stop memory backup
+
+**Plugin Agents (`Admin/hive-plugin/agents/`):**
+- `hive-doctor.md` - Diagnose and fix Hive infrastructure issues
+- `intel-gatherer.md` - Gather intelligence from various sources
 
 **Tool Logging API (Relay):**
 ```bash
