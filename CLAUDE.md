@@ -96,6 +96,7 @@ git push                      # Push to remote
 | `/msg` | Check relay messages |
 | `/mem` | Add to CLAUDE.md |
 | `/cp` | Commit and push |
+| `/sc` | Check screenshots |
 | `/syncmem` | Backup docs to database |
 
 Skills location: `.claude/skills/*.md`
@@ -160,6 +161,7 @@ Config: `Admin/caddy/Caddyfile`
 - **Remote PC:** ai-pc (192.168.1.162)
 - **LLMs:** Ollama + LM Studio locally, Iris remote
 - **GitHub:** https://github.com/cobrahjh/LLM-DevOSWE
+- **Screenshots:** `C:\Users\hjhar\OneDrive\Pictures\screenshoots`
 
 ---
 
