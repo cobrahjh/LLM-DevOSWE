@@ -20,6 +20,8 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 | 8771 | Terminal Hub | http://localhost:8771 | https://hive.local/terminal |
 | 8800 | Hive Brain (colony) | http://localhost:8800 | https://hive.local/brain |
 | 8850 | Hive Oracle (LLM routing) | http://localhost:8850 | https://hive.local/hiveoracle |
+| 8860 | MCP Bridge (tool hub) | http://localhost:8860 | https://hive.local/mcpbridge |
+| 8899 | Hive Dashboard | http://localhost:8899 | https://hive.local/dashboard |
 | 11434 | Ollama | http://localhost:11434 | https://hive.local/ollama |
 | 1234 | LM Studio | http://localhost:1234 | https://hive.local/lmstudio |
 | 443 | **Caddy (SSL proxy)** | - | https://hive.local |
@@ -38,6 +40,11 @@ curl http://localhost:8600/api/messages/pending
 
 # Restart a service via Master O
 curl -X POST http://localhost:8500/api/services/hiveoracle/restart
+
+# MCP Bridge - access MCP tools from any Hive AI
+curl http://localhost:8860/api/servers              # List all MCP servers
+curl http://localhost:8860/api/status               # Full status report
+curl -X POST http://localhost:8860/api/tool/read_file -H "Content-Type: application/json" -d '{"path":"C:/test.txt"}'
 ```
 
 ### Key Directories
@@ -52,6 +59,221 @@ curl -X POST http://localhost:8500/api/services/hiveoracle/restart
 - **Local:** Ollama (qwen3-coder), LM Studio (qwen2.5-coder-14b)
 - **Remote:** Iris @ 192.168.1.162:1234 (ai-pc fallback)
 
+### SSH Access (Cross-Machine Terminal)
+| From | To | Command |
+|------|-----|---------|
+| Harold-PC | ai-pc | `ssh hjhar@192.168.1.162` (key auth) |
+| ai-pc | Harold-PC | `ssh hjhariSSH@192.168.1.42` (password: 0812) |
+
+### Claude Code Plugins & MCP Servers
+
+**Installed Plugins (13):**
+| Plugin | Source | Purpose |
+|--------|--------|---------|
+| code-review | official | Code review automation |
+| security-guidance | official | Security best practices |
+| commit-commands | official | Git commit helpers |
+| pr-review-toolkit | official | PR review workflow |
+| frontend-design | official | UI/UX design assistance |
+| commit | cc-marketplace | Smart commits |
+| create-pr | cc-marketplace | PR creation |
+| fix-github-issue | cc-marketplace | Issue resolution |
+| debugger | cc-marketplace | Debug assistance |
+| api-tester | cc-marketplace | API testing |
+| test-writer-fixer | cc-marketplace | Test automation |
+| backend-architect | cc-marketplace | Architecture design |
+
+**MCP Servers (14):**
+| Server | Purpose | Status |
+|--------|---------|--------|
+| filesystem | File operations | Configured |
+| memory | Persistent memory | Configured |
+| github | GitHub integration | ✅ Active |
+| puppeteer | Browser automation | Configured |
+| fetch | HTTP requests | Configured |
+| sqlite | SQLite database | Configured |
+| postgres | PostgreSQL | Needs connection string |
+| slack | Slack integration | ✅ Active |
+| git | Git operations | Configured |
+| brave-search | Web search | Needs API key |
+| sequential-thinking | Reasoning | Configured |
+| everything | Multi-tool | Configured |
+| time | Time operations | Configured |
+| sentry | Error tracking | Needs auth |
+
+**Plugin Marketplaces:**
+- `claude-plugins-official` (Anthropic)
+- `cc-marketplace` (Community)
+
+### Hive Hooks & Plugin
+
+**Hive Plugin Commands:**
+| Command | Description |
+|---------|-------------|
+| `/hive-status` | Full health check of all Hive services |
+| `/relay-check` | Check and respond to pending Relay messages |
+| `/mcp-tools` | List all available MCP tools (79 across 10 servers) |
+| `/sync-memory` | Backup CLAUDE.md/STANDARDS.md to database |
+
+**Active Hooks (`.claude/settings.json`):**
+| Hook Event | Purpose |
+|------------|---------|
+| SessionStart | Inject Hive status into context |
+| PostToolUse | Log all tool calls to Relay |
+| Stop | Sync memory on session end |
+
+**Hook Scripts (`Admin/hooks/`):**
+- `inject-hive-context.py` - SessionStart context injection
+- `log-to-relay.py` - PostToolUse logging
+- `session-sync.py` - Stop memory backup
+
+**Plugin Location:** `Admin/hive-plugin/`
+
+**Commands:**
+```bash
+claude mcp list                    # List MCP servers
+claude plugin list                 # List plugins
+claude plugin install <name>       # Install plugin
+/code-review                       # Run code review
+/commit                            # Smart commit
+/create-pr                         # Create PR
+```
+
+### Claude Code CLI Reference
+
+**Starting Claude Code:**
+```bash
+claude                             # Start interactive REPL
+claude "query"                     # Start with initial prompt
+claude -p "query"                  # Query via SDK, then exit
+claude -c                          # Continue most recent conversation
+claude -r "session-name" "query"   # Resume session by name/ID
+claude update                      # Update to latest version
+```
+
+**Common Flags:**
+| Flag | Description |
+|------|-------------|
+| `-p, --print` | Print response without interactive mode |
+| `-c, --continue` | Load most recent conversation |
+| `-r, --resume` | Resume specific session |
+| `--model` | Set model (sonnet, opus, haiku) |
+| `--permission-mode` | Begin in specified mode (plan, acceptEdits, etc) |
+| `--tools` | Restrict available tools |
+| `--output-format` | Specify output (text, json, stream-json) |
+| `--max-turns` | Limit agentic turns |
+| `--max-budget-usd` | Maximum spending limit |
+| `--debug` | Enable debug mode |
+
+**Slash Commands:**
+| Command | Description |
+|---------|-------------|
+| `/clear` | Clear conversation history |
+| `/compact` | Compact conversation |
+| `/config` | Open Settings |
+| `/context` | Visualize context usage |
+| `/cost` | Show token usage |
+| `/doctor` | Check installation health |
+| `/export` | Export conversation |
+| `/help` | Get usage help |
+| `/init` | Initialize CLAUDE.md |
+| `/mcp` | Manage MCP servers |
+| `/memory` | Edit CLAUDE.md files |
+| `/model` | Change AI model |
+| `/permissions` | View/update permissions |
+| `/plan` | Enter plan mode |
+| `/resume` | Resume conversation |
+| `/rewind` | Rewind conversation/code |
+| `/stats` | Show usage stats |
+| `/tasks` | List background tasks |
+| `/vim` | Enable vim editing |
+
+**Keyboard Shortcuts:**
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+C` | Cancel current input/generation |
+| `Ctrl+D` | Exit session |
+| `Ctrl+G` | Open in text editor |
+| `Ctrl+L` | Clear terminal |
+| `Ctrl+O` | Toggle verbose output |
+| `Ctrl+R` | Reverse search history |
+| `Ctrl+B` | Background running tasks |
+| `Esc+Esc` | Rewind code/conversation |
+| `Shift+Tab` | Toggle permission modes |
+| `Alt+P` | Switch model |
+| `Alt+T` | Toggle extended thinking |
+| `!` prefix | Bash mode (run directly) |
+| `@` prefix | File path mention |
+
+### Claude Code Settings
+
+**Settings Scopes (highest to lowest precedence):**
+1. **Managed** - System-level (IT-deployed)
+2. **Command line** - Temporary session
+3. **Local** - `.claude/settings.local.json` (gitignored)
+4. **Project** - `.claude/settings.json` (team-shared)
+5. **User** - `~/.claude/settings.json` (personal)
+
+**Key Environment Variables:**
+| Variable | Purpose |
+|----------|---------|
+| `ANTHROPIC_API_KEY` | API key for Claude SDK |
+| `ANTHROPIC_MODEL` | Default model |
+| `BASH_DEFAULT_TIMEOUT_MS` | Command timeout |
+| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | Max output (default: 32000) |
+| `MAX_MCP_OUTPUT_TOKENS` | MCP response limit (default: 25000) |
+| `MCP_TIMEOUT` | MCP server startup timeout |
+| `HTTP_PROXY` / `HTTPS_PROXY` | Proxy settings |
+| `DISABLE_TELEMETRY` | Opt out of telemetry |
+
+### Claude Code Hooks
+
+**Hook Events:**
+| Event | When Fired | Use Case |
+|-------|------------|----------|
+| `SessionStart` | Session begins | Load context, set env vars |
+| `UserPromptSubmit` | User submits | Validate prompts, add context |
+| `PreToolUse` | Before tool | Approve/deny/modify calls |
+| `PostToolUse` | After tool | Validate outputs |
+| `Stop` | Claude finishes | Decide if work continues |
+| `SessionEnd` | Session ends | Cleanup, logging |
+
+**Hook Configuration (settings.json):**
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash",
+      "hooks": [{
+        "type": "command",
+        "command": "./scripts/validate-bash.sh",
+        "timeout": 60
+      }]
+    }]
+  }
+}
+```
+
+### MCP Server Management
+
+```bash
+# Add HTTP server
+claude mcp add --transport http notion https://mcp.notion.com/mcp
+
+# Add stdio server
+claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn "postgres://..."
+
+# List/manage servers
+claude mcp list
+claude mcp get github
+claude mcp remove github
+
+# Import from Claude Desktop
+claude mcp add-from-claude-desktop
+```
+
+**Scopes:** `--scope local` (default), `--scope project` (team), `--scope user` (all projects)
+
 ### User Shortcuts (say these to Claude)
 - `sqr` - show quick reference (this cheat sheet)
 - `msg` - check relay messages
@@ -63,6 +285,7 @@ curl -X POST http://localhost:8500/api/services/hiveoracle/restart
 - `ntt` - next todo task
 - `hivesanitycheck` - full hive status
 - `syncmem` - backup docs to database
+- `eod` - end of day session wrap (TODO: implement)
 
 ### Personas
 - **Heather** - Voice persona (Google UK English Female)
@@ -184,9 +407,13 @@ Oracle autonomously gathers intelligence to keep the Hive ahead of the curve:
 | Hive Health Metrics | 60 seconds | Anomaly detection, patterns |
 
 **Watched GitHub Repos:**
-- ollama/ollama, anthropics/claude-code, anthropics/anthropic-sdk-python
-- openai/openai-node, EvenAR/node-simconnect, nodejs/node
-- lmstudio-ai/lmstudio, nicedoc/electron
+- **Core AI/LLM:** ollama/ollama, lmstudio-ai/lmstudio, anthropics/claude-code, anthropics/anthropic-sdk-python, anthropics/anthropic-sdk-typescript, openai/openai-node, openai/openai-python
+- **MCP:** anthropics/model-context-protocol, modelcontextprotocol/servers, modelcontextprotocol/typescript-sdk
+- **Local LLM:** ggml-org/llama.cpp, Mozilla-Ocho/llamafile, huggingface/transformers, vllm-project/vllm, oobabooga/text-generation-webui, open-webui/open-webui
+- **AI Agents:** langchain-ai/langchain, langchain-ai/langgraph, microsoft/autogen, crewAIInc/crewAI, significant-gravitas/AutoGPT
+- **Dev Tools:** nodejs/node, electron/electron, microsoft/vscode, github/copilot.vim
+- **Flight Sim:** EvenAR/node-simconnect, flybywiresim/aircraft
+- **Utilities:** xtermjs/xterm.js, websockets/ws, expressjs/express, jestjs/jest
 
 **Future Intel Sources (TODO):**
 - **Hugging Face** - New model releases, trending models
@@ -514,6 +741,13 @@ Network Scan → Device Found → Fingerprint
 - [ ] Project templates for quick-start
 - [ ] tinyAI learning from corrections
 - [ ] Proprietary browser automation extension (replace Claude in Chrome for Google Docs/Drive access)
+
+**AI Workflow Improvements (from research):**
+- [ ] Session checkpoint API in Relay - Store/retrieve AI session state for continuity
+- [ ] `eod` shortcut - End-of-day session wrap-up (extract learnings, save state, WIP commit)
+- [ ] AI log review dashboard - Claude reviews Oracle/Kitt logs, proposes improvements
+- [ ] PLANNING.md template generator - Quick-start planning docs for new features
+- [ ] Memory consolidation cron - Daily auto-backup of learnings to database
 
 ---
 
@@ -885,6 +1119,8 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 | 8701 | Hive-Mind | Real-time activity monitor |
 | 8800 | Hive Brain | Device discovery, colony management |
 | 8850 | Hive Oracle | Distributed LLM orchestrator |
+| 8860 | MCP Bridge | MCP server hub for all Hive AI |
+| 8899 | Hive Dashboard | Command Center UI |
 | 11434 | Ollama | Local LLM (qwen3-coder) |
 | 1234 | LM Studio | Local LLM (qwen2.5-coder-14b) |
 | 443 | Caddy | SSL reverse proxy for all services |
@@ -913,6 +1149,7 @@ Mobile/External ──► https://hive.local/[service] ──► Caddy (:443) �
 | https://hive.local/hivemind/* | localhost:8701 |
 | https://hive.local/brain/* | localhost:8800 |
 | https://hive.local/hiveoracle/* | localhost:8850 |
+| https://hive.local/dashboard/* | localhost:8899 |
 | https://hive.local/ollama/* | localhost:11434 |
 | https://hive.local/lmstudio/* | localhost:1234 |
 

@@ -1,0 +1,47 @@
+{
+  "extraKnownMarketplaces": {
+    "hive-local": {
+      "source": {
+        "source": "directory",
+        "path": "C:/LLM-DevOSWE/Admin/hive-plugin"
+      }
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe C:/LLM-DevOSWE/Admin/hooks/inject-hive-context.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe C:/LLM-DevOSWE/Admin/hooks/log-to-relay.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe C:/LLM-DevOSWE/Admin/hooks/session-sync.py",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

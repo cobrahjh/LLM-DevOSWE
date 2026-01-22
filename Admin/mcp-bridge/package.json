@@ -1,0 +1,17 @@
+{
+  "name": "mcp-hive-bridge",
+  "version": "1.0.0",
+  "description": "MCP-Hive Bridge Service - Exposes MCP server capabilities to all Hive AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["mcp", "hive", "bridge", "ai"],
+  "author": "Harold's Hive",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  }
+}

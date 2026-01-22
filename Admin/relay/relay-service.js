@@ -85,18 +85,9 @@ function apiKeyAuth(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized - API key required' });
 }
 
-// Security: Restricted CORS
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
+// Security: CORS - allow all origins for Hive internal services
 const corsOptions = {
-    origin: function(origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
-        // Allow if in allowed list or if no restrictions configured
-        if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        callback(new Error('Not allowed by CORS'));
-    },
+    origin: true, // Reflect the request origin
     credentials: true
 };
 

@@ -81,6 +81,16 @@ hive.local {
 		reverse_proxy localhost:8771
 	}
 
+	# Hive Dashboard - Command Center Dashboard
+	handle_path /dashboard/* {
+		reverse_proxy localhost:8899
+	}
+
+	# MCP Bridge - MCP server hub for all Hive AI
+	handle_path /mcpbridge/* {
+		reverse_proxy localhost:8860
+	}
+
 	# Widgets - Direct access to MSFS widgets
 	handle_path /widgets/* {
 		reverse_proxy localhost:8080
@@ -88,7 +98,7 @@ hive.local {
 
 	# Default - serve a status page or redirect to KittBox
 	handle {
-		respond "Hive is alive. Available routes: /oracle, /relay, /kitt, /simwidget, /hivemind, /brain, /hiveoracle, /widgets" 200
+		respond "Hive is alive. Available routes: /dashboard, /oracle, /relay, /kitt, /simwidget, /hivemind, /brain, /hiveoracle, /mcpbridge, /widgets" 200
 	}
 
 	# Enable WebSocket support for all routes

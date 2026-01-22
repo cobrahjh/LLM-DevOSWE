@@ -59,6 +59,16 @@ echo Starting Hive Oracle (port 8850)...
 start "Hive Oracle" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\hive-oracle && node server.js"
 call :healthcheck 8850 "Hive Oracle"
 
+REM Start Hive Dashboard (Command Center)
+echo Starting Hive Dashboard (port 8899)...
+start "Hive Dashboard" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\hive-dashboard && node server.js"
+call :healthcheck 8899 "Hive Dashboard"
+
+REM Start MCP Bridge (MCP Server Hub)
+echo Starting MCP Bridge (port 8860)...
+start "MCP Bridge" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\mcp-bridge && node server.js"
+call :healthcheck 8860 "MCP Bridge"
+
 REM Start Auto-Responder (Ollama auto-reply for relay messages)
 echo Starting Auto-Responder...
 start "Auto-Responder" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\relay && node auto-responder.js"
@@ -120,6 +130,8 @@ curl -s http://localhost:8701/api/health >nul 2>&1 && (echo   [OK] Hive-Mind   :
 curl -s http://localhost:8771/api/health >nul 2>&1 && (echo   [OK] Term Hub    :8771) || (echo   [!!] Term Hub    :8771 OFFLINE)
 curl -s http://localhost:8800/api/health >nul 2>&1 && (echo   [OK] Hive Brain  :8800) || (echo   [!!] Hive Brain  :8800 OFFLINE)
 curl -s http://localhost:8850/api/health >nul 2>&1 && (echo   [OK] Hive Oracle :8850) || (echo   [!!] Hive Oracle :8850 OFFLINE)
+curl -s http://localhost:8899/ >nul 2>&1 && (echo   [OK] Dashboard   :8899) || (echo   [!!] Dashboard   :8899 OFFLINE)
+curl -s http://localhost:8860/api/health >nul 2>&1 && (echo   [OK] MCP Bridge  :8860) || (echo   [!!] MCP Bridge  :8860 OFFLINE)
 curl -s http://localhost:11434/api/tags >nul 2>&1 && (echo   [OK] Ollama      :11434) || (echo   [--] Ollama      :11434 not running)
 curl -s http://localhost:1234/v1/models >nul 2>&1 && (echo   [OK] LM Studio   :1234) || (echo   [--] LM Studio   :1234 not running)
 echo.
@@ -128,11 +140,13 @@ echo   Startup complete!
 echo ========================================
 echo.
 echo Web UIs:
+echo   - Dashboard:  http://localhost:8899
 echo   - KittBox:    http://localhost:8585
 echo   - Hive-Mind:  http://localhost:8701
 echo   - Term Hub:   http://localhost:8771
 echo   - Hive Brain: http://localhost:8800
 echo   - Hive Oracle:http://localhost:8850
+echo   - MCP Bridge: http://localhost:8860
 echo   - Master O:   http://localhost:8500
 echo.
 goto :eof

@@ -1,0 +1,9 @@
+{
+  "name": "hive",
+  "description": "Harold's Hive integration plugin - Service management, MCP tools, and Relay messaging for the Hive colony",
+  "version": "1.0.0",
+  "author": {
+    "name": "Harold's Hive",
+    "email": "hive@local"
+  }
+}

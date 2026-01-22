@@ -1,0 +1,19 @@
+{
+  "name": "hive-local",
+  "description": "Harold's Hive local plugin marketplace",
+  "plugins": [
+    {
+      "id": "hive",
+      "name": "hive",
+      "description": "Harold's Hive integration - Service management, MCP tools, and Relay messaging",
+      "version": "1.0.0",
+      "author": {
+        "name": "Harold's Hive"
+      },
+      "source": {
+        "source": "directory",
+        "path": "."
+      }
+    }
+  ]
+}

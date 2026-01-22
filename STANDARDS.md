@@ -103,6 +103,190 @@ cd daemon && ./servicename.exe install|start|stop|uninstall
 
 **Never use scripts to run services in production.** Scripts are for development only.
 
+### Windows OpenSSH Setup (Lessons Learned)
+
+**Problem:** Setting up SSH key authentication on Windows is notoriously difficult due to strict permission requirements.
+
+**Key Learnings:**
+
+1. **StrictModes is enabled by default** - Windows SSH server checks file permissions strictly
+2. **Admin users use different key file** - `C:\ProgramData\ssh\administrators_authorized_keys` instead of `~/.ssh/authorized_keys`
+3. **`__PROGRAMDATA__` token may not work** - Use absolute paths like `C:/ProgramData/ssh/administrators_authorized_keys`
+4. **Authenticated Users permission breaks auth** - Remove from `C:\ProgramData\ssh` folder
+5. **Key passphrase vs Windows password** - If prompted for "passphrase", the key has a passphrase set; regenerate with `-N '""'` for no passphrase
+
+**Working Configuration (Password Auth - Recommended for Windows):**
+
+```powershell
+# On the TARGET machine (the one you're SSHing INTO):
+
+# 1. Create dedicated SSH user with simple password
+net user sshuser YourPassword123 /add
+net localgroup administrators sshuser /add
+
+# 2. Enable password auth in sshd_config
+# Edit C:\ProgramData\ssh\sshd_config:
+#   PasswordAuthentication yes
+
+# 3. Restart SSH service
+Restart-Service sshd
+```
+
+**Key Auth Setup (If you really want it):**
+
+```powershell
+# On SOURCE machine - generate key with NO passphrase
+ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\id_ed25519 -N '""'
+
+# On TARGET machine - for admin users:
+# 1. Comment out Match Group administrators in sshd_config
+# 2. Add key to user's .ssh/authorized_keys
+mkdir C:\Users\USERNAME\.ssh
+Set-Content C:\Users\USERNAME\.ssh\authorized_keys -Value "ssh-ed25519 AAAA... user@host" -Encoding ASCII
+icacls C:\Users\USERNAME\.ssh\authorized_keys /inheritance:r /grant "USERNAME:(R)" /grant "SYSTEM:(R)"
+Restart-Service sshd
+```
+
+**Common Errors:**
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Permission denied (publickey)` | Key not in authorized_keys or wrong permissions | Check file path, permissions, and key fingerprint match |
+| `Enter passphrase for key` | Key has passphrase | Regenerate key with `-N '""'` or enter passphrase |
+| `Connection reset` | PubkeyAuthentication disabled | Uncomment `PubkeyAuthentication yes` in sshd_config |
+| `Invalid user` | Wrong username | Check actual username with `whoami` on target |
+
+**Hive SSH Access:**
+
+| Direction | Account | Auth | Command |
+|-----------|---------|------|---------|
+| Harold-PC → ai-pc | hjhar | Key | `ssh hjhar@192.168.1.162` |
+| ai-pc → Harold-PC | hjhariSSH | Password (0812) | `ssh hjhariSSH@192.168.1.42` |
+
+### Service Lifecycle Management (NSSM)
+
+**Problem:** Services running in terminal windows clutter the desktop, can be accidentally closed, and don't auto-start on boot.
+
+**Solution:** Use NSSM (Non-Sucking Service Manager) for all Hive services.
+
+#### Service Lifecycle Stages
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   CREATE    │───►│  REGISTER   │───►│    RUN      │───►│   REMOVE    │
+│  (develop)  │    │   (nssm)    │    │ (background)│    │ (decomm)    │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+#### 1. CREATE - Developing a New Service
+
+```javascript
+// service.js - Minimum viable service
+const PORT = 8XXX;  // Get assigned port from SERVICE-REGISTRY.md
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+    if (req.url === '/health') {
+        res.writeHead(200);
+        res.end(JSON.stringify({ status: 'healthy', service: 'MyService' }));
+    }
+});
+
+server.listen(PORT, () => {
+    console.log(`[MyService] Started on port ${PORT}`);
+});
+```
+
+**Checklist before registering:**
+- [ ] Service has `/health` endpoint
+- [ ] Port assigned in SERVICE-REGISTRY.md
+- [ ] Tested manually with `node service.js`
+- [ ] No hardcoded paths (use `__dirname` or config)
+
+#### 2. REGISTER - Add to NSSM
+
+```powershell
+# Install service (run as Admin)
+nssm install HiveServiceName "C:\Program Files\nodejs\node.exe" "C:\path\to\service.js"
+
+# Configure (optional but recommended)
+nssm set HiveServiceName AppDirectory "C:\path\to"
+nssm set HiveServiceName DisplayName "Hive Service Name"
+nssm set HiveServiceName Description "What this service does"
+nssm set HiveServiceName Start SERVICE_AUTO_START
+
+# Start the service
+nssm start HiveServiceName
+```
+
+**Naming Convention:** `Hive[ServiceName]` (e.g., HiveOracle, HiveRelay, HiveImmortal)
+
+#### 3. RUN - Managing Running Services
+
+```powershell
+# Check status
+nssm status HiveServiceName
+
+# Start/Stop/Restart
+nssm start HiveServiceName
+nssm stop HiveServiceName
+nssm restart HiveServiceName
+
+# View all Hive services
+nssm list | findstr Hive
+
+# Check logs (if configured)
+nssm get HiveServiceName AppStdout
+```
+
+#### 4. REMOVE - Decommissioning a Service
+
+```powershell
+# Stop first
+nssm stop HiveServiceName
+
+# Remove from NSSM
+nssm remove HiveServiceName confirm
+
+# Clean up
+# - Remove from SERVICE-REGISTRY.md
+# - Remove from start-all-servers.bat (if present)
+# - Archive or delete source files
+```
+
+#### Current Hive Services (NSSM)
+
+| Service | Port | Status | Path |
+|---------|------|--------|------|
+| HiveOracle | 3002 | Auto | C:\LLM-Oracle\oracle.js |
+| HiveRelay | 8600 | Auto | Admin\relay\relay-service.js |
+| HiveKittBox | 8585 | Auto | Admin\agent\agent-server.js |
+| HiveKittLive | 8686 | Auto | C:\kittbox-modules\kitt-live |
+| HiveMind | 8701 | Auto | Admin\hive-mind\hive-mind.js |
+| HiveRemoteSupport | 8590 | Auto | Admin\remote-support\service.js |
+| HiveImmortal | - | Auto | C:\DevClaude\Hivemind\bootstrap\immortal.js |
+| HiveCaddy | 443 | Auto | Caddy reverse proxy |
+| HiveSmartPoller | - | Auto | Admin\relay\smart-poller.js |
+
+#### Golden Rules
+
+1. **Never run services in terminal windows** - Always use NSSM for production
+2. **Test before registering** - Run manually first, fix all errors
+3. **Always add health endpoint** - Enables monitoring and auto-restart
+4. **Update SERVICE-REGISTRY.md** - Single source of truth for all services
+5. **Use descriptive names** - `HiveOracle` not `svc1`
+6. **Set auto-start** - Services should survive reboots
+7. **Close duplicate windows** - If you see a terminal running a registered service, close it
+
+#### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Service won't start | Check `nssm get HiveX AppStderr` for errors |
+| Port already in use | Another instance running - kill it first |
+| Service starts then stops | Check logs, likely missing dependency |
+| Can't install service | Run PowerShell as Administrator |
+
 ## 🎮 Gamepad API Patterns
 
 ### Stale Reference Problem
@@ -2201,3 +2385,487 @@ curl -s -X POST http://localhost:3002/api/ask \
 3. **Browser cache** - Force refresh (`Ctrl+Shift+R`) when testing UI changes
 4. **Windows services** - Use `net stop/start` not just restart for full cleanup
 5. **LM Studio endpoints** - Uses OpenAI format, not Ollama format
+
+---
+
+## 🤖 AI Development Workflow
+
+Best practices for LLM-assisted software development, based on industry research and hive experience.
+
+### Core Principles
+
+1. **Planning First** - Never dive into code without a documented plan
+2. **Context is King** - What the model knows determines quality
+3. **Human Oversight** - AI proposes, human approves
+4. **Memory Persistence** - Sessions die, knowledge must survive
+5. **Quality Gates** - AI code requires review before merge
+
+### PLANNING.md Pattern
+
+Every significant feature/project should have a `PLANNING.md` file that serves as the "AI brain" for that work:
+
+```markdown
+# Feature: [Name]
+
+## Context
+[Brief description, why this feature exists]
+
+## Current State
+[What exists now, what's broken/missing]
+
+## Requirements
+- [ ] Requirement 1
+- [ ] Requirement 2
+
+## Technical Approach
+[High-level implementation strategy]
+
+## Files to Modify
+| File | Changes |
+|------|---------|
+| src/component.js | Add validation logic |
+| tests/component.test.js | Add test cases |
+
+## Verification
+[How to test this works]
+
+## Open Questions
+- Question that needs human decision
+```
+
+**Benefits:**
+- AI can read this to understand context in any session
+- Human can review and approve approach before coding
+- Serves as audit trail of decisions
+- Survives context compaction
+
+### AI Workflow Stages
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   PLANNING  │───►│   CODING    │───►│   REVIEW    │───►│   DEPLOY    │
+│  (AI drafts)│    │ (AI writes) │    │ (Human/AI)  │    │  (Verified) │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+      │                  │                  │                  │
+      ▼                  ▼                  ▼                  ▼
+  PLANNING.md        Code Files       Quality Gates      Production
+```
+
+**Stage Details:**
+
+| Stage | AI Role | Human Role | Output |
+|-------|---------|------------|--------|
+| Planning | Draft approach, identify files | Approve/modify plan | PLANNING.md |
+| Coding | Write implementation | Monitor, course-correct | Code changes |
+| Review | Self-review, fix issues | Final approval | Clean code |
+| Deploy | Generate tests, docs | Verify, merge | Released feature |
+
+### Context Engineering
+
+**Problem:** LLMs have limited context windows. What they see determines output quality.
+
+**Strategies:**
+
+1. **Structured Memory Files**
+   - CLAUDE.md: Project context, rules, shortcuts
+   - STANDARDS.md: Patterns, conventions, lessons
+   - PLANNING.md: Current task context
+   - SESSION.md: Transient session state (optional)
+
+2. **Memory Hierarchy**
+   ```
+   Long-term Memory (CLAUDE.md, STANDARDS.md)
+        │
+        ▼
+   Working Memory (PLANNING.md, current task)
+        │
+        ▼
+   Short-term Memory (conversation context)
+   ```
+
+3. **Context Injection**
+   - Always reference memory files at session start
+   - Include relevant code snippets, not entire files
+   - Summarize previous decisions, don't re-explain
+
+4. **Memory Consolidation**
+   - End of session: Extract learnings to memory files
+   - Significant decisions → CLAUDE.md
+   - New patterns → STANDARDS.md
+   - Task progress → PLANNING.md
+
+### Memory Persistence Patterns
+
+**Problem:** Context compaction loses detail. Sessions end. Knowledge must survive.
+
+**Solution 1: Checkpoint Pattern**
+```javascript
+// Before context gets full or session ends
+const checkpoint = {
+    timestamp: Date.now(),
+    currentTask: 'Implementing user auth',
+    completedSteps: ['Created schema', 'Added endpoints'],
+    nextSteps: ['Add validation', 'Write tests'],
+    blockers: ['Need decision on session timeout'],
+    modifiedFiles: ['src/auth.js:42', 'tests/auth.test.js:15']
+};
+await saveToMemory('session-checkpoint', checkpoint);
+```
+
+**Solution 2: Fact Extraction**
+```markdown
+## Learned This Session
+
+### Decisions Made
+- Using JWT for auth (not sessions) - Harold approved 2024-01-21
+- Token expiry: 24 hours
+
+### Patterns Discovered
+- Auth middleware must check `req.headers.authorization` not `req.auth`
+- Use `bcrypt.compare()` not direct string comparison
+
+### Gotchas Found
+- JWT decode doesn't verify - use `jwt.verify()`
+```
+
+**Solution 3: Database Memory**
+```javascript
+// Relay API for persistent memory
+POST /api/memory/save
+{
+    "key": "auth-implementation",
+    "value": { /* structured data */ },
+    "tags": ["auth", "security"],
+    "ttl": null  // Permanent
+}
+
+GET /api/memory/search?tags=auth
+```
+
+## 🗄️ Database Standards
+
+### SQLite as Default Backend
+
+**Rule:** All services, webpages, and components requiring data persistence MUST use SQLite.
+
+**Why SQLite:**
+- Zero configuration - no server setup required
+- Single file database - easy backup and migration
+- Fast for read-heavy workloads (which most Hive services are)
+- ACID compliant - data integrity guaranteed
+- Works offline - no network dependency
+- Cross-platform - same code works everywhere
+
+**Implementation Pattern:**
+```javascript
+const Database = require('better-sqlite3');
+const db = new Database('service-name.db');
+
+// Create tables on startup
+db.exec(`
+    CREATE TABLE IF NOT EXISTS data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        key TEXT UNIQUE,
+        value TEXT,
+        created_at INTEGER DEFAULT (strftime('%s', 'now'))
+    )
+`);
+```
+
+**Standard Locations:**
+| Service | Database Path |
+|---------|---------------|
+| Relay | `Admin/relay/relay.db` |
+| Oracle | `C:/LLM-Oracle/oracle.db` |
+| Hive Brain | `Admin/hive-brain/colony.db` |
+| New services | `[service-dir]/[service-name].db` |
+
+**Package:** Use `better-sqlite3` (synchronous, fast) not `sqlite3` (async, slower).
+
+**Exceptions:** Only use localStorage for:
+- UI-only state (panel positions, collapsed states)
+- Browser-side preferences
+- Temporary session data
+
+Everything else goes to SQLite.
+
+### Quality Gates for AI Code
+
+**Rule:** No AI-generated code goes to production without verification.
+
+**Gate 1: Self-Review**
+```
+Before committing, AI should:
+- [ ] Check for common errors (off-by-one, null refs)
+- [ ] Verify error handling exists
+- [ ] Confirm no hardcoded secrets
+- [ ] Test happy path works
+```
+
+**Gate 2: Human Review**
+```
+Human reviewer checks:
+- [ ] Does this match the approved plan?
+- [ ] Is the approach appropriate?
+- [ ] Any security concerns?
+- [ ] Any performance concerns?
+- [ ] Tests adequate?
+```
+
+**Gate 3: Integration**
+```
+Before merge:
+- [ ] All tests pass
+- [ ] No regressions in existing functionality
+- [ ] Documentation updated if needed
+- [ ] STANDARDS.md updated if new pattern
+```
+
+### Prompting Best Practices
+
+**Do:**
+- One task at a time (focused prompts)
+- Include relevant context
+- Specify output format expected
+- Set constraints upfront
+
+**Don't:**
+- Ask for entire application at once
+- Assume AI remembers previous sessions
+- Skip verification steps
+- Accept code without testing
+
+**Effective Prompt Structure:**
+```
+CONTEXT: [What exists, what's the goal]
+TASK: [Specific thing to do]
+CONSTRAINTS: [Limits, patterns to follow, what to avoid]
+OUTPUT: [Expected format, files to modify]
+```
+
+**Example:**
+```
+CONTEXT: We have a user auth system using JWT. Need to add refresh tokens.
+TASK: Add refresh token endpoint to auth.js
+CONSTRAINTS:
+- Follow existing patterns in auth.js
+- Refresh token expires in 7 days
+- Store refresh tokens in Redis (already configured)
+OUTPUT: Modified auth.js with POST /auth/refresh endpoint
+```
+
+### Session Handoff Protocol
+
+When ending a session or expecting context compaction:
+
+1. **Update PLANNING.md** with current progress
+2. **Extract learnings** to CLAUDE.md or STANDARDS.md
+3. **Save checkpoint** if mid-task
+4. **Document blockers** for next session
+5. **Commit work** even if incomplete (WIP commit)
+
+**Handoff Template:**
+```markdown
+## Session End: [Date]
+
+### Completed
+- [x] Task 1
+- [x] Task 2
+
+### In Progress
+- [ ] Task 3 (50% - stopped at validation logic)
+
+### Next Session Should
+1. Continue Task 3 from src/auth.js:142
+2. Review the validation approach
+3. Run full test suite
+
+### Blockers
+- Need Harold's decision on timeout value
+
+### Files Modified This Session
+- src/auth.js (lines 100-200)
+- tests/auth.test.js (new file)
+```
+
+### AI Code Review Checklist
+
+When AI generates code, verify:
+
+**Correctness:**
+- [ ] Logic matches requirements
+- [ ] Edge cases handled
+- [ ] Error paths covered
+- [ ] No obvious bugs
+
+**Security:**
+- [ ] No hardcoded secrets
+- [ ] Input validation present
+- [ ] No SQL/command injection
+- [ ] Auth/authz enforced
+
+**Quality:**
+- [ ] Follows project patterns (STANDARDS.md)
+- [ ] Naming is clear and consistent
+- [ ] No dead code
+- [ ] Comments explain "why" not "what"
+
+**Performance:**
+- [ ] No N+1 queries
+- [ ] Appropriate caching
+- [ ] No memory leaks
+- [ ] Reasonable complexity
+
+### Hive-Specific AI Guidelines
+
+**For Oracle/Kitt/tinyAI:**
+1. Always inject hive context (ports, services, state)
+2. Use tool calling, don't just suggest commands
+3. Check service health before operations
+4. Escalate complex tasks to Claude Code
+5. Log all interactions for learning
+
+**For Claude Code sessions:**
+1. Read CLAUDE.md at session start
+2. Use todo lists for multi-step tasks
+3. Test after every change
+4. Save learnings before session ends
+5. Use shortcuts (msg, mem, mst, etc.)
+
+### Anti-Patterns to Avoid
+
+| Anti-Pattern | Problem | Solution |
+|--------------|---------|----------|
+| Prompt stuffing | Too much context, model confused | Focus on relevant info only |
+| No verification | Bugs reach production | Always test AI output |
+| Session amnesia | Knowledge lost between sessions | Use memory files |
+| Over-reliance | Human stops thinking | Human reviews all decisions |
+| Under-specification | AI guesses wrong | Be explicit about requirements |
+| Monolithic prompts | Giant tasks fail | Break into small steps |
+
+### Continuous Improvement Loop
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AI IMPROVEMENT CYCLE                      │
+│                                                              │
+│  AI Works ──► Results Logged ──► Claude Reviews             │
+│       ▲                               │                      │
+│       │                               ▼                      │
+│       └── All AI Learns ◄── Harold Approves Changes         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+1. **AI acts** - Oracle, Kitt, tinyAI perform tasks
+2. **Results logged** - All interactions stored in database
+3. **Claude reviews** - Analyzes logs for improvements
+4. **Harold approves** - Human validates recommendations
+5. **All AI learns** - Updates propagate to all agents
+
+This ensures every AI in the hive gets smarter over time
+
+---
+
+## 📝 Claude Code Memory Management
+
+Standards for managing Claude Code's memory system across sessions.
+
+### Memory Hierarchy (Priority Order)
+
+| Level | Location | Purpose | Shared With |
+|-------|----------|---------|-------------|
+| 1. Managed Policy | `C:\Program Files\ClaudeCode\CLAUDE.md` | Org-wide rules (IT/DevOps) | All users |
+| 2. Project Memory | `./CLAUDE.md` or `./.claude/CLAUDE.md` | Team-shared project context | Team (via git) |
+| 3. Project Rules | `./.claude/rules/*.md` | Modular topic-specific rules | Team (via git) |
+| 4. User Memory | `~/.claude/CLAUDE.md` | Personal preferences (all projects) | Just you |
+| 5. Local Project | `./CLAUDE.local.md` | Personal project prefs (gitignored) | Just you |
+
+### Import Syntax
+
+Import other files into CLAUDE.md using `@path/to/file`:
+
+```markdown
+See @README for project overview and @package.json for npm commands.
+
+# Additional Instructions
+- git workflow @docs/git-instructions.md
+- personal prefs @~/.claude/my-project-instructions.md
+```
+
+**Rules:**
+- Relative and absolute paths supported
+- `@~/` expands to user home directory
+- Imports NOT evaluated inside code blocks/spans
+- Max depth: 5 recursive imports
+- Check loaded files with `/memory` command
+
+### Modular Rules (`.claude/rules/`)
+
+Organize instructions into topic-specific files:
+
+```
+.claude/
+├── CLAUDE.md              # Main project instructions
+└── rules/
+    ├── code-style.md      # Code style guidelines
+    ├── testing.md         # Testing conventions
+    ├── security.md        # Security requirements
+    └── frontend/
+        ├── react.md       # React-specific rules
+        └── styles.md      # CSS conventions
+```
+
+**Path-Specific Rules (YAML Frontmatter):**
+
+```markdown
+---
+paths:
+  - "src/api/**/*.ts"
+  - "lib/**/*.ts"
+---
+
+# API Development Rules
+
+- All API endpoints must include input validation
+- Use the standard error response format
+```
+
+Rules without `paths` frontmatter apply to all files.
+
+**Glob Patterns:**
+
+| Pattern | Matches |
+|---------|---------|
+| `**/*.ts` | All TypeScript files anywhere |
+| `src/**/*` | All files under src/ |
+| `*.md` | Markdown in project root |
+| `src/**/*.{ts,tsx}` | TypeScript and TSX in src |
+| `{src,lib}/**/*.ts` | TypeScript in src or lib |
+
+### Memory Lookup Behavior
+
+- Claude recurses UP from cwd to root, reading all CLAUDE.md files found
+- Nested CLAUDE.md files (in subdirectories) loaded when Claude reads files in those subtrees
+- User-level rules (`~/.claude/rules/`) loaded before project rules (lower priority)
+- Symlinks supported in `.claude/rules/` for shared rules across projects
+
+### Best Practices
+
+**File Organization:**
+- Keep rules focused (one topic per file)
+- Use descriptive filenames (`testing.md` not `rules1.md`)
+- Organize with subdirectories for large projects
+- Use path-specific rules sparingly (only when truly file-type specific)
+
+**Content Guidelines:**
+- Be specific: "Use 2-space indentation" not "Format properly"
+- Use bullet points for individual rules
+- Group related rules under markdown headings
+- Review and update as project evolves
+
+**Hive Standard:**
+- Main context: `CLAUDE.md` in project root
+- Standards/patterns: `STANDARDS.md` in project root
+- Import both in CLAUDE.md for full context
+- Use `syncmem` shortcut to backup to database

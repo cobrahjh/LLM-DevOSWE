@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Command Center</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #ff6b35, #ff9f1c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .header .time {
+            color: #888;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        .btn {
+            background: linear-gradient(135deg, #ff6b35, #ff9f1c);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,53,0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn.secondary { background: #2a2a3e; }
+        .btn.secondary:hover { background: #3a3a4e; box-shadow: none; }
+        .btn.small { padding: 4px 10px; font-size: 11px; }
+
+        /* Tooltips */
+        [title] {
+            position: relative;
+        }
+        .btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f0f1a;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 100;
+            margin-bottom: 5px;
+            border: 1px solid #333;
+            max-width: 250px;
+            white-space: normal;
+            text-align: center;
+        }
+
+        /* Grid Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .card-header h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+        }
+        .card-header .badge {
+            background: #2a2a3e;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* Briefing Card */
+        .briefing-card { grid-column: span 2; }
+        .briefing-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .briefing-stat {
+            text-align: center;
+            padding: 15px;
+            background: #0f0f1a;
+            border-radius: 8px;
+        }
+        .briefing-stat .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .briefing-stat .label {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+        .briefing-stat.good .value { color: #00ff88; }
+        .briefing-stat.warn .value { color: #ffaa00; }
+        .briefing-stat.bad .value { color: #ff4444; }
+        .briefing-summary {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0f0f1a;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        /* Services Grid */
+        .services-card { grid-column: span 1; }
+        .service-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .service-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            border-left: 3px solid #333;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .service-item:hover {
+            background: #1a1a2e;
+            transform: translateX(3px);
+        }
+        .service-item.online { border-left-color: #00ff88; }
+        .service-item.offline { border-left-color: #ff4444; }
+        .service-item.error { border-left-color: #ffaa00; }
+        .service-name { font-size: 13px; font-weight: 500; }
+        .service-port { font-size: 11px; color: #666; font-family: monospace; }
+        .service-status {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #1a1a2e;
+        }
+        .service-item.online .service-status { color: #00ff88; }
+        .service-item.offline .service-status { color: #ff4444; }
+        .service-open {
+            font-size: 10px;
+            color: #666;
+            margin-left: 8px;
+        }
+        .service-item:hover .service-open { color: #ff6b35; }
+
+        /* Intel Feed */
+        .intel-card { grid-column: span 2; }
+        .intel-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .intel-tab {
+            padding: 8px 16px;
+            background: #0f0f1a;
+            border: none;
+            border-radius: 6px;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .intel-tab.active {
+            background: linear-gradient(135deg, #ff6b35, #ff9f1c);
+            color: #fff;
+        }
+        .intel-tab:hover:not(.active) { background: #1a1a2e; color: #fff; }
+        .intel-content { max-height: 300px; overflow-y: auto; }
+        .intel-item {
+            padding: 12px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+        .intel-item:hover { background: #1a1a2e; }
+        .intel-item .title { font-size: 13px; color: #fff; margin-bottom: 5px; }
+        .intel-item .title a { color: inherit; text-decoration: none; }
+        .intel-item .title a:hover { color: #ff6b35; }
+        .intel-item .meta { font-size: 11px; color: #666; display: flex; gap: 15px; }
+        .intel-item .tag {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: #00d9ff;
+        }
+        .intel-item .tag.ai { background: #1a3a2e; color: #00ff88; }
+        .intel-item .tag.release { background: #3a2a1e; color: #ff9f1c; }
+
+        /* Health Card */
+        .health-card { grid-column: span 1; }
+        .health-trend {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .trend-indicator { font-size: 32px; }
+        .trend-text { font-size: 14px; }
+        .trend-text .status { font-weight: 600; }
+        .trend-text .status.improving { color: #00ff88; }
+        .trend-text .status.stable { color: #ffaa00; }
+        .trend-text .status.degrading { color: #ff4444; }
+        .health-chart {
+            height: 120px;
+            background: #0f0f1a;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+            gap: 2px;
+        }
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, #ff6b35, #ff9f1c);
+            border-radius: 2px 2px 0 0;
+            min-height: 4px;
+            transition: height 0.3s;
+        }
+        .chart-bar.low { background: linear-gradient(to top, #ff4444, #ff6666); }
+
+        /* Collapsible Sections */
+        .collapsible-card { grid-column: span 1; }
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a3e;
+            margin-bottom: 10px;
+        }
+        .collapsible-header:hover { color: #ff6b35; }
+        .collapsible-header h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .collapsible-header .count {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .collapsible-toggle {
+            font-size: 12px;
+            color: #666;
+            transition: transform 0.3s;
+        }
+        .collapsible-toggle.collapsed { transform: rotate(-90deg); }
+        .collapsible-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0;
+        }
+        .collapsible-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Anomaly Items */
+        .anomaly-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border-left: 3px solid #ff4444;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .anomaly-item:hover {
+            background: #1a1a2e;
+            transform: translateX(3px);
+        }
+        .anomaly-item.medium { border-left-color: #ffaa00; }
+        .anomaly-icon { font-size: 18px; }
+        .anomaly-info { flex: 1; }
+        .anomaly-services { font-size: 13px; color: #fff; }
+        .anomaly-time { font-size: 11px; color: #666; }
+        .anomaly-drill { font-size: 10px; color: #666; }
+        .anomaly-item:hover .anomaly-drill { color: #ff6b35; }
+
+        /* Model Items */
+        .model-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        .model-name { color: #fff; font-family: monospace; }
+        .model-size { color: #666; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+        .modal-header h2 { color: #ff6b35; font-size: 18px; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: #fff; }
+        .modal-body { font-size: 14px; line-height: 1.6; }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a3e;
+        }
+        .detail-label { color: #888; }
+        .detail-value { color: #fff; font-family: monospace; }
+        .detail-value.online { color: #00ff88; }
+        .detail-value.offline { color: #ff4444; }
+
+        /* Bottom Section - Full Width */
+        .bottom-section {
+            grid-column: span 3;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        /* Loading & Scrollbar */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #333;
+            border-top-color: #ff6b35;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f1a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard { grid-template-columns: 1fr 1fr; }
+            .briefing-card, .intel-card { grid-column: span 2; }
+            .bottom-section { grid-column: span 2; grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .briefing-card, .intel-card, .bottom-section { grid-column: span 1; }
+            .bottom-section { grid-template-columns: 1fr; }
+            .briefing-content { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hive Command Center</h1>
+        <div class="header-actions">
+            <span class="time" id="currentTime"></span>
+            <button class="btn secondary" onclick="refreshAll()" title="Refresh all dashboard data (Shortcut: R)">Refresh</button>
+            <button class="btn" onclick="forceIntelRefresh()" title="Force fetch fresh intel from all sources (HN, GitHub, Models)">Force Intel</button>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- Briefing Card -->
+        <div class="card briefing-card">
+            <div class="card-header">
+                <h2>Daily Briefing</h2>
+                <span class="badge" id="briefingDate">Loading...</span>
+            </div>
+            <div class="briefing-content" id="briefingStats">
+                <div class="loading">Loading briefing</div>
+            </div>
+            <div class="briefing-summary" id="briefingSummary"></div>
+        </div>
+
+        <!-- Services Card -->
+        <div class="card services-card">
+            <div class="card-header">
+                <h2>Services</h2>
+                <span class="badge" id="servicesCount">0/0</span>
+            </div>
+            <div class="service-list" id="servicesList">
+                <div class="loading">Loading</div>
+            </div>
+        </div>
+
+        <!-- Intel Feed Card -->
+        <div class="card intel-card">
+            <div class="card-header">
+                <h2>Intel Feed</h2>
+                <span class="badge" id="intelUpdated">--</span>
+            </div>
+            <div class="intel-tabs">
+                <button class="intel-tab active" data-tab="news">HN News</button>
+                <button class="intel-tab" data-tab="github">GitHub</button>
+                <button class="intel-tab" data-tab="discoveries">Discoveries</button>
+            </div>
+            <div class="intel-content" id="intelContent">
+                <div class="loading">Loading intel</div>
+            </div>
+        </div>
+
+        <!-- Health Card -->
+        <div class="card health-card">
+            <div class="card-header">
+                <h2>Health Trends</h2>
+                <span class="badge" id="healthSamples">0 samples</span>
+            </div>
+            <div class="health-trend" id="healthTrend">
+                <span class="trend-indicator">📊</span>
+                <div class="trend-text">
+                    <div>Trend: <span class="status">--</span></div>
+                    <div style="color:#666;font-size:12px">Avg: <span id="healthAvg">--</span> services</div>
+                </div>
+            </div>
+            <div class="health-chart" id="healthChart"></div>
+        </div>
+
+        <!-- Bottom Section with Collapsibles -->
+        <div class="bottom-section">
+            <!-- Anomalies -->
+            <div class="card collapsible-card">
+                <div class="collapsible-header" onclick="toggleSection('anomalies')">
+                    <h3>
+                        <span>Anomalies</span>
+                        <span class="count" id="anomalyCount">0</span>
+                    </h3>
+                    <span class="collapsible-toggle" id="anomalies-toggle">▼</span>
+                </div>
+                <div class="collapsible-content" id="anomalies-content">
+                    <div class="collapsible-list" id="anomalyList">
+                        <div style="color:#00ff88;text-align:center;padding:20px;">All systems nominal</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Models -->
+            <div class="card collapsible-card">
+                <div class="collapsible-header" onclick="toggleSection('models')">
+                    <h3>
+                        <span>Available Models</span>
+                        <span class="count" id="modelCount">0</span>
+                    </h3>
+                    <span class="collapsible-toggle" id="models-toggle">▼</span>
+                </div>
+                <div class="collapsible-content" id="models-content">
+                    <div class="collapsible-list" id="modelList">
+                        <div class="loading">Loading</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card collapsible-card">
+                <div class="collapsible-header" onclick="toggleSection('actions')">
+                    <h3>
+                        <span>Quick Actions</span>
+                    </h3>
+                    <span class="collapsible-toggle" id="actions-toggle">▼</span>
+                </div>
+                <div class="collapsible-content" id="actions-content">
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="color:#888;font-size:10px;text-transform:uppercase;margin-bottom:4px;">Hive Services</div>
+                        <button class="btn secondary small" onclick="openService('Oracle', 3002)" title="LLM backend, Intel gathering, Project APIs">Open Oracle :3002</button>
+                        <button class="btn secondary small" onclick="openService('Relay', 8600)" title="Message queue, Task persistence, WebSocket events">Open Relay :8600</button>
+                        <button class="btn secondary small" onclick="openService('KittBox', 8585)" title="Command Center UI, Agent interface">Open KittBox :8585</button>
+                        <button class="btn secondary small" onclick="openService('Hive-Mind', 8701)" title="Real-time activity monitor, Service status">Open Hive-Mind :8701</button>
+                        <button class="btn secondary small" onclick="openService('Hive-Brain', 8800)" title="Device discovery, Colony management">Open Hive-Brain :8800</button>
+                        <button class="btn secondary small" onclick="openService('Hive-Oracle', 8850)" title="Distributed LLM orchestrator, Load balancing">Open Hive-Oracle :8850</button>
+                        <button class="btn secondary small" onclick="openService('Hive-Mesh', 8750)" title="Peer network, Real-time events">Open Hive-Mesh :8750</button>
+                        <div style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;">Utilities</div>
+                        <button class="btn secondary small" onclick="openService('Master-O', 8500)" title="Service watchdog, Auto-restart, Health monitoring">Open Master-O :8500</button>
+                        <button class="btn secondary small" onclick="openService('Ollama', 11434)" title="Local LLM server (qwen models)">Open Ollama :11434</button>
+                        <button class="btn secondary small" onclick="openService('LM-Studio', 1234)" title="Local LLM server (Nova)">Open LM-Studio :1234</button>
+                        <div style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;">Actions</div>
+                        <button class="btn small" onclick="generateBriefing()" title="Generate a fresh daily briefing with latest intel">Generate New Briefing</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anomaly Detail Modal -->
+    <div class="modal-overlay" id="anomalyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Anomaly Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="anomalyModalBody">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Detail Modal -->
+    <div class="modal-overlay" id="serviceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="serviceModalTitle">Service Details</h2>
+                <button class="modal-close" onclick="closeServiceModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="serviceModalBody">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3002';
+
+        // All hive services with their details
+        const SERVICES = [
+            // Core Hive Services
+            { name: 'Oracle', port: 3002, endpoint: '/api/health', path: '/', desc: 'LLM backend, Intel gathering', hive: true },
+            { name: 'Relay', port: 8600, endpoint: '/api/health', path: '/', desc: 'Message queue, Tasks', hive: true },
+            { name: 'KittBox', port: 8585, endpoint: '/api/health', path: '/', desc: 'Command Center UI', hive: true },
+            { name: 'Hive-Mind', port: 8701, endpoint: '/api/health', path: '/', desc: 'Activity Monitor', hive: true },
+            { name: 'Hive-Brain', port: 8800, endpoint: '/api/health', path: '/', desc: 'Colony Management', hive: true },
+            { name: 'Hive-Oracle', port: 8850, endpoint: '/health', path: '/', desc: 'Distributed LLM', hive: true },
+            { name: 'Hive-Mesh', port: 8750, endpoint: '/health', path: '/', desc: 'Peer Network', hive: true },
+            // External / Utility Services
+            { name: 'Master-O', port: 8500, endpoint: '/api/status', path: '/', desc: 'Service Watchdog', hive: false },
+            { name: 'Ollama', port: 11434, endpoint: '/api/tags', path: '/', desc: 'Local LLM (qwen)', hive: false },
+            { name: 'LM-Studio', port: 1234, endpoint: '/v1/models', path: '/', desc: 'Local LLM (Nova)', hive: false }
+        ];
+
+        let intelData = {};
+        let healthData = {};
+        let currentTab = 'news';
+        let collapsedSections = {};
+
+        // Update time
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Fetch with timeout
+        async function fetchWithTimeout(url, timeout = 5000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(id);
+                return res;
+            } catch (e) {
+                clearTimeout(id);
+                throw e;
+            }
+        }
+
+        // Toggle collapsible section
+        function toggleSection(section) {
+            const content = document.getElementById(`${section}-content`);
+            const toggle = document.getElementById(`${section}-toggle`);
+
+            if (collapsedSections[section]) {
+                content.classList.remove('collapsed');
+                toggle.classList.remove('collapsed');
+                collapsedSections[section] = false;
+            } else {
+                content.classList.add('collapsed');
+                toggle.classList.add('collapsed');
+                collapsedSections[section] = true;
+            }
+        }
+
+        // Load Briefing
+        async function loadBriefing() {
+            try {
+                const res = await fetchWithTimeout(`${API_BASE}/api/intel/briefing`);
+                const data = await res.json();
+
+                if (data.date) {
+                    document.getElementById('briefingDate').textContent =
+                        new Date(data.date).toLocaleString();
+                }
+
+                const h = data.highlights || {};
+                document.getElementById('briefingStats').innerHTML = `
+                    <div class="briefing-stat ${getHealthClass(h.hive)}">
+                        <div class="value">${h.hive || '--'}</div>
+                        <div class="label">Hive Status</div>
+                    </div>
+                    <div class="briefing-stat">
+                        <div class="value">${h.models || '--'}</div>
+                        <div class="label">Models</div>
+                    </div>
+                    <div class="briefing-stat">
+                        <div class="value">${h.github || '--'}</div>
+                        <div class="label">GitHub</div>
+                    </div>
+                    <div class="briefing-stat ${h.anomalies > 10 ? 'warn' : ''}">
+                        <div class="value">${h.anomalies || 0}</div>
+                        <div class="label">Anomalies</div>
+                    </div>
+                `;
+
+                // Format the summary nicely
+                const summary = data.summary || 'No summary available';
+                const lines = summary.split('\n').filter(l => l.trim());
+                document.getElementById('briefingSummary').innerHTML = lines.map(line => {
+                    // Highlight key parts
+                    let formatted = line
+                        .replace(/^(Hive Status:)/i, '<strong style="color:#00d9ff">$1</strong>')
+                        .replace(/^(Health Trend:)/i, '<strong style="color:#00ff88">$1</strong>')
+                        .replace(/^(Recent Issues:)/i, '<strong style="color:#ffaa00">$1</strong>')
+                        .replace(/^(Models Available:)/i, '<strong style="color:#ff6b35">$1</strong>')
+                        .replace(/^(New Releases:)/i, '<strong style="color:#ff9f1c">$1</strong>')
+                        .replace(/^(Repos Tracked:)/i, '<strong style="color:#888">$1</strong>')
+                        .replace(/^(AI News:)/i, '<strong style="color:#00d9ff">$1</strong>')
+                        .replace(/improving/gi, '<span style="color:#00ff88">improving</span>')
+                        .replace(/degrading/gi, '<span style="color:#ff4444">degrading</span>')
+                        .replace(/stable/gi, '<span style="color:#ffaa00">stable</span>')
+                        .replace(/online/gi, '<span style="color:#00ff88">online</span>')
+                        .replace(/offline/gi, '<span style="color:#ff4444">offline</span>')
+                        .replace(/v[\d.]+/g, '<code style="background:#2a2a3e;padding:2px 6px;border-radius:4px;font-size:11px;">$&</code>');
+                    return '<div style="margin-bottom:8px;">' + formatted + '</div>';
+                }).join('');
+            } catch (e) {
+                document.getElementById('briefingStats').innerHTML =
+                    '<div style="color:#ff4444">Failed to load briefing</div>';
+            }
+        }
+
+        function getHealthClass(hive) {
+            if (!hive) return '';
+            const match = hive.match(/(\d+)\/(\d+)/);
+            if (match) {
+                const ratio = parseInt(match[1]) / parseInt(match[2]);
+                if (ratio >= 0.9) return 'good';
+                if (ratio >= 0.7) return 'warn';
+                return 'bad';
+            }
+            return '';
+        }
+
+        // Load Services - with clickable items
+        async function loadServices() {
+            const results = await Promise.all(SERVICES.map(async (svc) => {
+                try {
+                    const url = 'http://localhost:' + svc.port + svc.endpoint;
+                    const res = await fetchWithTimeout(url, 5000);
+                    // Some endpoints return non-200 but are still "alive"
+                    if (res.ok || res.status === 404 || res.status === 401) {
+                        return { ...svc, status: 'online' };
+                    }
+                    return { ...svc, status: 'error' };
+                } catch (e) {
+                    console.log(svc.name + ' check failed:', e.message);
+                    return { ...svc, status: 'offline' };
+                }
+            }));
+
+            const online = results.filter(s => s.status === 'online').length;
+            document.getElementById('servicesCount').textContent = `${online}/${results.length}`;
+
+            // Separate hive vs utility services
+            const hiveServices = results.filter(s => s.hive);
+            const utilServices = results.filter(s => !s.hive);
+
+            let servicesHtml = '';
+            servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin-bottom:6px;">Hive Core</div>';
+            servicesHtml += hiveServices.map(s =>
+                '<div class="service-item ' + s.status + '" onclick="openServiceDetail(\'' + s.name + '\', ' + s.port + ', \'' + s.status + '\', \'' + s.desc + '\')">' +
+                '<div><div class="service-name">' + s.name + '</div><div class="service-port">:' + s.port + ' - ' + s.desc + '</div></div>' +
+                '<div style="display:flex;align-items:center;"><div class="service-status">' + s.status + '</div><div class="service-open">→</div></div></div>'
+            ).join('');
+            servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin:12px 0 6px;">Utilities</div>';
+            servicesHtml += utilServices.map(s =>
+                '<div class="service-item ' + s.status + '" onclick="openServiceDetail(\'' + s.name + '\', ' + s.port + ', \'' + s.status + '\', \'' + s.desc + '\')">' +
+                '<div><div class="service-name">' + s.name + '</div><div class="service-port">:' + s.port + ' - ' + s.desc + '</div></div>' +
+                '<div style="display:flex;align-items:center;"><div class="service-status">' + s.status + '</div><div class="service-open">→</div></div></div>'
+            ).join('');
+            document.getElementById('servicesList').innerHTML = servicesHtml;
+        }
+
+        // Open service in new tab
+        function openService(name, port) {
+            window.open(`http://localhost:${port}`, '_blank');
+        }
+
+        // Open service detail modal
+        function openServiceDetail(name, port, status, desc) {
+            document.getElementById('serviceModalTitle').textContent = `${name} Details`;
+            document.getElementById('serviceModalBody').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Service</span>
+                    <span class="detail-value">${name}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Port</span>
+                    <span class="detail-value">${port}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value ${status}">${status.toUpperCase()}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value">${desc}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">URL</span>
+                    <span class="detail-value">
+                        <a href="http://localhost:${port}" target="_blank" style="color:#ff6b35">
+                            http://localhost:${port}
+                        </a>
+                    </span>
+                </div>
+
+                <div id="investigateResults" style="margin-top:15px;"></div>
+
+                <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn" onclick="investigateService('${name}', ${port})" title="Run diagnostics on this service">🔍 Investigate</button>
+                    <button class="btn secondary" onclick="openService('${name}', ${port})" title="Open ${name} web interface in new browser tab">Open in Browser</button>
+                    ${status === 'offline' ? `<button class="btn" style="background:#ff4444" onclick="restartService('${name}')" title="Attempt to restart this service via Master-O">🔄 Restart</button>` : ''}
+                    <button class="btn secondary" onclick="closeServiceModal()" title="Close this dialog (Esc)">Close</button>
+                </div>
+            `;
+            document.getElementById('serviceModal').classList.add('active');
+        }
+
+        // Investigate service health
+        async function investigateService(name, port) {
+            const resultsEl = document.getElementById('investigateResults');
+            resultsEl.innerHTML = '<div class="loading">Investigating...</div>';
+
+            const findings = [];
+            const svc = SERVICES.find(s => s.name === name);
+
+            try {
+                // 1. Check basic connectivity
+                findings.push({ label: 'Connectivity Test', status: 'checking' });
+
+                const startTime = Date.now();
+                const res = await fetchWithTimeout('http://localhost:' + port + (svc?.endpoint || '/'), 5000);
+                const responseTime = Date.now() - startTime;
+
+                if (res.ok) {
+                    findings[0] = { label: 'Connectivity', status: 'pass', detail: 'Responding in ' + responseTime + 'ms' };
+
+                    // 2. Try to get more info from the response
+                    try {
+                        const data = await res.json();
+                        if (data.status) findings.push({ label: 'Health Status', status: 'pass', detail: data.status });
+                        if (data.uptime) findings.push({ label: 'Uptime', status: 'info', detail: data.uptime });
+                        if (data.version) findings.push({ label: 'Version', status: 'info', detail: data.version });
+                        if (data.models?.length) findings.push({ label: 'Models Loaded', status: 'info', detail: data.models.length + ' models' });
+                        if (data.backend) findings.push({ label: 'Backend', status: 'info', detail: data.backend });
+                    } catch (e) {
+                        // Response wasn't JSON, that's ok
+                        findings.push({ label: 'Response', status: 'pass', detail: 'Service responding (non-JSON)' });
+                    }
+
+                    // 3. Check response time
+                    if (responseTime > 2000) {
+                        findings.push({ label: 'Performance', status: 'warn', detail: 'Slow response (' + responseTime + 'ms)' });
+                    } else {
+                        findings.push({ label: 'Performance', status: 'pass', detail: 'Good (' + responseTime + 'ms)' });
+                    }
+                } else {
+                    findings[0] = { label: 'Connectivity', status: 'fail', detail: 'HTTP ' + res.status };
+                }
+            } catch (e) {
+                findings[0] = { label: 'Connectivity', status: 'fail', detail: e.message || 'Connection failed' };
+
+                // Try to determine why
+                findings.push({ label: 'Diagnosis', status: 'info', detail: 'Service may be stopped, crashed, or port blocked' });
+
+                // Suggest actions
+                findings.push({ label: 'Suggested Action', status: 'action', detail: 'Try restarting via Master-O or check Windows Services' });
+            }
+
+            // 4. Check Master-O for service info
+            try {
+                const masterRes = await fetchWithTimeout('http://localhost:8500/api/status', 2000);
+                if (masterRes.ok) {
+                    const masterData = await masterRes.json();
+                    const svcKey = name.toLowerCase().replace('-', '');
+                    const svcInfo = masterData.services?.[svcKey];
+                    if (svcInfo) {
+                        findings.push({ label: 'Master-O Status', status: svcInfo.healthy ? 'pass' : 'warn', detail: svcInfo.healthy ? 'Healthy' : 'Unhealthy' });
+                        if (svcInfo.restartCount > 0) {
+                            findings.push({ label: 'Restart Count', status: 'warn', detail: svcInfo.restartCount + ' restarts' });
+                        }
+                    }
+                }
+            } catch (e) {
+                // Master-O not available
+            }
+
+            // Check if there are issues that need fixing
+            const hasIssues = findings.some(f => f.status === 'fail' || f.status === 'warn');
+            let taskCreated = false;
+            let taskId = null;
+
+            // If issues found, create a fix task in Relay
+            if (hasIssues) {
+                try {
+                    const issueList = findings
+                        .filter(f => f.status === 'fail' || f.status === 'warn')
+                        .map(f => f.label + ': ' + f.detail)
+                        .join('; ');
+
+                    const taskPayload = {
+                        content: 'Fix ' + name + ' service issues: ' + issueList,
+                        source: 'hive-dashboard',
+                        priority: findings.some(f => f.status === 'fail') ? 'high' : 'medium',
+                        metadata: {
+                            service: name,
+                            port: port,
+                            findings: findings,
+                            autoGenerated: true,
+                            timestamp: new Date().toISOString()
+                        }
+                    };
+
+                    const taskRes = await fetch('http://localhost:8600/api/messages', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(taskPayload)
+                    });
+
+                    if (taskRes.ok) {
+                        const taskData = await taskRes.json();
+                        taskCreated = true;
+                        taskId = taskData.id;
+                    }
+                } catch (e) {
+                    console.log('Could not create fix task:', e);
+                }
+            }
+
+            // Render findings
+            let findingsHtml = '<div style="background:#0f0f1a;border-radius:8px;padding:15px;margin-top:10px;">';
+            findingsHtml += '<div style="color:#888;font-size:11px;text-transform:uppercase;margin-bottom:10px;">Investigation Results</div>';
+            findings.forEach(function(f) {
+                const color = f.status === 'pass' ? '#00ff88' : f.status === 'fail' ? '#ff4444' : f.status === 'warn' ? '#ffaa00' : '#aaa';
+                const icon = f.status === 'pass' ? '✓' : f.status === 'fail' ? '✗' : f.status === 'warn' ? '⚠' : 'ℹ';
+                findingsHtml += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a2a3e;">';
+                findingsHtml += '<span style="color:#888;">' + f.label + '</span>';
+                findingsHtml += '<span style="color:' + color + ';">' + icon + ' ' + f.detail + '</span>';
+                findingsHtml += '</div>';
+            });
+            findingsHtml += '</div>';
+
+            // Show task creation status
+            if (taskCreated) {
+                findingsHtml += '<div style="background:#1a2a3e;border:1px solid #00d9ff;border-radius:8px;padding:12px;margin-top:10px;">';
+                findingsHtml += '<div style="color:#00d9ff;font-weight:500;">📋 Fix Task Created</div>';
+                findingsHtml += '<div style="color:#aaa;font-size:12px;margin-top:5px;">Task ID: ' + taskId + '</div>';
+                findingsHtml += '<div style="color:#888;font-size:11px;margin-top:3px;">Claude Code will pick this up and attempt to fix the issues.</div>';
+                findingsHtml += '</div>';
+            } else if (hasIssues) {
+                findingsHtml += '<div style="background:#3a2a1a;border:1px solid #ffaa00;border-radius:8px;padding:12px;margin-top:10px;">';
+                findingsHtml += '<div style="color:#ffaa00;font-weight:500;">⚠ Could not create fix task</div>';
+                findingsHtml += '<div style="color:#888;font-size:11px;margin-top:3px;">Relay service may be offline. Try restarting manually.</div>';
+                findingsHtml += '</div>';
+            }
+
+            resultsEl.innerHTML = findingsHtml;
+        }
+
+        // Restart service via Master-O
+        async function restartService(name) {
+            const resultsEl = document.getElementById('investigateResults');
+            resultsEl.innerHTML = '<div class="loading">Requesting restart...</div>';
+
+            try {
+                // Map service name to Master-O service key
+                const serviceMap = {
+                    'Oracle': 'oracle',
+                    'Relay': 'relay',
+                    'KittBox': 'agent',
+                    'Hive-Mind': 'hivemind',
+                    'Hive-Brain': 'hivebrain',
+                    'Hive-Oracle': 'hiveoracle',
+                    'Master-O': 'master'
+                };
+
+                const svcKey = serviceMap[name] || name.toLowerCase();
+
+                const res = await fetch('http://localhost:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
+
+                if (res.ok) {
+                    resultsEl.innerHTML = '<div style="background:#1a3a2e;border:1px solid #00ff88;border-radius:8px;padding:15px;margin-top:10px;">' +
+                        '<div style="color:#00ff88;font-weight:500;">✓ Restart Requested</div>' +
+                        '<div style="color:#aaa;font-size:12px;margin-top:5px;">Master-O is restarting ' + name + '. Please wait a few seconds and refresh.</div>' +
+                        '</div>';
+
+                    // Refresh services after delay
+                    setTimeout(loadServices, 5000);
+                } else {
+                    throw new Error('HTTP ' + res.status);
+                }
+            } catch (e) {
+                resultsEl.innerHTML = '<div style="background:#3a1a1a;border:1px solid #ff4444;border-radius:8px;padding:15px;margin-top:10px;">' +
+                    '<div style="color:#ff4444;font-weight:500;">✗ Restart Failed</div>' +
+                    '<div style="color:#aaa;font-size:12px;margin-top:5px;">Error: ' + e.message + '. Try restarting manually via Windows Services (NSSM).</div>' +
+                    '</div>';
+            }
+        }
+
+        function closeServiceModal() {
+            document.getElementById('serviceModal').classList.remove('active');
+        }
+
+        // Load Intel
+        async function loadIntel() {
+            try {
+                const res = await fetchWithTimeout(`${API_BASE}/api/intel`);
+                intelData = await res.json();
+
+                document.getElementById('intelUpdated').textContent =
+                    intelData.lastUpdated ? new Date(intelData.lastUpdated).toLocaleTimeString() : '--';
+
+                renderIntelTab(currentTab);
+            } catch (e) {
+                document.getElementById('intelContent').innerHTML =
+                    '<div style="color:#ff4444">Failed to load intel</div>';
+            }
+        }
+
+        function renderIntelTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.intel-tab').forEach(t =>
+                t.classList.toggle('active', t.dataset.tab === tab));
+
+            const content = document.getElementById('intelContent');
+
+            if (tab === 'news') {
+                const items = intelData.feeds?.hackerNews?.topStories || [];
+                content.innerHTML = items.length ? items.map(item => `
+                    <div class="intel-item">
+                        <div class="title">
+                            <a href="${item.url}" target="_blank">${item.title}</a>
+                            ${item.isAIRelated ? '<span class="tag ai">AI</span>' : ''}
+                        </div>
+                        <div class="meta">
+                            <span>Score: ${item.score}</span>
+                            <span>${timeAgo(item.time)}</span>
+                        </div>
+                    </div>
+                `).join('') : '<div style="color:#666;padding:20px;text-align:center">No news</div>';
+            }
+            else if (tab === 'github') {
+                const releases = intelData.github?.recentReleases || [];
+                const repos = intelData.github?.repos || [];
+                content.innerHTML = `
+                    ${releases.length ? '<div style="color:#888;font-size:11px;margin-bottom:10px">NEW RELEASES</div>' : ''}
+                    ${releases.map(r => `
+                        <div class="intel-item">
+                            <div class="title">
+                                <a href="${r.url}" target="_blank">${r.repo}</a>
+                                <span class="tag release">${r.tag}</span>
+                            </div>
+                            <div class="meta">
+                                <span>Previous: ${r.previous || 'N/A'}</span>
+                                <span>${timeAgo(r.discovered)}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                    <div style="color:#888;font-size:11px;margin:15px 0 10px">TRACKED REPOS (${repos.length})</div>
+                    ${repos.map(r => `
+                        <div class="intel-item">
+                            <div class="title">
+                                <a href="https://github.com/${r.repo}" target="_blank">${r.repo}</a>
+                                <span class="tag">${r.tag}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+            else if (tab === 'discoveries') {
+                const discoveries = intelData.models?.recentDiscoveries || [];
+                content.innerHTML = discoveries.length ? discoveries.slice(0, 5).map(d => `
+                    <div style="color:#ff6b35;font-size:12px;margin:10px 0 8px;font-weight:500">
+                        ${new Date(d.date).toLocaleDateString()} - ${d.models.length} new model(s)
+                    </div>
+                    ${d.models.map(m => `
+                        <div class="intel-item">
+                            <div class="title">${m.name}</div>
+                            <div class="meta">
+                                <span>Size: ${m.size}</span>
+                                <span>Digest: ${m.digest || 'N/A'}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                `).join('') : '<div style="color:#666;padding:20px;text-align:center">No recent model discoveries</div>';
+            }
+        }
+
+        // Tab clicks
+        document.querySelectorAll('.intel-tab').forEach(tab => {
+            tab.addEventListener('click', () => renderIntelTab(tab.dataset.tab));
+        });
+
+        // Load Health
+        async function loadHealth() {
+            try {
+                const res = await fetchWithTimeout(`${API_BASE}/api/intel/health`);
+                healthData = await res.json();
+
+                document.getElementById('healthSamples').textContent =
+                    `${healthData.historySize || 0} samples`;
+
+                const trend = healthData.trends || {};
+                const trendEl = document.getElementById('healthTrend');
+                const statusEl = trendEl.querySelector('.status');
+                statusEl.textContent = trend.trend || 'unknown';
+                statusEl.className = `status ${trend.trend || ''}`;
+                document.getElementById('healthAvg').textContent = trend.lastHourAvg || '--';
+
+                // Trend indicator
+                const indicator = trendEl.querySelector('.trend-indicator');
+                if (trend.trend === 'improving') indicator.textContent = '📈';
+                else if (trend.trend === 'degrading') indicator.textContent = '📉';
+                else indicator.textContent = '📊';
+
+                // Chart
+                const chart = document.getElementById('healthChart');
+                const bars = 60;
+                const avgVal = parseFloat(trend.lastHourAvg) || 4;
+                chart.innerHTML = Array(bars).fill(0).map((_, i) => {
+                    const variance = (Math.random() - 0.5) * 2;
+                    const height = Math.min(100, Math.max(20, (avgVal + variance) / 7 * 100));
+                    return `<div class="chart-bar ${height < 50 ? 'low' : ''}" style="height:${height}%"></div>`;
+                }).join('');
+
+                // Anomalies
+                const anomalies = healthData.anomalies || [];
+                document.getElementById('anomalyCount').textContent = anomalies.length;
+                document.getElementById('anomalyList').innerHTML = anomalies.length ?
+                    anomalies.slice(-15).reverse().map((a, i) => `
+                        <div class="anomaly-item ${a.severity}" onclick="showAnomalyDetail(${anomalies.length - 1 - i})">
+                            <span class="anomaly-icon">${a.severity === 'high' ? '🔴' : '🟡'}</span>
+                            <div class="anomaly-info">
+                                <div class="anomaly-services">${a.services.join(', ')} offline</div>
+                                <div class="anomaly-time">${timeAgo(a.timestamp)}</div>
+                            </div>
+                            <div class="anomaly-drill">Details →</div>
+                        </div>
+                    `).join('') :
+                    '<div style="color:#00ff88;text-align:center;padding:20px;">All systems nominal</div>';
+            } catch (e) {
+                console.error('Health load error:', e);
+            }
+        }
+
+        // Show anomaly detail modal
+        function showAnomalyDetail(index) {
+            const anomalies = healthData.anomalies || [];
+            const a = anomalies[index];
+            if (!a) return;
+
+            document.getElementById('anomalyModalBody').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Timestamp</span>
+                    <span class="detail-value">${new Date(a.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value">${a.type.replace(/_/g, ' ').toUpperCase()}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Severity</span>
+                    <span class="detail-value ${a.severity === 'high' ? 'offline' : ''}" style="color:${a.severity === 'high' ? '#ff4444' : '#ffaa00'}">
+                        ${a.severity.toUpperCase()}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Affected Services</span>
+                    <span class="detail-value">${a.services.length}</span>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <h3 style="color:#888;font-size:12px;margin-bottom:10px;text-transform:uppercase;">Affected Services</h3>
+                    ${a.services.map(s => {
+                        const svc = SERVICES.find(sv => sv.name === s);
+                        return `
+                            <div style="background:#0f0f1a;padding:10px;border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="color:#fff;font-weight:500;">${s}</div>
+                                    <div style="color:#666;font-size:11px;">Port: ${svc?.port || 'Unknown'}</div>
+                                </div>
+                                ${svc ? `<button class="btn small" onclick="openService('${s}', ${svc.port})">Check</button>` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <div style="margin-top:20px;">
+                    <h3 style="color:#888;font-size:12px;margin-bottom:10px;text-transform:uppercase;">Possible Causes</h3>
+                    <ul style="color:#ccc;font-size:13px;margin-left:20px;line-height:1.8;">
+                        <li>Service crashed or was stopped</li>
+                        <li>Port conflict with another application</li>
+                        <li>Resource exhaustion (memory/CPU)</li>
+                        <li>Network connectivity issue</li>
+                        <li>Dependency service unavailable</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top:20px;display:flex;gap:10px;">
+                    <button class="btn secondary" onclick="closeModal()">Close</button>
+                </div>
+            `;
+            document.getElementById('anomalyModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('anomalyModal').classList.remove('active');
+        }
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // Load Models
+        async function loadModels() {
+            try {
+                const res = await fetchWithTimeout(`${API_BASE}/api/intel/models`);
+                const data = await res.json();
+
+                const models = data.known || [];
+                document.getElementById('modelCount').textContent = models.length;
+                document.getElementById('modelList').innerHTML = models.map(m => `
+                    <div class="model-item">
+                        <span class="model-name">${m.name}</span>
+                        <span class="model-size">${m.size}</span>
+                    </div>
+                `).join('') || '<div style="color:#666;text-align:center;padding:20px;">No models</div>';
+            } catch (e) {
+                document.getElementById('modelList').innerHTML =
+                    '<div style="color:#ff4444">Failed to load</div>';
+            }
+        }
+
+        // Utility
+        function timeAgo(dateStr) {
+            if (!dateStr) return '';
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 60) return `${mins}m ago`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return `${hours}h ago`;
+            return `${Math.floor(hours / 24)}d ago`;
+        }
+
+        // Actions
+        function refreshAll() {
+            loadBriefing();
+            loadServices();
+            loadIntel();
+            loadHealth();
+            loadModels();
+        }
+
+        async function forceIntelRefresh() {
+            try {
+                await fetch(`${API_BASE}/api/intel/refresh`, { method: 'POST' });
+                setTimeout(refreshAll, 2000);
+            } catch (e) {
+                alert('Failed to refresh intel');
+            }
+        }
+
+        async function generateBriefing() {
+            try {
+                await fetch(`${API_BASE}/api/intel/refresh`, { method: 'POST' });
+                setTimeout(loadBriefing, 3000);
+            } catch (e) {
+                alert('Failed to generate briefing');
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+            }
+            if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+                refreshAll();
+            }
+        });
+
+        // Init
+        refreshAll();
+        setInterval(refreshAll, 60000);
+    </script>
+</body>
+</html>
