@@ -345,6 +345,25 @@ function initDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_tool ON tool_logs(tool)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_created ON tool_logs(created_at)`);
 
+    // File state tracking - tracks all files read/modified/created during sessions
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS file_state (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            file_path TEXT NOT NULL,
+            operation TEXT NOT NULL,
+            file_size INTEGER,
+            lines_changed INTEGER,
+            hash TEXT,
+            metadata TEXT,
+            created_at INTEGER NOT NULL
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_file_state_session ON file_state(session_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_file_state_path ON file_state(file_path)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_file_state_operation ON file_state(operation)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_file_state_created ON file_state(created_at)`);
+
     log(`Database initialized: ${DB_FILE}`);
 }
 
@@ -3352,6 +3371,175 @@ app.get('/api/knowledge/status', (req, res) => {
         }
 
         res.json({ success: true, status });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// FILE STATE API (Session File Tracking)
+// ============================================
+
+// Record a file operation
+app.post('/api/session/files', (req, res) => {
+    try {
+        const { session_id, file_path, operation, file_size, lines_changed, hash, metadata } = req.body;
+
+        if (!session_id || !file_path || !operation) {
+            return res.status(400).json({ error: 'session_id, file_path, and operation are required' });
+        }
+
+        const validOps = ['read', 'write', 'create', 'edit', 'delete'];
+        if (!validOps.includes(operation)) {
+            return res.status(400).json({ error: `Invalid operation. Must be one of: ${validOps.join(', ')}` });
+        }
+
+        const stmt = db.prepare(`
+            INSERT INTO file_state (session_id, file_path, operation, file_size, lines_changed, hash, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const result = stmt.run(
+            session_id,
+            file_path,
+            operation,
+            file_size || null,
+            lines_changed || null,
+            hash || null,
+            metadata ? JSON.stringify(metadata) : null,
+            Date.now()
+        );
+
+        res.json({ success: true, id: result.lastInsertRowid });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get files for a session
+app.get('/api/session/files/:session_id', (req, res) => {
+    try {
+        const { session_id } = req.params;
+        const operation = req.query.operation; // Filter by operation type
+
+        let query = 'SELECT * FROM file_state WHERE session_id = ?';
+        const params = [session_id];
+
+        if (operation) {
+            query += ' AND operation = ?';
+            params.push(operation);
+        }
+
+        query += ' ORDER BY created_at DESC';
+
+        const rows = db.prepare(query).all(...params);
+
+        // Parse metadata JSON
+        const files = rows.map(r => ({
+            ...r,
+            metadata: r.metadata ? JSON.parse(r.metadata) : null
+        }));
+
+        res.json({
+            session_id,
+            count: files.length,
+            files
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get session summary (unique files and operation counts)
+app.get('/api/session/files/:session_id/summary', (req, res) => {
+    try {
+        const { session_id } = req.params;
+
+        const stats = db.prepare(`
+            SELECT operation, COUNT(*) as count
+            FROM file_state WHERE session_id = ?
+            GROUP BY operation
+        `).all(session_id);
+
+        const uniqueFiles = db.prepare(`
+            SELECT DISTINCT file_path, MAX(created_at) as last_access
+            FROM file_state WHERE session_id = ?
+            GROUP BY file_path
+            ORDER BY last_access DESC
+        `).all(session_id);
+
+        const total = db.prepare(`
+            SELECT COUNT(*) as count FROM file_state WHERE session_id = ?
+        `).get(session_id);
+
+        res.json({
+            session_id,
+            total_operations: total.count,
+            unique_files: uniqueFiles.length,
+            operations: Object.fromEntries(stats.map(s => [s.operation, s.count])),
+            files: uniqueFiles
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get all sessions with file activity
+app.get('/api/session/files', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 20;
+
+        const sessions = db.prepare(`
+            SELECT session_id,
+                   COUNT(*) as total_operations,
+                   COUNT(DISTINCT file_path) as unique_files,
+                   MIN(created_at) as started_at,
+                   MAX(created_at) as last_activity
+            FROM file_state
+            GROUP BY session_id
+            ORDER BY last_activity DESC
+            LIMIT ?
+        `).all(limit);
+
+        res.json({ count: sessions.length, sessions });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Bulk record file operations
+app.post('/api/session/files/bulk', (req, res) => {
+    try {
+        const { session_id, files } = req.body;
+
+        if (!session_id || !Array.isArray(files)) {
+            return res.status(400).json({ error: 'session_id and files array required' });
+        }
+
+        const stmt = db.prepare(`
+            INSERT INTO file_state (session_id, file_path, operation, file_size, lines_changed, hash, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const inserted = db.transaction((files) => {
+            let count = 0;
+            for (const f of files) {
+                stmt.run(
+                    session_id,
+                    f.file_path,
+                    f.operation || 'read',
+                    f.file_size || null,
+                    f.lines_changed || null,
+                    f.hash || null,
+                    f.metadata ? JSON.stringify(f.metadata) : null,
+                    f.timestamp || Date.now()
+                );
+                count++;
+            }
+            return count;
+        })(files);
+
+        res.json({ success: true, inserted });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
