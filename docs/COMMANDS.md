@@ -1,0 +1,170 @@
+# Hive Commands & Skills Reference
+**Last Updated:** 2026-01-22
+**Version:** v1.0.0
+
+Quick reference for all available commands, skills, and shortcuts in the Hive ecosystem.
+
+---
+
+## User Skills
+
+Skills are stored in `.claude/skills/` and invoked by saying the skill name.
+
+| Skill | Description |
+|-------|-------------|
+| `br` | Add item to Backlog/Todo list |
+| `chk` | Check status of services or code |
+| `cls` | Clear stuck queues, logs, cache |
+| `cp` | Commit and Push (git workflow) |
+| `css` | Create Session Shortcut on desktop |
+| `eod` | End of Day session wrap-up |
+| `hivesanitycheck` | Full Hive health check (all services, ports, logs) |
+| `mem` | Add information to CLAUDE.md |
+| `memstandards` | Review session work, add patterns to STANDARDS.md |
+| `msg` | Check Relay for pending messages |
+| `mst` | Add pattern/convention to STANDARDS.md |
+| `ntt` | Work on Next Todo Task |
+| `rfr` | Refactor code to follow STANDARDS.md |
+| `rst` | Reset stuck services/state |
+| `rvw` | Review code for issues, clean up, optimize |
+| `sc` | Check OneDrive Screenshots folder |
+| `scg` | Check Google Drive Screenshots folder |
+| `sqr` | Show Quick Reference (cheat sheet) |
+| `ss` | Save Session (commit & push current work) |
+| `syncmem` | Sync CLAUDE.md/STANDARDS.md to database |
+| `ts` | Test recent changes |
+
+---
+
+## Claude Code Plugins
+
+Installed plugins from official and marketplace sources.
+
+### Official Plugins
+| Plugin | Purpose |
+|--------|---------|
+| `/code-review` | Automated code review |
+| `/security-guidance` | Security best practices |
+| `/commit-commands` | Git commit helpers |
+| `/pr-review-toolkit` | PR review workflow |
+| `/frontend-design` | UI/UX design assistance |
+
+### Marketplace Plugins
+| Plugin | Purpose |
+|--------|---------|
+| `/commit` | Smart commits with context |
+| `/create-pr` | PR creation workflow |
+| `/fix-github-issue` | Issue resolution |
+| `/debugger` | Debug assistance |
+| `/api-tester` | API testing |
+| `/test-writer-fixer` | Test automation |
+| `/backend-architect` | Architecture design |
+
+---
+
+## Built-in Slash Commands
+
+Claude Code native commands.
+
+| Command | Description |
+|---------|-------------|
+| `/clear` | Clear conversation history |
+| `/compact` | Compact conversation to save context |
+| `/config` | Open settings |
+| `/context` | Visualize context usage |
+| `/cost` | Show token usage and costs |
+| `/doctor` | Check installation health |
+| `/export` | Export conversation |
+| `/help` | Get usage help |
+| `/init` | Initialize CLAUDE.md |
+| `/mcp` | Manage MCP servers |
+| `/memory` | Edit CLAUDE.md files |
+| `/model` | Change AI model |
+| `/permissions` | View/update permissions |
+| `/plan` | Enter plan mode |
+| `/resume` | Resume previous conversation |
+| `/rewind` | Rewind conversation/code |
+| `/stats` | Show usage stats |
+| `/tasks` | List background tasks |
+| `/vim` | Enable vim editing mode |
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+C` | Cancel current input/generation |
+| `Ctrl+D` | Exit session |
+| `Ctrl+G` | Open in text editor |
+| `Ctrl+L` | Clear terminal |
+| `Ctrl+O` | Toggle verbose output |
+| `Ctrl+R` | Reverse search history |
+| `Ctrl+B` | Background running tasks |
+| `Esc+Esc` | Rewind code/conversation |
+| `Shift+Tab` | Toggle permission modes |
+| `Alt+P` | Switch model |
+| `Alt+T` | Toggle extended thinking |
+| `!` prefix | Bash mode (run directly) |
+| `@` prefix | File path mention |
+
+---
+
+## Quick Commands (Bash)
+
+Common commands for Hive management.
+
+```bash
+# Start all services
+C:\LLM-DevOSWE\start-all-servers.bat
+
+# Check service health
+curl http://localhost:8600/api/health   # Relay
+curl http://localhost:8500/api/status   # Master-O (all services)
+curl http://localhost:3002/api/health   # Oracle
+
+# Check pending messages
+curl http://localhost:8600/api/messages/pending
+
+# Restart a service
+curl -X POST http://localhost:8500/api/services/[name]/restart
+
+# Query Master Mind (parallel LLM)
+curl -X POST http://localhost:8820/api/query/parallel \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Your question here"}'
+
+# Check Hive Brain colony
+curl http://localhost:8810/api/colony
+```
+
+---
+
+## Hive Service Ports
+
+| Port | Service | URL |
+|------|---------|-----|
+| 3002 | Oracle | http://localhost:3002 |
+| 8500 | Master-O | http://localhost:8500 |
+| 8585 | KittBox | http://localhost:8585 |
+| 8600 | Relay | http://localhost:8600 |
+| 8701 | Hive-Mind | http://localhost:8701 |
+| 8810 | Hive Brain | http://localhost:8810 |
+| 8820 | Master Mind | http://localhost:8820 |
+| 8850 | Hive Oracle | http://localhost:8850 |
+| 8899 | Dashboard | http://localhost:8899 |
+| 11434 | Ollama | http://localhost:11434 |
+| 1234 | LM Studio | http://localhost:1234 |
+
+---
+
+## MCP Servers
+
+| Server | Purpose |
+|--------|---------|
+| `github` | GitHub integration |
+| `slack` | Slack integration |
+
+---
+
+*Generated by Hive Brain - Harold's AI Development System*

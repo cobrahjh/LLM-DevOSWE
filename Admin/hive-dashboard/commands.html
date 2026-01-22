@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Commands & Skills</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        h1 {
+            font-size: 32px;
+            background: linear-gradient(90deg, #ff6b35, #ff9f1c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .subtitle { color: #888; margin-bottom: 30px; }
+
+        h2 {
+            color: #ff6b35;
+            font-size: 20px;
+            margin: 30px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+        h3 {
+            color: #8b5cf6;
+            font-size: 16px;
+            margin: 20px 0 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a3e;
+        }
+        th {
+            background: rgba(255,107,53,0.1);
+            color: #ff9f1c;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        tr:hover { background: rgba(255,255,255,0.05); }
+
+        code {
+            background: rgba(139,92,246,0.2);
+            color: #c4b5fd;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        .cmd-code {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .cmd-code pre {
+            color: #22c55e;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge.official { background: rgba(34,197,94,0.2); color: #22c55e; }
+        .badge.marketplace { background: rgba(139,92,246,0.2); color: #a78bfa; }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #2a2a3e;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            th, td { padding: 8px 10px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hive Commands & Skills</h1>
+        <p class="subtitle">Quick reference for all available commands in the Hive ecosystem | v1.0.0</p>
+
+        <div class="section">
+            <h2>User Skills</h2>
+            <p style="color:#888;margin-bottom:15px;">Skills in <code>.claude/skills/</code> - invoke by saying the skill name</p>
+            <table>
+                <tr><th>Skill</th><th>Description</th></tr>
+                <tr><td><code>br</code></td><td>Add item to Backlog/Todo list</td></tr>
+                <tr><td><code>chk</code></td><td>Check status of services or code</td></tr>
+                <tr><td><code>cls</code></td><td>Clear stuck queues, logs, cache</td></tr>
+                <tr><td><code>cp</code></td><td>Commit and Push (git workflow)</td></tr>
+                <tr><td><code>css</code></td><td>Create Session Shortcut on desktop</td></tr>
+                <tr><td><code>eod</code></td><td>End of Day session wrap-up</td></tr>
+                <tr><td><code>hivesanitycheck</code></td><td>Full Hive health check</td></tr>
+                <tr><td><code>mem</code></td><td>Add information to CLAUDE.md</td></tr>
+                <tr><td><code>memstandards</code></td><td>Review session, update STANDARDS.md</td></tr>
+                <tr><td><code>msg</code></td><td>Check Relay for pending messages</td></tr>
+                <tr><td><code>mst</code></td><td>Add pattern to STANDARDS.md</td></tr>
+                <tr><td><code>ntt</code></td><td>Work on Next Todo Task</td></tr>
+                <tr><td><code>rfr</code></td><td>Refactor code to standards</td></tr>
+                <tr><td><code>rst</code></td><td>Reset stuck services/state</td></tr>
+                <tr><td><code>rvw</code></td><td>Review code for issues</td></tr>
+                <tr><td><code>sc</code></td><td>Check OneDrive Screenshots</td></tr>
+                <tr><td><code>scg</code></td><td>Check Google Drive Screenshots</td></tr>
+                <tr><td><code>sqr</code></td><td>Show Quick Reference</td></tr>
+                <tr><td><code>ss</code></td><td>Save Session (commit & push)</td></tr>
+                <tr><td><code>syncmem</code></td><td>Sync memory to database</td></tr>
+                <tr><td><code>ts</code></td><td>Test recent changes</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Claude Code Plugins</h2>
+
+            <h3>Official <span class="badge official">Official</span></h3>
+            <table>
+                <tr><th>Plugin</th><th>Purpose</th></tr>
+                <tr><td><code>/code-review</code></td><td>Automated code review</td></tr>
+                <tr><td><code>/security-guidance</code></td><td>Security best practices</td></tr>
+                <tr><td><code>/commit-commands</code></td><td>Git commit helpers</td></tr>
+                <tr><td><code>/pr-review-toolkit</code></td><td>PR review workflow</td></tr>
+                <tr><td><code>/frontend-design</code></td><td>UI/UX design assistance</td></tr>
+            </table>
+
+            <h3>Marketplace <span class="badge marketplace">Community</span></h3>
+            <table>
+                <tr><th>Plugin</th><th>Purpose</th></tr>
+                <tr><td><code>/commit</code></td><td>Smart commits with context</td></tr>
+                <tr><td><code>/create-pr</code></td><td>PR creation workflow</td></tr>
+                <tr><td><code>/fix-github-issue</code></td><td>Issue resolution</td></tr>
+                <tr><td><code>/debugger</code></td><td>Debug assistance</td></tr>
+                <tr><td><code>/api-tester</code></td><td>API testing</td></tr>
+                <tr><td><code>/test-writer-fixer</code></td><td>Test automation</td></tr>
+                <tr><td><code>/backend-architect</code></td><td>Architecture design</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Built-in Slash Commands</h2>
+            <table>
+                <tr><th>Command</th><th>Description</th></tr>
+                <tr><td><code>/clear</code></td><td>Clear conversation history</td></tr>
+                <tr><td><code>/compact</code></td><td>Compact conversation</td></tr>
+                <tr><td><code>/config</code></td><td>Open settings</td></tr>
+                <tr><td><code>/context</code></td><td>Visualize context usage</td></tr>
+                <tr><td><code>/cost</code></td><td>Show token usage</td></tr>
+                <tr><td><code>/help</code></td><td>Get usage help</td></tr>
+                <tr><td><code>/model</code></td><td>Change AI model</td></tr>
+                <tr><td><code>/plan</code></td><td>Enter plan mode</td></tr>
+                <tr><td><code>/resume</code></td><td>Resume conversation</td></tr>
+                <tr><td><code>/vim</code></td><td>Enable vim mode</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Keyboard Shortcuts</h2>
+            <table>
+                <tr><th>Shortcut</th><th>Action</th></tr>
+                <tr><td><code>Ctrl+C</code></td><td>Cancel input/generation</td></tr>
+                <tr><td><code>Ctrl+D</code></td><td>Exit session</td></tr>
+                <tr><td><code>Ctrl+L</code></td><td>Clear terminal</td></tr>
+                <tr><td><code>Ctrl+R</code></td><td>Reverse search history</td></tr>
+                <tr><td><code>Esc+Esc</code></td><td>Rewind code/conversation</td></tr>
+                <tr><td><code>Alt+P</code></td><td>Switch model</td></tr>
+                <tr><td><code>Alt+T</code></td><td>Toggle extended thinking</td></tr>
+                <tr><td><code>!</code> prefix</td><td>Bash mode</td></tr>
+                <tr><td><code>@</code> prefix</td><td>File path mention</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Hive Service Ports</h2>
+            <table>
+                <tr><th>Port</th><th>Service</th><th>URL</th></tr>
+                <tr><td>3002</td><td>Oracle</td><td><a href="http://localhost:3002" style="color:#8b5cf6">localhost:3002</a></td></tr>
+                <tr><td>8500</td><td>Master-O</td><td><a href="http://localhost:8500" style="color:#8b5cf6">localhost:8500</a></td></tr>
+                <tr><td>8585</td><td>KittBox</td><td><a href="http://localhost:8585" style="color:#8b5cf6">localhost:8585</a></td></tr>
+                <tr><td>8600</td><td>Relay</td><td><a href="http://localhost:8600" style="color:#8b5cf6">localhost:8600</a></td></tr>
+                <tr><td>8701</td><td>Hive-Mind</td><td><a href="http://localhost:8701" style="color:#8b5cf6">localhost:8701</a></td></tr>
+                <tr><td>8810</td><td>Hive Brain</td><td><a href="http://localhost:8810" style="color:#8b5cf6">localhost:8810</a></td></tr>
+                <tr><td>8820</td><td>Master Mind</td><td><a href="http://localhost:8820" style="color:#8b5cf6">localhost:8820</a></td></tr>
+                <tr><td>8850</td><td>Hive Oracle</td><td><a href="http://localhost:8850" style="color:#8b5cf6">localhost:8850</a></td></tr>
+                <tr><td>8899</td><td>Dashboard</td><td><a href="http://localhost:8899" style="color:#8b5cf6">localhost:8899</a></td></tr>
+            </table>
+        </div>
+
+        <div class="footer">
+            Generated by Hive Brain | Harold's AI Development System | 2026-01-22
+        </div>
+    </div>
+</body>
+</html>
