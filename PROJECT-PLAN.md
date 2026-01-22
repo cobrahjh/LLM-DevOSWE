@@ -157,7 +157,7 @@
 |---------|----------|--------|-------|
 | Panel Launcher | LOW | ✅ | G1000 soft keys, avionics power, quick actions |
 | Interaction Wheel | LOW | ✅ | Radial menu for common flight controls |
-| Otto search bar | LOW | ❌ | Quick command search (backlog) |
+| Otto Search Bar | LOW | ✅ | Command palette with 45+ commands |
 | Plugin system | LOW | ❌ | Third-party widgets (backlog) |
 
 **Phase 6 Deliverables:**
@@ -172,6 +172,11 @@
   - Live state feedback (gear, brake, AP, lights)
   - Color-coded categories (flight, lights, engine, camera, autopilot)
   - Tooltips and visual feedback
+- [x] Otto Search Bar (`ui/otto-search/`)
+  - Command palette with 45+ flight commands
+  - Fuzzy search by name, description, keywords
+  - Category filters (flight, lights, autopilot, engine, camera, radio)
+  - Keyboard navigation (arrows, enter, escape)
 
 ---
 
