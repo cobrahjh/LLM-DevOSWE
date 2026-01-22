@@ -154,7 +154,12 @@ let flightData = {
     nav2Standby: 0,
     adfActive: 0,
     adfStandby: 0,
-    transponder: 0
+    transponder: 0,
+    // DME
+    dme1Distance: 0,
+    dme2Distance: 0,
+    dme1Speed: 0,
+    dme2Speed: 0
 };
 
 // Directory structure (DEBUG - TODO: disable directory listing for production)
@@ -879,7 +884,9 @@ app.get('/api/radio', (req, res) => {
         nav1: { active: flightData.nav1Active, standby: flightData.nav1Standby },
         nav2: { active: flightData.nav2Active, standby: flightData.nav2Standby },
         adf: { active: flightData.adfActive, standby: flightData.adfStandby },
-        transponder: flightData.transponder
+        transponder: flightData.transponder,
+        dme1: { distance: flightData.dme1Distance, speed: flightData.dme1Speed },
+        dme2: { distance: flightData.dme2Distance, speed: flightData.dme2Speed }
     });
 });
 
@@ -1799,6 +1806,11 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'ADF ACTIVE FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'ADF STANDBY FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'TRANSPONDER CODE:1', 'BCO16', SimConnectDataType.INT32, 0);
+        // DME data
+        handle.addToDataDefinition(0, 'NAV DME:1', 'nautical miles', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV DME:2', 'nautical miles', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV DMESPEED:1', 'knots', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV DMESPEED:2', 'knots', SimConnectDataType.FLOAT64, 0);
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -1937,6 +1949,11 @@ async function initSimConnect() {
                         adfActive: d.readFloat64(),
                         adfStandby: d.readFloat64(),
                         transponder: d.readInt32(),
+                        // DME
+                        dme1Distance: d.readFloat64(),
+                        dme2Distance: d.readFloat64(),
+                        dme1Speed: d.readFloat64(),
+                        dme2Speed: d.readFloat64(),
                         connected: true
                     };
                     broadcastFlightData();

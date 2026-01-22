@@ -108,13 +108,14 @@
 | Transponder mode | HIGH | ✅ | OFF/STBY/ON/ALT modes |
 | Frequency swap | HIGH | ✅ | COM_STBY_RADIO_SWAP, NAV1_RADIO_SWAP |
 | ADF frequency | MEDIUM | ✅ | ADF_ACTIVE_SET, data in flightData |
-| DME | LOW | ❌ | - (future) |
+| DME | LOW | ✅ | NAV DME:1/2, NAV DMESPEED:1/2 |
 
 **Phase 3 Deliverables:**
 - [x] Radio Stack widget (COM1, COM2, NAV1, NAV2)
 - [x] Transponder widget with digit tuning
 - [x] Frequency swap buttons (⇄)
 - [x] Emergency code presets (VFR, HIJ, COM, EMG)
+- [x] DME display (distance and speed for NAV1/NAV2)
 
 ---
 

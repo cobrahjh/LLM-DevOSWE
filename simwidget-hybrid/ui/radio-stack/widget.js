@@ -110,6 +110,20 @@ function updateDisplay(data) {
         xpndrCode = data.transponderCode;
         updateXpndrDisplay();
     }
+
+    // DME
+    if (data.dme1Distance !== undefined) {
+        document.getElementById('dme1-dist').textContent = data.dme1Distance > 0 ? data.dme1Distance.toFixed(1) : '--.-';
+    }
+    if (data.dme1Speed !== undefined) {
+        document.getElementById('dme1-spd').textContent = data.dme1Speed > 0 ? Math.round(data.dme1Speed) : '---';
+    }
+    if (data.dme2Distance !== undefined) {
+        document.getElementById('dme2-dist').textContent = data.dme2Distance > 0 ? data.dme2Distance.toFixed(1) : '--.-';
+    }
+    if (data.dme2Speed !== undefined) {
+        document.getElementById('dme2-spd').textContent = data.dme2Speed > 0 ? Math.round(data.dme2Speed) : '---';
+    }
 }
 
 function formatComFreq(freq) {

@@ -134,7 +134,7 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 - [x] NAV1/NAV2 (active, standby, swap)
 - [x] ADF frequency
 - [x] Transponder (code, mode)
-- [ ] DME (future)
+- [x] DME (distance + speed for NAV1/NAV2)
 
 ### Phase 4: Information & HUD ✅ COMPLETE
 - [x] Altitude tape (0-50k ft)
@@ -363,8 +363,9 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 ### Documentation
 - [x] FLOW-PRO-REFERENCE.md - Complete category/widget docs
 - [x] STANDARDS.md - Project conventions and patterns
+- [x] CAMERA-TROUBLESHOOTING.md - Camera control troubleshooting guide
+- [x] PLUGIN-DEVELOPMENT.md - Plugin development guide
 - [ ] Update CLAUDE.md with camera controller architecture
-- [ ] Add troubleshooting guide for camera controls
 
 ---
 

@@ -164,6 +164,48 @@ body {
     font-size: 20px;
 }
 
+/* DME */
+.dme-panel {
+    background: rgba(0,50,100,0.3);
+}
+
+.dme-display {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dme-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+}
+
+.dme-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #00d4ff;
+    width: 40px;
+}
+
+.dme-value {
+    font-family: 'Consolas', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: #00ff88;
+    min-width: 50px;
+    text-align: right;
+}
+
+.dme-unit {
+    font-size: 10px;
+    color: #666;
+    width: 20px;
+}
+
 /* Transponder */
 .xpndr-panel {
     background: rgba(0,0,0,0.4);
