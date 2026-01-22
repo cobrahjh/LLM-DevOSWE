@@ -12,6 +12,7 @@
  * - WASM cinematic camera support
  * 
  * Changelog:
+ * v1.12.0 - Added Phase 6 widgets to command center index
  * v1.11.0 - Added plugin system with discovery and management
  * v1.10.0 - Added /api/logs/:service endpoint for log viewing
  * v1.9.0 - Added Services Panel widget and /api/services endpoint
@@ -49,7 +50,7 @@ const pluginsDir = path.join(__dirname, '../plugins');
 const pluginLoader = new PluginLoader(pluginsDir);
 const pluginAPI = new PluginAPI();
 
-const SERVER_VERSION = '1.11.0';
+const SERVER_VERSION = '1.12.0';
 
 // SimConnect - will be loaded dynamically
 let simConnect = null;
@@ -213,7 +214,9 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/flight-data-widget/">📊 Flight Data</a></li>
                 <li><a href="/ui/flight-recorder/">🎬 Flight Recorder</a></li>
                 <li><a href="/ui/fuel-widget/">⛽ Fuel Widget</a></li>
-                <li><a href="/ui/wasm-camera/">🎥 WASM Camera</a></li>
+                <li><a href="/ui/panel-launcher/">🎛️ Panel Launcher</a></li>
+                <li><a href="/ui/interaction-wheel/">⚙️ Interaction Wheel</a></li>
+                <li><a href="/ui/otto-search/">🔍 Otto Search</a></li>
             </ul>
         </div>
         
