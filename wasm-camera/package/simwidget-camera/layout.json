@@ -2,7 +2,12 @@
   "content": [
     {
       "path": "modules/simwidget_camera.wasm",
-      "size": 4096,
+      "size": 1811,
+      "date": 133825392000000000
+    },
+    {
+      "path": "modules/module.xml",
+      "size": 259,
       "date": 133825392000000000
     }
   ]

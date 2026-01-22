@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SimBase.Document Type="WASMModule" version="1,0">
+  <Descr>WASMModule</Descr>
+  <Filename>simwidget_camera.wasm</Filename>
+  <Name>SimWidget Camera</Name>
+  <ModuleName>SIMWIDGET_CAMERA</ModuleName>
+</SimBase.Document>
