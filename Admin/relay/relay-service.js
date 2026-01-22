@@ -329,6 +329,20 @@ function initDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_knowledge_type ON knowledge(type)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_knowledge_created ON knowledge(created_at)`);
 
+    // Tool usage logs - for Claude Code hooks
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS tool_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tool TEXT NOT NULL,
+            input_summary TEXT,
+            session_id TEXT,
+            source TEXT DEFAULT 'claude-code-hook',
+            created_at INTEGER NOT NULL
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_tool ON tool_logs(tool)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_created ON tool_logs(created_at)`);
+
     log(`Database initialized: ${DB_FILE}`);
 }
 
@@ -2068,6 +2082,105 @@ app.delete('/api/conversation-logs/:persona', (req, res) => {
     const result = db.prepare('DELETE FROM conversation_logs WHERE persona = ?').run(persona);
     log(`Cleared ${result.changes} conversation logs for ${persona}`);
     res.json({ success: true, cleared: result.changes });
+});
+
+// ============================================
+// TOOL USAGE LOGS (Claude Code Hooks)
+// ============================================
+
+// Log a tool usage from PostToolUse hook
+app.post('/api/logs', (req, res) => {
+    try {
+        const { type, tool, input_summary, session_id, source, timestamp } = req.body;
+
+        // Accept either 'tool' directly or nested in body
+        const toolName = tool || req.body.tool_name || 'unknown';
+        const summary = input_summary || '';
+        const sessionId = session_id || null;
+        const logSource = source || 'claude-code-hook';
+        const createdAt = timestamp ? new Date(timestamp).getTime() : Date.now();
+
+        db.prepare(`
+            INSERT INTO tool_logs (tool, input_summary, session_id, source, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        `).run(toolName, summary, sessionId, logSource, createdAt);
+
+        res.json({ success: true, tool: toolName, logged_at: createdAt });
+    } catch (err) {
+        log(`Tool log error: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get recent tool logs
+app.get('/api/logs', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 100;
+        const tool = req.query.tool;
+
+        let query = `
+            SELECT id, tool, input_summary, session_id, source, created_at
+            FROM tool_logs
+        `;
+        const params = [];
+
+        if (tool) {
+            query += ` WHERE tool = ?`;
+            params.push(tool);
+        }
+
+        query += ` ORDER BY created_at DESC LIMIT ?`;
+        params.push(limit);
+
+        const logs = db.prepare(query).all(...params);
+
+        res.json({
+            count: logs.length,
+            logs
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get tool usage stats
+app.get('/api/logs/stats', (req, res) => {
+    try {
+        const since = req.query.since ? parseInt(req.query.since) : Date.now() - (24 * 60 * 60 * 1000); // Last 24h
+
+        const stats = db.prepare(`
+            SELECT tool, COUNT(*) as count
+            FROM tool_logs
+            WHERE created_at > ?
+            GROUP BY tool
+            ORDER BY count DESC
+        `).all(since);
+
+        const total = stats.reduce((sum, s) => sum + s.count, 0);
+
+        res.json({
+            since: new Date(since).toISOString(),
+            total,
+            by_tool: stats
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Clear old tool logs (keep last N days)
+app.delete('/api/logs', (req, res) => {
+    try {
+        const days = parseInt(req.query.days) || 7;
+        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+
+        const result = db.prepare('DELETE FROM tool_logs WHERE created_at < ?').run(cutoff);
+
+        log(`Cleared ${result.changes} tool logs older than ${days} days`);
+        res.json({ success: true, cleared: result.changes, days });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ============================================
