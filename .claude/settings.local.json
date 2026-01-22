@@ -81,7 +81,15 @@
       "WebFetch(domain:github.com)",
       "Bash(cmd.exe /c \"cd /d C:\\\\LLM-DevOSWE && claude --help | findstr resume\")",
       "Bash(cmd.exe /c \"claude --help\")",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(setx PATH \"%PATH%;C:\\\\LLM-DevOSWE\\\\bin\")",
+      "Bash(setx PATH \"%PATH%;C:\\\\Users\\\\hjharissh\\\\.local\\\\bin\")",
+      "Bash(reg add \"HKLM\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Terminal Server\" /v fDenyTSConnections /t REG_DWORD /d 0 /f)",
+      "Bash(reg query \"HKLM\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Terminal Server\" /v fDenyTSConnections)",
+      "Bash(ssh hjhar@192.168.1.162 \"ls //192.168.1.42/LLM-DevOSWE 2>/dev/null || smbclient -L //192.168.1.42 -N 2>/dev/null || echo ''Need to test SMB access''\")",
+      "Bash(ssh:*)",
+      "Bash(ssh-add:*)",
+      "Bash(/c/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe:*)"
     ],
     "deny": [
       "Read(.env)",
@@ -98,6 +106,10 @@
           {
             "type": "command",
             "command": "node C:/LLM-DevOSWE/Admin/terminal-bridge/hooks/output-hook.js"
+          },
+          {
+            "type": "command",
+            "command": "node C:/LLM-DevOSWE/Admin/relay/hooks/file-state-hook.js"
           }
         ]
       }
