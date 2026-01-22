@@ -193,35 +193,25 @@ claude mcp remove github     # Remove server
 
 ### Installed Plugins
 
-| Plugin | Source | Purpose |
-|--------|--------|---------|
-| code-review | official | Code review automation |
-| security-guidance | official | Security best practices |
-| commit-commands | official | Git commit helpers |
-| pr-review-toolkit | official | PR review workflow |
-| frontend-design | official | UI/UX design assistance |
-| commit | cc-marketplace | Smart commits |
-| create-pr | cc-marketplace | PR creation |
-| fix-github-issue | cc-marketplace | Issue resolution |
-| debugger | cc-marketplace | Debug assistance |
-| api-tester | cc-marketplace | API testing |
-| test-writer-fixer | cc-marketplace | Test automation |
-| backend-architect | cc-marketplace | Architecture design |
+| Plugin | Purpose | Command |
+|--------|---------|---------|
+| code-review | Code review automation | `/code-review` |
+| commit-commands | Git commit helpers | `/commit` |
+| frontend-design | UI/UX design assistance | `/frontend-design` |
+| pr-review-toolkit | PR review workflow | `/pr-review` |
+| security-guidance | Security best practices | `/security` |
 
 ### Plugin Commands
 
 ```bash
 claude plugin list                 # List plugins
 claude plugin install <name>       # Install plugin
-/code-review                       # Run code review
-/commit                            # Smart commit
-/create-pr                         # Create PR
+claude plugin remove <name>        # Remove plugin
 ```
 
-### Plugin Marketplaces
+### Plugin Marketplace
 
-- `claude-plugins-official` (Anthropic)
-- `cc-marketplace` (Community)
+- `claude-plugins-official` (Anthropic) - Default registry
 
 ---
 
