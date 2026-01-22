@@ -465,7 +465,7 @@ class KeySender {
             };
 
             const startTime = Date.now();
-            const script = 'C:\\DevOSWE\\send-key.ps1';
+            const script = 'C:\\LLM-DevOSWE\\send-key.ps1';
             const cmd = `powershell -ExecutionPolicy Bypass -File ${script} -Key ${key}`;
 
             this.log(`Executing (PowerShell fallback): ${key}`);

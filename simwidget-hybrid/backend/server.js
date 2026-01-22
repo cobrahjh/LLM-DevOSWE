@@ -1170,7 +1170,7 @@ app.get('/api/debug/test/:category/:action', (req, res) => {
         action,
         key: key || null,
         found: !!key,
-        wouldSend: key ? `powershell -ExecutionPolicy Bypass -File C:\\DevOSWE\\send-key.ps1 -Key ${key}` : null
+        wouldSend: key ? `powershell -ExecutionPolicy Bypass -File C:\\LLM-DevOSWE\\send-key.ps1 -Key ${key}` : null
     });
 });
 
@@ -1209,9 +1209,9 @@ function executeCommand(command, value) {
                 console.log(`[Camera] vJoy failed, trying keyboard fallback`);
                 // Fallback to keyboard simulation
                 if (command === 'KEY_TOGGLE_CINEMATIC' || command === 'TCM') {
-                    exec('powershell -ExecutionPolicy Bypass -File "C:\\DevOSWE\\send-key.ps1" -Key "ALT+Z"');
+                    exec('powershell -ExecutionPolicy Bypass -File "C:\\LLM-DevOSWE\\send-key.ps1" -Key "ALT+Z"');
                 } else if (command === 'KEY_NEXT_CINEMATIC' || command === 'NCV') {
-                    exec('powershell -ExecutionPolicy Bypass -File "C:\\DevOSWE\\send-key.ps1" -Key "ALT+X"');
+                    exec('powershell -ExecutionPolicy Bypass -File "C:\\LLM-DevOSWE\\send-key.ps1" -Key "ALT+X"');
                 }
             }
         });
@@ -1221,12 +1221,12 @@ function executeCommand(command, value) {
     // Legacy camera commands (direct keyboard)
     if (command === 'KEY_TOGGLE_CINEMATIC') {
         console.log('[Camera] TCM - Alt+Z');
-        exec('powershell -ExecutionPolicy Bypass -File "C:\\DevOSWE\\send-key.ps1" -Key "ALT+Z"');
+        exec('powershell -ExecutionPolicy Bypass -File "C:\\LLM-DevOSWE\\send-key.ps1" -Key "ALT+Z"');
         return;
     }
     if (command === 'KEY_NEXT_CINEMATIC') {
         console.log('[Camera] NCV - Alt+X');
-        exec('powershell -ExecutionPolicy Bypass -File "C:\\DevOSWE\\send-key.ps1" -Key "ALT+X"');
+        exec('powershell -ExecutionPolicy Bypass -File "C:\\LLM-DevOSWE\\send-key.ps1" -Key "ALT+X"');
         return;
     }
     if (command === 'VIEW_MODE') {
@@ -1240,7 +1240,7 @@ function executeCommand(command, value) {
                 console.log('[Camera] SimConnect failed, trying keyboard');
             }
         }
-        exec('powershell -ExecutionPolicy Bypass -File "C:\\DevOSWE\\send-key.ps1" -Key "END"');
+        exec('powershell -ExecutionPolicy Bypass -File "C:\\LLM-DevOSWE\\send-key.ps1" -Key "END"');
         return;
     }
     

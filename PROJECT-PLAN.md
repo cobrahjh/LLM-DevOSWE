@@ -205,10 +205,10 @@
 - [x] Save to config.json
 - [x] 4-step wizard UI with progress indicator
 
-### 3. Camera Controls Without ChasePlane
-**Status:** Not tested  
-**Task:** Verify native MSFS camera keybinds work  
-**Risk:** Different key mappings needed
+### 3. Camera Controls Without ChasePlane ✅ TESTED
+**Status:** Working (2026-01-22)
+**Result:** All native camera views work via PowerShell key sending
+**Fixed:** send-key.ps1 script created, path references corrected
 
 ---
 
