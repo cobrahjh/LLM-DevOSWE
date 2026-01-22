@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Mind - Parallel LLM</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #0a0a1a, #1a1a2e); color: #eee; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #6366f1; }
+        h1 { font-size: 28px; background: linear-gradient(90deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .backends-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .backend-card { background: rgba(30,30,50,0.8); border: 1px solid #333; border-radius: 12px; padding: 16px; }
+        .backend-card:hover { border-color: #6366f1; }
+        .backend-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .backend-name { font-weight: 600; color: #a855f7; }
+        .backend-status { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; }
+        .backend-status.offline { background: #ef4444; }
+        .query-section, .results-section { background: rgba(30,30,50,0.8); border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+        h2 { color: #6366f1; margin-bottom: 16px; }
+        .query-input { width: 100%; min-height: 100px; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 12px; color: #eee; font-size: 14px; resize: vertical; margin-bottom: 12px; }
+        .query-input:focus { outline: none; border-color: #6366f1; }
+        .query-actions { display: flex; gap: 12px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: linear-gradient(90deg, #6366f1, #a855f7); color: white; }
+        .btn-secondary { background: #333; color: #ccc; border: 1px solid #444; }
+        .result-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+        .result-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .result-backend { font-weight: 600; color: #a855f7; }
+        .result-time { color: #22c55e; font-size: 12px; }
+        .result-content { font-size: 14px; line-height: 1.6; color: #ccc; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+        .stats-bar { display: flex; gap: 24px; margin-bottom: 24px; }
+        .stat-item { background: rgba(30,30,50,0.8); border: 1px solid #333; border-radius: 8px; padding: 12px 20px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #6366f1; }
+        .stat-label { font-size: 11px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header><h1>Master Mind</h1><span id="status" style="color:#22c55e">Online</span></header>
+        <div class="stats-bar">
+            <div class="stat-item"><div class="stat-value" id="stat-queries">0</div><div class="stat-label">Queries</div></div>
+            <div class="stat-item"><div class="stat-value" id="stat-backends">0/0</div><div class="stat-label">Backends</div></div>
+        </div>
+        <div class="backends-grid" id="backends-grid"><div class="loading">Loading...</div></div>
+        <div class="query-section">
+            <h2>Query LLMs</h2>
+            <textarea class="query-input" id="query-input" placeholder="Enter prompt..."></textarea>
+            <div class="query-actions">
+                <button class="btn btn-primary" onclick="queryParallel()">Parallel (All)</button>
+                <button class="btn btn-secondary" onclick="querySmart()">Smart (Fastest)</button>
+            </div>
+        </div>
+        <div class="results-section"><h2>Results</h2><div id="results">Enter a query above</div></div>
+    </div>
+    <script>
+        const API = 'http://' + location.hostname + ':8820';
+        async function loadBackends() {
+            const res = await fetch(API + '/api/backends');
+            const backends = await res.json();
+            const online = backends.filter(b => b.status === 'online').length;
+            document.getElementById('stat-backends').textContent = online + '/' + backends.length;
+            document.getElementById('backends-grid').innerHTML = backends.map(b =>
+                '<div class="backend-card"><div class="backend-header"><span class="backend-name">' + b.name + '</span><span class="backend-status ' + (b.status === 'offline' ? 'offline' : '') + '"></span></div><div style="font-size:12px;color:#888">Type: ' + b.type + ' | ' + (b.free ? 'Free' : 'Paid') + '</div></div>'
+            ).join('');
+            const stats = await (await fetch(API + '/api/stats')).json();
+            document.getElementById('stat-queries').textContent = stats.totalQueries || 0;
+        }
+        async function queryParallel() {
+            const prompt = document.getElementById('query-input').value;
+            if (!prompt) return;
+            document.getElementById('results').innerHTML = '<div class="loading">Querying...</div>';
+            const res = await fetch(API + '/api/query/parallel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+            const data = await res.json();
+            document.getElementById('results').innerHTML = data.responses.map(r =>
+                '<div class="result-card"><div class="result-header"><span class="result-backend">' + r.backend + '</span><span class="result-time">' + r.responseTime + 'ms</span></div><div class="result-content">' + (r.response || '').substring(0, 500) + '</div></div>'
+            ).join('') || 'No results';
+            loadBackends();
+        }
+        async function querySmart() {
+            const prompt = document.getElementById('query-input').value;
+            if (!prompt) return;
+            document.getElementById('results').innerHTML = '<div class="loading">Racing...</div>';
+            const res = await fetch(API + '/api/query/smart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+            const data = await res.json();
+            document.getElementById('results').innerHTML = '<div class="result-card" style="border-color:#22c55e"><div class="result-header"><span class="result-backend">Winner: ' + data.winner + '</span><span class="result-time">' + data.responseTime + 'ms</span></div><div class="result-content">' + (data.response || '').substring(0, 500) + '</div></div>';
+            loadBackends();
+        }
+        loadBackends();
+    </script>
+</body>
+</html>

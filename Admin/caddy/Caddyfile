@@ -41,9 +41,24 @@ hive.local {
 		reverse_proxy localhost:8701
 	}
 
-	# Hive Brain - Device discovery, colony management
-	handle_path /brain/* {
+	# Agents - HiveImmortal agent orchestration
+	handle_path /agents/* {
 		reverse_proxy localhost:8800
+	}
+
+	# Hive Brain - Device discovery, colony management
+	handle_path /hivebrain/* {
+		reverse_proxy localhost:8810
+	}
+
+	# Master Mind - Parallel LLM orchestrator
+	handle_path /mastermind/* {
+		reverse_proxy localhost:8820
+	}
+
+	# PMS50 GTN750 - MSFS 2024 avionics prototype
+	handle_path /pms50/* {
+		reverse_proxy localhost:8830
 	}
 
 	# Hive Oracle - Distributed LLM orchestrator
@@ -98,7 +113,7 @@ hive.local {
 
 	# Default - serve a status page or redirect to KittBox
 	handle {
-		respond "Hive is alive. Available routes: /dashboard, /oracle, /relay, /kitt, /simwidget, /hivemind, /brain, /hiveoracle, /mcpbridge, /widgets" 200
+		respond "Hive is alive. Available routes: /dashboard, /oracle, /relay, /kitt, /simwidget, /hivemind, /hivebrain, /mastermind, /pms50, /agents, /hiveoracle, /mcpbridge, /widgets" 200
 	}
 
 	# Enable WebSocket support for all routes

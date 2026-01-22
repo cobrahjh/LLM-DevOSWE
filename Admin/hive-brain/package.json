@@ -1,17 +1,1 @@
-{
-  "name": "hive-brain",
-  "version": "1.0.0",
-  "description": "Hive Brain - Central Admin Control Center",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "lint": "npx eslint *.js --config ../../.eslintrc.json"
-  },
-  "dependencies": {
-    "better-sqlite3": "^12.6.0",
-    "cors": "^2.8.5",
-    "express": "^4.22.1",
-    "ws": "^8.19.0"
-  }
-}
+{"name":"hive-brain","version":"1.0.0","description":"Hive Brain - Device Discovery & Colony Management","main":"hive-brain.js","scripts":{"start":"node hive-brain.js"},"dependencies":{"express":"^4.18.2","cors":"^2.8.5"}}

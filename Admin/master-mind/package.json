@@ -1,0 +1,1 @@
+{"name":"master-mind","version":"1.0.0","description":"Parallel LLM Orchestrator","main":"master-mind.js","scripts":{"start":"node master-mind.js"},"dependencies":{"express":"^4.18.2","cors":"^2.8.5"}}
