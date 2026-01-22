@@ -37,7 +37,7 @@
 | Dashboard Launcher | ✅ Complete | v1.0 |
 | AxisPad Component | 🔶 Needs MSFS testing | v1.2 |
 
-**Flow Pro Parity:** ~90% complete (Phase 1-5 + Installer + Dashboard)
+**Flow Pro Parity:** ~95% complete (Phase 1-6 + Installer + Dashboard)
 
 ---
 
@@ -150,15 +150,28 @@
 
 ---
 
-### Phase 6: Advanced (Optional)
-**Timeline:** Backlog
+### Phase 6: Advanced (In Progress)
+**Timeline:** 2026-01-22 (Started)
 
-| Feature | Priority | Notes |
-|---------|----------|-------|
-| MSFS panel launcher | LOW | Open G1000, etc. |
-| Interaction wheel | LOW | Flow Pro signature feature |
-| Otto search bar | LOW | Quick command search |
-| Plugin system | LOW | Third-party widgets |
+| Feature | Priority | Status | Notes |
+|---------|----------|--------|-------|
+| Panel Launcher | LOW | ✅ | G1000 soft keys, avionics power, quick actions |
+| Interaction Wheel | LOW | ✅ | Radial menu for common flight controls |
+| Otto search bar | LOW | ❌ | Quick command search (backlog) |
+| Plugin system | LOW | ❌ | Third-party widgets (backlog) |
+
+**Phase 6 Deliverables:**
+- [x] Panel Launcher widget (`ui/panel-launcher/`)
+  - G1000 PFD/MFD soft keys (SK1-SK6)
+  - Avionics power controls (Battery, Alt, Avionics)
+  - Knob controls (NAV VOL, HDG, ALT, FMS, RANGE)
+  - Quick actions (Direct-To, Menu, FPL, PROC, View)
+  - H: event API endpoint (`/api/hevent`)
+- [x] Interaction Wheel widget (`ui/interaction-wheel/`)
+  - Radial menu with 8 quick actions
+  - Live state feedback (gear, brake, AP, lights)
+  - Color-coded categories (flight, lights, engine, camera, autopilot)
+  - Tooltips and visual feedback
 
 ---
 

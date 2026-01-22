@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Launcher - SimWidget</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <header class="widget-header">
+            <h1>Panel Launcher</h1>
+            <span class="status-dot" id="status"></span>
+        </header>
+
+        <!-- Avionics Power -->
+        <section class="panel-section">
+            <h2>Avionics Power</h2>
+            <div class="button-grid power-grid">
+                <button class="power-btn" data-command="TOGGLE_MASTER_BATTERY" title="Battery Master">
+                    <span class="icon">🔋</span>
+                    <span class="label">BATT</span>
+                </button>
+                <button class="power-btn" data-command="TOGGLE_MASTER_ALTERNATOR" title="Alternator">
+                    <span class="icon">⚡</span>
+                    <span class="label">ALT</span>
+                </button>
+                <button class="power-btn" data-command="TOGGLE_AVIONICS_MASTER" title="Avionics Master">
+                    <span class="icon">📡</span>
+                    <span class="label">AVNCS</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- G1000 PFD Controls -->
+        <section class="panel-section">
+            <h2>G1000 PFD</h2>
+            <div class="button-grid">
+                <button class="panel-btn" data-hevent="AS1000_PFD_SOFTKEYS_1" title="Softkey 1">SK1</button>
+                <button class="panel-btn" data-hevent="AS1000_PFD_SOFTKEYS_2" title="Softkey 2">SK2</button>
+                <button class="panel-btn" data-hevent="AS1000_PFD_SOFTKEYS_3" title="Softkey 3">SK3</button>
+                <button class="panel-btn" data-hevent="AS1000_PFD_SOFTKEYS_4" title="Softkey 4">SK4</button>
+                <button class="panel-btn" data-hevent="AS1000_PFD_SOFTKEYS_5" title="Softkey 5">SK5</button>
+                <button class="panel-btn" data-hevent="AS1000_PFD_SOFTKEYS_6" title="Softkey 6">SK6</button>
+            </div>
+            <div class="knob-row">
+                <div class="knob-group">
+                    <span class="knob-label">NAV VOL</span>
+                    <button class="knob-btn" data-hevent="AS1000_PFD_VOL_1_DEC">-</button>
+                    <button class="knob-btn" data-hevent="AS1000_PFD_VOL_1_INC">+</button>
+                </div>
+                <div class="knob-group">
+                    <span class="knob-label">HDG</span>
+                    <button class="knob-btn" data-hevent="AS1000_PFD_CRS_DEC">-</button>
+                    <button class="knob-btn" data-hevent="AS1000_PFD_CRS_INC">+</button>
+                </div>
+                <div class="knob-group">
+                    <span class="knob-label">ALT</span>
+                    <button class="knob-btn" data-hevent="AS1000_PFD_BARO_DEC">-</button>
+                    <button class="knob-btn" data-hevent="AS1000_PFD_BARO_INC">+</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- G1000 MFD Controls -->
+        <section class="panel-section">
+            <h2>G1000 MFD</h2>
+            <div class="button-grid">
+                <button class="panel-btn" data-hevent="AS1000_MFD_SOFTKEYS_1" title="Softkey 1">SK1</button>
+                <button class="panel-btn" data-hevent="AS1000_MFD_SOFTKEYS_2" title="Softkey 2">SK2</button>
+                <button class="panel-btn" data-hevent="AS1000_MFD_SOFTKEYS_3" title="Softkey 3">SK3</button>
+                <button class="panel-btn" data-hevent="AS1000_MFD_SOFTKEYS_4" title="Softkey 4">SK4</button>
+                <button class="panel-btn" data-hevent="AS1000_MFD_SOFTKEYS_5" title="Softkey 5">SK5</button>
+                <button class="panel-btn" data-hevent="AS1000_MFD_SOFTKEYS_6" title="Softkey 6">SK6</button>
+            </div>
+            <div class="knob-row">
+                <div class="knob-group">
+                    <span class="knob-label">FMS</span>
+                    <button class="knob-btn" data-hevent="AS1000_MFD_FMS_Lower_DEC">-</button>
+                    <button class="knob-btn" data-hevent="AS1000_MFD_FMS_Lower_INC">+</button>
+                </div>
+                <div class="knob-group">
+                    <span class="knob-label">RANGE</span>
+                    <button class="knob-btn" data-hevent="AS1000_MFD_RANGE_DEC">-</button>
+                    <button class="knob-btn" data-hevent="AS1000_MFD_RANGE_INC">+</button>
+                </div>
+                <div class="knob-group">
+                    <span class="knob-label">ENT/CLR</span>
+                    <button class="knob-btn" data-hevent="AS1000_MFD_ENT">ENT</button>
+                    <button class="knob-btn" data-hevent="AS1000_MFD_CLR">CLR</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="panel-section">
+            <h2>Quick Actions</h2>
+            <div class="button-grid actions-grid">
+                <button class="action-btn" data-hevent="AS1000_PFD_DIRECTTO" title="Direct To">
+                    <span class="icon">➡️</span>
+                    <span class="label">D→</span>
+                </button>
+                <button class="action-btn" data-hevent="AS1000_MFD_MENU" title="Menu">
+                    <span class="icon">📋</span>
+                    <span class="label">MENU</span>
+                </button>
+                <button class="action-btn" data-hevent="AS1000_MFD_FPL" title="Flight Plan">
+                    <span class="icon">🗺️</span>
+                    <span class="label">FPL</span>
+                </button>
+                <button class="action-btn" data-hevent="AS1000_MFD_PROC" title="Procedures">
+                    <span class="icon">📝</span>
+                    <span class="label">PROC</span>
+                </button>
+                <button class="action-btn" data-command="VIEW_MODE" title="Cycle Camera View">
+                    <span class="icon">📷</span>
+                    <span class="label">VIEW</span>
+                </button>
+                <button class="action-btn" data-command="COCKPIT_VIEW" title="Cockpit View">
+                    <span class="icon">🎯</span>
+                    <span class="label">COCKPIT</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Pop-Out Info -->
+        <section class="panel-section info-section">
+            <h2>Panel Pop-Out</h2>
+            <p class="info-text">
+                <strong>Right-Alt + Click</strong> on any avionics panel to pop it out as a separate window.
+            </p>
+            <p class="info-hint">
+                Use MSFS Pop Out Panel Manager for automated pop-outs.
+            </p>
+        </section>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

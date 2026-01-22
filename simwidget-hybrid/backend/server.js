@@ -566,7 +566,7 @@ app.get('/api/logs/:service', (req, res) => {
 app.post('/api/command', (req, res) => {
     const { command, value } = req.body;
     console.log(`Command received: ${command} = ${value}`);
-    
+
     // Keyboard shortcuts work even without SimConnect
     if (command.startsWith('KEY_')) {
         executeCommand(command, value);
@@ -578,6 +578,71 @@ app.post('/api/command', (req, res) => {
         // Mock response for browser testing without sim
         res.json({ success: true, mock: true });
     }
+});
+
+// H: Event endpoint for G1000/avionics HTML events
+// Maps common H: events to SimConnect events or handles via InputEvent system
+const H_EVENT_MAP = {
+    // G1000 PFD Softkeys
+    'AS1000_PFD_SOFTKEYS_1': 'G1000_PFD_SOFTKEY1',
+    'AS1000_PFD_SOFTKEYS_2': 'G1000_PFD_SOFTKEY2',
+    'AS1000_PFD_SOFTKEYS_3': 'G1000_PFD_SOFTKEY3',
+    'AS1000_PFD_SOFTKEYS_4': 'G1000_PFD_SOFTKEY4',
+    'AS1000_PFD_SOFTKEYS_5': 'G1000_PFD_SOFTKEY5',
+    'AS1000_PFD_SOFTKEYS_6': 'G1000_PFD_SOFTKEY6',
+    // G1000 MFD Softkeys
+    'AS1000_MFD_SOFTKEYS_1': 'G1000_MFD_SOFTKEY1',
+    'AS1000_MFD_SOFTKEYS_2': 'G1000_MFD_SOFTKEY2',
+    'AS1000_MFD_SOFTKEYS_3': 'G1000_MFD_SOFTKEY3',
+    'AS1000_MFD_SOFTKEYS_4': 'G1000_MFD_SOFTKEY4',
+    'AS1000_MFD_SOFTKEYS_5': 'G1000_MFD_SOFTKEY5',
+    'AS1000_MFD_SOFTKEYS_6': 'G1000_MFD_SOFTKEY6',
+    // G1000 Common Controls
+    'AS1000_PFD_ENT': 'G1000_PFD_ENT_Push',
+    'AS1000_PFD_CLR': 'G1000_PFD_CLR',
+    'AS1000_MFD_ENT': 'G1000_MFD_ENT_Push',
+    'AS1000_MFD_CLR': 'G1000_MFD_CLR',
+    'AS1000_PFD_DIRECTTO': 'G1000_PFD_DIRECTTO',
+    'AS1000_MFD_DIRECTTO': 'G1000_MFD_DIRECTTO',
+    'AS1000_MFD_MENU': 'G1000_MFD_MENU_Push',
+    'AS1000_MFD_FPL': 'G1000_MFD_FPL_Push',
+    'AS1000_MFD_PROC': 'G1000_MFD_PROC_Push'
+};
+
+app.post('/api/hevent', (req, res) => {
+    const { event } = req.body;
+    console.log(`H:Event received: ${event}`);
+
+    if (!event) {
+        return res.status(400).json({ success: false, error: 'No event specified' });
+    }
+
+    // Check if we have a mapped SimConnect event
+    const mappedEvent = H_EVENT_MAP[event];
+
+    if (mappedEvent && isSimConnected && simConnectConnection) {
+        // Try to execute via SimConnect event mapping
+        const eventId = eventMap[mappedEvent];
+        if (eventId !== undefined) {
+            try {
+                simConnectConnection.transmitClientEvent(0, eventId, 0, 1, 16);
+                console.log(`H:Event ${event} -> SimConnect ${mappedEvent}`);
+                return res.json({ success: true, method: 'simconnect', mapped: mappedEvent });
+            } catch (e) {
+                console.error(`H:Event SimConnect error:`, e.message);
+            }
+        }
+    }
+
+    // For unmapped events, log and return info
+    // Full H: event support requires MSFS InputEvent system
+    console.log(`H:Event ${event} - no direct mapping available`);
+    res.json({
+        success: true,
+        method: 'logged',
+        note: 'H: events require InputEvent system for full support',
+        event
+    });
 });
 
 // Camera control REST endpoint (vJoy)

@@ -1,0 +1,257 @@
+/* Interaction Wheel Widget - SimWidget Phase 6 */
+/* Flow Pro-style radial menu for quick actions */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d1a 100%);
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.wheel-container {
+    position: relative;
+    width: 360px;
+    height: 360px;
+}
+
+/* Center Hub */
+.wheel-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg, #2a2a4e 0%, #1a1a2e 100%);
+    border: 3px solid rgba(0, 212, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+}
+
+.wheel-hub:hover {
+    transform: translate(-50%, -50%) scale(1.05);
+    border-color: #00d4ff;
+    box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
+}
+
+.hub-icon {
+    font-size: 28px;
+    color: #00d4ff;
+}
+
+.hub-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+/* Wheel Container */
+.wheel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Wheel Segment */
+.wheel-segment {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 130px;
+    height: 70px;
+    transform-origin: 0 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.segment-content {
+    position: absolute;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(42, 42, 62, 0.9) 0%, rgba(26, 26, 46, 0.9) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.wheel-segment:hover .segment-content {
+    background: linear-gradient(135deg, rgba(62, 62, 82, 0.95) 0%, rgba(42, 42, 62, 0.95) 100%);
+    border-color: var(--segment-color, #00d4ff);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 20px var(--segment-glow, rgba(0, 212, 255, 0.4));
+}
+
+.wheel-segment:active .segment-content {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.segment-icon {
+    font-size: 22px;
+    margin-bottom: 2px;
+}
+
+.segment-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wheel-segment:hover .segment-label {
+    color: #fff;
+}
+
+/* Segment Color Variants */
+.wheel-segment[data-category="flight"] {
+    --segment-color: #00d4ff;
+    --segment-glow: rgba(0, 212, 255, 0.4);
+}
+
+.wheel-segment[data-category="lights"] {
+    --segment-color: #ffaa00;
+    --segment-glow: rgba(255, 170, 0, 0.4);
+}
+
+.wheel-segment[data-category="engine"] {
+    --segment-color: #00ff88;
+    --segment-glow: rgba(0, 255, 136, 0.4);
+}
+
+.wheel-segment[data-category="camera"] {
+    --segment-color: #ff6688;
+    --segment-glow: rgba(255, 102, 136, 0.4);
+}
+
+.wheel-segment[data-category="autopilot"] {
+    --segment-color: #aa88ff;
+    --segment-glow: rgba(170, 136, 255, 0.4);
+}
+
+.wheel-segment[data-category="nav"] {
+    --segment-color: #88ffaa;
+    --segment-glow: rgba(136, 255, 170, 0.4);
+}
+
+/* Active State */
+.wheel-segment.active .segment-content {
+    background: var(--segment-glow);
+    border-color: var(--segment-color);
+}
+
+/* Status Bar */
+.status-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff4444;
+    transition: background 0.3s ease;
+}
+
+.status-dot.connected {
+    background: #00ff88;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+
+.status-text {
+    font-size: 12px;
+    color: #888;
+}
+
+/* Tooltip */
+.tooltip {
+    position: fixed;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    border-radius: 6px;
+    font-size: 12px;
+    color: #fff;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    max-width: 200px;
+}
+
+.tooltip.visible {
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+    .wheel-container {
+        width: 300px;
+        height: 300px;
+    }
+
+    .wheel-hub {
+        width: 70px;
+        height: 70px;
+    }
+
+    .hub-icon {
+        font-size: 22px;
+    }
+
+    .wheel-segment {
+        width: 100px;
+        height: 55px;
+    }
+
+    .segment-content {
+        left: 45px;
+        width: 50px;
+        height: 50px;
+    }
+
+    .segment-icon {
+        font-size: 18px;
+    }
+
+    .segment-label {
+        font-size: 8px;
+    }
+}
