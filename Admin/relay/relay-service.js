@@ -345,6 +345,23 @@ function initDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_tool ON tool_logs(tool)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_created ON tool_logs(created_at)`);
 
+    // Sessions - named sessions for tracking work
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS sessions (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            status TEXT DEFAULT 'active',
+            tags TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER,
+            ended_at INTEGER
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_name ON sessions(name)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_created ON sessions(created_at)`);
+
     // File state tracking - tracks all files read/modified/created during sessions
     db.exec(`
         CREATE TABLE IF NOT EXISTS file_state (
@@ -3371,6 +3388,196 @@ app.get('/api/knowledge/status', (req, res) => {
         }
 
         res.json({ success: true, status });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// SESSION API (Named Sessions)
+// ============================================
+
+// Create a new session
+app.post('/api/sessions', (req, res) => {
+    try {
+        const { id, name, description, tags } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ error: 'name is required' });
+        }
+
+        const sessionId = id || `session-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+
+        const stmt = db.prepare(`
+            INSERT INTO sessions (id, name, description, tags, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+            sessionId,
+            name,
+            description || null,
+            tags ? JSON.stringify(tags) : null,
+            Date.now(),
+            Date.now()
+        );
+
+        res.json({ success: true, id: sessionId, name });
+    } catch (err) {
+        if (err.message.includes('UNIQUE constraint')) {
+            return res.status(409).json({ error: 'Session ID already exists' });
+        }
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// List all sessions
+app.get('/api/sessions', (req, res) => {
+    try {
+        const status = req.query.status || 'active';
+        const limit = parseInt(req.query.limit) || 50;
+
+        let query = 'SELECT * FROM sessions';
+        const params = [];
+
+        if (status !== 'all') {
+            query += ' WHERE status = ?';
+            params.push(status);
+        }
+
+        query += ' ORDER BY updated_at DESC LIMIT ?';
+        params.push(limit);
+
+        const sessions = db.prepare(query).all(...params);
+
+        // Enrich with file counts
+        const enriched = sessions.map(s => {
+            const fileCount = db.prepare('SELECT COUNT(*) as count FROM file_state WHERE session_id = ?').get(s.id);
+            return {
+                ...s,
+                tags: s.tags ? JSON.parse(s.tags) : [],
+                file_count: fileCount.count
+            };
+        });
+
+        res.json({ count: enriched.length, sessions: enriched });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get a session by ID
+app.get('/api/sessions/:id', (req, res) => {
+    try {
+        const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Get file summary
+        const files = db.prepare(`
+            SELECT file_path, operation, created_at
+            FROM file_state WHERE session_id = ?
+            ORDER BY created_at DESC
+        `).all(req.params.id);
+
+        const stats = db.prepare(`
+            SELECT operation, COUNT(*) as count
+            FROM file_state WHERE session_id = ?
+            GROUP BY operation
+        `).all(req.params.id);
+
+        res.json({
+            ...session,
+            tags: session.tags ? JSON.parse(session.tags) : [],
+            files: {
+                count: files.length,
+                operations: Object.fromEntries(stats.map(s => [s.operation, s.count])),
+                recent: files.slice(0, 20)
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update a session
+app.patch('/api/sessions/:id', (req, res) => {
+    try {
+        const { name, description, status, tags } = req.body;
+        const updates = [];
+        const params = [];
+
+        if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+        if (description !== undefined) { updates.push('description = ?'); params.push(description); }
+        if (status !== undefined) { updates.push('status = ?'); params.push(status); }
+        if (tags !== undefined) { updates.push('tags = ?'); params.push(JSON.stringify(tags)); }
+
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'No fields to update' });
+        }
+
+        updates.push('updated_at = ?');
+        params.push(Date.now());
+
+        if (status === 'ended') {
+            updates.push('ended_at = ?');
+            params.push(Date.now());
+        }
+
+        params.push(req.params.id);
+
+        const stmt = db.prepare(`UPDATE sessions SET ${updates.join(', ')} WHERE id = ?`);
+        const result = stmt.run(...params);
+
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        res.json({ success: true, updated: result.changes });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// End a session
+app.post('/api/sessions/:id/end', (req, res) => {
+    try {
+        const stmt = db.prepare(`
+            UPDATE sessions SET status = 'ended', ended_at = ?, updated_at = ? WHERE id = ?
+        `);
+        const result = stmt.run(Date.now(), Date.now(), req.params.id);
+
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        res.json({ success: true, message: 'Session ended' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete a session (and its file records)
+app.delete('/api/sessions/:id', (req, res) => {
+    try {
+        const deleteFiles = db.prepare('DELETE FROM file_state WHERE session_id = ?');
+        const deleteSession = db.prepare('DELETE FROM sessions WHERE id = ?');
+
+        const transaction = db.transaction((id) => {
+            const filesDeleted = deleteFiles.run(id);
+            const sessionDeleted = deleteSession.run(id);
+            return { files: filesDeleted.changes, session: sessionDeleted.changes };
+        });
+
+        const result = transaction(req.params.id);
+
+        if (result.session === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        res.json({ success: true, deleted: result });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
