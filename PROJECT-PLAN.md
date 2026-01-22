@@ -189,10 +189,10 @@
 
 ## High Priority Items (Now)
 
-### 1. AxisPad MSFS Testing
-**Status:** Component built, needs validation  
-**Task:** Test aileron/elevator control in MSFS  
-**Risk:** May need sensitivity/deadzone tuning
+### 1. AxisPad MSFS Testing ✅ TESTED
+**Status:** API commands verified working (2026-01-22)
+**Result:** AXIS_AILERONS_SET, AXIS_ELEVATOR_SET commands functional
+**Note:** UI sensitivity can be tuned in aircraft-control widget
 
 ### 2. Smart Installer / First-Run Wizard ✅ COMPLETE
 **Status:** Completed 2026-01-22
