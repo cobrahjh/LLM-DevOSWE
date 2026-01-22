@@ -51,7 +51,7 @@ const pluginsDir = path.join(__dirname, '../plugins');
 const pluginLoader = new PluginLoader(pluginsDir);
 const pluginAPI = new PluginAPI();
 
-const SERVER_VERSION = '1.13.0';
+const SERVER_VERSION = '1.14.0';
 
 // SimConnect - will be loaded dynamically
 let simConnect = null;
@@ -64,6 +64,20 @@ let fuelWriteDefIdRight = null;
 
 // Camera controller (handles ChasePlane detection)
 const cameraController = new CameraController();
+
+// AHK helper status checker (static command, no user input)
+async function getAhkHelperStatus() {
+    return new Promise((resolve) => {
+        exec('tasklist /FI "IMAGENAME eq AutoHotkey*.exe" /FO CSV /NH', (err, stdout) => {
+            const running = stdout && stdout.includes('AutoHotkey');
+            resolve({
+                installed: true,
+                running: running,
+                script: 'camera-helper.ahk'
+            });
+        });
+    });
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -385,10 +399,12 @@ function getApiIndex() {
     };
 }
 
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+    const ahkStatus = await getAhkHelperStatus();
     res.json({
         connected: isSimConnected,
         camera: cameraController.getStatus(),
+        ahkHelper: ahkStatus,
         flightData
     });
 });

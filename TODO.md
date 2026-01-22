@@ -346,7 +346,7 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 
 ### Startup Automation
 - [x] Auto-start camera-helper.ahk when server starts ✓ v1.2
-- [ ] Add AHK helper status to `/api/status` endpoint
+- [x] Add AHK helper status to `/api/status` endpoint (v1.14.0)
 - [x] **MSFS EXE.xml addon** - Auto-launch SimWidget with MSFS (2026-01-09)
 - [x] **start-simwidget.bat** - Manual start script (2026-01-09)
 - [x] **stop-simwidget.bat** - Manual stop script (2026-01-09)
