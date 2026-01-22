@@ -282,36 +282,36 @@ Enhance MCP Bridge with hook integration.
 
 ## 5. Implementation Roadmap
 
-### Phase 1: Foundation (Immediate)
-- [ ] Create `Admin/hooks/` directory
-- [ ] Write `inject-hive-context.py` script
-- [ ] Write `log-to-relay.py` script
-- [ ] Create `.claude/settings.json` with basic hooks
-- [ ] Test SessionStart and PostToolUse hooks
+### Phase 1: Foundation (Immediate) ✅ COMPLETE
+- [x] Create `Admin/hooks/` directory
+- [x] Write `inject-hive-context.py` script
+- [x] Write `log-to-relay.py` script
+- [x] Create `.claude/settings.json` with basic hooks
+- [x] Test SessionStart and PostToolUse hooks
 
-### Phase 2: Plugin Development (Week 1)
-- [ ] Create hive-plugin structure
-- [ ] Implement `/hive-status` command
-- [ ] Implement `/relay-check` command
-- [ ] Implement `/sync-memory` command
-- [ ] Test all plugin commands
+### Phase 2: Plugin Development (Week 1) ✅ COMPLETE
+- [x] Create hive-plugin structure
+- [x] Implement `/hive-status` command (via `/hivesanitycheck` skill)
+- [x] Implement `/relay-check` command (via `/msg` skill)
+- [x] Implement `/sync-memory` command (via `/syncmem` skill)
+- [x] Test all plugin commands
 
-### Phase 3: Advanced Hooks (Week 2)
-- [ ] Implement `validate-bash.py` security hook
-- [ ] Implement `session-sync.py` for Stop event
-- [ ] Implement `forward-notifications.py`
-- [ ] Add hook logging to MCP Bridge
-- [ ] Update Relay with hook log endpoint
+### Phase 3: Advanced Hooks (Week 2) ✅ COMPLETE
+- [x] Implement `validate-bash.py` security hook
+- [x] Implement `session-sync.py` for Stop event
+- [x] Implement `forward-notifications.py`
+- [x] Add hook logging to MCP Bridge
+- [x] Update Relay with hook log endpoint (`/api/logs`)
 
-### Phase 4: Skills & Agents (Week 3)
-- [ ] Create `hive-operations.md` skill
-- [ ] Create `hive-doctor.md` agent
-- [ ] Create `intel-gatherer.md` agent
-- [ ] Test skill auto-invocation
-- [ ] Document all skills/agents
+### Phase 4: Skills & Agents (Week 3) ✅ COMPLETE
+- [x] Create skills in `.claude/skills/` directory
+- [x] Create `hive-doctor.md` agent (`Admin/hive-plugin/agents/`)
+- [x] Create `intel-gatherer.md` agent
+- [x] Test skill auto-invocation
+- [x] Document all skills/agents
 
-### Phase 5: Polish (Week 4)
-- [ ] Update CLAUDE.md with full hook docs
+### Phase 5: Polish (Week 4) - IN PROGRESS
+- [x] Update CLAUDE.md with full hook docs (moved to `docs/CLAUDE-CODE-GUIDE.md`)
 - [ ] Train all Hive AI on new capabilities
 - [ ] Performance testing
 - [ ] Create user guide
