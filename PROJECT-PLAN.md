@@ -35,7 +35,7 @@
 | Environment Widget | ✅ Complete | v1.0 |
 | Setup Wizard | ✅ Complete | v1.0 |
 | Dashboard Launcher | ✅ Complete | v1.0 |
-| AxisPad Component | 🔶 Needs MSFS testing | v1.2 |
+| AxisPad Component | ✅ MSFS tested | v1.2 |
 
 **Flow Pro Parity:** ~95% complete (Phase 1-6 + Installer + Dashboard)
 
