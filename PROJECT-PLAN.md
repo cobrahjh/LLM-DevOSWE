@@ -209,7 +209,7 @@
 
 | Item | Severity | Notes |
 |------|----------|-------|
-| Port inconsistency (8080 vs 8484) | LOW | CLAUDE.md says 8484, server uses 8080 |
+| ~~Port inconsistency (8080 vs 8484)~~ | ~~LOW~~ | ✅ Fixed - CLAUDE.md updated |
 | vJoy integration disabled | LOW | Caused input conflicts |
 | AHK helper dependency | MEDIUM | Windows-only solution |
 

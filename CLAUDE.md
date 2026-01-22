@@ -19,6 +19,9 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 | 8585 | KittBox (Command Center) | http://localhost:8585 | https://hive.local/kitt |
 | 8600 | Relay (messages/tasks) | http://localhost:8600 | https://hive.local/relay |
 | 8701 | Hive-Mind (monitor) | http://localhost:8701 | https://hive.local/hivemind |
+| 8810 | Hive Brain (discovery) | http://localhost:8810 | https://hive.local/hivebrain |
+| 8820 | Master Mind (parallel LLM) | http://localhost:8820 | https://hive.local/mastermind |
+| 8830 | PMS50 GTN750 (avionics) | http://localhost:8830 | https://hive.local/pms50 |
 | 8850 | Hive Oracle (LLM routing) | http://localhost:8850 | https://hive.local/hiveoracle |
 | 8860 | MCP Bridge (tool hub) | http://localhost:8860 | https://hive.local/mcpbridge |
 | 8899 | Hive Dashboard | http://localhost:8899 | https://hive.local/dashboard |
@@ -1122,7 +1125,10 @@ curl -X POST http://localhost:8610/api/llm/mode -H "Content-Type: application/js
 | 8620 | Browser Bridge | Browser automation API |
 | 8700 | Claude Bridge | WebSocket to Claude Code CLI |
 | 8701 | Hive-Mind | Real-time activity monitor |
-| 8800 | Hive Brain | Device discovery, colony management |
+| 8800 | Agents (HiveImmortal) | Agent orchestration (16 agents) |
+| 8810 | Hive Brain | Device discovery, colony management |
+| 8820 | Master Mind | Parallel LLM orchestrator |
+| 8830 | PMS50 GTN750 | MSFS 2024 avionics prototype |
 | 8850 | Hive Oracle | Distributed LLM orchestrator |
 | 8860 | MCP Bridge | MCP server hub for all Hive AI |
 | 8899 | Hive Dashboard | Command Center UI |
@@ -1527,7 +1533,7 @@ See `STANDARDS.md` → Responsive Design Prototype for full implementation detai
 
 ### Server (`server/index.js`)
 - Connects to MSFS via node-simconnect
-- Exposes WebSocket on port 8484
+- Exposes WebSocket on port 8080
 - Caches SimVar values
 - Handles K: events
 
