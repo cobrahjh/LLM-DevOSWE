@@ -254,6 +254,10 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/environment/">🌤️ Environment</a></li>
                 <li><a href="/ui/gtn750/">🗺️ GTN750</a></li>
                 <li><a href="/ui/wasm-camera/">🎬 WASM Camera</a></li>
+                <li><a href="/ui/checklist-widget/">✅ Checklist</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/map-widget/">🗺️ Map</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/weather-widget/">🌦️ Weather</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/timer-widget/">⏱️ Timer</a> <span class="new-badge">NEW</span></li>
             </ul>
         </div>
 
@@ -282,8 +286,8 @@ app.get('/', (req, res) => {
         <div class="section highlight">
             <h2>📹 Video Capture</h2>
             <ul>
-                <li><a href="/ui/video-viewer/">🎥 Video Viewer</a> <span class="new-badge">NEW</span></li>
-                <li><a href="/backend/video-capture/ws-stream/ws-client.html">⚡ WS Binary Stream</a></li>
+                <li><a href="/backend/video-capture/ws-stream/viewer.html">🎥 Live Capture (60+ FPS)</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/video-viewer/">📺 Video Viewer</a></li>
                 <li><a href="/backend/video-capture/">📂 Capture Prototypes</a></li>
             </ul>
         </div>

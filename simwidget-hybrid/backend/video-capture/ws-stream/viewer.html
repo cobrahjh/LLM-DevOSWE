@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Screen Capture</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #111; font-family: system-ui, sans-serif; }
+        #video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+            display: block;
+        }
+        .overlay {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            padding: 12px 18px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            z-index: 100;
+        }
+        .stat { color: #0f0; font-family: monospace; }
+        .stat.off { color: #f55; }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            border: 2px solid #555;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        button:hover { background: #444; border-color: #777; }
+        button.active { background: #0a0; border-color: #0f0; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <img id="video">
+
+    <div class="overlay">
+        <span class="stat" id="status">Connecting...</span>
+        <span id="fps-display" class="hidden"> | <span class="stat" id="fps">0</span> FPS | <span class="stat" id="res">0x0</span></span>
+    </div>
+
+    <div class="controls">
+        <button id="startBtn">▶ Start</button>
+        <button id="fullscreenBtn">⛶ Fullscreen</button>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const statusEl = document.getElementById('status');
+        const fpsEl = document.getElementById('fps');
+        const resEl = document.getElementById('res');
+        const fpsDisplay = document.getElementById('fps-display');
+        const startBtn = document.getElementById('startBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        let ws = null;
+        let streaming = false;
+        let frameCount = 0;
+        let lastUpdate = Date.now();
+        let pendingHeader = null;
+
+        function connect() {
+            statusEl.textContent = 'Connecting...';
+            statusEl.className = 'stat';
+
+            ws = new WebSocket('ws://localhost:9997');
+            ws.binaryType = 'arraybuffer';
+
+            ws.onopen = () => {
+                statusEl.textContent = 'Connected - Click Start';
+                statusEl.className = 'stat';
+            };
+
+            ws.onmessage = (e) => {
+                if (typeof e.data === 'string') {
+                    const msg = JSON.parse(e.data);
+                    if (msg.type === 'connected') {
+                        statusEl.textContent = 'Streaming';
+                        fpsDisplay.classList.remove('hidden');
+                    } else if (msg.type === 'disconnected') {
+                        statusEl.textContent = 'Capture service disconnected';
+                        statusEl.className = 'stat off';
+                        fpsDisplay.classList.add('hidden');
+                        streaming = false;
+                        startBtn.textContent = '▶ Start';
+                        startBtn.classList.remove('active');
+                    }
+                } else {
+                    // Binary frame data
+                    if (!pendingHeader) {
+                        // Header: size(4) + width(2) + height(2)
+                        const view = new DataView(e.data);
+                        pendingHeader = {
+                            size: view.getUint32(0, true),
+                            width: view.getUint16(4, true),
+                            height: view.getUint16(6, true)
+                        };
+                    } else {
+                        // JPEG data
+                        const blob = new Blob([e.data], { type: 'image/jpeg' });
+                        const url = URL.createObjectURL(blob);
+                        video.onload = () => URL.revokeObjectURL(url);
+                        video.src = url;
+
+                        resEl.textContent = `${pendingHeader.width}x${pendingHeader.height}`;
+                        frameCount++;
+                        updateFPS();
+                        pendingHeader = null;
+                    }
+                }
+            };
+
+            ws.onclose = () => {
+                statusEl.textContent = 'Disconnected - Reconnecting...';
+                statusEl.className = 'stat off';
+                fpsDisplay.classList.add('hidden');
+                streaming = false;
+                startBtn.textContent = '▶ Start';
+                startBtn.classList.remove('active');
+                setTimeout(connect, 2000);
+            };
+
+            ws.onerror = () => {
+                statusEl.textContent = 'Connection error';
+                statusEl.className = 'stat off';
+            };
+        }
+
+        function updateFPS() {
+            const now = Date.now();
+            if (now - lastUpdate >= 1000) {
+                const fps = Math.round(frameCount * 1000 / (now - lastUpdate));
+                fpsEl.textContent = fps;
+                frameCount = 0;
+                lastUpdate = now;
+            }
+        }
+
+        startBtn.onclick = () => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            streaming = !streaming;
+            if (streaming) {
+                ws.send(JSON.stringify({ type: 'start' }));
+                startBtn.textContent = '⏹ Stop';
+                startBtn.classList.add('active');
+            } else {
+                ws.send(JSON.stringify({ type: 'stop' }));
+                startBtn.textContent = '▶ Start';
+                startBtn.classList.remove('active');
+                fpsDisplay.classList.add('hidden');
+            }
+        };
+
+        fullscreenBtn.onclick = () => {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen();
+            }
+        };
+
+        // Keyboard shortcuts
+        document.onkeydown = (e) => {
+            if (e.key === ' ') startBtn.click();
+            if (e.key === 'f') fullscreenBtn.click();
+        };
+
+        connect();
+    </script>
+</body>
+</html>
