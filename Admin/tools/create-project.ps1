@@ -103,19 +103,19 @@ This project is part of the LLM-DevOSWE Hive. Access shared memory via:
 
 ### Sync Memory (backup to database)
 ``````bash
-curl -X POST http://localhost:8600/api/knowledge/sync
+curl -X POST http://192.168.1.42:8600/api/knowledge/sync
 ``````
 
 ### Load Memory from Database
 ``````bash
 # Get latest CLAUDE.md from hive
-curl http://localhost:8600/api/knowledge/restore/claude_md
+curl http://192.168.1.42:8600/api/knowledge/restore/claude_md
 
 # Get latest STANDARDS.md from hive
-curl http://localhost:8600/api/knowledge/restore/standards_md
+curl http://192.168.1.42:8600/api/knowledge/restore/standards_md
 
 # Check backup status
-curl http://localhost:8600/api/knowledge/status
+curl http://192.168.1.42:8600/api/knowledge/status
 ``````
 
 ### Hive Services
@@ -147,7 +147,7 @@ if (!(Test-Path $syncScriptPath)) {
     $syncScript = @"
 @echo off
 echo Syncing memory with Hive...
-curl -X POST http://localhost:8600/api/knowledge/sync -H "Content-Type: application/json" -d "{\"sessionId\":\"$Name\"}"
+curl -X POST http://192.168.1.42:8600/api/knowledge/sync -H "Content-Type: application/json" -d "{\"sessionId\":\"$Name\"}"
 echo.
 echo Memory synced!
 pause
