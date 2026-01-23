@@ -106,8 +106,18 @@ hive.local {
 		reverse_proxy localhost:8860
 	}
 
+	# Hive Voice - Voice control for AI dictation
+	handle_path /voice/* {
+		reverse_proxy localhost:8870
+	}
+
 	# Widgets - Direct access to MSFS widgets
 	handle_path /widgets/* {
+		reverse_proxy localhost:8080
+	}
+
+	# Widget UI - Direct access to widget interfaces (for mic/camera access)
+	handle /ui/* {
 		reverse_proxy localhost:8080
 	}
 
@@ -116,13 +126,24 @@ hive.local {
 		respond "Hive is alive. Available routes: /dashboard, /oracle, /relay, /kitt, /simwidget, /hivemind, /hivebrain, /mastermind, /pms50, /agents, /hiveoracle, /mcpbridge, /widgets" 200
 	}
 
-	# Enable WebSocket support for all routes
-	@websockets {
+	# Enable WebSocket support for SimWidget
+	@ws_simwidget {
 		header Connection *Upgrade*
 		header Upgrade websocket
+		path /simwidget/* /widgets/*
 	}
-	handle @websockets {
+	handle @ws_simwidget {
 		reverse_proxy localhost:8080
+	}
+
+	# Enable WebSocket support for Voice
+	@ws_voice {
+		header Connection *Upgrade*
+		header Upgrade websocket
+		path /voice/*
+	}
+	handle @ws_voice {
+		reverse_proxy localhost:8870
 	}
 
 	# TLS configuration (Caddy auto-generates self-signed for .local domains)
