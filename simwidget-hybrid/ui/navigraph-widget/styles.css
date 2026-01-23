@@ -1,0 +1,385 @@
+/* Navigraph Charts Widget Styles */
+
+.widget-container {
+    background: var(--widget-bg, #1a1a2e);
+    border-radius: 12px;
+    padding: 14px;
+    min-width: 360px;
+    max-width: 500px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.widget-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.btn-icon:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Airport Search */
+.airport-search {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.airport-search input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--widget-border, #333);
+    border-radius: 6px;
+    background: var(--widget-bg-secondary, #16213e);
+    color: var(--widget-text, #fff);
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+}
+
+.airport-search input:focus {
+    outline: none;
+    border-color: var(--widget-accent, #667eea);
+}
+
+.btn-search {
+    padding: 10px 16px;
+    background: var(--widget-accent, #667eea);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-search:hover {
+    background: #5a6fd6;
+}
+
+/* Chart Tabs */
+.chart-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.tab-btn {
+    padding: 8px 12px;
+    background: var(--widget-bg-secondary, #16213e);
+    border: none;
+    border-radius: 6px;
+    color: var(--widget-text-muted, #888);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--widget-text, #fff);
+}
+
+.tab-btn.active {
+    background: var(--widget-accent, #667eea);
+    color: white;
+}
+
+/* Charts Content */
+.charts-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Auth Notice */
+.auth-notice {
+    text-align: center;
+    padding: 30px 20px;
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 10px;
+}
+
+.notice-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.notice-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+    margin-bottom: 8px;
+}
+
+.notice-text {
+    font-size: 12px;
+    color: var(--widget-text-muted, #888);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.btn-connect {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-connect:hover {
+    transform: scale(1.02);
+}
+
+.notice-hint {
+    margin-top: 12px;
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+}
+
+/* Charts List */
+.charts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chart-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chart-item:hover {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.chart-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--widget-bg, #1a1a2e);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.chart-info {
+    flex: 1;
+}
+
+.chart-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.chart-type {
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+}
+
+.chart-arrow {
+    color: var(--widget-text-muted, #888);
+    font-size: 12px;
+}
+
+/* Airport Info Header */
+.airport-header {
+    background: linear-gradient(135deg, var(--widget-accent, #667eea), #764ba2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.airport-icao {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    font-family: 'Courier New', monospace;
+}
+
+.airport-name {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    margin-top: 4px;
+}
+
+.airport-info-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Chart Viewer */
+.chart-viewer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--widget-bg, #1a1a2e);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: var(--widget-bg-secondary, #16213e);
+    border-bottom: 1px solid var(--widget-border, #333);
+}
+
+.btn-back {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--widget-border, #333);
+    border-radius: 6px;
+    color: var(--widget-text, #fff);
+    cursor: pointer;
+}
+
+.btn-back:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.viewer-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-zoom {
+    width: 32px;
+    height: 32px;
+    background: var(--widget-bg, #1a1a2e);
+    border: 1px solid var(--widget-border, #333);
+    border-radius: 6px;
+    color: var(--widget-text, #fff);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.btn-zoom:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.viewer-content {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.viewer-content img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.2s;
+}
+
+/* Loading */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--widget-text-muted, #888);
+}
+
+.loading-spinner {
+    font-size: 24px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Error */
+.error-message {
+    text-align: center;
+    padding: 30px;
+    color: #ef4444;
+}
+
+.error-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+/* Scrollbar */
+.charts-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.charts-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.charts-content::-webkit-scrollbar-thumb {
+    background: var(--widget-accent, #667eea);
+    border-radius: 2px;
+}
+
+/* Mobile */
+@media (max-width: 400px) {
+    .chart-tabs {
+        flex-wrap: nowrap;
+    }
+
+    .tab-btn {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+
+    .airport-icao {
+        font-size: 24px;
+    }
+}

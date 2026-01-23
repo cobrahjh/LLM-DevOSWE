@@ -174,7 +174,21 @@ let flightData = {
     dme1Distance: 0,
     dme2Distance: 0,
     dme1Speed: 0,
-    dme2Speed: 0
+    dme2Speed: 0,
+    // GPS Flight Plan
+    gpsWpCount: 0,
+    gpsWpIndex: 0,
+    gpsWpDistance: 0,
+    gpsWpEte: 0,
+    gpsWpBearing: 0,
+    gpsWpNextLat: 0,
+    gpsWpNextLon: 0,
+    gpsWpNextAlt: 0,
+    gpsWpPrevLat: 0,
+    gpsWpPrevLon: 0,
+    gpsEte: 0,
+    gpsLat: 0,
+    gpsLon: 0
 };
 
 // Directory structure (DEBUG - TODO: disable directory listing for production)
@@ -260,6 +274,8 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/timer-widget/">⏱️ Timer</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/notepad-widget/">📝 Notepad</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/flightplan-widget/">🛫 Flight Plan</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/simbrief-widget/">📋 SimBrief</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/navigraph-widget/">🗺️ Navigraph Charts</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/copilot-widget/">🧑‍✈️ AI Copilot</a> <span class="new-badge">NEW</span></li>
             </ul>
         </div>
@@ -604,6 +620,41 @@ app.get('/api/weather/taf/:icao', async (req, res) => {
     }
 
     res.status(404).json({ error: `No TAF found for ${icao}` });
+});
+
+// SimBrief OFP proxy (CORS bypass)
+app.get('/api/simbrief/ofp', async (req, res) => {
+    const { userid, username } = req.query;
+
+    if (!userid && !username) {
+        return res.status(400).json({ error: 'Provide userid or username' });
+    }
+
+    try {
+        let url = 'https://www.simbrief.com/api/xml.fetcher.php?json=1';
+        if (userid) {
+            url += '&userid=' + encodeURIComponent(userid);
+        } else {
+            url += '&username=' + encodeURIComponent(username);
+        }
+
+        const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: 'SimBrief API error' });
+        }
+
+        const data = await response.json();
+
+        if (data.fetch?.status === 'Error') {
+            return res.status(404).json({ error: data.fetch.status_msg || 'No flight plan found' });
+        }
+
+        res.json(data);
+    } catch (e) {
+        console.log('[SimBrief] Fetch failed:', e.message);
+        res.status(500).json({ error: 'Failed to fetch from SimBrief' });
+    }
 });
 
 // Video status endpoint
@@ -2226,6 +2277,20 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'NAV DME:2', 'nautical miles', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'NAV DMESPEED:1', 'knots', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'NAV DMESPEED:2', 'knots', SimConnectDataType.FLOAT64, 0);
+        // GPS Flight Plan data
+        handle.addToDataDefinition(0, 'GPS FLIGHT PLAN WP COUNT', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'GPS FLIGHT PLAN WP INDEX', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'GPS WP DISTANCE', 'nautical miles', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP ETE', 'seconds', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP BEARING', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP NEXT LAT', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP NEXT LON', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP NEXT ALT', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP PREV LAT', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP PREV LON', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS ETE', 'seconds', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS POSITION LAT', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS POSITION LON', 'degrees', SimConnectDataType.FLOAT64, 0);
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -2370,6 +2435,20 @@ async function initSimConnect() {
                         dme2Distance: d.readFloat64(),
                         dme1Speed: d.readFloat64(),
                         dme2Speed: d.readFloat64(),
+                        // GPS Flight Plan
+                        gpsWpCount: d.readInt32(),
+                        gpsWpIndex: d.readInt32(),
+                        gpsWpDistance: d.readFloat64(),
+                        gpsWpEte: d.readFloat64(),
+                        gpsWpBearing: d.readFloat64(),
+                        gpsWpNextLat: d.readFloat64(),
+                        gpsWpNextLon: d.readFloat64(),
+                        gpsWpNextAlt: d.readFloat64(),
+                        gpsWpPrevLat: d.readFloat64(),
+                        gpsWpPrevLon: d.readFloat64(),
+                        gpsEte: d.readFloat64(),
+                        gpsLat: d.readFloat64(),
+                        gpsLon: d.readFloat64(),
                         connected: true
                     };
                     broadcastFlightData();
@@ -2480,6 +2559,20 @@ function startMockData() {
             groundSpeed: mockSpd * 1.1 + (Math.random() - 0.5) * 10,
             windDirection: 270 + (Math.random() - 0.5) * 20,
             windSpeed: 15 + (Math.random() - 0.5) * 10,
+            // GPS Flight Plan (mock flight: KJFK -> KLAX)
+            gpsWpCount: 5,
+            gpsWpIndex: 2,
+            gpsWpDistance: 125.4 + (Math.random() - 0.5) * 2,
+            gpsWpEte: 1850 + Math.random() * 100,
+            gpsWpBearing: 275 + (Math.random() - 0.5) * 5,
+            gpsWpNextLat: 39.8561,
+            gpsWpNextLon: -104.6737,
+            gpsWpNextAlt: 35000,
+            gpsWpPrevLat: 41.9742,
+            gpsWpPrevLon: -87.9073,
+            gpsEte: 14400 + Math.random() * 500,
+            gpsLat: 40.6413 + (Math.random() - 0.5) * 0.01,
+            gpsLon: -95.5 + (Math.random() - 0.5) * 0.01,
             connected: false // Show as disconnected in mock mode
         };
         
