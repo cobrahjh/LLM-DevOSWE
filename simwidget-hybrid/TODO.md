@@ -18,7 +18,7 @@
 - [x] 🟡 Add press-and-hold +/- buttons for AP values ✅ 2026-01-05
 - [x] 🟡 Add Flight Controls (aileron, elevator, rudder sliders) ✅ 2026-01-05
 - [x] 🟡 Add Camera buttons (TCM, NCV) ✅ 2026-01-05
-- [ ] 🟡 Add GPS coordinates display (lat/lon)
+- [x] 🟡 Add GPS coordinates display (lat/lon) ✅ 2026-01-23
 - [ ] 🟢 Deploy to MSFS toolbar panel for fullscreen use
 - [ ] 🟢 Add more light controls (panel, logo, recognition)
 - [x] ✅ Keymap editor widget (remap keys via UI) - DONE
@@ -47,15 +47,15 @@
 ---
 
 ## Ideas / Future Features
-- Autopilot controls (AP on/off, ALT hold, HDG hold, VS, SPD)
-- Fuel management display
-- Radio stack (COM1/2, NAV1/2, transponder)
-- Flight plan display
-- Weather/METAR widget
-- AI Co-Pilot integration (Claude API)
-- Voice commands
-- Mobile companion view
-- Multiple aircraft profiles
+- [x] Autopilot controls (AP on/off, ALT hold, HDG hold, VS, SPD) ✅ Done
+- [x] Fuel management display ✅ Done (fuel-widget)
+- [x] Radio stack (COM1/2, NAV1/2, transponder) ✅ Done (radio-stack)
+- [x] Flight plan display ✅ Done (flightplan-widget)
+- [x] Weather/METAR widget ✅ Done (weather-widget)
+- [x] AI Co-Pilot integration ✅ Done (copilot-widget)
+- [x] Voice commands ✅ Done (voice-control widget)
+- [x] Mobile companion view ✅ Done (mobile.css responsive)
+- [x] Multiple aircraft profiles ✅ Done (checklist-widget)
 
 ---
 

@@ -22,6 +22,8 @@ const iasEl = document.getElementById('ias');
 const groundspeedEl = document.getElementById('groundspeed');
 const vspeedEl = document.getElementById('vspeed');
 const windEl = document.getElementById('wind');
+const latitudeEl = document.getElementById('latitude');
+const longitudeEl = document.getElementById('longitude');
 const statusIndicator = document.querySelector('.status-indicator');
 
 // State
@@ -140,7 +142,9 @@ function handleFlightData(data) {
         groundspeed: data.groundSpeed || data.speed * 1.1,  // Estimate if not available
         vspeed: data.verticalSpeed,
         windDirection: data.windDirection,
-        windSpeed: data.windSpeed
+        windSpeed: data.windSpeed,
+        latitude: data.latitude,
+        longitude: data.longitude
     });
 }
 
@@ -191,6 +195,18 @@ function updateFlightData(data) {
         const dir = Math.round(data.windDirection).toString().padStart(3, '0');
         const spd = Math.round(data.windSpeed);
         windEl.textContent = `${dir}° / ${spd} kts`;
+    }
+
+    // GPS Coordinates
+    if (data.latitude !== undefined && latitudeEl) {
+        const lat = data.latitude;
+        const latDir = lat >= 0 ? 'N' : 'S';
+        latitudeEl.textContent = `${Math.abs(lat).toFixed(4)}° ${latDir}`;
+    }
+    if (data.longitude !== undefined && longitudeEl) {
+        const lon = data.longitude;
+        const lonDir = lon >= 0 ? 'E' : 'W';
+        longitudeEl.textContent = `${Math.abs(lon).toFixed(4)}° ${lonDir}`;
     }
 }
 
