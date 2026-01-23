@@ -1,0 +1,242 @@
+/* Weather Widget Styles */
+
+.widget-container {
+    background: var(--widget-bg, #1a1a2e);
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 300px;
+    max-width: 380px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.widget-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: transform 0.3s;
+}
+
+.btn-icon:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.btn-icon.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Search Bar */
+.search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    border-radius: 8px;
+    color: var(--widget-text, #fff);
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--widget-accent, #667eea);
+}
+
+.btn-search {
+    padding: 10px 16px;
+    background: var(--widget-accent, #667eea);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-search:hover {
+    filter: brightness(1.1);
+}
+
+/* Weather Content */
+.weather-content {
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.placeholder {
+    text-align: center;
+    padding: 20px;
+    color: var(--widget-text-muted, #888);
+}
+
+.placeholder-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+/* METAR Display */
+.metar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.airport-code {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--widget-text, #fff);
+}
+
+.metar-time {
+    font-size: 11px;
+    color: var(--widget-text-muted, #888);
+}
+
+.metar-raw {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--widget-accent, #667eea);
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    word-break: break-all;
+}
+
+.weather-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.weather-item {
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.weather-label {
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.weather-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.weather-value.wind {
+    color: #4ade80;
+}
+
+.weather-value.visibility {
+    color: #60a5fa;
+}
+
+.weather-value.temp {
+    color: #f59e0b;
+}
+
+.weather-value.pressure {
+    color: #a78bfa;
+}
+
+.weather-unit {
+    font-size: 11px;
+    color: var(--widget-text-muted, #888);
+    font-weight: normal;
+}
+
+/* Flight Category */
+.flight-category {
+    text-align: center;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 12px;
+}
+
+.flight-category.vfr { background: #22c55e; color: #000; }
+.flight-category.mvfr { background: #3b82f6; color: #fff; }
+.flight-category.ifr { background: #ef4444; color: #fff; }
+.flight-category.lifr { background: #7c3aed; color: #fff; }
+
+/* Recent Airports */
+.recent-airports {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.recent-label {
+    font-size: 11px;
+    color: var(--widget-text-muted, #888);
+}
+
+.recent-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.recent-btn {
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    color: var(--widget-text, #fff);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+}
+
+.recent-btn:hover {
+    border-color: var(--widget-accent, #667eea);
+}
+
+/* Error state */
+.error-message {
+    text-align: center;
+    padding: 20px;
+    color: #ef4444;
+}
+
+.error-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">⏱️ Timer</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-sound" title="Toggle Sound">🔔</button>
+            </div>
+        </div>
+
+        <div class="timer-tabs">
+            <button class="tab active" data-mode="stopwatch">Stopwatch</button>
+            <button class="tab" data-mode="countdown">Countdown</button>
+        </div>
+
+        <div class="timer-display" id="timer-display">00:00:00</div>
+
+        <div class="countdown-setup" id="countdown-setup">
+            <div class="time-input-group">
+                <input type="number" id="hours-input" min="0" max="23" value="0" placeholder="H">
+                <span>:</span>
+                <input type="number" id="minutes-input" min="0" max="59" value="5" placeholder="M">
+                <span>:</span>
+                <input type="number" id="seconds-input" min="0" max="59" value="0" placeholder="S">
+            </div>
+            <div class="preset-buttons">
+                <button class="preset" data-seconds="60">1m</button>
+                <button class="preset" data-seconds="180">3m</button>
+                <button class="preset" data-seconds="300">5m</button>
+                <button class="preset" data-seconds="600">10m</button>
+                <button class="preset" data-seconds="900">15m</button>
+            </div>
+        </div>
+
+        <div class="timer-controls">
+            <button class="btn btn-primary" id="btn-start">▶ Start</button>
+            <button class="btn btn-secondary" id="btn-reset">↺ Reset</button>
+        </div>
+
+        <div class="lap-times" id="lap-times">
+            <div class="lap-header">Lap Times</div>
+            <div class="lap-list" id="lap-list"></div>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'timer-widget', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

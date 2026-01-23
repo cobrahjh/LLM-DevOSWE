@@ -47,6 +47,27 @@
     background: var(--widget-accent, #667eea);
 }
 
+/* Aircraft Selector */
+.aircraft-selector {
+    margin-bottom: 10px;
+}
+
+.aircraft-selector select {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    border-radius: 6px;
+    color: var(--widget-text, #fff);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.aircraft-selector select:focus {
+    outline: none;
+    border-color: var(--widget-accent, #667eea);
+}
+
 /* Tabs */
 .checklist-tabs {
     display: flex;

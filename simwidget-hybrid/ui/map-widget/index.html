@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map - SimWidget</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">🗺️ Map</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-center" title="Center on Aircraft">🎯</button>
+                <button class="btn-icon" id="btn-follow" title="Follow Aircraft">📍</button>
+            </div>
+        </div>
+
+        <div class="map-container" id="map"></div>
+
+        <div class="flight-info" id="flight-info">
+            <div class="info-item">
+                <span class="info-label">Position</span>
+                <span class="info-value" id="info-position">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Altitude</span>
+                <span class="info-value" id="info-altitude">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Heading</span>
+                <span class="info-value" id="info-heading">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Speed</span>
+                <span class="info-value" id="info-speed">--</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'map-widget', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

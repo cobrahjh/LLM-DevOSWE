@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">🌦️ Weather</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="airport-input" placeholder="ICAO (e.g., KJFK)" maxlength="4">
+            <button class="btn-search" id="btn-search">Get METAR</button>
+        </div>
+
+        <div class="weather-content" id="weather-content">
+            <div class="placeholder">
+                <div class="placeholder-icon">✈️</div>
+                <div class="placeholder-text">Enter airport ICAO code</div>
+            </div>
+        </div>
+
+        <div class="recent-airports" id="recent-airports">
+            <div class="recent-label">Recent:</div>
+            <div class="recent-list" id="recent-list"></div>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'weather-widget', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>
