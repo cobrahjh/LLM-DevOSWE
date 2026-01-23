@@ -258,6 +258,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/map-widget/">🗺️ Map</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/weather-widget/">🌦️ Weather</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/timer-widget/">⏱️ Timer</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/copilot-widget/">🧑‍✈️ AI Copilot</a> <span class="new-badge">NEW</span></li>
             </ul>
         </div>
 
@@ -497,6 +498,111 @@ function checkMsfsRunning() {
         });
     });
 }
+
+// ============================================
+// WEATHER API PROXY (METAR/TAF)
+// ============================================
+
+// Cache for weather data (5 minute TTL)
+const weatherCache = new Map();
+const WEATHER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+app.get('/api/weather/metar/:icao', async (req, res) => {
+    const icao = req.params.icao.toUpperCase();
+
+    if (!/^[A-Z]{4}$/.test(icao)) {
+        return res.status(400).json({ error: 'Invalid ICAO code' });
+    }
+
+    // Check cache
+    const cached = weatherCache.get(`metar_${icao}`);
+    if (cached && Date.now() - cached.timestamp < WEATHER_CACHE_TTL) {
+        return res.json(cached.data);
+    }
+
+    try {
+        // Try AVWX API first (free tier)
+        const avwxRes = await fetch(`https://avwx.rest/api/metar/${icao}?options=info,translate`, {
+            headers: { 'Authorization': 'DEMO' },
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (avwxRes.ok) {
+            const data = await avwxRes.json();
+            weatherCache.set(`metar_${icao}`, { data, timestamp: Date.now() });
+            return res.json(data);
+        }
+    } catch (e) {
+        console.log(`[Weather] AVWX failed for ${icao}: ${e.message}`);
+    }
+
+    try {
+        // Fallback: Aviation Weather Center (AWC)
+        const awcUrl = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
+        const awcRes = await fetch(awcUrl, { signal: AbortSignal.timeout(5000) });
+
+        if (awcRes.ok) {
+            const awcData = await awcRes.json();
+            if (awcData && awcData.length > 0) {
+                const metar = awcData[0];
+                const parsed = {
+                    raw: metar.rawOb,
+                    station: icao,
+                    time: { dt: metar.obsTime },
+                    wind_direction: { value: metar.wdir },
+                    wind_speed: { value: metar.wspd },
+                    wind_gust: metar.wgst ? { value: metar.wgst } : null,
+                    visibility: { value: metar.visib },
+                    temperature: { value: metar.temp },
+                    dewpoint: { value: metar.dewp },
+                    altimeter: { value: metar.altim },
+                    flight_rules: metar.fltcat,
+                    clouds: (metar.clouds || []).map(c => ({
+                        type: c.cover,
+                        altitude: c.base
+                    }))
+                };
+                weatherCache.set(`metar_${icao}`, { data: parsed, timestamp: Date.now() });
+                return res.json(parsed);
+            }
+        }
+    } catch (e) {
+        console.log(`[Weather] AWC failed for ${icao}: ${e.message}`);
+    }
+
+    res.status(404).json({ error: `No METAR found for ${icao}` });
+});
+
+app.get('/api/weather/taf/:icao', async (req, res) => {
+    const icao = req.params.icao.toUpperCase();
+
+    if (!/^[A-Z]{4}$/.test(icao)) {
+        return res.status(400).json({ error: 'Invalid ICAO code' });
+    }
+
+    // Check cache
+    const cached = weatherCache.get(`taf_${icao}`);
+    if (cached && Date.now() - cached.timestamp < WEATHER_CACHE_TTL) {
+        return res.json(cached.data);
+    }
+
+    try {
+        const awcUrl = `https://aviationweather.gov/api/data/taf?ids=${icao}&format=json`;
+        const awcRes = await fetch(awcUrl, { signal: AbortSignal.timeout(5000) });
+
+        if (awcRes.ok) {
+            const data = await awcRes.json();
+            if (data && data.length > 0) {
+                weatherCache.set(`taf_${icao}`, { data: data[0], timestamp: Date.now() });
+                return res.json(data[0]);
+            }
+        }
+    } catch (e) {
+        console.log(`[Weather] TAF failed for ${icao}: ${e.message}`);
+    }
+
+    res.status(404).json({ error: `No TAF found for ${icao}` });
+});
 
 // Video status endpoint
 app.get('/api/video/status', async (req, res) => {

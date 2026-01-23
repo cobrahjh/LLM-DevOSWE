@@ -47,18 +47,12 @@ class WeatherWidget {
         this.refreshBtn.classList.add('spinning');
 
         try {
-            // Use AVWX API (free tier available)
-            const response = await fetch(
-                'https://avwx.rest/api/metar/' + airport + '?options=info,translate',
-                {
-                    headers: {
-                        'Authorization': 'DEMO'  // Public demo token
-                    }
-                }
-            );
+            // Use backend proxy to avoid CORS issues
+            const response = await fetch('/api/weather/metar/' + airport);
 
             if (!response.ok) {
-                throw new Error('Airport not found');
+                const err = await response.json();
+                throw new Error(err.error || 'Airport not found');
             }
 
             const data = await response.json();
@@ -67,21 +61,22 @@ class WeatherWidget {
             this.addToRecent(airport);
 
         } catch (error) {
-            // Fallback: try parsing from aviationweather.gov
-            try {
-                await this.fetchFromAWC(airport);
-            } catch (e) {
-                this.showError('Could not fetch weather for ' + airport);
-            }
+            this.showError(error.message || 'Could not fetch weather for ' + airport);
         }
 
         this.refreshBtn.classList.remove('spinning');
     }
 
-    async fetchFromAWC(icao) {
-        // Aviation Weather Center doesn't have CORS, so we simulate with sample data
-        // In production, this would go through a backend proxy
-        this.showError('API unavailable - enter METAR manually or use backend proxy');
+    async fetchTAF(icao) {
+        try {
+            const response = await fetch('/api/weather/taf/' + icao);
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (e) {
+            console.log('TAF fetch failed:', e);
+        }
+        return null;
     }
 
     displayWeather(data) {
