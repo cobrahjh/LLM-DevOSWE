@@ -3,7 +3,8 @@
  * Controls COM, NAV, ADF frequencies and transponder
  */
 
-const API_BASE = 'http://localhost:8080';
+const WS_URL = `ws://${window.location.host}`;
+const API_BASE = `http://${window.location.host}`;
 let ws = null;
 let connected = false;
 
@@ -21,7 +22,7 @@ let xpndrCode = 1200;
 
 // Connect WebSocket
 function connect() {
-    ws = new WebSocket('ws://localhost:8080');
+    ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
         connected = true;

@@ -3,7 +3,7 @@
  * Manages SimWidget plugins - discover, enable, disable
  */
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = `http://${window.location.host}`;
 
 let plugins = [];
 

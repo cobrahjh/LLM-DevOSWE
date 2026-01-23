@@ -3,8 +3,8 @@
  * Command palette for quick action search
  */
 
-const WS_URL = 'ws://localhost:8080';
-const API_URL = 'http://localhost:8080';
+const WS_URL = `ws://${window.location.host}`;
+const API_URL = `http://${window.location.host}`;
 
 let ws = null;
 let isConnected = false;

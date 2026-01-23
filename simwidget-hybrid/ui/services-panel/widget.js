@@ -9,10 +9,11 @@
 
 class ServicesPanel {
     constructor() {
+        const host = window.location.hostname || 'localhost';
         this.services = {
-            simwidget: { port: 8080, url: 'http://localhost:8080', status: 'checking' },
-            agent: { port: 8585, url: 'http://localhost:8585', status: 'checking' },
-            remote: { port: 8590, url: 'http://localhost:8590', status: 'checking' }
+            simwidget: { port: 8080, url: `http://${host}:8080`, status: 'checking' },
+            agent: { port: 8585, url: `http://${host}:8585`, status: 'checking' },
+            remote: { port: 8590, url: `http://${host}:8590`, status: 'checking' }
         };
         
         this.collapsed = false;
@@ -216,7 +217,8 @@ class ServicesPanel {
         
         try {
             // Try main SimWidget API first
-            const response = await fetch('http://localhost:8080/api/services', {
+            const host = window.location.hostname || 'localhost';
+            const response = await fetch(`http://${host}:8080/api/services`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ service, action })

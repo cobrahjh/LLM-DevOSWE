@@ -6,7 +6,7 @@
  * Controls smooth cinematic camera via WASM module
  */
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = `http://${window.location.host}`;
 
 // State
 let isActive = false;
