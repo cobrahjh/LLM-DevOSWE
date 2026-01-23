@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Environment</title>
+    <link rel="stylesheet" href="../shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="sw-widget environment">
+        <div class="sw-header">
+            <span class="sw-conn" id="conn"></span>
+            <span class="sw-header-title">ENVIRONMENT</span>
+        </div>
+
+        <div class="sw-content">
+            <!-- Time of Day Section -->
+            <div class="env-section">
+                <div class="env-section-header">TIME OF DAY</div>
+                <div class="env-time-display">
+                    <div class="env-time-icon" id="time-icon">☀️</div>
+                    <div class="env-time-value">
+                        <span class="env-time-local" id="local-time">12:00</span>
+                        <span class="env-time-label">LOCAL</span>
+                    </div>
+                    <div class="env-time-value">
+                        <span class="env-time-zulu" id="zulu-time">12:00Z</span>
+                        <span class="env-time-label">ZULU</span>
+                    </div>
+                </div>
+                <div class="env-time-slider">
+                    <input type="range" id="time-slider" min="0" max="1440" value="720" class="env-slider">
+                    <div class="env-time-marks">
+                        <span>00:00</span>
+                        <span>06:00</span>
+                        <span>12:00</span>
+                        <span>18:00</span>
+                        <span>24:00</span>
+                    </div>
+                </div>
+                <div class="env-time-presets">
+                    <button class="env-preset-btn" data-time="360" title="Dawn">🌅</button>
+                    <button class="env-preset-btn" data-time="720" title="Noon">☀️</button>
+                    <button class="env-preset-btn" data-time="1080" title="Dusk">🌇</button>
+                    <button class="env-preset-btn" data-time="0" title="Midnight">🌙</button>
+                </div>
+            </div>
+
+            <!-- Simulation Rate Section -->
+            <div class="env-section">
+                <div class="env-section-header">SIMULATION RATE</div>
+                <div class="env-simrate">
+                    <button class="env-rate-btn" id="rate-decrease">−</button>
+                    <div class="env-rate-display">
+                        <span class="env-rate-value" id="sim-rate">1x</span>
+                        <span class="env-rate-label">SPEED</span>
+                    </div>
+                    <button class="env-rate-btn" id="rate-increase">+</button>
+                </div>
+                <div class="env-rate-presets">
+                    <button class="env-rate-preset" data-rate="0.25">¼x</button>
+                    <button class="env-rate-preset" data-rate="0.5">½x</button>
+                    <button class="env-rate-preset active" data-rate="1">1x</button>
+                    <button class="env-rate-preset" data-rate="2">2x</button>
+                    <button class="env-rate-preset" data-rate="4">4x</button>
+                    <button class="env-rate-preset" data-rate="8">8x</button>
+                </div>
+            </div>
+
+            <!-- Weather Section -->
+            <div class="env-section">
+                <div class="env-section-header">WEATHER PRESETS</div>
+                <div class="env-weather-current">
+                    <span class="env-weather-icon" id="weather-icon">☀️</span>
+                    <span class="env-weather-name" id="weather-name">Clear Skies</span>
+                </div>
+                <div class="env-weather-grid">
+                    <button class="env-weather-btn active" data-weather="clear" title="Clear Skies">
+                        <span class="env-weather-emoji">☀️</span>
+                        <span class="env-weather-text">Clear</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="fewclouds" title="Few Clouds">
+                        <span class="env-weather-emoji">🌤️</span>
+                        <span class="env-weather-text">Few Cld</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="scattered" title="Scattered Clouds">
+                        <span class="env-weather-emoji">⛅</span>
+                        <span class="env-weather-text">Sctd</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="broken" title="Broken Clouds">
+                        <span class="env-weather-emoji">🌥️</span>
+                        <span class="env-weather-text">Broken</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="overcast" title="Overcast">
+                        <span class="env-weather-emoji">☁️</span>
+                        <span class="env-weather-text">OVC</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="rain" title="Rain">
+                        <span class="env-weather-emoji">🌧️</span>
+                        <span class="env-weather-text">Rain</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="storm" title="Thunderstorm">
+                        <span class="env-weather-emoji">⛈️</span>
+                        <span class="env-weather-text">Storm</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="snow" title="Snow">
+                        <span class="env-weather-emoji">🌨️</span>
+                        <span class="env-weather-text">Snow</span>
+                    </button>
+                    <button class="env-weather-btn" data-weather="fog" title="Fog">
+                        <span class="env-weather-emoji">🌫️</span>
+                        <span class="env-weather-text">Fog</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="env-section">
+                <div class="env-section-header">QUICK ACTIONS</div>
+                <div class="env-actions-row">
+                    <button class="env-action-btn" id="btn-pause" title="Pause Simulation">
+                        <span class="env-action-icon">⏸️</span>
+                        <span class="env-action-text">PAUSE</span>
+                    </button>
+                    <button class="env-action-btn" id="btn-slew" title="Toggle Slew Mode">
+                        <span class="env-action-icon">✈️</span>
+                        <span class="env-action-text">SLEW</span>
+                    </button>
+                    <button class="env-action-btn" id="btn-refuel" title="Repair & Refuel">
+                        <span class="env-action-icon">⛽</span>
+                        <span class="env-action-text">REFUEL</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

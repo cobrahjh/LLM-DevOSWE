@@ -1,0 +1,378 @@
+/**
+ * Environment Widget
+ * SimWidget Engine v2.0.0 - Phase 5: Environment Controls
+ */
+
+.environment {
+    width: 320px;
+}
+
+/* Section */
+.env-section {
+    background: var(--sw-bg-tertiary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    padding: var(--sw-space-sm);
+    margin-bottom: var(--sw-space-sm);
+}
+
+.env-section:last-child {
+    margin-bottom: 0;
+}
+
+.env-section-header {
+    font-size: var(--sw-text-xs);
+    font-weight: 600;
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+    margin-bottom: var(--sw-space-sm);
+}
+
+/* ===========================================
+   TIME OF DAY
+   =========================================== */
+
+.env-time-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sw-space-md);
+    margin-bottom: var(--sw-space-sm);
+}
+
+.env-time-icon {
+    font-size: 32px;
+}
+
+.env-time-value {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.env-time-local {
+    font-size: var(--sw-text-2xl);
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-yellow);
+}
+
+.env-time-zulu {
+    font-size: var(--sw-text-lg);
+    font-weight: 600;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-cyan);
+}
+
+.env-time-label {
+    font-size: var(--sw-text-xs);
+    color: var(--sw-text-dim);
+}
+
+/* Time Slider */
+.env-time-slider {
+    margin-bottom: var(--sw-space-sm);
+}
+
+.env-slider {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    appearance: none;
+    outline: none;
+}
+
+.env-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--sw-accent-yellow);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--sw-accent-yellow);
+}
+
+.env-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--sw-accent-yellow);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 8px var(--sw-accent-yellow);
+}
+
+.env-time-marks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 9px;
+    color: var(--sw-text-dim);
+}
+
+/* Time Presets */
+.env-time-presets {
+    display: flex;
+    justify-content: center;
+    gap: var(--sw-space-sm);
+}
+
+.env-preset-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    font-size: 24px;
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.env-preset-btn:hover {
+    border-color: var(--sw-accent-yellow);
+    transform: scale(1.1);
+}
+
+.env-preset-btn:active {
+    transform: scale(0.95);
+}
+
+/* ===========================================
+   SIMULATION RATE
+   =========================================== */
+
+.env-simrate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sw-space-md);
+    margin-bottom: var(--sw-space-sm);
+}
+
+.env-rate-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--sw-text-primary);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.env-rate-btn:hover {
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}
+
+.env-rate-btn:active {
+    transform: scale(0.95);
+}
+
+.env-rate-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.env-rate-value {
+    font-size: var(--sw-text-2xl);
+    font-weight: 700;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-accent-cyan);
+}
+
+.env-rate-label {
+    font-size: var(--sw-text-xs);
+    color: var(--sw-text-dim);
+}
+
+/* Rate Presets */
+.env-rate-presets {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.env-rate-preset {
+    padding: 8px 12px;
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    font-size: var(--sw-text-sm);
+    font-weight: 600;
+    font-family: var(--sw-font-mono);
+    color: var(--sw-text-secondary);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+}
+
+.env-rate-preset:hover {
+    border-color: var(--sw-text-dim);
+    color: var(--sw-text-primary);
+}
+
+.env-rate-preset.active {
+    background: rgba(0, 255, 255, 0.15);
+    border-color: var(--sw-accent-cyan);
+    color: var(--sw-accent-cyan);
+}
+
+/* ===========================================
+   WEATHER
+   =========================================== */
+
+.env-weather-current {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sw-space-sm);
+    padding: var(--sw-space-sm);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--sw-radius-md);
+    margin-bottom: var(--sw-space-sm);
+}
+
+.env-weather-icon {
+    font-size: 32px;
+}
+
+.env-weather-name {
+    font-size: var(--sw-text-lg);
+    font-weight: 600;
+    color: var(--sw-text-primary);
+}
+
+.env-weather-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.env-weather-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sw-space-xs);
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-sm);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+    min-height: 56px;
+}
+
+.env-weather-btn:hover {
+    border-color: var(--sw-text-dim);
+    transform: translateY(-2px);
+}
+
+.env-weather-btn.active {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--sw-accent-blue);
+}
+
+.env-weather-emoji {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.env-weather-text {
+    font-size: 9px;
+    color: var(--sw-text-dim);
+    text-transform: uppercase;
+}
+
+.env-weather-btn.active .env-weather-text {
+    color: var(--sw-accent-blue);
+}
+
+/* ===========================================
+   QUICK ACTIONS
+   =========================================== */
+
+.env-actions-row {
+    display: flex;
+    gap: var(--sw-space-sm);
+    justify-content: center;
+}
+
+.env-action-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sw-space-sm);
+    background: var(--sw-bg-secondary);
+    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sw-radius-md);
+    cursor: pointer;
+    transition: all var(--sw-transition-fast);
+    min-height: 64px;
+}
+
+.env-action-btn:hover {
+    border-color: var(--sw-text-dim);
+    transform: translateY(-2px);
+}
+
+.env-action-btn.active {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--sw-accent-red);
+}
+
+.env-action-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.env-action-text {
+    font-size: var(--sw-text-xs);
+    font-weight: 600;
+    color: var(--sw-text-secondary);
+}
+
+.env-action-btn.active .env-action-text {
+    color: var(--sw-accent-red);
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@container widget (max-width: 280px) {
+    .env-weather-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .env-time-display {
+        flex-wrap: wrap;
+    }
+    .env-preset-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+}
+
+@container widget (min-width: 360px) {
+    .env-weather-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .env-action-btn {
+        min-height: 72px;
+    }
+}

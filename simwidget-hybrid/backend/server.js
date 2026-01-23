@@ -105,6 +105,7 @@ let flightData = {
     engineRunning: false,
     throttle: 0,
     localTime: 0,
+    zuluTime: 0,
     connected: false,
     // Autopilot
     apMaster: false,
@@ -1908,6 +1909,7 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'ENG COMBUSTION:1', 'Bool', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'GENERAL ENG THROTTLE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'LOCAL TIME', 'Hours', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ZULU TIME', 'Hours', SimConnectDataType.FLOAT64, 0);
         // Autopilot data
         handle.addToDataDefinition(0, 'AUTOPILOT MASTER', 'Bool', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'AUTOPILOT HEADING LOCK', 'Bool', SimConnectDataType.INT32, 0);
@@ -2051,6 +2053,7 @@ async function initSimConnect() {
                         engineRunning: d.readInt32() !== 0,
                         throttle: d.readFloat64(),
                         localTime: d.readFloat64(),
+                        zuluTime: d.readFloat64(),
                         // Autopilot
                         apMaster: d.readInt32() !== 0,
                         apHdgLock: d.readInt32() !== 0,
@@ -2185,6 +2188,7 @@ function startMockData() {
             engineRunning: true,
             throttle: 65 + Math.random() * 10,
             localTime: new Date().getHours() + new Date().getMinutes() / 60,
+            zuluTime: new Date().getUTCHours() + new Date().getUTCMinutes() / 60,
             // Autopilot (mock)
             apMaster: true,
             apHdgLock: true,
