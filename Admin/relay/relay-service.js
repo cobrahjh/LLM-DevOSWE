@@ -1364,6 +1364,18 @@ app.get('/api/tasks/dead-letters', (req, res) => {
     }
 });
 
+// Clear all dead letters
+app.delete('/api/tasks/dead-letters', (req, res) => {
+    try {
+        const count = db.prepare('SELECT COUNT(*) as count FROM dead_letters').get();
+        db.prepare('DELETE FROM dead_letters').run();
+        log(`Cleared ${count.count} dead letters`);
+        res.json({ success: true, cleared: count.count });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ============================================
 // DIRECT CLAUDE CODE API (No consumer needed)
 // ============================================
