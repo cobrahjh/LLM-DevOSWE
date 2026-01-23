@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<SimBase.Document Type="WASMModule" version="1,0">
-  <Descr>WASMModule</Descr>
+<SimBase.Document Type="SimConnectGauge" version="1,0">
   <Filename>simwidget_camera.wasm</Filename>
-  <Name>SimWidget Camera</Name>
-  <ModuleName>SIMWIDGET_CAMERA</ModuleName>
+  <Descr>SimWidget Camera Control Module</Descr>
+  <Author>SimWidget Engine</Author>
+  <Name>SimWidget_Camera</Name>
+  <CABCode>SWCAM</CABCode>
 </SimBase.Document>

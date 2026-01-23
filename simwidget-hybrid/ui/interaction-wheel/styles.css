@@ -25,14 +25,14 @@ body {
     margin: 0 auto;
 }
 
-/* Center Hub */
+/* Center Hub - Properly Centered */
 .wheel-hub {
     position: absolute;
     top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
     width: 90px;
     height: 90px;
-    transform: translate(-50%, -50%);
     background: linear-gradient(135deg, #2a2a4e 0%, #1a1a2e 100%);
     border: 3px solid rgba(0, 212, 255, 0.5);
     border-radius: 50%;
@@ -42,25 +42,19 @@ body {
     align-items: center;
     z-index: 100;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
 }
 
 .wheel-hub:hover {
-    transform: translate(-50%, -50%) scale(1.05);
     border-color: #00d4ff;
     box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
 }
 
 .hub-icon {
-    font-size: 28px;
-    color: #00d4ff;
-    line-height: 1;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
+    width: 32px;
+    height: 32px;
+    fill: #00d4ff;
 }
 
 .hub-label {
@@ -68,8 +62,7 @@ body {
     font-weight: 600;
     color: #888;
     letter-spacing: 1px;
-    margin-top: 2px;
-    text-align: center;
+    margin-top: 4px;
 }
 
 /* Wheel Container */
@@ -238,12 +231,11 @@ body {
     .wheel-hub {
         width: 70px;
         height: 70px;
-        margin-top: -35px;
-        margin-left: -35px;
     }
 
     .hub-icon {
-        font-size: 22px;
+        width: 24px;
+        height: 24px;
     }
 
     .wheel-segment {
