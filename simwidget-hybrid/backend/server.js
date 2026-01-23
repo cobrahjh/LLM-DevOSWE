@@ -258,6 +258,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/map-widget/">🗺️ Map</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/weather-widget/">🌦️ Weather</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/timer-widget/">⏱️ Timer</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/flightplan-widget/">🛫 Flight Plan</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/copilot-widget/">🧑‍✈️ AI Copilot</a> <span class="new-badge">NEW</span></li>
             </ul>
         </div>
