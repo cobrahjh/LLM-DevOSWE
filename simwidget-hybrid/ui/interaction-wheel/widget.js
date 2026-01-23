@@ -3,18 +3,20 @@
  * Flow Pro-style radial menu for quick flight actions
  */
 
-const WS_URL = 'ws://localhost:8080';
-const API_URL = 'http://localhost:8080';
+// Use relative URLs for same-origin requests
+const WS_URL = `ws://${window.location.host}`;
+const API_URL = `http://${window.location.host}`;
 
 let ws = null;
 let isConnected = false;
 
 // Define wheel segments - quick actions arranged in a circle
+// Commands must match server.js eventMap entries
 const WHEEL_ACTIONS = [
     { id: 'gear', icon: '\u2699', label: 'GEAR', command: 'GEAR_TOGGLE', category: 'flight', tooltip: 'Toggle landing gear' },
-    { id: 'flaps-up', icon: '\u25B2', label: 'FLAPS-', command: 'FLAPS_DECR', category: 'flight', tooltip: 'Retract flaps' },
-    { id: 'flaps-dn', icon: '\u25BC', label: 'FLAPS+', command: 'FLAPS_INCR', category: 'flight', tooltip: 'Extend flaps' },
-    { id: 'lights', icon: '\u{1F4A1}', label: 'LIGHTS', command: 'TOGGLE_ALL_LIGHTS', category: 'lights', tooltip: 'Toggle all lights' },
+    { id: 'flaps-up', icon: '\u25B2', label: 'FLAPS-', command: 'FLAPS_UP', category: 'flight', tooltip: 'Retract flaps' },
+    { id: 'flaps-dn', icon: '\u25BC', label: 'FLAPS+', command: 'FLAPS_DOWN', category: 'flight', tooltip: 'Extend flaps' },
+    { id: 'nav', icon: '\u{1F6A9}', label: 'NAV', command: 'TOGGLE_NAV_LIGHTS', category: 'lights', tooltip: 'Toggle nav lights' },
     { id: 'ap', icon: '\u2708', label: 'A/P', command: 'AP_MASTER', category: 'autopilot', tooltip: 'Autopilot master' },
     { id: 'brake', icon: '\u25A0', label: 'BRAKE', command: 'PARKING_BRAKES', category: 'flight', tooltip: 'Parking brake' },
     { id: 'view', icon: '\u{1F4F7}', label: 'VIEW', command: 'VIEW_MODE', category: 'camera', tooltip: 'Cycle camera view' },
@@ -45,8 +47,14 @@ function connect() {
 
     ws.onmessage = (event) => {
         try {
-            const data = JSON.parse(event.data);
-            updateSegmentStates(data);
+            const msg = JSON.parse(event.data);
+            // Server sends { type: 'flightData', data: {...} }
+            if (msg.type === 'flightData' && msg.data) {
+                updateSegmentStates(msg.data);
+            } else if (msg.gearDown !== undefined) {
+                // Fallback for direct data format
+                updateSegmentStates(msg);
+            }
         } catch (e) {
             // Ignore parse errors
         }
@@ -73,12 +81,8 @@ function updateSegmentStates(data) {
     const apSeg = document.querySelector('[data-action="ap"]');
     if (apSeg) apSeg.classList.toggle('active', data.apMaster);
 
-    const lightSeg = document.querySelector('[data-action="lights"]');
-    if (lightSeg) {
-        const anyLightOn = data.navLight || data.beaconLight || data.strobeLight ||
-                          data.landingLight || data.taxiLight;
-        lightSeg.classList.toggle('active', anyLightOn);
-    }
+    const navSeg = document.querySelector('[data-action="nav"]');
+    if (navSeg) navSeg.classList.toggle('active', data.navLight);
 }
 
 // Send command via REST API
@@ -134,7 +138,8 @@ function createWheel() {
             segment.classList.add('active');
             await sendCommand(action.command);
             setTimeout(() => {
-                if (!['gear', 'brake', 'ap', 'lights'].includes(action.id)) {
+                // Keep active state for toggle buttons (state will update via WebSocket)
+                if (!['gear', 'brake', 'ap', 'nav'].includes(action.id)) {
                     segment.classList.remove('active');
                 }
             }, 200);

@@ -1678,6 +1678,7 @@ async function initSimConnect() {
             'GEAR_TOGGLE',
             'FLAPS_UP',
             'FLAPS_DOWN',
+            'SPOILERS_TOGGLE',
             // Autopilot events
             'AP_MASTER',
             'AP_HDG_HOLD',

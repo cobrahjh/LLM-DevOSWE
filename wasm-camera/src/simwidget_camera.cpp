@@ -1,13 +1,23 @@
 /**
  * SimWidget Camera WASM Module
- * Version: 0.5.0
+ * Version: 0.5.2
  *
  * Uses Legacy gauges.h API (same as Lorby, MobiFlight, etc.)
  * NOT the newer MSFS_Vars.h API which doesn't seem to work
  */
 
+// Define Microsoft types as macros for WASM target before any SDK includes
+#ifndef __int64
+#define __int64 long long
+#endif
+
 #include <MSFS/MSFS.h>
+
+// Suppress deprecation warnings - gauges.h API still works despite warnings
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <MSFS/Legacy/gauges.h>
+#pragma clang diagnostic pop
 
 // Global LVar IDs
 static ID g_lvarReady = -1;

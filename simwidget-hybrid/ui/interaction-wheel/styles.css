@@ -22,6 +22,7 @@ body {
     position: relative;
     width: 360px;
     height: 360px;
+    margin: 0 auto;
 }
 
 /* Center Hub */
@@ -29,9 +30,10 @@ body {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
     width: 90px;
     height: 90px;
+    margin-top: -45px;
+    margin-left: -45px;
     background: linear-gradient(135deg, #2a2a4e 0%, #1a1a2e 100%);
     border: 3px solid rgba(0, 212, 255, 0.5);
     border-radius: 50%;
@@ -46,7 +48,7 @@ body {
 }
 
 .wheel-hub:hover {
-    transform: translate(-50%, -50%) scale(1.05);
+    transform: scale(1.05);
     border-color: #00d4ff;
     box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
 }
