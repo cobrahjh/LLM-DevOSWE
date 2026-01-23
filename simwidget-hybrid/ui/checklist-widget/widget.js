@@ -806,8 +806,84 @@ class ChecklistWidget {
 
         this.switchChecklist(keys[newIndex]);
     }
+
+    // Voice control integration
+    initVoiceControl() {
+        // Listen for voice commands via BroadcastChannel
+        const channel = new BroadcastChannel('simwidget-checklist');
+        channel.onmessage = (event) => {
+            this.handleVoiceCommand(event.data);
+        };
+
+        // Also listen via localStorage for fallback
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'simwidget-checklist-command') {
+                try {
+                    const cmd = JSON.parse(event.newValue);
+                    // Only process recent commands (within 2 seconds)
+                    if (Date.now() - cmd.timestamp < 2000) {
+                        this.handleVoiceCommand(cmd);
+                    }
+                } catch (e) {}
+            }
+        });
+    }
+
+    handleVoiceCommand(cmd) {
+        if (!cmd || cmd.type !== 'checklist') return;
+
+        switch (cmd.action) {
+            case 'checkNext':
+                this.checkNextItem();
+                break;
+            case 'uncheckLast':
+                this.uncheckLastItem();
+                break;
+            case 'reset':
+                this.resetChecklist();
+                break;
+            case 'nextChecklist':
+                this.navigateChecklist(1);
+                break;
+            case 'prevChecklist':
+                this.navigateChecklist(-1);
+                break;
+            case 'goto':
+                if (cmd.target && this.checklists[cmd.target]) {
+                    this.switchChecklist(cmd.target);
+                }
+                break;
+        }
+    }
+
+    checkNextItem() {
+        const checklist = this.checklists[this.currentChecklist];
+        if (!checklist) return;
+
+        const itemKey = this.currentAircraft + '_' + this.currentChecklist;
+        const checked = this.checkedItems[itemKey] || [];
+
+        // Find first unchecked item
+        for (let i = 0; i < checklist.items.length; i++) {
+            if (!checked.includes(i)) {
+                this.toggleItem(i);
+                break;
+            }
+        }
+    }
+
+    uncheckLastItem() {
+        const itemKey = this.currentAircraft + '_' + this.currentChecklist;
+        const checked = this.checkedItems[itemKey] || [];
+
+        if (checked.length > 0) {
+            const lastIndex = checked[checked.length - 1];
+            this.toggleItem(lastIndex);
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.checklistWidget = new ChecklistWidget();
+    window.checklistWidget.initVoiceControl();
 });

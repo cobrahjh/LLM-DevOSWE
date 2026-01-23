@@ -1,0 +1,182 @@
+/**
+ * SimWidget Mobile Optimization Styles
+ * Touch-friendly enhancements for tablet/phone use
+ */
+
+/* Touch target sizes - minimum 44px for accessibility */
+@media (pointer: coarse) {
+    /* Buttons */
+    .btn, button, .tab, .preset, .preset-btn {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 12px 16px;
+    }
+
+    /* Checkbox/radio items */
+    .checklist-item, .weather-item, .info-item {
+        min-height: 48px;
+        padding: 12px;
+    }
+
+    /* Input fields */
+    input, select, textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevents iOS zoom */
+        padding: 12px;
+    }
+
+    /* Icons/controls */
+    .btn-icon, .header-controls button {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 20px;
+    }
+
+    /* Increase tap spacing */
+    .button-grid, .timer-controls, .preset-buttons {
+        gap: 12px;
+    }
+
+    /* Larger text for readability */
+    .widget-title {
+        font-size: 18px;
+    }
+
+    .item-text, .weather-value, .timer-display {
+        font-size: 16px;
+    }
+
+    /* Scrollable containers */
+    .checklist-container, .lap-list, .log {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Small screens (phones) */
+@media (max-width: 480px) {
+    .widget-container {
+        border-radius: 0;
+        max-width: 100%;
+        min-width: auto;
+    }
+
+    /* Stack horizontal layouts */
+    .weather-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .flight-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Full-width tabs */
+    .checklist-tabs, .timer-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .checklist-tabs::-webkit-scrollbar,
+    .timer-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab {
+        flex-shrink: 0;
+    }
+
+    /* Larger timer display on mobile */
+    .timer-display {
+        font-size: 40px;
+        padding: 16px;
+    }
+
+    /* Full-width buttons */
+    .timer-controls, .checklist-footer {
+        flex-direction: column;
+    }
+
+    .timer-controls .btn,
+    .checklist-footer .btn {
+        width: 100%;
+    }
+}
+
+/* Medium screens (tablets) */
+@media (min-width: 481px) and (max-width: 1024px) {
+    .widget-container {
+        max-width: 90vw;
+    }
+}
+
+/* Landscape phone optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+    .widget-container {
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .checklist-container {
+        max-height: 150px;
+    }
+
+    .map-container {
+        height: 200px;
+    }
+}
+
+/* Touch feedback */
+@media (pointer: coarse) {
+    .btn:active, button:active, .tab:active, .checklist-item:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+
+    /* Disable hover effects on touch */
+    .btn:hover, button:hover, .tab:hover {
+        transform: none;
+    }
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: max(0px)) {
+    .widget-container {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Prevent text selection on touch */
+.btn, button, .tab, .checklist-item {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Smooth scrolling */
+.checklist-container,
+.lap-list,
+.log,
+.commands-list {
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+}
+
+/* Pull-to-refresh prevention */
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* Settings button positioning on mobile */
+@media (max-width: 480px) {
+    .settings-btn {
+        top: 8px;
+        right: 8px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+}

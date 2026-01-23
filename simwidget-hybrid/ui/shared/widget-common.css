@@ -132,3 +132,6 @@ body.transparent .widget-container {
     transform: rotate(45deg);
     color: #e0e0e0;
 }
+
+/* Mobile optimization - import last for proper cascade */
+@import url('mobile.css');

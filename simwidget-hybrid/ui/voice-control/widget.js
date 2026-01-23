@@ -52,7 +52,20 @@ let voiceCommands = [
     
     // Custom/utility
     { phrase: 'take screenshot', action: 'key', key: 'F12', description: 'Screenshot' },
-    { phrase: 'pause', action: 'key', key: 'P', description: 'Pause simulation' }
+    { phrase: 'pause', action: 'key', key: 'P', description: 'Pause simulation' },
+
+    // Checklist commands (hands-free)
+    { phrase: 'check', action: 'checklist', checklistAction: 'checkNext', description: 'Check next item' },
+    { phrase: 'checked', action: 'checklist', checklistAction: 'checkNext', description: 'Check next item' },
+    { phrase: 'next item', action: 'checklist', checklistAction: 'checkNext', description: 'Check next item' },
+    { phrase: 'uncheck', action: 'checklist', checklistAction: 'uncheckLast', description: 'Uncheck last item' },
+    { phrase: 'reset checklist', action: 'checklist', checklistAction: 'reset', description: 'Reset current checklist' },
+    { phrase: 'next checklist', action: 'checklist', checklistAction: 'nextChecklist', description: 'Go to next checklist' },
+    { phrase: 'previous checklist', action: 'checklist', checklistAction: 'prevChecklist', description: 'Go to previous checklist' },
+    { phrase: 'startup checklist', action: 'checklist', checklistAction: 'goto', target: 'startup', description: 'Go to startup checklist' },
+    { phrase: 'taxi checklist', action: 'checklist', checklistAction: 'goto', target: 'taxi', description: 'Go to taxi checklist' },
+    { phrase: 'takeoff checklist', action: 'checklist', checklistAction: 'goto', target: 'takeoff', description: 'Go to takeoff checklist' },
+    { phrase: 'landing checklist', action: 'checklist', checklistAction: 'goto', target: 'landing', description: 'Go to landing checklist' }
 ];
 
 // ============================================
@@ -278,6 +291,9 @@ async function executeAction(cmd) {
             case 'fuel':
                 await executeFuel(cmd);
                 break;
+            case 'checklist':
+                await executeChecklist(cmd);
+                break;
             default:
                 log(`Unknown action type: ${cmd.action}`, 'error');
         }
@@ -337,6 +353,28 @@ async function executeFuel(cmd) {
         })
     });
     log(`Fuel: ${cmd.fuelAction} ${cmd.percent}%`, 'info');
+}
+
+async function executeChecklist(cmd) {
+    // Send checklist command via WebSocket broadcast or localStorage
+    const action = {
+        type: 'checklist',
+        action: cmd.checklistAction,
+        target: cmd.target || null
+    };
+
+    // Use BroadcastChannel API for cross-widget communication
+    const channel = new BroadcastChannel('simwidget-checklist');
+    channel.postMessage(action);
+    channel.close();
+
+    // Also store in localStorage for widgets that might not support BroadcastChannel
+    localStorage.setItem('simwidget-checklist-command', JSON.stringify({
+        ...action,
+        timestamp: Date.now()
+    }));
+
+    log(`Checklist: ${cmd.checklistAction}${cmd.target ? ' -> ' + cmd.target : ''}`, 'info');
 }
 
 
