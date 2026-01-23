@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">📝 Notepad</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-clear" title="Clear All">🗑️</button>
+                <button class="btn-icon" id="btn-copy" title="Copy All">📋</button>
+            </div>
+        </div>
+
+        <div class="quick-buttons" id="quick-buttons">
+            <button class="quick-btn" data-template="ATIS">ATIS</button>
+            <button class="quick-btn" data-template="CLEARANCE">CLR</button>
+            <button class="quick-btn" data-template="FREQ">FREQ</button>
+            <button class="quick-btn" data-template="SQUAWK">SQK</button>
+            <button class="quick-btn" data-template="RUNWAY">RWY</button>
+            <button class="quick-btn" data-template="ALTIMETER">QNH</button>
+        </div>
+
+        <div class="notes-container">
+            <textarea id="notes" placeholder="Type notes here...&#10;&#10;Tip: Use quick buttons above for common entries"></textarea>
+        </div>
+
+        <div class="saved-items" id="saved-items">
+            <div class="saved-header">
+                <span>Saved Items</span>
+                <button class="btn-icon btn-small" id="btn-add-saved" title="Save Current">+</button>
+            </div>
+            <div class="saved-list" id="saved-list"></div>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'notepad-widget', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>
