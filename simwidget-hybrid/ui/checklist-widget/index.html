@@ -22,12 +22,29 @@
 
         <div class="aircraft-selector">
             <select id="aircraft-select">
-                <option value="generic">Generic GA</option>
-                <option value="c172">Cessna 172</option>
-                <option value="c208">Cessna 208 Caravan</option>
-                <option value="tbm930">TBM 930</option>
-                <option value="a320">Airbus A320</option>
-                <option value="b747">Boeing 747</option>
+                <optgroup label="General Aviation">
+                    <option value="generic">Generic GA</option>
+                    <option value="c172">Cessna 172</option>
+                    <option value="c208">Cessna 208 Caravan</option>
+                    <option value="da40">Diamond DA40</option>
+                    <option value="da62">Diamond DA62</option>
+                    <option value="sr22">Cirrus SR22</option>
+                </optgroup>
+                <optgroup label="Turboprop">
+                    <option value="tbm930">TBM 930</option>
+                    <option value="pc12">Pilatus PC-12</option>
+                    <option value="kingair">King Air 350</option>
+                </optgroup>
+                <optgroup label="Business Jets">
+                    <option value="cj4">Cessna CJ4</option>
+                    <option value="longitude">Cessna Longitude</option>
+                </optgroup>
+                <optgroup label="Airliners">
+                    <option value="a320">Airbus A320</option>
+                    <option value="b737">Boeing 737</option>
+                    <option value="b747">Boeing 747</option>
+                    <option value="b787">Boeing 787</option>
+                </optgroup>
             </select>
         </div>
 
