@@ -28,6 +28,7 @@
 | 11434 | Ollama | External | `ollama serve` |
 | 1234 | Iris (ai-pc) | External | LM Studio on 192.168.1.162 |
 | 3003 | Hive Bridge (ai-pc) | External | `node C:\Hive\services\hive-bridge.js` |
+| 8870 | Hive Voice | Optional | `node C:\LLM-DevOSWE\Admin\hive-voice\voice-server.js` |
 
 ---
 

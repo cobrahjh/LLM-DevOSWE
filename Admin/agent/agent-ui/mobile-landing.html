@@ -107,6 +107,7 @@
         .service-icon.hivemind { background: linear-gradient(135deg, #43e97b, #38f9d7); }
         .service-icon.simwidget { background: linear-gradient(135deg, #00d4ff, #0099cc); }
         .service-icon.iris { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .service-icon.voice { background: linear-gradient(135deg, #f093fb, #f5576c); }
 
         .service-info h3 {
             font-size: 18px;
@@ -253,6 +254,15 @@
                 </div>
                 <div class="service-status" id="iris-status"></div>
             </a>
+
+            <a href="#" class="service-card" id="voice-link">
+                <div class="service-icon voice">🎤</div>
+                <div class="service-info">
+                    <h3>Voice Control</h3>
+                    <p>Dictate to Claude/AI</p>
+                </div>
+                <div class="service-status" id="voice-status"></div>
+            </a>
         </div>
 
         <button class="install-btn" id="installBtn" style="display:none;">
@@ -280,7 +290,8 @@
             oracle: { port: 3002, path: '/api/health' },
             relay: { port: 8600, path: '/api/health' },
             simwidget: { port: 8080, path: '/api/health' },
-            iris: { port: 3003, path: '/api/health', host: '192.168.1.162' }
+            iris: { port: 3003, path: '/api/health', host: '192.168.1.162' },
+            voice: { port: 8870, path: '/api/health' }
         };
 
         // Set service links
@@ -291,6 +302,7 @@
         document.getElementById('relay-link').href = `http://${host}:8600`;
         document.getElementById('simwidget-link').href = `http://${host}:8080/ui/interaction-wheel/`;
         document.getElementById('iris-link').href = `http://192.168.1.162:3003/api/health`;
+        document.getElementById('voice-link').href = `http://${host}:8870`;
 
         // Check service status
         async function checkService(name, port, path, customHost) {

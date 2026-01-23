@@ -26,7 +26,7 @@
         "cam-004-toggle-external": {
             "originalId": "toggleExternal",
             "name": "Toggle External",
-            "key": "BACKSPACE",
+            "key": "END",
             "trigger": "P",
             "isDefault": true
         },

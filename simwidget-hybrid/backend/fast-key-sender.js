@@ -35,6 +35,7 @@ class FastKeySender extends EventEmitter {
         // PowerShell script that reads commands from stdin
         const script = `
             Add-Type -AssemblyName System.Windows.Forms
+            $shell = New-Object -ComObject WScript.Shell
 
             $keyMap = @{
                 'BACKSPACE' = '{BACKSPACE}'; 'TAB' = '{TAB}'; 'ENTER' = '{ENTER}'
@@ -60,6 +61,10 @@ class FastKeySender extends EventEmitter {
                 if (-not $line) { continue }
 
                 try {
+                    # Focus MSFS window first
+                    $shell.AppActivate('Microsoft Flight Simulator') | Out-Null
+                    Start-Sleep -Milliseconds 50
+
                     $parts = $line -split '\\+'
                     $modPrefix = ''
                     $mainKey = $parts[-1]

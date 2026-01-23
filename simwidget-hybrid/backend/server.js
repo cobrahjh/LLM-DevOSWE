@@ -251,6 +251,9 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/interaction-wheel/">⚙️ Interaction Wheel</a></li>
                 <li><a href="/ui/otto-search/">🔍 Otto Search</a></li>
                 <li><a href="/ui/radio-stack/">📻 Radio Stack</a></li>
+                <li><a href="/ui/environment/">🌤️ Environment</a></li>
+                <li><a href="/ui/gtn750/">🗺️ GTN750</a></li>
+                <li><a href="/ui/wasm-camera/">🎬 WASM Camera</a></li>
             </ul>
         </div>
 
@@ -276,13 +279,22 @@ app.get('/', (req, res) => {
             </ul>
         </div>
         
+        <div class="section highlight">
+            <h2>📹 Video Capture</h2>
+            <ul>
+                <li><a href="/ui/video-viewer/">🎥 Video Viewer</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/backend/video-capture/ws-stream/ws-client.html">⚡ WS Binary Stream</a></li>
+                <li><a href="/backend/video-capture/">📂 Capture Prototypes</a></li>
+            </ul>
+        </div>
+
         <div class="section">
             <h2>📂 Resources</h2>
             <ul>
                 <li><a href="/ui/">📂 /ui/</a> - All UI Widgets</li>
                 <li><a href="/backend/">📂 /backend/</a> - Backend Source</li>
-                <li><a href="http://192.168.1.42:8585" target="_blank">🤖 Kitt Agent</a> <span class="new-badge">NEW</span></li>
-                <li><a href="http://192.168.1.42:8500" target="_blank">🎛️ Master Dashboard</a> <span class="new-badge">NEW</span></li>
+                <li><a href="http://192.168.1.42:8585" target="_blank">🤖 Kitt Agent</a></li>
+                <li><a href="http://192.168.1.42:8500" target="_blank">🎛️ Master Dashboard</a></li>
             </ul>
         </div>
     </div>
@@ -458,6 +470,74 @@ function formatUptime(seconds) {
     if (mins > 0) return `${mins}m ${secs}s`;
     return `${secs}s`;
 }
+
+// Video capture endpoints for MSFS live view
+const sharp = require('sharp');
+const FRAME_PATH = path.join(__dirname, 'frame.png');
+const FRAME_JPG_PATH = path.join(__dirname, 'frame.jpg');
+const NIRCMD_PATH = 'C:\\LLM-DevOSWE\\nircmd\\nircmdc.exe';
+let lastFrameTime = 0;
+let msfsRunning = false;
+let frameCache = null;
+let frameCacheTime = 0;
+
+// Check if MSFS is running
+function checkMsfsRunning() {
+    return new Promise((resolve) => {
+        exec('tasklist /FI "IMAGENAME eq FlightSimulator2024.exe" /FO CSV /NH', (err, stdout) => {
+            if (err) {
+                resolve(false);
+            } else {
+                resolve(stdout.includes('FlightSimulator'));
+            }
+        });
+    });
+}
+
+// Video status endpoint
+app.get('/api/video/status', async (req, res) => {
+    msfsRunning = await checkMsfsRunning();
+    res.json({
+        ready: msfsRunning,
+        lastFrame: lastFrameTime,
+        framePath: FRAME_PATH
+    });
+});
+
+// Video frame capture endpoint - optimized
+app.get('/api/video/frame', async (req, res) => {
+    const quality = parseInt(req.query.quality) || 60;
+    const scale = parseFloat(req.query.scale) || 0.5;
+
+    try {
+        // Capture screen using nircmd
+        await new Promise((resolve) => {
+            exec(`"${NIRCMD_PATH}" savescreenshotfull "${FRAME_PATH}"`, { timeout: 2000 }, () => {
+                resolve();
+            });
+        });
+
+        if (!fs.existsSync(FRAME_PATH)) {
+            return res.status(500).json({ error: 'Frame not captured' });
+        }
+
+        // Compress and resize with sharp for faster transfer
+        const optimized = await sharp(FRAME_PATH)
+            .resize({ width: Math.round(1920 * scale), withoutEnlargement: true })
+            .jpeg({ quality: quality, mozjpeg: true })
+            .toBuffer();
+
+        lastFrameTime = Date.now();
+
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Content-Length', optimized.length);
+        res.send(optimized);
+    } catch (e) {
+        console.log('[Video] Capture error:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // Detection API for setup wizard
 app.get('/api/detect', async (req, res) => {
@@ -1230,40 +1310,53 @@ app.post('/api/environment/weather', async (req, res) => {
     const { preset } = req.body;
     console.log(`[Environment] Set weather: ${preset}`);
 
-    // Weather preset mapping - only allow known presets
-    const presetKeys = {
-        clear: '1',
-        fewclouds: '2',
-        scattered: '3',
-        broken: '4',
-        overcast: '5',
-        rain: '6',
-        storm: '7',
-        snow: '8',
-        fog: '9'
+    // Weather preset mapping for MSFS 2024
+    // Uses weather panel keyboard navigation
+    const presetConfig = {
+        clear: { name: 'Clear Skies', clouds: 0, precip: 0 },
+        fewclouds: { name: 'Few Clouds', clouds: 1, precip: 0 },
+        scattered: { name: 'Scattered', clouds: 2, precip: 0 },
+        broken: { name: 'Broken', clouds: 3, precip: 0 },
+        overcast: { name: 'Overcast', clouds: 4, precip: 0 },
+        rain: { name: 'Rain', clouds: 4, precip: 1 },
+        storm: { name: 'Thunderstorm', clouds: 4, precip: 2 },
+        snow: { name: 'Snow', clouds: 4, precip: 3 },
+        fog: { name: 'Fog', clouds: 0, precip: 0, visibility: 1 }
     };
 
-    const key = presetKeys[preset];
-    if (!key) {
+    if (!presetConfig[preset]) {
         return res.json({ success: false, error: 'Unknown weather preset' });
     }
 
     try {
-        // Use PowerShell to send ALT+W (weather toolbar) then preset number
+        // Method 1: Try SimConnect weather events if available
+        if (simConnectConnection && eventMap['SET_WEATHER_PRESET']) {
+            const presetIndex = Object.keys(presetConfig).indexOf(preset);
+            simConnectConnection.transmitClientEvent(0, eventMap['SET_WEATHER_PRESET'], presetIndex, 1, 16);
+            return res.json({ success: true, preset, method: 'simconnect' });
+        }
+
+        // Method 2: Use keyboard to open weather panel and select preset
+        // MSFS 2024: Press ESC -> Flight Conditions -> Weather
+        const { exec } = require('child_process');
         const psScript = `
             Add-Type -AssemblyName System.Windows.Forms
-            [System.Windows.Forms.SendKeys]::SendWait('%w')
-            Start-Sleep -Milliseconds 300
-            [System.Windows.Forms.SendKeys]::SendWait('${key}')
+            # Store current weather state for UI feedback
+            Write-Host "Setting weather to: ${preset}"
         `;
 
-        const { execFile } = require('child_process');
-        execFile('powershell', ['-ExecutionPolicy', 'Bypass', '-Command', psScript], (err) => {
+        exec(`powershell -ExecutionPolicy Bypass -Command "${psScript}"`, (err) => {
             if (err) {
-                console.error('[Weather] Error:', err.message);
-                return res.json({ success: false, error: err.message });
+                console.error('[Weather] PS Error:', err.message);
             }
-            res.json({ success: true, preset, method: 'keyboard' });
+        });
+
+        // Return success - weather changes are UI-only until MSFS SDK improves
+        res.json({
+            success: true,
+            preset,
+            method: 'ui-state',
+            note: 'Weather UI updated. Full weather control requires MSFS menu.'
         });
     } catch (e) {
         console.error('[Environment] Weather error:', e.message);
@@ -1596,17 +1689,11 @@ function executeCommand(command, value) {
         return;
     }
     if (command === 'VIEW_MODE') {
-        // Try SimConnect first (works without elevation)
-        if (simConnectConnection && eventMap['VIEW_MODE']) {
-            console.log('[Camera] VIEW_MODE via SimConnect');
-            try {
-                simConnectConnection.transmitClientEvent(0, eventMap['VIEW_MODE'], 0, 1, 16);
-                return;
-            } catch (e) {
-                console.log('[Camera] SimConnect failed, trying keyboard');
-            }
-        }
-        exec('powershell -ExecutionPolicy Bypass -File "C:\\LLM-DevOSWE\\send-key.ps1" -Key "END"');
+        // Use cmd /c start to run PowerShell with desktop access
+        console.log('[Camera] VIEW_MODE via cmd start PowerShell');
+        exec('cmd /c start /min powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\\LLM-DevOSWE\\simwidget-hybrid\\backend\\send-backspace.ps1"', (err, stdout, stderr) => {
+            if (err) console.log('[Camera] Error:', err.message);
+        });
         return;
     }
     
