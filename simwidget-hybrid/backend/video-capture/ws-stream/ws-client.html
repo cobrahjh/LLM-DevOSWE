@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WS Stream Viewer</title>
+    <style>
+        body { margin: 0; background: #000; font-family: sans-serif; }
+        #video { max-width: 100vw; max-height: 100vh; display: block; margin: auto; }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .stat { color: #0f0; font-family: monospace; min-width: 100px; }
+        button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #555; }
+        button.active { background: #0a0; }
+    </style>
+</head>
+<body>
+    <img id="video">
+    <div class="controls">
+        <button id="startBtn">Start</button>
+        <select id="fps">
+            <option value="15">15 FPS</option>
+            <option value="30" selected>30 FPS</option>
+            <option value="60">60 FPS</option>
+        </select>
+        <select id="quality">
+            <option value="40">Low</option>
+            <option value="60" selected>Med</option>
+            <option value="80">High</option>
+        </select>
+        <div class="stat" id="stats">-- FPS / --ms</div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('startBtn');
+        const statsEl = document.getElementById('stats');
+        const fpsSelect = document.getElementById('fps');
+        const qualitySelect = document.getElementById('quality');
+
+        let ws = null;
+        let streaming = false;
+        let frameCount = 0;
+        let lastUpdate = Date.now();
+        let pendingHeader = null;
+
+        function connect() {
+            ws = new WebSocket('ws://localhost:9997');
+            ws.binaryType = 'arraybuffer';
+
+            ws.onopen = () => console.log('Connected');
+
+            ws.onmessage = (e) => {
+                if (typeof e.data === 'string') {
+                    const msg = JSON.parse(e.data);
+                    if (msg.type === 'settings') {
+                        fpsSelect.value = msg.fps;
+                        qualitySelect.value = msg.quality;
+                    }
+                } else {
+                    // Binary data
+                    if (!pendingHeader) {
+                        // This is header (8 bytes)
+                        const view = new DataView(e.data);
+                        pendingHeader = {
+                            size: view.getUint32(0, true),
+                            captureTime: view.getUint32(4, true)
+                        };
+                    } else {
+                        // This is frame data
+                        const blob = new Blob([e.data], { type: 'image/jpeg' });
+                        const url = URL.createObjectURL(blob);
+                        video.onload = () => URL.revokeObjectURL(url);
+                        video.src = url;
+
+                        frameCount++;
+                        updateStats(pendingHeader.captureTime);
+                        pendingHeader = null;
+                    }
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected');
+                streaming = false;
+                startBtn.textContent = 'Start';
+                startBtn.classList.remove('active');
+                setTimeout(connect, 2000);
+            };
+        }
+
+        function updateStats(captureTime) {
+            const now = Date.now();
+            if (now - lastUpdate >= 1000) {
+                const fps = Math.round(frameCount * 1000 / (now - lastUpdate));
+                statsEl.textContent = `${fps} FPS / ${captureTime}ms`;
+                frameCount = 0;
+                lastUpdate = now;
+            }
+        }
+
+        startBtn.onclick = () => {
+            streaming = !streaming;
+            if (streaming) {
+                ws.send(JSON.stringify({
+                    type: 'start',
+                    fps: parseInt(fpsSelect.value),
+                    quality: parseInt(qualitySelect.value),
+                    scale: 0.5
+                }));
+                startBtn.textContent = 'Stop';
+                startBtn.classList.add('active');
+            } else {
+                ws.send(JSON.stringify({ type: 'stop' }));
+                startBtn.textContent = 'Start';
+                startBtn.classList.remove('active');
+            }
+        };
+
+        fpsSelect.onchange = qualitySelect.onchange = () => {
+            if (streaming && ws) {
+                ws.send(JSON.stringify({
+                    type: 'settings',
+                    fps: parseInt(fpsSelect.value),
+                    quality: parseInt(qualitySelect.value)
+                }));
+            }
+        };
+
+        connect();
+    </script>
+</body>
+</html>
