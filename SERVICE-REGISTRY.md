@@ -27,6 +27,7 @@
 | 8830 | PMS50 GTN750 | Optional | `node C:\PMS50-Prototype\server.js` |
 | 11434 | Ollama | External | `ollama serve` |
 | 1234 | Iris (ai-pc) | External | LM Studio on 192.168.1.162 |
+| 3003 | Hive Bridge (ai-pc) | External | `node C:\Hive\services\hive-bridge.js` |
 
 ---
 
@@ -257,6 +258,17 @@
 - **Host:** 192.168.1.162 (ai-pc)
 - **Purpose:** Remote LLM fallback
 - **Models:** qwen3-vl-4b (vision), vt-gwen-2.5-3b
+
+### Hive Bridge (Port 3003)
+- **Host:** 192.168.1.162 (ai-pc)
+- **Location:** `C:\Hive\services\hive-bridge.js`
+- **Purpose:** Bridges ai-pc LM Studio to Hive network
+- **Endpoints:**
+  - `GET /api/health` - Node health + LM Studio status + model list
+  - `GET /api/info` - Node capabilities
+  - `/v1/*` - Proxies to LM Studio OpenAI-compatible API
+- **Capabilities:** llm, vision, embeddings
+- **Firewall:** Ports 1234, 3003 open
 
 ---
 

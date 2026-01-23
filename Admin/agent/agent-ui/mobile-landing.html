@@ -105,6 +105,8 @@
         .service-icon.oracle { background: linear-gradient(135deg, #f093fb, #f5576c); }
         .service-icon.relay { background: linear-gradient(135deg, #4facfe, #00f2fe); }
         .service-icon.hivemind { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .service-icon.simwidget { background: linear-gradient(135deg, #00d4ff, #0099cc); }
+        .service-icon.iris { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
 
         .service-info h3 {
             font-size: 18px;
@@ -233,6 +235,24 @@
                 </div>
                 <div class="service-status" id="relay-status"></div>
             </a>
+
+            <a href="#" class="service-card" id="simwidget-link">
+                <div class="service-icon simwidget">✈️</div>
+                <div class="service-info">
+                    <h3>SimWidget</h3>
+                    <p>Flight Sim Controls</p>
+                </div>
+                <div class="service-status" id="simwidget-status"></div>
+            </a>
+
+            <a href="#" class="service-card" id="iris-link">
+                <div class="service-icon iris">🔮</div>
+                <div class="service-info">
+                    <h3>Iris (ai-pc)</h3>
+                    <p>Vision AI + LLM Backup</p>
+                </div>
+                <div class="service-status" id="iris-status"></div>
+            </a>
         </div>
 
         <button class="install-btn" id="installBtn" style="display:none;">
@@ -258,7 +278,9 @@
             kittlive: { port: 8686, path: '/' },
             hivemind: { port: 8701, path: '/' },
             oracle: { port: 3002, path: '/api/health' },
-            relay: { port: 8600, path: '/api/status' }
+            relay: { port: 8600, path: '/api/health' },
+            simwidget: { port: 8080, path: '/api/health' },
+            iris: { port: 3003, path: '/api/health', host: '192.168.1.162' }
         };
 
         // Set service links
@@ -267,13 +289,16 @@
         document.getElementById('hivemind-link').href = `http://${host}:8701`;
         document.getElementById('oracle-link').href = `http://${host}:3002`;
         document.getElementById('relay-link').href = `http://${host}:8600`;
+        document.getElementById('simwidget-link').href = `http://${host}:8080/ui/interaction-wheel/`;
+        document.getElementById('iris-link').href = `http://192.168.1.162:3003/api/health`;
 
         // Check service status
-        async function checkService(name, port, path) {
+        async function checkService(name, port, path, customHost) {
+            const targetHost = customHost || host;
             try {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 3000);
-                const response = await fetch(`http://${host}:${port}${path}`, {
+                const response = await fetch(`http://${targetHost}:${port}${path}`, {
                     signal: controller.signal,
                     mode: 'no-cors'
                 });
@@ -288,7 +313,7 @@
             let onlineCount = 0;
 
             for (const [name, config] of Object.entries(services)) {
-                const online = await checkService(name, config.port, config.path);
+                const online = await checkService(name, config.port, config.path, config.host);
                 const statusEl = document.getElementById(`${name}-status`);
                 if (statusEl) {
                     statusEl.classList.toggle('online', online);
