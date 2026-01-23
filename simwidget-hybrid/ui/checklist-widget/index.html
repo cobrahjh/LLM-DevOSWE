@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">✅ Checklist</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-audio" title="Toggle Audio">🔊</button>
+                <button class="btn-icon" id="btn-reset" title="Reset Current">↺</button>
+            </div>
+        </div>
+
+        <div class="checklist-tabs" id="checklist-tabs">
+            <button class="tab active" data-checklist="preflight">Pre-Flight</button>
+            <button class="tab" data-checklist="startup">Startup</button>
+            <button class="tab" data-checklist="taxi">Taxi</button>
+            <button class="tab" data-checklist="takeoff">Takeoff</button>
+            <button class="tab" data-checklist="cruise">Cruise</button>
+            <button class="tab" data-checklist="landing">Landing</button>
+            <button class="tab" data-checklist="shutdown">Shutdown</button>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+            <span class="progress-text" id="progress-text">0/0</span>
+        </div>
+
+        <div class="checklist-container" id="checklist-container">
+            <!-- Items populated by JS -->
+        </div>
+
+        <div class="checklist-footer">
+            <button class="btn btn-secondary" id="btn-prev">← Prev</button>
+            <button class="btn btn-primary" id="btn-next">Next →</button>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'checklist-widget', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>
