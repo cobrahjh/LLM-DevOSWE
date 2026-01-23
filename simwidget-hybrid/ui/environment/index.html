@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Environment</title>
     <link rel="stylesheet" href="../shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="sw-widget environment">
         <div class="sw-header">
             <span class="sw-conn" id="conn"></span>
@@ -136,6 +139,13 @@
         </div>
     </div>
 
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
     <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'environment', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
 </body>
 </html>

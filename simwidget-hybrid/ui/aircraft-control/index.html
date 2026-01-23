@@ -6,6 +6,7 @@
     <title>SimWidget - Aircraft Control</title>
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -307,7 +308,13 @@
     
     <script src="/ui/shared/telemetry.js"></script>
     <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
     <script src="/ui/shared/feedback-section.js"></script>
     <script src="app.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'aircraft-control', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
 </body>
 </html>

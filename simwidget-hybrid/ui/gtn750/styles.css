@@ -1,0 +1,258 @@
+/* GTN750 GPS Widget Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    background: #000;
+    color: #00ff00;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gtn750 {
+    width: 400px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border: 3px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+}
+
+/* Header */
+.gtn-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #0066aa;
+    color: #fff;
+}
+
+.gtn-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.gtn-conn {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff4444;
+}
+
+.gtn-conn.connected {
+    background: #00ff00;
+    box-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+}
+
+/* Main Content */
+.gtn-main {
+    padding: 8px;
+}
+
+/* Sections */
+.gtn-section {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    padding: 8px;
+}
+
+.gtn-section-title {
+    font-size: 10px;
+    color: #0099ff;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+}
+
+/* Position Display */
+.gtn-coords {
+    display: flex;
+    justify-content: space-around;
+}
+
+.gtn-coord {
+    text-align: center;
+}
+
+.gtn-label {
+    display: block;
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.gtn-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #00ff00;
+    font-family: 'Consolas', monospace;
+}
+
+/* Navigation Data */
+.gtn-nav-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.gtn-nav-row:last-child {
+    margin-bottom: 0;
+}
+
+.gtn-nav-item {
+    flex: 1;
+    text-align: center;
+    padding: 4px;
+    background: #0a0a0a;
+    border-radius: 3px;
+    margin: 0 2px;
+}
+
+.gtn-nav-label {
+    display: block;
+    font-size: 9px;
+    color: #0099ff;
+    margin-bottom: 2px;
+}
+
+.gtn-nav-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #00ff00;
+    font-family: 'Consolas', monospace;
+}
+
+.gtn-nav-unit {
+    font-size: 10px;
+    color: #888;
+    margin-left: 2px;
+}
+
+/* Waypoint Display */
+.gtn-wpt-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.gtn-wpt-id {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ff00ff;
+    font-family: 'Consolas', monospace;
+    min-width: 80px;
+}
+
+.gtn-wpt-info {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+}
+
+.gtn-wpt-item {
+    text-align: center;
+}
+
+.gtn-wpt-label {
+    display: block;
+    font-size: 9px;
+    color: #0099ff;
+}
+
+.gtn-wpt-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #00ff00;
+    font-family: 'Consolas', monospace;
+}
+
+.gtn-wpt-unit {
+    font-size: 9px;
+    color: #888;
+}
+
+/* Radio Frequencies */
+.gtn-radio-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.gtn-radio-row:last-child {
+    margin-bottom: 0;
+}
+
+.gtn-radio-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #0a0a0a;
+    border-radius: 3px;
+    margin: 0 2px;
+}
+
+.gtn-radio-label {
+    font-size: 10px;
+    color: #0099ff;
+    font-weight: 600;
+    min-width: 35px;
+}
+
+.gtn-radio-active {
+    font-size: 14px;
+    font-weight: 700;
+    color: #00ff00;
+    font-family: 'Consolas', monospace;
+}
+
+.gtn-radio-stby {
+    font-size: 12px;
+    color: #888;
+    font-family: 'Consolas', monospace;
+}
+
+/* Footer */
+.gtn-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background: #1a1a1a;
+    border-top: 1px solid #333;
+}
+
+.gtn-time {
+    font-size: 14px;
+    font-weight: 600;
+    color: #00ff00;
+    font-family: 'Consolas', monospace;
+}
+
+.gtn-status {
+    font-size: 12px;
+    color: #00ff00;
+    font-weight: 600;
+    padding: 2px 8px;
+    background: #004400;
+    border-radius: 3px;
+}
+
+/* Responsive */
+@media (max-width: 420px) {
+    .gtn750 {
+        width: 100%;
+        border-radius: 0;
+    }
+}

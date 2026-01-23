@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTN750 GPS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="gtn750">
+        <div class="gtn-header">
+            <span class="gtn-title">GTN 750</span>
+            <span class="gtn-conn" id="conn"></span>
+        </div>
+
+        <div class="gtn-main">
+            <!-- Position Display -->
+            <div class="gtn-section gtn-position">
+                <div class="gtn-section-title">POSITION</div>
+                <div class="gtn-coords">
+                    <div class="gtn-coord">
+                        <span class="gtn-label">LAT</span>
+                        <span class="gtn-value" id="lat">N 00° 00.00'</span>
+                    </div>
+                    <div class="gtn-coord">
+                        <span class="gtn-label">LON</span>
+                        <span class="gtn-value" id="lon">W 000° 00.00'</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Data -->
+            <div class="gtn-section gtn-navdata">
+                <div class="gtn-nav-row">
+                    <div class="gtn-nav-item">
+                        <span class="gtn-nav-label">GS</span>
+                        <span class="gtn-nav-value" id="gs">0</span>
+                        <span class="gtn-nav-unit">KT</span>
+                    </div>
+                    <div class="gtn-nav-item">
+                        <span class="gtn-nav-label">TRK</span>
+                        <span class="gtn-nav-value" id="trk">000</span>
+                        <span class="gtn-nav-unit">°</span>
+                    </div>
+                    <div class="gtn-nav-item">
+                        <span class="gtn-nav-label">ALT</span>
+                        <span class="gtn-nav-value" id="alt">0</span>
+                        <span class="gtn-nav-unit">FT</span>
+                    </div>
+                </div>
+                <div class="gtn-nav-row">
+                    <div class="gtn-nav-item">
+                        <span class="gtn-nav-label">HDG</span>
+                        <span class="gtn-nav-value" id="hdg">000</span>
+                        <span class="gtn-nav-unit">°M</span>
+                    </div>
+                    <div class="gtn-nav-item">
+                        <span class="gtn-nav-label">VS</span>
+                        <span class="gtn-nav-value" id="vs">0</span>
+                        <span class="gtn-nav-unit">FPM</span>
+                    </div>
+                    <div class="gtn-nav-item">
+                        <span class="gtn-nav-label">WND</span>
+                        <span class="gtn-nav-value" id="wind">000/00</span>
+                        <span class="gtn-nav-unit"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Waypoint -->
+            <div class="gtn-section gtn-waypoint">
+                <div class="gtn-section-title">ACTIVE WAYPOINT</div>
+                <div class="gtn-wpt-display">
+                    <div class="gtn-wpt-id" id="wpt-id">----</div>
+                    <div class="gtn-wpt-info">
+                        <div class="gtn-wpt-item">
+                            <span class="gtn-wpt-label">DIS</span>
+                            <span class="gtn-wpt-value" id="wpt-dis">--.-</span>
+                            <span class="gtn-wpt-unit">NM</span>
+                        </div>
+                        <div class="gtn-wpt-item">
+                            <span class="gtn-wpt-label">BRG</span>
+                            <span class="gtn-wpt-value" id="wpt-brg">---</span>
+                            <span class="gtn-wpt-unit">°</span>
+                        </div>
+                        <div class="gtn-wpt-item">
+                            <span class="gtn-wpt-label">ETE</span>
+                            <span class="gtn-wpt-value" id="wpt-ete">--:--</span>
+                            <span class="gtn-wpt-unit"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COM/NAV Frequencies -->
+            <div class="gtn-section gtn-radio">
+                <div class="gtn-radio-row">
+                    <div class="gtn-radio-item">
+                        <span class="gtn-radio-label">COM1</span>
+                        <span class="gtn-radio-active" id="com1">118.00</span>
+                        <span class="gtn-radio-stby" id="com1-stby">118.00</span>
+                    </div>
+                    <div class="gtn-radio-item">
+                        <span class="gtn-radio-label">NAV1</span>
+                        <span class="gtn-radio-active" id="nav1">108.00</span>
+                        <span class="gtn-radio-stby" id="nav1-stby">108.00</span>
+                    </div>
+                </div>
+                <div class="gtn-radio-row">
+                    <div class="gtn-radio-item">
+                        <span class="gtn-radio-label">COM2</span>
+                        <span class="gtn-radio-active" id="com2">118.00</span>
+                        <span class="gtn-radio-stby" id="com2-stby">118.00</span>
+                    </div>
+                    <div class="gtn-radio-item">
+                        <span class="gtn-radio-label">XPDR</span>
+                        <span class="gtn-radio-active" id="xpdr">1200</span>
+                        <span class="gtn-radio-stby"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="gtn-footer">
+            <span class="gtn-time" id="utc-time">00:00:00Z</span>
+            <span class="gtn-status" id="gps-status">GPS</span>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'gtn750', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

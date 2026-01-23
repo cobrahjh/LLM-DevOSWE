@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSFS Video Viewer</title>
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff4444;
+        }
+
+        .status-dot.live { background: #00ff88; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .video-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+        }
+
+        #videoFeed {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #555;
+        }
+
+        .placeholder .icon { font-size: 64px; margin-bottom: 20px; }
+
+        .controls {
+            background: rgba(0,0,0,0.9);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            border-top: 1px solid #333;
+        }
+
+        .btn {
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #444; }
+        .btn.active { background: #00d4ff; color: #000; }
+
+        .fps-display {
+            font-size: 12px;
+            color: #888;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        select {
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .video-container:hover .fullscreen-btn { opacity: 1; }
+    </style>
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="header">
+        <h1>MSFS Live View</h1>
+        <div class="status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </div>
+
+    <div class="video-container" id="videoContainer">
+        <img id="videoFeed" style="display:none;">
+        <div class="placeholder" id="placeholder">
+            <div class="icon">&#x2708;</div>
+            <p>Click Start to begin video stream</p>
+            <p style="font-size:12px; margin-top:10px;">Captures MSFS window at selected FPS</p>
+        </div>
+        <button class="fullscreen-btn" id="fullscreenBtn">&#x26F6;</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="startBtn">
+            <span id="startIcon">&#x25B6;</span>
+            <span id="startText">Start</span>
+        </button>
+
+        <select id="fpsSelect">
+            <option value="5">5 FPS</option>
+            <option value="10" selected>10 FPS</option>
+            <option value="15">15 FPS</option>
+            <option value="20">20 FPS</option>
+            <option value="30">30 FPS</option>
+        </select>
+
+        <select id="qualitySelect">
+            <option value="40">Low Quality</option>
+            <option value="60" selected>Medium</option>
+            <option value="75">High</option>
+            <option value="90">Ultra</option>
+        </select>
+
+        <select id="scaleSelect">
+            <option value="0.25">25%</option>
+            <option value="0.5" selected>50%</option>
+            <option value="0.75">75%</option>
+            <option value="1.0">100%</option>
+        </select>
+
+        <div class="fps-display" id="fpsDisplay">-- FPS</div>
+    </div>
+
+    <script>
+        const API_URL = 'http://' + window.location.host;
+        let streaming = false;
+        let frameInterval = null;
+        let fps = 10;
+        let quality = 60;
+        let scale = 0.5;
+        let frameCount = 0;
+        let lastFpsUpdate = Date.now();
+
+        const videoFeed = document.getElementById('videoFeed');
+        const placeholder = document.getElementById('placeholder');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const startBtn = document.getElementById('startBtn');
+        const startIcon = document.getElementById('startIcon');
+        const startText = document.getElementById('startText');
+        const fpsDisplay = document.getElementById('fpsDisplay');
+        const fpsSelect = document.getElementById('fpsSelect');
+        const qualitySelect = document.getElementById('qualitySelect');
+        const scaleSelect = document.getElementById('scaleSelect');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        async function fetchFrame() {
+            if (!streaming) return;
+
+            try {
+                const timestamp = Date.now();
+                const response = await fetch(API_URL + '/api/video/frame?quality=' + quality + '&scale=' + scale + '&t=' + timestamp);
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+
+                    videoFeed.onload = function() { URL.revokeObjectURL(url); };
+                    videoFeed.src = url;
+                    videoFeed.style.display = 'block';
+                    placeholder.style.display = 'none';
+
+                    frameCount++;
+                    updateFpsDisplay();
+
+                    statusDot.classList.add('live');
+                    statusText.textContent = 'Live';
+                }
+            } catch (e) {
+                console.error('Frame fetch error:', e);
+                statusDot.classList.remove('live');
+                statusText.textContent = 'Error';
+            }
+        }
+
+        function updateFpsDisplay() {
+            const now = Date.now();
+            const elapsed = now - lastFpsUpdate;
+
+            if (elapsed >= 1000) {
+                const actualFps = Math.round(frameCount * 1000 / elapsed);
+                fpsDisplay.textContent = actualFps + ' FPS';
+                frameCount = 0;
+                lastFpsUpdate = now;
+            }
+        }
+
+        function toggleStream() {
+            streaming = !streaming;
+
+            if (streaming) {
+                startIcon.textContent = '\u25A0';
+                startText.textContent = 'Stop';
+                startBtn.classList.add('active');
+                frameInterval = setInterval(fetchFrame, 1000 / fps);
+                fetchFrame();
+            } else {
+                startIcon.textContent = '\u25B6';
+                startText.textContent = 'Start';
+                startBtn.classList.remove('active');
+                clearInterval(frameInterval);
+                statusDot.classList.remove('live');
+                statusText.textContent = 'Stopped';
+                fpsDisplay.textContent = '-- FPS';
+            }
+        }
+
+        function updateFps() {
+            fps = parseInt(fpsSelect.value);
+            if (streaming) {
+                clearInterval(frameInterval);
+                frameInterval = setInterval(fetchFrame, 1000 / fps);
+            }
+        }
+
+        function updateQuality() {
+            quality = parseInt(qualitySelect.value);
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('videoContainer');
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                container.requestFullscreen();
+            }
+        }
+
+        function updateScale() {
+            scale = parseFloat(scaleSelect.value);
+        }
+
+        // Event listeners
+        startBtn.addEventListener('click', toggleStream);
+        fpsSelect.addEventListener('change', updateFps);
+        qualitySelect.addEventListener('change', updateQuality);
+        scaleSelect.addEventListener('change', updateScale);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+        // Check if video endpoint exists
+        fetch(API_URL + '/api/video/status')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                statusText.textContent = data.ready ? 'Ready' : 'MSFS not found';
+            })
+            .catch(function() {
+                statusText.textContent = 'Server offline';
+            });
+    </script>
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'video-viewer', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

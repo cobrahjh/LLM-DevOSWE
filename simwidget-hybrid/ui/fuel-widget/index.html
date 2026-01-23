@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuel Widget - SimWidget Engine</title>
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
     <link rel="stylesheet" href="widget.css">
 </head>
 <body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="widget-container">
         <div class="widget-header">
             <span class="widget-title">⛽ FUEL MANAGEMENT</span>
@@ -93,6 +96,13 @@
         <div class="status-log" id="statusLog"></div>
     </div>
 
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
     <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'fuel-widget', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
 </body>
 </html>

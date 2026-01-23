@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimWidget - Flight Recorder</title>
     <link rel="stylesheet" href="widget.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
 </head>
 <body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="widget-container">
         <div class="widget-header">
             <h1>🎬 Flight Recorder</h1>
@@ -130,6 +133,13 @@
         </div>
     </div>
 
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
     <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'flight-recorder', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
 </body>
 </html>

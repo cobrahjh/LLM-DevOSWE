@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimWidget - Keymap Editor</title>
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="container">
         <header>
             <div class="header-left">
@@ -81,6 +84,13 @@
         </div>
     </div>
 
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
     <script src="app.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'keymap-editor', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
 </body>
 </html>
