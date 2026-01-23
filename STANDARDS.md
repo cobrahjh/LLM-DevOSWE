@@ -2388,6 +2388,69 @@ curl -s -X POST http://localhost:3002/api/ask \
 
 ---
 
+## 🎮 MSFS WASM Development
+
+### Lessons Learned (2026-01-22)
+
+#### API Choice: Legacy vs Modern
+
+**CRITICAL:** The MSFS SDK has multiple APIs for LVar access. The "Legacy" API is what actually works.
+
+| API | Header | Status |
+|-----|--------|--------|
+| Legacy (USE THIS) | `<MSFS/Legacy/gauges.h>` | ✅ Works in MSFS 2024 |
+| Modern | `<MSFS/MSFS_Vars.h>` | ❌ Does not work |
+
+**Correct functions (gauges.h):**
+- `register_named_variable()` - Register an LVar
+- `get_named_variable_value()` - Read an LVar
+- `set_named_variable_value()` - Write an LVar
+
+**Wrong functions (MSFS_Vars.h):**
+- `fsVarsRegisterLVar()` - Not implemented
+- `fsVarsLVarGet()` - Not implemented
+- `fsVarsLVarSet()` - Not implemented
+
+#### How to Verify API Choice
+
+**Before building, analyze working WASM modules:**
+```bash
+# Check what symbols working addons import
+strings "path\to\working.wasm" | grep -i "register\|lvar\|variable"
+```
+
+All working addons (Lorby, MobiFlight, FBW, Flow Pro) import:
+- `register_named_variable`
+- `get_named_variable_value`
+- `set_named_variable_value`
+
+#### Size Sanity Check
+
+| Size | Meaning |
+|------|---------|
+| < 5 KB | ❌ SDK not linked, symbols undefined |
+| 100-300 KB | ✅ Minimal working module |
+| 1-2 MB | ✅ Full-featured module |
+
+If your WASM is tiny (< 5KB), the compiler allowed undefined symbols but nothing is actually linked.
+
+#### The Mistake Pattern
+
+**Don't assume "Legacy" means deprecated.** In MSFS SDK:
+- "Legacy" = battle-tested, what everyone uses
+- "Modern" = newer API that may not be fully implemented
+
+**Always verify against working examples, not just documentation.**
+
+#### Reference Working Addons
+
+When in doubt, analyze these addons in `Community` folder:
+- Lorby LVar Hook - Pure LVar access
+- MobiFlight - Event module
+- FlyByWire - Full aircraft systems
+
+---
+
 ## 🤖 AI Development Workflow
 
 Best practices for LLM-assisted software development, based on industry research and hive experience.
