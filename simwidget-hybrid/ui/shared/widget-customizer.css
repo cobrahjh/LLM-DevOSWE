@@ -296,6 +296,17 @@ body {
     padding: 20px;
 }
 
+/* Built-in profiles */
+.profile-item.builtin {
+    border-left: 3px solid var(--widget-accent);
+}
+
+.profile-item.builtin .profile-name::after {
+    content: '✨';
+    margin-left: 6px;
+    font-size: 10px;
+}
+
 /* Settings panel overrides for customizer */
 .settings-dialog {
     background: var(--widget-bg) !important;

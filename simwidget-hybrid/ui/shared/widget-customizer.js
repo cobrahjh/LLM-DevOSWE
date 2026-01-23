@@ -15,6 +15,7 @@ class WidgetCustomizer {
 
         // Default themes
         this.themes = {
+            // Dark themes
             dark: {
                 name: 'Dark',
                 bg: '#1a1a2e',
@@ -23,15 +24,6 @@ class WidgetCustomizer {
                 textMuted: '#888888',
                 accent: '#667eea',
                 border: 'rgba(255,255,255,0.1)'
-            },
-            light: {
-                name: 'Light',
-                bg: '#f5f5f5',
-                bgSecondary: '#ffffff',
-                text: '#333333',
-                textMuted: '#666666',
-                accent: '#667eea',
-                border: 'rgba(0,0,0,0.1)'
             },
             amoled: {
                 name: 'AMOLED',
@@ -42,6 +34,16 @@ class WidgetCustomizer {
                 accent: '#00ff88',
                 border: 'rgba(255,255,255,0.05)'
             },
+            midnight: {
+                name: 'Midnight',
+                bg: '#0f0f23',
+                bgSecondary: '#1a1a3e',
+                text: '#e0e0ff',
+                textMuted: '#7777aa',
+                accent: '#9966ff',
+                border: 'rgba(153,102,255,0.2)'
+            },
+            // Aviation themes
             cockpit: {
                 name: 'Cockpit',
                 bg: '#0d1117',
@@ -51,6 +53,43 @@ class WidgetCustomizer {
                 accent: '#ff6b35',
                 border: 'rgba(255,107,53,0.2)'
             },
+            nightFlight: {
+                name: 'Night Flight',
+                bg: '#1a0a0a',
+                bgSecondary: '#2a1515',
+                text: '#ff9999',
+                textMuted: '#aa6666',
+                accent: '#ff3333',
+                border: 'rgba(255,50,50,0.2)'
+            },
+            garmin: {
+                name: 'Garmin',
+                bg: '#000000',
+                bgSecondary: '#1a1a1a',
+                text: '#00ff00',
+                textMuted: '#008800',
+                accent: '#00ffff',
+                border: 'rgba(0,255,0,0.2)'
+            },
+            boeing: {
+                name: 'Boeing',
+                bg: '#0a1628',
+                bgSecondary: '#142238',
+                text: '#7ec8e3',
+                textMuted: '#4a7c94',
+                accent: '#00aaff',
+                border: 'rgba(0,170,255,0.2)'
+            },
+            airbus: {
+                name: 'Airbus',
+                bg: '#1a1a2e',
+                bgSecondary: '#252545',
+                text: '#ffffff',
+                textMuted: '#8888aa',
+                accent: '#ffaa00',
+                border: 'rgba(255,170,0,0.2)'
+            },
+            // Nature themes
             ocean: {
                 name: 'Ocean',
                 bg: '#0f2027',
@@ -59,15 +98,112 @@ class WidgetCustomizer {
                 textMuted: '#a0c4d4',
                 accent: '#00d4ff',
                 border: 'rgba(0,212,255,0.2)'
+            },
+            forest: {
+                name: 'Forest',
+                bg: '#0a1f0a',
+                bgSecondary: '#153015',
+                text: '#c8e6c8',
+                textMuted: '#7ab37a',
+                accent: '#4caf50',
+                border: 'rgba(76,175,80,0.2)'
+            },
+            sunset: {
+                name: 'Sunset',
+                bg: '#1a0f1a',
+                bgSecondary: '#2d1f2d',
+                text: '#ffccaa',
+                textMuted: '#cc9977',
+                accent: '#ff6600',
+                border: 'rgba(255,102,0,0.2)'
+            },
+            aurora: {
+                name: 'Aurora',
+                bg: '#0a0a1a',
+                bgSecondary: '#151530',
+                text: '#aaffaa',
+                textMuted: '#66aa88',
+                accent: '#00ffaa',
+                border: 'rgba(0,255,170,0.2)'
+            },
+            // Light themes
+            light: {
+                name: 'Light',
+                bg: '#f5f5f5',
+                bgSecondary: '#ffffff',
+                text: '#333333',
+                textMuted: '#666666',
+                accent: '#667eea',
+                border: 'rgba(0,0,0,0.1)'
+            },
+            paper: {
+                name: 'Paper',
+                bg: '#faf8f5',
+                bgSecondary: '#ffffff',
+                text: '#2c2c2c',
+                textMuted: '#6b6b6b',
+                accent: '#d4a574',
+                border: 'rgba(0,0,0,0.08)'
+            },
+            daylight: {
+                name: 'Daylight',
+                bg: '#e8f4fc',
+                bgSecondary: '#ffffff',
+                text: '#1a3a4a',
+                textMuted: '#5a7a8a',
+                accent: '#0088cc',
+                border: 'rgba(0,136,204,0.15)'
+            },
+            // Special themes
+            hacker: {
+                name: 'Hacker',
+                bg: '#0a0a0a',
+                bgSecondary: '#111111',
+                text: '#00ff00',
+                textMuted: '#006600',
+                accent: '#00ff00',
+                border: 'rgba(0,255,0,0.1)'
+            },
+            cyberpunk: {
+                name: 'Cyberpunk',
+                bg: '#0d0221',
+                bgSecondary: '#1a0a3e',
+                text: '#ff00ff',
+                textMuted: '#aa00aa',
+                accent: '#00ffff',
+                border: 'rgba(255,0,255,0.2)'
+            },
+            retro: {
+                name: 'Retro',
+                bg: '#2b1b17',
+                bgSecondary: '#3d2b27',
+                text: '#ffd700',
+                textMuted: '#cc9900',
+                accent: '#ff4500',
+                border: 'rgba(255,215,0,0.2)'
             }
         };
 
         // Layout presets
         this.layouts = {
-            compact: { name: 'Compact', scale: 0.85, padding: 8, gap: 6 },
-            normal: { name: 'Normal', scale: 1.0, padding: 12, gap: 10 },
-            large: { name: 'Large', scale: 1.15, padding: 16, gap: 14 },
-            touch: { name: 'Touch-Friendly', scale: 1.25, padding: 20, gap: 16 }
+            mini: { name: 'Mini', scale: 0.7, padding: 4, gap: 4, borderRadius: 4 },
+            compact: { name: 'Compact', scale: 0.85, padding: 8, gap: 6, borderRadius: 6 },
+            normal: { name: 'Normal', scale: 1.0, padding: 12, gap: 10, borderRadius: 8 },
+            comfortable: { name: 'Comfortable', scale: 1.1, padding: 14, gap: 12, borderRadius: 10 },
+            large: { name: 'Large', scale: 1.2, padding: 16, gap: 14, borderRadius: 12 },
+            touch: { name: 'Touch', scale: 1.3, padding: 20, gap: 16, borderRadius: 14 },
+            tablet: { name: 'Tablet', scale: 1.4, padding: 24, gap: 18, borderRadius: 16 },
+            kiosk: { name: 'Kiosk', scale: 1.6, padding: 32, gap: 24, borderRadius: 20 }
+        };
+
+        // Built-in profiles
+        this.builtInProfiles = {
+            'Day VFR': { theme: 'daylight', layout: 'normal' },
+            'Night IFR': { theme: 'nightFlight', layout: 'comfortable' },
+            'Glass Cockpit': { theme: 'garmin', layout: 'normal' },
+            'Phone': { theme: 'amoled', layout: 'touch' },
+            'Tablet': { theme: 'dark', layout: 'tablet' },
+            'Stream Deck': { theme: 'amoled', layout: 'mini' }
         };
 
         // Load saved settings
@@ -175,10 +311,11 @@ class WidgetCustomizer {
     }
 
     /**
-     * Load a saved profile
+     * Load a saved profile (user or built-in)
      */
     loadProfile(name) {
-        const profile = this.profiles[name];
+        // Check user profiles first, then built-in
+        const profile = this.profiles[name] || this.builtInProfiles[name];
         if (!profile) return false;
 
         this.customColors = profile.customColors || {};
@@ -262,9 +399,13 @@ class WidgetCustomizer {
      * Render layout settings
      */
     renderLayoutSection() {
+        const layoutIcons = {
+            mini: '🔹', compact: '🔸', normal: '⬜', comfortable: '🔷',
+            large: '🔶', touch: '👆', tablet: '📱', kiosk: '🖥️'
+        };
         const layoutOptions = Object.entries(this.layouts).map(([id, layout]) => `
             <button class="layout-btn ${this.currentLayout === id ? 'active' : ''}" data-layout="${id}">
-                <span class="layout-icon">${id === 'compact' ? '🔹' : id === 'normal' ? '🔸' : id === 'large' ? '🔶' : '👆'}</span>
+                <span class="layout-icon">${layoutIcons[id] || '⬜'}</span>
                 <span class="layout-name">${layout.name}</span>
                 <span class="layout-scale">${Math.round(layout.scale * 100)}%</span>
             </button>
@@ -289,8 +430,22 @@ class WidgetCustomizer {
      * Render profiles section
      */
     renderProfilesSection() {
-        const profileList = Object.entries(this.profiles).map(([name, profile]) => `
-            <div class="profile-item">
+        // Built-in profiles
+        const builtInList = Object.entries(this.builtInProfiles).map(([name, profile]) => `
+            <div class="profile-item builtin">
+                <div class="profile-info">
+                    <span class="profile-name">${name}</span>
+                    <span class="profile-meta">${this.themes[profile.theme]?.name} / ${this.layouts[profile.layout]?.name}</span>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn-small btn-load" data-profile="${name}">Load</button>
+                </div>
+            </div>
+        `).join('');
+
+        // User profiles
+        const userList = Object.entries(this.profiles).map(([name, profile]) => `
+            <div class="profile-item user">
                 <div class="profile-info">
                     <span class="profile-name">${name}</span>
                     <span class="profile-meta">${this.themes[profile.theme]?.name} / ${this.layouts[profile.layout]?.name}</span>
@@ -300,9 +455,13 @@ class WidgetCustomizer {
                     <button class="btn-small btn-delete" data-profile="${name}">✕</button>
                 </div>
             </div>
-        `).join('') || '<p class="empty-state">No saved profiles</p>';
+        `).join('') || '<p class="empty-state">No custom profiles yet</p>';
 
         return `
+            <div class="customizer-section">
+                <label class="section-label">Quick Presets</label>
+                <div class="profile-list">${builtInList}</div>
+            </div>
             <div class="customizer-section">
                 <label class="section-label">Save Current Settings</label>
                 <div class="save-profile-row">
@@ -311,8 +470,8 @@ class WidgetCustomizer {
                 </div>
             </div>
             <div class="customizer-section">
-                <label class="section-label">Saved Profiles</label>
-                <div class="profile-list">${profileList}</div>
+                <label class="section-label">My Profiles</label>
+                <div class="profile-list">${userList}</div>
             </div>
         `;
     }
