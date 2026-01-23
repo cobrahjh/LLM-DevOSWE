@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interaction Wheel - SimWidget</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
 </head>
 <body>
+    <!-- Settings Button -->
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+
     <div class="wheel-container">
         <!-- Radial Menu -->
         <div class="wheel" id="wheel">
@@ -31,6 +36,23 @@
     <!-- Action Tooltip -->
     <div class="tooltip" id="tooltip"></div>
 
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
     <script src="widget.js"></script>
+    <script>
+        // Initialize customizer after widget loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const settings = new SettingsPanel();
+            const customizer = new WidgetCustomizer({
+                widgetId: 'interaction-wheel',
+                settingsPanel: settings
+            });
+
+            // Settings button
+            document.getElementById('settings-btn').addEventListener('click', () => {
+                settings.toggle();
+            });
+        });
+    </script>
 </body>
 </html>

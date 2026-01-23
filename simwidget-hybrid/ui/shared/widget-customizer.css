@@ -1,0 +1,321 @@
+/**
+ * SimWidget Customizer Styles v1.0.0
+ * Include after settings-panel.css
+ */
+
+/* CSS Variables - Defaults */
+:root {
+    --widget-bg: #1a1a2e;
+    --widget-bg-secondary: #16213e;
+    --widget-text: #ffffff;
+    --widget-text-muted: #888888;
+    --widget-accent: #667eea;
+    --widget-border: rgba(255,255,255,0.1);
+    --widget-scale: 1;
+    --widget-padding: 12px;
+    --widget-gap: 10px;
+    --widget-bg-opacity: 1;
+}
+
+/* Apply variables to body */
+body {
+    background: var(--widget-bg);
+    color: var(--widget-text);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Customizer section styling */
+.customizer-section {
+    margin-bottom: 20px;
+}
+
+.section-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--widget-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+/* Theme grid */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+}
+
+.theme-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+    background: var(--widget-bg-secondary);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+    border-color: var(--widget-accent);
+}
+
+.theme-btn.active {
+    border-color: var(--widget-accent);
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.theme-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.theme-name {
+    font-size: 11px;
+    color: var(--widget-text);
+}
+
+/* Layout grid */
+.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.layout-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px;
+    background: var(--widget-bg-secondary);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.layout-btn:hover {
+    border-color: var(--widget-accent);
+}
+
+.layout-btn.active {
+    border-color: var(--widget-accent);
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.layout-icon {
+    font-size: 20px;
+}
+
+.layout-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--widget-text);
+}
+
+.layout-scale {
+    font-size: 10px;
+    color: var(--widget-text-muted);
+}
+
+/* Color picker row */
+.color-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-picker-row input[type="color"] {
+    width: 50px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--widget-bg-secondary);
+    padding: 2px;
+}
+
+.color-picker-row input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-picker-row input[type="color"]::-webkit-color-swatch {
+    border-radius: 4px;
+    border: none;
+}
+
+/* Slider row */
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-row input[type="range"] {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--widget-bg-secondary);
+    appearance: none;
+    cursor: pointer;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--widget-accent);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.slider-value {
+    min-width: 45px;
+    font-size: 13px;
+    color: var(--widget-text-muted);
+    text-align: right;
+}
+
+/* Save profile row */
+.save-profile-row {
+    display: flex;
+    gap: 10px;
+}
+
+.save-profile-row input[type="text"] {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--widget-bg-secondary);
+    border: 1px solid var(--widget-border);
+    border-radius: 6px;
+    color: var(--widget-text);
+    font-size: 14px;
+}
+
+.save-profile-row input[type="text"]:focus {
+    outline: none;
+    border-color: var(--widget-accent);
+}
+
+/* Buttons */
+.btn-small {
+    padding: 6px 12px;
+    background: var(--widget-bg-secondary);
+    border: 1px solid var(--widget-border);
+    border-radius: 4px;
+    color: var(--widget-text);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-small:hover {
+    background: var(--widget-accent);
+    border-color: var(--widget-accent);
+}
+
+.btn-primary {
+    padding: 10px 20px;
+    background: var(--widget-accent);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Profile list */
+.profile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profile-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: var(--widget-bg-secondary);
+    border-radius: 8px;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-name {
+    font-weight: 600;
+    color: var(--widget-text);
+}
+
+.profile-meta {
+    font-size: 11px;
+    color: var(--widget-text-muted);
+}
+
+.profile-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-delete {
+    background: rgba(255, 68, 68, 0.2);
+    border-color: rgba(255, 68, 68, 0.3);
+    color: #ff4444;
+}
+
+.btn-delete:hover {
+    background: #ff4444;
+    color: white;
+}
+
+.empty-state {
+    color: var(--widget-text-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Settings panel overrides for customizer */
+.settings-dialog {
+    background: var(--widget-bg) !important;
+    border: 1px solid var(--widget-border) !important;
+}
+
+.settings-header {
+    border-bottom: 1px solid var(--widget-border) !important;
+}
+
+.settings-nav-btn {
+    color: var(--widget-text-muted) !important;
+}
+
+.settings-nav-btn:hover,
+.settings-nav-btn.active {
+    color: var(--widget-text) !important;
+    background: var(--widget-bg-secondary) !important;
+}
+
+.section-title {
+    color: var(--widget-text) !important;
+}

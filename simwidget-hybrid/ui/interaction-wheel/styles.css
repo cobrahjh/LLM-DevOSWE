@@ -9,13 +9,34 @@
 
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d1a 100%);
-    color: #e0e0e0;
+    background: radial-gradient(ellipse at center, var(--widget-bg, #1a1a2e) 0%, #0d0d1a 100%);
+    color: var(--widget-text, #e0e0e0);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
+}
+
+/* Settings Button */
+.settings-btn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 44px;
+    height: 44px;
+    background: var(--widget-bg-secondary, rgba(255,255,255,0.1));
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.2));
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.2s ease;
+}
+
+.settings-btn:hover {
+    background: var(--widget-accent, #667eea);
+    transform: rotate(45deg);
 }
 
 .wheel-container {
@@ -25,12 +46,12 @@ body {
     margin: 0 auto;
 }
 
-/* Center Hub - Properly Centered */
+/* Center Hub - Adjusted to visual center of icons */
 .wheel-hub {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -10%);
     width: 90px;
     height: 90px;
     background: linear-gradient(135deg, #2a2a4e 0%, #1a1a2e 100%);
