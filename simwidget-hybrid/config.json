@@ -1,6 +1,13 @@
 {
-  "cameraMode": "auto",
+  "msfsVersion": null,
+  "chasePlaneDetected": false,
+  "ahkDetected": false,
+  "simConnectDetected": false,
+  "cameraMode": "native",
+  "autostartServer": false,
+  "autostartOverlay": false,
+  "serverPort": 8080,
+  "theme": "auto",
   "autoStart": true,
-  "port": 8080,
-  "theme": "dark"
+  "port": 8080
 }

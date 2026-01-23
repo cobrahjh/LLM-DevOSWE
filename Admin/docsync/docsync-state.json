@@ -67,7 +67,7 @@
     "C:\\LLM-DevOSWE\\Admin\\docker\\stop-hive-wsl.bat": 1768564510969,
     "C:\\LLM-DevOSWE\\Admin\\docker\\sync-to-morpu.bat": 1768563711732,
     "C:\\LLM-DevOSWE\\Admin\\docs\\HIVE-DISPLAY-STANDARDS.md": 1768563712259,
-    "C:\\LLM-DevOSWE\\Admin\\docsync\\docsync-state.json": 1769107905961,
+    "C:\\LLM-DevOSWE\\Admin\\docsync\\docsync-state.json": 1769112052018,
     "C:\\LLM-DevOSWE\\Admin\\docsync\\docsync-watch.bat": 1768563712275,
     "C:\\LLM-DevOSWE\\Admin\\docsync\\docsync.bat": 1768563712287,
     "C:\\LLM-DevOSWE\\Admin\\google-drive\\credentials.json": 1768563712298,
@@ -110,7 +110,7 @@
     "C:\\LLM-DevOSWE\\Admin\\uninstall-services.ps1": 1768563717380,
     "C:\\LLM-DevOSWE\\ARCHITECTURE.md": 1768563717912,
     "C:\\LLM-DevOSWE\\claude-here.bat": 1768737414747,
-    "C:\\LLM-DevOSWE\\CLAUDE.md": 1769106486565,
+    "C:\\LLM-DevOSWE\\CLAUDE.md": 1769108965670,
     "C:\\LLM-DevOSWE\\create-shortcut.ps1": 1768563718591,
     "C:\\LLM-DevOSWE\\data\\fsuipc-events-a320.json": 1768563718604,
     "C:\\LLM-DevOSWE\\data\\fsuipc-events-cessna.json": 1768563718613,
@@ -406,13 +406,16 @@
     "C:\\LLM-DevOSWE\\Admin\\restart-relay.bat": 1769054162125,
     "C:\\LLM-DevOSWE\\Admin\\hive-plugin\\agents\\hive-doctor.md": 1769100730254,
     "C:\\LLM-DevOSWE\\Admin\\hive-plugin\\agents\\intel-gatherer.md": 1769100759137,
-    "C:\\LLM-DevOSWE\\Admin\\hive-brain\\data\\devices.json": 1769107885772,
-    "C:\\LLM-DevOSWE\\Admin\\hive-brain\\data\\enrollment-queue.json": 1769107885784,
+    "C:\\LLM-DevOSWE\\Admin\\hive-brain\\data\\devices.json": 1769111780973,
+    "C:\\LLM-DevOSWE\\Admin\\hive-brain\\data\\enrollment-queue.json": 1769111780984,
     "C:\\LLM-DevOSWE\\Admin\\master-mind\\package.json": 1769102002204,
     "C:\\LLM-DevOSWE\\Admin\\master-mind\\package-lock.json": 1769102164567,
     "C:\\LLM-DevOSWE\\Admin\\master-mind\\data\\stats.json": 1769105233546,
-    "C:\\LLM-DevOSWE\\simwidget-hybrid\\config.json": 1769103956532,
-    "C:\\LLM-DevOSWE\\docs\\COMMANDS.md": 1769107761418
+    "C:\\LLM-DevOSWE\\simwidget-hybrid\\config.json": 1769112046868,
+    "C:\\LLM-DevOSWE\\docs\\COMMANDS.md": 1769107761418,
+    "C:\\LLM-DevOSWE\\docs\\PERSONAS.md": 1769108811394,
+    "C:\\LLM-DevOSWE\\docs\\INTEL-SOURCES.md": 1769108853686,
+    "C:\\LLM-DevOSWE\\docs\\CLAUDE-CODE-GUIDE.md": 1769110091729
   },
-  "lastSave": "2026-01-22T18:51:45.961Z"
+  "lastSave": "2026-01-22T20:00:52.018Z"
 }

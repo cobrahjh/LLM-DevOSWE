@@ -56,6 +56,8 @@ body {
 .hub-icon {
     font-size: 28px;
     color: #00d4ff;
+    line-height: 1;
+    text-align: center;
 }
 
 .hub-label {
@@ -64,6 +66,7 @@ body {
     color: #888;
     letter-spacing: 1px;
     margin-top: 2px;
+    text-align: center;
 }
 
 /* Wheel Container */
@@ -232,6 +235,8 @@ body {
     .wheel-hub {
         width: 70px;
         height: 70px;
+        margin-top: -35px;
+        margin-left: -35px;
     }
 
     .hub-icon {

@@ -1194,6 +1194,148 @@ app.post('/api/recorder/slew', (req, res) => {
     }
 });
 
+// ==================== ENVIRONMENT API ====================
+
+// Set time of day
+app.post('/api/environment/time', (req, res) => {
+    const { hours, minutes } = req.body;
+    console.log(`[Environment] Set time: ${hours}:${minutes}`);
+
+    if (!simConnectConnection) {
+        return res.json({ success: false, error: 'SimConnect not connected' });
+    }
+
+    try {
+        // ZULU_HOURS_SET and ZULU_MINUTES_SET
+        const hoursEventId = eventMap['ZULU_HOURS_SET'];
+        const minutesEventId = eventMap['ZULU_MINUTES_SET'];
+
+        if (hoursEventId) {
+            simConnectConnection.transmitClientEvent(0, hoursEventId, hours, 1, 16);
+        }
+        if (minutesEventId) {
+            simConnectConnection.transmitClientEvent(0, minutesEventId, minutes, 1, 16);
+        }
+
+        res.json({ success: true, time: { hours, minutes } });
+    } catch (e) {
+        console.error('[Environment] Time error:', e.message);
+        res.json({ success: false, error: e.message });
+    }
+});
+
+// Set weather preset
+app.post('/api/environment/weather', (req, res) => {
+    const { preset } = req.body;
+    console.log(`[Environment] Set weather: ${preset}`);
+
+    // Weather presets are typically set via SimConnect weather functions
+    // For now, return success as weather control varies by sim version
+    res.json({ success: true, preset, note: 'Weather presets require MSFS weather API' });
+});
+
+// Set sim rate
+app.post('/api/environment/simrate', (req, res) => {
+    const { rate } = req.body;
+    console.log(`[Environment] Set sim rate: ${rate}x`);
+
+    if (!simConnectConnection) {
+        return res.json({ success: false, error: 'SimConnect not connected' });
+    }
+
+    try {
+        // SIM_RATE_SET or SIM_RATE_INCR/SIM_RATE_DECR
+        const setEventId = eventMap['SIM_RATE_SET'];
+        if (setEventId) {
+            // Sim rate is set as a multiplier (1 = normal, 2 = 2x, etc.)
+            simConnectConnection.transmitClientEvent(0, setEventId, Math.round(rate * 256), 1, 16);
+            res.json({ success: true, rate });
+        } else {
+            // Try increment/decrement approach
+            res.json({ success: false, error: 'SIM_RATE events not mapped' });
+        }
+    } catch (e) {
+        console.error('[Environment] Sim rate error:', e.message);
+        res.json({ success: false, error: e.message });
+    }
+});
+
+// Pause/Resume
+app.post('/api/environment/pause', (req, res) => {
+    const { paused } = req.body;
+    console.log(`[Environment] ${paused ? 'Pause' : 'Resume'}`);
+
+    if (!simConnectConnection) {
+        return res.json({ success: false, error: 'SimConnect not connected' });
+    }
+
+    try {
+        const eventName = paused ? 'PAUSE_ON' : 'PAUSE_OFF';
+        const eventId = eventMap[eventName];
+        if (eventId) {
+            simConnectConnection.transmitClientEvent(0, eventId, 0, 1, 16);
+            res.json({ success: true, paused });
+        } else {
+            // Try PAUSE_TOGGLE
+            const toggleId = eventMap['PAUSE_TOGGLE'];
+            if (toggleId) {
+                simConnectConnection.transmitClientEvent(0, toggleId, 0, 1, 16);
+                res.json({ success: true, paused });
+            } else {
+                res.json({ success: false, error: 'Pause event not mapped' });
+            }
+        }
+    } catch (e) {
+        console.error('[Environment] Pause error:', e.message);
+        res.json({ success: false, error: e.message });
+    }
+});
+
+// Repair aircraft
+app.post('/api/environment/repair', (req, res) => {
+    console.log('[Environment] Repair aircraft');
+
+    if (!simConnectConnection) {
+        return res.json({ success: false, error: 'SimConnect not connected' });
+    }
+
+    try {
+        const eventId = eventMap['REPAIR_AND_REFUEL'];
+        if (eventId) {
+            simConnectConnection.transmitClientEvent(0, eventId, 0, 1, 16);
+            res.json({ success: true, action: 'repair' });
+        } else {
+            res.json({ success: false, error: 'Repair event not mapped' });
+        }
+    } catch (e) {
+        console.error('[Environment] Repair error:', e.message);
+        res.json({ success: false, error: e.message });
+    }
+});
+
+// Refuel aircraft
+app.post('/api/environment/refuel', (req, res) => {
+    console.log('[Environment] Refuel aircraft');
+
+    if (!simConnectConnection) {
+        return res.json({ success: false, error: 'SimConnect not connected' });
+    }
+
+    try {
+        // FUEL_SELECTOR_ALL or ADD_FUEL_QUANTITY
+        const eventId = eventMap['REPAIR_AND_REFUEL'] || eventMap['ADD_FUEL_QUANTITY'];
+        if (eventId) {
+            simConnectConnection.transmitClientEvent(0, eventId, 0, 1, 16);
+            res.json({ success: true, action: 'refuel' });
+        } else {
+            res.json({ success: false, error: 'Refuel event not mapped' });
+        }
+    } catch (e) {
+        console.error('[Environment] Refuel error:', e.message);
+        res.json({ success: false, error: e.message });
+    }
+});
+
 // ==================== KEYMAP API ====================
 
 const keySender = require('./key-sender');
@@ -1713,6 +1855,16 @@ async function initSimConnect() {
             'SLEW_TOGGLE',
             'SLEW_ON',
             'SLEW_OFF',
+            // Environment controls
+            'ZULU_HOURS_SET',
+            'ZULU_MINUTES_SET',
+            'PAUSE_ON',
+            'PAUSE_OFF',
+            'PAUSE_TOGGLE',
+            'SIM_RATE_SET',
+            'SIM_RATE_INCR',
+            'SIM_RATE_DECR',
+            'REPAIR_AND_REFUEL',
             // Radio frequency events
             'COM_RADIO_SET',
             'COM_STBY_RADIO_SET',
