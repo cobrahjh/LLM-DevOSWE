@@ -32,8 +32,7 @@ body {
     left: 50%;
     width: 90px;
     height: 90px;
-    margin-top: -45px;
-    margin-left: -45px;
+    transform: translate(-50%, -50%);
     background: linear-gradient(135deg, #2a2a4e 0%, #1a1a2e 100%);
     border: 3px solid rgba(0, 212, 255, 0.5);
     border-radius: 50%;
@@ -48,7 +47,7 @@ body {
 }
 
 .wheel-hub:hover {
-    transform: scale(1.05);
+    transform: translate(-50%, -50%) scale(1.05);
     border-color: #00d4ff;
     box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
 }
@@ -58,6 +57,10 @@ body {
     color: #00d4ff;
     line-height: 1;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 
 .hub-label {

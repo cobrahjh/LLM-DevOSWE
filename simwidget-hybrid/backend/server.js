@@ -1226,13 +1226,49 @@ app.post('/api/environment/time', (req, res) => {
 });
 
 // Set weather preset
-app.post('/api/environment/weather', (req, res) => {
+app.post('/api/environment/weather', async (req, res) => {
     const { preset } = req.body;
     console.log(`[Environment] Set weather: ${preset}`);
 
-    // Weather presets are typically set via SimConnect weather functions
-    // For now, return success as weather control varies by sim version
-    res.json({ success: true, preset, note: 'Weather presets require MSFS weather API' });
+    // Weather preset mapping - only allow known presets
+    const presetKeys = {
+        clear: '1',
+        fewclouds: '2',
+        scattered: '3',
+        broken: '4',
+        overcast: '5',
+        rain: '6',
+        storm: '7',
+        snow: '8',
+        fog: '9'
+    };
+
+    const key = presetKeys[preset];
+    if (!key) {
+        return res.json({ success: false, error: 'Unknown weather preset' });
+    }
+
+    try {
+        // Use PowerShell to send ALT+W (weather toolbar) then preset number
+        const psScript = `
+            Add-Type -AssemblyName System.Windows.Forms
+            [System.Windows.Forms.SendKeys]::SendWait('%w')
+            Start-Sleep -Milliseconds 300
+            [System.Windows.Forms.SendKeys]::SendWait('${key}')
+        `;
+
+        const { execFile } = require('child_process');
+        execFile('powershell', ['-ExecutionPolicy', 'Bypass', '-Command', psScript], (err) => {
+            if (err) {
+                console.error('[Weather] Error:', err.message);
+                return res.json({ success: false, error: err.message });
+            }
+            res.json({ success: true, preset, method: 'keyboard' });
+        });
+    } catch (e) {
+        console.error('[Environment] Weather error:', e.message);
+        res.json({ success: false, error: e.message });
+    }
 });
 
 // Set sim rate
@@ -1599,6 +1635,15 @@ function executeCommand(command, value) {
                 simValue = Math.round(value);
             } else if (command === 'VIEW_MODE' || command === 'CENTER_AILER_RUDDER') {
                 // Toggle - no value needed
+                simValue = 0;
+            } else if (command === 'ZULU_HOURS_SET' || command === 'ZULU_MINUTES_SET') {
+                // Time values passed directly
+                simValue = Math.round(value);
+            } else if (command === 'SIM_RATE_SET') {
+                // Sim rate multiplier (1 = 256)
+                simValue = Math.round(value * 256);
+            } else if (command === 'PAUSE_TOGGLE' || command === 'SLEW_TOGGLE' || command === 'REPAIR_AND_REFUEL') {
+                // Toggle commands - no value needed
                 simValue = 0;
             } else if (command === 'AXIS_AILERONS_SET' || command === 'AXIS_ELEVATOR_SET' || command === 'AXIS_RUDDER_SET') {
                 // Flight controls: -100 to 100 → -16383 to 16383

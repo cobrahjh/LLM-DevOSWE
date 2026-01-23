@@ -175,23 +175,22 @@ class EnvironmentWidget {
     setWeather(preset) {
         this.data.weather = preset;
 
-        // Weather commands are limited in SimConnect
-        // These may need to use the MSFS menu system
-        const weatherCommands = {
-            clear: 'WEATHER_SET_PRESET:Clear',
-            fewclouds: 'WEATHER_SET_PRESET:FewClouds',
-            scattered: 'WEATHER_SET_PRESET:Scattered',
-            broken: 'WEATHER_SET_PRESET:Broken',
-            overcast: 'WEATHER_SET_PRESET:Overcast',
-            rain: 'WEATHER_SET_PRESET:Rain',
-            storm: 'WEATHER_SET_PRESET:Thunderstorm',
-            snow: 'WEATHER_SET_PRESET:Snow',
-            fog: 'WEATHER_SET_PRESET:Fog'
-        };
-
-        // Note: Weather presets have limited SimConnect support
-        // This may just update local state for UI
-        console.log(`Weather preset: ${weatherCommands[preset]}`);
+        // Send weather preset command to server
+        // Server will use HTTP API to set weather
+        fetch(`http://${window.location.hostname}:8080/api/environment/weather`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ preset: preset })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log(`Weather set: ${preset}`);
+            } else {
+                console.warn(`Weather failed: ${data.error}`);
+            }
+        })
+        .catch(err => console.error('Weather error:', err));
 
         this.updateUI();
     }
