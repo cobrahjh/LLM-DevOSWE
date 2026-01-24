@@ -19,7 +19,7 @@
 - [x] 🟡 Add Flight Controls (aileron, elevator, rudder sliders) ✅ 2026-01-05
 - [x] 🟡 Add Camera buttons (TCM, NCV) ✅ 2026-01-05
 - [x] 🟡 Add GPS coordinates display (lat/lon) ✅ 2026-01-23
-- [ ] 🟢 Deploy to MSFS toolbar panel for fullscreen use
+- [x] 🟢 Deploy to MSFS toolbar panel for fullscreen use ✅ 2026-01-23 (toolbar-panel)
 - [x] 🟢 Add more light controls (panel, logo, recognition) ✅ Already in aircraft-control widget
 - [x] ✅ Keymap editor widget (remap keys via UI) - DONE
 - [ ] 🟢 Revisit ChasePlane support (vJoy caused input conflicts)
