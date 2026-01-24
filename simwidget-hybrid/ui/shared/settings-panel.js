@@ -140,6 +140,9 @@ class SettingsPanel {
                     { id: 'cockpit', name: 'Cockpit', icon: '✈️', desc: 'Green aviation instruments' },
                     { id: 'glass', name: 'Glass', icon: '💎', desc: 'Modern avionics blue' },
                     { id: 'day', name: 'Day', icon: '☀️', desc: 'Light mode' },
+                    { id: 'oled', name: 'OLED', icon: '🖤', desc: 'True black for OLED screens' },
+                    { id: 'sunset', name: 'Sunset', icon: '🌅', desc: 'Warm colors for night flying' },
+                    { id: 'retro', name: 'Retro', icon: '📟', desc: 'Amber CRT style' },
                     { id: 'highcontrast', name: 'High Contrast', icon: '👁️', desc: 'Accessibility' }
                 ];
 

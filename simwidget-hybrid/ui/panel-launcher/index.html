@@ -7,13 +7,52 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <style>
+        /* Theme selector styles */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-selector {
+            background: var(--widget-bg-secondary, #16213e);
+            color: var(--widget-text, #fff);
+            border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        .theme-selector:hover,
+        .theme-selector:focus {
+            border-color: var(--widget-accent, #667eea);
+        }
+        .theme-selector option {
+            background: var(--widget-bg, #1a1a2e);
+            color: var(--widget-text, #fff);
+        }
+    </style>
+    <script src="/ui/shared/themes.js"></script>
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="widget-container">
         <header class="widget-header">
             <h1>Panel Launcher</h1>
-            <span class="status-dot" id="status"></span>
+            <div class="header-controls">
+                <select class="theme-selector" id="theme-selector" title="Select Theme">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                    <option value="midnight">Midnight</option>
+                    <option value="sunset">Sunset</option>
+                    <option value="cockpit">Cockpit</option>
+                    <option value="amoled">AMOLED</option>
+                    <option value="highContrast">High Contrast</option>
+                </select>
+                <span class="status-dot" id="status"></span>
+            </div>
         </header>
 
         <!-- Avionics Power -->
@@ -126,6 +165,29 @@
             </div>
         </section>
 
+        <!-- Preset Layouts -->
+        <section class="panel-section">
+            <h2>Presets</h2>
+            <div class="button-grid preset-grid">
+                <button class="preset-btn" data-preset="IFR" title="Instrument Flight Rules - Copilot, Flight Plan, Map, Weather, Radio Stack">
+                    <span class="preset-icon" id="icon-IFR"></span>
+                    <span class="label">IFR</span>
+                </button>
+                <button class="preset-btn" data-preset="VFR" title="Visual Flight Rules - Map, Checklist, Timer, Notepad">
+                    <span class="preset-icon" id="icon-VFR"></span>
+                    <span class="label">VFR</span>
+                </button>
+                <button class="preset-btn" data-preset="Cruise" title="Cruise Phase - Copilot, Flight Plan, Notepad, Timer">
+                    <span class="preset-icon" id="icon-Cruise"></span>
+                    <span class="label">Cruise</span>
+                </button>
+                <button class="preset-btn" data-preset="Ground" title="Ground Operations - Checklist, Fuel, SimBrief">
+                    <span class="preset-icon" id="icon-Ground"></span>
+                    <span class="label">Ground</span>
+                </button>
+            </div>
+        </section>
+
         <!-- SimWidgets Quick Launch -->
         <section class="panel-section">
             <h2>SimWidgets</h2>
@@ -183,15 +245,45 @@
                 Use MSFS Pop Out Panel Manager for automated pop-outs.
             </p>
         </section>
+
+        <!-- Hotkeys Info -->
+        <section class="panel-section info-section hotkeys-section">
+            <h2>Keyboard Shortcuts</h2>
+            <p class="info-text">
+                <strong>Hotkeys: Ctrl+1-5</strong> for quick widget access
+            </p>
+            <p class="info-hint">
+                Ctrl+1 Copilot | Ctrl+2 Flight Plan | Ctrl+3 Map | Ctrl+4 Checklist | Ctrl+5 Weather<br>
+                Ctrl+Shift+S SimBrief | Ctrl+Shift+N Notepad | Escape to close
+            </p>
+        </section>
     </div>
 
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="/ui/shared/hotkeys.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
         const customizer = new WidgetCustomizer({ widgetId: 'panel-launcher', settingsPanel: settings });
         document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+
+        // Theme selector integration
+        const themeSelector = document.getElementById('theme-selector');
+        if (themeSelector && window.SimWidgetThemes) {
+            // Set initial value from saved theme
+            themeSelector.value = SimWidgetThemes.getCurrentTheme();
+
+            // Handle theme changes
+            themeSelector.addEventListener('change', (e) => {
+                SimWidgetThemes.setTheme(e.target.value);
+            });
+
+            // Update selector when theme changes from another widget
+            window.addEventListener('simwidget-theme-changed', (e) => {
+                themeSelector.value = e.detail.theme;
+            });
+        }
     </script>
 </body>
 </html>
