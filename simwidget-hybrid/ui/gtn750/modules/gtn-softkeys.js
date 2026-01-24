@@ -52,8 +52,18 @@ class GTNSoftKeys {
             { label: 'TER', action: 'toggle-terrain', toggle: true },
             { label: 'TFC', action: 'toggle-traffic', toggle: true },
             { label: 'WX', action: 'toggle-weather', toggle: true },
-            { label: 'DCLTR', action: 'declutter' },
+            { label: 'CDI', action: 'cdi-menu' },
             { label: 'BACK', action: 'back' }
+        ]);
+
+        // CDI source menu
+        this.registerContext('cdi-menu', [
+            { label: 'GPS', action: 'cdi-source-gps' },
+            { label: 'NAV1', action: 'cdi-source-nav1' },
+            { label: 'NAV2', action: 'cdi-source-nav2' },
+            { label: 'OBS+', action: 'obs-inc' },
+            { label: 'OBS-', action: 'obs-dec' },
+            { label: 'BACK', action: 'back-menu' }
         ]);
 
         // FPL page

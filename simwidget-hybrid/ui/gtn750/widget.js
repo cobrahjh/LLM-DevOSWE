@@ -438,6 +438,32 @@ class GTN750Widget {
                 this.cycleDeclutter();
                 break;
 
+            // CDI source selection
+            case 'cdi-menu':
+                this.softKeys?.setContext('cdi-menu');
+                break;
+            case 'cdi-source-gps':
+                this.setNavSource('GPS');
+                this.softKeys?.setContext('map');
+                break;
+            case 'cdi-source-nav1':
+                this.setNavSource('NAV1');
+                this.softKeys?.setContext('map');
+                break;
+            case 'cdi-source-nav2':
+                this.setNavSource('NAV2');
+                this.softKeys?.setContext('map');
+                break;
+            case 'obs-inc':
+                this.adjustObs(1);
+                break;
+            case 'obs-dec':
+                this.adjustObs(-1);
+                break;
+            case 'back-menu':
+                this.softKeys?.setContext('map');
+                break;
+
             // Map orientation
             case 'map-north-up':
                 this.map.orientation = 'north';
