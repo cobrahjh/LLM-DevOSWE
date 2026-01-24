@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Traffic">
+    <link rel="manifest" href="/ui/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/ui/icons/icon.svg">
+    <title>Traffic Radar - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">📡 Traffic Radar</span>
+            <div class="header-controls">
+                <select id="range-select" class="range-selector">
+                    <option value="5">5 nm</option>
+                    <option value="10" selected>10 nm</option>
+                    <option value="20">20 nm</option>
+                    <option value="40">40 nm</option>
+                </select>
+                <span class="connection-status" id="conn-status" title="SimConnect Status">●</span>
+            </div>
+        </div>
+
+        <div class="radar-container">
+            <div class="radar-display" id="radar-display">
+                <div class="radar-rings">
+                    <div class="radar-ring ring-outer"></div>
+                    <div class="radar-ring ring-middle"></div>
+                    <div class="radar-ring ring-inner"></div>
+                </div>
+                <div class="radar-crosshair"></div>
+                <div class="own-aircraft">▲</div>
+                <div class="traffic-targets" id="traffic-targets"></div>
+                <div class="radar-sweep" id="radar-sweep"></div>
+            </div>
+            <div class="radar-labels">
+                <span class="label-n">N</span>
+                <span class="label-e">E</span>
+                <span class="label-s">S</span>
+                <span class="label-w">W</span>
+            </div>
+        </div>
+
+        <div class="traffic-list" id="traffic-list">
+            <div class="list-header">
+                <span>Nearby Traffic</span>
+                <span class="traffic-count" id="traffic-count">0</span>
+            </div>
+            <div class="list-content" id="list-content">
+                <div class="no-traffic">No traffic detected</div>
+            </div>
+        </div>
+
+        <div class="tcas-status" id="tcas-status">
+            <span class="tcas-label">TCAS</span>
+            <span class="tcas-mode" id="tcas-mode">TA/RA</span>
+            <span class="tcas-alert" id="tcas-alert"></span>
+        </div>
+    </div>
+
+    <script src="/ui/shared/pwa-init.js"></script>
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

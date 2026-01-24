@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Log - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">Flight Log</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-export" title="Export CSV">📥</button>
+                <button class="btn-icon" id="btn-clear" title="Clear All">🗑️</button>
+            </div>
+        </div>
+
+        <div class="current-flight" id="current-flight">
+            <div class="flight-status" id="flight-status">No Active Flight</div>
+            <div class="flight-timer" id="flight-timer">00:00:00</div>
+            <div class="flight-stats">
+                <div class="stat">
+                    <span class="stat-label">DEP</span>
+                    <span class="stat-value" id="departure">----</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">ARR</span>
+                    <span class="stat-value" id="arrival">----</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">DIST</span>
+                    <span class="stat-value" id="distance">-- nm</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">MAX ALT</span>
+                    <span class="stat-value" id="max-alt">-- ft</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-section">
+            <div class="section-title">Recent Flights</div>
+            <div class="log-list" id="log-list">
+                <div class="empty-log">No flights logged yet</div>
+            </div>
+        </div>
+
+        <div class="totals-section">
+            <div class="section-title">Totals</div>
+            <div class="totals-grid">
+                <div class="total-item">
+                    <span class="total-value" id="total-flights">0</span>
+                    <span class="total-label">Flights</span>
+                </div>
+                <div class="total-item">
+                    <span class="total-value" id="total-hours">0.0</span>
+                    <span class="total-label">Hours</span>
+                </div>
+                <div class="total-item">
+                    <span class="total-value" id="total-distance">0</span>
+                    <span class="total-label">nm</span>
+                </div>
+                <div class="total-item">
+                    <span class="total-value" id="total-landings">0</span>
+                    <span class="total-label">Landings</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

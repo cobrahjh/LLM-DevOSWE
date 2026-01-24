@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ATC">
+    <link rel="manifest" href="/ui/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/ui/icons/icon.svg">
+    <title>ATC - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">📻 ATC / Comms</span>
+            <div class="header-controls">
+                <span class="connection-status" id="conn-status" title="SimConnect Status">●</span>
+            </div>
+        </div>
+
+        <div class="comms-section">
+            <div class="radio-panel">
+                <div class="radio-row">
+                    <span class="radio-label">COM1</span>
+                    <span class="radio-freq active" id="com1-active">---.---</span>
+                    <span class="radio-freq standby" id="com1-standby">---.---</span>
+                    <button class="btn-swap" id="btn-swap-com1" title="Swap">⇄</button>
+                </div>
+                <div class="radio-row">
+                    <span class="radio-label">COM2</span>
+                    <span class="radio-freq active" id="com2-active">---.---</span>
+                    <span class="radio-freq standby" id="com2-standby">---.---</span>
+                    <button class="btn-swap" id="btn-swap-com2" title="Swap">⇄</button>
+                </div>
+                <div class="radio-row">
+                    <span class="radio-label">NAV1</span>
+                    <span class="radio-freq active" id="nav1-active">---.--</span>
+                    <span class="radio-freq standby" id="nav1-standby">---.--</span>
+                    <button class="btn-swap" id="btn-swap-nav1" title="Swap">⇄</button>
+                </div>
+                <div class="radio-row">
+                    <span class="radio-label">NAV2</span>
+                    <span class="radio-freq active" id="nav2-active">---.--</span>
+                    <span class="radio-freq standby" id="nav2-standby">---.--</span>
+                    <button class="btn-swap" id="btn-swap-nav2" title="Swap">⇄</button>
+                </div>
+            </div>
+
+            <div class="transponder-panel">
+                <div class="xpdr-row">
+                    <span class="xpdr-label">XPDR</span>
+                    <span class="xpdr-code" id="xpdr-code">----</span>
+                    <span class="xpdr-mode" id="xpdr-mode">STBY</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="atc-section">
+            <div class="section-header">ATC Status</div>
+            <div class="atc-info">
+                <div class="atc-row">
+                    <span class="atc-label">Callsign</span>
+                    <span class="atc-value" id="atc-callsign">-------</span>
+                </div>
+                <div class="atc-row">
+                    <span class="atc-label">Flight Number</span>
+                    <span class="atc-value" id="atc-flightnum">----</span>
+                </div>
+                <div class="atc-row">
+                    <span class="atc-label">Aircraft Type</span>
+                    <span class="atc-value" id="atc-actype">----</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-freqs">
+            <div class="section-header">Quick Frequencies</div>
+            <div class="freq-grid" id="freq-grid">
+                <button class="freq-btn" data-freq="121.500">121.50 EMER</button>
+                <button class="freq-btn" data-freq="122.800">122.80 UNICOM</button>
+                <button class="freq-btn" data-freq="123.450">123.45 AIR-AIR</button>
+                <button class="freq-btn" data-freq="118.000">118.00 TWR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/ui/shared/pwa-init.js"></script>
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

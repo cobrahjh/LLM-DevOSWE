@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kneeboard - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/themes.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container kneeboard">
+        <div class="widget-header">
+            <span class="widget-title">📋 Kneeboard</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-clear" title="Clear Notes">🗑️</button>
+            </div>
+        </div>
+
+        <div class="kneeboard-tabs" id="kneeboard-tabs">
+            <button class="kb-tab active" data-tab="notes">Notes</button>
+            <button class="kb-tab" data-tab="frequencies">Freqs</button>
+            <button class="kb-tab" data-tab="timer">Timer</button>
+            <button class="kb-tab" data-tab="reference">Ref</button>
+        </div>
+
+        <div class="kneeboard-content">
+            <!-- Notes Tab -->
+            <div class="kb-panel active" id="panel-notes">
+                <textarea id="notes-area" placeholder="ATIS, clearances, squawk codes..."></textarea>
+                <div class="notes-templates">
+                    <button class="template-btn" data-template="atis">ATIS</button>
+                    <button class="template-btn" data-template="clearance">CLR</button>
+                    <button class="template-btn" data-template="squawk">SQK</button>
+                </div>
+            </div>
+
+            <!-- Frequencies Tab -->
+            <div class="kb-panel" id="panel-frequencies">
+                <div class="freq-list" id="freq-list"></div>
+                <div class="freq-add">
+                    <input type="text" id="freq-name" placeholder="Name" maxlength="10">
+                    <input type="text" id="freq-value" placeholder="123.45" maxlength="7">
+                    <button class="btn-add-freq" id="btn-add-freq">+</button>
+                </div>
+            </div>
+
+            <!-- Timer Tab -->
+            <div class="kb-panel" id="panel-timer">
+                <div class="timer-section">
+                    <div class="timer-label">Zulu Time (UTC)</div>
+                    <div class="timer-display zulu" id="zulu-time">00:00:00Z</div>
+                </div>
+                <div class="timer-section">
+                    <div class="timer-label">Flight Timer</div>
+                    <div class="timer-display flight" id="flight-timer">00:00:00</div>
+                    <div class="timer-controls">
+                        <button class="timer-btn" id="btn-timer-start">▶️ Start</button>
+                        <button class="timer-btn" id="btn-timer-reset">↺ Reset</button>
+                    </div>
+                </div>
+                <div class="timer-section">
+                    <div class="timer-label">Countdown</div>
+                    <div class="countdown-setup" id="countdown-setup">
+                        <input type="number" id="countdown-min" value="5" min="1" max="120"> min
+                        <button class="timer-btn" id="btn-countdown-start">Start</button>
+                    </div>
+                    <div class="timer-display countdown hidden" id="countdown-display">00:00</div>
+                </div>
+            </div>
+
+            <!-- Reference Tab -->
+            <div class="kb-panel" id="panel-reference">
+                <div class="ref-section">
+                    <div class="ref-title">V-Speeds (C172)</div>
+                    <div class="ref-grid">
+                        <div class="ref-item"><span class="ref-label">Vr</span><span class="ref-value">55 kts</span></div>
+                        <div class="ref-item"><span class="ref-label">Vx</span><span class="ref-value">62 kts</span></div>
+                        <div class="ref-item"><span class="ref-label">Vy</span><span class="ref-value">74 kts</span></div>
+                        <div class="ref-item"><span class="ref-label">Va</span><span class="ref-value">99 kts</span></div>
+                        <div class="ref-item"><span class="ref-label">Vfe</span><span class="ref-value">85 kts</span></div>
+                        <div class="ref-item"><span class="ref-label">Vno</span><span class="ref-value">129 kts</span></div>
+                    </div>
+                </div>
+                <div class="ref-section">
+                    <div class="ref-title">Standard Frequencies</div>
+                    <div class="ref-grid">
+                        <div class="ref-item"><span class="ref-label">GUARD</span><span class="ref-value">121.50</span></div>
+                        <div class="ref-item"><span class="ref-label">UNICOM</span><span class="ref-value">122.80</span></div>
+                        <div class="ref-item"><span class="ref-label">MULTICOM</span><span class="ref-value">122.90</span></div>
+                        <div class="ref-item"><span class="ref-label">FSS</span><span class="ref-value">122.20</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

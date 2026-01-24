@@ -287,6 +287,12 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/navigraph-widget/">🗺️ Navigraph Charts</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/charts-widget/">📊 Free Charts</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/copilot-widget/">🧑‍✈️ AI Copilot</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/landing-widget/">🛬 Landing Rate</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/performance-widget/">📈 Performance</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/atc-widget/">📡 ATC Comm</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/flightlog-widget/">📓 Flight Log</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/multiplayer-widget/">👥 Multiplayer</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/flight-dashboard/">🎯 Flight Dashboard</a> <span class="new-badge">NEW</span></li>
             </ul>
         </div>
 

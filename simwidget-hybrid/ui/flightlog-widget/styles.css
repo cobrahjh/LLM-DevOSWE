@@ -1,0 +1,208 @@
+/* Flight Log Widget Styles */
+
+.widget-container {
+    background: var(--widget-bg, #1a1a2e);
+    border-radius: 12px;
+    padding: 14px;
+    min-width: 300px;
+    max-width: 380px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.widget-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.header-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.btn-icon:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Current Flight */
+.current-flight {
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.current-flight.active {
+    border: 2px solid #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.flight-status {
+    font-size: 11px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.current-flight.active .flight-status {
+    color: #22c55e;
+}
+
+.flight-timer {
+    font-size: 32px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: var(--widget-text, #fff);
+    margin-bottom: 12px;
+}
+
+.flight-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 9px;
+    color: var(--widget-text-muted, #888);
+    margin-bottom: 2px;
+}
+
+.stat-value {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    color: var(--widget-accent, #667eea);
+}
+
+/* Log Section */
+.log-section {
+    margin-bottom: 14px;
+}
+
+.section-title {
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.log-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.log-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+.log-route {
+    flex: 1;
+}
+
+.log-airports {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.log-airports .arrow {
+    color: var(--widget-text-muted, #888);
+    margin: 0 6px;
+}
+
+.log-date {
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+    margin-top: 2px;
+}
+
+.log-details {
+    text-align: right;
+}
+
+.log-duration {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    color: var(--widget-accent, #667eea);
+}
+
+.log-distance {
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+}
+
+.empty-log {
+    text-align: center;
+    color: var(--widget-text-muted, #888);
+    font-size: 12px;
+    padding: 20px;
+}
+
+/* Totals Section */
+.totals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.total-item {
+    background: var(--widget-bg-secondary, #16213e);
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.total-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: var(--widget-accent, #667eea);
+}
+
+.total-label {
+    font-size: 9px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+}
+
+/* Scrollbar */
+.log-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.log-list::-webkit-scrollbar-thumb {
+    background: var(--widget-accent, #667eea);
+    border-radius: 2px;
+}

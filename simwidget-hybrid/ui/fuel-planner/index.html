@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Planner - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">⛽ Fuel Planner</span>
+            <button class="btn-icon" id="btn-calculate" title="Calculate">🔄</button>
+        </div>
+
+        <!-- Aircraft Selection -->
+        <div class="section">
+            <label class="section-label">Aircraft Profile</label>
+            <select id="aircraft-select">
+                <option value="c172">Cessna 172 (8.5 GPH)</option>
+                <option value="c208">Cessna 208 Caravan (50 GPH)</option>
+                <option value="tbm930">TBM 930 (37 GPH)</option>
+                <option value="cj4">Citation CJ4 (165 GPH)</option>
+                <option value="737">Boeing 737-800 (850 GPH)</option>
+                <option value="a320">Airbus A320 (800 GPH)</option>
+                <option value="custom">Custom...</option>
+            </select>
+        </div>
+
+        <!-- Trip Details -->
+        <div class="section">
+            <label class="section-label">Trip Details</label>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Distance</label>
+                    <input type="number" id="distance" value="250" min="0">
+                    <span class="unit">nm</span>
+                </div>
+                <div class="input-group">
+                    <label>Cruise TAS</label>
+                    <input type="number" id="cruise-speed" value="120" min="0">
+                    <span class="unit">kt</span>
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Wind</label>
+                    <input type="number" id="wind-speed" value="0" min="0">
+                    <span class="unit">kt</span>
+                </div>
+                <div class="input-group">
+                    <label>Wind Dir</label>
+                    <select id="wind-component">
+                        <option value="head">Headwind</option>
+                        <option value="tail">Tailwind</option>
+                        <option value="none" selected>None</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fuel Burn -->
+        <div class="section">
+            <label class="section-label">Fuel Consumption</label>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Cruise Burn</label>
+                    <input type="number" id="fuel-burn" value="8.5" min="0" step="0.1">
+                    <span class="unit">GPH</span>
+                </div>
+                <div class="input-group">
+                    <label>Taxi Fuel</label>
+                    <input type="number" id="taxi-fuel" value="1.5" min="0" step="0.1">
+                    <span class="unit">gal</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-panel">
+            <div class="result-header">Fuel Required</div>
+            <div class="results-grid">
+                <div class="result-item">
+                    <span class="result-label">Trip Fuel</span>
+                    <span class="result-value" id="trip-fuel">--</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">+ Reserve (45min)</span>
+                    <span class="result-value" id="reserve-fuel">--</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">+ Alternate</span>
+                    <span class="result-value" id="alternate-fuel">--</span>
+                </div>
+                <div class="result-item highlight">
+                    <span class="result-label">Total Required</span>
+                    <span class="result-value" id="total-fuel">--</span>
+                </div>
+            </div>
+            <div class="results-grid secondary">
+                <div class="result-item">
+                    <span class="result-label">Flight Time</span>
+                    <span class="result-value" id="flight-time">--</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Ground Speed</span>
+                    <span class="result-value" id="ground-speed">--</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Endurance</span>
+                    <span class="result-value" id="endurance">--</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Range</span>
+                    <span class="result-value" id="range">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fuel Load -->
+        <div class="section">
+            <label class="section-label">Fuel On Board</label>
+            <div class="fuel-slider">
+                <input type="range" id="fuel-load" min="0" max="100" value="75">
+                <div class="fuel-display">
+                    <span id="fuel-load-gal">--</span> gal
+                    <span class="fuel-status" id="fuel-status">OK</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary" id="btn-to-notepad">📝 Send to Notepad</button>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

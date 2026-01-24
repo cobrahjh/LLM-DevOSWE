@@ -1,0 +1,165 @@
+/* Performance Widget Styles */
+
+.widget-container {
+    background: var(--widget-bg, #1a1a2e);
+    border-radius: 12px;
+    padding: 14px;
+    min-width: 260px;
+    max-width: 320px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.widget-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--widget-text, #fff);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.btn-icon:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Performance Grid */
+.perf-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.perf-card {
+    background: var(--widget-bg-secondary, #16213e);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.perf-icon {
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.perf-value {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 8px;
+}
+
+.perf-card.fps .perf-value { color: #22c55e; }
+.perf-card.gpu .perf-value { color: #f97316; }
+.perf-card.cpu .perf-value { color: #3b82f6; }
+.perf-card.ram .perf-value { color: #a855f7; }
+
+.perf-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.perf-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.perf-card.fps .perf-fill { background: #22c55e; }
+.perf-card.gpu .perf-fill { background: #f97316; }
+.perf-card.cpu .perf-fill { background: #3b82f6; }
+.perf-card.ram .perf-fill { background: #a855f7; }
+
+/* Frame Timing */
+.frame-timing {
+    background: var(--widget-bg-secondary, #16213e);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.timing-header {
+    font-size: 10px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.timing-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.timing-row:last-child {
+    border-bottom: none;
+}
+
+.timing-label {
+    font-size: 11px;
+    color: var(--widget-text-muted, #888);
+}
+
+.timing-value {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    color: var(--widget-text, #fff);
+}
+
+/* Sim Stats */
+.sim-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.stat-row {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 6px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 9px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    color: var(--widget-accent, #667eea);
+}
+
+/* Warning states */
+.perf-card.warning .perf-value { color: #eab308 !important; }
+.perf-card.critical .perf-value { color: #ef4444 !important; }
+.perf-card.warning .perf-fill { background: #eab308 !important; }
+.perf-card.critical .perf-fill { background: #ef4444 !important; }

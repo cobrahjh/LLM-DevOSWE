@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">Performance</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-refresh" title="Refresh">↺</button>
+            </div>
+        </div>
+
+        <div class="perf-grid">
+            <div class="perf-card fps">
+                <div class="perf-icon">FPS</div>
+                <div class="perf-value" id="fps">--</div>
+                <div class="perf-bar">
+                    <div class="perf-fill" id="fps-bar"></div>
+                </div>
+            </div>
+
+            <div class="perf-card gpu">
+                <div class="perf-icon">GPU</div>
+                <div class="perf-value" id="gpu">--%</div>
+                <div class="perf-bar">
+                    <div class="perf-fill" id="gpu-bar"></div>
+                </div>
+            </div>
+
+            <div class="perf-card cpu">
+                <div class="perf-icon">CPU</div>
+                <div class="perf-value" id="cpu">--%</div>
+                <div class="perf-bar">
+                    <div class="perf-fill" id="cpu-bar"></div>
+                </div>
+            </div>
+
+            <div class="perf-card ram">
+                <div class="perf-icon">RAM</div>
+                <div class="perf-value" id="ram">-- GB</div>
+                <div class="perf-bar">
+                    <div class="perf-fill" id="ram-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="frame-timing">
+            <div class="timing-header">Frame Timing</div>
+            <div class="timing-row">
+                <span class="timing-label">Frame Time</span>
+                <span class="timing-value" id="frame-time">-- ms</span>
+            </div>
+            <div class="timing-row">
+                <span class="timing-label">Main Thread</span>
+                <span class="timing-value" id="main-thread">-- ms</span>
+            </div>
+            <div class="timing-row">
+                <span class="timing-label">Render Thread</span>
+                <span class="timing-value" id="render-thread">-- ms</span>
+            </div>
+        </div>
+
+        <div class="sim-stats">
+            <div class="stat-row">
+                <span class="stat-label">Draw Calls</span>
+                <span class="stat-value" id="draw-calls">---</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Objects</span>
+                <span class="stat-value" id="objects">---</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">VRAM</span>
+                <span class="stat-value" id="vram">-- GB</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

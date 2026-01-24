@@ -368,3 +368,203 @@
         }
     }
 }
+
+/* ==========================================================================
+   MOBILE COMPANION MODE
+   Add .mobile-companion class to body for optimized tablet/phone experience
+   ========================================================================== */
+
+.mobile-companion {
+    /* Full viewport */
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+.mobile-companion .widget-container {
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+    max-width: 100%;
+}
+
+/* Extra large touch targets */
+.mobile-companion .btn,
+.mobile-companion button:not(.settings-close),
+.mobile-companion .tab {
+    min-height: 56px;
+    font-size: 17px;
+}
+
+.mobile-companion .btn-icon {
+    min-width: 56px;
+    min-height: 56px;
+    font-size: 24px;
+}
+
+/* Larger checklist items */
+.mobile-companion .checklist-item {
+    min-height: 64px;
+    padding: 16px;
+    font-size: 17px;
+}
+
+.mobile-companion .item-text {
+    font-size: 17px;
+}
+
+.mobile-companion .item-action {
+    font-size: 15px;
+}
+
+/* Larger checkbox */
+.mobile-companion .item-checkbox {
+    width: 28px;
+    height: 28px;
+}
+
+/* Voice control prominent */
+.mobile-companion .voice-control-ui {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.mobile-companion .voice-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-companion .voice-icon {
+    font-size: 28px;
+}
+
+.mobile-companion .voice-status,
+.mobile-companion .voice-transcript {
+    display: none;
+}
+
+/* Progress bar more visible */
+.mobile-companion .progress-bar {
+    height: 12px;
+    border-radius: 6px;
+}
+
+/* Multiplayer panel adjustments */
+.mobile-companion .mp-panel {
+    max-width: 100%;
+    width: 100%;
+    right: 0;
+    border-radius: 0;
+}
+
+/* Kneeboard mobile tweaks */
+.mobile-companion .kneeboard-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.mobile-companion .kb-tab {
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+.mobile-companion #notes-area {
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.mobile-companion .timer-display {
+    font-size: 48px;
+}
+
+.mobile-companion .freq-value {
+    font-size: 24px;
+}
+
+/* Floating action button style */
+.mobile-companion .settings-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-size: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+}
+
+/* Hide less important elements */
+.mobile-companion .header-controls .btn-icon:nth-child(n+3) {
+    display: none;
+}
+
+/* Dashboard mobile */
+.mobile-companion .dashboard-grid {
+    grid-template-columns: 1fr;
+}
+
+.mobile-companion .dashboard-widget {
+    height: auto;
+    min-height: 300px;
+}
+
+/* Themes panel in settings - larger cards */
+.mobile-companion .theme-card {
+    padding: 16px 12px;
+    min-width: 90px;
+}
+
+.mobile-companion .theme-card-icon {
+    font-size: 32px;
+}
+
+/* ==========================================================================
+   REDUCED MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ==========================================================================
+   DARK MODE PREFERENCE (if not using theme system)
+   ========================================================================== */
+
+@media (prefers-color-scheme: light) {
+    body:not([class*="theme-"]) {
+        /* Could auto-apply day theme, but we use manual selection */
+    }
+}
+
+/* ==========================================================================
+   PRINT STYLES
+   ========================================================================== */
+
+@media print {
+    .settings-btn,
+    .header-controls,
+    .voice-control-ui,
+    .mp-panel,
+    .mp-trigger {
+        display: none !important;
+    }
+
+    .widget-container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+    .checklist-item.checked {
+        text-decoration: line-through;
+        color: #666;
+    }
+}

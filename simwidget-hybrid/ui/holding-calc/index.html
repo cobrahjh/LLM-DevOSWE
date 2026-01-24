@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holding Calculator - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">🔄 Holding Calculator</span>
+        </div>
+
+        <!-- Holding Fix Info -->
+        <div class="section">
+            <label class="section-label">Holding Pattern</label>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Inbound Course</label>
+                    <input type="number" id="inbound-course" value="360" min="1" max="360">
+                    <span class="unit">°</span>
+                </div>
+                <div class="input-group">
+                    <label>Turn Direction</label>
+                    <select id="turn-direction">
+                        <option value="right">Right (Standard)</option>
+                        <option value="left">Left</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aircraft Heading -->
+        <div class="section">
+            <label class="section-label">Your Position</label>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Current Heading</label>
+                    <input type="number" id="current-heading" value="180" min="1" max="360">
+                    <span class="unit">°</span>
+                </div>
+                <div class="input-group">
+                    <label>Ground Speed</label>
+                    <input type="number" id="ground-speed" value="120" min="0">
+                    <span class="unit">kt</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wind -->
+        <div class="section">
+            <label class="section-label">Wind</label>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Direction</label>
+                    <input type="number" id="wind-direction" value="270" min="1" max="360">
+                    <span class="unit">°</span>
+                </div>
+                <div class="input-group">
+                    <label>Speed</label>
+                    <input type="number" id="wind-speed" value="15" min="0">
+                    <span class="unit">kt</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry Graphic -->
+        <div class="entry-display">
+            <canvas id="holding-canvas" width="260" height="200"></canvas>
+        </div>
+
+        <!-- Results -->
+        <div class="results-panel">
+            <div class="entry-result">
+                <span class="entry-label">Recommended Entry</span>
+                <span class="entry-type" id="entry-type">DIRECT</span>
+            </div>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Outbound Heading</span>
+                    <span class="detail-value" id="outbound-heading">--°</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Outbound Time</span>
+                    <span class="detail-value" id="outbound-time">1:00</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Wind Correction</span>
+                    <span class="detail-value" id="wind-correction">--°</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Inbound Heading</span>
+                    <span class="detail-value" id="inbound-heading">--°</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary" id="btn-speak">🔊 Read Entry</button>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

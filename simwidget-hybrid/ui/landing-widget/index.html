@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Rate - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">Landing Rate</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-reset" title="Reset">↺</button>
+            </div>
+        </div>
+
+        <div class="landing-display">
+            <div class="rate-circle" id="rate-circle">
+                <div class="rate-value" id="rate-value">---</div>
+                <div class="rate-unit">fpm</div>
+            </div>
+            <div class="rate-grade" id="rate-grade">Waiting...</div>
+        </div>
+
+        <div class="landing-stats">
+            <div class="stat-item">
+                <span class="stat-label">G-Force</span>
+                <span class="stat-value" id="g-force">-.-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Pitch</span>
+                <span class="stat-value" id="pitch">-.-°</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Speed</span>
+                <span class="stat-value" id="speed">--- kts</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Wind</span>
+                <span class="stat-value" id="wind">---</span>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <div class="section-title">Recent Landings</div>
+            <div class="history-list" id="history-list">
+                <div class="empty-history">No landings recorded</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

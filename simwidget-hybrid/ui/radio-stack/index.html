@@ -4,197 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radio Stack - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
-    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
 </head>
 <body>
-    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
-    <div class="container">
-        <div class="header">
-            <h1>Radio Stack</h1>
-            <div class="connection-status" id="status">
-                <span class="dot"></span>
-                <span class="text">Connecting...</span>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">📻 Radio Stack</span>
+            <button class="btn-icon" id="btn-sync" title="Sync">🔄</button>
+        </div>
+        <div class="radio-section">
+            <div class="radio-label">COM 1</div>
+            <div class="radio-display">
+                <div class="freq-active" id="com1-active">118.000</div>
+                <button class="btn-swap" data-radio="com1">⇄</button>
+                <input type="text" id="com1-standby" value="121.500" class="freq-standby">
             </div>
         </div>
-
-        <!-- COM1 -->
-        <div class="radio-panel" data-radio="com1">
-            <div class="radio-label">COM1</div>
-            <div class="freq-display">
-                <div class="freq-group active">
-                    <span class="freq-value" id="com1-active">----.---</span>
-                    <span class="freq-type">ACT</span>
-                </div>
-                <button class="swap-btn" onclick="swapFreq('com1')">⇄</button>
-                <div class="freq-group standby">
-                    <span class="freq-value" id="com1-standby">----.---</span>
-                    <span class="freq-type">SBY</span>
-                </div>
-            </div>
-            <div class="freq-controls">
-                <button onclick="adjustFreq('com1', -1)">-</button>
-                <button onclick="adjustFreq('com1', -0.025)">◀</button>
-                <button onclick="adjustFreq('com1', 0.025)">▶</button>
-                <button onclick="adjustFreq('com1', 1)">+</button>
+        <div class="radio-section">
+            <div class="radio-label">COM 2</div>
+            <div class="radio-display">
+                <div class="freq-active" id="com2-active">121.500</div>
+                <button class="btn-swap" data-radio="com2">⇄</button>
+                <input type="text" id="com2-standby" value="122.800" class="freq-standby">
             </div>
         </div>
-
-        <!-- COM2 -->
-        <div class="radio-panel" data-radio="com2">
-            <div class="radio-label">COM2</div>
-            <div class="freq-display">
-                <div class="freq-group active">
-                    <span class="freq-value" id="com2-active">----.---</span>
-                    <span class="freq-type">ACT</span>
-                </div>
-                <button class="swap-btn" onclick="swapFreq('com2')">⇄</button>
-                <div class="freq-group standby">
-                    <span class="freq-value" id="com2-standby">----.---</span>
-                    <span class="freq-type">SBY</span>
-                </div>
-            </div>
-            <div class="freq-controls">
-                <button onclick="adjustFreq('com2', -1)">-</button>
-                <button onclick="adjustFreq('com2', -0.025)">◀</button>
-                <button onclick="adjustFreq('com2', 0.025)">▶</button>
-                <button onclick="adjustFreq('com2', 1)">+</button>
+        <div class="radio-section nav">
+            <div class="radio-label">NAV 1</div>
+            <div class="radio-display">
+                <div class="freq-active" id="nav1-active">110.00</div>
+                <button class="btn-swap" data-radio="nav1">⇄</button>
+                <input type="text" id="nav1-standby" value="108.00" class="freq-standby">
             </div>
         </div>
-
-        <!-- NAV1 -->
-        <div class="radio-panel" data-radio="nav1">
-            <div class="radio-label">NAV1</div>
-            <div class="freq-display">
-                <div class="freq-group active">
-                    <span class="freq-value" id="nav1-active">----.--</span>
-                    <span class="freq-type">ACT</span>
-                </div>
-                <button class="swap-btn" onclick="swapFreq('nav1')">⇄</button>
-                <div class="freq-group standby">
-                    <span class="freq-value" id="nav1-standby">----.--</span>
-                    <span class="freq-type">SBY</span>
-                </div>
-            </div>
-            <div class="freq-controls">
-                <button onclick="adjustFreq('nav1', -1)">-</button>
-                <button onclick="adjustFreq('nav1', -0.05)">◀</button>
-                <button onclick="adjustFreq('nav1', 0.05)">▶</button>
-                <button onclick="adjustFreq('nav1', 1)">+</button>
-            </div>
-        </div>
-
-        <!-- NAV2 -->
-        <div class="radio-panel" data-radio="nav2">
-            <div class="radio-label">NAV2</div>
-            <div class="freq-display">
-                <div class="freq-group active">
-                    <span class="freq-value" id="nav2-active">----.--</span>
-                    <span class="freq-type">ACT</span>
-                </div>
-                <button class="swap-btn" onclick="swapFreq('nav2')">⇄</button>
-                <div class="freq-group standby">
-                    <span class="freq-value" id="nav2-standby">----.--</span>
-                    <span class="freq-type">SBY</span>
-                </div>
-            </div>
-            <div class="freq-controls">
-                <button onclick="adjustFreq('nav2', -1)">-</button>
-                <button onclick="adjustFreq('nav2', -0.05)">◀</button>
-                <button onclick="adjustFreq('nav2', 0.05)">▶</button>
-                <button onclick="adjustFreq('nav2', 1)">+</button>
-            </div>
-        </div>
-
-        <!-- ADF -->
-        <div class="radio-panel" data-radio="adf">
-            <div class="radio-label">ADF</div>
-            <div class="freq-display adf-display">
-                <div class="freq-group active">
-                    <span class="freq-value" id="adf-active">----</span>
-                    <span class="freq-type">KHz</span>
-                </div>
-                <button class="swap-btn" onclick="swapFreq('adf')">⇄</button>
-                <div class="freq-group standby">
-                    <span class="freq-value" id="adf-standby">----</span>
-                    <span class="freq-type">SBY</span>
-                </div>
-            </div>
-            <div class="freq-controls">
-                <button onclick="adjustFreq('adf', -100)">-</button>
-                <button onclick="adjustFreq('adf', -1)">◀</button>
-                <button onclick="adjustFreq('adf', 1)">▶</button>
-                <button onclick="adjustFreq('adf', 100)">+</button>
-            </div>
-        </div>
-
-        <!-- DME -->
-        <div class="radio-panel dme-panel" data-radio="dme">
-            <div class="radio-label">DME</div>
-            <div class="dme-display">
-                <div class="dme-row">
-                    <span class="dme-label">NAV1</span>
-                    <span class="dme-value" id="dme1-dist">--.-</span>
-                    <span class="dme-unit">nm</span>
-                    <span class="dme-value" id="dme1-spd">---</span>
-                    <span class="dme-unit">kt</span>
-                </div>
-                <div class="dme-row">
-                    <span class="dme-label">NAV2</span>
-                    <span class="dme-value" id="dme2-dist">--.-</span>
-                    <span class="dme-unit">nm</span>
-                    <span class="dme-value" id="dme2-spd">---</span>
-                    <span class="dme-unit">kt</span>
+        <div class="radio-section xpdr">
+            <div class="radio-label">XPDR</div>
+            <div class="xpdr-display">
+                <input type="text" id="xpdr-code" value="1200" maxlength="4">
+                <div class="xpdr-btns">
+                    <button data-code="1200">VFR</button>
+                    <button data-code="7700">EMERG</button>
                 </div>
             </div>
         </div>
-
-        <!-- Transponder -->
-        <div class="radio-panel xpndr-panel" data-radio="xpndr">
-            <div class="radio-label">XPNDR</div>
-            <div class="xpndr-display">
-                <div class="xpndr-code" id="xpndr-code">----</div>
-                <div class="xpndr-mode" id="xpndr-mode">STBY</div>
-            </div>
-            <div class="xpndr-presets">
-                <button onclick="setXpndr(1200)">VFR</button>
-                <button onclick="setXpndr(7500)">HIJ</button>
-                <button onclick="setXpndr(7600)">COM</button>
-                <button onclick="setXpndr(7700)">EMG</button>
-            </div>
-            <div class="xpndr-digits">
-                <div class="digit-group">
-                    <button onclick="adjustXpndr(0, 1)">▲</button>
-                    <span class="digit" id="xpndr-d0">-</span>
-                    <button onclick="adjustXpndr(0, -1)">▼</button>
-                </div>
-                <div class="digit-group">
-                    <button onclick="adjustXpndr(1, 1)">▲</button>
-                    <span class="digit" id="xpndr-d1">-</span>
-                    <button onclick="adjustXpndr(1, -1)">▼</button>
-                </div>
-                <div class="digit-group">
-                    <button onclick="adjustXpndr(2, 1)">▲</button>
-                    <span class="digit" id="xpndr-d2">-</span>
-                    <button onclick="adjustXpndr(2, -1)">▼</button>
-                </div>
-                <div class="digit-group">
-                    <button onclick="adjustXpndr(3, 1)">▲</button>
-                    <span class="digit" id="xpndr-d3">-</span>
-                    <button onclick="adjustXpndr(3, -1)">▼</button>
-                </div>
-            </div>
+        <div class="presets-section">
+            <div class="presets-header">Quick Tune</div>
+            <div class="presets-grid" id="presets-grid"></div>
         </div>
     </div>
-
-    <script src="/ui/shared/settings-panel.js"></script>
-    <script src="/ui/shared/widget-customizer.js"></script>
     <script src="widget.js"></script>
-    <script>
-        const settings = new SettingsPanel();
-        const customizer = new WidgetCustomizer({ widgetId: 'radio-stack', settingsPanel: settings });
-        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
-    </script>
 </body>
 </html>

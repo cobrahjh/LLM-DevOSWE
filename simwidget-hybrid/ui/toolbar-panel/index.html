@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SimWidget Toolbar</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a14;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .toolbar-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .toolbar-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: #16213e;
+            border-bottom: 1px solid #333;
+        }
+
+        .toolbar-title {
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .toolbar-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 8px;
+            background: #0f172a;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-btn {
+            padding: 8px 14px;
+            background: #16213e;
+            border: none;
+            border-radius: 6px;
+            color: #888;
+            font-size: 12px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .toolbar-content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .toolbar-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 8px;
+            background: #0f172a;
+            border-top: 1px solid #333;
+        }
+
+        .quick-btn {
+            padding: 10px 8px;
+            background: #16213e;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .quick-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quick-btn .icon {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        /* Connection indicator */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            margin-right: 8px;
+        }
+
+        .status-dot.connected {
+            background: #22c55e;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #667eea; border-radius: 2px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+<body>
+    <div class="toolbar-container">
+        <div class="toolbar-header">
+            <span class="status-dot" id="status-dot"></span>
+            <span class="toolbar-title">SimWidget</span>
+        </div>
+
+        <div class="toolbar-tabs" id="tabs">
+            <button class="tab-btn active" data-widget="aircraft-control">Control</button>
+            <button class="tab-btn" data-widget="checklist-widget">Checklist</button>
+            <button class="tab-btn" data-widget="weather-widget">Weather</button>
+            <button class="tab-btn" data-widget="map-widget">Map</button>
+            <button class="tab-btn" data-widget="flightplan-widget">Plan</button>
+            <button class="tab-btn" data-widget="timer-widget">Timer</button>
+            <button class="tab-btn" data-widget="landing-widget">Landing</button>
+            <button class="tab-btn" data-widget="performance-widget">Perf</button>
+        </div>
+
+        <div class="toolbar-content">
+            <iframe id="widget-frame" src="/ui/aircraft-control/"></iframe>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-btn" data-cmd="TOGGLE_NAV_LIGHTS">
+                <span class="icon">💡</span>NAV
+            </button>
+            <button class="quick-btn" data-cmd="TOGGLE_BEACON_LIGHTS">
+                <span class="icon">🔴</span>BCN
+            </button>
+            <button class="quick-btn" data-cmd="LANDING_LIGHTS_TOGGLE">
+                <span class="icon">🔦</span>LDG
+            </button>
+            <button class="quick-btn" data-cmd="AP_MASTER">
+                <span class="icon">🅰️</span>A/P
+            </button>
+            <button class="quick-btn" data-cmd="TOGGLE_TAXI_LIGHTS">
+                <span class="icon">🚕</span>TAXI
+            </button>
+            <button class="quick-btn" data-cmd="GEAR_TOGGLE">
+                <span class="icon">🛞</span>GEAR
+            </button>
+            <button class="quick-btn" data-cmd="FLAPS_UP">
+                <span class="icon">⬆️</span>FLP-
+            </button>
+            <button class="quick-btn" data-cmd="FLAPS_DOWN">
+                <span class="icon">⬇️</span>FLP+
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const widgetFrame = document.getElementById('widget-frame');
+        const statusDot = document.getElementById('status-dot');
+        const tabs = document.getElementById('tabs');
+        let ws = null;
+
+        // Tab switching
+        tabs.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab-btn')) {
+                tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                const widget = e.target.dataset.widget;
+                widgetFrame.src = '/ui/' + widget + '/';
+            }
+        });
+
+        // Quick actions
+        document.querySelectorAll('.quick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cmd = btn.dataset.cmd;
+                if (cmd) sendCommand(cmd);
+            });
+        });
+
+        function sendCommand(cmd) {
+            fetch('/api/simconnect/event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event: cmd })
+            }).catch(() => {});
+        }
+
+        // WebSocket connection
+        function connect() {
+            const host = location.hostname || '127.0.0.1';
+            ws = new WebSocket('ws://' + host + ':8080');
+
+            ws.onopen = () => {
+                statusDot.classList.add('connected');
+            };
+
+            ws.onclose = () => {
+                statusDot.classList.remove('connected');
+                setTimeout(connect, 3000);
+            };
+
+            ws.onerror = () => {
+                statusDot.classList.remove('connected');
+            };
+        }
+
+        connect();
+    </script>
+</body>
+</html>

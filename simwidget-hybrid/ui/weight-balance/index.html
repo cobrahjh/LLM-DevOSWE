@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weight & Balance - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">⚖️ Weight & Balance</span>
+            <button class="btn-icon" id="btn-reset" title="Reset">🔄</button>
+        </div>
+
+        <!-- Aircraft Selection -->
+        <div class="section">
+            <select id="aircraft-select">
+                <option value="c172">Cessna 172S</option>
+                <option value="c208">Cessna 208 Caravan</option>
+                <option value="tbm930">TBM 930</option>
+                <option value="pa28">Piper PA-28 Cherokee</option>
+            </select>
+        </div>
+
+        <!-- Weight Inputs -->
+        <div class="weight-inputs">
+            <div class="weight-row">
+                <span class="weight-label">Empty Weight</span>
+                <input type="number" id="empty-weight" class="weight-input" readonly>
+                <span class="weight-unit">lbs</span>
+            </div>
+            <div class="weight-row">
+                <span class="weight-label">Pilot + Front Pax</span>
+                <input type="number" id="front-weight" class="weight-input" value="340">
+                <span class="weight-unit">lbs</span>
+            </div>
+            <div class="weight-row">
+                <span class="weight-label">Rear Passengers</span>
+                <input type="number" id="rear-weight" class="weight-input" value="0">
+                <span class="weight-unit">lbs</span>
+            </div>
+            <div class="weight-row">
+                <span class="weight-label">Baggage</span>
+                <input type="number" id="baggage-weight" class="weight-input" value="20">
+                <span class="weight-unit">lbs</span>
+            </div>
+            <div class="weight-row">
+                <span class="weight-label">Fuel (<span id="fuel-gal">40</span> gal)</span>
+                <input type="range" id="fuel-weight" min="0" max="318" value="240">
+                <span class="weight-value" id="fuel-lbs">240</span>
+            </div>
+        </div>
+
+        <!-- CG Envelope Graph -->
+        <div class="envelope-container">
+            <canvas id="envelope-canvas" width="280" height="200"></canvas>
+            <div class="envelope-legend">
+                <span class="legend-item"><span class="dot takeoff"></span> Takeoff</span>
+                <span class="legend-item"><span class="dot landing"></span> Landing</span>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-row">
+            <div class="result-box">
+                <span class="result-label">Gross Weight</span>
+                <span class="result-value" id="gross-weight">--</span>
+                <span class="result-limit" id="weight-limit">Max: 2550</span>
+            </div>
+            <div class="result-box">
+                <span class="result-label">CG Position</span>
+                <span class="result-value" id="cg-position">--</span>
+                <span class="result-limit" id="cg-limit">35.0 - 47.3</span>
+            </div>
+            <div class="result-box status">
+                <span class="result-label">Status</span>
+                <span class="result-value status-indicator" id="status">--</span>
+            </div>
+        </div>
+
+        <button class="btn-primary" id="btn-to-notepad">📝 Send to Notepad</button>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

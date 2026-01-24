@@ -1,0 +1,32 @@
+.widget-container { background: #1a1a2e; border-radius: 12px; padding: 14px; min-width: 300px; max-width: 380px; font-family: system-ui; }
+.widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.widget-title { font-size: 16px; font-weight: 600; color: #fff; }
+.btn-icon { background: transparent; border: none; font-size: 16px; cursor: pointer; }
+.current-flight { background: #16213e; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.flight-status { text-align: center; font-size: 12px; color: #888; margin-bottom: 10px; padding: 6px; border-radius: 4px; background: rgba(0,0,0,0.2); }
+.flight-status.recording { background: rgba(239, 68, 68, 0.2); color: #ef4444; animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.flight-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+.stat { text-align: center; background: rgba(0,0,0,0.2); padding: 8px 4px; border-radius: 6px; }
+.stat-label { display: block; font-size: 9px; color: #888; text-transform: uppercase; }
+.stat-value { display: block; font-size: 14px; font-weight: 600; color: #667eea; font-family: monospace; }
+.flight-route { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+.flight-route input { width: 60px; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; font-size: 14px; text-align: center; text-transform: uppercase; font-family: monospace; }
+.route-arrow { color: #667eea; font-size: 18px; }
+.flight-controls { display: flex; gap: 8px; }
+.btn-record, .btn-stop { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.btn-record { background: #22c55e; color: #000; }
+.btn-record:disabled { background: #444; color: #888; }
+.btn-stop { background: #ef4444; color: #fff; }
+.btn-stop:disabled { background: #444; color: #888; }
+.log-history { background: #16213e; border-radius: 8px; padding: 10px; margin-bottom: 12px; }
+.history-header { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 8px; }
+.history-list { max-height: 150px; overflow-y: auto; }
+.history-item { display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 4px; font-size: 12px; }
+.history-route { color: #fff; font-family: monospace; }
+.history-time { color: #667eea; }
+.history-date { color: #888; font-size: 10px; }
+.log-totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.total { background: #16213e; padding: 10px; border-radius: 6px; text-align: center; }
+.total span:first-child { display: block; font-size: 9px; color: #888; text-transform: uppercase; }
+.total span:last-child { display: block; font-size: 16px; font-weight: 600; color: #22c55e; font-family: monospace; }
