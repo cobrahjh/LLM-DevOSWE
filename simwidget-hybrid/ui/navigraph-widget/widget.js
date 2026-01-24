@@ -151,68 +151,51 @@ class NavigraphWidget {
     }
 
     async fetchAirportData(icao) {
-        // Demo data for free preview airports
-        const demoAirports = {
-            'NZWN': {
-                icao: 'NZWN',
-                name: 'Wellington International',
-                city: 'Wellington',
-                country: 'New Zealand',
-                elevation: '41 ft',
-                runways: '16/34',
-                charts: this.generateDemoCharts('NZWN')
-            },
-            'YBBN': {
-                icao: 'YBBN',
-                name: 'Brisbane Airport',
-                city: 'Brisbane',
-                country: 'Australia',
-                elevation: '13 ft',
-                runways: '01/19, 14/32',
-                charts: this.generateDemoCharts('YBBN')
-            }
-        };
-
         // Simulate API delay
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 300));
 
-        if (demoAirports[icao]) {
-            return demoAirports[icao];
-        }
+        // Determine region for chart source
+        const isUSAirport = icao.startsWith('K') || icao.startsWith('P');
+        const chartSource = isUSAirport ? 'FAA DTPP' : 'SkyVector';
 
-        // For other airports, generate placeholder data
+        // Generate charts based on region
+        const charts = isUSAirport
+            ? this.generateFAACharts(icao)
+            : this.generateSkyVectorCharts(icao);
+
         return {
             icao: icao,
             name: icao + ' Airport',
-            city: 'Unknown',
-            country: 'Unknown',
-            elevation: 'N/A',
-            runways: 'N/A',
-            charts: this.generatePlaceholderCharts(icao)
+            city: isUSAirport ? 'USA' : 'International',
+            country: isUSAirport ? 'United States' : 'Worldwide',
+            elevation: 'See chart',
+            runways: 'See chart',
+            source: chartSource,
+            charts: charts
         };
     }
 
-    generateDemoCharts(icao) {
+    generateFAACharts(icao) {
+        // FAA DTPP chart types for US airports
         return [
-            { id: 1, name: 'Airport Diagram', type: 'apt', category: 'Airport' },
-            { id: 2, name: 'Parking/Docking', type: 'apt', category: 'Airport' },
-            { id: 3, name: 'SID RWY 16', type: 'sid', category: 'Departure' },
-            { id: 4, name: 'SID RWY 34', type: 'sid', category: 'Departure' },
-            { id: 5, name: 'RNAV STAR RWY 16', type: 'star', category: 'Arrival' },
-            { id: 6, name: 'STAR RWY 34', type: 'star', category: 'Arrival' },
-            { id: 7, name: 'ILS RWY 16', type: 'app', category: 'Approach' },
-            { id: 8, name: 'ILS RWY 34', type: 'app', category: 'Approach' },
-            { id: 9, name: 'RNAV (GPS) RWY 16', type: 'app', category: 'Approach' },
-            { id: 10, name: 'VOR RWY 34', type: 'app', category: 'Approach' }
+            { id: 1, name: 'Airport Diagram', type: 'apt', category: 'Airport', url: 'faa', icao: icao },
+            { id: 2, name: 'Takeoff Minimums', type: 'apt', category: 'Airport', url: 'faa', icao: icao },
+            { id: 3, name: 'SID - All Departures', type: 'sid', category: 'Departure', url: 'faa', icao: icao },
+            { id: 4, name: 'STAR - All Arrivals', type: 'star', category: 'Arrival', url: 'faa', icao: icao },
+            { id: 5, name: 'ILS Approaches', type: 'app', category: 'Approach', url: 'faa', icao: icao },
+            { id: 6, name: 'RNAV (GPS) Approaches', type: 'app', category: 'Approach', url: 'faa', icao: icao },
+            { id: 7, name: 'VOR/LOC Approaches', type: 'app', category: 'Approach', url: 'faa', icao: icao },
+            { id: 8, name: 'Open in SkyVector', type: 'link', category: 'External', url: 'skyvector', icao: icao }
         ];
     }
 
-    generatePlaceholderCharts(icao) {
+    generateSkyVectorCharts(icao) {
+        // SkyVector links for international airports
         return [
-            { id: 1, name: 'Airport Diagram', type: 'apt', category: 'Airport', placeholder: true },
-            { id: 2, name: 'SID (Various)', type: 'sid', category: 'Departure', placeholder: true },
-            { id: 3, name: 'STAR (Various)', type: 'star', category: 'Arrival', placeholder: true },
-            { id: 4, name: 'ILS Approach', type: 'app', category: 'Approach', placeholder: true }
+            { id: 1, name: 'Airport Info', type: 'apt', category: 'Airport', url: 'skyvector', icao: icao },
+            { id: 2, name: 'Procedures', type: 'app', category: 'Approach', url: 'skyvector', icao: icao },
+            { id: 3, name: 'Open in ChartFox', type: 'link', category: 'External', url: 'chartfox', icao: icao },
+            { id: 4, name: 'Open in SkyVector', type: 'link', category: 'External', url: 'skyvector', icao: icao }
         ];
     }
 
@@ -302,7 +285,13 @@ class NavigraphWidget {
             item.appendChild(info);
             item.appendChild(arrow);
 
-            item.addEventListener('click', () => this.openChart(chart));
+            item.addEventListener('click', () => {
+                if (chart.type === 'link') {
+                    this.openChart(chart);
+                } else {
+                    this.showChartInfo(chart);
+                }
+            });
 
             listContainer.appendChild(item);
         });
@@ -319,28 +308,41 @@ class NavigraphWidget {
     }
 
     openChart(chart) {
-        this.chartTitle.textContent = chart.name;
-        this.zoomLevel = 1;
-        this.chartImage.style.transform = 'scale(1)';
+        // Build URL based on source
+        let url = '';
+        const icao = chart.icao;
 
-        if (chart.placeholder) {
-            this.chartImage.src = '';
-            this.chartImage.alt = 'Navigraph subscription required';
-            this.showChartPlaceholder();
-        } else {
-            // In production, this would load the actual chart image
-            this.showChartPlaceholder(chart.name);
+        switch (chart.url) {
+            case 'faa':
+                // FAA DTPP - opens search page for the airport
+                url = 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/dtpp/search/results/?cycle=current&ident=' + icao;
+                break;
+            case 'skyvector':
+                // SkyVector airport page
+                url = 'https://skyvector.com/airport/' + icao;
+                break;
+            case 'chartfox':
+                // ChartFox - community charts
+                url = 'https://chartfox.org/' + icao;
+                break;
+            default:
+                url = 'https://skyvector.com/airport/' + icao;
         }
 
-        this.chartViewer.style.display = 'flex';
+        // Open in new tab
+        window.open(url, '_blank');
+        this.showMessage('Opening ' + chart.name + ' for ' + icao);
     }
 
-    showChartPlaceholder(chartName) {
+    showChartInfo(chart) {
+        this.chartTitle.textContent = chart.name;
+        this.zoomLevel = 1;
+
         const viewerContent = document.getElementById('viewer-content');
         viewerContent.replaceChildren();
 
         const placeholder = document.createElement('div');
-        placeholder.style.cssText = 'text-align:center;color:#888;';
+        placeholder.style.cssText = 'text-align:center;color:#888;padding:40px;';
 
         const icon = document.createElement('div');
         icon.style.cssText = 'font-size:60px;margin-bottom:16px;';
@@ -348,23 +350,24 @@ class NavigraphWidget {
 
         const title = document.createElement('div');
         title.style.cssText = 'font-size:16px;margin-bottom:8px;color:white;';
-        title.textContent = chartName || 'Chart Preview';
+        title.textContent = chart.name;
 
         const text = document.createElement('div');
-        text.style.cssText = 'font-size:12px;line-height:1.5;';
-        text.textContent = 'Full Jeppesen charts require Navigraph Ultimate subscription and API integration.';
+        text.style.cssText = 'font-size:12px;line-height:1.5;margin-bottom:16px;';
+        text.textContent = 'Charts open in external browser for best viewing experience.';
 
-        const link = document.createElement('a');
-        link.href = 'https://navigraph.com/products/subscriptions';
-        link.target = '_blank';
-        link.style.cssText = 'display:inline-block;margin-top:16px;color:#667eea;text-decoration:none;';
-        link.textContent = 'Learn more at navigraph.com \u2192';
+        const openBtn = document.createElement('button');
+        openBtn.style.cssText = 'padding:12px 24px;background:#667eea;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;';
+        openBtn.textContent = 'Open Chart \u2192';
+        openBtn.addEventListener('click', () => this.openChart(chart));
 
         placeholder.appendChild(icon);
         placeholder.appendChild(title);
         placeholder.appendChild(text);
-        placeholder.appendChild(link);
+        placeholder.appendChild(openBtn);
         viewerContent.appendChild(placeholder);
+
+        this.chartViewer.style.display = 'flex';
     }
 
     closeViewer() {
