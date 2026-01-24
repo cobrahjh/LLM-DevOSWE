@@ -56,3 +56,4 @@ Admin/hive-brain/data/
 
 # Compiled binaries
 simwidget-hybrid/backend/video-capture/bin/
+.claude/
