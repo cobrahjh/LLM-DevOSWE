@@ -6,7 +6,8 @@
 class GTN750Widget {
     constructor() {
         this.ws = null;
-        this.serverHost = '192.168.1.42';
+        this.reconnectDelay = 3000;
+        this.activeWaypoint = null;
         this.serverPort = 8080;
 
         this.data = {
@@ -66,14 +67,18 @@ class GTN750Widget {
     }
 
     connect() {
-        const host = window.location.hostname || this.serverHost;
-        this.ws = new WebSocket(`ws://${host}:${this.serverPort}`);
+        const host = window.location.hostname || 'localhost';
+        const wsUrl = `ws://${host}:${this.serverPort}`;
+        console.log('[GTN750] Connecting to', wsUrl);
+        this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
             console.log('[GTN750] Connected');
             this.elements.conn?.classList.add('connected');
-            this.elements.gpsStatus.textContent = 'GPS 3D';
-            this.elements.gpsStatus.style.background = '#004400';
+            if (this.elements.gpsStatus) {
+                this.elements.gpsStatus.textContent = 'GPS 3D';
+                this.elements.gpsStatus.classList.remove('error');
+            }
         };
 
         this.ws.onmessage = (event) => {
@@ -88,11 +93,13 @@ class GTN750Widget {
         };
 
         this.ws.onclose = () => {
-            console.log('[GTN750] Disconnected');
+            console.log('[GTN750] Disconnected, reconnecting...');
             this.elements.conn?.classList.remove('connected');
-            this.elements.gpsStatus.textContent = 'NO GPS';
-            this.elements.gpsStatus.style.background = '#440000';
-            setTimeout(() => this.connect(), 3000);
+            if (this.elements.gpsStatus) {
+                this.elements.gpsStatus.textContent = 'NO GPS';
+                this.elements.gpsStatus.classList.add('error');
+            }
+            setTimeout(() => this.connect(), this.reconnectDelay);
         };
 
         this.ws.onerror = (e) => {
