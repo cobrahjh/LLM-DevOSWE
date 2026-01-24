@@ -191,26 +191,34 @@ let flightData = {
     gpsLon: 0
 };
 
-// Directory structure (DEBUG - TODO: disable directory listing for production)
+// Directory structure - listing disabled in production (NODE_ENV=production)
 const uiPath = path.join(__dirname, '../ui');
 const configPath = path.join(__dirname, '../config');
 const backendPath = path.join(__dirname);
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Serve shared UI for hot reload and common components
 const sharedUIPath = path.join(__dirname, '../shared-ui');
 app.use('/shared-ui', express.static(sharedUIPath));
 
-// Serve UI directories with listing
-app.use('/ui', express.static(uiPath), serveIndex(uiPath, { icons: true }));
-app.use('/config', express.static(configPath), serveIndex(configPath, { icons: true }));
-app.use('/backend', express.static(backendPath), serveIndex(backendPath, { icons: true }));
+// Serve UI directories (listing only in dev mode)
+app.use('/ui', express.static(uiPath));
+if (!isProduction) {
+    app.use('/ui', serveIndex(uiPath, { icons: true }));
+    app.use('/config', serveIndex(configPath, { icons: true }));
+    app.use('/backend', serveIndex(backendPath, { icons: true }));
+}
+app.use('/config', express.static(configPath));
+app.use('/backend', express.static(backendPath));
 
 // Serve root widgets folder
 const widgetsPath = path.join(__dirname, '../../widgets');
-app.use('/widgets', express.static(widgetsPath), serveIndex(widgetsPath, { icons: true }));
+app.use('/widgets', express.static(widgetsPath));
+if (!isProduction) app.use('/widgets', serveIndex(widgetsPath, { icons: true }));
 
 // Serve plugins static files
-app.use('/plugins', express.static(pluginsDir), serveIndex(pluginsDir, { icons: true }));
+app.use('/plugins', express.static(pluginsDir));
+if (!isProduction) app.use('/plugins', serveIndex(pluginsDir, { icons: true }));
 
 // Root index page
 app.get('/', (req, res) => {

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - SimWidget</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .offline-container {
+            max-width: 400px;
+        }
+        .offline-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: #667eea;
+        }
+        p {
+            color: #888;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .retry-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+        .cached-widgets {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .cached-widgets h3 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .widget-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .widget-link {
+            background: #1a1a2e;
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .widget-link:hover {
+            background: #16213e;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">✈️</div>
+        <h1>You're Offline</h1>
+        <p>SimWidget needs a connection to your flight simulator. Check your network and try again.</p>
+        <button class="retry-btn" onclick="location.reload()">Retry Connection</button>
+
+        <div class="cached-widgets">
+            <h3>Cached Widgets (View Only)</h3>
+            <div class="widget-links">
+                <a href="/ui/weather-widget/" class="widget-link">Weather</a>
+                <a href="/ui/flightplan-widget/" class="widget-link">Flight Plan</a>
+                <a href="/ui/notepad-widget/" class="widget-link">Notepad</a>
+                <a href="/ui/map-widget/" class="widget-link">Map</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

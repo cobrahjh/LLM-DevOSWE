@@ -1,0 +1,44 @@
+{
+  "name": "SimWidget",
+  "short_name": "SimWidget",
+  "description": "Flight simulator companion widgets",
+  "start_url": "/ui/flight-dashboard/",
+  "display": "standalone",
+  "background_color": "#0f0f1a",
+  "theme_color": "#667eea",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/ui/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/ui/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Weather",
+      "url": "/ui/weather-widget/"
+    },
+    {
+      "name": "Flight Plan",
+      "url": "/ui/flightplan-widget/"
+    },
+    {
+      "name": "Map",
+      "url": "/ui/map-widget/"
+    },
+    {
+      "name": "Notepad",
+      "url": "/ui/notepad-widget/"
+    }
+  ],
+  "categories": ["utilities", "games"],
+  "lang": "en-US"
+}

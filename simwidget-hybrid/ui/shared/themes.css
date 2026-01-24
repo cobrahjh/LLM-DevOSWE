@@ -240,6 +240,118 @@
 }
 
 /* ========================================
+   OLED THEME (True black for OLED screens)
+   ======================================== */
+.theme-oled {
+    --widget-bg: #000000;
+    --widget-bg-secondary: #0a0a0a;
+    --widget-bg-tertiary: #000000;
+    --widget-text: #ffffff;
+    --widget-text-muted: #888888;
+    --widget-text-dim: #555555;
+    --widget-accent: #667eea;
+    --widget-accent-hover: #8b9cf5;
+    --widget-success: #22c55e;
+    --widget-warning: #f59e0b;
+    --widget-danger: #ef4444;
+    --widget-border: rgba(255, 255, 255, 0.08);
+    --widget-shadow: none;
+    --widget-glow: 0 0 30px rgba(102, 126, 234, 0.2);
+    --widget-radius: 16px;
+    --widget-radius-sm: 8px;
+}
+
+.theme-oled .widget-container {
+    border: 1px solid var(--widget-border);
+}
+
+/* ========================================
+   SUNSET THEME (Warm colors for night flying)
+   ======================================== */
+.theme-sunset {
+    --widget-bg: #1a0f0a;
+    --widget-bg-secondary: #2a1810;
+    --widget-bg-tertiary: #0f0805;
+    --widget-text: #ffd4a8;
+    --widget-text-muted: #b8947a;
+    --widget-text-dim: #7a5f4d;
+    --widget-accent: #ff8c42;
+    --widget-accent-hover: #ffa366;
+    --widget-success: #7cb342;
+    --widget-warning: #ffb300;
+    --widget-danger: #ff5252;
+    --widget-border: rgba(255, 140, 66, 0.2);
+    --widget-shadow: 0 4px 20px rgba(255, 100, 50, 0.1);
+    --widget-glow: 0 0 30px rgba(255, 140, 66, 0.2);
+    --widget-radius: 12px;
+    --widget-radius-sm: 6px;
+}
+
+.theme-sunset .widget-container {
+    background: linear-gradient(
+        145deg,
+        var(--widget-bg) 0%,
+        #2a1510 50%,
+        var(--widget-bg) 100%
+    );
+    border: 1px solid var(--widget-border);
+}
+
+/* ========================================
+   RETRO THEME (Amber CRT style)
+   ======================================== */
+.theme-retro {
+    --widget-bg: #0a0800;
+    --widget-bg-secondary: #141000;
+    --widget-bg-tertiary: #050400;
+    --widget-text: #ffb000;
+    --widget-text-muted: #b87800;
+    --widget-text-dim: #785000;
+    --widget-accent: #ff9000;
+    --widget-accent-hover: #ffb040;
+    --widget-success: #00ff00;
+    --widget-warning: #ffff00;
+    --widget-danger: #ff4000;
+    --widget-border: rgba(255, 176, 0, 0.3);
+    --widget-shadow: 0 0 20px rgba(255, 144, 0, 0.1);
+    --widget-glow: 0 0 40px rgba(255, 176, 0, 0.15);
+    --widget-radius: 2px;
+    --widget-radius-sm: 1px;
+}
+
+.theme-retro .widget-container {
+    border: 2px solid var(--widget-border);
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.theme-retro .widget-title,
+.theme-retro .stat-value,
+.theme-retro .info-value,
+.theme-retro .weather-value,
+.theme-retro .airport-code {
+    font-family: var(--font-display);
+    text-shadow: 0 0 8px currentColor;
+    letter-spacing: 2px;
+}
+
+/* Phosphor glow effect for retro */
+.theme-retro .widget-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        rgba(0, 0, 0, 0.3) 100%
+    );
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* ========================================
    THEME UTILITIES
    ======================================== */
 

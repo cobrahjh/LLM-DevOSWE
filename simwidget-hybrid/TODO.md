@@ -23,7 +23,7 @@
 - [ ] 🟢 Add more light controls (panel, logo, recognition)
 - [x] ✅ Keymap editor widget (remap keys via UI) - DONE
 - [ ] 🟢 Revisit ChasePlane support (vJoy caused input conflicts)
-- [ ] 🔴 Disable directory listing in server.js for production (security)
+- [x] 🔴 Disable directory listing in server.js for production (security) ✅ 2026-01-23
 
 ---
 

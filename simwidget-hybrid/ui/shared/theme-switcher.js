@@ -13,7 +13,7 @@ class ThemeSwitcher {
     constructor(options = {}) {
         this.storageKey = options.storageKey || 'simwidget-theme';
         this.defaultTheme = options.defaultTheme || 'default';
-        this.themes = ['default', 'cockpit', 'glass', 'day', 'highcontrast'];
+        this.themes = ['default', 'cockpit', 'glass', 'day', 'oled', 'sunset', 'retro', 'highcontrast'];
         this.currentTheme = this.defaultTheme;
 
         // Load saved theme
@@ -118,11 +118,14 @@ class ThemeSwitcher {
         if (!pickerEl) return;
 
         const themeInfo = {
-            'default': { name: 'Default', icon: '🌙', desc: 'Dark blue theme' },
-            'cockpit': { name: 'Cockpit', icon: '✈️', desc: 'Green aviation instruments' },
-            'glass': { name: 'Glass', icon: '💎', desc: 'Modern avionics blue' },
-            'day': { name: 'Day', icon: '☀️', desc: 'Light mode' },
-            'highcontrast': { name: 'High Contrast', icon: '👁️', desc: 'Accessibility mode' }
+            'default': { name: 'Default', icon: '\ud83c\udf19', desc: 'Dark blue theme' },
+            'cockpit': { name: 'Cockpit', icon: '\u2708\ufe0f', desc: 'Green aviation instruments' },
+            'glass': { name: 'Glass', icon: '\ud83d\udc8e', desc: 'Modern avionics blue' },
+            'day': { name: 'Day', icon: '\u2600\ufe0f', desc: 'Light mode' },
+            'oled': { name: 'OLED', icon: '\ud83d\udda4', desc: 'True black for OLED' },
+            'sunset': { name: 'Sunset', icon: '\ud83c\udf05', desc: 'Warm night flying' },
+            'retro': { name: 'Retro', icon: '\ud83d\udcdf', desc: 'Amber CRT style' },
+            'highcontrast': { name: 'Contrast', icon: '\ud83d\udc41\ufe0f', desc: 'Accessibility mode' }
         };
 
         const picker = document.createElement('div');
