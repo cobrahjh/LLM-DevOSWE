@@ -65,7 +65,24 @@ let voiceCommands = [
     { phrase: 'startup checklist', action: 'checklist', checklistAction: 'goto', target: 'startup', description: 'Go to startup checklist' },
     { phrase: 'taxi checklist', action: 'checklist', checklistAction: 'goto', target: 'taxi', description: 'Go to taxi checklist' },
     { phrase: 'takeoff checklist', action: 'checklist', checklistAction: 'goto', target: 'takeoff', description: 'Go to takeoff checklist' },
-    { phrase: 'landing checklist', action: 'checklist', checklistAction: 'goto', target: 'landing', description: 'Go to landing checklist' }
+    { phrase: 'landing checklist', action: 'checklist', checklistAction: 'goto', target: 'landing', description: 'Go to landing checklist' },
+
+    // Dashboard commands
+    { phrase: 'show map', action: 'dashboard', layout: 'map-focus', description: 'Map focus layout' },
+    { phrase: 'map focus', action: 'dashboard', layout: 'map-focus', description: 'Map focus layout' },
+    { phrase: 'planning mode', action: 'dashboard', layout: 'planning', description: 'Planning layout' },
+    { phrase: 'show planning', action: 'dashboard', layout: 'planning', description: 'Planning layout' },
+    { phrase: 'enroute mode', action: 'dashboard', layout: 'enroute', description: 'Enroute layout' },
+    { phrase: 'show enroute', action: 'dashboard', layout: 'enroute', description: 'Enroute layout' },
+    { phrase: 'default layout', action: 'dashboard', layout: 'default', description: 'Default layout' },
+    { phrase: 'fullscreen', action: 'dashboard', dashAction: 'fullscreen', description: 'Toggle fullscreen' },
+    { phrase: 'open dashboard', action: 'dashboard', dashAction: 'open', description: 'Open flight dashboard' },
+
+    // Widget commands
+    { phrase: 'fetch weather', action: 'widget', widget: 'weather', widgetAction: 'fetch', description: 'Fetch weather' },
+    { phrase: 'fetch simbrief', action: 'widget', widget: 'simbrief', widgetAction: 'fetch', description: 'Fetch SimBrief OFP' },
+    { phrase: 'show charts', action: 'widget', widget: 'charts', widgetAction: 'open', description: 'Open charts widget' },
+    { phrase: 'copy to notepad', action: 'widget', widget: 'notepad', widgetAction: 'copy', description: 'Copy to notepad' }
 ];
 
 // ============================================
@@ -294,6 +311,12 @@ async function executeAction(cmd) {
             case 'checklist':
                 await executeChecklist(cmd);
                 break;
+            case 'dashboard':
+                await executeDashboard(cmd);
+                break;
+            case 'widget':
+                await executeWidget(cmd);
+                break;
             default:
                 log(`Unknown action type: ${cmd.action}`, 'error');
         }
@@ -375,6 +398,67 @@ async function executeChecklist(cmd) {
     }));
 
     log(`Checklist: ${cmd.checklistAction}${cmd.target ? ' -> ' + cmd.target : ''}`, 'info');
+}
+
+async function executeDashboard(cmd) {
+    const channel = new BroadcastChannel('simwidget-sync');
+
+    if (cmd.layout) {
+        // Change dashboard layout
+        channel.postMessage({
+            type: 'dashboard-layout',
+            data: { layout: cmd.layout }
+        });
+        log(`Dashboard layout: ${cmd.layout}`, 'info');
+    } else if (cmd.dashAction === 'fullscreen') {
+        channel.postMessage({
+            type: 'dashboard-action',
+            data: { action: 'fullscreen' }
+        });
+        log('Dashboard: Toggle fullscreen', 'info');
+    } else if (cmd.dashAction === 'open') {
+        window.open('/ui/flight-dashboard/', 'flight-dashboard', 'width=1400,height=900');
+        log('Dashboard: Opened', 'info');
+    }
+
+    channel.close();
+}
+
+async function executeWidget(cmd) {
+    const channel = new BroadcastChannel('simwidget-sync');
+
+    switch (cmd.widget) {
+        case 'weather':
+            channel.postMessage({
+                type: 'widget-action',
+                data: { widget: 'weather', action: 'fetch' }
+            });
+            log('Weather: Fetch requested', 'info');
+            break;
+
+        case 'simbrief':
+            channel.postMessage({
+                type: 'widget-action',
+                data: { widget: 'simbrief', action: 'fetch' }
+            });
+            log('SimBrief: Fetch requested', 'info');
+            break;
+
+        case 'charts':
+            window.open('/ui/charts-widget/', 'charts-widget', 'width=800,height=600');
+            log('Charts: Opened', 'info');
+            break;
+
+        case 'notepad':
+            channel.postMessage({
+                type: 'widget-action',
+                data: { widget: 'notepad', action: 'copy' }
+            });
+            log('Notepad: Copy requested', 'info');
+            break;
+    }
+
+    channel.close();
 }
 
 

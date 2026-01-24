@@ -300,6 +300,17 @@
     20%, 80% { opacity: 1; }
 }
 
+/* Speaking indicator */
+.btn-icon.speaking {
+    animation: pulse-speak 1s infinite;
+    color: var(--widget-accent, #667eea);
+}
+
+@keyframes pulse-speak {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
 /* Mobile */
 @media (max-width: 400px) {
     .flight-summary {

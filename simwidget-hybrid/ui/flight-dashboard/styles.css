@@ -258,3 +258,25 @@ body.fullscreen .frame-header {
 .connection-dot.disconnected {
     background: #ef4444;
 }
+
+/* Voice command toast */
+.voice-toast {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000;
+    animation: toastSlide 2s ease-in-out;
+}
+
+@keyframes toastSlide {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    15%, 85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}

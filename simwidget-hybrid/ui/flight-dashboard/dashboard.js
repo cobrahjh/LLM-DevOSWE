@@ -12,6 +12,33 @@ class FlightDashboard {
         this.initEvents();
         this.loadLayout();
         this.initPopouts();
+        this.initVoiceListener();
+    }
+
+    initVoiceListener() {
+        // Listen for voice commands from simwidget-sync channel
+        const syncChannel = new BroadcastChannel('simwidget-sync');
+        syncChannel.onmessage = (event) => {
+            const { type, data } = event.data;
+
+            if (type === 'dashboard-layout' && data.layout) {
+                this.setLayout(data.layout);
+                this.layoutSelect.value = data.layout;
+                this.showToast('Layout: ' + data.layout);
+            }
+
+            if (type === 'dashboard-action' && data.action === 'fullscreen') {
+                this.toggleFullscreen();
+            }
+        };
+    }
+
+    showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'voice-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
     }
 
     initEvents() {

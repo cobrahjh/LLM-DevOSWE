@@ -6,6 +6,10 @@
  * - Broadcasts waypoint-select when user clicks waypoint
  * - Broadcasts route-update when flight plan changes
  * - Broadcasts copy-route for notepad widget
+ *
+ * Voice Features:
+ * - Click speaker icon to announce next waypoint
+ * - Auto-announce waypoint changes (optional)
  */
 
 class FlightPlanWidget {
@@ -14,6 +18,10 @@ class FlightPlanWidget {
         this.currentPosition = null;
         this.groundSpeed = 0;
         this.ws = null;
+        this.lastAnnouncedWaypoint = null;
+
+        // Voice announcer
+        this.announcer = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer() : null;
 
         // Cross-widget communication
         this.syncChannel = new BroadcastChannel('simwidget-sync');
@@ -85,6 +93,31 @@ class FlightPlanWidget {
         document.getElementById('btn-copy-route').addEventListener('click', () => {
             this.copyRouteToNotepad();
         });
+
+        // Speak next waypoint
+        document.getElementById('btn-speak-next').addEventListener('click', () => {
+            this.speakNextWaypoint();
+        });
+    }
+
+    speakNextWaypoint() {
+        if (!this.flightPlan || !this.flightPlan.nextWaypoint) {
+            this.showFeedback('No waypoint data');
+            return;
+        }
+
+        const wp = this.flightPlan.nextWaypoint;
+
+        if (this.announcer) {
+            this.announcer.speakWaypoint(wp);
+        } else if (typeof VoiceAnnouncer !== 'undefined') {
+            VoiceAnnouncer.announceWaypoint(wp);
+        }
+
+        // Visual feedback
+        const btn = document.getElementById('btn-speak-next');
+        btn.classList.add('speaking');
+        setTimeout(() => btn.classList.remove('speaking'), 3000);
     }
 
     copyRouteToNotepad() {

@@ -15,6 +15,7 @@
         <div class="widget-header">
             <span class="widget-title">🛫 Flight Plan</span>
             <div class="header-controls">
+                <button class="btn-icon" id="btn-speak-next" title="Announce next waypoint">🔊</button>
                 <button class="btn-icon" id="btn-copy-route" title="Copy to Notepad">📝</button>
                 <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
             </div>
@@ -78,6 +79,7 @@
 
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="/ui/shared/voice-announcer.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();

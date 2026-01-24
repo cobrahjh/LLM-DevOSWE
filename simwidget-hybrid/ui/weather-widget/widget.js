@@ -1,12 +1,19 @@
 /**
  * Weather Widget - SimWidget
  * METAR/TAF weather display for flight planning
+ *
+ * Voice Features:
+ * - Click speaker icon to read weather aloud
+ * - Uses VoiceAnnouncer shared service
  */
 
 class WeatherWidget {
     constructor() {
         this.recentAirports = [];
         this.currentData = null;
+
+        // Voice announcer
+        this.announcer = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer() : null;
 
         this.initElements();
         this.initEvents();
@@ -18,6 +25,7 @@ class WeatherWidget {
         this.airportInput = document.getElementById('airport-input');
         this.searchBtn = document.getElementById('btn-search');
         this.refreshBtn = document.getElementById('btn-refresh');
+        this.speakBtn = document.getElementById('btn-speak');
         this.content = document.getElementById('weather-content');
         this.recentList = document.getElementById('recent-list');
     }
@@ -25,6 +33,7 @@ class WeatherWidget {
     initEvents() {
         this.searchBtn.addEventListener('click', () => this.fetchWeather());
         this.refreshBtn.addEventListener('click', () => this.refresh());
+        this.speakBtn.addEventListener('click', () => this.speakWeather());
 
         this.airportInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.fetchWeather();
@@ -176,6 +185,22 @@ Category: ${category}`;
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 2000);
+    }
+
+    speakWeather() {
+        if (!this.currentData) {
+            this.showToast('No weather data to read');
+            return;
+        }
+
+        if (this.announcer) {
+            this.announcer.speakWeather(this.currentData);
+            this.speakBtn.classList.add('speaking');
+            setTimeout(() => this.speakBtn.classList.remove('speaking'), 5000);
+        } else {
+            // Fallback: use static broadcast
+            VoiceAnnouncer.announceWeather(this.currentData);
+        }
     }
 
     createWeatherItem(label, value, className, unit) {

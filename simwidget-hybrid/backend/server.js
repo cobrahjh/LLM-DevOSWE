@@ -277,6 +277,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/flightplan-widget/">🛫 Flight Plan</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/simbrief-widget/">📋 SimBrief</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/navigraph-widget/">🗺️ Navigraph Charts</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/charts-widget/">📊 Free Charts</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/copilot-widget/">🧑‍✈️ AI Copilot</a> <span class="new-badge">NEW</span></li>
             </ul>
         </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather - SimWidget</title>
+    <title>Charts - SimWidget</title>
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
@@ -13,26 +13,32 @@
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="widget-container">
         <div class="widget-header">
-            <span class="widget-title">🌦️ Weather</span>
+            <span class="widget-title">📊 Charts</span>
             <div class="header-controls">
-                <button class="btn-icon" id="btn-speak" title="Read aloud">🔊</button>
                 <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
             </div>
         </div>
 
-        <div class="search-bar">
+        <div class="search-section">
             <input type="text" id="airport-input" placeholder="ICAO (e.g., KJFK)" maxlength="4">
-            <button class="btn-search" id="btn-search">Get METAR</button>
+            <button id="btn-search">Search</button>
         </div>
 
-        <div class="weather-content" id="weather-content">
+        <div class="source-tabs" id="source-tabs">
+            <button class="tab active" data-source="chartfox">ChartFox</button>
+            <button class="tab" data-source="faa">FAA (US)</button>
+            <button class="tab" data-source="eurocontrol">EuroCtrl</button>
+        </div>
+
+        <div class="charts-content" id="charts-content">
             <div class="placeholder">
-                <div class="placeholder-icon">✈️</div>
-                <div class="placeholder-text">Enter airport ICAO code</div>
+                <div class="placeholder-icon">📊</div>
+                <div class="placeholder-text">Enter airport code to search charts</div>
+                <div class="placeholder-hint">Free sources: ChartFox, FAA, Eurocontrol</div>
             </div>
         </div>
 
-        <div class="recent-airports" id="recent-airports">
+        <div class="recent-section" id="recent-section">
             <div class="recent-label">Recent:</div>
             <div class="recent-list" id="recent-list"></div>
         </div>
@@ -40,11 +46,10 @@
 
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
-    <script src="/ui/shared/voice-announcer.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
-        const customizer = new WidgetCustomizer({ widgetId: 'weather-widget', settingsPanel: settings });
+        const customizer = new WidgetCustomizer({ widgetId: 'charts-widget', settingsPanel: settings });
         document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
     </script>
 </body>
