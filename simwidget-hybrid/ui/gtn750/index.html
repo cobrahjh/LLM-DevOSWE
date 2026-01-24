@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GTN750 GPS</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>GTN750 GPS - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/themes.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="/ui/shared/mobile-companion.js"></script>
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
@@ -95,17 +99,19 @@
                 </div>
             </div>
 
-            <!-- COM/NAV Frequencies -->
+            <!-- COM/NAV Frequencies with Swap Buttons -->
             <div class="gtn-section gtn-radio">
                 <div class="gtn-radio-row">
                     <div class="gtn-radio-item">
                         <span class="gtn-radio-label">COM1</span>
                         <span class="gtn-radio-active" id="com1">118.00</span>
+                        <button class="gtn-swap-btn" id="swap-com1" title="Swap COM1">⇄</button>
                         <span class="gtn-radio-stby" id="com1-stby">118.00</span>
                     </div>
                     <div class="gtn-radio-item">
                         <span class="gtn-radio-label">NAV1</span>
                         <span class="gtn-radio-active" id="nav1">108.00</span>
+                        <button class="gtn-swap-btn" id="swap-nav1" title="Swap NAV1">⇄</button>
                         <span class="gtn-radio-stby" id="nav1-stby">108.00</span>
                     </div>
                 </div>
@@ -113,12 +119,45 @@
                     <div class="gtn-radio-item">
                         <span class="gtn-radio-label">COM2</span>
                         <span class="gtn-radio-active" id="com2">118.00</span>
+                        <button class="gtn-swap-btn" id="swap-com2" title="Swap COM2">⇄</button>
                         <span class="gtn-radio-stby" id="com2-stby">118.00</span>
                     </div>
                     <div class="gtn-radio-item">
                         <span class="gtn-radio-label">XPDR</span>
                         <span class="gtn-radio-active" id="xpdr">1200</span>
                         <span class="gtn-radio-stby"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flight Plan -->
+            <div class="gtn-section gtn-fpl">
+                <div class="gtn-section-title">
+                    FLIGHT PLAN
+                    <button class="gtn-direct-btn" id="btn-direct" title="Direct To">D→</button>
+                </div>
+                <div class="gtn-fpl-list" id="fpl-list">
+                    <div class="gtn-fpl-empty">No flight plan loaded</div>
+                </div>
+            </div>
+
+            <!-- CDI / OBS Indicator -->
+            <div class="gtn-section gtn-cdi">
+                <div class="gtn-cdi-display">
+                    <span class="gtn-cdi-label">CDI</span>
+                    <div class="gtn-cdi-bar">
+                        <div class="gtn-cdi-dots">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot center"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                        <div class="gtn-cdi-needle" id="cdi-needle"></div>
+                    </div>
+                    <div class="gtn-cdi-info">
+                        <span class="gtn-cdi-dtk">DTK <span id="cdi-dtk">---</span>°</span>
+                        <span class="gtn-cdi-xtrk">XTK <span id="cdi-xtrk">0.0</span>NM</span>
                     </div>
                 </div>
             </div>
@@ -131,10 +170,12 @@
     </div>
 
     <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
+        settings.registerThemeSection();
         const customizer = new WidgetCustomizer({ widgetId: 'gtn750', settingsPanel: settings });
         document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
     </script>
