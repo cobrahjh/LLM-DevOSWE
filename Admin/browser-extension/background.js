@@ -9,15 +9,40 @@ let reconnectTimer = null;
 let keepaliveTimer = null;
 let isConnected = false;
 
-// Keepalive - send ping every 20 seconds to prevent service worker sleep
+// ============================================
+// AGGRESSIVE KEEPALIVE (MV3 service worker fix)
+// ============================================
+
+// Use chrome.alarms for persistent wakeups (survives SW termination)
+chrome.alarms.create('keepalive', { periodInMinutes: 0.25 }); // Every 15 seconds
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'keepalive') {
+        console.log('[Kitt Bridge] Alarm keepalive tick');
+        // Touch storage to keep SW alive
+        chrome.storage.local.set({ lastKeepalive: Date.now() });
+        // Ensure connection
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            connect();
+        }
+    }
+});
+
+// Keepalive - send ping every 10 seconds to prevent service worker sleep
 function startKeepalive() {
     stopKeepalive();
     keepaliveTimer = setInterval(() => {
+        // Touch storage to signal activity
+        chrome.storage.local.set({ lastPing: Date.now() });
+
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'ping' }));
             console.log('[Kitt Bridge] Keepalive ping');
+        } else {
+            console.log('[Kitt Bridge] Keepalive - reconnecting...');
+            connect();
         }
-    }, 20000);
+    }, 10000); // Every 10 seconds
 }
 
 function stopKeepalive() {
@@ -26,6 +51,11 @@ function stopKeepalive() {
         keepaliveTimer = null;
     }
 }
+
+// Self-wake: listen to storage changes to keep SW alive
+chrome.storage.onChanged.addListener(() => {
+    // Any storage change keeps the service worker active
+});
 
 // Connect to bridge server
 function connect() {

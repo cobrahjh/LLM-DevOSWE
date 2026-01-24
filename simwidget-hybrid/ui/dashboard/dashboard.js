@@ -56,7 +56,17 @@ class Dashboard {
         this.addBtn = document.getElementById('btn-add');
         this.lockBtn = document.getElementById('btn-lock');
         this.saveBtn = document.getElementById('btn-save');
+        this.settingsBtn = document.getElementById('btn-settings');
+        this.settingsModal = document.getElementById('settings-modal');
         this.presetBtns = document.querySelectorAll('.preset-btn');
+
+        // Voice settings elements
+        this.voiceEnabled = document.getElementById('voice-enabled');
+        this.voiceSelect = document.getElementById('voice-select');
+        this.voiceRate = document.getElementById('voice-rate');
+        this.voicePitch = document.getElementById('voice-pitch');
+        this.voiceVolume = document.getElementById('voice-volume');
+        this.voiceTest = document.getElementById('voice-test');
     }
 
     initEvents() {
@@ -66,6 +76,14 @@ class Dashboard {
 
         this.lockBtn.addEventListener('click', () => this.toggleEdit());
         this.saveBtn.addEventListener('click', () => this.saveLayout());
+
+        // Settings modal
+        this.settingsBtn.addEventListener('click', () => this.showSettings());
+        document.getElementById('settings-close').addEventListener('click', () => this.hideSettings());
+        document.querySelector('.settings-overlay').addEventListener('click', () => this.hideSettings());
+
+        // Voice settings
+        this.initVoiceSettings();
 
         this.presetBtns.forEach(btn => {
             btn.addEventListener('click', () => this.loadPreset(btn.dataset.preset));
@@ -380,6 +398,166 @@ class Dashboard {
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 2000);
+    }
+
+    // ============================================
+    // SETTINGS
+    // ============================================
+
+    showSettings() {
+        this.settingsModal.style.display = 'flex';
+        this.populateVoices();
+    }
+
+    hideSettings() {
+        this.settingsModal.style.display = 'none';
+    }
+
+    initVoiceSettings() {
+        // Initialize VoiceAnnouncer if available
+        this.announcer = window.VoiceAnnouncer ? new VoiceAnnouncer() : null;
+
+        // Load saved settings
+        this.loadVoiceSettings();
+
+        // Event listeners
+        this.voiceEnabled.addEventListener('change', () => this.saveVoiceSettings());
+        this.voiceSelect.addEventListener('change', () => this.saveVoiceSettings());
+
+        this.voiceRate.addEventListener('input', () => {
+            document.getElementById('voice-rate-value').textContent = this.voiceRate.value + 'x';
+            this.saveVoiceSettings();
+        });
+
+        this.voicePitch.addEventListener('input', () => {
+            document.getElementById('voice-pitch-value').textContent = this.voicePitch.value;
+            this.saveVoiceSettings();
+        });
+
+        this.voiceVolume.addEventListener('input', () => {
+            document.getElementById('voice-volume-value').textContent = Math.round(this.voiceVolume.value * 100) + '%';
+            this.saveVoiceSettings();
+        });
+
+        this.voiceTest.addEventListener('click', () => this.testVoice());
+
+        // Populate voices when they load
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = () => this.populateVoices();
+        }
+    }
+
+    populateVoices() {
+        if (!window.speechSynthesis) return;
+
+        const voices = window.speechSynthesis.getVoices();
+        const savedVoice = localStorage.getItem('voice-name') || '';
+
+        // Clear existing options
+        this.voiceSelect.replaceChildren();
+
+        // Group by language
+        const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+        const otherVoices = voices.filter(v => !v.lang.startsWith('en'));
+
+        // Add English voices first
+        if (englishVoices.length > 0) {
+            const group = document.createElement('optgroup');
+            group.label = 'English';
+            englishVoices.forEach(voice => {
+                const opt = document.createElement('option');
+                opt.value = voice.name;
+                opt.textContent = voice.name + (voice.localService ? '' : ' (Online)');
+                opt.selected = voice.name === savedVoice;
+                group.appendChild(opt);
+            });
+            this.voiceSelect.appendChild(group);
+        }
+
+        // Add other voices
+        if (otherVoices.length > 0) {
+            const group = document.createElement('optgroup');
+            group.label = 'Other Languages';
+            otherVoices.forEach(voice => {
+                const opt = document.createElement('option');
+                opt.value = voice.name;
+                opt.textContent = voice.name;
+                opt.selected = voice.name === savedVoice;
+                group.appendChild(opt);
+            });
+            this.voiceSelect.appendChild(group);
+        }
+    }
+
+    loadVoiceSettings() {
+        try {
+            this.voiceEnabled.checked = localStorage.getItem('voice-enabled') !== 'false';
+            this.voiceRate.value = localStorage.getItem('voice-rate') || 1;
+            this.voicePitch.value = localStorage.getItem('voice-pitch') || 1;
+            this.voiceVolume.value = localStorage.getItem('voice-volume') || 1;
+
+            document.getElementById('voice-rate-value').textContent = this.voiceRate.value + 'x';
+            document.getElementById('voice-pitch-value').textContent = this.voicePitch.value;
+            document.getElementById('voice-volume-value').textContent = Math.round(this.voiceVolume.value * 100) + '%';
+        } catch (e) {
+            console.error('Failed to load voice settings:', e);
+        }
+    }
+
+    saveVoiceSettings() {
+        try {
+            localStorage.setItem('voice-enabled', this.voiceEnabled.checked);
+            localStorage.setItem('voice-name', this.voiceSelect.value);
+            localStorage.setItem('voice-rate', this.voiceRate.value);
+            localStorage.setItem('voice-pitch', this.voicePitch.value);
+            localStorage.setItem('voice-volume', this.voiceVolume.value);
+
+            // Update announcer if available
+            if (this.announcer) {
+                this.announcer.enabled = this.voiceEnabled.checked;
+                this.announcer.rate = parseFloat(this.voiceRate.value);
+                this.announcer.pitch = parseFloat(this.voicePitch.value);
+                this.announcer.volume = parseFloat(this.voiceVolume.value);
+                this.announcer.voiceName = this.voiceSelect.value;
+                this.announcer.loadVoice();
+            }
+
+            // Broadcast settings to other widgets
+            const channel = new BroadcastChannel('simwidget-voice-settings');
+            channel.postMessage({
+                enabled: this.voiceEnabled.checked,
+                voice: this.voiceSelect.value,
+                rate: parseFloat(this.voiceRate.value),
+                pitch: parseFloat(this.voicePitch.value),
+                volume: parseFloat(this.voiceVolume.value)
+            });
+            channel.close();
+        } catch (e) {
+            console.error('Failed to save voice settings:', e);
+        }
+    }
+
+    testVoice() {
+        if (!window.speechSynthesis) {
+            this.showToast('Speech synthesis not available');
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance('SimWidget voice test. All systems nominal.');
+        utterance.rate = parseFloat(this.voiceRate.value);
+        utterance.pitch = parseFloat(this.voicePitch.value);
+        utterance.volume = parseFloat(this.voiceVolume.value);
+
+        const voices = window.speechSynthesis.getVoices();
+        const selectedVoice = voices.find(v => v.name === this.voiceSelect.value);
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+        this.showToast('Testing voice...');
     }
 }
 

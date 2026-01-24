@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Kitt Browser Bridge",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Browser automation bridge for LLM-DevOSWE framework",
   "permissions": [
     "activeTab",
     "tabs",
     "tabGroups",
     "scripting",
-    "storage"
+    "storage",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>"

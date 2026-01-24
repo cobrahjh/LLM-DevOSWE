@@ -23,6 +23,7 @@
             <button class="btn-action" id="btn-add">+ Add Widget</button>
             <button class="btn-action" id="btn-lock">🔓 Edit</button>
             <button class="btn-action" id="btn-save">💾 Save</button>
+            <button class="btn-action" id="btn-settings">⚙️ Settings</button>
         </div>
     </div>
 
@@ -43,6 +44,49 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settings-modal" style="display: none;">
+        <div class="settings-overlay"></div>
+        <div class="settings-content">
+            <div class="settings-header">
+                <span class="settings-title">⚙️ Settings</span>
+                <button class="settings-close" id="settings-close">&times;</button>
+            </div>
+            <div class="settings-body">
+                <div class="settings-section">
+                    <h3>🔊 Voice Announcements</h3>
+                    <div class="setting-row">
+                        <label>Enable Voice</label>
+                        <input type="checkbox" id="voice-enabled" checked>
+                    </div>
+                    <div class="setting-row">
+                        <label>Voice</label>
+                        <select id="voice-select"></select>
+                    </div>
+                    <div class="setting-row">
+                        <label>Speed</label>
+                        <input type="range" id="voice-rate" min="0.5" max="2" step="0.1" value="1">
+                        <span id="voice-rate-value">1.0x</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Pitch</label>
+                        <input type="range" id="voice-pitch" min="0.5" max="2" step="0.1" value="1">
+                        <span id="voice-pitch-value">1.0</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Volume</label>
+                        <input type="range" id="voice-volume" min="0" max="1" step="0.1" value="1">
+                        <span id="voice-volume-value">100%</span>
+                    </div>
+                    <div class="setting-row">
+                        <button class="btn-test" id="voice-test">🔊 Test Voice</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/voice-announcer.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>
