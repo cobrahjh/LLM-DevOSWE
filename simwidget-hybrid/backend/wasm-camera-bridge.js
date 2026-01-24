@@ -132,6 +132,14 @@ class WasmCameraBridge {
     async resetCamera() {
         return this.sendCommand(CameraCommand.RESET);
     }
+
+    /**
+     * Start tower view camera
+     * Positions camera at nearest airport tower looking at aircraft
+     */
+    async startTower() {
+        return this.sendCommand(CameraCommand.TOWER);
+    }
     
     /**
      * Set smoothing factor

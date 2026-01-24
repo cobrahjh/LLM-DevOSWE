@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Maker - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/themes.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="/ui/shared/mobile-companion.js"></script>
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container checklist-maker">
+        <div class="widget-header">
+            <span class="widget-title">✏️ Checklist Maker</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-export" title="Export JSON">📤</button>
+                <button class="btn-icon" id="btn-import" title="Import JSON">📥</button>
+            </div>
+        </div>
+
+        <!-- Aircraft Selection -->
+        <div class="maker-section">
+            <div class="section-header">
+                <span class="section-title">Aircraft</span>
+                <button class="btn-sm btn-add" id="btn-new-aircraft">+ New Aircraft</button>
+            </div>
+            <div class="aircraft-list" id="aircraft-list"></div>
+        </div>
+
+        <!-- Checklist Phases -->
+        <div class="maker-section" id="phases-section" style="display:none;">
+            <div class="section-header">
+                <span class="section-title">Phases</span>
+                <button class="btn-sm btn-add" id="btn-new-phase">+ Add Phase</button>
+            </div>
+            <div class="phase-list" id="phase-list"></div>
+        </div>
+
+        <!-- Checklist Items -->
+        <div class="maker-section" id="items-section" style="display:none;">
+            <div class="section-header">
+                <span class="section-title" id="items-title">Items</span>
+                <button class="btn-sm btn-add" id="btn-new-item">+ Add Item</button>
+            </div>
+            <div class="items-list" id="items-list"></div>
+        </div>
+
+        <!-- Hidden file input for import -->
+        <input type="file" id="import-file" accept=".json" style="display:none">
+    </div>
+
+    <!-- Modal for editing -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="modal-title">Edit</span>
+                <button class="modal-close" id="modal-close">✕</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="modal-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

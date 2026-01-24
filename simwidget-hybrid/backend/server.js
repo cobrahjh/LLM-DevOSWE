@@ -301,6 +301,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/replay-debrief/">🎬 Flight Replay</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/kneeboard-widget/">📋 Kneeboard</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/metar-widget/">🌦️ METAR Weather</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/checklist-maker/">✏️ Checklist Maker</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/dashboard/">🎛️ Widget Dashboard</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/flight-dashboard/">🎯 Flight Dashboard</a></li>
             </ul>
@@ -1520,6 +1521,7 @@ app.post('/api/wasm-camera', (req, res) => {
         // Command values matching WASM enum
         const commands = {
             'flyby': 1,
+            'tower': 2,
             'toggle': 3,
             'next': 4,
             'reset': 5
@@ -1551,7 +1553,7 @@ app.get('/api/wasm-camera/status', (req, res) => {
     res.json({
         ready: wasmCameraReady,
         status: wasmCameraStatus,
-        modes: { 0: 'off', 2: 'flyby' }
+        modes: { 0: 'off', 1: 'cinematic', 2: 'flyby', 3: 'tower', 4: 'manual' }
     });
 });
 

@@ -17,6 +17,7 @@ let smoothing = 50;
 // Elements
 const statusDot = document.getElementById('status-dot');
 const btnFlyby = document.getElementById('btn-flyby');
+const btnTower = document.getElementById('btn-tower');
 const btnNext = document.getElementById('btn-next');
 const btnReset = document.getElementById('btn-reset');
 const smoothSlider = document.getElementById('smooth-slider');
@@ -97,6 +98,11 @@ function updateUI() {
 // Event Handlers
 btnFlyby.addEventListener('click', async () => {
     await sendCommand('flyby', smoothing);
+    setTimeout(checkStatus, 200);
+});
+
+btnTower.addEventListener('click', async () => {
+    await sendCommand('tower', smoothing);
     setTimeout(checkStatus, 200);
 });
 
