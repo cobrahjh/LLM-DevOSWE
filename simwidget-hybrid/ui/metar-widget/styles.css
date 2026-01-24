@@ -1,0 +1,374 @@
+/**
+ * METAR Widget Styles
+ */
+
+.metar-widget {
+    min-width: 320px;
+}
+
+/* Airport Input */
+.airport-input {
+    display: flex;
+    gap: 8px;
+    padding: 0 12px;
+    margin-bottom: 12px;
+}
+
+.airport-input input {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--widget-bg-tertiary);
+    border: 1px solid var(--widget-border);
+    border-radius: var(--widget-radius-sm);
+    color: var(--widget-text);
+    font-size: 16px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+}
+
+.airport-input input::placeholder {
+    text-transform: none;
+    color: var(--widget-text-dim);
+}
+
+.btn-fetch {
+    padding: 10px 16px;
+    background: var(--widget-accent);
+    border: none;
+    border-radius: var(--widget-radius-sm);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-fetch:hover {
+    background: var(--widget-accent-hover);
+}
+
+.btn-fetch:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Recent Airports */
+.recent-airports {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 12px;
+    margin-bottom: 12px;
+}
+
+.recent-btn {
+    padding: 6px 12px;
+    background: var(--widget-bg-secondary);
+    border: 1px solid var(--widget-border);
+    border-radius: 20px;
+    color: var(--widget-text-muted);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.recent-btn:hover {
+    border-color: var(--widget-accent);
+    color: var(--widget-text);
+}
+
+/* METAR Content */
+.metar-content {
+    padding: 0 12px 12px;
+}
+
+.metar-placeholder {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--widget-text-dim);
+}
+
+.placeholder-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.placeholder-text {
+    font-size: 14px;
+}
+
+/* Flight Category Badge */
+.flight-category {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+}
+
+.flight-category.vfr {
+    background: var(--widget-success);
+    color: white;
+}
+
+.flight-category.mvfr {
+    background: #3b82f6;
+    color: white;
+}
+
+.flight-category.ifr {
+    background: var(--widget-danger);
+    color: white;
+}
+
+.flight-category.lifr {
+    background: #7c3aed;
+    color: white;
+}
+
+/* Station Info */
+.station-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.station-code {
+    font-size: 32px;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    color: var(--widget-text);
+    letter-spacing: 2px;
+}
+
+.station-name {
+    font-size: 12px;
+    color: var(--widget-text-muted);
+    margin-top: 4px;
+}
+
+.obs-time {
+    font-size: 12px;
+    color: var(--widget-text-muted);
+    text-align: right;
+}
+
+/* Weather Grid */
+.weather-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.weather-item {
+    background: var(--widget-bg-secondary);
+    padding: 12px;
+    border-radius: var(--widget-radius-sm);
+}
+
+.weather-label {
+    font-size: 10px;
+    color: var(--widget-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.weather-value {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    color: var(--widget-text);
+}
+
+.weather-value.wind {
+    color: var(--widget-accent);
+}
+
+.weather-value.vis {
+    color: var(--widget-success);
+}
+
+.weather-value.vis.low {
+    color: var(--widget-warning);
+}
+
+.weather-value.vis.very-low {
+    color: var(--widget-danger);
+}
+
+.weather-unit {
+    font-size: 12px;
+    color: var(--widget-text-muted);
+    font-weight: normal;
+}
+
+/* Conditions */
+.conditions-section {
+    margin-bottom: 16px;
+}
+
+.conditions-title {
+    font-size: 11px;
+    color: var(--widget-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.conditions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.condition-badge {
+    padding: 6px 12px;
+    background: var(--widget-bg-secondary);
+    border-radius: var(--widget-radius-sm);
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--widget-text);
+}
+
+.condition-badge.precip {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.condition-badge.fog {
+    background: rgba(156, 163, 175, 0.2);
+    color: #9ca3af;
+}
+
+.condition-badge.thunder {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+/* Clouds */
+.clouds-section {
+    margin-bottom: 16px;
+}
+
+.cloud-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cloud-layer {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--widget-bg-secondary);
+    border-radius: var(--widget-radius-sm);
+}
+
+.cloud-cover {
+    font-size: 13px;
+    color: var(--widget-text);
+}
+
+.cloud-alt {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--widget-accent);
+}
+
+/* Raw METAR */
+.raw-metar {
+    background: var(--widget-bg-tertiary);
+    padding: 12px;
+    border-radius: var(--widget-radius-sm);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--widget-text-muted);
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.raw-metar-label {
+    font-size: 10px;
+    color: var(--widget-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+/* Auto Refresh */
+.auto-refresh {
+    padding: 12px;
+    border-top: 1px solid var(--widget-border);
+    font-size: 12px;
+    color: var(--widget-text-muted);
+}
+
+.auto-refresh label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.auto-refresh input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Loading State */
+.metar-loading {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--widget-border);
+    border-top-color: var(--widget-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.metar-error {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--widget-danger);
+}
+
+.error-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+}
+
+.error-text {
+    font-size: 14px;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .weather-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .station-code {
+        font-size: 28px;
+    }
+
+    .weather-value {
+        font-size: 24px;
+    }
+}

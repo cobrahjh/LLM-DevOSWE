@@ -30,12 +30,20 @@ class MapWidget {
         this.weatherMarkers = [];
         this.weatherCache = {};
 
+        // Radar overlay (RainViewer)
+        this.radarLayer = null;
+        this.radarEnabled = false;
+        this.radarOpacity = 0.5;
+        this.radarTileUrl = null;
+        this.radarTimestamp = 0;
+
         // Cross-widget communication
         this.syncChannel = new BroadcastChannel('simwidget-sync');
         this.initSyncListener();
 
         this.initMap();
         this.initControls();
+        this.initRadarControls();
         this.connectWebSocket();
         this.loadFlightPlan();
     }
@@ -450,6 +458,87 @@ class MapWidget {
     clearTrack() {
         this.trackPoints = [];
         this.trackLine.setLatLngs([]);
+    }
+
+    // Radar overlay methods (RainViewer API)
+    initRadarControls() {
+        const radarToggle = document.getElementById('btn-radar');
+        const radarSlider = document.getElementById('radar-opacity');
+        const radarControls = document.getElementById('radar-controls');
+
+        if (radarToggle) {
+            radarToggle.addEventListener('click', () => {
+                this.radarEnabled = !this.radarEnabled;
+                radarToggle.classList.toggle('active', this.radarEnabled);
+                radarControls.classList.toggle('visible', this.radarEnabled);
+
+                if (this.radarEnabled) {
+                    this.loadRadarLayer();
+                } else {
+                    this.removeRadarLayer();
+                }
+            });
+        }
+
+        if (radarSlider) {
+            radarSlider.addEventListener('input', (e) => {
+                this.radarOpacity = parseFloat(e.target.value);
+                if (this.radarLayer) {
+                    this.radarLayer.setOpacity(this.radarOpacity);
+                }
+            });
+        }
+
+        // Refresh radar every 10 minutes
+        setInterval(() => {
+            if (this.radarEnabled) {
+                this.loadRadarLayer();
+            }
+        }, 600000);
+    }
+
+    async loadRadarLayer() {
+        try {
+            const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+            if (!response.ok) throw new Error('RainViewer API failed');
+
+            const data = await response.json();
+            const radarData = data.radar;
+
+            if (radarData && radarData.past && radarData.past.length > 0) {
+                // Get the most recent radar frame
+                const latestFrame = radarData.past[radarData.past.length - 1];
+                const tileUrl = data.host + latestFrame.path + '/256/{z}/{x}/{y}/2/1_1.png';
+
+                // Only update if URL changed
+                if (tileUrl !== this.radarTileUrl) {
+                    this.radarTileUrl = tileUrl;
+                    this.radarTimestamp = latestFrame.time;
+
+                    // Remove old layer
+                    if (this.radarLayer) {
+                        this.map.removeLayer(this.radarLayer);
+                    }
+
+                    // Add new radar layer
+                    this.radarLayer = L.tileLayer(tileUrl, {
+                        opacity: this.radarOpacity,
+                        zIndex: 100
+                    }).addTo(this.map);
+
+                    console.log('[Map] Radar layer updated:', new Date(latestFrame.time * 1000).toLocaleTimeString());
+                }
+            }
+        } catch (e) {
+            console.error('[Map] Failed to load radar:', e);
+        }
+    }
+
+    removeRadarLayer() {
+        if (this.radarLayer) {
+            this.map.removeLayer(this.radarLayer);
+            this.radarLayer = null;
+        }
     }
 }
 

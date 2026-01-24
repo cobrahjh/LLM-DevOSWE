@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>METAR - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/themes.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="/ui/shared/mobile-companion.js"></script>
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <div class="widget-container metar-widget">
+        <div class="widget-header">
+            <span class="widget-title">🌦️ METAR</span>
+            <div class="header-controls">
+                <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+            </div>
+        </div>
+
+        <div class="airport-input">
+            <input type="text" id="airport-code" placeholder="ICAO (e.g. KJFK)" maxlength="4">
+            <button class="btn-fetch" id="btn-fetch">Get METAR</button>
+        </div>
+
+        <div class="recent-airports" id="recent-airports"></div>
+
+        <div class="metar-content" id="metar-content">
+            <div class="metar-placeholder">
+                <div class="placeholder-icon">✈️</div>
+                <div class="placeholder-text">Enter an airport ICAO code</div>
+            </div>
+        </div>
+
+        <div class="auto-refresh">
+            <label>
+                <input type="checkbox" id="auto-refresh">
+                Auto-refresh every 5 min
+            </label>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>
