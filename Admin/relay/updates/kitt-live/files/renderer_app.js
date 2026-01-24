@@ -14,6 +14,14 @@ class KittApp {
         this.currentVoice = null;
         this.messages = [];
 
+        // Wake word detection
+        this.wakeWordEnabled = true;
+        this.wakeWords = ['hey kitt', 'hey kit', 'ok kitt', 'okay kitt', 'hi kitt'];
+        this.wakeWordListening = false;
+        this.wakeWordRecognition = null;
+        this.awaitingCommand = false;
+        this.awaitingTimeout = null;
+
         this.init();
     }
 
@@ -38,6 +46,11 @@ class KittApp {
         window.kitt.on('push-to-talk', () => {
             this.toggleListening();
         });
+
+        // Start wake word detection if enabled
+        if (this.wakeWordEnabled) {
+            setTimeout(() => this.startWakeWordListening(), 2000);
+        }
     }
 
     setupElements() {
@@ -140,6 +153,10 @@ class KittApp {
                     setTimeout(() => this.startListening(), 100);
                 } else {
                     this.setStatus('ready', 'Ready');
+                    // Resume wake word listening if enabled
+                    if (this.wakeWordEnabled && !this.wakeWordListening) {
+                        this.startWakeWordListening();
+                    }
                 }
             };
 
@@ -149,10 +166,113 @@ class KittApp {
                 this.voiceBtn.classList.remove('listening');
                 this.setStatus('ready', 'Ready');
             };
+
+            // Setup wake word recognition (separate instance for continuous listening)
+            this.setupWakeWordRecognition();
         }
 
         // Load TTS voice
         this.loadVoice();
+    }
+
+    setupWakeWordRecognition() {
+        if (!('webkitSpeechRecognition' in window)) return;
+
+        this.wakeWordRecognition = new webkitSpeechRecognition();
+        this.wakeWordRecognition.continuous = true;
+        this.wakeWordRecognition.interimResults = true;
+        this.wakeWordRecognition.lang = 'en-US';
+
+        this.wakeWordRecognition.onresult = (event) => {
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript.toLowerCase().trim();
+
+                // Check for wake word
+                for (const wakeWord of this.wakeWords) {
+                    if (transcript.includes(wakeWord)) {
+                        console.log('[Kitt] Wake word detected:', transcript);
+                        this.handleWakeWord();
+                        return;
+                    }
+                }
+            }
+        };
+
+        this.wakeWordRecognition.onend = () => {
+            this.wakeWordListening = false;
+            // Auto-restart if wake word mode is enabled and not in main listening mode
+            if (this.wakeWordEnabled && !this.isListening && !this.micLocked) {
+                setTimeout(() => this.startWakeWordListening(), 500);
+            }
+        };
+
+        this.wakeWordRecognition.onerror = (event) => {
+            if (event.error !== 'aborted') {
+                console.error('Wake word recognition error:', event.error);
+            }
+            this.wakeWordListening = false;
+        };
+    }
+
+    handleWakeWord() {
+        // Stop wake word listening
+        this.stopWakeWordListening();
+
+        // Play acknowledgment sound or speak
+        this.speak('Yes?');
+
+        // Set awaiting command state
+        this.awaitingCommand = true;
+        this.setStatus('listening', 'Listening...');
+
+        // Wait for speech to finish, then start listening for command
+        setTimeout(() => {
+            if (this.awaitingCommand) {
+                this.startListening();
+            }
+        }, 600);
+
+        // Timeout if no command received
+        this.awaitingTimeout = setTimeout(() => {
+            if (this.awaitingCommand && !this.isListening) {
+                this.awaitingCommand = false;
+                this.setStatus('ready', 'Ready');
+                this.startWakeWordListening();
+            }
+        }, 10000);
+    }
+
+    startWakeWordListening() {
+        if (this.wakeWordRecognition && !this.wakeWordListening && !this.isListening && !this.micLocked) {
+            try {
+                this.wakeWordRecognition.start();
+                this.wakeWordListening = true;
+                console.log('[Kitt] Wake word listening started');
+            } catch (e) {
+                // Already started or other error
+            }
+        }
+    }
+
+    stopWakeWordListening() {
+        if (this.wakeWordRecognition && this.wakeWordListening) {
+            try {
+                this.wakeWordRecognition.stop();
+                this.wakeWordListening = false;
+            } catch (e) {
+                // Already stopped
+            }
+        }
+    }
+
+    toggleWakeWord() {
+        this.wakeWordEnabled = !this.wakeWordEnabled;
+        if (this.wakeWordEnabled) {
+            this.startWakeWordListening();
+        } else {
+            this.stopWakeWordListening();
+        }
+        return this.wakeWordEnabled;
     }
 
     async loadVoice() {
@@ -175,6 +295,14 @@ class KittApp {
 
     startListening() {
         if (this.recognition && !this.isListening) {
+            // Stop wake word listening first
+            this.stopWakeWordListening();
+            this.awaitingCommand = false;
+            if (this.awaitingTimeout) {
+                clearTimeout(this.awaitingTimeout);
+                this.awaitingTimeout = null;
+            }
+
             try {
                 this.recognition.start();
             } catch (e) {
