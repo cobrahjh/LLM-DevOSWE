@@ -1,0 +1,272 @@
+/**
+ * SimWidget Themes
+ * Apply themes by adding class to body: theme-default, theme-cockpit, theme-glass, theme-day
+ */
+
+/* ========================================
+   DEFAULT THEME (Current dark theme)
+   ======================================== */
+:root,
+.theme-default {
+    --widget-bg: #1a1a2e;
+    --widget-bg-secondary: #16213e;
+    --widget-bg-tertiary: #0f0f1a;
+    --widget-text: #ffffff;
+    --widget-text-muted: #888888;
+    --widget-text-dim: #555555;
+    --widget-accent: #667eea;
+    --widget-accent-hover: #7c8ff5;
+    --widget-success: #22c55e;
+    --widget-warning: #f59e0b;
+    --widget-danger: #ef4444;
+    --widget-border: rgba(255, 255, 255, 0.1);
+    --widget-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --widget-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+    --widget-radius: 12px;
+    --widget-radius-sm: 6px;
+    --font-mono: 'Courier New', 'Monaco', monospace;
+    --font-display: 'DSEG7 Classic', 'Courier New', monospace;
+}
+
+/* ========================================
+   COCKPIT THEME (Aviation instrument style)
+   ======================================== */
+.theme-cockpit {
+    --widget-bg: #1a1f16;
+    --widget-bg-secondary: #252b1f;
+    --widget-bg-tertiary: #0d0f0a;
+    --widget-text: #00ff00;
+    --widget-text-muted: #66aa66;
+    --widget-text-dim: #446644;
+    --widget-accent: #00cc00;
+    --widget-accent-hover: #00ff44;
+    --widget-success: #00ff00;
+    --widget-warning: #ffaa00;
+    --widget-danger: #ff3300;
+    --widget-border: rgba(0, 255, 0, 0.2);
+    --widget-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+    --widget-glow: 0 0 30px rgba(0, 255, 0, 0.2);
+    --widget-radius: 4px;
+    --widget-radius-sm: 2px;
+}
+
+.theme-cockpit .widget-container {
+    border: 2px solid var(--widget-border);
+    box-shadow:
+        inset 0 0 30px rgba(0, 0, 0, 0.5),
+        var(--widget-shadow);
+}
+
+.theme-cockpit .widget-title,
+.theme-cockpit .stat-value,
+.theme-cockpit .info-value,
+.theme-cockpit .weather-value,
+.theme-cockpit .airport-code {
+    font-family: var(--font-display);
+    text-shadow: 0 0 10px currentColor;
+    letter-spacing: 2px;
+}
+
+.theme-cockpit button,
+.theme-cockpit .btn,
+.theme-cockpit .btn-icon {
+    border: 1px solid var(--widget-accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.theme-cockpit input,
+.theme-cockpit select {
+    background: #0d0f0a;
+    border: 1px solid var(--widget-accent);
+    color: var(--widget-text);
+}
+
+/* Scanline effect for cockpit */
+.theme-cockpit .widget-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.1) 2px,
+        rgba(0, 0, 0, 0.1) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.3;
+}
+
+/* ========================================
+   GLASS PANEL THEME (Modern avionics)
+   ======================================== */
+.theme-glass {
+    --widget-bg: #0a1628;
+    --widget-bg-secondary: #0f2847;
+    --widget-bg-tertiary: #061220;
+    --widget-text: #00d4ff;
+    --widget-text-muted: #5599bb;
+    --widget-text-dim: #336688;
+    --widget-accent: #00aaff;
+    --widget-accent-hover: #44ccff;
+    --widget-success: #00ff88;
+    --widget-warning: #ffcc00;
+    --widget-danger: #ff4466;
+    --widget-border: rgba(0, 170, 255, 0.3);
+    --widget-shadow: 0 4px 30px rgba(0, 170, 255, 0.15);
+    --widget-glow: 0 0 40px rgba(0, 170, 255, 0.2);
+    --widget-radius: 8px;
+    --widget-radius-sm: 4px;
+}
+
+.theme-glass .widget-container {
+    background: linear-gradient(
+        135deg,
+        rgba(10, 22, 40, 0.95) 0%,
+        rgba(15, 40, 71, 0.95) 100%
+    );
+    border: 1px solid var(--widget-border);
+    backdrop-filter: blur(10px);
+}
+
+.theme-glass .widget-title,
+.theme-glass .stat-value,
+.theme-glass .info-value {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+.theme-glass .weather-value,
+.theme-glass .airport-code,
+.theme-glass .next-name {
+    font-family: var(--font-mono);
+    font-weight: 600;
+}
+
+.theme-glass button,
+.theme-glass .btn {
+    background: linear-gradient(180deg, rgba(0, 170, 255, 0.2) 0%, rgba(0, 100, 200, 0.3) 100%);
+    border: 1px solid var(--widget-accent);
+    transition: all 0.2s ease;
+}
+
+.theme-glass button:hover,
+.theme-glass .btn:hover {
+    background: linear-gradient(180deg, rgba(0, 170, 255, 0.4) 0%, rgba(0, 100, 200, 0.5) 100%);
+    box-shadow: var(--widget-glow);
+}
+
+/* ========================================
+   DAY THEME (Light mode for bright environments)
+   ======================================== */
+.theme-day {
+    --widget-bg: #f5f7fa;
+    --widget-bg-secondary: #ffffff;
+    --widget-bg-tertiary: #e8ecf1;
+    --widget-text: #1a1a2e;
+    --widget-text-muted: #666666;
+    --widget-text-dim: #999999;
+    --widget-accent: #4f46e5;
+    --widget-accent-hover: #6366f1;
+    --widget-success: #16a34a;
+    --widget-warning: #d97706;
+    --widget-danger: #dc2626;
+    --widget-border: rgba(0, 0, 0, 0.1);
+    --widget-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --widget-glow: 0 0 20px rgba(79, 70, 229, 0.2);
+    --widget-radius: 12px;
+    --widget-radius-sm: 6px;
+}
+
+.theme-day .widget-container {
+    background: var(--widget-bg-secondary);
+    border: 1px solid var(--widget-border);
+    box-shadow: var(--widget-shadow);
+}
+
+.theme-day input,
+.theme-day select {
+    background: var(--widget-bg);
+    border: 1px solid var(--widget-border);
+    color: var(--widget-text);
+}
+
+.theme-day .btn-icon {
+    color: var(--widget-text-muted);
+}
+
+.theme-day .btn-icon:hover {
+    background: var(--widget-bg);
+    color: var(--widget-accent);
+}
+
+/* ========================================
+   HIGH CONTRAST THEME (Accessibility)
+   ======================================== */
+.theme-highcontrast {
+    --widget-bg: #000000;
+    --widget-bg-secondary: #1a1a1a;
+    --widget-bg-tertiary: #000000;
+    --widget-text: #ffffff;
+    --widget-text-muted: #cccccc;
+    --widget-text-dim: #888888;
+    --widget-accent: #ffff00;
+    --widget-accent-hover: #ffffff;
+    --widget-success: #00ff00;
+    --widget-warning: #ffaa00;
+    --widget-danger: #ff0000;
+    --widget-border: #ffffff;
+    --widget-shadow: none;
+    --widget-glow: none;
+    --widget-radius: 0;
+    --widget-radius-sm: 0;
+}
+
+.theme-highcontrast .widget-container {
+    border: 2px solid var(--widget-border);
+}
+
+.theme-highcontrast button,
+.theme-highcontrast .btn,
+.theme-highcontrast input,
+.theme-highcontrast select {
+    border: 2px solid var(--widget-text);
+}
+
+/* ========================================
+   THEME UTILITIES
+   ======================================== */
+
+/* Smooth theme transitions */
+.theme-transition,
+.theme-transition * {
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease !important;
+}
+
+/* Flight category colors (consistent across themes) */
+.flight-category.vfr { background: var(--widget-success) !important; }
+.flight-category.mvfr { background: #3b82f6 !important; }
+.flight-category.ifr { background: var(--widget-danger) !important; }
+.flight-category.lifr { background: #7c3aed !important; }
+
+/* Accent text */
+.text-accent { color: var(--widget-accent); }
+.text-success { color: var(--widget-success); }
+.text-warning { color: var(--widget-warning); }
+.text-danger { color: var(--widget-danger); }
+.text-muted { color: var(--widget-text-muted); }
+
+/* Background utilities */
+.bg-primary { background: var(--widget-bg); }
+.bg-secondary { background: var(--widget-bg-secondary); }
+.bg-tertiary { background: var(--widget-bg-tertiary); }

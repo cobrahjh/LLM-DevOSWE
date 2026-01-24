@@ -75,11 +75,21 @@
 
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="/ui/shared/multiplayer-sync.js"></script>
+    <script src="/ui/shared/multiplayer-panel.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
         const customizer = new WidgetCustomizer({ widgetId: 'checklist-widget', settingsPanel: settings });
         document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+
+        // Multiplayer sync
+        const mp = new MultiplayerPanel('checklist', {
+            getState: () => window.checklistWidget?.getState?.() || {},
+            onStateReceived: (state) => window.checklistWidget?.loadState?.(state),
+            onActionReceived: (action, data) => window.checklistWidget?.handleRemoteAction?.(action, data)
+        });
+        mp.attach(document.body);
     </script>
 </body>
 </html>

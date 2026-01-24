@@ -1567,6 +1567,57 @@ class ChecklistWidget {
             this.toggleItem(lastIndex);
         }
     }
+
+    // Multiplayer sync methods
+    getState() {
+        return {
+            aircraft: this.currentAircraft,
+            checklist: this.currentChecklist,
+            checkedItems: this.checkedItems,
+            audioEnabled: this.audioEnabled
+        };
+    }
+
+    loadState(state) {
+        if (!state) return;
+
+        if (state.aircraft && state.aircraft !== this.currentAircraft) {
+            this.aircraftSelect.value = state.aircraft;
+            this.currentAircraft = state.aircraft;
+        }
+
+        if (state.checklist && state.checklist !== this.currentChecklist) {
+            this.currentChecklist = state.checklist;
+            this.updateTabs();
+        }
+
+        if (state.checkedItems) {
+            this.checkedItems = state.checkedItems;
+        }
+
+        this.renderChecklist();
+    }
+
+    handleRemoteAction(action, data) {
+        switch (action) {
+            case 'toggleItem':
+                this.toggleItem(data.index, true);
+                break;
+            case 'changeChecklist':
+                this.currentChecklist = data.checklist;
+                this.updateTabs();
+                this.renderChecklist();
+                break;
+            case 'changeAircraft':
+                this.aircraftSelect.value = data.aircraft;
+                this.currentAircraft = data.aircraft;
+                this.renderChecklist();
+                break;
+            case 'reset':
+                this.resetChecklist(true);
+                break;
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
