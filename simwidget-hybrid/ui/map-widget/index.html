@@ -24,9 +24,15 @@
         <div class="widget-header">
             <span class="widget-title">🗺️ Map</span>
             <div class="header-controls">
+                <button class="btn-icon" id="btn-radar" title="Weather Radar">🌧️</button>
                 <button class="btn-icon" id="btn-center" title="Center on Aircraft">🎯</button>
                 <button class="btn-icon" id="btn-follow" title="Follow Aircraft">📍</button>
             </div>
+        </div>
+
+        <div class="radar-controls" id="radar-controls">
+            <label class="radar-label">Radar Opacity</label>
+            <input type="range" id="radar-opacity" min="0.3" max="0.8" step="0.05" value="0.5">
         </div>
 
         <div class="map-container" id="map"></div>

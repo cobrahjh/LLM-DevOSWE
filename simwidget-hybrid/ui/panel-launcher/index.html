@@ -261,12 +261,33 @@
                 Ctrl+Shift+S SimBrief | Ctrl+Shift+N Notepad | Escape to close
             </p>
         </section>
+
+        <!-- Settings Backup -->
+        <section class="panel-section settings-backup-section">
+            <h2>Settings</h2>
+            <div class="settings-backup-info">
+                <span class="settings-count" id="settings-count">Loading...</span>
+            </div>
+            <div class="settings-backup-actions">
+                <button class="backup-btn export-btn" id="export-settings-btn" title="Download all settings as JSON">
+                    <span class="icon">📥</span>
+                    <span class="label">Export Settings</span>
+                </button>
+                <label class="backup-btn import-btn" title="Restore settings from JSON file">
+                    <span class="icon">📤</span>
+                    <span class="label">Import Settings</span>
+                    <input type="file" id="import-settings-input" accept=".json" hidden>
+                </label>
+            </div>
+            <p class="import-status" id="import-status"></p>
+        </section>
     </div>
 
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
     <script src="/ui/shared/hotkeys.js"></script>
     <script src="/ui/shared/presets.js"></script>
+    <script src="/ui/shared/settings-backup.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
@@ -318,6 +339,63 @@
                     SimWidgetPresets.applyPreset(presetName);
                     setTimeout(() => btn.classList.remove('loading'), 1000);
                 });
+            });
+        })();
+
+        // Initialize settings backup
+        (function initSettingsBackup() {
+            if (typeof SimWidgetSettingsBackup === 'undefined') {
+                console.warn('[Panel Launcher] SimWidgetSettingsBackup not loaded');
+                return;
+            }
+
+            const countEl = document.getElementById('settings-count');
+            const statusEl = document.getElementById('import-status');
+            const exportBtn = document.getElementById('export-settings-btn');
+            const importInput = document.getElementById('import-settings-input');
+
+            // Update settings count display
+            function updateSettingsCount() {
+                const summary = SimWidgetSettingsBackup.getSettingsSummary();
+                countEl.textContent = `${summary.total} saved settings`;
+                if (summary.themes > 0 || summary.presets > 0 || summary.hotkeys > 0) {
+                    const details = [];
+                    if (summary.themes > 0) details.push(`${summary.themes} themes`);
+                    if (summary.presets > 0) details.push(`${summary.presets} presets`);
+                    if (summary.hotkeys > 0) details.push(`${summary.hotkeys} hotkeys`);
+                    countEl.textContent += ` (${details.join(', ')})`;
+                }
+            }
+
+            updateSettingsCount();
+
+            // Export button handler
+            exportBtn.addEventListener('click', () => {
+                const count = SimWidgetSettingsBackup.exportSettings();
+                statusEl.textContent = `Exported ${count} settings`;
+                statusEl.className = 'import-status success';
+                setTimeout(() => { statusEl.textContent = ''; }, 3000);
+            });
+
+            // Import file handler
+            importInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    statusEl.textContent = 'Importing...';
+                    statusEl.className = 'import-status';
+                    const result = await SimWidgetSettingsBackup.importSettings(file);
+                    statusEl.textContent = `Imported ${result.imported} settings. Reload to apply.`;
+                    statusEl.className = 'import-status success';
+                    updateSettingsCount();
+                } catch (err) {
+                    statusEl.textContent = 'Import failed: ' + err.message;
+                    statusEl.className = 'import-status error';
+                }
+
+                // Reset input so same file can be selected again
+                importInput.value = '';
             });
         })();
     </script>

@@ -300,6 +300,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/mobile-companion/">📱 Mobile View</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/replay-debrief/">🎬 Flight Replay</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/kneeboard-widget/">📋 Kneeboard</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/metar-widget/">🌦️ METAR Weather</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/dashboard/">🎛️ Widget Dashboard</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/flight-dashboard/">🎯 Flight Dashboard</a></li>
             </ul>
