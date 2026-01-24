@@ -20,7 +20,7 @@
 - [x] 🟡 Add Camera buttons (TCM, NCV) ✅ 2026-01-05
 - [x] 🟡 Add GPS coordinates display (lat/lon) ✅ 2026-01-23
 - [ ] 🟢 Deploy to MSFS toolbar panel for fullscreen use
-- [ ] 🟢 Add more light controls (panel, logo, recognition)
+- [x] 🟢 Add more light controls (panel, logo, recognition) ✅ Already in aircraft-control widget
 - [x] ✅ Keymap editor widget (remap keys via UI) - DONE
 - [ ] 🟢 Revisit ChasePlane support (vJoy caused input conflicts)
 - [x] 🔴 Disable directory listing in server.js for production (security) ✅ 2026-01-23
