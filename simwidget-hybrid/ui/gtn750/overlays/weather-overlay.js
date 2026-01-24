@@ -1,0 +1,531 @@
+/**
+ * GTN750 Weather Overlay - NEXRAD radar and METAR display
+ * Uses RainViewer API for radar and AVWX for METAR data
+ */
+
+class WeatherOverlay {
+    constructor(options = {}) {
+        this.core = options.core || new GTNCore();
+        this.enabled = false;
+
+        // Layer states
+        this.layers = {
+            nexrad: false,
+            metar: false,
+            taf: false,
+            winds: false,
+            lightning: false
+        };
+
+        // Radar data
+        this.radarTiles = [];
+        this.radarTimestamp = null;
+        this.radarAge = 0; // minutes old
+        this.radarAnimating = false;
+        this.radarFrames = [];
+        this.currentFrame = 0;
+
+        // METAR data
+        this.metarData = new Map(); // icao -> metar
+        this.lastMetarFetch = 0;
+        this.metarFetchInterval = 300000; // 5 minutes
+
+        // TAF data
+        this.tafData = new Map();
+
+        // Wind data
+        this.windData = [];
+
+        // Lightning data
+        this.lightningStrikes = [];
+
+        // API endpoints
+        this.rainViewerApi = 'https://api.rainviewer.com/public/weather-maps.json';
+
+        // Color scales for radar
+        this.radarColors = [
+            { dbz: 5, color: '#04e904' },   // Light green
+            { dbz: 10, color: '#01c501' },  // Green
+            { dbz: 15, color: '#fef700' },  // Yellow
+            { dbz: 20, color: '#e5bc00' },  // Gold
+            { dbz: 25, color: '#fd9500' },  // Orange
+            { dbz: 30, color: '#fd0000' },  // Red
+            { dbz: 35, color: '#d40000' },  // Dark red
+            { dbz: 40, color: '#bc0000' },  // Maroon
+            { dbz: 45, color: '#f800fd' },  // Magenta
+            { dbz: 50, color: '#9854c6' },  // Purple
+            { dbz: 55, color: '#fdfdfd' }   // White
+        ];
+
+        // METAR colors for flight category
+        this.metarColors = {
+            VFR: '#00ff00',
+            MVFR: '#0099ff',
+            IFR: '#ff0000',
+            LIFR: '#ff00ff'
+        };
+    }
+
+    /**
+     * Enable/disable weather overlay
+     */
+    setEnabled(enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * Toggle individual weather layer
+     */
+    toggleLayer(layer) {
+        if (this.layers.hasOwnProperty(layer)) {
+            this.layers[layer] = !this.layers[layer];
+            return this.layers[layer];
+        }
+        return false;
+    }
+
+    /**
+     * Set layer state
+     */
+    setLayer(layer, enabled) {
+        if (this.layers.hasOwnProperty(layer)) {
+            this.layers[layer] = enabled;
+        }
+    }
+
+    /**
+     * Render weather overlays on map canvas
+     */
+    render(ctx, aircraft, mapSettings) {
+        if (!this.enabled) return;
+
+        const { latitude, longitude } = aircraft;
+        const { range, orientation, width, height } = mapSettings;
+
+        // Render each enabled layer
+        if (this.layers.nexrad) {
+            this.renderNexrad(ctx, latitude, longitude, mapSettings);
+        }
+
+        if (this.layers.metar) {
+            this.renderMetarDots(ctx, latitude, longitude, mapSettings);
+        }
+
+        if (this.layers.winds) {
+            this.renderWinds(ctx, latitude, longitude, mapSettings);
+        }
+
+        if (this.layers.lightning) {
+            this.renderLightning(ctx, latitude, longitude, mapSettings);
+        }
+    }
+
+    /**
+     * Render NEXRAD radar overlay
+     * Uses simulated radar data for demonstration
+     */
+    renderNexrad(ctx, lat, lon, mapSettings) {
+        const { range, width, height, orientation } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+
+        // Generate simulated radar cells
+        const radarCells = this.generateSimulatedRadar(lat, lon, range);
+
+        ctx.save();
+
+        // Apply map rotation if not north-up
+        if (orientation !== 'north') {
+            ctx.translate(cx, cy);
+            ctx.rotate(-mapSettings.heading * Math.PI / 180);
+            ctx.translate(-cx, -cy);
+        }
+
+        // Render radar cells with transparency
+        ctx.globalAlpha = 0.5;
+
+        radarCells.forEach(cell => {
+            const x = cx + cell.offsetX * pixelsPerNm;
+            const y = cy - cell.offsetY * pixelsPerNm;
+            const cellSize = cell.size * pixelsPerNm;
+
+            ctx.fillStyle = this.getRadarColor(cell.intensity);
+            ctx.fillRect(x - cellSize / 2, y - cellSize / 2, cellSize, cellSize);
+        });
+
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+    }
+
+    /**
+     * Generate simulated radar data
+     */
+    generateSimulatedRadar(centerLat, centerLon, range) {
+        const cells = [];
+        const numCells = 20;
+
+        // Create weather cells based on position
+        const seed = Math.sin(centerLat * 10) * Math.cos(centerLon * 10);
+
+        for (let i = 0; i < numCells; i++) {
+            // Pseudo-random but deterministic positions
+            const angle = (seed * 1000 + i * 137.5) % 360;
+            const dist = ((seed * 500 + i * 17) % range) * 0.8;
+
+            const offsetX = Math.sin(angle * Math.PI / 180) * dist;
+            const offsetY = Math.cos(angle * Math.PI / 180) * dist;
+
+            // Intensity varies
+            const intensity = 10 + ((seed * 100 + i * 23) % 40);
+
+            // Cell size varies
+            const size = 1 + ((seed * 50 + i * 7) % 3);
+
+            cells.push({
+                offsetX,
+                offsetY,
+                intensity,
+                size
+            });
+        }
+
+        return cells;
+    }
+
+    /**
+     * Get radar color for intensity (dBZ)
+     */
+    getRadarColor(dbz) {
+        for (let i = this.radarColors.length - 1; i >= 0; i--) {
+            if (dbz >= this.radarColors[i].dbz) {
+                return this.radarColors[i].color;
+            }
+        }
+        return 'transparent';
+    }
+
+    /**
+     * Render METAR dots at airports
+     */
+    renderMetarDots(ctx, lat, lon, mapSettings) {
+        const { range, width, height, orientation, heading } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+        const rotation = orientation === 'north' ? 0 : heading;
+
+        // Simulated METAR positions
+        const metarStations = this.generateSimulatedMetar(lat, lon, range);
+
+        metarStations.forEach(station => {
+            const dist = this.core.calculateDistance(lat, lon, station.lat, station.lon);
+            if (dist > range) return;
+
+            const brg = this.core.calculateBearing(lat, lon, station.lat, station.lon);
+            const angle = this.core.toRad(brg - rotation);
+
+            const x = cx + Math.sin(angle) * dist * pixelsPerNm;
+            const y = cy - Math.cos(angle) * dist * pixelsPerNm;
+
+            // Draw METAR dot
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = this.metarColors[station.category] || '#888888';
+            ctx.fill();
+
+            // Draw station ID
+            ctx.font = '8px Consolas, monospace';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(station.icao, x, y - 8);
+        });
+    }
+
+    /**
+     * Generate simulated METAR stations
+     */
+    generateSimulatedMetar(centerLat, centerLon, range) {
+        const stations = [];
+        const categories = ['VFR', 'MVFR', 'IFR', 'LIFR'];
+
+        // Generate stations in a grid pattern
+        const step = range / 3;
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                if (i === 0 && j === 0) continue;
+
+                const lat = centerLat + (i * step / 60);
+                const lon = centerLon + (j * step / (60 * Math.cos(centerLat * Math.PI / 180)));
+
+                // Pseudo-random category
+                const catIdx = Math.floor(Math.abs(Math.sin(lat * 100 + lon * 100) * 4)) % 4;
+
+                stations.push({
+                    icao: `K${String.fromCharCode(65 + Math.abs(i) * 3 + j)}${String.fromCharCode(66 + Math.abs(j) * 2)}${String.fromCharCode(67 + i + j)}`,
+                    lat,
+                    lon,
+                    category: categories[catIdx]
+                });
+            }
+        }
+
+        return stations;
+    }
+
+    /**
+     * Render wind barbs
+     */
+    renderWinds(ctx, lat, lon, mapSettings) {
+        const { range, width, height } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+
+        // Simulated wind data points
+        const windPoints = this.generateSimulatedWinds(lat, lon, range);
+
+        windPoints.forEach(point => {
+            const x = cx + point.offsetX * pixelsPerNm;
+            const y = cy - point.offsetY * pixelsPerNm;
+
+            this.drawWindBarb(ctx, x, y, point.direction, point.speed);
+        });
+    }
+
+    /**
+     * Generate simulated wind data
+     */
+    generateSimulatedWinds(centerLat, centerLon, range) {
+        const winds = [];
+        const step = range / 2;
+
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                const offsetX = i * step;
+                const offsetY = j * step;
+
+                // Pseudo-random wind
+                const direction = (Math.abs(Math.sin(centerLat * 10 + i) * 360) + i * 30) % 360;
+                const speed = 5 + Math.abs(Math.cos(centerLon * 10 + j) * 25);
+
+                winds.push({
+                    offsetX,
+                    offsetY,
+                    direction,
+                    speed
+                });
+            }
+        }
+
+        return winds;
+    }
+
+    /**
+     * Draw wind barb at position
+     */
+    drawWindBarb(ctx, x, y, direction, speed) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((direction + 180) * Math.PI / 180);
+
+        ctx.strokeStyle = '#00aaff';
+        ctx.lineWidth = 1;
+
+        // Draw staff
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -15);
+        ctx.stroke();
+
+        // Draw barbs based on speed
+        let remaining = speed;
+        let barbY = -15;
+
+        // Pennants (50 kt)
+        while (remaining >= 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, barbY);
+            ctx.lineTo(5, barbY + 3);
+            ctx.lineTo(0, barbY + 6);
+            ctx.closePath();
+            ctx.fillStyle = '#00aaff';
+            ctx.fill();
+            barbY += 6;
+            remaining -= 50;
+        }
+
+        // Long barbs (10 kt)
+        while (remaining >= 10) {
+            ctx.beginPath();
+            ctx.moveTo(0, barbY);
+            ctx.lineTo(8, barbY + 3);
+            ctx.stroke();
+            barbY += 3;
+            remaining -= 10;
+        }
+
+        // Short barbs (5 kt)
+        if (remaining >= 5) {
+            ctx.beginPath();
+            ctx.moveTo(0, barbY);
+            ctx.lineTo(4, barbY + 2);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Render lightning strikes
+     */
+    renderLightning(ctx, lat, lon, mapSettings) {
+        const { range, width, height, orientation, heading } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+        const rotation = orientation === 'north' ? 0 : heading;
+
+        // Simulated lightning
+        const strikes = this.generateSimulatedLightning(lat, lon, range);
+
+        strikes.forEach(strike => {
+            const angle = this.core.toRad(strike.bearing - rotation);
+            const x = cx + Math.sin(angle) * strike.distance * pixelsPerNm;
+            const y = cy - Math.cos(angle) * strike.distance * pixelsPerNm;
+
+            // Draw lightning symbol
+            ctx.fillStyle = strike.age < 5 ? '#ffff00' : '#ff8800';
+            ctx.font = '12px Arial';
+            ctx.fillText('⚡', x - 5, y + 4);
+        });
+    }
+
+    /**
+     * Generate simulated lightning
+     */
+    generateSimulatedLightning(lat, lon, range) {
+        const strikes = [];
+        const time = Date.now() / 1000;
+
+        // Create moving lightning based on time
+        for (let i = 0; i < 5; i++) {
+            const angle = ((time * 10 + i * 72) % 360);
+            const distance = (range * 0.3) + ((time + i * 17) % (range * 0.5));
+
+            strikes.push({
+                bearing: angle,
+                distance,
+                age: i * 3 // minutes ago
+            });
+        }
+
+        return strikes;
+    }
+
+    /**
+     * Render weather page with full display
+     */
+    renderWeatherPage(ctx, aircraft, width, height) {
+        const range = 50; // 50nm range for weather page
+
+        // Clear
+        ctx.fillStyle = '#0a1520';
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw range rings
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+
+        ctx.strokeStyle = '#1a3040';
+        ctx.lineWidth = 1;
+        [10, 25, 50].forEach(r => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * pixelsPerNm, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+
+        // Draw own aircraft
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 6);
+        ctx.lineTo(cx - 4, cy + 4);
+        ctx.lineTo(cx, cy + 2);
+        ctx.lineTo(cx + 4, cy + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Render weather layers
+        this.render(ctx, aircraft, {
+            range,
+            orientation: 'north',
+            width,
+            height,
+            heading: aircraft.heading
+        });
+
+        // Draw legend
+        this.drawLegend(ctx, width, height);
+    }
+
+    /**
+     * Draw weather legend
+     */
+    drawLegend(ctx, width, height) {
+        const legendX = 10;
+        let legendY = height - 60;
+
+        ctx.font = '10px Consolas, monospace';
+
+        // METAR legend
+        if (this.layers.metar) {
+            Object.entries(this.metarColors).forEach(([cat, color], idx) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(legendX + idx * 40, legendY, 10, 10);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(cat, legendX + idx * 40 + 12, legendY + 9);
+            });
+            legendY += 15;
+        }
+
+        // Radar legend
+        if (this.layers.nexrad) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Radar: Light → Heavy', legendX, legendY + 9);
+            for (let i = 0; i < 6; i++) {
+                ctx.fillStyle = this.radarColors[i * 2].color;
+                ctx.fillRect(legendX + 100 + i * 12, legendY, 10, 10);
+            }
+        }
+    }
+
+    /**
+     * Fetch real radar data from RainViewer API
+     * (For future implementation)
+     */
+    async fetchRadarData() {
+        try {
+            const response = await fetch(this.rainViewerApi);
+            const data = await response.json();
+            if (data.radar && data.radar.past) {
+                this.radarFrames = data.radar.past;
+                this.radarTimestamp = this.radarFrames[this.radarFrames.length - 1].time;
+            }
+        } catch (e) {
+            console.warn('[GTN750] Failed to fetch radar data:', e);
+        }
+    }
+
+    /**
+     * Get layer states
+     */
+    getLayers() {
+        return { ...this.layers };
+    }
+}
+
+// Export
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = WeatherOverlay;
+}

@@ -49,6 +49,13 @@ class GTN750Widget {
         // TAWS
         this.taws = { active: true, inhibited: false };
 
+        // Overlays (initialized after canvas setup)
+        this.terrainOverlay = null;
+        this.mapControls = null;
+
+        // Pan offset for map
+        this.panOffset = { x: 0, y: 0 };
+
         // Cross-widget sync
         this.syncChannel = new BroadcastChannel('simwidget-sync');
         this.initSyncListener();
@@ -59,13 +66,78 @@ class GTN750Widget {
     init() {
         this.cacheElements();
         this.setupCanvas();
+        this.initOverlays();
         this.initPageManager();
         this.initSoftKeys();
         this.bindEvents();
+        this.bindTawsAlerts();
         this.connect();
         this.startClock();
         this.fetchFlightPlan();
         this.startMapRender();
+    }
+
+    initOverlays() {
+        // Initialize terrain overlay
+        this.terrainOverlay = new TerrainOverlay({
+            core: this.core
+        });
+
+        // Initialize traffic overlay
+        this.trafficOverlay = new TrafficOverlay({
+            core: this.core
+        });
+
+        // Initialize weather overlay
+        this.weatherOverlay = new WeatherOverlay({
+            core: this.core
+        });
+
+        // Initialize map controls with touch/gesture support
+        if (this.canvas) {
+            this.mapControls = new MapControls({
+                canvas: this.canvas,
+                onRangeChange: (range, delta) => {
+                    this.map.range = range;
+                    if (this.elements.dfRange) {
+                        this.elements.dfRange.textContent = range;
+                    }
+                },
+                onPan: (offset) => {
+                    this.panOffset = offset;
+                },
+                onDataFieldTap: (position, type) => {
+                    console.log(`[GTN750] Data field ${position} changed to ${type.type}`);
+                }
+            });
+            this.mapControls.setRange(this.map.range);
+        }
+    }
+
+    bindTawsAlerts() {
+        window.addEventListener('gtn:taws-alert', (e) => {
+            this.handleTawsAlert(e.detail);
+        });
+    }
+
+    handleTawsAlert(alert) {
+        const alertEl = this.elements.tawsAlert;
+        const textEl = this.elements.tawsText;
+        if (!alertEl || !textEl) return;
+
+        if (alert.level !== 'CLEAR' && alert.color) {
+            alertEl.style.display = 'flex';
+            alertEl.style.backgroundColor = alert.color;
+            textEl.textContent = alert.message || alert.level.replace('_', ' ');
+        } else {
+            alertEl.style.display = 'none';
+        }
+
+        // Update terrain page status
+        if (this.elements.tawsStatus) {
+            this.elements.tawsStatus.textContent = this.taws.inhibited ? 'INHIBITED' : 'ACTIVE';
+            this.elements.tawsStatus.style.color = this.taws.inhibited ? '#ffcc00' : '#00ff00';
+        }
     }
 
     initPageManager() {
@@ -132,17 +204,69 @@ class GTN750Widget {
         }
         if (pageId === 'terrain') {
             this.setupTerrainCanvas();
+            this.startTerrainPageRender();
         }
         if (pageId === 'traffic') {
             this.setupTrafficCanvas();
+            this.startTrafficPageRender();
         }
         if (pageId === 'wx') {
             this.setupWeatherCanvas();
+            this.startWeatherPageRender();
         }
     }
 
     onPageDeactivate(pageId) {
-        // Cleanup if needed
+        // Stop page rendering when leaving
+        if (pageId === 'terrain') {
+            this.terrainPageRenderActive = false;
+        }
+        if (pageId === 'traffic') {
+            this.trafficPageRenderActive = false;
+        }
+        if (pageId === 'wx') {
+            this.weatherPageRenderActive = false;
+        }
+    }
+
+    startTerrainPageRender() {
+        this.terrainPageRenderActive = true;
+        const renderLoop = () => {
+            if (!this.terrainPageRenderActive) return;
+            this.renderTerrainPage();
+            requestAnimationFrame(renderLoop);
+        };
+        renderLoop();
+    }
+
+    startTrafficPageRender() {
+        this.trafficPageRenderActive = true;
+        // Enable test mode if no real traffic data
+        if (this.trafficOverlay) {
+            this.trafficOverlay.setEnabled(true);
+        }
+        const renderLoop = () => {
+            if (!this.trafficPageRenderActive) return;
+            this.renderTrafficPage();
+            requestAnimationFrame(renderLoop);
+        };
+        renderLoop();
+    }
+
+    startWeatherPageRender() {
+        this.weatherPageRenderActive = true;
+        // Enable all weather layers for weather page
+        if (this.weatherOverlay) {
+            this.weatherOverlay.setEnabled(true);
+            this.weatherOverlay.setLayer('nexrad', true);
+            this.weatherOverlay.setLayer('metar', true);
+        }
+        const renderLoop = () => {
+            if (!this.weatherPageRenderActive) return;
+            this.renderWeatherPage();
+            requestAnimationFrame(renderLoop);
+        };
+        renderLoop();
     }
 
     updatePageData(pageId, data) {
@@ -207,10 +331,23 @@ class GTN750Widget {
                 this.switchNearestType(action.split('-')[1]);
                 break;
 
-            // TAWS
+            // TAWS / Terrain
             case 'taws-inhibit':
                 this.taws.inhibited = !this.taws.inhibited;
+                if (this.terrainOverlay) {
+                    this.terrainOverlay.setInhibited(this.taws.inhibited);
+                }
                 this.updateTawsStatus();
+                break;
+            case 'terrain-view':
+                // Cycle terrain view modes
+                this.cycleTerrainView();
+                break;
+            case 'terrain-360':
+                this.setTerrainView('360');
+                break;
+            case 'terrain-arc':
+                this.setTerrainView('arc');
                 break;
 
             // Traffic
@@ -426,11 +563,7 @@ class GTN750Widget {
             this.map.orientation = e.target.value;
         });
 
-        // Touch/mouse events for map
-        this.canvas?.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            this.changeRange(e.deltaY > 0 ? 1 : -1);
-        });
+        // Note: wheel/touch events now handled by MapControls
     }
 
     // ===== MAP RENDERING =====
@@ -444,16 +577,53 @@ class GTN750Widget {
         const ctx = this.ctx;
         const w = this.canvas.width;
         const h = this.canvas.height;
-        const cx = w / 2;
-        const cy = h / 2;
+
+        // Apply pan offset
+        const cx = w / 2 + this.panOffset.x;
+        const cy = h / 2 + this.panOffset.y;
 
         // Clear with background
         ctx.fillStyle = '#0a1520';
         ctx.fillRect(0, 0, w, h);
 
-        // Terrain overlay
-        if (this.map.showTerrain) {
-            this.renderTerrainOverlay(ctx, w, h);
+        // Terrain overlay using TerrainOverlay class
+        if (this.map.showTerrain && this.terrainOverlay) {
+            this.terrainOverlay.setEnabled(true);
+            this.terrainOverlay.setInhibited(this.taws.inhibited);
+            this.terrainOverlay.render(ctx, {
+                latitude: this.data.latitude,
+                longitude: this.data.longitude,
+                altitude: this.data.altitude,
+                heading: this.data.heading,
+                verticalSpeed: this.data.verticalSpeed,
+                groundSpeed: this.data.groundSpeed
+            }, {
+                range: this.map.range,
+                orientation: this.map.orientation,
+                width: w,
+                height: h
+            });
+        } else if (this.terrainOverlay) {
+            this.terrainOverlay.setEnabled(false);
+        }
+
+        // Weather overlay (render before other elements)
+        if (this.map.showWeather && this.weatherOverlay) {
+            this.weatherOverlay.setEnabled(true);
+            this.weatherOverlay.render(ctx, {
+                latitude: this.data.latitude,
+                longitude: this.data.longitude,
+                altitude: this.data.altitude,
+                heading: this.data.heading
+            }, {
+                range: this.map.range,
+                orientation: this.map.orientation,
+                width: w,
+                height: h,
+                heading: this.data.heading
+            });
+        } else if (this.weatherOverlay) {
+            this.weatherOverlay.setEnabled(false);
         }
 
         // Range rings
@@ -464,31 +634,127 @@ class GTN750Widget {
             this.renderRoute(ctx, cx, cy, w, h);
         }
 
-        // Aircraft symbol
-        this.renderAircraft(ctx, cx, cy);
+        // Traffic overlay (render after route, before aircraft)
+        if (this.map.showTraffic && this.trafficOverlay) {
+            this.trafficOverlay.setEnabled(true);
+            this.trafficOverlay.render(ctx, {
+                latitude: this.data.latitude,
+                longitude: this.data.longitude,
+                altitude: this.data.altitude,
+                heading: this.data.heading,
+                verticalSpeed: this.data.verticalSpeed,
+                groundSpeed: this.data.groundSpeed
+            }, {
+                range: this.map.range,
+                orientation: this.map.orientation,
+                width: w,
+                height: h
+            });
+        } else if (this.trafficOverlay) {
+            this.trafficOverlay.setEnabled(false);
+        }
+
+        // Aircraft symbol (always at center, unaffected by pan)
+        this.renderAircraft(ctx, w / 2, h / 2);
 
         // Compass rose
-        this.renderCompass(ctx, cx, cy, Math.min(w, h) / 2 - 25);
+        this.renderCompass(ctx, w / 2, h / 2, Math.min(w, h) / 2 - 25);
 
         // Update datafields
         this.updateDatafields();
     }
 
-    renderTerrainOverlay(ctx, w, h) {
-        // TAWS-style terrain coloring based on altitude
-        const alt = this.data.altitude;
-        const clearance = alt; // Simplified - would use actual terrain data
-        const color = this.core.getTerrainColor(0, alt);
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, w, h);
+    renderTerrainPage() {
+        // Render dedicated terrain page with full TAWS view
+        if (!this.terrainCtx || !this.terrainOverlay) return;
 
-        // Check for TAWS alerts
-        if (!this.taws.inhibited) {
-            const alert = this.core.getTerrainAlertLevel(0, alt, this.data.verticalSpeed);
-            this.showTawsAlert(alert);
+        const canvas = this.elements.terrainCanvas;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Clear
+        this.terrainCtx.fillStyle = '#0a1520';
+        this.terrainCtx.fillRect(0, 0, w, h);
+
+        // Render terrain view
+        const minClearance = this.terrainOverlay.renderTerrainPage(
+            this.terrainCtx,
+            {
+                latitude: this.data.latitude,
+                longitude: this.data.longitude,
+                altitude: this.data.altitude,
+                heading: this.data.heading,
+                verticalSpeed: this.data.verticalSpeed,
+                groundSpeed: this.data.groundSpeed
+            },
+            w, h
+        );
+
+        // Update clearance display
+        if (this.elements.terrainClearance) {
+            this.elements.terrainClearance.textContent = minClearance > 0 ? minClearance : '---';
         }
     }
 
+    renderTrafficPage() {
+        // Render dedicated traffic page
+        if (!this.trafficCtx || !this.trafficOverlay) return;
+
+        const canvas = this.elements.trafficCanvas;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Render traffic view and get count
+        const targetCount = this.trafficOverlay.renderTrafficPage(
+            this.trafficCtx,
+            {
+                latitude: this.data.latitude,
+                longitude: this.data.longitude,
+                altitude: this.data.altitude,
+                heading: this.data.heading,
+                verticalSpeed: this.data.verticalSpeed,
+                groundSpeed: this.data.groundSpeed
+            },
+            w, h
+        );
+
+        // Update display elements
+        if (this.elements.trafficCount) {
+            this.elements.trafficCount.textContent = targetCount;
+        }
+        if (this.elements.trafficMode) {
+            this.elements.trafficMode.textContent = this.trafficOverlay.getMode();
+        }
+    }
+
+    renderWeatherPage() {
+        // Render dedicated weather page
+        if (!this.wxCtx || !this.weatherOverlay) return;
+
+        const canvas = this.elements.wxCanvas;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Render weather view
+        this.weatherOverlay.renderWeatherPage(
+            this.wxCtx,
+            {
+                latitude: this.data.latitude,
+                longitude: this.data.longitude,
+                altitude: this.data.altitude,
+                heading: this.data.heading
+            },
+            w, h
+        );
+
+        // Update METAR display
+        if (this.elements.wxMetarText) {
+            // In production, this would show actual METAR
+            this.elements.wxMetarText.textContent = 'Weather data simulated';
+        }
+    }
+
+    // Legacy method kept for compatibility
     showTawsAlert(alert) {
         const alertEl = this.elements.tawsAlert;
         const textEl = this.elements.tawsText;
@@ -994,6 +1260,9 @@ class GTN750Widget {
 
     // ===== TRAFFIC =====
     setTrafficMode(mode) {
+        if (this.trafficOverlay) {
+            this.trafficOverlay.setMode(mode);
+        }
         if (this.elements.trafficMode) {
             this.elements.trafficMode.textContent = mode.toUpperCase();
         }
@@ -1001,14 +1270,37 @@ class GTN750Widget {
 
     // ===== WEATHER =====
     toggleWeatherLayer(layer) {
-        console.log(`[GTN750] Toggle weather layer: ${layer}`);
+        if (this.weatherOverlay) {
+            const enabled = this.weatherOverlay.toggleLayer(layer);
+            console.log(`[GTN750] Weather layer ${layer}: ${enabled ? 'ON' : 'OFF'}`);
+
+            // Update UI checkboxes if present
+            const checkbox = document.getElementById(`wx-${layer}`);
+            if (checkbox) {
+                checkbox.checked = enabled;
+            }
+        }
     }
 
     // ===== TAWS =====
     updateTawsStatus() {
         if (this.elements.tawsStatus) {
             this.elements.tawsStatus.textContent = this.taws.inhibited ? 'INHIBITED' : 'ACTIVE';
+            this.elements.tawsStatus.style.color = this.taws.inhibited ? '#ffcc00' : '#00ff00';
         }
+    }
+
+    cycleTerrainView() {
+        const views = ['360', 'arc', 'forward'];
+        const current = this.terrainView || '360';
+        const idx = views.indexOf(current);
+        this.terrainView = views[(idx + 1) % views.length];
+        console.log(`[GTN750] Terrain view: ${this.terrainView}`);
+    }
+
+    setTerrainView(view) {
+        this.terrainView = view;
+        console.log(`[GTN750] Terrain view set to: ${view}`);
     }
 
     // ===== WEBSOCKET =====
