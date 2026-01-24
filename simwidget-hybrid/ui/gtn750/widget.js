@@ -129,6 +129,41 @@ class GTN750Widget {
         this.auxPage = new AuxPage({
             core: this.core
         });
+
+        // Initialize Charts page
+        this.chartsPage = new ChartsPage({
+            core: this.core,
+            serverPort: this.serverPort,
+            onChartSelect: (chart) => {
+                console.log(`[GTN750] Chart selected: ${chart.name}`);
+            }
+        });
+
+        // Initialize System page
+        this.systemPage = new SystemPage({
+            core: this.core,
+            onSettingChange: (key, value) => {
+                this.handleSettingChange(key, value);
+            }
+        });
+    }
+
+    handleSettingChange(key, value) {
+        // Apply settings changes
+        switch (key) {
+            case 'mapOrientation':
+                this.map.orientation = value;
+                break;
+            case 'showTerrain':
+                this.map.showTerrain = value;
+                break;
+            case 'showTraffic':
+                this.map.showTraffic = value;
+                break;
+            case 'showWeather':
+                this.map.showWeather = value;
+                break;
+        }
     }
 
     handleProcedureSelect(proc, type, waypoints) {
@@ -271,6 +306,23 @@ class GTN750Widget {
                 this.auxPage.init();
             }
             this.updateAuxPageData();
+        }
+        if (pageId === 'charts') {
+            if (this.chartsPage) {
+                this.chartsPage.init();
+                // Pre-load destination airport if available
+                if (this.flightPlan?.waypoints?.length > 0) {
+                    const dest = this.flightPlan.waypoints[this.flightPlan.waypoints.length - 1];
+                    if (dest.ident?.length === 4) {
+                        this.chartsPage.setAirport(dest.ident);
+                    }
+                }
+            }
+        }
+        if (pageId === 'system') {
+            if (this.systemPage) {
+                this.systemPage.init();
+            }
         }
     }
 
@@ -471,6 +523,42 @@ class GTN750Widget {
                 this.toggleWeatherLayer(action.split('-')[1]);
                 break;
 
+            // Charts actions
+            case 'view-chart':
+                if (this.chartsPage) this.chartsPage.viewChart();
+                break;
+            case 'open-chartfox':
+                if (this.chartsPage) this.chartsPage.openChartFox();
+                break;
+            case 'chart-apt':
+            case 'chart-iap':
+            case 'chart-dp':
+            case 'chart-star':
+                if (this.chartsPage) {
+                    const type = action.split('-')[1].toUpperCase();
+                    this.chartsPage.filterByType(type === 'APT' ? 'APD' : type);
+                }
+                break;
+
+            // System actions
+            case 'sys-reset':
+                if (this.systemPage) this.systemPage.resetToDefaults();
+                break;
+            case 'sys-north-up':
+                this.map.orientation = 'north';
+                if (this.systemPage) this.systemPage.setSetting('mapOrientation', 'north');
+                break;
+            case 'sys-track-up':
+                this.map.orientation = 'track';
+                if (this.systemPage) this.systemPage.setSetting('mapOrientation', 'track');
+                break;
+            case 'sys-night-mode':
+                if (this.systemPage) {
+                    const current = this.systemPage.getSetting('nightMode');
+                    this.systemPage.setSetting('nightMode', !current);
+                }
+                break;
+
             default:
                 console.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
@@ -661,6 +749,19 @@ class GTN750Widget {
         this.elements.chartSearch?.addEventListener('click', () => this.searchCharts());
         this.elements.chartApt?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.searchCharts();
+        });
+
+        // Chart actions
+        document.getElementById('chart-view')?.addEventListener('click', () => {
+            if (this.chartsPage) this.chartsPage.viewChart();
+        });
+        document.getElementById('chart-fox')?.addEventListener('click', () => {
+            if (this.chartsPage) this.chartsPage.openChartFox();
+        });
+
+        // System reset
+        document.getElementById('sys-reset')?.addEventListener('click', () => {
+            if (this.systemPage) this.systemPage.resetToDefaults();
         });
 
         // System map orientation
@@ -1351,15 +1452,10 @@ class GTN750Widget {
     // ===== CHARTS =====
     async searchCharts() {
         const icao = this.elements.chartApt?.value.toUpperCase().trim();
-        if (!icao || icao.length < 4) return;
+        if (!icao || icao.length < 3) return;
 
-        // Would fetch chart list for airport
-        if (this.elements.chartList) {
-            this.elements.chartList.textContent = '';
-            const msg = document.createElement('div');
-            msg.className = 'gtn-charts-empty';
-            msg.textContent = `Charts for ${icao} not available`;
-            this.elements.chartList.appendChild(msg);
+        if (this.chartsPage) {
+            this.chartsPage.searchCharts(icao);
         }
     }
 

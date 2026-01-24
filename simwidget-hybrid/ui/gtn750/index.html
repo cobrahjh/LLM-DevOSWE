@@ -234,8 +234,13 @@
                     <input type="text" id="chart-apt" placeholder="Airport ICAO" maxlength="4">
                     <button id="chart-search">Search</button>
                 </div>
+                <div class="gtn-chart-types" id="chart-type-bar"></div>
                 <div class="gtn-charts-list" id="chart-list">
                     <div class="gtn-charts-empty">Enter airport ICAO</div>
+                </div>
+                <div class="gtn-charts-actions">
+                    <button class="chart-action-btn" id="chart-view">VIEW</button>
+                    <button class="chart-action-btn" id="chart-fox">ChartFox</button>
                 </div>
             </div>
 
@@ -266,21 +271,101 @@
 
             <!-- SYSTEM Page -->
             <div class="gtn-page" id="page-system" style="display:none;">
-                <div class="gtn-sys-section">
-                    <div class="sys-title">DISPLAY</div>
-                    <div class="sys-option">
-                        <span>Map Orientation</span>
-                        <select id="sys-map-orient">
-                            <option value="north">North Up</option>
-                            <option value="track">Track Up</option>
-                            <option value="heading">Heading Up</option>
-                        </select>
+                <div class="gtn-sys-scroll">
+                    <div class="gtn-sys-section">
+                        <div class="sys-title">DISPLAY</div>
+                        <div class="sys-option">
+                            <span>Map Orientation</span>
+                            <select id="sys-map-orient">
+                                <option value="north">North Up</option>
+                                <option value="track">Track Up</option>
+                                <option value="heading">Heading Up</option>
+                            </select>
+                        </div>
+                        <div class="sys-option">
+                            <span>Brightness</span>
+                            <div class="sys-slider-group">
+                                <input type="range" id="sys-brightness" min="20" max="100" value="80">
+                                <span id="sys-brightness-value">80%</span>
+                            </div>
+                        </div>
+                        <div class="sys-option">
+                            <span>Night Mode</span>
+                            <label class="sys-toggle">
+                                <input type="checkbox" id="sys-night-mode">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
-                </div>
-                <div class="gtn-sys-section">
-                    <div class="sys-title">GPS STATUS</div>
-                    <div class="sys-status">
-                        <span>Status: <b id="sys-gps-status">3D FIX</b></span>
+                    <div class="gtn-sys-section">
+                        <div class="sys-title">UNITS</div>
+                        <div class="sys-option">
+                            <span>Distance</span>
+                            <select id="sys-distance-unit">
+                                <option value="nm">NM</option>
+                                <option value="km">KM</option>
+                                <option value="mi">MI</option>
+                            </select>
+                        </div>
+                        <div class="sys-option">
+                            <span>Altitude</span>
+                            <select id="sys-altitude-unit">
+                                <option value="ft">FT</option>
+                                <option value="m">M</option>
+                            </select>
+                        </div>
+                        <div class="sys-option">
+                            <span>Speed</span>
+                            <select id="sys-speed-unit">
+                                <option value="kt">KT</option>
+                                <option value="kph">KPH</option>
+                                <option value="mph">MPH</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gtn-sys-section">
+                        <div class="sys-title">MAP FEATURES</div>
+                        <div class="sys-option">
+                            <span>Terrain Overlay</span>
+                            <label class="sys-toggle">
+                                <input type="checkbox" id="sys-show-terrain" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="sys-option">
+                            <span>Traffic Overlay</span>
+                            <label class="sys-toggle">
+                                <input type="checkbox" id="sys-show-traffic" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="sys-option">
+                            <span>Weather Overlay</span>
+                            <label class="sys-toggle">
+                                <input type="checkbox" id="sys-show-weather">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="gtn-sys-section">
+                        <div class="sys-title">GPS STATUS</div>
+                        <div class="sys-status-grid">
+                            <div class="sys-status-item">
+                                <span class="status-label">GPS</span>
+                                <span class="status-value" id="sys-gps-status">3D FIX</span>
+                            </div>
+                            <div class="sys-status-item">
+                                <span class="status-label">Database</span>
+                                <span class="status-value" id="sys-database-status">CURRENT</span>
+                            </div>
+                            <div class="sys-status-item">
+                                <span class="status-label">Software</span>
+                                <span class="status-value" id="sys-software-version">v2.0.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gtn-sys-section">
+                        <button class="sys-reset-btn" id="sys-reset">Reset to Defaults</button>
                     </div>
                 </div>
             </div>
@@ -327,6 +412,8 @@
     <script src="overlays/map-controls.js"></script>
     <script src="pages/page-proc.js"></script>
     <script src="pages/page-aux.js"></script>
+    <script src="pages/page-charts.js"></script>
+    <script src="pages/page-system.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();

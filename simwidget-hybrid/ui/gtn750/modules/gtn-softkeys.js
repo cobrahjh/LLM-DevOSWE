@@ -128,11 +128,11 @@ class GTNSoftKeys {
 
         // CHARTS page
         this.registerContext('charts', [
-            { label: 'APT', action: 'chart-apt' },
-            { label: 'DEP', action: 'chart-dep' },
-            { label: 'ARR', action: 'chart-arr' },
-            { label: 'APR', action: 'chart-apr' },
-            { label: 'INFO', action: 'chart-info' },
+            { label: 'APD', action: 'chart-apt' },
+            { label: 'IAP', action: 'chart-iap' },
+            { label: 'DP', action: 'chart-dp' },
+            { label: 'STAR', action: 'chart-star' },
+            { label: 'VIEW', action: 'view-chart' },
             { label: 'BACK', action: 'back' }
         ]);
 
@@ -148,11 +148,11 @@ class GTNSoftKeys {
 
         // SYSTEM page
         this.registerContext('system', [
-            { label: 'DISP', action: 'sys-display' },
-            { label: 'UNITS', action: 'sys-units' },
-            { label: 'AUDIO', action: 'sys-audio' },
-            { label: 'GPS', action: 'sys-gps' },
-            { label: 'ABOUT', action: 'sys-about' },
+            { label: 'NORTH', action: 'sys-north-up' },
+            { label: 'TRACK', action: 'sys-track-up' },
+            { label: 'NIGHT', action: 'sys-night-mode', toggle: true },
+            { label: 'RESET', action: 'sys-reset' },
+            { label: '', action: null },
             { label: 'BACK', action: 'back' }
         ]);
 
@@ -215,6 +215,10 @@ class GTNSoftKeys {
     handleKeyPress(index) {
         const key = this.keys[index];
         if (!key || key.classList.contains('disabled')) return;
+
+        // Add press feedback animation
+        key.classList.add('pressed');
+        setTimeout(() => key.classList.remove('pressed'), 150);
 
         const action = key.dataset.action;
         if (!action) return;
