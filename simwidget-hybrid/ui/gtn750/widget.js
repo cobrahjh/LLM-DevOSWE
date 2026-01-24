@@ -112,6 +112,41 @@ class GTN750Widget {
             });
             this.mapControls.setRange(this.map.range);
         }
+
+        // Initialize procedures page
+        this.proceduresPage = new ProceduresPage({
+            core: this.core,
+            serverPort: this.serverPort,
+            onProcedureSelect: (proc, type, waypoints) => {
+                this.handleProcedureSelect(proc, type, waypoints);
+            },
+            onProcedureLoad: (proc, type, waypoints) => {
+                this.handleProcedureLoad(proc, type, waypoints);
+            }
+        });
+    }
+
+    handleProcedureSelect(proc, type, waypoints) {
+        // Store preview waypoints for map overlay
+        this.procedurePreview = {
+            procedure: proc,
+            type: type,
+            waypoints: waypoints
+        };
+        console.log(`[GTN750] Procedure selected: ${proc.name}`);
+    }
+
+    handleProcedureLoad(proc, type, waypoints) {
+        // Add procedure to flight plan
+        console.log(`[GTN750] Loading procedure: ${proc.name}`);
+        this.syncChannel.postMessage({
+            type: 'procedure-load',
+            data: {
+                procedure: proc,
+                procedureType: type,
+                waypoints: waypoints
+            }
+        });
     }
 
     bindTawsAlerts() {
@@ -201,6 +236,18 @@ class GTN750Widget {
     onPageActivate(pageId) {
         if (pageId === 'nrst') {
             this.fetchNearestAirports();
+        }
+        if (pageId === 'proc') {
+            if (this.proceduresPage) {
+                this.proceduresPage.init();
+                // If we have a destination airport, pre-load it
+                if (this.flightPlan?.waypoints?.length > 0) {
+                    const dest = this.flightPlan.waypoints[this.flightPlan.waypoints.length - 1];
+                    if (dest.ident?.length === 4) {
+                        this.proceduresPage.setAirport(dest.ident);
+                    }
+                }
+            }
         }
         if (pageId === 'terrain') {
             this.setupTerrainCanvas();
@@ -348,6 +395,23 @@ class GTN750Widget {
                 break;
             case 'terrain-arc':
                 this.setTerrainView('arc');
+                break;
+
+            // Procedures
+            case 'proc-departure':
+                if (this.proceduresPage) this.proceduresPage.switchType('dep');
+                break;
+            case 'proc-arrival':
+                if (this.proceduresPage) this.proceduresPage.switchType('arr');
+                break;
+            case 'proc-approach':
+                if (this.proceduresPage) this.proceduresPage.switchType('apr');
+                break;
+            case 'load-proc':
+                if (this.proceduresPage) this.proceduresPage.loadProcedure();
+                break;
+            case 'preview-proc':
+                this.previewProcedure();
                 break;
 
             // Traffic
@@ -1255,6 +1319,17 @@ class GTN750Widget {
             msg.className = 'gtn-charts-empty';
             msg.textContent = `Charts for ${icao} not available`;
             this.elements.chartList.appendChild(msg);
+        }
+    }
+
+    // ===== PROCEDURES =====
+    previewProcedure() {
+        if (this.procedurePreview?.waypoints) {
+            // Toggle procedure preview on map
+            this.showProcedurePreview = !this.showProcedurePreview;
+            console.log(`[GTN750] Procedure preview: ${this.showProcedurePreview ? 'ON' : 'OFF'}`);
+        } else {
+            console.log('[GTN750] No procedure selected for preview');
         }
     }
 
