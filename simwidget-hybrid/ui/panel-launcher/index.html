@@ -232,6 +232,10 @@
                     <span class="icon">🎤</span>
                     <span class="label">Voice</span>
                 </a>
+                <a href="/ui/health-dashboard/" target="_blank" class="widget-btn" title="System Health">
+                    <span class="icon">💚</span>
+                    <span class="label">Health</span>
+                </a>
             </div>
         </section>
 
@@ -262,6 +266,7 @@
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
     <script src="/ui/shared/hotkeys.js"></script>
+    <script src="/ui/shared/presets.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
@@ -284,6 +289,37 @@
                 themeSelector.value = e.detail.theme;
             });
         }
+
+        // Initialize preset buttons
+        (function initPresets() {
+            if (typeof SimWidgetPresets === 'undefined') {
+                console.warn('[Panel Launcher] SimWidgetPresets not loaded');
+                return;
+            }
+
+            const presets = SimWidgetPresets.getBuiltInPresets();
+
+            // Set icons for each preset button using safe DOM insertion
+            Object.keys(presets).forEach(name => {
+                const iconEl = document.getElementById('icon-' + name);
+                if (iconEl) {
+                    // Create a template element for safe SVG insertion from trusted source
+                    const template = document.createElement('template');
+                    template.innerHTML = SimWidgetPresets.getPresetIcon(presets[name].icon);
+                    iconEl.appendChild(template.content.cloneNode(true));
+                }
+            });
+
+            // Add click handlers
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const presetName = btn.dataset.preset;
+                    btn.classList.add('loading');
+                    SimWidgetPresets.applyPreset(presetName);
+                    setTimeout(() => btn.classList.remove('loading'), 1000);
+                });
+            });
+        })();
     </script>
 </body>
 </html>

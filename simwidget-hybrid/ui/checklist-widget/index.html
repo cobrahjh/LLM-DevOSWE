@@ -16,6 +16,7 @@
         <div class="widget-header">
             <span class="widget-title">✅ Checklist</span>
             <div class="header-controls">
+                <div id="voice-control-container" class="voice-control-compact"></div>
                 <button class="btn-icon" id="btn-audio" title="Toggle Audio">🔊</button>
                 <button class="btn-icon" id="btn-reset" title="Reset Current">↺</button>
             </div>
@@ -84,6 +85,7 @@
     <script src="/ui/shared/widget-customizer.js"></script>
     <script src="/ui/shared/multiplayer-sync.js"></script>
     <script src="/ui/shared/multiplayer-panel.js"></script>
+    <script src="/ui/shared/voice-control.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
@@ -97,6 +99,10 @@
             onActionReceived: (action, data) => window.checklistWidget?.handleRemoteAction?.(action, data)
         });
         mp.attach(document.body);
+
+        // Voice control
+        const voice = new VoiceControl();
+        new VoiceControlUI(voice, document.getElementById('voice-control-container'));
     </script>
 </body>
 </html>

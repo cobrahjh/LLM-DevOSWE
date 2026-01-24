@@ -226,7 +226,155 @@ class SettingsPanel {
     document.head.appendChild(style);
 })();
 
+/**
+ * Widget Data Export/Import Utility
+ */
+class WidgetDataManager {
+    static exportAll() {
+        const data = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('simwidget_') || key.includes('-widget-')) {
+                data[key] = localStorage.getItem(key);
+            }
+        }
+        return data;
+    }
+
+    static importAll(data) {
+        let count = 0;
+        Object.entries(data).forEach(([key, value]) => {
+            localStorage.setItem(key, value);
+            count++;
+        });
+        return count;
+    }
+
+    static downloadBackup() {
+        const data = this.exportAll();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'simwidget-backup-' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        return Object.keys(data).length;
+    }
+
+    static async restoreBackup(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const count = this.importAll(data);
+                    resolve(count);
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
+    }
+
+    static clearAll() {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('simwidget_') || key.includes('-widget-')) {
+                keys.push(key);
+            }
+        }
+        keys.forEach(k => localStorage.removeItem(k));
+        return keys.length;
+    }
+}
+
+// Register backup section in SettingsPanel
+SettingsPanel.prototype.registerBackupSection = function() {
+    this.registerSection('backup', {
+        title: 'Backup & Restore',
+        icon: '💾',
+        render: () => `
+            <div class="backup-section">
+                <p class="backup-desc">Export or import all widget settings and data.</p>
+                <div class="backup-actions">
+                    <button class="backup-btn" id="btn-export-backup">📥 Export Backup</button>
+                    <button class="backup-btn" id="btn-import-backup">📤 Import Backup</button>
+                    <input type="file" id="backup-file-input" accept=".json" style="display:none">
+                </div>
+                <div class="backup-status" id="backup-status"></div>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 16px 0;">
+                <button class="backup-btn danger" id="btn-clear-all">🗑️ Clear All Data</button>
+            </div>
+        `,
+        onMount: (container) => {
+            const exportBtn = container.querySelector('#btn-export-backup');
+            const importBtn = container.querySelector('#btn-import-backup');
+            const fileInput = container.querySelector('#backup-file-input');
+            const clearBtn = container.querySelector('#btn-clear-all');
+            const status = container.querySelector('#backup-status');
+
+            exportBtn.addEventListener('click', () => {
+                const count = WidgetDataManager.downloadBackup();
+                status.textContent = 'Exported ' + count + ' settings';
+                status.style.color = '#22c55e';
+            });
+
+            importBtn.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', async (e) => {
+                if (e.target.files.length > 0) {
+                    try {
+                        const count = await WidgetDataManager.restoreBackup(e.target.files[0]);
+                        status.textContent = 'Restored ' + count + ' settings. Refresh to apply.';
+                        status.style.color = '#22c55e';
+                    } catch (err) {
+                        status.textContent = 'Error: Invalid backup file';
+                        status.style.color = '#ef4444';
+                    }
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                if (confirm('Clear ALL widget data? This cannot be undone.')) {
+                    const count = WidgetDataManager.clearAll();
+                    status.textContent = 'Cleared ' + count + ' settings';
+                    status.style.color = '#f97316';
+                }
+            });
+        }
+    });
+};
+
+// Add backup section styles
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .backup-section { padding: 10px 0; }
+        .backup-desc { font-size: 12px; color: var(--widget-text-muted, #888); margin-bottom: 16px; }
+        .backup-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .backup-btn {
+            padding: 10px 16px;
+            background: var(--widget-bg-secondary, #16213e);
+            border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+            border-radius: 6px;
+            color: var(--widget-text, #fff);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .backup-btn:hover { border-color: var(--widget-accent, #667eea); }
+        .backup-btn.danger { border-color: #ef4444; color: #ef4444; }
+        .backup-btn.danger:hover { background: rgba(239, 68, 68, 0.2); }
+        .backup-status { margin-top: 12px; font-size: 12px; min-height: 20px; }
+    `;
+    document.head.appendChild(style);
+})();
+
 // Export
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SettingsPanel;
+    module.exports = { SettingsPanel, WidgetDataManager };
 }
