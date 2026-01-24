@@ -18,10 +18,45 @@ class FlightPlanWidget {
         // Cross-widget communication
         this.syncChannel = new BroadcastChannel('simwidget-sync');
 
+        // SimBrief import channel
+        this.simbriefChannel = new BroadcastChannel('simwidget-flightplan');
+        this.simbriefChannel.onmessage = (event) => {
+            if (event.data.action === 'loadPlan') {
+                this.importSimBriefPlan(event.data.data);
+            }
+        };
+
         this.initElements();
         this.initControls();
         this.connectWebSocket();
         this.pollFlightPlan();
+    }
+
+    importSimBriefPlan(data) {
+        // Convert SimBrief format to our format
+        const waypoints = data.waypoints.map((wp, index) => ({
+            ident: wp.ident,
+            name: wp.name,
+            type: index === 0 ? 'departure' : (index === data.waypoints.length - 1 ? 'arrival' : wp.type || 'fix'),
+            lat: wp.lat,
+            lng: wp.lng,
+            alt: wp.altitude,
+            altitude: wp.altitude,
+            distanceFromPrev: wp.distanceFromPrev,
+            passed: false,
+            active: index === 0
+        }));
+
+        const flightPlan = {
+            source: 'simbrief',
+            departure: data.departure?.icao_code || waypoints[0]?.ident || '----',
+            arrival: data.arrival?.icao_code || waypoints[waypoints.length - 1]?.ident || '----',
+            totalDistance: data.totalDistance || 0,
+            waypoints: waypoints
+        };
+
+        this.updateFlightPlan(flightPlan);
+        this.showFeedback('SimBrief plan loaded!');
     }
 
     initElements() {

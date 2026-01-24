@@ -212,6 +212,35 @@
     50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
 }
 
+/* Weather markers */
+.weather-marker {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.weather-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.5);
+    box-shadow: 0 0 6px currentColor;
+}
+
+.weather-cat {
+    font-size: 8px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(0,0,0,0.7);
+    padding: 1px 3px;
+    border-radius: 2px;
+    margin-top: 1px;
+    font-family: 'Courier New', monospace;
+}
+
 /* Responsive */
 @media (max-width: 400px) {
     .flight-info {

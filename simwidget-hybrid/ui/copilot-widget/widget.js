@@ -183,7 +183,50 @@ class AICopilot {
             vref: 65
         };
 
+        // Flight plan
+        this.flightPlan = null;
+
+        // Cross-widget communication
+        this.syncChannel = new BroadcastChannel('simwidget-sync');
+        this.initSyncListener();
+
         this.init();
+    }
+
+    initSyncListener() {
+        this.syncChannel.onmessage = (event) => {
+            const { type, data } = event.data;
+
+            switch (type) {
+                case 'route-update':
+                    this.flightPlan = data;
+                    this.updateFlightPlanDisplay();
+                    break;
+
+                case 'position-update':
+                    // Update flight data from map widget
+                    if (data.altitude) this.flightData.altitude = data.altitude;
+                    if (data.speed) this.flightData.speed = data.speed;
+                    if (data.heading) this.flightData.heading = data.heading;
+                    break;
+            }
+        };
+    }
+
+    updateFlightPlanDisplay() {
+        if (!this.flightPlan) return;
+
+        // Update status bar if we have departure/arrival
+        const dep = this.flightPlan.departure || '----';
+        const arr = this.flightPlan.arrival || '----';
+
+        // Add message about flight plan
+        if (this.flightPlan.waypoints && this.flightPlan.waypoints.length > 0) {
+            const nextWp = this.flightPlan.nextWaypoint;
+            if (nextWp) {
+                this.addMessage(`Flight plan loaded: ${dep} to ${arr}. Next waypoint: ${nextWp.ident}, ${Math.round(nextWp.distance)} nm.`, 'copilot');
+            }
+        }
     }
 
     init() {

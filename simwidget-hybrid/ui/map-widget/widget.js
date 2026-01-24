@@ -26,6 +26,10 @@ class MapWidget {
         this.waypointMarkers = [];
         this.flightPlan = null;
 
+        // Weather overlay
+        this.weatherMarkers = [];
+        this.weatherCache = {};
+
         // Cross-widget communication
         this.syncChannel = new BroadcastChannel('simwidget-sync');
         this.initSyncListener();
@@ -141,6 +145,9 @@ class MapWidget {
 
             this.waypointMarkers.push(marker);
         });
+
+        // Load weather for airports
+        this.loadWeatherForAirports();
     }
 
     getWpIcon(type) {
@@ -153,6 +160,99 @@ class MapWidget {
             'airport': '✈️'
         };
         return icons[type?.toLowerCase()] || '◆';
+    }
+
+    // Weather overlay methods
+    async loadWeatherForAirports() {
+        if (!this.flightPlan || !this.flightPlan.waypoints) return;
+
+        // Find airports in the flight plan
+        const airports = this.flightPlan.waypoints.filter(wp =>
+            wp.type === 'departure' || wp.type === 'arrival' || wp.type === 'airport'
+        );
+
+        for (const airport of airports) {
+            if (airport.ident && airport.lat && airport.lng) {
+                await this.fetchWeatherForAirport(airport);
+            }
+        }
+    }
+
+    async fetchWeatherForAirport(airport) {
+        const icao = airport.ident;
+
+        // Check cache (5 min)
+        if (this.weatherCache[icao] && Date.now() - this.weatherCache[icao].timestamp < 300000) {
+            this.addWeatherMarker(airport, this.weatherCache[icao].data);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/weather/metar/' + icao);
+            if (response.ok) {
+                const data = await response.json();
+                this.weatherCache[icao] = { data, timestamp: Date.now() };
+                this.addWeatherMarker(airport, data);
+            }
+        } catch (e) {
+            console.log('[Map] Weather fetch failed for', icao);
+        }
+    }
+
+    addWeatherMarker(airport, weather) {
+        // Remove existing marker for this airport
+        this.weatherMarkers = this.weatherMarkers.filter(m => {
+            if (m.icao === airport.ident) {
+                this.map.removeLayer(m.marker);
+                return false;
+            }
+            return true;
+        });
+
+        const category = weather.flight_rules || this.getFlightCategory(weather);
+        const categoryColors = {
+            'VFR': '#22c55e',
+            'MVFR': '#3b82f6',
+            'IFR': '#ef4444',
+            'LIFR': '#a855f7'
+        };
+        const color = categoryColors[category] || '#888';
+
+        const weatherIcon = L.divIcon({
+            className: 'weather-marker',
+            html: `<div class="weather-dot" style="background:${color}"></div><div class="weather-cat">${category}</div>`,
+            iconSize: [40, 24],
+            iconAnchor: [20, 12]
+        });
+
+        const wind = weather.wind_speed ? `${weather.wind_direction?.value || 'VRB'}@${weather.wind_speed.value}kt` : 'Calm';
+        const vis = weather.visibility ? weather.visibility.value + (weather.units?.visibility || 'sm') : '--';
+        const temp = weather.temperature ? weather.temperature.value + '°C' : '--';
+
+        const marker = L.marker([airport.lat, airport.lng], { icon: weatherIcon, zIndexOffset: -100 })
+            .addTo(this.map)
+            .bindPopup(`<b>${airport.ident}</b> - ${category}<br>Wind: ${wind}<br>Vis: ${vis}<br>Temp: ${temp}`);
+
+        this.weatherMarkers.push({ icao: airport.ident, marker });
+    }
+
+    getFlightCategory(data) {
+        const vis = data.visibility?.value || 10;
+        const ceiling = this.getCeiling(data);
+        if (vis < 1 || ceiling < 500) return 'LIFR';
+        if (vis < 3 || ceiling < 1000) return 'IFR';
+        if (vis < 5 || ceiling < 3000) return 'MVFR';
+        return 'VFR';
+    }
+
+    getCeiling(data) {
+        if (!data.clouds || data.clouds.length === 0) return 99999;
+        for (const cloud of data.clouds) {
+            if (cloud.type === 'BKN' || cloud.type === 'OVC') {
+                return cloud.altitude || 99999;
+            }
+        }
+        return 99999;
     }
 
     initMap() {
