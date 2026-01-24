@@ -33,8 +33,38 @@
             background: var(--widget-bg, #1a1a2e);
             color: var(--widget-text, #fff);
         }
+        .auto-theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 11px;
+            color: var(--widget-text-muted, #888);
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--widget-bg-secondary, #16213e);
+            border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+            transition: all 0.2s ease;
+        }
+        .auto-theme-toggle:hover {
+            border-color: var(--widget-accent, #667eea);
+            color: var(--widget-text, #fff);
+        }
+        .auto-theme-toggle input {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--widget-accent, #667eea);
+            cursor: pointer;
+            margin: 0;
+        }
+        .auto-theme-toggle.active {
+            border-color: var(--widget-accent, #667eea);
+            color: var(--widget-text, #fff);
+        }
     </style>
     <script src="/ui/shared/themes.js"></script>
+    <script src="/ui/shared/auto-theme.js"></script>
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
@@ -42,6 +72,10 @@
         <header class="widget-header">
             <h1>Panel Launcher</h1>
             <div class="header-controls">
+                <label class="auto-theme-toggle" title="Auto-switch theme based on simulator time (19:00-06:00 = night)">
+                    <input type="checkbox" id="auto-theme-toggle">
+                    <span>Auto</span>
+                </label>
                 <select class="theme-selector" id="theme-selector" title="Select Theme">
                     <option value="dark">Dark</option>
                     <option value="light">Light</option>
@@ -308,6 +342,37 @@
             // Update selector when theme changes from another widget
             window.addEventListener('simwidget-theme-changed', (e) => {
                 themeSelector.value = e.detail.theme;
+            });
+        }
+
+        // Auto theme toggle integration
+        const autoThemeToggle = document.getElementById('auto-theme-toggle');
+        const autoThemeLabel = autoThemeToggle ? autoThemeToggle.closest('.auto-theme-toggle') : null;
+        if (autoThemeToggle && window.SimWidgetAutoTheme) {
+            // Set initial state
+            autoThemeToggle.checked = SimWidgetAutoTheme.isEnabled();
+            if (autoThemeLabel) {
+                autoThemeLabel.classList.toggle('active', autoThemeToggle.checked);
+            }
+
+            // Handle toggle changes
+            autoThemeToggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    SimWidgetAutoTheme.enable();
+                } else {
+                    SimWidgetAutoTheme.disable();
+                }
+                if (autoThemeLabel) {
+                    autoThemeLabel.classList.toggle('active', e.target.checked);
+                }
+            });
+
+            // Update toggle when auto-theme state changes externally
+            window.addEventListener('simwidget-auto-theme-changed', (e) => {
+                autoThemeToggle.checked = SimWidgetAutoTheme.isEnabled();
+                if (autoThemeLabel) {
+                    autoThemeLabel.classList.toggle('active', autoThemeToggle.checked);
+                }
             });
         }
 
