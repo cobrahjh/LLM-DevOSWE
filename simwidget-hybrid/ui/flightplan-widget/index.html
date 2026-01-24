@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -80,9 +81,11 @@
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
     <script src="/ui/shared/voice-announcer.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
+        settings.registerThemeSection();
         const customizer = new WidgetCustomizer({ widgetId: 'flightplan-widget', settingsPanel: settings });
         document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
     </script>

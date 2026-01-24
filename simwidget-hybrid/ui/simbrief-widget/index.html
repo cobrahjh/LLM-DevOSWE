@@ -35,9 +35,11 @@
 
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
     <script src="widget.js"></script>
     <script>
         const settings = new SettingsPanel();
+        settings.registerThemeSection();
         const customizer = new WidgetCustomizer({ widgetId: 'simbrief-widget', settingsPanel: settings });
         document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
     </script>

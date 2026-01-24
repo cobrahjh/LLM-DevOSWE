@@ -119,7 +119,109 @@ class SettingsPanel {
     toggle() {
         this.isOpen ? this.close() : this.open();
     }
+
+    /**
+     * Register theme section (call after ThemeSwitcher is loaded)
+     */
+    registerThemeSection() {
+        if (typeof ThemeSwitcher === 'undefined') {
+            console.warn('[Settings] ThemeSwitcher not loaded');
+            return;
+        }
+
+        const themeSwitcher = new ThemeSwitcher();
+
+        this.registerSection('theme', {
+            title: 'Theme',
+            icon: '🎨',
+            render: () => {
+                const themes = [
+                    { id: 'default', name: 'Default', icon: '🌙', desc: 'Dark blue theme' },
+                    { id: 'cockpit', name: 'Cockpit', icon: '✈️', desc: 'Green aviation instruments' },
+                    { id: 'glass', name: 'Glass', icon: '💎', desc: 'Modern avionics blue' },
+                    { id: 'day', name: 'Day', icon: '☀️', desc: 'Light mode' },
+                    { id: 'highcontrast', name: 'High Contrast', icon: '👁️', desc: 'Accessibility' }
+                ];
+
+                const currentTheme = themeSwitcher.getTheme();
+
+                let html = '<div class="theme-grid">';
+                themes.forEach(t => {
+                    const isActive = t.id === currentTheme ? 'active' : '';
+                    html += `
+                        <button class="theme-card ${isActive}" data-theme="${t.id}" title="${t.desc}">
+                            <span class="theme-card-icon">${t.icon}</span>
+                            <span class="theme-card-name">${t.name}</span>
+                        </button>
+                    `;
+                });
+                html += '</div>';
+
+                return html;
+            },
+            onMount: (container) => {
+                container.querySelectorAll('.theme-card').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        themeSwitcher.setTheme(btn.dataset.theme);
+                        container.querySelectorAll('.theme-card').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+        });
+    }
 }
+
+// Add theme grid styles
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .theme-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            background: var(--widget-bg-secondary, #16213e);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-card:hover {
+            border-color: var(--widget-accent, #667eea);
+            transform: translateY(-2px);
+        }
+
+        .theme-card.active {
+            border-color: var(--widget-accent, #667eea);
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .theme-card-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .theme-card-name {
+            font-size: 11px;
+            color: var(--widget-text-muted, #888);
+            text-align: center;
+        }
+
+        .theme-card.active .theme-card-name {
+            color: var(--widget-text, #fff);
+        }
+    `;
+    document.head.appendChild(style);
+})();
 
 // Export
 if (typeof module !== 'undefined' && module.exports) {

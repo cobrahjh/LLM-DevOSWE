@@ -1,10 +1,13 @@
 /**
- * Widget Shared Styles v1.0.0
- * Last Updated: 2025-01-07
- * 
+ * Widget Shared Styles v1.1.0
+ * Last Updated: 2026-01-23
+ *
  * Common styles for all SimWidget widgets.
  * Include in your widget: <link rel="stylesheet" href="/ui/shared/widget-common.css">
  */
+
+/* Import themes */
+@import url('/ui/shared/themes.css');
 
 /* Transparency Mode */
 body.transparent {

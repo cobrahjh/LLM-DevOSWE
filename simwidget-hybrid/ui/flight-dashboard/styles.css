@@ -8,8 +8,8 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0f0f1a;
-    color: #fff;
+    background: var(--widget-bg-tertiary, #0f0f1a);
+    color: var(--widget-text, #fff);
     min-height: 100vh;
 }
 
@@ -26,14 +26,14 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background: #1a1a2e;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: var(--widget-bg, #1a1a2e);
+    border-bottom: 1px solid var(--widget-border, rgba(255,255,255,0.1));
 }
 
 .dashboard-header h1 {
     font-size: 18px;
     font-weight: 600;
-    color: #667eea;
+    color: var(--widget-accent, #667eea);
 }
 
 .header-controls {
@@ -43,28 +43,28 @@ body {
 }
 
 .header-controls select {
-    background: #16213e;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #fff;
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    color: var(--widget-text, #fff);
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: var(--widget-radius-sm, 6px);
     font-size: 13px;
     cursor: pointer;
 }
 
 .header-controls button {
-    background: #16213e;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #fff;
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    color: var(--widget-text, #fff);
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: var(--widget-radius-sm, 6px);
     font-size: 16px;
     cursor: pointer;
     transition: background 0.2s;
 }
 
 .header-controls button:hover {
-    background: #667eea;
+    background: var(--widget-accent, #667eea);
 }
 
 /* Main Grid */
@@ -113,8 +113,8 @@ body {
 
 /* Widget Frames */
 .widget-frame {
-    background: #1a1a2e;
-    border-radius: 10px;
+    background: var(--widget-bg, #1a1a2e);
+    border-radius: var(--widget-radius, 10px);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -133,17 +133,17 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 6px 12px;
-    background: #16213e;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: var(--widget-bg-secondary, #16213e);
+    border-bottom: 1px solid var(--widget-border, rgba(255,255,255,0.1));
     font-size: 12px;
     font-weight: 500;
-    color: #888;
+    color: var(--widget-text-muted, #888);
 }
 
 .btn-popout {
     background: transparent;
     border: none;
-    color: #888;
+    color: var(--widget-text-muted, #888);
     font-size: 12px;
     cursor: pointer;
     padding: 2px 6px;
@@ -152,14 +152,14 @@ body {
 
 .btn-popout:hover {
     background: rgba(255,255,255,0.1);
-    color: #fff;
+    color: var(--widget-text, #fff);
 }
 
 .widget-frame iframe {
     flex: 1;
     width: 100%;
     border: none;
-    background: #1a1a2e;
+    background: var(--widget-bg, #1a1a2e);
 }
 
 /* Hide widgets not in current layout */
