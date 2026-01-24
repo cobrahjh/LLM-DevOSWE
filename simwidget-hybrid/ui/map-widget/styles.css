@@ -44,6 +44,55 @@
     background: var(--widget-accent, #667eea);
 }
 
+/* Radar Controls */
+.radar-controls {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 6px;
+}
+
+.radar-controls.visible {
+    display: flex;
+}
+
+.radar-label {
+    font-size: 11px;
+    color: var(--widget-text-muted, #888);
+    white-space: nowrap;
+}
+
+.radar-controls input[type="range"] {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.radar-controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--widget-accent, #667eea);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.radar-controls input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--widget-accent, #667eea);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
 /* Map Container */
 .map-container {
     height: 280px;

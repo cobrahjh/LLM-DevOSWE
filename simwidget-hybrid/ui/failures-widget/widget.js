@@ -8,6 +8,7 @@ class FailuresWidget {
         this.ws = null;
         this.reconnectDelay = 2000;
         this.failures = new Map();
+        this.announcer = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer() : null;
         this.systems = {
             engine1: { name: 'Engine 1', icon: '🔧', status: 'ok' },
             engine2: { name: 'Engine 2', icon: '🔧', status: 'ok' },
@@ -163,6 +164,11 @@ class FailuresWidget {
                 detail,
                 time: new Date()
             });
+
+            // Voice alert for new failure
+            if (this.announcer) {
+                this.announcer.speak(`Warning: ${this.systems[system].name} failure`);
+            }
         } else if (status === 'ok' && this.failures.has(system)) {
             this.failures.delete(system);
         }
