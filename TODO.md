@@ -1,6 +1,6 @@
 # SimWidget Engine - TODO List
-**Version:** v2.7.0
-**Last updated:** 2026-01-22
+**Version:** v2.8.0
+**Last updated:** 2026-01-23
 
 > 📋 **See [PROJECT-PLAN.md](PROJECT-PLAN.md) for full roadmap & milestones**
 
@@ -90,12 +90,12 @@ Custom WASM module for ChasePlane-like smooth camera control.
 - [x] Install to MSFS Community folder
 - [x] Add server API endpoints (/api/wasm-camera)
 - [x] Create WASM Camera Widget UI
+- [x] Add tower view mode ✅ 2026-01-23
 - [ ] **Test in MSFS 2024** ← NEXT STEP
-- [ ] Add tower view mode
 - [ ] Add more cinematic presets
 
 **LVars (Server → WASM):**
-- `L:SIMWIDGET_CAM_CMD` - Commands: 0=none, 1=flyby, 3=toggle, 4=next, 5=reset
+- `L:SIMWIDGET_CAM_CMD` - Commands: 0=none, 1=flyby, 2=tower, 3=toggle, 4=next, 5=reset
 - `L:SIMWIDGET_CAM_SMOOTH` - Smoothing factor 0-100
 
 **LVars (WASM → Server):**
@@ -216,7 +216,7 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 - [ ] **Whisper model selector** - tiny/base/small/medium/large
 - [ ] **Language detection** - Auto-detect spoken language
 - [ ] **Continuous listening mode** - Keep transcribing without click-to-stop
-- [ ] **Wake word** - "Hey Kitt" to activate
+- [x] **Wake word** - "Hey Kitt" to activate ✅ 2026-01-23
 - [ ] **Noise suppression** - Filter background noise before transcription
 - [ ] **Speaker diarization** - Identify different speakers
 
@@ -351,7 +351,7 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 - [x] **start-simwidget.bat** - Manual start script (2026-01-09)
 - [x] **stop-simwidget.bat** - Manual stop script (2026-01-09)
 - [x] **simwidget-manage.ps1** - PowerShell management start/stop/restart/status (2026-01-09)
-- [ ] **Windows Service installer** - Optional service mode for always-on
+- [x] **Windows Service installer** - install-service.ps1 for NSSM service mode ✅ 2026-01-23
 
 ---
 
@@ -370,6 +370,19 @@ See **docs/FLOW-PRO-REFERENCE.md** for complete category/widget documentation.
 ---
 
 ## Completed ✓
+
+### 2026-01-23
+- [x] **Widget Catalog** - 50+ widgets documented in WIDGET-CATALOG.md
+- [x] **Keyboard Shortcuts** - Ctrl+K search, Ctrl+1-5 widgets, Ctrl+Shift+T theme
+- [x] **Widget Search** - Fuzzy search launcher for all widgets
+- [x] **Night Mode** - Auto-switch theme based on system/sim time
+- [x] **Widget Presets** - VFR, IFR, Airliner, Training configurations
+- [x] **Checklist Maker** - Create custom aircraft checklists
+- [x] **Tower View Camera** - WASM camera tower perspective mode
+- [x] **Windows Service Installer** - install-service.ps1 for NSSM
+- [x] **Kitt Wake Word** - "Hey Kitt" hands-free activation
+- [x] **Voice Control for Checklists** - Speech commands for checklist widget
+- [x] **Mobile Optimization** - Responsive checklist widget for phones/tablets
 
 ### 2026-01-11
 - [x] **Kitt Task Processor v1.0.0** - State machine for task lifecycle management
