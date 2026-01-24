@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Instructor - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">🎓 Flight Instructor</span>
+            <button class="btn-icon" id="btn-voice">🔊</button>
+        </div>
+        <div class="scenario-select">
+            <select id="scenario">
+                <option value="pattern">Traffic Pattern</option>
+                <option value="landing">Landing Evaluation</option>
+                <option value="stalls">Stall Recovery</option>
+                <option value="emergencies">Emergency Procedures</option>
+                <option value="instruments">Instrument Scan</option>
+                <option value="crosswind">Crosswind Landing</option>
+            </select>
+            <button class="btn-start" id="btn-start">▶ Start</button>
+        </div>
+        <div class="instruction-panel" id="instruction-panel">
+            <div class="instruction-text" id="instruction-text">Select a training scenario and click Start</div>
+        </div>
+        <div class="metrics-panel">
+            <div class="metric"><span class="metric-label">Score</span><span class="metric-value" id="score">--</span></div>
+            <div class="metric"><span class="metric-label">Phase</span><span class="metric-value" id="phase">--</span></div>
+            <div class="metric"><span class="metric-label">Errors</span><span class="metric-value" id="errors">0</span></div>
+        </div>
+        <div class="feedback-panel" id="feedback-panel"></div>
+        <div class="grade-display" id="grade-display">
+            <div class="grade-letter" id="grade-letter">-</div>
+            <div class="grade-text" id="grade-text">Complete a scenario for grading</div>
+        </div>
+    </div>
+    <script src="widget.js"></script>
+</body>
+</html>

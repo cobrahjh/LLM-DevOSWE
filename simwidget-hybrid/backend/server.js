@@ -292,7 +292,15 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/atc-widget/">📡 ATC Comm</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/flightlog-widget/">📓 Flight Log</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/multiplayer-widget/">👥 Multiplayer</a> <span class="new-badge">NEW</span></li>
-                <li><a href="/ui/flight-dashboard/">🎯 Flight Dashboard</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/fuel-planner/">⛽ Fuel Planner</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/weight-balance/">⚖️ Weight & Balance</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/holding-calc/">🔄 Holding Calc</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/flight-log/">📒 Flight Log</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/flight-instructor/">🎓 Instructor</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/mobile-companion/">📱 Mobile View</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/kneeboard-widget/">📋 Kneeboard</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/dashboard/">🎛️ Widget Dashboard</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/flight-dashboard/">🎯 Flight Dashboard</a></li>
             </ul>
         </div>
 
@@ -2660,6 +2668,94 @@ function startMockData() {
         
         broadcastFlightData();
     }, 100);
+}
+
+// ===== Stream Deck Integration API =====
+// Simple REST endpoints for Elgato Stream Deck actions
+
+app.get('/api/streamdeck/actions', (req, res) => {
+    res.json({
+        actions: [
+            { id: 'camera.cockpit', name: 'Cockpit View', icon: '🎥' },
+            { id: 'camera.external', name: 'External View', icon: '🌍' },
+            { id: 'camera.drone', name: 'Drone View', icon: '🚁' },
+            { id: 'camera.showcase', name: 'Showcase View', icon: '✨' },
+            { id: 'sim.pause', name: 'Pause/Resume', icon: '⏸️' },
+            { id: 'sim.slew', name: 'Toggle Slew', icon: '🕹️' },
+            { id: 'lights.landing', name: 'Landing Lights', icon: '💡' },
+            { id: 'lights.nav', name: 'Nav Lights', icon: '🔦' },
+            { id: 'gear.toggle', name: 'Toggle Gear', icon: '🛞' },
+            { id: 'flaps.up', name: 'Flaps Up', icon: '⬆️' },
+            { id: 'flaps.down', name: 'Flaps Down', icon: '⬇️' },
+            { id: 'ap.toggle', name: 'Autopilot', icon: '🤖' },
+            { id: 'xpdr.7700', name: 'Squawk 7700', icon: '🚨' }
+        ]
+    });
+});
+
+app.post('/api/streamdeck/execute/:actionId', async (req, res) => {
+    const { actionId } = req.params;
+    console.log('[StreamDeck] Execute:', actionId);
+
+    try {
+        const [category, action] = actionId.split('.');
+
+        switch (category) {
+            case 'camera':
+                await cameraSystem.executeAction(action);
+                break;
+            case 'sim':
+                if (action === 'pause') await sendSimConnectEvent('PAUSE_TOGGLE');
+                if (action === 'slew') await sendSimConnectEvent('SLEW_TOGGLE');
+                break;
+            case 'lights':
+                if (action === 'landing') await sendSimConnectEvent('LANDING_LIGHTS_TOGGLE');
+                if (action === 'nav') await sendSimConnectEvent('NAV_LIGHTS_TOGGLE');
+                break;
+            case 'gear':
+                await sendSimConnectEvent('GEAR_TOGGLE');
+                break;
+            case 'flaps':
+                if (action === 'up') await sendSimConnectEvent('FLAPS_UP');
+                if (action === 'down') await sendSimConnectEvent('FLAPS_DOWN');
+                break;
+            case 'ap':
+                await sendSimConnectEvent('AP_MASTER');
+                break;
+            case 'xpdr':
+                if (action === '7700') await sendSimConnectEvent('XPNDR_SET', 7700);
+                break;
+            default:
+                return res.status(400).json({ error: 'Unknown action' });
+        }
+
+        res.json({ success: true, action: actionId });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/streamdeck/status', (req, res) => {
+    res.json({
+        connected: connected,
+        flightData: latestFlightData ? {
+            altitude: Math.round(latestFlightData.altitude || 0),
+            speed: Math.round(latestFlightData.speed || 0),
+            heading: Math.round(latestFlightData.heading || 0),
+            onGround: latestFlightData.onGround || false
+        } : null
+    });
+});
+
+// Helper for SimConnect events
+async function sendSimConnectEvent(event, value = 0) {
+    if (typeof simConnect !== 'undefined' && simConnect) {
+        try {
+            simConnect.transmitClientEvent(event, value);
+        } catch (e) {
+            console.log('[StreamDeck] SimConnect event error:', e.message);
+        }
+    }
 }
 
 // Start server with TroubleshootEngine

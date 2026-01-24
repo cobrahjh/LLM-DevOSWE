@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Replay - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">🎬 Flight Replay</span>
+            <button class="btn-icon" id="btn-settings">⚙️</button>
+        </div>
+        <div class="recording-controls">
+            <button class="btn-rec" id="btn-record">⏺️ Record</button>
+            <button class="btn-control" id="btn-stop" disabled>⏹️</button>
+            <span class="rec-status" id="rec-status">Ready</span>
+        </div>
+        <div class="timeline-container">
+            <canvas id="timeline-canvas" width="360" height="60"></canvas>
+            <div class="time-display">
+                <span id="current-time">00:00</span> / <span id="total-time">00:00</span>
+            </div>
+        </div>
+        <div class="playback-controls">
+            <button class="btn-play" id="btn-rewind">⏪</button>
+            <button class="btn-play" id="btn-play">▶️</button>
+            <button class="btn-play" id="btn-forward">⏩</button>
+            <select id="playback-speed">
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+            </select>
+        </div>
+        <div class="data-display">
+            <div class="data-row">
+                <span class="label">Altitude</span>
+                <span class="value" id="replay-alt">---</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Speed</span>
+                <span class="value" id="replay-spd">---</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Heading</span>
+                <span class="value" id="replay-hdg">---</span>
+            </div>
+            <div class="data-row">
+                <span class="label">V/S</span>
+                <span class="value" id="replay-vs">---</span>
+            </div>
+        </div>
+        <div class="events-panel">
+            <div class="events-header">📍 Events</div>
+            <div class="events-list" id="events-list"></div>
+        </div>
+        <div class="recordings-panel">
+            <div class="panel-header">📁 Saved Recordings</div>
+            <div class="recordings-list" id="recordings-list"></div>
+        </div>
+    </div>
+    <script src="widget.js"></script>
+</body>
+</html>
