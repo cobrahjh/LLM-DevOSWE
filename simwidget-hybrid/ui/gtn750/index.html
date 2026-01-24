@@ -101,20 +101,61 @@
                             <span class="wpt-value" id="wpt-ete">--:--</span>
                         </div>
                     </div>
-                    <div class="gtn-cdi">
-                        <div class="cdi-bar">
-                            <div class="cdi-dots">
-                                <span class="dot"></span>
-                                <span class="dot"></span>
-                                <span class="dot center"></span>
-                                <span class="dot"></span>
-                                <span class="dot"></span>
-                            </div>
-                            <div class="cdi-needle" id="cdi-needle"></div>
+                    <!-- Extended CDI with Nav Source Switching -->
+                    <div class="gtn-cdi-extended">
+                        <!-- Navigation Source Selector -->
+                        <div class="cdi-nav-source">
+                            <button class="nav-src-btn active" id="nav-source-gps">GPS</button>
+                            <button class="nav-src-btn" id="nav-source-nav1">NAV1</button>
+                            <button class="nav-src-btn" id="nav-source-nav2">NAV2</button>
                         </div>
-                        <div class="cdi-info">
-                            <span>DTK <span id="cdi-dtk">---</span>&#176;</span>
-                            <span>XTK <span id="cdi-xtrk">0.0</span>NM</span>
+
+                        <!-- Main CDI Display -->
+                        <div class="cdi-main">
+                            <!-- Glideslope Bar (vertical) -->
+                            <div class="cdi-gs-bar" id="cdi-gs-bar" style="display:none;">
+                                <div class="gs-dots">
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot center"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                </div>
+                                <div class="cdi-gs-needle" id="cdi-gs-needle"></div>
+                            </div>
+
+                            <!-- Horizontal CDI Bar -->
+                            <div class="cdi-bar-container">
+                                <div class="cdi-source cdi-source-gps" id="cdi-source">GPS</div>
+                                <div class="cdi-bar">
+                                    <div class="cdi-dots">
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot center"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                    </div>
+                                    <div class="cdi-needle" id="cdi-needle"></div>
+                                </div>
+                                <div class="cdi-tofrom to" id="cdi-tofrom">TO</div>
+                            </div>
+
+                            <!-- NAV Flag (no signal) -->
+                            <div class="cdi-flag" id="cdi-flag" style="display:none;">NAV</div>
+                        </div>
+
+                        <!-- CDI Info Row -->
+                        <div class="cdi-info-row">
+                            <span class="cdi-dtk">DTK <span id="cdi-dtk">---</span>&deg;</span>
+                            <span class="cdi-xtrk">XTK <span id="cdi-xtrk">0.0</span>NM</span>
+                        </div>
+
+                        <!-- OBS Controls (hidden when GPS selected) -->
+                        <div class="cdi-obs-controls" id="obs-controls" style="display:none;">
+                            <button class="obs-btn" id="obs-dec">&lt;</button>
+                            <span class="obs-label">OBS</span>
+                            <span class="obs-value" id="obs-value">000</span>&deg;
+                            <button class="obs-btn" id="obs-inc">&gt;</button>
                         </div>
                     </div>
                 </div>

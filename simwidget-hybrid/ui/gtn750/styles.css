@@ -333,19 +333,134 @@
     color: var(--gtn-text-dim);
 }
 
-/* CDI */
-.gtn-cdi {
+/* ===== EXTENDED CDI ===== */
+.gtn-cdi-extended {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0 10px;
+    padding: 6px 10px;
+    background: var(--gtn-bg);
+    border-top: 1px solid var(--gtn-border);
+}
+
+/* Navigation Source Selector */
+.cdi-nav-source {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.nav-src-btn {
+    padding: 3px 8px;
+    background: var(--gtn-bg-light);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-text-dim);
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.nav-src-btn:hover {
+    background: var(--gtn-bg-panel);
+    color: var(--gtn-text);
+}
+
+.nav-src-btn.active {
+    background: var(--gtn-accent);
+    border-color: var(--gtn-accent);
+    color: white;
+}
+
+/* Main CDI Container */
+.cdi-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+/* Glideslope Vertical Bar */
+.cdi-gs-bar {
+    position: relative;
+    width: 16px;
+    height: 60px;
+    background: var(--gtn-bg-light);
+    border: 1px solid var(--gtn-border);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cdi-gs-bar .gs-dots {
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    bottom: 4px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cdi-gs-bar .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gtn-border);
+}
+
+.cdi-gs-bar .dot.center {
+    width: 6px;
+    height: 6px;
+    background: var(--gtn-accent);
+    margin-left: -1px;
+}
+
+.cdi-gs-needle {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: 50%;
+    height: 3px;
+    background: var(--gtn-green);
+    border-radius: 2px;
+    transform: translateY(-50%);
+    transition: top 0.3s ease;
+}
+
+/* Horizontal CDI */
+.cdi-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cdi-source {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 4px;
+    border-radius: 3px;
+    min-width: 32px;
+    text-align: center;
+}
+
+.cdi-source-gps {
+    background: var(--gtn-magenta);
+    color: white;
+}
+
+.cdi-source-nav1, .cdi-source-nav2 {
+    background: var(--gtn-green);
+    color: black;
 }
 
 .cdi-bar {
     position: relative;
     width: 120px;
     height: 16px;
-    background: var(--gtn-bg);
+    background: var(--gtn-bg-light);
     border-radius: 4px;
     border: 1px solid var(--gtn-border);
 }
@@ -386,18 +501,111 @@
     transition: left 0.3s ease;
 }
 
-.cdi-info {
+/* TO/FROM Indicator */
+.cdi-tofrom {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    min-width: 36px;
+    text-align: center;
+    font-family: var(--gtn-mono);
+}
+
+.cdi-tofrom.to {
+    background: var(--gtn-green);
+    color: black;
+}
+
+.cdi-tofrom.from {
+    background: var(--gtn-yellow);
+    color: black;
+}
+
+.cdi-tofrom.none {
+    background: var(--gtn-bg-light);
+    color: var(--gtn-text-dim);
+}
+
+/* NAV Flag */
+.cdi-flag {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--gtn-red);
+    color: white;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 3px;
+    z-index: 10;
+}
+
+/* CDI Info Row */
+.cdi-info-row {
     display: flex;
     justify-content: space-between;
     width: 100%;
     font-size: 9px;
     color: var(--gtn-text-dim);
-    margin-top: 2px;
+    margin-top: 4px;
     font-family: var(--gtn-mono);
 }
 
-.cdi-info span span {
+.cdi-info-row span span {
     color: var(--gtn-green);
+}
+
+/* OBS Controls */
+.cdi-obs-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 4px 8px;
+    background: var(--gtn-bg-light);
+    border-radius: 4px;
+}
+
+.obs-btn {
+    width: 24px;
+    height: 24px;
+    background: var(--gtn-accent);
+    border: none;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.obs-btn:hover {
+    filter: brightness(1.2);
+}
+
+.obs-btn:active {
+    transform: scale(0.95);
+}
+
+.obs-label {
+    font-size: 9px;
+    color: var(--gtn-text-dim);
+}
+
+.obs-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gtn-green);
+    font-family: var(--gtn-mono);
+    cursor: pointer;
+    padding: 2px 6px;
+    background: var(--gtn-bg);
+    border-radius: 3px;
+}
+
+.obs-value:hover {
+    background: var(--gtn-bg-panel);
 }
 
 /* ===== FPL PAGE ===== */
