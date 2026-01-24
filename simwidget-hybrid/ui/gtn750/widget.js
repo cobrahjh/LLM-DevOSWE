@@ -124,6 +124,11 @@ class GTN750Widget {
                 this.handleProcedureLoad(proc, type, waypoints);
             }
         });
+
+        // Initialize AUX page utilities
+        this.auxPage = new AuxPage({
+            core: this.core
+        });
     }
 
     handleProcedureSelect(proc, type, waypoints) {
@@ -260,6 +265,28 @@ class GTN750Widget {
         if (pageId === 'wx') {
             this.setupWeatherCanvas();
             this.startWeatherPageRender();
+        }
+        if (pageId === 'aux') {
+            if (this.auxPage) {
+                this.auxPage.init();
+            }
+            this.updateAuxPageData();
+        }
+    }
+
+    updateAuxPageData() {
+        if (!this.auxPage) return;
+
+        const tripData = this.auxPage.updateTripData(
+            { waypoints: this.flightPlan?.waypoints, activeWaypointIndex: this.activeWaypointIndex },
+            this.data
+        );
+
+        if (tripData) {
+            if (this.elements.auxDist) this.elements.auxDist.textContent = `${tripData.remainingDist} NM`;
+            if (this.elements.auxTime) this.elements.auxTime.textContent = tripData.timeRemaining;
+            if (this.elements.auxEta) this.elements.auxEta.textContent = tripData.eta;
+            if (this.elements.auxFuel) this.elements.auxFuel.textContent = `${tripData.fuelRequired} GAL`;
         }
     }
 
@@ -412,6 +439,20 @@ class GTN750Widget {
                 break;
             case 'preview-proc':
                 this.previewProcedure();
+                break;
+
+            // AUX page
+            case 'aux-trip':
+                this.showAuxSubpage('trip');
+                break;
+            case 'aux-util':
+                this.showAuxSubpage('util');
+                break;
+            case 'aux-timer':
+                this.toggleAuxTimer();
+                break;
+            case 'aux-calc':
+                this.showAuxSubpage('calc');
                 break;
 
             // Traffic
@@ -1330,6 +1371,21 @@ class GTN750Widget {
             console.log(`[GTN750] Procedure preview: ${this.showProcedurePreview ? 'ON' : 'OFF'}`);
         } else {
             console.log('[GTN750] No procedure selected for preview');
+        }
+    }
+
+    // ===== AUX PAGE =====
+    showAuxSubpage(subpage) {
+        console.log(`[GTN750] AUX subpage: ${subpage}`);
+        this.auxSubpage = subpage;
+        // Could show different content based on subpage selection
+    }
+
+    toggleAuxTimer() {
+        if (this.auxPage) {
+            this.auxPage.toggleTimer();
+            const state = this.auxPage.getTimerState();
+            console.log(`[GTN750] Timer ${state.running ? 'started' : 'stopped'}: ${state.formatted}`);
         }
     }
 
