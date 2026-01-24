@@ -1,0 +1,279 @@
+/**
+ * GTN Soft Keys - Context-sensitive function keys
+ * Mimics real GTN 750 bottom row soft keys
+ */
+
+class GTNSoftKeys {
+    constructor(options = {}) {
+        this.container = options.container || document.getElementById('gtn-softkeys');
+        this.keyCount = 6;
+        this.keys = [];
+        this.contexts = new Map();
+        this.currentContext = null;
+        this.subMenu = null;
+
+        this.init();
+    }
+
+    init() {
+        this.createKeyElements();
+        this.registerDefaultContexts();
+    }
+
+    /**
+     * Create soft key button elements
+     */
+    createKeyElements() {
+        if (!this.container) return;
+
+        this.container.textContent = '';
+        for (let i = 0; i < this.keyCount; i++) {
+            const key = document.createElement('button');
+            key.className = 'gtn-softkey';
+            key.dataset.index = i;
+
+            const label = document.createElement('span');
+            label.className = 'sk-label';
+            key.appendChild(label);
+
+            key.addEventListener('click', () => this.handleKeyPress(i));
+            this.container.appendChild(key);
+            this.keys.push(key);
+        }
+    }
+
+    /**
+     * Register default page contexts
+     */
+    registerDefaultContexts() {
+        // MAP page
+        this.registerContext('map', [
+            { label: 'MENU', action: 'map-menu' },
+            { label: 'TER', action: 'toggle-terrain', toggle: true },
+            { label: 'TFC', action: 'toggle-traffic', toggle: true },
+            { label: 'WX', action: 'toggle-weather', toggle: true },
+            { label: 'DCLTR', action: 'declutter' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // FPL page
+        this.registerContext('fpl', [
+            { label: 'MENU', action: 'fpl-menu' },
+            { label: 'NEW', action: 'new-waypoint' },
+            { label: 'ACTV', action: 'activate-leg' },
+            { label: 'INVRT', action: 'invert-plan' },
+            { label: 'INFO', action: 'waypoint-info' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // WPT page
+        this.registerContext('wpt', [
+            { label: 'MENU', action: 'wpt-menu' },
+            { label: 'D\u2192', action: 'direct-to' },
+            { label: 'MAP', action: 'show-on-map' },
+            { label: 'FPL', action: 'add-to-fpl' },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // NRST page
+        this.registerContext('nrst', [
+            { label: 'APT', action: 'nrst-apt' },
+            { label: 'VOR', action: 'nrst-vor' },
+            { label: 'NDB', action: 'nrst-ndb' },
+            { label: 'FIX', action: 'nrst-fix' },
+            { label: 'D\u2192', action: 'direct-to' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // PROC page
+        this.registerContext('proc', [
+            { label: 'DEP', action: 'proc-departure' },
+            { label: 'ARR', action: 'proc-arrival' },
+            { label: 'APR', action: 'proc-approach' },
+            { label: 'LOAD', action: 'load-proc' },
+            { label: 'PRVW', action: 'preview-proc' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // TERRAIN page
+        this.registerContext('terrain', [
+            { label: 'VIEW', action: 'terrain-view' },
+            { label: '360\u00B0', action: 'terrain-360' },
+            { label: 'ARC', action: 'terrain-arc' },
+            { label: 'INHIB', action: 'taws-inhibit' },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // TRAFFIC page
+        this.registerContext('traffic', [
+            { label: 'OPER', action: 'traffic-operate' },
+            { label: 'STBY', action: 'traffic-standby' },
+            { label: 'TEST', action: 'traffic-test' },
+            { label: 'ALT', action: 'traffic-alt-mode' },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // WEATHER page
+        this.registerContext('wx', [
+            { label: 'NXRD', action: 'wx-nexrad' },
+            { label: 'METAR', action: 'wx-metar' },
+            { label: 'TAF', action: 'wx-taf' },
+            { label: 'WINDS', action: 'wx-winds' },
+            { label: 'LTNG', action: 'wx-lightning' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // CHARTS page
+        this.registerContext('charts', [
+            { label: 'APT', action: 'chart-apt' },
+            { label: 'DEP', action: 'chart-dep' },
+            { label: 'ARR', action: 'chart-arr' },
+            { label: 'APR', action: 'chart-apr' },
+            { label: 'INFO', action: 'chart-info' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // AUX page
+        this.registerContext('aux', [
+            { label: 'TRIP', action: 'aux-trip' },
+            { label: 'UTIL', action: 'aux-util' },
+            { label: 'TIMER', action: 'aux-timer' },
+            { label: 'CALC', action: 'aux-calc' },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // SYSTEM page
+        this.registerContext('system', [
+            { label: 'DISP', action: 'sys-display' },
+            { label: 'UNITS', action: 'sys-units' },
+            { label: 'AUDIO', action: 'sys-audio' },
+            { label: 'GPS', action: 'sys-gps' },
+            { label: 'ABOUT', action: 'sys-about' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // Map menu submenu
+        this.registerContext('map-menu', [
+            { label: 'NORTH', action: 'map-north-up' },
+            { label: 'TRACK', action: 'map-track-up' },
+            { label: 'HDG', action: 'map-heading-up' },
+            { label: 'RANGE', action: 'map-range' },
+            { label: 'DATA', action: 'map-datafields' },
+            { label: 'BACK', action: 'back-menu' }
+        ]);
+    }
+
+    /**
+     * Register a context
+     */
+    registerContext(contextId, keys) {
+        this.contexts.set(contextId, keys);
+    }
+
+    /**
+     * Set active context
+     */
+    setContext(contextId) {
+        if (!this.contexts.has(contextId)) {
+            console.warn(`[GTN] Context not found: ${contextId}`);
+            return;
+        }
+
+        this.currentContext = contextId;
+        const keyConfig = this.contexts.get(contextId);
+
+        keyConfig.forEach((config, index) => {
+            if (index < this.keys.length) {
+                this.updateKey(index, config);
+            }
+        });
+    }
+
+    /**
+     * Update a single key
+     */
+    updateKey(index, config) {
+        const key = this.keys[index];
+        if (!key) return;
+
+        const labelEl = key.querySelector('.sk-label');
+        labelEl.textContent = config.label || '';
+
+        key.dataset.action = config.action || '';
+        key.classList.toggle('active', config.active || false);
+        key.classList.toggle('toggle', config.toggle || false);
+        key.classList.toggle('disabled', !config.action);
+    }
+
+    /**
+     * Handle key press
+     */
+    handleKeyPress(index) {
+        const key = this.keys[index];
+        if (!key || key.classList.contains('disabled')) return;
+
+        const action = key.dataset.action;
+        if (!action) return;
+
+        // Handle back actions
+        if (action === 'back') {
+            this.dispatchAction('go-back');
+            return;
+        }
+
+        if (action === 'back-menu') {
+            // Return from submenu to page context
+            const pageId = window.gtn750?.pageManager?.getCurrentPageId();
+            if (pageId) this.setContext(pageId);
+            return;
+        }
+
+        // Handle menu actions (switch to submenu context)
+        if (action.endsWith('-menu')) {
+            this.setContext(action);
+            return;
+        }
+
+        // Toggle states for toggle buttons
+        if (key.classList.contains('toggle')) {
+            key.classList.toggle('active');
+        }
+
+        // Dispatch action
+        this.dispatchAction(action, { index, active: key.classList.contains('active') });
+    }
+
+    /**
+     * Dispatch action event
+     */
+    dispatchAction(action, detail = {}) {
+        window.dispatchEvent(new CustomEvent('gtn:softkey', {
+            detail: { action, ...detail }
+        }));
+    }
+
+    /**
+     * Set key active state (for toggles)
+     */
+    setKeyActive(index, active) {
+        if (this.keys[index]) {
+            this.keys[index].classList.toggle('active', active);
+        }
+    }
+
+    /**
+     * Find key index by action
+     */
+    findKeyByAction(action) {
+        return this.keys.findIndex(k => k.dataset.action === action);
+    }
+}
+
+// Export
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GTNSoftKeys;
+}
