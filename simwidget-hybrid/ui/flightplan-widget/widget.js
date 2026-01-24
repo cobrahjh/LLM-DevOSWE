@@ -1,6 +1,11 @@
 /**
  * Flight Plan Widget - SimWidget
  * Displays active flight plan with waypoints and progress
+ *
+ * Widget Interconnection:
+ * - Broadcasts waypoint-select when user clicks waypoint
+ * - Broadcasts route-update when flight plan changes
+ * - Broadcasts copy-route for notepad widget
  */
 
 class FlightPlanWidget {
@@ -9,6 +14,9 @@ class FlightPlanWidget {
         this.currentPosition = null;
         this.groundSpeed = 0;
         this.ws = null;
+
+        // Cross-widget communication
+        this.syncChannel = new BroadcastChannel('simwidget-sync');
 
         this.initElements();
         this.initControls();
@@ -122,6 +130,12 @@ class FlightPlanWidget {
         // Render waypoints
         this.renderWaypoints(data.waypoints || []);
         this.updateProgress();
+
+        // Broadcast route update to other widgets (map, notepad)
+        this.syncChannel.postMessage({
+            type: 'route-update',
+            data: data
+        });
     }
 
     renderWaypoints(waypoints) {
@@ -193,6 +207,26 @@ class FlightPlanWidget {
             div.appendChild(icon);
             div.appendChild(info);
             div.appendChild(dataDiv);
+
+            // Click to broadcast waypoint selection to map
+            if (wp.lat && wp.lng) {
+                div.style.cursor = 'pointer';
+                div.addEventListener('click', () => {
+                    this.syncChannel.postMessage({
+                        type: 'waypoint-select',
+                        data: {
+                            index,
+                            ident: wp.ident || wp.name,
+                            lat: wp.lat,
+                            lng: wp.lng
+                        }
+                    });
+                    // Highlight selected waypoint
+                    this.waypointsList.querySelectorAll('.waypoint').forEach(w => w.classList.remove('selected'));
+                    div.classList.add('selected');
+                });
+            }
+
             this.waypointsList.appendChild(div);
         });
 

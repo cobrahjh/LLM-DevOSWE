@@ -155,6 +155,15 @@
     border-left-color: var(--widget-text-muted, #888);
 }
 
+.waypoint.selected {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.2);
+}
+
+.waypoint:hover {
+    background: rgba(255,255,255,0.05);
+}
+
 .waypoint-icon {
     font-size: 14px;
     width: 24px;
