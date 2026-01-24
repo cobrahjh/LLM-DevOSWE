@@ -47,3 +47,12 @@ tmpclaude-*/
 # Windows NUL artifacts
 NUL
 nul
+
+# Auto-generated state files
+Admin/docsync/docsync-state.json
+
+# Data directories (runtime generated)
+Admin/hive-brain/data/
+
+# Compiled binaries
+simwidget-hybrid/backend/video-capture/bin/

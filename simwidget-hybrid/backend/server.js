@@ -445,6 +445,72 @@ app.get('/api/status', async (req, res) => {
     });
 });
 
+// Flight Plan API - Returns GPS-based flight plan data from SimConnect
+const mockWaypoints = [
+    { ident: 'KJFK', type: 'departure', lat: 40.6413, lng: -73.7781, alt: 0, passed: true },
+    { ident: 'MERIT', type: 'fix', lat: 41.9742, lng: -87.9073, alt: 35000, passed: true },
+    { ident: 'KDEN', type: 'fix', lat: 39.8561, lng: -104.6737, alt: 35000, active: true },
+    { ident: 'CLARR', type: 'fix', lat: 36.0796, lng: -115.1523, alt: 35000 },
+    { ident: 'KLAX', type: 'arrival', lat: 33.9425, lng: -118.4081, alt: 0 }
+];
+
+app.get('/api/flightplan', (req, res) => {
+    const fd = flightData;
+
+    if (fd.gpsWpCount > 0) {
+        // Build from SimConnect GPS data
+        const waypoints = [];
+        if (fd.gpsWpPrevLat !== 0 || fd.gpsWpPrevLon !== 0) {
+            waypoints.push({
+                ident: 'WP' + (fd.gpsWpIndex - 1),
+                type: fd.gpsWpIndex === 1 ? 'departure' : 'fix',
+                lat: fd.gpsWpPrevLat,
+                lng: fd.gpsWpPrevLon,
+                passed: true
+            });
+        }
+        if (fd.gpsWpNextLat !== 0 || fd.gpsWpNextLon !== 0) {
+            waypoints.push({
+                ident: 'WP' + fd.gpsWpIndex,
+                type: fd.gpsWpIndex === fd.gpsWpCount ? 'arrival' : 'fix',
+                lat: fd.gpsWpNextLat,
+                lng: fd.gpsWpNextLon,
+                alt: fd.gpsWpNextAlt,
+                active: true,
+                distanceFromPrev: fd.gpsWpDistance
+            });
+        }
+        res.json({
+            source: 'simconnect',
+            connected: isSimConnected,
+            departure: waypoints[0]?.ident || '----',
+            arrival: waypoints[waypoints.length - 1]?.ident || '----',
+            totalDistance: Math.round(fd.gpsWpDistance * (fd.gpsWpCount - fd.gpsWpIndex + 1)),
+            totalEte: fd.gpsEte,
+            currentPosition: { lat: fd.gpsLat || fd.latitude, lng: fd.gpsLon || fd.longitude, groundSpeed: fd.groundSpeed },
+            waypointIndex: fd.gpsWpIndex,
+            waypointCount: fd.gpsWpCount,
+            nextWaypoint: { ident: 'WP' + fd.gpsWpIndex, distance: fd.gpsWpDistance, bearing: fd.gpsWpBearing, ete: fd.gpsWpEte, alt: fd.gpsWpNextAlt },
+            waypoints
+        });
+    } else {
+        // Mock data for UI development
+        res.json({
+            source: 'mock',
+            connected: false,
+            departure: 'KJFK',
+            arrival: 'KLAX',
+            totalDistance: 2475,
+            totalEte: 18000,
+            currentPosition: { lat: fd.gpsLat || 40.6413, lng: fd.gpsLon || -95.5, groundSpeed: fd.groundSpeed || 450 },
+            waypointIndex: 2,
+            waypointCount: 5,
+            nextWaypoint: { ident: 'KDEN', distance: 125.4, bearing: 275, ete: 1850, alt: 35000 },
+            waypoints: mockWaypoints
+        });
+    }
+});
+
 // Health check endpoint with full system status
 const serverStartTime = Date.now();
 
