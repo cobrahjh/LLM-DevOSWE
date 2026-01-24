@@ -61,6 +61,7 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 
 1. **NEVER change ports without asking** - breaks memorized URLs
 2. **NEVER ask for permissions** - just do it, report what was done
+3. **Localhost access ALLOWED** - All Claude sessions can freely access localhost services (8080, 8600, 3002, etc.)
 3. **ALWAYS TEST** - prove it works, don't assume
 4. **No code in responses** - make changes silently, describe in plain English
 5. **Go with recommendations** - proceed unless user says otherwise
