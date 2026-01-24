@@ -11,6 +11,8 @@ class TrafficWidget {
         this.ownPosition = { lat: 0, lon: 0, alt: 0, hdg: 0 };
         this.traffic = [];
         this.radarSize = 0;
+        this.lastAlertLevel = null;
+        this.announcer = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer() : null;
 
         this.init();
     }
@@ -221,6 +223,7 @@ class TrafficWidget {
     checkTCAS() {
         const alertEl = document.getElementById('tcas-alert');
         let highestThreat = null;
+        let threatAircraft = null;
 
         this.traffic.forEach(aircraft => {
             const relPos = this.calculateRelativePosition(aircraft);
@@ -232,8 +235,10 @@ class TrafficWidget {
 
             if (relPos.distance < 0.5 && vertSep < 500) {
                 highestThreat = 'ra';
+                threatAircraft = { ...aircraft, relPos };
             } else if (relPos.distance < 2 && vertSep < 1000 && highestThreat !== 'ra') {
                 highestThreat = 'ta';
+                if (!threatAircraft) threatAircraft = { ...aircraft, relPos };
             }
         });
 
@@ -241,12 +246,33 @@ class TrafficWidget {
         if (highestThreat === 'ra') {
             alertEl.className = 'tcas-alert ra';
             alertEl.textContent = 'TRAFFIC ALERT';
+
+            // Voice alert for RA (only if state changed)
+            if (this.lastAlertLevel !== 'ra' && this.announcer) {
+                const direction = this.getClockPosition(threatAircraft.relPos.relativeBearing);
+                const vertDir = threatAircraft.relPos.altDiff > 0 ? 'high' : 'low';
+                this.announcer.speak(`Traffic! Traffic! ${direction} o'clock, ${vertDir}`);
+            }
         } else if (highestThreat === 'ta') {
             alertEl.className = 'tcas-alert ta';
             alertEl.textContent = 'TRAFFIC';
+
+            // Voice alert for TA (only if state changed from clear)
+            if (this.lastAlertLevel === null && this.announcer) {
+                const direction = this.getClockPosition(threatAircraft.relPos.relativeBearing);
+                this.announcer.speak(`Traffic, ${direction} o'clock, ${Math.round(threatAircraft.relPos.distance)} miles`);
+            }
         } else {
             alertEl.textContent = '';
         }
+
+        this.lastAlertLevel = highestThreat;
+    }
+
+    getClockPosition(bearing) {
+        // Convert bearing to clock position (12 = ahead, 3 = right, etc)
+        const clock = Math.round(bearing / 30) || 12;
+        return clock === 0 ? 12 : clock;
     }
 
     bindEvents() {

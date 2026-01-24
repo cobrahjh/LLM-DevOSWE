@@ -111,6 +111,15 @@ body {
         "checklist notepad";
 }
 
+/* Layout: Systems Monitor */
+.dashboard-grid.layout-monitoring {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+        "traffic failures atc"
+        "map map flightplan";
+}
+
 /* Widget Frames */
 .widget-frame {
     background: var(--widget-bg, #1a1a2e);
@@ -127,6 +136,9 @@ body {
 .widget-frame[data-widget="weather"] { grid-area: weather; }
 .widget-frame[data-widget="notepad"] { grid-area: notepad; }
 .widget-frame[data-widget="checklist"] { grid-area: checklist; }
+.widget-frame[data-widget="atc"] { grid-area: atc; }
+.widget-frame[data-widget="traffic"] { grid-area: traffic; }
+.widget-frame[data-widget="failures"] { grid-area: failures; }
 
 .frame-header {
     display: flex;
@@ -163,7 +175,13 @@ body {
 }
 
 /* Hide widgets not in current layout */
-.dashboard-grid:not(.layout-planning) .widget-frame[data-widget="checklist"] {
+.dashboard-grid:not(.layout-planning):not(.layout-enroute) .widget-frame[data-widget="checklist"] {
+    display: none;
+}
+
+.dashboard-grid:not(.layout-monitoring) .widget-frame[data-widget="atc"],
+.dashboard-grid:not(.layout-monitoring) .widget-frame[data-widget="traffic"],
+.dashboard-grid:not(.layout-monitoring) .widget-frame[data-widget="failures"] {
     display: none;
 }
 
@@ -174,6 +192,13 @@ body {
 
 .dashboard-grid.layout-enroute .widget-frame[data-widget="simbrief"],
 .dashboard-grid.layout-enroute .widget-frame[data-widget="weather"] {
+    display: none;
+}
+
+.dashboard-grid.layout-monitoring .widget-frame[data-widget="simbrief"],
+.dashboard-grid.layout-monitoring .widget-frame[data-widget="weather"],
+.dashboard-grid.layout-monitoring .widget-frame[data-widget="notepad"],
+.dashboard-grid.layout-monitoring .widget-frame[data-widget="checklist"] {
     display: none;
 }
 

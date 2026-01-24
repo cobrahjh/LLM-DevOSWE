@@ -298,6 +298,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/flight-log/">📒 Flight Log</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/flight-instructor/">🎓 Instructor</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/mobile-companion/">📱 Mobile View</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/replay-debrief/">🎬 Flight Replay</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/kneeboard-widget/">📋 Kneeboard</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/dashboard/">🎛️ Widget Dashboard</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/flight-dashboard/">🎯 Flight Dashboard</a></li>
@@ -1238,6 +1239,136 @@ app.get('/api/radio', (req, res) => {
         dme1: { distance: flightData.dme1Distance, speed: flightData.dme1Speed },
         dme2: { distance: flightData.dme2Distance, speed: flightData.dme2Speed }
     });
+});
+
+// Extended radio/ATC data for ATC widget
+app.get('/api/radios', (req, res) => {
+    res.json({
+        com1ActiveFreq: flightData.com1Active,
+        com1StandbyFreq: flightData.com1Standby,
+        com2ActiveFreq: flightData.com2Active,
+        com2StandbyFreq: flightData.com2Standby,
+        nav1ActiveFreq: flightData.nav1Active,
+        nav1StandbyFreq: flightData.nav1Standby,
+        nav2ActiveFreq: flightData.nav2Active,
+        nav2StandbyFreq: flightData.nav2Standby,
+        transponderCode: flightData.transponder,
+        transponderState: flightData.transponderState || 1,
+        atcId: flightData.atcId || '',
+        atcFlightNumber: flightData.atcFlightNumber || '',
+        atcType: flightData.atcType || ''
+    });
+});
+
+// Traffic data for Traffic Radar widget (simulated for now)
+let trafficData = [];
+app.get('/api/traffic', (req, res) => {
+    // In production, this would come from SimConnect AI traffic or multiplayer
+    // For now, return empty or mock data based on own position
+    res.json({
+        traffic: trafficData,
+        ownPosition: {
+            latitude: flightData.latitude,
+            longitude: flightData.longitude,
+            altitude: flightData.altitude,
+            heading: flightData.heading
+        }
+    });
+});
+
+// Failures data for Failures Monitor widget
+app.get('/api/failures', (req, res) => {
+    const failures = [];
+
+    // Check engine status
+    if (flightData.eng1Combustion === false) {
+        failures.push({ system: 'engine1', name: 'Engine 1', detail: 'No combustion' });
+    }
+    if (flightData.eng2Combustion === false) {
+        failures.push({ system: 'engine2', name: 'Engine 2', detail: 'No combustion' });
+    }
+
+    // Check electrical
+    if (flightData.electricalMainBusVoltage < 20) {
+        failures.push({ system: 'electrical', name: 'Electrical', detail: `Low voltage: ${flightData.electricalMainBusVoltage?.toFixed(1) || 0}V` });
+    }
+
+    // Check fuel
+    if (flightData.fuelTotal < 100) {
+        failures.push({ system: 'fuel', name: 'Fuel', detail: 'Critically low' });
+    }
+
+    res.json({
+        activeFailures: failures,
+        systems: {
+            engine1: flightData.eng1Combustion !== false ? 'ok' : 'fail',
+            engine2: flightData.eng2Combustion !== false ? 'ok' : 'fail',
+            electrical: (flightData.electricalMainBusVoltage || 28) >= 20 ? 'ok' : 'fail',
+            hydraulic: 'ok',
+            fuel: (flightData.fuelTotal || 1000) >= 100 ? 'ok' : 'fail',
+            avionics: 'ok',
+            gear: 'ok',
+            flaps: 'ok'
+        }
+    });
+});
+
+// Shared Cockpit sync endpoint
+const cockpitSessions = new Map();
+
+app.get('/api/cockpit/sessions', (req, res) => {
+    const sessions = [];
+    cockpitSessions.forEach((session, id) => {
+        sessions.push({ id, ...session, clients: session.clients?.length || 0 });
+    });
+    res.json({ sessions });
+});
+
+app.post('/api/cockpit/create', (req, res) => {
+    const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    cockpitSessions.set(sessionId, {
+        created: Date.now(),
+        host: req.body.host || 'Unknown',
+        clients: [],
+        state: {}
+    });
+    res.json({ sessionId, success: true });
+});
+
+app.post('/api/cockpit/join/:sessionId', (req, res) => {
+    const session = cockpitSessions.get(req.params.sessionId);
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    session.clients.push({ joined: Date.now(), name: req.body.name || 'Guest' });
+    res.json({ success: true, session });
+});
+
+app.get('/api/cockpit/state/:sessionId', (req, res) => {
+    const session = cockpitSessions.get(req.params.sessionId);
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    res.json({ state: session.state, flightData });
+});
+
+app.post('/api/cockpit/sync/:sessionId', (req, res) => {
+    const session = cockpitSessions.get(req.params.sessionId);
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    // Merge state updates
+    session.state = { ...session.state, ...req.body.state };
+    session.lastUpdate = Date.now();
+
+    // Broadcast to WebSocket clients in this session
+    wss.clients.forEach(client => {
+        if (client.sessionId === req.params.sessionId && client.readyState === 1) {
+            client.send(JSON.stringify({ type: 'cockpitSync', state: session.state, flightData }));
+        }
+    });
+
+    res.json({ success: true });
 });
 
 // Camera control REST endpoint (vJoy)

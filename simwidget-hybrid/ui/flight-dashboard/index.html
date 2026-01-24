@@ -24,6 +24,7 @@
                     <option value="map-focus">Map Focus</option>
                     <option value="planning">Planning Mode</option>
                     <option value="enroute">Enroute Mode</option>
+                    <option value="monitoring">Systems Monitor</option>
                 </select>
                 <button id="btn-fullscreen" title="Fullscreen">⛶</button>
             </div>
@@ -82,6 +83,33 @@
                     <button class="btn-popout" title="Open in new window">↗</button>
                 </div>
                 <iframe src="/ui/checklist-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- ATC/Comms Widget -->
+            <div class="widget-frame" id="frame-atc" data-widget="atc">
+                <div class="frame-header">
+                    <span>ATC / Comms</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/atc-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- Traffic Radar Widget -->
+            <div class="widget-frame" id="frame-traffic" data-widget="traffic">
+                <div class="frame-header">
+                    <span>Traffic Radar</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/traffic-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- Failures Monitor Widget -->
+            <div class="widget-frame" id="frame-failures" data-widget="failures">
+                <div class="frame-header">
+                    <span>Systems Status</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/failures-widget/" frameborder="0"></iframe>
             </div>
         </main>
     </div>

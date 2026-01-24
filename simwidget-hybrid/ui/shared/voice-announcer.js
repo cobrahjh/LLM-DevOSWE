@@ -84,6 +84,15 @@ class VoiceAnnouncer {
                 case 'toggle':
                     this.enabled = !this.enabled;
                     break;
+                case 'speak-tcas':
+                    this.speakTCAS(data.type, data.aircraft);
+                    break;
+                case 'speak-failure':
+                    this.speakFailure(data.system, data.detail, data.severity);
+                    break;
+                case 'speak-failures-summary':
+                    this.speakFailuresSummary(data.failures);
+                    break;
             }
         };
     }
@@ -335,6 +344,99 @@ class VoiceAnnouncer {
         }).join(' ');
     }
 
+    // TCAS traffic alert
+    speakTCAS(type, aircraft = null) {
+        let announcement;
+
+        switch (type) {
+            case 'ra':
+                // Resolution Advisory - immediate action required
+                this.stop(); // Cancel any current speech
+                announcement = 'Traffic! Traffic!';
+                if (aircraft) {
+                    const clock = this.bearingToClock(aircraft.relativeBearing);
+                    const vertDir = aircraft.altDiff > 0 ? 'high' : aircraft.altDiff < 0 ? 'low' : '';
+                    announcement = `Traffic! ${clock} o'clock, ${vertDir}, ${Math.round(aircraft.distance)} miles`;
+                }
+                this.speak(announcement, true); // Priority speech
+                break;
+
+            case 'ta':
+                // Traffic Advisory
+                announcement = 'Traffic';
+                if (aircraft) {
+                    const clock = this.bearingToClock(aircraft.relativeBearing);
+                    announcement = `Traffic, ${clock} o'clock, ${Math.round(aircraft.distance)} miles`;
+                }
+                this.speak(announcement);
+                break;
+
+            case 'clear':
+                this.speak('Clear of conflict');
+                break;
+        }
+    }
+
+    bearingToClock(bearing) {
+        // Convert relative bearing to clock position
+        const normalized = ((bearing % 360) + 360) % 360;
+        let clock = Math.round(normalized / 30);
+        if (clock === 0) clock = 12;
+        return clock;
+    }
+
+    // System failure alert
+    speakFailure(system, detail = null, severity = 'warning') {
+        const systemNames = {
+            engine1: 'Engine one',
+            engine2: 'Engine two',
+            electrical: 'Electrical system',
+            hydraulic: 'Hydraulic system',
+            fuel: 'Fuel system',
+            avionics: 'Avionics',
+            gear: 'Landing gear',
+            flaps: 'Flaps'
+        };
+
+        const name = systemNames[system] || system;
+        let announcement;
+
+        if (severity === 'critical') {
+            this.stop(); // Cancel current speech for critical alerts
+            announcement = `Warning! ${name} failure!`;
+            if (detail) announcement += ` ${detail}`;
+            this.speak(announcement, true);
+        } else if (severity === 'caution') {
+            announcement = `Caution. ${name}`;
+            if (detail) announcement += `. ${detail}`;
+            this.speak(announcement);
+        } else {
+            announcement = `${name} ${detail || 'status change'}`;
+            this.speak(announcement);
+        }
+    }
+
+    // Multiple failures summary
+    speakFailuresSummary(failures) {
+        if (!failures || failures.length === 0) {
+            this.speak('All systems normal');
+            return;
+        }
+
+        const count = failures.length;
+        let announcement = `${count} system${count > 1 ? 's' : ''} require attention. `;
+
+        failures.slice(0, 3).forEach(f => {
+            announcement += `${f.name || f.system}. `;
+        });
+
+        if (failures.length > 3) {
+            announcement += `And ${failures.length - 3} more.`;
+        }
+
+        this.speak(announcement);
+    }
+
     // Broadcast methods for cross-widget communication
     static broadcast(type, data) {
         const channel = new BroadcastChannel('simwidget-voice');
@@ -356,6 +458,18 @@ class VoiceAnnouncer {
 
     static stopSpeaking() {
         VoiceAnnouncer.broadcast('stop', {});
+    }
+
+    static announceTCAS(type, aircraft = null) {
+        VoiceAnnouncer.broadcast('speak-tcas', { type, aircraft });
+    }
+
+    static announceFailure(system, detail = null, severity = 'warning') {
+        VoiceAnnouncer.broadcast('speak-failure', { system, detail, severity });
+    }
+
+    static announceFailuresSummary(failures) {
+        VoiceAnnouncer.broadcast('speak-failures-summary', { failures });
     }
 }
 
