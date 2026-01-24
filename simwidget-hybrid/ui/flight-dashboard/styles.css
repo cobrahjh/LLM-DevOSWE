@@ -1,0 +1,260 @@
+/* Flight Dashboard - Multi-Widget Layout */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f0f1a;
+    color: #fff;
+    min-height: 100vh;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: #1a1a2e;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.dashboard-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.header-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.header-controls select {
+    background: #16213e;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.header-controls button {
+    background: #16213e;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.header-controls button:hover {
+    background: #667eea;
+}
+
+/* Main Grid */
+.dashboard-grid {
+    flex: 1;
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+    overflow: hidden;
+
+    /* Default layout: 3 columns */
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+        "map flightplan simbrief"
+        "map weather notepad";
+}
+
+/* Layout: Map Focus */
+.dashboard-grid.layout-map-focus {
+    grid-template-columns: 3fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-areas:
+        "map flightplan"
+        "map weather"
+        "map notepad";
+}
+
+/* Layout: Planning Mode */
+.dashboard-grid.layout-planning {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas:
+        "simbrief flightplan map"
+        "weather notepad checklist";
+}
+
+/* Layout: Enroute Mode */
+.dashboard-grid.layout-enroute {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 2fr 1fr;
+    grid-template-areas:
+        "map flightplan"
+        "checklist notepad";
+}
+
+/* Widget Frames */
+.widget-frame {
+    background: #1a1a2e;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.widget-frame[data-widget="map"] { grid-area: map; }
+.widget-frame[data-widget="flightplan"] { grid-area: flightplan; }
+.widget-frame[data-widget="simbrief"] { grid-area: simbrief; }
+.widget-frame[data-widget="weather"] { grid-area: weather; }
+.widget-frame[data-widget="notepad"] { grid-area: notepad; }
+.widget-frame[data-widget="checklist"] { grid-area: checklist; }
+
+.frame-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background: #16213e;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    font-weight: 500;
+    color: #888;
+}
+
+.btn-popout {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.btn-popout:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.widget-frame iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #1a1a2e;
+}
+
+/* Hide widgets not in current layout */
+.dashboard-grid:not(.layout-planning) .widget-frame[data-widget="checklist"] {
+    display: none;
+}
+
+.dashboard-grid.layout-map-focus .widget-frame[data-widget="simbrief"],
+.dashboard-grid.layout-map-focus .widget-frame[data-widget="checklist"] {
+    display: none;
+}
+
+.dashboard-grid.layout-enroute .widget-frame[data-widget="simbrief"],
+.dashboard-grid.layout-enroute .widget-frame[data-widget="weather"] {
+    display: none;
+}
+
+/* Fullscreen mode */
+body.fullscreen .dashboard-header {
+    display: none;
+}
+
+body.fullscreen .dashboard-grid {
+    padding: 5px;
+    gap: 5px;
+}
+
+body.fullscreen .frame-header {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+/* Mobile responsive */
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+        grid-template-areas:
+            "map map"
+            "flightplan weather"
+            "simbrief notepad";
+    }
+
+    .widget-frame {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "map"
+            "flightplan"
+            "weather"
+            "notepad"
+            "simbrief";
+        overflow-y: auto;
+    }
+
+    .widget-frame {
+        min-height: 350px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 14px;
+    }
+}
+
+/* Loading state */
+.widget-frame.loading iframe {
+    opacity: 0.5;
+}
+
+/* Connection indicator */
+.connection-status {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 20px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+.connection-dot.disconnected {
+    background: #ef4444;
+}

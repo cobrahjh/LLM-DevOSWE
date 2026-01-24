@@ -391,20 +391,35 @@ class SimBriefWidget {
         try {
             const waypoints = this.parseRouteToWaypoints(this.ofpData);
 
-            const channel = new BroadcastChannel('simwidget-flightplan');
-            channel.postMessage({
-                action: 'loadPlan',
+            // Use unified sync channel for all widgets
+            const syncChannel = new BroadcastChannel('simwidget-sync');
+            syncChannel.postMessage({
+                type: 'simbrief-plan',
                 data: {
-                    departure: this.ofpData.origin,
-                    arrival: this.ofpData.destination,
+                    departure: this.ofpData.origin?.icao_code || this.ofpData.origin,
+                    arrival: this.ofpData.destination?.icao_code || this.ofpData.destination,
                     waypoints: waypoints,
                     totalDistance: parseInt(this.ofpData.general?.route_distance) || 0,
+                    route: this.ofpData.general?.route || '',
+                    altitude: this.ofpData.general?.initial_altitude || 0,
                     source: 'simbrief'
                 }
             });
-            channel.close();
 
-            this.showToast('Sent to Flight Plan widget');
+            // Also broadcast route update for map widget
+            syncChannel.postMessage({
+                type: 'route-update',
+                data: {
+                    departure: this.ofpData.origin?.icao_code,
+                    arrival: this.ofpData.destination?.icao_code,
+                    waypoints: waypoints,
+                    totalDistance: parseInt(this.ofpData.general?.route_distance) || 0
+                }
+            });
+
+            syncChannel.close();
+
+            this.showToast('Sent to Flight Plan & Map');
         } catch (e) {
             console.error('Failed to send to FMS:', e);
         }

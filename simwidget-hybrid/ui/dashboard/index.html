@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="header-left">
+            <span class="logo">SimWidget</span>
+            <span class="title">Dashboard</span>
+        </div>
+        <div class="header-center">
+            <div class="preset-buttons" id="preset-buttons">
+                <button class="preset-btn" data-preset="flight-planning">Flight Planning</button>
+                <button class="preset-btn" data-preset="in-flight">In-Flight</button>
+                <button class="preset-btn" data-preset="streaming">Streaming</button>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-action" id="btn-add">+ Add Widget</button>
+            <button class="btn-action" id="btn-lock">🔓 Edit</button>
+            <button class="btn-action" id="btn-save">💾 Save</button>
+        </div>
+    </div>
+
+    <div class="dashboard-grid" id="dashboard-grid">
+        <!-- Widgets will be added here -->
+    </div>
+
+    <div class="widget-picker" id="widget-picker" style="display: none;">
+        <div class="picker-overlay"></div>
+        <div class="picker-content">
+            <div class="picker-header">
+                <span class="picker-title">Add Widget</span>
+                <button class="picker-close" id="picker-close">&times;</button>
+            </div>
+            <div class="picker-grid" id="picker-grid">
+                <!-- Widget options populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

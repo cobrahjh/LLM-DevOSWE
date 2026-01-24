@@ -1,23 +1,31 @@
 /**
- * Navigraph Charts Widget - SimWidget
- * Airport charts viewer (requires Navigraph subscription)
- * API: https://developers.navigraph.com/docs/charts/
+ * Charts Widget - SimWidget
+ * Airport charts viewer using FREE sources:
+ * - FAA DTPP for US airports (no login required)
+ * - SkyVector for worldwide charts
+ * - ChartFox for community charts
  *
- * Note: Full implementation requires OAuth setup with Navigraph.
- * This prototype shows the UI and uses demo data.
+ * No Navigraph subscription needed!
  */
 
 class NavigraphWidget {
     constructor() {
-        this.isAuthenticated = false;
+        this.isAuthenticated = true; // No auth needed for free charts
         this.currentAirport = null;
         this.charts = [];
         this.currentFilter = 'all';
         this.zoomLevel = 1;
 
+        // Free chart sources
+        this.chartSources = {
+            faa: 'https://aeronav.faa.gov/d-tpp/', // FAA DTPP
+            skyvector: 'https://skyvector.com/airport/', // SkyVector
+            chartfox: 'https://chartfox.org/' // ChartFox
+        };
+
         this.initElements();
         this.initEvents();
-        this.checkAuth();
+        this.showReadyMessage();
     }
 
     initElements() {
@@ -64,21 +72,19 @@ class NavigraphWidget {
         this.zoomOutBtn.addEventListener('click', () => this.zoom(-0.2));
     }
 
-    checkAuth() {
-        const token = localStorage.getItem('navigraph-token');
-        if (token) {
-            this.isAuthenticated = true;
+    showReadyMessage() {
+        // Hide auth notice - no login needed for free charts
+        if (this.authNotice) {
             this.authNotice.style.display = 'none';
         }
     }
 
     connectNavigraph() {
-        // In production, this would initiate OAuth flow
-        // For demo, we'll simulate authentication
-        this.showAuthDialog();
+        // Show info about free sources
+        this.showSourcesDialog();
     }
 
-    showAuthDialog() {
+    showSourcesDialog() {
         const dialog = document.createElement('div');
         dialog.className = 'auth-dialog';
         dialog.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:200;';
@@ -88,43 +94,38 @@ class NavigraphWidget {
 
         const title = document.createElement('div');
         title.style.cssText = 'font-size:16px;font-weight:600;color:white;margin-bottom:16px;';
-        title.textContent = 'Connect Navigraph Account';
+        title.textContent = 'Free Chart Sources';
 
         const info = document.createElement('div');
-        info.style.cssText = 'font-size:12px;color:#888;margin-bottom:20px;line-height:1.5;';
-        info.textContent = 'OAuth authentication with Navigraph is required. This would redirect to navigraph.com for login.';
+        info.style.cssText = 'font-size:12px;color:#888;margin-bottom:20px;line-height:1.8;text-align:left;';
 
-        const demoBtn = document.createElement('button');
-        demoBtn.style.cssText = 'width:100%;padding:12px;background:#667eea;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;margin-bottom:10px;';
-        demoBtn.textContent = 'Use Demo Mode';
-        demoBtn.addEventListener('click', () => {
-            this.enableDemoMode();
-            dialog.remove();
+        const sources = [
+            { label: 'US Airports:', value: 'FAA DTPP (free)', color: '#22c55e' },
+            { label: 'Worldwide:', value: 'SkyVector (free)', color: '#3b82f6' },
+            { label: 'Community:', value: 'ChartFox (free)', color: '#f59e0b' },
+            { label: 'Premium:', value: 'Navigraph (subscription)', color: '#667eea' }
+        ];
+
+        sources.forEach(src => {
+            const line = document.createElement('div');
+            const labelSpan = document.createElement('b');
+            labelSpan.style.color = src.color;
+            labelSpan.textContent = src.label + ' ';
+            line.appendChild(labelSpan);
+            line.appendChild(document.createTextNode(src.value));
+            info.appendChild(line);
         });
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.style.cssText = 'width:100%;padding:12px;background:transparent;color:#888;border:1px solid #333;border-radius:6px;cursor:pointer;';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.addEventListener('click', () => dialog.remove());
-
-        const note = document.createElement('div');
-        note.style.cssText = 'font-size:10px;color:#666;margin-top:16px;';
-        note.textContent = 'Full integration requires API access from dev@navigraph.com';
+        const closeBtn = document.createElement('button');
+        closeBtn.style.cssText = 'width:100%;padding:12px;background:#667eea;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;';
+        closeBtn.textContent = 'Got It';
+        closeBtn.addEventListener('click', () => dialog.remove());
 
         box.appendChild(title);
         box.appendChild(info);
-        box.appendChild(demoBtn);
-        box.appendChild(cancelBtn);
-        box.appendChild(note);
+        box.appendChild(closeBtn);
         dialog.appendChild(box);
         document.body.appendChild(dialog);
-    }
-
-    enableDemoMode() {
-        this.isAuthenticated = true;
-        localStorage.setItem('navigraph-token', 'demo');
-        this.authNotice.style.display = 'none';
-        this.showMessage('Demo mode enabled. Try NZWN or YBBN for free preview.');
     }
 
     async searchAirport() {
@@ -135,16 +136,9 @@ class NavigraphWidget {
             return;
         }
 
-        if (!this.isAuthenticated) {
-            this.showError('Please connect your Navigraph account first');
-            return;
-        }
-
         this.showLoading();
 
         try {
-            // In production, this would call Navigraph API
-            // For demo, we use mock data
             const data = await this.fetchAirportData(icao);
             this.currentAirport = data;
             this.charts = data.charts;

@@ -17,12 +17,10 @@ class FlightPlanWidget {
 
         // Cross-widget communication
         this.syncChannel = new BroadcastChannel('simwidget-sync');
-
-        // SimBrief import channel
-        this.simbriefChannel = new BroadcastChannel('simwidget-flightplan');
-        this.simbriefChannel.onmessage = (event) => {
-            if (event.data.action === 'loadPlan') {
-                this.importSimBriefPlan(event.data.data);
+        this.syncChannel.onmessage = (event) => {
+            const { type, data } = event.data;
+            if (type === 'simbrief-plan') {
+                this.importSimBriefPlan(data);
             }
         };
 
@@ -49,8 +47,8 @@ class FlightPlanWidget {
 
         const flightPlan = {
             source: 'simbrief',
-            departure: data.departure?.icao_code || waypoints[0]?.ident || '----',
-            arrival: data.arrival?.icao_code || waypoints[waypoints.length - 1]?.ident || '----',
+            departure: typeof data.departure === 'string' ? data.departure : (data.departure?.icao_code || waypoints[0]?.ident || '----'),
+            arrival: typeof data.arrival === 'string' ? data.arrival : (data.arrival?.icao_code || waypoints[waypoints.length - 1]?.ident || '----'),
             totalDistance: data.totalDistance || 0,
             waypoints: waypoints
         };

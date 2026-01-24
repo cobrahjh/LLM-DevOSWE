@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Dashboard - SimWidget</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header class="dashboard-header">
+            <h1>Flight Dashboard</h1>
+            <div class="header-controls">
+                <select id="layout-select">
+                    <option value="default">Default Layout</option>
+                    <option value="map-focus">Map Focus</option>
+                    <option value="planning">Planning Mode</option>
+                    <option value="enroute">Enroute Mode</option>
+                </select>
+                <button id="btn-fullscreen" title="Fullscreen">⛶</button>
+            </div>
+        </header>
+
+        <main class="dashboard-grid" id="dashboard-grid">
+            <!-- Map Widget - Large -->
+            <div class="widget-frame" id="frame-map" data-widget="map">
+                <div class="frame-header">
+                    <span>Map</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/map-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- Flight Plan Widget -->
+            <div class="widget-frame" id="frame-flightplan" data-widget="flightplan">
+                <div class="frame-header">
+                    <span>Flight Plan</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/flightplan-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- SimBrief Widget -->
+            <div class="widget-frame" id="frame-simbrief" data-widget="simbrief">
+                <div class="frame-header">
+                    <span>SimBrief</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/simbrief-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- Weather Widget -->
+            <div class="widget-frame" id="frame-weather" data-widget="weather">
+                <div class="frame-header">
+                    <span>Weather</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/weather-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- Notepad Widget -->
+            <div class="widget-frame" id="frame-notepad" data-widget="notepad">
+                <div class="frame-header">
+                    <span>Notepad</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/notepad-widget/" frameborder="0"></iframe>
+            </div>
+
+            <!-- Checklist Widget -->
+            <div class="widget-frame" id="frame-checklist" data-widget="checklist">
+                <div class="frame-header">
+                    <span>Checklist</span>
+                    <button class="btn-popout" title="Open in new window">↗</button>
+                </div>
+                <iframe src="/ui/checklist-widget/" frameborder="0"></iframe>
+            </div>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

@@ -132,6 +132,50 @@ class WeatherWidget {
         catEl.className = 'flight-category ' + category.toLowerCase();
         catEl.textContent = category + ' Flight Rules';
         this.content.appendChild(catEl);
+
+        // Action buttons
+        const actions = document.createElement('div');
+        actions.className = 'weather-actions';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn-action';
+        copyBtn.textContent = '📝 To Notepad';
+        copyBtn.addEventListener('click', () => this.sendToNotepad(station, raw, wind, visibility, pressure, category));
+
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'btn-action';
+        refreshBtn.textContent = '🔄 Refresh';
+        refreshBtn.addEventListener('click', () => this.refresh());
+
+        actions.appendChild(copyBtn);
+        actions.appendChild(refreshBtn);
+        this.content.appendChild(actions);
+    }
+
+    sendToNotepad(station, raw, wind, visibility, pressure, category) {
+        const weatherText = `${station} METAR
+${raw}
+Wind: ${wind.display} ${wind.unit || ''}
+Vis: ${visibility.display} ${visibility.unit || ''}
+QNH: ${pressure.display} ${pressure.unit || ''}
+Category: ${category}`;
+
+        const syncChannel = new BroadcastChannel('simwidget-sync');
+        syncChannel.postMessage({
+            type: 'copy-route',
+            data: { text: weatherText }
+        });
+        syncChannel.close();
+
+        this.showToast('Sent to Notepad');
+    }
+
+    showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'weather-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
     }
 
     createWeatherItem(label, value, className, unit) {

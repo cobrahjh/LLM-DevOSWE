@@ -255,6 +255,7 @@ app.get('/', (req, res) => {
     <div class="grid">
         <div class="section highlight">
             <h2>🎮 Flight Widgets</h2>
+            <div style="margin-bottom:12px;"><a href="/ui/flight-dashboard/" style="display:inline-block;padding:10px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;text-decoration:none;border-radius:8px;font-weight:600;">🖥️ Flight Dashboard</a> <span class="new-badge">NEW</span></div>
             <ul>
                 <li><a href="/ui/aircraft-control/">✈️ Aircraft Control</a></li>
                 <li><a href="/ui/camera-widget/">📷 Camera Widget</a></li>

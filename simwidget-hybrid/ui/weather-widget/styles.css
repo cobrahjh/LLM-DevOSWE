@@ -240,3 +240,47 @@
     font-size: 32px;
     margin-bottom: 8px;
 }
+
+/* Weather Actions */
+.weather-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-action {
+    flex: 1;
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    color: var(--widget-text, #fff);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-action:hover {
+    background: var(--widget-accent, #667eea);
+    border-color: var(--widget-accent, #667eea);
+}
+
+/* Toast notification */
+.weather-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--widget-accent, #667eea);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 1000;
+    animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    15%, 85% { opacity: 1; }
+}
