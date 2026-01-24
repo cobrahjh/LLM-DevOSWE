@@ -2401,7 +2401,14 @@ async function initSimConnect() {
             'ADF_SET',
             'ADF_STBY_SET',
             'ADF1_RADIO_SWAP',
-            'XPNDR_SET'
+            'XPNDR_SET',
+            // OBS (VOR course) control events
+            'VOR1_SET',
+            'VOR2_SET',
+            'VOR1_OBI_INC',
+            'VOR1_OBI_DEC',
+            'VOR2_OBI_INC',
+            'VOR2_OBI_DEC'
             // Note: Fuel control uses writable SimVars, not events
         ];
         
@@ -2515,6 +2522,35 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'GPS ETE', 'seconds', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS POSITION LAT', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS POSITION LON', 'degrees', SimConnectDataType.FLOAT64, 0);
+
+        // NAV1 CDI/OBS/Glideslope data
+        handle.addToDataDefinition(0, 'NAV CDI:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV OBS:1', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV RADIAL:1', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV TOFROM:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV SIGNAL:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV GSI:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV GS FLAG:1', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV HAS LOCALIZER:1', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV HAS GLIDE SLOPE:1', 'Bool', SimConnectDataType.INT32, 0);
+        // NAV2 CDI/OBS data
+        handle.addToDataDefinition(0, 'NAV CDI:2', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV OBS:2', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV RADIAL:2', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV TOFROM:2', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV SIGNAL:2', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV GSI:2', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV GS FLAG:2', 'Bool', SimConnectDataType.INT32, 0);
+        // GPS CDI data
+        handle.addToDataDefinition(0, 'GPS CDI NEEDLE', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'GPS WP CROSS TRK', 'nautical miles', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP DESIRED TRACK', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS OBS VALUE', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS VERTICAL ANGLE ERROR', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS APPROACH MODE', 'Bool', SimConnectDataType.INT32, 0);
+        // Navigation source
+        handle.addToDataDefinition(0, 'AUTOPILOT NAV SELECTED', 'number', SimConnectDataType.INT32, 0);
+        console.log('[Nav] Registered CDI/OBS/Glideslope SimVars');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -2673,6 +2709,33 @@ async function initSimConnect() {
                         gpsEte: d.readFloat64(),
                         gpsLat: d.readFloat64(),
                         gpsLon: d.readFloat64(),
+                        // NAV1 CDI/OBS/Glideslope
+                        nav1Cdi: d.readInt32(),
+                        nav1Obs: d.readFloat64(),
+                        nav1Radial: d.readFloat64(),
+                        nav1ToFrom: d.readInt32(),
+                        nav1Signal: d.readInt32(),
+                        nav1Gsi: d.readInt32(),
+                        nav1GsFlag: d.readInt32() !== 0,
+                        nav1HasLoc: d.readInt32() !== 0,
+                        nav1HasGs: d.readInt32() !== 0,
+                        // NAV2 CDI/OBS
+                        nav2Cdi: d.readInt32(),
+                        nav2Obs: d.readFloat64(),
+                        nav2Radial: d.readFloat64(),
+                        nav2ToFrom: d.readInt32(),
+                        nav2Signal: d.readInt32(),
+                        nav2Gsi: d.readInt32(),
+                        nav2GsFlag: d.readInt32() !== 0,
+                        // GPS CDI
+                        gpsCdiNeedle: d.readInt32(),
+                        gpsCrossTrackError: d.readFloat64(),
+                        gpsDesiredTrack: d.readFloat64(),
+                        gpsObsValue: d.readFloat64(),
+                        gpsVerticalError: d.readFloat64(),
+                        gpsApproachMode: d.readInt32() !== 0,
+                        // Navigation source
+                        apNavSelected: d.readInt32(),
                         connected: true
                     };
                     broadcastFlightData();
@@ -2797,6 +2860,33 @@ function startMockData() {
             gpsEte: 14400 + Math.random() * 500,
             gpsLat: 40.6413 + (Math.random() - 0.5) * 0.01,
             gpsLon: -95.5 + (Math.random() - 0.5) * 0.01,
+            // NAV1 CDI/OBS mock data (simulating VOR approach)
+            nav1Cdi: Math.round((Math.random() - 0.5) * 100),
+            nav1Obs: 275,
+            nav1Radial: 95 + (Math.random() - 0.5) * 5,
+            nav1ToFrom: Math.random() > 0.5 ? 1 : 0,
+            nav1Signal: 85 + Math.round(Math.random() * 15),
+            nav1Gsi: Math.round((Math.random() - 0.5) * 60),
+            nav1GsFlag: false,
+            nav1HasLoc: true,
+            nav1HasGs: true,
+            // NAV2 mock data
+            nav2Cdi: Math.round((Math.random() - 0.5) * 80),
+            nav2Obs: 180,
+            nav2Radial: 0 + (Math.random() - 0.5) * 5,
+            nav2ToFrom: 1,
+            nav2Signal: 70 + Math.round(Math.random() * 30),
+            nav2Gsi: 0,
+            nav2GsFlag: true,
+            // GPS CDI mock data
+            gpsCdiNeedle: Math.round((Math.random() - 0.5) * 50),
+            gpsCrossTrackError: (Math.random() - 0.5) * 1.5,
+            gpsDesiredTrack: 275,
+            gpsObsValue: 275,
+            gpsVerticalError: (Math.random() - 0.5) * 2,
+            gpsApproachMode: false,
+            // Navigation source
+            apNavSelected: 0,
             connected: false // Show as disconnected in mock mode
         };
         

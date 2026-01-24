@@ -26,8 +26,15 @@ class GTN750Widget {
             nav1Active: 108.00,
             nav1Standby: 108.00,
             transponder: 1200,
-            zuluTime: 0
+            zuluTime: 0,
+            // Navigation source
+            navSource: 'GPS'
         };
+
+        // NAV radio data
+        this.nav1 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true, hasLoc: false, hasGs: false };
+        this.nav2 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true };
+        this.gps = { cdi: 0, xtrk: 0, dtk: 0, obs: 0, vertError: 0, approachMode: false };
 
         // Map settings
         this.map = {
@@ -43,8 +50,17 @@ class GTN750Widget {
         this.flightPlan = null;
         this.activeWaypointIndex = 0;
 
-        // CDI
-        this.cdi = { dtk: 0, xtrk: 0, deflection: 0 };
+        // CDI (extended for GPS/NAV source switching)
+        this.cdi = {
+            source: 'GPS',
+            needle: 0,        // -127 to +127 deflection
+            dtk: 0,           // Desired track
+            xtrk: 0,          // Cross track error in NM
+            toFrom: 2,        // 0=From, 1=To, 2=None
+            gsNeedle: 0,      // Glideslope deflection -119 to +119
+            gsValid: false,   // Glideslope signal valid
+            signalValid: true // NAV signal valid
+        };
 
         // TAWS
         this.taws = { active: true, inhibited: false };
@@ -601,10 +617,24 @@ class GTN750Widget {
             wptDis: document.getElementById('wpt-dis'),
             wptBrg: document.getElementById('wpt-brg'),
             wptEte: document.getElementById('wpt-ete'),
-            // CDI
+            // CDI (extended)
             cdiNeedle: document.getElementById('cdi-needle'),
             cdiDtk: document.getElementById('cdi-dtk'),
             cdiXtrk: document.getElementById('cdi-xtrk'),
+            cdiSource: document.getElementById('cdi-source'),
+            cdiToFrom: document.getElementById('cdi-tofrom'),
+            cdiGsNeedle: document.getElementById('cdi-gs-needle'),
+            cdiGsBar: document.getElementById('cdi-gs-bar'),
+            cdiFlag: document.getElementById('cdi-flag'),
+            // OBS Control
+            obsValue: document.getElementById('obs-value'),
+            obsInc: document.getElementById('obs-inc'),
+            obsDec: document.getElementById('obs-dec'),
+            obsControls: document.getElementById('obs-controls'),
+            // Nav Source Selector
+            navSourceGps: document.getElementById('nav-source-gps'),
+            navSourceNav1: document.getElementById('nav-source-nav1'),
+            navSourceNav2: document.getElementById('nav-source-nav2'),
             // FPL
             fplDep: document.getElementById('fpl-dep'),
             fplArr: document.getElementById('fpl-arr'),
@@ -720,6 +750,22 @@ class GTN750Widget {
         // Zoom controls
         this.elements.zoomIn?.addEventListener('click', () => this.changeRange(-1));
         this.elements.zoomOut?.addEventListener('click', () => this.changeRange(1));
+
+        // Nav source buttons
+        this.elements.navSourceGps?.addEventListener('click', () => this.setNavSource('GPS'));
+        this.elements.navSourceNav1?.addEventListener('click', () => this.setNavSource('NAV1'));
+        this.elements.navSourceNav2?.addEventListener('click', () => this.setNavSource('NAV2'));
+
+        // OBS controls
+        this.elements.obsInc?.addEventListener('click', () => this.adjustObs(1));
+        this.elements.obsDec?.addEventListener('click', () => this.adjustObs(-1));
+        this.elements.obsValue?.addEventListener('click', () => {
+            const currentObs = this.cdi.source === 'NAV1' ? this.nav1.obs : this.nav2.obs;
+            const newObs = prompt('Enter OBS course (0-359):', Math.round(currentObs));
+            if (newObs !== null && !isNaN(newObs)) {
+                this.setObs(parseInt(newObs) % 360);
+            }
+        });
 
         // Tab navigation
         this.elements.tabs.forEach(tab => {
@@ -1304,17 +1350,160 @@ class GTN750Widget {
     }
 
     updateCDI(bearing, distance) {
-        const trackError = this.core.normalizeAngle(bearing - this.data.heading);
-        const xtrk = Math.sin(this.core.toRad(trackError)) * distance;
+        // Legacy GPS-calculated CDI (fallback when no SimConnect data)
+        if (this.data.navSource === 'GPS' && !this.gps.dtk) {
+            const trackError = this.core.normalizeAngle(bearing - this.data.heading);
+            const xtrk = Math.sin(this.core.toRad(trackError)) * distance;
+            this.cdi.dtk = Math.round(bearing);
+            this.cdi.xtrk = Math.abs(xtrk);
+            this.cdi.needle = Math.round(Math.max(-127, Math.min(127, xtrk / 2 * 127)));
+            this.renderCdi();
+        }
+    }
 
-        this.cdi.dtk = Math.round(bearing);
-        this.cdi.xtrk = Math.abs(xtrk);
-        this.cdi.deflection = Math.max(-1, Math.min(1, xtrk / 2));
+    // ===== CDI SOURCE SWITCHING =====
+    updateCdiFromSource() {
+        const source = this.data.navSource;
 
-        if (this.elements.cdiDtk) this.elements.cdiDtk.textContent = this.cdi.dtk.toString().padStart(3, '0');
-        if (this.elements.cdiXtrk) this.elements.cdiXtrk.textContent = this.cdi.xtrk.toFixed(1);
+        switch (source) {
+            case 'NAV1':
+                this.cdi = {
+                    source: 'NAV1',
+                    needle: this.nav1.cdi,
+                    dtk: this.nav1.obs,
+                    xtrk: Math.abs(this.nav1.cdi / 127 * 2),
+                    toFrom: this.nav1.toFrom,
+                    gsNeedle: this.nav1.gsi,
+                    gsValid: !this.nav1.gsFlag && this.nav1.hasGs,
+                    signalValid: this.nav1.signal > 10
+                };
+                break;
+            case 'NAV2':
+                this.cdi = {
+                    source: 'NAV2',
+                    needle: this.nav2.cdi,
+                    dtk: this.nav2.obs,
+                    xtrk: Math.abs(this.nav2.cdi / 127 * 2),
+                    toFrom: this.nav2.toFrom,
+                    gsNeedle: this.nav2.gsi,
+                    gsValid: !this.nav2.gsFlag,
+                    signalValid: this.nav2.signal > 10
+                };
+                break;
+            case 'GPS':
+            default:
+                this.cdi = {
+                    source: 'GPS',
+                    needle: this.gps.cdi,
+                    dtk: this.gps.dtk || this.cdi.dtk,
+                    xtrk: Math.abs(this.gps.xtrk),
+                    toFrom: 1, // GPS always shows TO
+                    gsNeedle: Math.round(this.gps.vertError * 40),
+                    gsValid: this.gps.approachMode,
+                    signalValid: true
+                };
+        }
+
+        this.renderCdi();
+    }
+
+    renderCdi() {
+        // Update source indicator
+        if (this.elements.cdiSource) {
+            this.elements.cdiSource.textContent = this.cdi.source;
+            this.elements.cdiSource.className = `cdi-source cdi-source-${this.cdi.source.toLowerCase()}`;
+        }
+
+        // Update CDI needle (horizontal deflection)
         if (this.elements.cdiNeedle) {
-            this.elements.cdiNeedle.style.left = (50 + this.cdi.deflection * 40) + '%';
+            const deflectionPercent = (this.cdi.needle / 127) * 40;
+            this.elements.cdiNeedle.style.left = `${50 + deflectionPercent}%`;
+        }
+
+        // Update TO/FROM indicator
+        if (this.elements.cdiToFrom) {
+            const toFromLabels = ['FROM', 'TO', '---'];
+            this.elements.cdiToFrom.textContent = toFromLabels[this.cdi.toFrom] || '---';
+            this.elements.cdiToFrom.className = `cdi-tofrom ${this.cdi.toFrom === 1 ? 'to' : this.cdi.toFrom === 0 ? 'from' : 'none'}`;
+        }
+
+        // Update glideslope
+        if (this.elements.cdiGsBar) {
+            this.elements.cdiGsBar.style.display = this.cdi.gsValid ? 'flex' : 'none';
+        }
+        if (this.elements.cdiGsNeedle && this.cdi.gsValid) {
+            const gsDeflectionPercent = (this.cdi.gsNeedle / 119) * 40;
+            this.elements.cdiGsNeedle.style.top = `${50 - gsDeflectionPercent}%`;
+        }
+
+        // Update flag (no signal indicator)
+        if (this.elements.cdiFlag) {
+            this.elements.cdiFlag.style.display = this.cdi.signalValid ? 'none' : 'block';
+        }
+
+        // Update DTK and XTK display
+        if (this.elements.cdiDtk) {
+            this.elements.cdiDtk.textContent = Math.round(this.cdi.dtk).toString().padStart(3, '0');
+        }
+        if (this.elements.cdiXtrk) {
+            this.elements.cdiXtrk.textContent = this.cdi.xtrk.toFixed(1);
+        }
+
+        // Update OBS value display
+        if (this.elements.obsValue && this.cdi.source !== 'GPS') {
+            const obs = this.cdi.source === 'NAV1' ? this.nav1.obs : this.nav2.obs;
+            this.elements.obsValue.textContent = Math.round(obs).toString().padStart(3, '0');
+        }
+    }
+
+    setNavSource(source) {
+        this.data.navSource = source;
+
+        // Update UI buttons
+        if (this.elements.navSourceGps) this.elements.navSourceGps.classList.toggle('active', source === 'GPS');
+        if (this.elements.navSourceNav1) this.elements.navSourceNav1.classList.toggle('active', source === 'NAV1');
+        if (this.elements.navSourceNav2) this.elements.navSourceNav2.classList.toggle('active', source === 'NAV2');
+
+        // Update OBS visibility (only show for VOR sources)
+        if (this.elements.obsControls) {
+            this.elements.obsControls.style.display = source === 'GPS' ? 'none' : 'flex';
+        }
+
+        this.updateCdiFromSource();
+    }
+
+    async setObs(value) {
+        const source = this.data.navSource;
+        if (source === 'GPS') return;
+
+        const event = source === 'NAV1' ? 'VOR1_SET' : 'VOR2_SET';
+        try {
+            await fetch(`http://${location.hostname}:${this.serverPort}/api/command`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: event, value: Math.round(value) })
+            });
+        } catch (e) {
+            console.error('[GTN750] OBS set failed:', e);
+        }
+    }
+
+    async adjustObs(delta) {
+        const source = this.data.navSource;
+        if (source === 'GPS') return;
+
+        const event = delta > 0
+            ? (source === 'NAV1' ? 'VOR1_OBI_INC' : 'VOR2_OBI_INC')
+            : (source === 'NAV1' ? 'VOR1_OBI_DEC' : 'VOR2_OBI_DEC');
+
+        try {
+            await fetch(`http://${location.hostname}:${this.serverPort}/api/command`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: event })
+            });
+        } catch (e) {
+            console.error('[GTN750] OBS adjust failed:', e);
         }
     }
 
@@ -1578,9 +1767,48 @@ class GTN750Widget {
         if (d.transponder !== undefined) this.data.transponder = d.transponder;
         if (d.zuluTime !== undefined) this.data.zuluTime = d.zuluTime;
 
+        // NAV1 CDI/OBS data
+        if (d.nav1Cdi !== undefined) {
+            this.nav1 = {
+                cdi: d.nav1Cdi,
+                obs: d.nav1Obs || 0,
+                radial: d.nav1Radial || 0,
+                toFrom: d.nav1ToFrom ?? 2,
+                signal: d.nav1Signal || 0,
+                gsi: d.nav1Gsi || 0,
+                gsFlag: d.nav1GsFlag ?? true,
+                hasLoc: d.nav1HasLoc ?? false,
+                hasGs: d.nav1HasGs ?? false
+            };
+        }
+        // NAV2 CDI/OBS data
+        if (d.nav2Cdi !== undefined) {
+            this.nav2 = {
+                cdi: d.nav2Cdi,
+                obs: d.nav2Obs || 0,
+                radial: d.nav2Radial || 0,
+                toFrom: d.nav2ToFrom ?? 2,
+                signal: d.nav2Signal || 0,
+                gsi: d.nav2Gsi || 0,
+                gsFlag: d.nav2GsFlag ?? true
+            };
+        }
+        // GPS CDI data
+        if (d.gpsCdiNeedle !== undefined) {
+            this.gps = {
+                cdi: d.gpsCdiNeedle,
+                xtrk: d.gpsCrossTrackError || 0,
+                dtk: d.gpsDesiredTrack || 0,
+                obs: d.gpsObsValue || 0,
+                vertError: d.gpsVerticalError || 0,
+                approachMode: d.gpsApproachMode ?? false
+            };
+        }
+
         this.data.track = d.track || this.data.heading;
         this.updateUI();
         this.updateWaypointDisplay();
+        this.updateCdiFromSource();
     }
 
     updateUI() {
