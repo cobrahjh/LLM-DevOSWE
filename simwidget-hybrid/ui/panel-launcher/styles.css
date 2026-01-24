@@ -257,6 +257,47 @@ body {
     font-style: italic;
 }
 
+/* Widget Launch Buttons */
+.widget-grid {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.widget-btn {
+    background: linear-gradient(180deg, #2a2e3a 0%, #1a1e2a 100%);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    color: #667eea;
+    padding: 10px 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-decoration: none;
+}
+
+.widget-btn .icon {
+    font-size: 16px;
+}
+
+.widget-btn .label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.widget-btn:hover {
+    background: linear-gradient(180deg, #3a3e4a 0%, #2a2e3a 100%);
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.widget-btn:active {
+    transform: translateY(0);
+}
+
 /* Responsive */
 @media (max-width: 440px) {
     body {
@@ -269,5 +310,9 @@ body {
 
     .actions-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    .widget-grid {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
