@@ -3,7 +3,7 @@
  * Full-featured AI copilot for MSFS
  */
 
-// Checklist data (simplified - imports from checklist-widget would be better)
+// Checklist data - Multiple aircraft profiles
 const CHECKLISTS = {
     generic: {
         preflight: [
@@ -95,6 +95,220 @@ const CHECKLISTS = {
             { text: 'Master', action: 'OFF' }
         ]
     },
+    c208: {
+        preflight: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Battery', action: 'ON' },
+            { text: 'Fuel Selector', action: 'ALL' },
+            { text: 'Fuel Quantity', action: 'CHECK' },
+            { text: 'Control Lock', action: 'REMOVE' }
+        ],
+        startup: [
+            { text: 'Condition Lever', action: 'CUTOFF' },
+            { text: 'Power Lever', action: 'IDLE' },
+            { text: 'Propeller', action: 'HIGH RPM' },
+            { text: 'Generator', action: 'RESET/ON' },
+            { text: 'Ignition', action: 'ON' },
+            { text: 'Starter', action: 'ENGAGE' },
+            { text: 'Ng at 13%', action: 'CONDITION LOW IDLE' },
+            { text: 'ITT', action: 'MONITOR' },
+            { text: 'Oil Pressure', action: 'GREEN' }
+        ],
+        taxi: [
+            { text: 'Flaps', action: '20°' },
+            { text: 'Trims', action: 'SET' },
+            { text: 'Flight Instruments', action: 'CHECK' },
+            { text: 'Brakes', action: 'CHECK' }
+        ],
+        takeoff: [
+            { text: 'Condition Lever', action: 'HIGH IDLE' },
+            { text: 'Propeller', action: 'MAX' },
+            { text: 'Power Lever', action: 'TAKEOFF' },
+            { text: 'Airspeed', action: 'ALIVE' },
+            { text: 'Rotate', action: '80 KIAS' }
+        ],
+        cruise: [
+            { text: 'Power', action: 'SET' },
+            { text: 'Propeller', action: 'ADJUST' },
+            { text: 'Fuel Flow', action: 'MONITOR' }
+        ],
+        landing: [
+            { text: 'ATIS', action: 'RECEIVED' },
+            { text: 'Flaps', action: 'AS REQUIRED' },
+            { text: 'Airspeed', action: '85-90 KIAS' },
+            { text: 'Propeller', action: 'HIGH RPM' }
+        ],
+        shutdown: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Condition Lever', action: 'CUTOFF' },
+            { text: 'Generator', action: 'OFF' },
+            { text: 'Battery', action: 'OFF' }
+        ]
+    },
+    tbm930: {
+        preflight: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Source Selector', action: 'BATT' },
+            { text: 'Battery', action: 'ON' },
+            { text: 'Fuel Quantity', action: 'CHECK' },
+            { text: 'CAS Messages', action: 'CHECK' }
+        ],
+        startup: [
+            { text: 'Throttle', action: 'CUT OFF' },
+            { text: 'Aux BP', action: 'ON' },
+            { text: 'Ignition', action: 'AUTO' },
+            { text: 'Starter', action: 'ON' },
+            { text: 'Ng 13%', action: 'THROTTLE LO IDLE' },
+            { text: 'ITT/Ng/Oil', action: 'MONITOR' },
+            { text: 'Ng 50%', action: 'STARTER OFF' },
+            { text: 'Generator', action: 'MAIN' },
+            { text: 'Aux BP', action: 'OFF' }
+        ],
+        taxi: [
+            { text: 'Flaps', action: 'T/O' },
+            { text: 'Trims', action: 'SET' },
+            { text: 'AP/Trims', action: 'TEST' },
+            { text: 'Brakes', action: 'CHECK' },
+            { text: 'Pressurization', action: 'CHECK' }
+        ],
+        takeoff: [
+            { text: 'Inertial Sep', action: 'ON' },
+            { text: 'A/C', action: 'OFF' },
+            { text: 'Throttle', action: 'T/O' },
+            { text: 'Rotate', action: '90 KIAS' },
+            { text: 'Positive Climb', action: 'GEAR UP' }
+        ],
+        cruise: [
+            { text: 'Power', action: 'SET' },
+            { text: 'Pressurization', action: 'CHECK' },
+            { text: 'Fuel Balance', action: 'CHECK' },
+            { text: 'A/C', action: 'AS REQUIRED' }
+        ],
+        landing: [
+            { text: 'Approach Brief', action: 'COMPLETE' },
+            { text: 'Inertial Sep', action: 'ON' },
+            { text: 'Gear', action: 'DOWN' },
+            { text: 'Flaps', action: 'LAND' },
+            { text: 'Speed', action: '85 KIAS' }
+        ],
+        shutdown: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Throttle', action: 'CUT OFF' },
+            { text: 'Generator', action: 'OFF' },
+            { text: 'Source', action: 'OFF' },
+            { text: 'Battery', action: 'OFF' }
+        ]
+    },
+    cj4: {
+        preflight: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Battery', action: 'ON' },
+            { text: 'Emergency Lights', action: 'ARM' },
+            { text: 'Fuel Quantity', action: 'CHECK' },
+            { text: 'EICAS', action: 'CHECK' }
+        ],
+        startup: [
+            { text: 'Beacon', action: 'ON' },
+            { text: 'Throttle L', action: 'IDLE' },
+            { text: 'Engine L Start', action: 'PUSH' },
+            { text: 'N2 > 20%', action: 'FUEL ON' },
+            { text: 'ITT Rise', action: 'MONITOR' },
+            { text: 'Throttle R', action: 'IDLE' },
+            { text: 'Engine R Start', action: 'PUSH' },
+            { text: 'Generators', action: 'ON' }
+        ],
+        taxi: [
+            { text: 'Flaps', action: '15°' },
+            { text: 'Speedbrakes', action: 'RETRACT' },
+            { text: 'Trims', action: 'SET' },
+            { text: 'Flight Controls', action: 'CHECK' },
+            { text: 'Transponder', action: 'ON' }
+        ],
+        takeoff: [
+            { text: 'Takeoff Config', action: 'CHECK' },
+            { text: 'Throttle', action: 'T/O' },
+            { text: 'V1', action: 'CALL' },
+            { text: 'Rotate', action: 'Vr' },
+            { text: 'Positive Rate', action: 'GEAR UP' },
+            { text: 'V2', action: 'CALL' }
+        ],
+        cruise: [
+            { text: 'Thrust', action: 'CRUISE' },
+            { text: 'Pressurization', action: 'CHECK' },
+            { text: 'Fuel Balance', action: 'MONITOR' },
+            { text: 'Autopilot', action: 'ENGAGE' }
+        ],
+        landing: [
+            { text: 'Approach Briefing', action: 'COMPLETE' },
+            { text: 'Speedbrakes', action: 'ARM' },
+            { text: 'Gear', action: 'DOWN' },
+            { text: 'Flaps', action: '35°' },
+            { text: 'Speed', action: 'Vref + 5' }
+        ],
+        shutdown: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Throttles', action: 'CUTOFF' },
+            { text: 'Generators', action: 'OFF' },
+            { text: 'Battery', action: 'OFF' },
+            { text: 'Emergency Lights', action: 'OFF' }
+        ]
+    },
+    '737': {
+        preflight: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Battery', action: 'ON' },
+            { text: 'Emergency Exit Lights', action: 'ARM' },
+            { text: 'IRS', action: 'NAV' },
+            { text: 'MCP', action: 'SET' }
+        ],
+        startup: [
+            { text: 'Beacon', action: 'ON' },
+            { text: 'APU', action: 'START' },
+            { text: 'APU Gen', action: 'ON' },
+            { text: 'Engine 2', action: 'START' },
+            { text: 'Engine 1', action: 'START' },
+            { text: 'Generators', action: 'ON' },
+            { text: 'APU', action: 'OFF' },
+            { text: 'Packs', action: 'AUTO' }
+        ],
+        taxi: [
+            { text: 'Flaps', action: 'SET' },
+            { text: 'Flight Controls', action: 'CHECK' },
+            { text: 'Trims', action: 'SET' },
+            { text: 'Recall', action: 'CHECK' },
+            { text: 'Transponder', action: 'TA/RA' }
+        ],
+        takeoff: [
+            { text: 'Strobes', action: 'ON' },
+            { text: 'Landing Lights', action: 'ON' },
+            { text: 'TOGA', action: 'SET' },
+            { text: '80 Knots', action: 'CALL' },
+            { text: 'V1', action: 'CALL' },
+            { text: 'Rotate', action: 'Vr' },
+            { text: 'Positive Rate', action: 'GEAR UP' }
+        ],
+        cruise: [
+            { text: 'Thrust', action: 'CRUISE' },
+            { text: 'Landing Lights', action: 'OFF' },
+            { text: 'Seat Belt Sign', action: 'AS REQ' },
+            { text: 'Pressurization', action: 'CHECK' }
+        ],
+        landing: [
+            { text: 'Approach Briefing', action: 'COMPLETE' },
+            { text: 'Autobrake', action: 'SET' },
+            { text: 'Speed Brake', action: 'ARM' },
+            { text: 'Landing Gear', action: 'DOWN' },
+            { text: 'Flaps', action: 'LAND' }
+        ],
+        shutdown: [
+            { text: 'Parking Brake', action: 'SET' },
+            { text: 'Thrust Levers', action: 'CUTOFF' },
+            { text: 'Beacon', action: 'OFF' },
+            { text: 'APU', action: 'START' },
+            { text: 'Generators', action: 'OFF' },
+            { text: 'IRS', action: 'OFF' }
+        ]
+    },
     a320: {
         preflight: [
             { text: 'Battery', action: 'ON' },
@@ -139,6 +353,86 @@ const CHECKLISTS = {
     }
 };
 
+// Emergency procedures
+const EMERGENCY_PROCEDURES = {
+    'engine-failure': {
+        name: 'Engine Failure',
+        critical: true,
+        items: [
+            { text: 'Airspeed', action: 'BEST GLIDE', critical: true },
+            { text: 'Mixture', action: 'RICH' },
+            { text: 'Fuel Selector', action: 'BOTH' },
+            { text: 'Fuel Pump', action: 'ON' },
+            { text: 'Ignition', action: 'BOTH/START' },
+            { text: 'If no restart', action: 'LAND ASAP', critical: true },
+            { text: 'Squawk', action: '7700' },
+            { text: 'Mayday', action: 'DECLARE' }
+        ]
+    },
+    'engine-fire': {
+        name: 'Engine Fire',
+        critical: true,
+        items: [
+            { text: 'Mixture', action: 'CUTOFF', critical: true },
+            { text: 'Fuel Selector', action: 'OFF', critical: true },
+            { text: 'Master', action: 'OFF', critical: true },
+            { text: 'Cabin Heat/Air', action: 'OFF' },
+            { text: 'Airspeed', action: '100 KIAS (SLIP)' },
+            { text: 'Forced Landing', action: 'EXECUTE', critical: true },
+            { text: 'Squawk', action: '7700' }
+        ]
+    },
+    'electrical': {
+        name: 'Electrical Failure',
+        critical: false,
+        items: [
+            { text: 'Master', action: 'OFF THEN ON' },
+            { text: 'Circuit Breakers', action: 'CHECK' },
+            { text: 'Alternator', action: 'CHECK' },
+            { text: 'Load Shed', action: 'NON-ESSENTIAL OFF' },
+            { text: 'Battery', action: 'MONITOR' },
+            { text: 'Land', action: 'NEAREST SUITABLE' }
+        ]
+    },
+    'hydraulic': {
+        name: 'Hydraulic Failure',
+        critical: false,
+        items: [
+            { text: 'Hydraulic Pressure', action: 'CHECK' },
+            { text: 'Alternate Gear', action: 'EXTEND' },
+            { text: 'No Flaps Landing', action: 'CONSIDER' },
+            { text: 'Approach Speed', action: 'INCREASE' },
+            { text: 'Landing Distance', action: 'INCREASE' }
+        ]
+    },
+    'pressurization': {
+        name: 'Pressurization Failure',
+        critical: true,
+        items: [
+            { text: 'Oxygen Masks', action: 'ON', critical: true },
+            { text: 'Establish Comm', action: 'CREW' },
+            { text: 'Emergency Descent', action: 'INITIATE', critical: true },
+            { text: 'Squawk', action: '7700' },
+            { text: 'Descend to', action: '10,000 FT OR MEA' },
+            { text: 'Land', action: 'NEAREST SUITABLE' }
+        ]
+    },
+    'ditching': {
+        name: 'Ditching',
+        critical: true,
+        items: [
+            { text: 'Squawk', action: '7700', critical: true },
+            { text: 'Mayday', action: 'DECLARE' },
+            { text: 'Passengers', action: 'BRIEF' },
+            { text: 'Life Vests', action: 'DON' },
+            { text: 'Flaps', action: 'FULL', critical: true },
+            { text: 'Approach', action: 'INTO WIND/SWELL' },
+            { text: 'Touchdown', action: 'TAIL LOW', critical: true },
+            { text: 'Evacuate', action: 'IMMEDIATELY' }
+        ]
+    }
+};
+
 class AICopilot {
     constructor() {
         this.currentMode = 'assist';
@@ -171,7 +465,7 @@ class AICopilot {
         this.callouts = {
             altitude: true,
             speed: true,
-            approach: false,
+            approach: true,
             gear: true,
             flaps: true
         };
@@ -182,6 +476,27 @@ class AICopilot {
             v2: 62,
             vref: 65
         };
+
+        // Approach callouts tracking
+        this.approachCallouts = {
+            lastAltCallout: 0,
+            calledMinimums: false,
+            calledDecision: false,
+            decisionHeight: 200,
+            minimums: 200
+        };
+
+        // Emergency state
+        this.emergencyType = 'engine-failure';
+        this.emergencyIndex = 0;
+        this.emergencyChecked = [];
+        this.emergencyAutoRunning = false;
+
+        // ATIS data
+        this.atisData = null;
+
+        // LLM endpoint
+        this.llmEndpoint = 'http://localhost:3002/api/chat';
 
         // Flight plan
         this.flightPlan = null;
@@ -233,7 +548,9 @@ class AICopilot {
         this.initTabs();
         this.initAssistMode();
         this.initChecklistMode();
+        this.initEmergencyMode();
         this.initATCMode();
+        this.initATISDecoder();
         this.initAdvisorMode();
         this.initVoice();
         this.initWebSocket();
@@ -327,8 +644,65 @@ class AICopilot {
             return;
         }
 
-        // Default response
-        this.respond('I can help with checklists, callouts, and flight information. Try "startup checklist" or "what\'s my altitude?"');
+        // Emergency commands
+        if (lower.includes('emergency') || lower.includes('mayday') || lower.includes('fire')) {
+            if (lower.includes('engine') && lower.includes('fire')) {
+                this.startEmergency('engine-fire');
+                this.respond('Engine fire emergency. Starting procedure immediately.');
+            } else if (lower.includes('engine')) {
+                this.startEmergency('engine-failure');
+                this.respond('Engine failure. Starting emergency procedure.');
+            } else if (lower.includes('electrical')) {
+                this.startEmergency('electrical');
+                this.respond('Electrical emergency. Starting procedure.');
+            } else {
+                this.switchMode('emergency');
+                this.respond('Emergency panel activated. Select the type of emergency.');
+            }
+            return;
+        }
+
+        // ATIS decode
+        if (lower.includes('atis') || lower.includes('decode')) {
+            this.switchMode('atc');
+            this.respond('Ready to decode ATIS. Paste the ATIS text and click Decode.');
+            return;
+        }
+
+        // LLM query for complex questions
+        this.queryLLM(text);
+    }
+
+    async queryLLM(question) {
+        this.updateStatus('Thinking...');
+
+        try {
+            const context = `You are an AI copilot assistant for Microsoft Flight Simulator. Current flight data: Altitude ${Math.round(this.flightData.altitude)}ft, Speed ${Math.round(this.flightData.speed)}kt, Heading ${Math.round(this.flightData.heading)}°. Keep responses brief and aviation-focused.`;
+
+            const response = await fetch(this.llmEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: question,
+                    context: context,
+                    persona: 'copilot'
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const reply = data.response || data.message || 'Unable to process that request.';
+                this.respond(reply);
+            } else {
+                // Fallback response
+                this.respond('I can help with checklists, emergencies, callouts, and flight information. Try "startup checklist", "emergency engine failure", or "decode atis".');
+            }
+        } catch (e) {
+            // Fallback if LLM unavailable
+            this.respond('I can help with checklists, emergencies, callouts, and flight information. Try "startup checklist", "emergency engine failure", or "decode atis".');
+        }
+
+        this.updateStatus('Standing by');
     }
 
     addMessage(text, sender) {
@@ -513,6 +887,180 @@ class AICopilot {
         }
     }
 
+    // === Emergency Mode ===
+    initEmergencyMode() {
+        const typeSelect = document.getElementById('emergency-type');
+        if (typeSelect) {
+            typeSelect.addEventListener('change', (e) => {
+                this.emergencyType = e.target.value;
+                this.renderEmergency();
+            });
+        }
+
+        const resetBtn = document.getElementById('btn-emergency-reset');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetEmergency());
+        }
+
+        const autoBtn = document.getElementById('btn-emergency-auto');
+        if (autoBtn) {
+            autoBtn.addEventListener('click', () => this.toggleEmergencyAuto());
+        }
+
+        const squawkBtn = document.getElementById('btn-squawk-7700');
+        if (squawkBtn) {
+            squawkBtn.addEventListener('click', () => {
+                this.speak('Squawking 7700. Mayday, mayday, mayday.');
+                this.addMessage('SQUAWK 7700 - Emergency declared', 'copilot');
+            });
+        }
+
+        this.renderEmergency();
+    }
+
+    renderEmergency() {
+        const container = document.getElementById('emergency-items');
+        if (!container) return;
+
+        container.replaceChildren();
+        const procedure = EMERGENCY_PROCEDURES[this.emergencyType];
+        if (!procedure) return;
+
+        procedure.items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'checklist-item emergency-item';
+            if (item.critical) div.classList.add('critical');
+            if (this.emergencyChecked.includes(index)) div.classList.add('checked');
+            if (index === this.emergencyIndex && !this.emergencyChecked.includes(index)) {
+                div.classList.add('active');
+            }
+
+            const checkbox = document.createElement('div');
+            checkbox.className = 'item-checkbox';
+
+            const text = document.createElement('span');
+            text.className = 'item-text';
+            text.textContent = item.text;
+
+            const action = document.createElement('span');
+            action.className = 'item-action';
+            action.textContent = item.action;
+
+            div.appendChild(checkbox);
+            div.appendChild(text);
+            div.appendChild(action);
+
+            div.addEventListener('click', () => this.toggleEmergencyItem(index));
+            container.appendChild(div);
+        });
+    }
+
+    toggleEmergencyItem(index) {
+        const idx = this.emergencyChecked.indexOf(index);
+        if (idx === -1) {
+            this.emergencyChecked.push(index);
+            const procedure = EMERGENCY_PROCEDURES[this.emergencyType];
+            if (this.voiceEnabled && procedure.items[index]) {
+                const item = procedure.items[index];
+                this.speak(item.text + ', ' + item.action);
+            }
+        } else {
+            this.emergencyChecked.splice(idx, 1);
+        }
+        this.advanceEmergency();
+        this.renderEmergency();
+    }
+
+    advanceEmergency() {
+        const procedure = EMERGENCY_PROCEDURES[this.emergencyType];
+        if (!procedure) return;
+
+        for (let i = 0; i < procedure.items.length; i++) {
+            if (!this.emergencyChecked.includes(i)) {
+                this.emergencyIndex = i;
+                return;
+            }
+        }
+        this.emergencyIndex = procedure.items.length;
+        if (this.emergencyChecked.length === procedure.items.length) {
+            this.speak('Emergency procedure complete.');
+        }
+    }
+
+    resetEmergency() {
+        this.emergencyChecked = [];
+        this.emergencyIndex = 0;
+        this.emergencyAutoRunning = false;
+        const btn = document.getElementById('btn-emergency-auto');
+        if (btn) {
+            btn.textContent = '▶ Run Procedure';
+            btn.classList.remove('running');
+        }
+        this.renderEmergency();
+    }
+
+    startEmergency(type) {
+        this.emergencyType = type;
+        const select = document.getElementById('emergency-type');
+        if (select) select.value = type;
+        this.resetEmergency();
+        this.switchMode('emergency');
+
+        const procedure = EMERGENCY_PROCEDURES[type];
+        if (procedure && procedure.items.length > 0) {
+            this.speak(procedure.name + ' emergency. ' + procedure.items[0].text + '?');
+        }
+    }
+
+    toggleEmergencyAuto() {
+        this.emergencyAutoRunning = !this.emergencyAutoRunning;
+        const btn = document.getElementById('btn-emergency-auto');
+
+        if (this.emergencyAutoRunning) {
+            btn.textContent = '⏹ Stop';
+            btn.classList.add('running');
+            this.runEmergencyAuto();
+        } else {
+            btn.textContent = '▶ Run Procedure';
+            btn.classList.remove('running');
+        }
+    }
+
+    async runEmergencyAuto() {
+        const procedure = EMERGENCY_PROCEDURES[this.emergencyType];
+        if (!procedure) return;
+
+        while (this.emergencyAutoRunning && this.emergencyIndex < procedure.items.length) {
+            const item = procedure.items[this.emergencyIndex];
+
+            // Speak with urgency for critical items
+            if (item.critical) {
+                this.speak(item.text + '! ' + item.action + '!');
+            } else {
+                this.speak(item.text + '?');
+            }
+
+            await this.sleep(2500);
+            if (!this.emergencyAutoRunning) break;
+
+            this.speak(item.action);
+            await this.sleep(1500);
+            if (!this.emergencyAutoRunning) break;
+
+            this.toggleEmergencyItem(this.emergencyIndex);
+            await this.sleep(800);
+        }
+
+        if (this.emergencyAutoRunning) {
+            this.emergencyAutoRunning = false;
+            const btn = document.getElementById('btn-emergency-auto');
+            if (btn) {
+                btn.textContent = '▶ Run Procedure';
+                btn.classList.remove('running');
+            }
+        }
+    }
+
     // === ATC Mode ===
     initATCMode() {
         document.querySelectorAll('.atc-btn').forEach(btn => {
@@ -564,6 +1112,146 @@ class AICopilot {
         msg.appendChild(msgText);
         container.appendChild(msg);
         container.scrollTop = container.scrollHeight;
+    }
+
+    // === ATIS Decoder ===
+    initATISDecoder() {
+        const decodeBtn = document.getElementById('btn-decode-atis');
+        if (decodeBtn) {
+            decodeBtn.addEventListener('click', () => this.decodeATIS());
+        }
+    }
+
+    decodeATIS() {
+        const input = document.getElementById('atis-input');
+        const output = document.getElementById('atis-decoded');
+        if (!input || !output) return;
+
+        const text = input.value.trim().toUpperCase();
+        if (!text) {
+            output.textContent = 'Paste ATIS text above';
+            return;
+        }
+
+        const decoded = this.parseATIS(text);
+        this.atisData = decoded;
+
+        output.replaceChildren();
+
+        // Create decoded display
+        const items = [
+            { label: 'Info', value: decoded.info || '?' },
+            { label: 'Time', value: decoded.time || '?' },
+            { label: 'Wind', value: decoded.wind || '?' },
+            { label: 'Visibility', value: decoded.visibility || '?' },
+            { label: 'Ceiling', value: decoded.ceiling || 'CLR' },
+            { label: 'Temp/Dew', value: decoded.temp || '?' },
+            { label: 'Altimeter', value: decoded.altimeter || '?' },
+            { label: 'Runway', value: decoded.runway || '?' },
+            { label: 'Approach', value: decoded.approach || '?' }
+        ];
+
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'atis-row';
+
+            const label = document.createElement('span');
+            label.className = 'atis-label';
+            label.textContent = item.label;
+
+            const value = document.createElement('span');
+            value.className = 'atis-value';
+            value.textContent = item.value;
+
+            row.appendChild(label);
+            row.appendChild(value);
+            output.appendChild(row);
+        });
+
+        // Speak key info
+        if (this.voiceEnabled) {
+            const speech = `Information ${decoded.info || 'unknown'}. Wind ${decoded.wind || 'calm'}. Altimeter ${decoded.altimeter || 'unknown'}. Landing runway ${decoded.runway || 'check ATIS'}.`;
+            this.speak(speech);
+        }
+    }
+
+    parseATIS(text) {
+        const decoded = {};
+
+        // Information letter (ATIS INFORMATION ALPHA, INFO A, etc)
+        const infoMatch = text.match(/INFORMATION\s+([A-Z])|INFO\s+([A-Z])|ATIS\s+([A-Z])\b/);
+        if (infoMatch) {
+            decoded.info = infoMatch[1] || infoMatch[2] || infoMatch[3];
+        }
+
+        // Time (1234Z, 12:34Z, etc)
+        const timeMatch = text.match(/(\d{4})Z|\b(\d{2}):?(\d{2})\s*Z/);
+        if (timeMatch) {
+            decoded.time = timeMatch[1] ? timeMatch[1] + 'Z' : timeMatch[2] + timeMatch[3] + 'Z';
+        }
+
+        // Wind (36010KT, 360 AT 10, VRB05KT)
+        const windMatch = text.match(/(\d{3}|VRB)\s*(?:AT\s*)?(\d{2,3})(?:G(\d{2,3}))?\s*(?:KT|KTS?)/);
+        if (windMatch) {
+            let wind = windMatch[1] + '° at ' + windMatch[2];
+            if (windMatch[3]) wind += ' gusting ' + windMatch[3];
+            decoded.wind = wind + ' kt';
+        } else if (text.includes('CALM') || text.includes('WIND CALM')) {
+            decoded.wind = 'Calm';
+        }
+
+        // Visibility (10SM, 3SM, 1/2SM, 9999)
+        const visMatch = text.match(/(\d+(?:\/\d+)?)\s*SM|VIS\s+(\d+)|(\d{4})\s*(?:M|METERS?)?/);
+        if (visMatch) {
+            if (visMatch[1]) decoded.visibility = visMatch[1] + ' SM';
+            else if (visMatch[2]) decoded.visibility = visMatch[2] + ' SM';
+            else if (visMatch[3]) {
+                const meters = parseInt(visMatch[3]);
+                decoded.visibility = meters >= 9999 ? '10+ km' : (meters / 1000).toFixed(1) + ' km';
+            }
+        }
+
+        // Ceiling (BKN025, OVC030, SCT040)
+        const ceilingMatch = text.match(/(BKN|OVC|VV)(\d{3})/);
+        if (ceilingMatch) {
+            const height = parseInt(ceilingMatch[2]) * 100;
+            decoded.ceiling = ceilingMatch[1] + ' ' + height + ' ft';
+        }
+
+        // Temperature/Dewpoint (24/18, M02/M05, 24 DEW 18)
+        const tempMatch = text.match(/(M?\d{2})\/(M?\d{2})|TEMP\s+(M?\d{2}).*?DEW\s+(M?\d{2})/);
+        if (tempMatch) {
+            const temp = (tempMatch[1] || tempMatch[3]).replace('M', '-');
+            const dew = (tempMatch[2] || tempMatch[4]).replace('M', '-');
+            decoded.temp = temp + '°/' + dew + '°C';
+        }
+
+        // Altimeter (A2992, QNH 1013, 29.92)
+        const altMatch = text.match(/A(\d{4})|QNH\s+(\d{4})|(\d{2})\.(\d{2})/);
+        if (altMatch) {
+            if (altMatch[1]) {
+                const inhg = parseInt(altMatch[1]) / 100;
+                decoded.altimeter = inhg.toFixed(2) + ' inHg';
+            } else if (altMatch[2]) {
+                decoded.altimeter = altMatch[2] + ' hPa';
+            } else if (altMatch[3] && altMatch[4]) {
+                decoded.altimeter = altMatch[3] + '.' + altMatch[4] + ' inHg';
+            }
+        }
+
+        // Landing runway (LDG RWY 27L, LANDING 27, RWY IN USE 09)
+        const rwyMatch = text.match(/(?:LANDING|LDG|ARRIV\w*|IN USE)\s*(?:RWY|RUNWAY)?\s*(\d{1,2}[LRC]?)|RWY\s+(\d{1,2}[LRC]?)\s+IN USE/i);
+        if (rwyMatch) {
+            decoded.runway = 'RWY ' + (rwyMatch[1] || rwyMatch[2]);
+        }
+
+        // Approach type (ILS, RNAV, VOR, VISUAL)
+        const appMatch = text.match(/(ILS|RNAV|VOR|VISUAL|GPS)\s+(?:APPROACH|APCH)?/i);
+        if (appMatch) {
+            decoded.approach = appMatch[1];
+        }
+
+        return decoded;
     }
 
     // === Advisor Mode ===
@@ -782,6 +1470,60 @@ class AICopilot {
         if (this.callouts.gear) {
             if (alt < 1000 && !this.flightData.onGround && !this.flightData.gearDown && this.flightData.vspeed < -500) {
                 this.speak('Gear! Check gear!');
+            }
+        }
+
+        // Approach callouts
+        if (this.callouts.approach && !this.flightData.onGround && this.flightData.vspeed < -200) {
+            const agl = alt; // Approximate AGL (would need terrain data for accuracy)
+
+            // Altitude callouts during approach
+            const approachAlts = [2500, 1000, 500, 400, 300, 200, 100, 50, 40, 30, 20, 10];
+
+            for (const callAlt of approachAlts) {
+                if (prev.altitude > callAlt && alt <= callAlt && alt > callAlt - 50) {
+                    if (callAlt >= 1000) {
+                        this.speak(Math.floor(callAlt / 1000) + ' thousand');
+                    } else if (callAlt === 100) {
+                        this.speak('One hundred');
+                    } else if (callAlt === 50) {
+                        this.speak('Fifty');
+                    } else if (callAlt === 40) {
+                        this.speak('Forty');
+                    } else if (callAlt === 30) {
+                        this.speak('Thirty');
+                    } else if (callAlt === 20) {
+                        this.speak('Twenty');
+                    } else if (callAlt === 10) {
+                        this.speak('Ten');
+                    } else {
+                        this.speak(callAlt.toString());
+                    }
+                    this.approachCallouts.lastAltCallout = callAlt;
+                    break;
+                }
+            }
+
+            // Minimums callout
+            if (!this.approachCallouts.calledMinimums &&
+                prev.altitude > this.approachCallouts.minimums &&
+                alt <= this.approachCallouts.minimums) {
+                this.speak('Minimums! Minimums!');
+                this.approachCallouts.calledMinimums = true;
+            }
+
+            // Decision height callout
+            if (!this.approachCallouts.calledDecision &&
+                prev.altitude > this.approachCallouts.decisionHeight &&
+                alt <= this.approachCallouts.decisionHeight) {
+                this.speak('Decision height!');
+                this.approachCallouts.calledDecision = true;
+            }
+
+            // Reset approach callouts when climbing
+            if (this.flightData.vspeed > 500 && alt > 1000) {
+                this.approachCallouts.calledMinimums = false;
+                this.approachCallouts.calledDecision = false;
             }
         }
     }

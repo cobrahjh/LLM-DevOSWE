@@ -1,0 +1,370 @@
+/**
+ * SimWidget Responsive Stylesheet
+ * Breakpoints: Tablet (768px), Phone (480px)
+ * Touch-friendly, mobile-first overrides
+ */
+
+/* ==========================================================================
+   TABLET BREAKPOINT (768px and below)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Touch-friendly button sizes */
+    .btn, button, .tab, .atc-btn {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 10px 16px;
+        font-size: 15px;
+    }
+
+    .btn-icon {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 8px;
+    }
+
+    /* Larger fonts for readability */
+    .widget-title {
+        font-size: 17px;
+    }
+
+    .info-value, .status-value, .value {
+        font-size: 15px;
+    }
+
+    .label, .info-label, .status-label {
+        font-size: 13px;
+    }
+
+    /* Stack flight info on tablets */
+    .flight-info, .flight-status {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .flight-info .info-item,
+    .flight-status .status-item {
+        flex: 1 1 45%;
+        min-width: 80px;
+    }
+
+    /* Wider touch targets for checklist items */
+    .checklist-item, .waypoint-item, .toggle-item {
+        min-height: 48px;
+        padding: 12px 10px;
+    }
+
+    /* Form inputs */
+    input, select, textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevents iOS zoom */
+        padding: 10px 12px;
+    }
+
+    /* Hide non-essential header controls on tablet */
+    .header-controls .btn-icon:nth-child(n+3) {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   PHONE BREAKPOINT (480px and below)
+   ========================================================================== */
+
+@media (max-width: 480px) {
+    /* Full width container */
+    .widget-container {
+        border-radius: 0;
+        max-width: 100%;
+        width: 100%;
+        min-width: unset;
+        padding: 12px;
+    }
+
+    /* Larger touch targets */
+    .btn, button, .tab, .atc-btn {
+        min-height: 48px;
+        padding: 12px 18px;
+        font-size: 16px;
+    }
+
+    .btn-icon {
+        min-width: 48px;
+        min-height: 48px;
+        font-size: 20px;
+    }
+
+    /* Stack layouts vertically */
+    .flight-summary {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .summary-arrow {
+        transform: rotate(90deg);
+        margin: 4px 0;
+    }
+
+    .flight-info, .flight-status {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .flight-info .info-item,
+    .flight-status .status-item {
+        flex: 1 1 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 12px;
+    }
+
+    /* Stack buttons vertically */
+    .checklist-footer,
+    .checklist-controls,
+    .emergency-controls,
+    .timer-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .checklist-footer .btn,
+    .checklist-controls .btn,
+    .emergency-controls .btn,
+    .timer-controls .btn {
+        width: 100%;
+    }
+
+    /* Horizontal scrolling tabs */
+    .checklist-tabs,
+    .copilot-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 6px;
+        padding-bottom: 4px;
+    }
+
+    .checklist-tabs::-webkit-scrollbar,
+    .copilot-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .checklist-tabs .tab,
+    .copilot-tabs .tab {
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+
+    /* Larger fonts */
+    .widget-title {
+        font-size: 18px;
+    }
+
+    .info-value, .status-value, .value, .next-name {
+        font-size: 17px;
+        font-weight: 600;
+    }
+
+    .label, .info-label, .status-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Larger checklist items */
+    .checklist-item, .waypoint-item {
+        min-height: 52px;
+        padding: 14px 12px;
+        font-size: 15px;
+    }
+
+    .toggle-item {
+        min-height: 48px;
+        padding: 12px;
+    }
+
+    /* Map adjustments */
+    .map-container {
+        min-height: 200px;
+    }
+
+    /* Hide non-essential UI elements */
+    .summary-arrow {
+        display: none;
+    }
+
+    .header-controls .btn-icon:nth-child(n+2) {
+        display: none;
+    }
+
+    /* Keep only first header button visible */
+    .header-controls {
+        gap: 4px;
+    }
+
+    /* ATC quick actions stack */
+    .atc-quick-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .atc-quick-actions .atc-btn {
+        width: 100%;
+    }
+
+    /* V-speed inputs stack */
+    .vspeed-inputs {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .vspeed-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .vspeed-row input {
+        width: 100px;
+    }
+
+    /* Aircraft selector full width */
+    .aircraft-selector select,
+    .checklist-header select,
+    .emergency-header select {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .checklist-header,
+    .emergency-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Next waypoint compact */
+    .next-waypoint .next-details {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Message area adjustments */
+    .message-area {
+        max-height: 200px;
+    }
+
+    .input-area {
+        flex-direction: row;
+    }
+
+    .input-area input {
+        flex: 1;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+        height: 8px;
+    }
+
+    .progress-section {
+        margin: 10px 0;
+    }
+}
+
+/* ==========================================================================
+   LANDSCAPE PHONE OPTIMIZATION
+   ========================================================================== */
+
+@media (max-height: 480px) and (orientation: landscape) {
+    .widget-container {
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    /* Compact header in landscape */
+    .widget-header {
+        padding: 8px 12px;
+    }
+
+    .widget-title {
+        font-size: 15px;
+    }
+
+    /* Reduce vertical spacing */
+    .checklist-container,
+    .waypoints-list,
+    .message-area {
+        max-height: 120px;
+    }
+
+    .map-container {
+        height: 150px;
+    }
+
+    /* Side-by-side layout where possible */
+    .flight-info, .flight-status {
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+}
+
+/* ==========================================================================
+   TOUCH ENHANCEMENTS
+   ========================================================================== */
+
+@media (pointer: coarse) {
+    /* Larger tap targets */
+    .checklist-item, .waypoint-item {
+        cursor: pointer;
+    }
+
+    /* Visual feedback on tap */
+    .btn:active,
+    button:active,
+    .tab:active,
+    .checklist-item:active,
+    .atc-btn:active {
+        transform: scale(0.97);
+        opacity: 0.85;
+        transition: transform 0.1s, opacity 0.1s;
+    }
+
+    /* Smooth scrolling containers */
+    .checklist-container,
+    .waypoints-list,
+    .message-area,
+    .atc-messages {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        overscroll-behavior: contain;
+    }
+
+    /* Prevent accidental text selection */
+    .btn, button, .tab, .checklist-item, .atc-btn {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+}
+
+/* ==========================================================================
+   SAFE AREA INSETS (Notched Phones)
+   ========================================================================== */
+
+@supports (padding: max(0px)) {
+    @media (max-width: 480px) {
+        .widget-container {
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(12px, env(safe-area-inset-right));
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+        }
+
+        .checklist-footer,
+        .checklist-controls {
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+        }
+    }
+}

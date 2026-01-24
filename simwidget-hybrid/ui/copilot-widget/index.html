@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,6 +25,7 @@
         <div class="copilot-tabs">
             <button class="tab active" data-mode="assist">Assist</button>
             <button class="tab" data-mode="checklist">Checklist</button>
+            <button class="tab" data-mode="emergency">Emergency</button>
             <button class="tab" data-mode="atc">ATC</button>
             <button class="tab" data-mode="advisor">Advisor</button>
         </div>
@@ -73,6 +75,10 @@
                     <select id="checklist-aircraft">
                         <option value="generic">Generic GA</option>
                         <option value="c172">Cessna 172</option>
+                        <option value="c208">Cessna 208 Caravan</option>
+                        <option value="tbm930">TBM 930</option>
+                        <option value="cj4">Citation CJ4</option>
+                        <option value="737">Boeing 737</option>
                         <option value="a320">Airbus A320</option>
                     </select>
                     <select id="checklist-phase">
@@ -94,12 +100,45 @@
                 </div>
             </div>
 
+            <!-- Emergency Mode -->
+            <div class="mode-panel" id="panel-emergency">
+                <div class="emergency-header">
+                    <select id="emergency-type">
+                        <option value="engine-failure">Engine Failure</option>
+                        <option value="engine-fire">Engine Fire</option>
+                        <option value="electrical">Electrical Failure</option>
+                        <option value="hydraulic">Hydraulic Failure</option>
+                        <option value="pressurization">Pressurization Failure</option>
+                        <option value="ditching">Ditching</option>
+                    </select>
+                    <button class="btn btn-danger" id="btn-squawk-7700">SQUAWK 7700</button>
+                </div>
+                <div class="emergency-items" id="emergency-items">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="emergency-controls">
+                    <button class="btn btn-secondary" id="btn-emergency-reset">Reset</button>
+                    <button class="btn btn-warning" id="btn-emergency-auto">▶ Run Procedure</button>
+                </div>
+            </div>
+
             <!-- ATC Mode -->
             <div class="mode-panel" id="panel-atc">
                 <div class="atc-frequency">
                     <span class="freq-label">FREQ</span>
                     <input type="text" id="atc-freq" value="121.500" class="freq-input">
                 </div>
+
+                <!-- ATIS Decoder -->
+                <div class="atis-section">
+                    <div class="atis-header">
+                        <span>ATIS Decoder</span>
+                        <button class="btn-small" id="btn-decode-atis">Decode</button>
+                    </div>
+                    <textarea id="atis-input" placeholder="Paste ATIS text here..." rows="3"></textarea>
+                    <div class="atis-decoded" id="atis-decoded"></div>
+                </div>
+
                 <div class="atc-messages" id="atc-messages">
                     <div class="atc-msg incoming">
                         <span class="callsign">ATC</span>
