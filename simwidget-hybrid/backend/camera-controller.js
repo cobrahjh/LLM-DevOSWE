@@ -1,9 +1,11 @@
 /**
- * SimWidget Camera Controller v3
- * 
+ * SimWidget Camera Controller v3.1
+ *
  * Now with platform detection and indicator support
  * Uses the best available input method for the current platform
- * 
+ *
+ * v3.1: Added HTTP-based ChasePlane detection (faster than tasklist)
+ *
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\backend\camera-controller.js
  */
 
@@ -11,11 +13,15 @@ const { exec } = require('child_process');
 const path = require('path');
 const { PlatformDetector } = require('./platform-detector');
 
+// ChasePlane API endpoint
+const CHASEPLANE_API = 'http://localhost:8652/getdata';
+
 class CameraController {
     constructor() {
         this.chasePlaneDetected = false;
+        this.detectionMethod = null;
         this.checkInterval = null;
-        
+
         // Platform detection
         this.platformDetector = new PlatformDetector();
         this.platformStatus = null;
@@ -60,20 +66,44 @@ class CameraController {
     }
 
     /**
-     * Detect if ChasePlane main app is running (not just the bridge)
+     * Detect if ChasePlane is running via HTTP API (fast) or tasklist (fallback)
      */
     async detectChasePlane() {
+        const wasDetected = this.chasePlaneDetected;
+
+        // Try HTTP detection first (faster, ~50ms vs ~400ms for tasklist)
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 500);
+
+            const response = await fetch(CHASEPLANE_API, {
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+
+            this.chasePlaneDetected = response.ok;
+            this.detectionMethod = 'http';
+        } catch (err) {
+            // HTTP failed, fallback to tasklist (hardcoded command, no user input)
+            this.chasePlaneDetected = await this.detectChasePlaneTasklist();
+            this.detectionMethod = 'tasklist';
+        }
+
+        if (this.chasePlaneDetected !== wasDetected) {
+            console.log(`[Camera] ChasePlane ${this.chasePlaneDetected ? 'DETECTED' : 'NOT detected'} (via ${this.detectionMethod})`);
+        }
+
+        return this.chasePlaneDetected;
+    }
+
+    /**
+     * Fallback detection using tasklist (slower but reliable)
+     */
+    async detectChasePlaneTasklist() {
         return new Promise((resolve) => {
-            // Look specifically for ChasePlane.exe, not just the bridge
+            // Safe: hardcoded command with no user input
             exec('tasklist /fi "imagename eq ChasePlane.exe" /fo csv /nh', (err, stdout) => {
-                const wasDetected = this.chasePlaneDetected;
-                this.chasePlaneDetected = stdout.includes('ChasePlane.exe');
-                
-                if (this.chasePlaneDetected !== wasDetected) {
-                    console.log(`[Camera] ChasePlane ${this.chasePlaneDetected ? 'DETECTED' : 'NOT detected'}`);
-                }
-                
-                resolve(this.chasePlaneDetected);
+                resolve(stdout.includes('ChasePlane.exe'));
             });
         });
     }
@@ -93,6 +123,7 @@ class CameraController {
     getStatus() {
         return {
             chasePlane: this.chasePlaneDetected,
+            chasePlaneDetection: this.detectionMethod || 'unknown',
             platform: this.platformStatus,
             stats: this.stats,
             mode: this.platformStatus?.preferred || 'unknown'
