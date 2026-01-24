@@ -273,6 +273,33 @@
     border-radius: 2px;
 }
 
+/* Selected waypoint (clicked) */
+.waypoint.selected {
+    border-left-color: #f59e0b !important;
+    background: rgba(245, 158, 11, 0.2) !important;
+}
+
+/* Copy feedback toast */
+.copy-feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--widget-accent, #667eea);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000;
+    animation: fadeInOut 1.5s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    20%, 80% { opacity: 1; }
+}
+
 /* Mobile */
 @media (max-width: 400px) {
     .flight-summary {

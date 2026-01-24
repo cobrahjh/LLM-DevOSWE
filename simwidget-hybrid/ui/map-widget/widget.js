@@ -1,6 +1,11 @@
 /**
  * Map Widget - SimWidget
  * Live aircraft position map using Leaflet
+ *
+ * Widget Interconnection:
+ * - Receives waypoint-select from flightplan-widget
+ * - Receives route-update from flightplan-widget
+ * - Broadcasts position-update to other widgets
  */
 
 class MapWidget {
@@ -16,9 +21,138 @@ class MapWidget {
         this.altitude = 0;
         this.speed = 0;
 
+        // Flight plan overlay
+        this.routeLine = null;
+        this.waypointMarkers = [];
+        this.flightPlan = null;
+
+        // Cross-widget communication
+        this.syncChannel = new BroadcastChannel('simwidget-sync');
+        this.initSyncListener();
+
         this.initMap();
         this.initControls();
         this.connectWebSocket();
+        this.loadFlightPlan();
+    }
+
+    initSyncListener() {
+        this.syncChannel.onmessage = (event) => {
+            const { type, data } = event.data;
+
+            switch (type) {
+                case 'waypoint-select':
+                    // Center map on selected waypoint
+                    if (data.lat && data.lng) {
+                        this.followMode = false;
+                        document.getElementById('btn-follow').classList.remove('active');
+                        this.map.setView([data.lat, data.lng], 10, { animate: true });
+                        this.highlightWaypoint(data.index);
+                    }
+                    break;
+
+                case 'route-update':
+                    // Flight plan updated, refresh route
+                    this.updateRoute(data);
+                    break;
+            }
+        };
+    }
+
+    highlightWaypoint(index) {
+        // Reset all waypoint markers
+        this.waypointMarkers.forEach((m, i) => {
+            const el = m.getElement();
+            if (el) {
+                el.classList.remove('highlighted');
+                if (i === index) {
+                    el.classList.add('highlighted');
+                }
+            }
+        });
+    }
+
+    async loadFlightPlan() {
+        try {
+            const response = await fetch('/api/flightplan');
+            if (response.ok) {
+                const data = await response.json();
+                this.updateRoute(data);
+            }
+        } catch (e) {
+            console.log('[Map] Flight plan fetch failed:', e);
+        }
+
+        // Refresh every 10 seconds
+        setTimeout(() => this.loadFlightPlan(), 10000);
+    }
+
+    updateRoute(flightPlan) {
+        if (!flightPlan || !flightPlan.waypoints) return;
+
+        this.flightPlan = flightPlan;
+
+        // Clear existing route
+        if (this.routeLine) {
+            this.map.removeLayer(this.routeLine);
+        }
+        this.waypointMarkers.forEach(m => this.map.removeLayer(m));
+        this.waypointMarkers = [];
+
+        // Draw route line
+        const routeCoords = flightPlan.waypoints
+            .filter(wp => wp.lat && wp.lng)
+            .map(wp => [wp.lat, wp.lng]);
+
+        if (routeCoords.length > 1) {
+            this.routeLine = L.polyline(routeCoords, {
+                color: '#22c55e',
+                weight: 3,
+                opacity: 0.8,
+                dashArray: '10, 5'
+            }).addTo(this.map);
+        }
+
+        // Add waypoint markers
+        flightPlan.waypoints.forEach((wp, index) => {
+            if (!wp.lat || !wp.lng) return;
+
+            const isActive = wp.active;
+            const isPassed = wp.passed;
+
+            const wpIcon = L.divIcon({
+                className: `waypoint-marker ${isActive ? 'active' : ''} ${isPassed ? 'passed' : ''}`,
+                html: `<div class="wp-icon">${this.getWpIcon(wp.type)}</div><div class="wp-label">${wp.ident || 'WP'}</div>`,
+                iconSize: [60, 30],
+                iconAnchor: [30, 15]
+            });
+
+            const marker = L.marker([wp.lat, wp.lng], { icon: wpIcon })
+                .addTo(this.map)
+                .bindPopup(`<b>${wp.ident || 'WP' + index}</b><br>${wp.type || 'Waypoint'}<br>Alt: ${wp.alt ? wp.alt.toLocaleString() + ' ft' : 'N/A'}`);
+
+            marker.on('click', () => {
+                // Broadcast waypoint selection
+                this.syncChannel.postMessage({
+                    type: 'waypoint-select',
+                    data: { index, ident: wp.ident, lat: wp.lat, lng: wp.lng }
+                });
+            });
+
+            this.waypointMarkers.push(marker);
+        });
+    }
+
+    getWpIcon(type) {
+        const icons = {
+            'departure': '🛫',
+            'arrival': '🛬',
+            'vor': '📡',
+            'ndb': '📻',
+            'fix': '◆',
+            'airport': '✈️'
+        };
+        return icons[type?.toLowerCase()] || '◆';
     }
 
     initMap() {
@@ -170,6 +304,18 @@ class MapWidget {
 
             // Update info display
             this.updateInfoDisplay();
+
+            // Broadcast position to other widgets
+            this.syncChannel.postMessage({
+                type: 'position-update',
+                data: {
+                    lat: this.position.lat,
+                    lng: this.position.lng,
+                    heading: this.heading,
+                    altitude: this.altitude,
+                    speed: this.speed
+                }
+            });
         }
     }
 

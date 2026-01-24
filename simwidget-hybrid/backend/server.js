@@ -705,15 +705,15 @@ app.get('/api/simbrief/ofp', async (req, res) => {
         }
 
         const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        const data = await response.json();
+
+        // Check for error in response (SimBrief returns 400 with JSON error)
+        if (data.fetch?.status?.startsWith('Error')) {
+            return res.status(404).json({ error: data.fetch.status });
+        }
 
         if (!response.ok) {
             return res.status(response.status).json({ error: 'SimBrief API error' });
-        }
-
-        const data = await response.json();
-
-        if (data.fetch?.status === 'Error') {
-            return res.status(404).json({ error: data.fetch.status_msg || 'No flight plan found' });
         }
 
         res.json(data);

@@ -47,6 +47,46 @@ class FlightPlanWidget {
             this.pollFlightPlan();
             setTimeout(() => this.refreshBtn.classList.remove('spinning'), 1000);
         });
+
+        // Copy route to notepad
+        document.getElementById('btn-copy-route').addEventListener('click', () => {
+            this.copyRouteToNotepad();
+        });
+    }
+
+    copyRouteToNotepad() {
+        if (!this.flightPlan || !this.flightPlan.waypoints) {
+            this.showFeedback('No flight plan loaded');
+            return;
+        }
+
+        const routeText = this.flightPlan.waypoints
+            .map(wp => wp.ident || wp.name || 'WP')
+            .join(' ');
+
+        const details = `Route: ${this.flightPlan.departure || '----'} → ${this.flightPlan.arrival || '----'}
+Dist: ${this.flightPlan.totalDistance ? Math.round(this.flightPlan.totalDistance) + ' nm' : '---'}
+WPTs: ${routeText}`;
+
+        // Broadcast to notepad widget
+        this.syncChannel.postMessage({
+            type: 'copy-route',
+            data: { text: details }
+        });
+
+        this.showFeedback('Sent to Notepad');
+    }
+
+    showFeedback(message) {
+        const existing = document.querySelector('.copy-feedback');
+        if (existing) existing.remove();
+
+        const feedback = document.createElement('div');
+        feedback.className = 'copy-feedback';
+        feedback.textContent = message;
+        document.body.appendChild(feedback);
+
+        setTimeout(() => feedback.remove(), 1500);
     }
 
     connectWebSocket() {

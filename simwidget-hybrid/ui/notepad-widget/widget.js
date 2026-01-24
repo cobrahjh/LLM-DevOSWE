@@ -1,6 +1,10 @@
 /**
  * Notepad Widget - SimWidget
  * Quick notes for frequencies, clearances, and flight info
+ *
+ * Widget Interconnection:
+ * - Receives copy-route from flightplan-widget
+ * - Receives position-update from map-widget
  */
 
 const TEMPLATES = {
@@ -19,6 +23,44 @@ class NotepadWidget {
         this.initElements();
         this.initEvents();
         this.renderSaved();
+        this.initSyncListener();
+    }
+
+    initSyncListener() {
+        // Cross-widget communication
+        const syncChannel = new BroadcastChannel('simwidget-sync');
+
+        syncChannel.onmessage = (event) => {
+            const { type, data } = event.data;
+
+            switch (type) {
+                case 'copy-route':
+                    // Received route from flight plan widget
+                    this.insertText(data.text);
+                    this.showFeedback('Route received from Flight Plan');
+                    break;
+
+                case 'waypoint-select':
+                    // Could optionally add waypoint info
+                    if (data.ident) {
+                        this.insertText(`\n--- ${data.ident} ---`);
+                    }
+                    break;
+            }
+        };
+    }
+
+    insertText(text) {
+        const start = this.notesArea.selectionStart;
+        const end = this.notesArea.selectionEnd;
+        const current = this.notesArea.value;
+
+        // Add newlines if not at start
+        const prefix = start > 0 && current[start - 1] !== '\n' ? '\n\n' : '';
+
+        this.notesArea.value = current.substring(0, start) + prefix + text + current.substring(end);
+        this.notesArea.focus();
+        this.saveState();
     }
 
     initElements() {
