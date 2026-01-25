@@ -543,21 +543,86 @@ class Dashboard {
             return;
         }
 
+        // Cancel with 100ms delay per voice standards
         window.speechSynthesis.cancel();
+        this.isSpeaking = false;
 
-        const utterance = new SpeechSynthesisUtterance('SimWidget voice test. All systems nominal.');
-        utterance.rate = parseFloat(this.voiceRate.value);
-        utterance.pitch = parseFloat(this.voicePitch.value);
-        utterance.volume = parseFloat(this.voiceVolume.value);
+        setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance('SimWidget voice test. All systems nominal.');
+            utterance.rate = parseFloat(this.voiceRate.value);
+            utterance.pitch = parseFloat(this.voicePitch.value);
+            utterance.volume = parseFloat(this.voiceVolume.value);
 
-        const voices = window.speechSynthesis.getVoices();
-        const selectedVoice = voices.find(v => v.name === this.voiceSelect.value);
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
+            const voices = window.speechSynthesis.getVoices();
+            const selectedVoice = voices.find(v => v.name === this.voiceSelect.value);
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+
+            utterance.onstart = () => { this.isSpeaking = true; };
+            utterance.onend = () => { this.isSpeaking = false; };
+            utterance.onerror = () => { this.isSpeaking = false; };
+
+            window.speechSynthesis.speak(utterance);
+        }, 100);
+
+        this.showToast('Testing voice...');
+    }
+
+    // Speak text following voice standards (with debounce for streaming)
+    speakText(text, immediate = false) {
+        if (!window.speechSynthesis || !this.voiceEnabled?.checked) return;
+
+        // Strip code blocks
+        const plainText = text
+            .replace(/```[\s\S]*?```/g, 'code block')
+            .replace(/`[^`]+`/g, 'code');
+
+        // Skip long responses (800 char default)
+        if (plainText.length > 800) return;
+
+        // Clear pending debounce
+        if (this.speechDebounceTimer) {
+            clearTimeout(this.speechDebounceTimer);
         }
 
-        window.speechSynthesis.speak(utterance);
-        this.showToast('Testing voice...');
+        if (!immediate) {
+            // Debounce: wait 1s after text stops changing
+            this.speechDebounceTimer = setTimeout(() => {
+                this.doSpeak(plainText);
+            }, 1000);
+        } else {
+            this.doSpeak(plainText);
+        }
+    }
+
+    doSpeak(text) {
+        window.speechSynthesis.cancel();
+        this.isSpeaking = false;
+
+        setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = parseFloat(this.voiceRate?.value || 0.9);
+            utterance.pitch = parseFloat(this.voicePitch?.value || 1.0);
+            utterance.volume = parseFloat(this.voiceVolume?.value || 1.0);
+
+            const voices = window.speechSynthesis.getVoices();
+            const selectedVoice = voices.find(v => v.name === this.voiceSelect?.value);
+            if (selectedVoice) utterance.voice = selectedVoice;
+
+            utterance.onstart = () => { this.isSpeaking = true; };
+            utterance.onend = () => { this.isSpeaking = false; };
+            utterance.onerror = () => { this.isSpeaking = false; };
+
+            window.speechSynthesis.speak(utterance);
+        }, 100);
+    }
+
+    stopSpeech() {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            this.isSpeaking = false;
+        }
     }
 }
 

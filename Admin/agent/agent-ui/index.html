@@ -978,6 +978,19 @@
             }
         }
 
+        // Voice settings following STANDARDS.md voice UI standards
+        let agentVoiceSettings = {
+            enabled: localStorage.getItem('cc-voice-enabled') !== 'false',
+            voice: localStorage.getItem('voice-entry-selected') || '',
+            rate: 0.9,
+            pitch: 1.0,
+            volume: 1.0,
+            autoSpeak: true,
+            maxTtsLength: 800
+        };
+        let isSpeaking = false;
+        let speechDebounceTimer = null;
+
         // Direct Web Speech API fallback for mobile/when VoiceEngine unavailable
         function speakDirect(text, voiceName, rate) {
             if (!window.speechSynthesis) {
@@ -985,36 +998,78 @@
                 return;
             }
 
+            // Strip code blocks for cleaner speech
+            const plainText = text
+                .replace(/```[\s\S]*?```/g, 'code block')
+                .replace(/`[^`]+`/g, 'code');
+
+            // Skip long responses
+            if (plainText.length > agentVoiceSettings.maxTtsLength) {
+                console.log('[speakDirect] Skipping - text too long:', plainText.length);
+                return;
+            }
+
             // Cancel any pending speech
             window.speechSynthesis.cancel();
+            isSpeaking = false;
 
-            const doSpeak = () => {
-                const utterance = new SpeechSynthesisUtterance(text);
+            // 100ms delay after cancel per voice standards
+            setTimeout(() => {
+                const doSpeak = () => {
+                    const utterance = new SpeechSynthesisUtterance(plainText);
+                    const voices = window.speechSynthesis.getVoices();
+
+                    if (voiceName && voices.length > 0) {
+                        const voice = voices.find(v => v.name === voiceName);
+                        if (voice) utterance.voice = voice;
+                    }
+                    utterance.rate = rate || agentVoiceSettings.rate;
+                    utterance.pitch = agentVoiceSettings.pitch;
+                    utterance.volume = agentVoiceSettings.volume;
+
+                    utterance.onstart = () => {
+                        isSpeaking = true;
+                        console.log('[speakDirect] Started speaking');
+                    };
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        console.log('[speakDirect] Finished speaking');
+                    };
+                    utterance.onerror = (e) => {
+                        isSpeaking = false;
+                        console.error('[speakDirect] Error:', e.error);
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                };
+
+                // Mobile Chrome: voices load async, may need to wait
                 const voices = window.speechSynthesis.getVoices();
-
-                if (voiceName && voices.length > 0) {
-                    const voice = voices.find(v => v.name === voiceName);
-                    if (voice) utterance.voice = voice;
+                if (voices.length === 0) {
+                    window.speechSynthesis.onvoiceschanged = doSpeak;
+                    window.speechSynthesis.getVoices();
+                    setTimeout(doSpeak, 100);
+                } else {
+                    doSpeak();
                 }
-                utterance.rate = rate || 0.9;
+            }, 100);
+        }
 
-                utterance.onstart = () => console.log('[speakDirect] Started speaking');
-                utterance.onend = () => console.log('[speakDirect] Finished speaking');
-                utterance.onerror = (e) => console.error('[speakDirect] Error:', e.error);
+        // Debounced speak for streaming responses
+        function speakResponseDebounced(text, voiceName, rate) {
+            if (speechDebounceTimer) {
+                clearTimeout(speechDebounceTimer);
+            }
+            speechDebounceTimer = setTimeout(() => {
+                speakDirect(text, voiceName, rate);
+            }, 1000); // Wait 1s after text stops changing
+        }
 
-                window.speechSynthesis.speak(utterance);
-            };
-
-            // Mobile Chrome: voices load async, may need to wait
-            const voices = window.speechSynthesis.getVoices();
-            if (voices.length === 0) {
-                window.speechSynthesis.onvoiceschanged = doSpeak;
-                // Trigger voice loading
-                window.speechSynthesis.getVoices();
-                // Fallback: speak anyway after short delay (uses default voice)
-                setTimeout(doSpeak, 100);
-            } else {
-                doSpeak();
+        // Stop speech
+        function stopSpeechDirect() {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                isSpeaking = false;
             }
         }
 
