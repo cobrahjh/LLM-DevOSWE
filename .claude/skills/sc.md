@@ -8,7 +8,7 @@ Backup: `C:\Users\hjhar\OneDrive\Pictures\screenshoots\backup\`
 1. List new screenshots (not in backup folder)
 2. Read/display each screenshot image
 3. Analyze what's shown and identify any issues
-4. After processing, move screenshots to backup folder:
+4. **ALWAYS** move screenshots to backup folder after checking (no need to ask):
    ```bash
-   mv "C:/Users/hjhar/OneDrive/Pictures/screenshoots/Screenshot*.png" "C:/Users/hjhar/OneDrive/Pictures/screenshoots/backup/"
+   mv C:/Users/hjhar/OneDrive/Pictures/screenshoots/Screenshot*.png C:/Users/hjhar/OneDrive/Pictures/screenshoots/backup/
    ```
