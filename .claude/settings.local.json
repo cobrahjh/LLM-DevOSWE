@@ -89,7 +89,10 @@
       "Bash(ssh hjhar@192.168.1.162 \"ls //192.168.1.42/LLM-DevOSWE 2>/dev/null || smbclient -L //192.168.1.42 -N 2>/dev/null || echo ''Need to test SMB access''\")",
       "Bash(ssh:*)",
       "Bash(ssh-add:*)",
-      "Bash(/c/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe:*)"
+      "Bash(/c/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe:*)",
+      "Bash(nssm list:*)",
+      "Bash(nssm install:*)",
+      "Bash(nssm get:*)"
     ],
     "deny": [
       "Read(.env)",

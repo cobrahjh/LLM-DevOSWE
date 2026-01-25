@@ -1,0 +1,172 @@
+<html>
+<head>
+<title>Quick Search</title>
+<HTA:APPLICATION
+    ID="QuickSearch"
+    APPLICATIONNAME="Quick Search"
+    BORDER="none"
+    BORDERSTYLE="none"
+    CAPTION="no"
+    SHOWINTASKBAR="no"
+    SINGLEINSTANCE="yes"
+    SYSMENU="no"
+    WINDOWSTATE="normal"
+/>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: Segoe UI, sans-serif;
+    background: #1a1a2e;
+    overflow: hidden;
+    border: 1px solid #333;
+    border-radius: 12px;
+}
+.search-box {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: #2a2a3e;
+    border-radius: 10px;
+    margin: 8px;
+}
+.search-icon { color: #667eea; font-size: 18px; margin-right: 10px; }
+input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 15px;
+    width: 350px;
+}
+.close-btn {
+    color: #666;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+}
+.close-btn:hover { color: #fff; }
+.results { margin: 0 8px 8px 8px; }
+.result-item {
+    padding: 10px 15px;
+    color: #aaa;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-bottom: 2px;
+}
+.result-item:hover { background: #2a2a3e; color: #fff; }
+.selected { background: #2a2a3e; color: #fff; }
+</style>
+<script>
+var commands = {
+    calc: {name: 'Calculator', run: 'calc.exe'},
+    cmd: {name: 'Command Prompt', run: 'cmd.exe'},
+    notepad: {name: 'Notepad', run: 'notepad.exe'},
+    explorer: {name: 'File Explorer', run: 'explorer.exe'},
+    settings: {name: 'Settings', run: 'ms-settings:'},
+    task: {name: 'Task Manager', run: 'taskmgr.exe'},
+    term: {name: 'Terminal', run: 'wt.exe'},
+    code: {name: 'VS Code', run: 'code'},
+    chrome: {name: 'Chrome', run: 'chrome.exe'},
+    edge: {name: 'Edge', run: 'msedge.exe'}
+};
+
+var results = [];
+var selectedIndex = 0;
+
+function init() {
+    window.resizeTo(450, 70);
+    var w = (screen.width - 450) / 2;
+    window.moveTo(w, 20);
+    document.getElementById('search').focus();
+}
+
+function doSearch() {
+    var query = document.getElementById('search').value.toLowerCase();
+    var resultsDiv = document.getElementById('results');
+    results = [];
+    selectedIndex = 0;
+
+    // Clear results using DOM
+    while (resultsDiv.firstChild) {
+        resultsDiv.removeChild(resultsDiv.firstChild);
+    }
+
+    if (!query) {
+        window.resizeTo(450, 70);
+        return;
+    }
+
+    if (query.charAt(0) === '?') {
+        var webQuery = query.substring(1);
+        if (webQuery) {
+            results.push({name: 'Google: ' + webQuery, run: 'https://www.google.com/search?q=' + encodeURIComponent(webQuery)});
+        }
+    } else {
+        for (var key in commands) {
+            var cmd = commands[key];
+            if (key.indexOf(query) >= 0 || cmd.name.toLowerCase().indexOf(query) >= 0) {
+                results.push(cmd);
+            }
+        }
+        if (results.length === 0) {
+            results.push({name: 'Search: ' + query, run: 'https://www.google.com/search?q=' + encodeURIComponent(query)});
+        }
+    }
+
+    renderResults();
+}
+
+function renderResults() {
+    var resultsDiv = document.getElementById('results');
+
+    // Clear existing
+    while (resultsDiv.firstChild) {
+        resultsDiv.removeChild(resultsDiv.firstChild);
+    }
+
+    // Create result elements
+    for (var i = 0; i < results.length; i++) {
+        var div = document.createElement('div');
+        div.className = 'result-item' + (i === selectedIndex ? ' selected' : '');
+        div.appendChild(document.createTextNode(results[i].name));
+        div.setAttribute('data-index', i);
+        div.onclick = function() { runResult(parseInt(this.getAttribute('data-index'))); };
+        resultsDiv.appendChild(div);
+    }
+
+    window.resizeTo(450, 70 + Math.min(results.length * 40, 200));
+}
+
+function runResult(index) {
+    if (results[index]) {
+        var shell = new ActiveXObject('WScript.Shell');
+        shell.Run(results[index].run);
+        document.getElementById('search').value = '';
+        while (document.getElementById('results').firstChild) {
+            document.getElementById('results').removeChild(document.getElementById('results').firstChild);
+        }
+        window.resizeTo(450, 70);
+    }
+}
+
+function handleKey(e) {
+    var key = e.keyCode;
+    if (key === 40) { selectedIndex = Math.min(selectedIndex + 1, results.length - 1); renderResults(); }
+    else if (key === 38) { selectedIndex = Math.max(selectedIndex - 1, 0); renderResults(); }
+    else if (key === 13) { runResult(selectedIndex); }
+    else if (key === 27) { document.getElementById('search').value = ''; while (document.getElementById('results').firstChild) { document.getElementById('results').removeChild(document.getElementById('results').firstChild); } window.resizeTo(450, 70); }
+}
+
+function closeApp() { window.close(); }
+</script>
+</head>
+<body onload="init()">
+<div class="search-box">
+    <span class="search-icon">&#128269;</span>
+    <input type="text" id="search" placeholder="Search..." oninput="doSearch()" onkeydown="handleKey(event)">
+    <span class="close-btn" onclick="closeApp()">&#10005;</span>
+</div>
+<div class="results" id="results"></div>
+</body>
+</html>

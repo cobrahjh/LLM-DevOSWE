@@ -2,6 +2,14 @@
   "lists": {
     "General": [
       {
+        "id": "1769295007140",
+        "text": "flight plan",
+        "thought": "Add import flight plans for all different formats for the flight plan widget",
+        "priority": "low",
+        "completed": false,
+        "createdAt": "2026-01-24T22:50:07.140Z"
+      },
+      {
         "id": "1768923795617",
         "text": "status",
         "thought": "",
