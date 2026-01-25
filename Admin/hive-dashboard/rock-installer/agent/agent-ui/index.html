@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<!--
+  Admin Kitt - SimWidget Command Center
+  Version: v3.0.0
+  Last updated: 2026-01-11
+
+  Complete redesign with:
+  - Sidebar navigation
+  - Dashboard cards
+  - Chat panel for Kitt
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimWidget Command Center v3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/llm-panels.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">✈️</div>
+            <div class="logo-text">Sim<span>Widget</span></div>
+        </div>
+
+        <div class="header-title">
+            <h1>Command Center</h1>
+            <p>System overview and quick actions</p>
+        </div>
+
+        <div class="header-status" id="header-status">
+            <div class="status-item" id="msfs-aircraft">
+                <span class="icon">✈️</span>
+                <span class="value">No Aircraft</span>
+            </div>
+            <div class="status-item" id="msfs-location">
+                <span class="icon">📍</span>
+                <span class="value">---</span>
+            </div>
+            <div class="status-item" id="msfs-time">
+                <span class="icon">⏱️</span>
+                <span class="value">00:00:00</span>
+            </div>
+            <div class="status-item" id="header-clock">
+                <span class="icon">🕐</span>
+                <span class="value" id="clock-time">--:--</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="header-claude-status">
+                <button class="header-btn" id="btn-output" onclick="typeof OutputBubble!=='undefined'&&OutputBubble.toggle()" title="Claude Activity">🤖</button>
+                <span class="claude-status-text" id="header-claude-status">Ready</span>
+                <button class="header-btn voice-toggle" id="btn-voice-toggle" onclick="typeof toggleVoiceEnabled==='function'&&toggleVoiceEnabled()" title="Toggle Voice">🔊</button>
+                <select class="header-llm-select" id="llm-select" onchange="typeof switchLLM==='function'&&switchLLM(this.value)" title="Select LLM">
+                    <option value="local">🖥️ Local</option>
+                    <option value="aipc">🌐 ai-pc</option>
+                    <option value="claude">🧠 Claude</option>
+                </select>
+            </div>
+            <button class="header-btn" id="btn-terminal-stream" onclick="typeof TerminalStream!=='undefined'&&TerminalStream.toggle()" title="Terminal Stream">💻</button>
+            <button class="header-btn" id="btn-claude-tasks" onclick="typeof toggleClaudeTasksPanel==='function'&&toggleClaudeTasksPanel()" title="Claude Tasks">🤖</button>
+            <button class="header-btn" id="btn-todo" onclick="typeof TodoModule!=='undefined'&&TodoModule.toggle()" title="TODO List">📋</button>
+            <button class="header-btn" id="btn-voice-entry" onclick="typeof showVoiceEntryModal==='function'&&showVoiceEntryModal()" title="Voice Entry">🎤</button>
+            <button class="header-btn" id="btn-help" title="Help">❓</button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <div class="nav-item active" data-page="dashboard">
+                        <span class="icon">📊</span>
+                        <span class="label">Dashboard</span>
+                    </div>
+                    <div class="nav-item" data-page="services">
+                        <span class="icon">🔧</span>
+                        <span class="label">Services</span>
+                        <span class="arrow">›</span>
+                    </div>
+                    <div class="nav-submenu" id="services-submenu">
+                        <div class="nav-item" onclick="showServiceDetails('master')">Master O</div>
+                        <div class="nav-item" onclick="showServiceDetails('simwidget')">DIM Server</div>
+                        <div class="nav-item" onclick="showServiceDetails('agent')">Agent (Kitt)</div>
+                        <div class="nav-item" onclick="showServiceDetails('relay')">Relay Queue</div>
+                    </div>
+                    <div class="nav-item" data-page="widgets">
+                        <span class="icon">🎛️</span>
+                        <span class="label">Widgets</span>
+                    </div>
+                    <div class="nav-item" data-page="logs" onclick="ActivityLog.show()">
+                        <span class="icon">📝</span>
+                        <span class="label">Logs</span>
+                        <span class="badge" id="error-count" style="display:none">0</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Quick Actions</div>
+                    <div class="nav-item" onclick="syncUIWithServer()">
+                        <span class="icon">🔄</span>
+                        <span class="label">Sync Status</span>
+                    </div>
+                    <div class="nav-item" onclick="showCompletedTasks()">
+                        <span class="icon">📋</span>
+                        <span class="label">Tasks</span>
+                    </div>
+                    <div class="nav-item" onclick="ClaudeTerminal.show()">
+                        <span class="icon">🤖</span>
+                        <span class="label">Claude</span>
+                    </div>
+                    <div class="nav-item" onclick="clearRelayQueue()">
+                        <span class="icon">🗑️</span>
+                        <span class="label">Clear Queue</span>
+                    </div>
+                    <div class="nav-item" onclick="clearLogs()">
+                        <span class="icon">🧹</span>
+                        <span class="label">Clear Logs</span>
+                    </div>
+                    <div class="nav-item" onclick="AdminKitt.sendQuick('sync to github')">
+                        <span class="icon">📤</span>
+                        <span class="label">Git Sync</span>
+                    </div>
+                    <div class="nav-item" onclick="syncMemory()">
+                        <span class="icon">💾</span>
+                        <span class="label">Sync Memory</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Widgets</div>
+                    <div class="nav-item" onclick="window.open('file:///C:/LLM-DevOSWE/msfs-panel/test.html','_blank')">
+                        <span class="icon">🧪</span>
+                        <span class="label">MSFS Panel Test</span>
+                    </div>
+                    <div class="nav-item" onclick="window.open('http://'+location.hostname+':8080','_blank')">
+                        <span class="icon">✈️</span>
+                        <span class="label">DIM Server UI</span>
+                    </div>
+                    <div class="nav-item" onclick="showCompletedTasks()">
+                        <span class="icon">✅</span>
+                        <span class="label">Completed Tasks</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Tools</div>
+                    <div class="nav-item" onclick="DebugInspector.toggle()">
+                        <span class="icon">🔍</span>
+                        <span class="label">Debug Inspector</span>
+                    </div>
+                    <div class="nav-item" onclick="window.open('http://'+location.hostname+':8600/task-history.html','_blank')">
+                        <span class="icon">📊</span>
+                        <span class="label">Task History</span>
+                    </div>
+                    <div class="nav-item" onclick="showDocsCenter()">
+                        <span class="icon">📚</span>
+                        <span class="label">Documentation</span>
+                    </div>
+                    <div class="nav-item" onclick="showDocAdmin()">
+                        <span class="icon">📄</span>
+                        <span class="label">Doc Admin</span>
+                    </div>
+                    <div class="nav-item" onclick="TodoModule.toggle()">
+                        <span class="icon">📋</span>
+                        <span class="label">TODO List</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">LLM Training</div>
+                    <div class="nav-item" onclick="PromptLibrary.toggle()">
+                        <span class="icon">📝</span>
+                        <span class="label">Prompt Library</span>
+                    </div>
+                    <div class="nav-item" onclick="EvaluationDashboard.toggle()">
+                        <span class="icon">📊</span>
+                        <span class="label">Eval Dashboard</span>
+                    </div>
+                    <div class="nav-item" onclick="TrainingGenerator.toggle()">
+                        <span class="icon">🎓</span>
+                        <span class="label">Training Data</span>
+                    </div>
+                    <div class="nav-item" onclick="InteractiveTrainer.toggle()">
+                        <span class="icon">🤖</span>
+                        <span class="label">Interactive Trainer</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <div class="nav-item" onclick="showCostReport()">
+                        <span class="icon">💰</span>
+                        <span class="label">Cost Report</span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <div class="user-name">Admin</div>
+                        <div class="user-role">Developer</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main" id="main-content">
+            <div class="dashboard-grid">
+                <!-- System Health Card -->
+                <div class="card card-health">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">💚</span>
+                            System Health
+                        </div>
+                        <div class="header-services" id="header-services">
+                            <div class="service-dot" id="hdot-master" title="Master"></div>
+                            <div class="service-dot" id="hdot-simwidget" title="DIM"></div>
+                            <div class="service-dot" id="hdot-agent" title="Agent"></div>
+                            <div class="service-dot" id="hdot-relay" title="Relay"></div>
+                            <div class="service-dot" id="hdot-remote" title="Remote"></div>
+                            <div class="service-dot" id="hdot-keysender" title="KeySender"></div>
+                            <span class="service-label" id="service-count">0/6</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="checkAllServers()" title="Refresh">🔄</button>
+                            <button class="card-btn" onclick="restartAllServers()" title="Restart All">⚡</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-health')" title="Minimize"></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="services-grid" id="services-grid">
+                            <!-- Services populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MSFS Connection Card -->
+                <div class="card card-msfs">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">✈️</span>
+                            MSFS
+                        </div>
+                        <div class="msfs-status-badge" id="msfs-status-badge">
+                            <span class="status-dot disconnected"></span>
+                            <span id="simconnect-status-text">Disconnected</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="reconnectMSFS()" title="Reconnect">🔄</button>
+                            <button class="card-btn minimize-btn" onclick="toggleCardMinimize('card-msfs')" title="Minimize"></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="msfs-aircraft-display">
+                            <div class="aircraft-icon-container">
+                                <div class="aircraft-icon">✈️</div>
+                            </div>
+                            <div class="aircraft-info">
+                                <div class="aircraft-name" id="aircraft-name">No Aircraft</div>
+                                <div class="aircraft-details" id="aircraft-details">Start MSFS to connect</div>
+                            </div>
+                        </div>
+                        <div class="flight-instruments">
+                            <div class="instrument">
+                                <div class="instrument-value"><span id="stat-altitude">---</span></div>
+                                <div class="instrument-label">ALT <span class="instrument-unit">ft</span></div>
+                            </div>
+                            <div class="instrument">
+                                <div class="instrument-value"><span id="stat-speed">---</span></div>
+                                <div class="instrument-label">IAS <span class="instrument-unit">kts</span></div>
+                            </div>
+                            <div class="instrument">
+                                <div class="instrument-value"><span id="stat-heading">---</span></div>
+                                <div class="instrument-label">HDG <span class="instrument-unit">°</span></div>
+                            </div>
+                            <div class="instrument fuel">
+                                <div class="instrument-value"><span id="stat-fuel">---</span></div>
+                                <div class="instrument-label">FUEL <span class="instrument-unit">%</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Todo Panel Container -->
+                <div id="todo-panel-container" class="card card-todo"></div>
+
+            </div>
+        </main>
+
+        <!-- Claude Tasks Floating Panel -->
+        <div id="claude-tasks-panel" class="claude-tasks-panel">
+            <div class="ctp-header">
+                <div class="ctp-title">
+                    <span class="ctp-icon">🤖</span>
+                    <span>Claude Tasks</span>
+                    <span class="ctp-status" id="ctp-status">●</span>
+                </div>
+                <div class="ctp-controls">
+                    <button class="ctp-btn" onclick="refreshTaskList()" title="Refresh">🔄</button>
+                    <button class="ctp-btn" onclick="ClaudeTerminal.show()" title="Terminal">💻</button>
+                    <button class="ctp-btn ctp-pin" onclick="togglePinPanel('claude-tasks-panel')" title="Pin (lock position)">📌</button>
+                    <button class="ctp-btn" onclick="toggleClaudeTasksMinimize()" title="Minimize">−</button>
+                    <button class="ctp-btn" onclick="hideClaudeTasksPanel()" title="Close">×</button>
+                </div>
+            </div>
+            <div class="ctp-tabs">
+                <button class="ctp-tab active" data-filter="all" onclick="filterClaudeTasks('all')">All</button>
+                <button class="ctp-tab" data-filter="pending" onclick="filterClaudeTasks('pending')">⏳ Pending</button>
+                <button class="ctp-tab" data-filter="processing" onclick="filterClaudeTasks('processing')">💭 Processing</button>
+                <button class="ctp-tab" data-filter="completed" onclick="filterClaudeTasks('completed')">✅ Completed</button>
+                <button class="ctp-tab" data-filter="failed" onclick="filterClaudeTasks('failed')">❌ Failed</button>
+            </div>
+            <div class="ctp-body">
+                <div id="claude-tasks-list" class="claude-tasks-list">
+                    <div class="task-empty">No tasks</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Dashboard FAB -->
+    <button class="dashboard-fab" id="dashboard-fab" onclick="toggleDashboard()" title="Toggle Dashboard">
+        <span class="fab-icon">📊</span>
+    </button>
+
+    <!-- Hidden file input for attachments -->
+    <input type="file" id="file-input" multiple hidden accept="image/*,.pdf,.txt,.js,.json,.md,.html,.css">
+
+    <!-- Module Scripts -->
+    <script src="modules/debug-inspector.js"></script>
+    <script src="modules/voice-engine.js"></script>
+    <script src="modules/claude-terminal.js"></script>
+    <script src="modules/terminal-stream.js"></script>
+    <script src="modules/relay-ws.js"></script>
+    <script src="modules/heather.js"></script>
+    <script src="modules/shi-zhen-xiang.js"></script>
+    <script src="modules/team-tasks.js"></script>
+    <script src="modules/task-processor.js"></script>
+    <script src="modules/claude-status.js"></script>
+    <script src="modules/task-bubbles.js"></script>
+    <script src="modules/core.js"></script>
+    <script src="modules/ui-panels.js"></script>
+    <script src="modules/services.js"></script>
+    <script src="modules/troubleshooting.js"></script>
+    <script src="modules/local-commands.js"></script>
+    <script src="modules/claude-bridge.js"></script>
+    <script src="modules/relay.js"></script>
+    <script src="modules/model.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="modules/remote-clients.js"></script>
+    <script src="modules/cost-report.js"></script>
+    <script src="modules/menu-utils.js"></script>
+    <script src="modules/activity-log.js"></script>
+    <script src="modules/output-bubble.js"></script>
+    <script src="modules/mobile-engine.js"></script>
+    <script src="modules/consumer-status.js"></script>
+    <script src="modules/openai-usage.js"></script>
+    <!-- LLM Training & Evaluation -->
+    <script src="modules/prompt-library.js"></script>
+    <script src="modules/evaluation-dashboard.js"></script>
+    <script src="modules/training-generator.js"></script>
+    <script src="modules/interactive-trainer.js"></script>
+
+    <!-- Existing Modules -->
+    <script src="todo-module.js"></script>
+    <script src="component-tester.js"></script>
+    <script src="../hot-update/hot-client.js"></script>
+
+    <script>
+        // Global error handler to prevent script breakage
+        window.onerror = function(msg, url, line) {
+            console.error('[GlobalError]', msg, 'at', url, line);
+            return false;
+        };
+
+        // v3.0 Command Center initialization
+        console.log('[CommandCenter] Script loaded');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[CommandCenter] DOMContentLoaded fired');
+
+            // Initialize TODO module
+            try {
+                if (typeof TodoModule !== 'undefined') {
+                    TodoModule.init(null, {
+                        assistantName: 'Kitt',
+                        inputSelector: '#message-input'
+                    });
+                }
+            } catch(e) { console.error('[Init] TodoModule failed:', e); }
+
+            // Initialize services grid
+            try { initServicesGrid(); } catch(e) { console.error('[Init] ServicesGrid failed:', e); }
+
+            // Setup nav item clicks
+            try { setupNavigation(); } catch(e) { console.error('[Init] Navigation failed:', e); }
+
+            // Start service polling
+            try { startServicePolling(); } catch(e) { console.error('[Init] ServicePolling failed:', e); }
+
+            // Start MSFS data polling
+            try { startMSFSPolling(); } catch(e) { console.error('[Init] MSFSPolling failed:', e); }
+        });
+
+        // Services configuration
+        const SERVICES = {
+            master: { name: 'Master O', icon: '🎯', port: 8500 },
+            simwidget: { name: 'DIM', icon: '✈️', port: 8080 },
+            agent: { name: 'Agent', icon: '🤖', port: 8585 },
+            relay: { name: 'Relay', icon: '📡', port: 8600 },
+            remote: { name: 'Remote', icon: '📱', port: 8590 },
+            keysender: { name: 'KeySender', icon: '⌨️', port: null, native: true }
+        };
+
+        function initServicesGrid() {
+            const grid = document.getElementById('services-grid');
+            if (!grid) return;
+
+            grid.innerHTML = Object.entries(SERVICES).map(([id, svc]) => `
+                <div class="service-card" data-service="${id}">
+                    <div class="service-card-header">
+                        <span class="service-name">${svc.icon} ${svc.name} <span class="service-port">${svc.port ? ':' + svc.port : 'native'}</span></span>
+                        <span class="service-status offline" id="status-${id}">Offline</span>
+                    </div>
+                    <div class="service-actions">
+                        <button class="service-action-btn" onclick="restartServer('${id}')">Restart</button>
+                        <button class="service-action-btn" onclick="${svc.port ? `window.open('http://'+location.hostname+':${svc.port}','_blank')` : `testService('${id}')`}">${svc.port ? 'Open' : 'Test'}</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const hasArrow = this.querySelector('.arrow');
+                    if (hasArrow) {
+                        this.classList.toggle('expanded');
+                    } else {
+                        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        let servicePollingInterval;
+        function startServicePolling() {
+            console.log('[CommandCenter] startServicePolling called');
+            checkAllServicesStatus();
+            servicePollingInterval = setInterval(checkAllServicesStatus, 10000);
+        }
+
+        async function checkAllServicesStatus() {
+            let onlineCount = 0;
+            console.log('[ServicePoll] Checking services...');
+
+            try {
+                // Get all service statuses from Master O
+                const masterUrl = `http://${location.hostname}:8500/api/status`;
+                console.log('[ServicePoll] Fetching from:', masterUrl);
+                const masterResp = await fetch(masterUrl);
+                console.log('[ServicePoll] Master response:', masterResp.status);
+
+                if (masterResp.ok) {
+                    const data = await masterResp.json();
+
+                    // Update Master O itself (it's running if we got here)
+                    updateServiceUI('master', true);
+                    onlineCount++;
+
+                    // Update other services from Master O data
+                    for (const [id, svc] of Object.entries(SERVICES)) {
+                        if (id === 'master') continue;
+
+                        const masterData = data.services?.[id];
+                        const isOnline = masterData?.running && masterData?.healthy;
+
+                        updateServiceUI(id, isOnline);
+                        if (isOnline) onlineCount++;
+                    }
+                } else {
+                    // Master O not responding - mark all offline
+                    for (const id of Object.keys(SERVICES)) {
+                        updateServiceUI(id, false);
+                    }
+                }
+            } catch (err) {
+                // Master O unreachable - check services directly
+                console.log('[ServicePoll] Master O unavailable, checking services directly...');
+                updateServiceUI('master', false);
+
+                for (const [id, svc] of Object.entries(SERVICES)) {
+                    if (id === 'master' || !svc.port) continue;
+                    try {
+                        const resp = await fetch(`http://${location.hostname}:${svc.port}/api/health`, {
+                            signal: AbortSignal.timeout(2000)
+                        });
+                        const isOnline = resp.ok;
+                        updateServiceUI(id, isOnline);
+                        if (isOnline) onlineCount++;
+                    } catch {
+                        updateServiceUI(id, false);
+                    }
+                }
+            }
+
+            document.getElementById('service-count').textContent = `${onlineCount}/6`;
+        }
+
+        function updateServiceUI(id, online) {
+            console.log(`[ServicePoll] Update ${id}: ${online ? 'ONLINE' : 'OFFLINE'}`);
+            // Update header dot
+            const hdot = document.getElementById(`hdot-${id}`);
+            if (hdot) {
+                hdot.className = `service-dot ${online ? 'online' : 'offline'}`;
+            }
+
+            // Update card status
+            const status = document.getElementById(`status-${id}`);
+            if (status) {
+                status.className = `service-status ${online ? 'online' : 'offline'}`;
+                status.textContent = online ? 'Online' : 'Offline';
+            }
+        }
+
+        // Sync UI with server status
+        async function syncUIWithServer() {
+            console.log('[Sync] Syncing UI with server...');
+
+            // Flash the sync button
+            const syncItems = document.querySelectorAll('.nav-item');
+            syncItems.forEach(item => {
+                if (item.textContent.includes('Sync Status')) {
+                    item.style.background = 'rgba(74, 158, 255, 0.3)';
+                    setTimeout(() => item.style.background = '', 500);
+                }
+            });
+
+            try {
+                // 1. Sync TaskProcessor with relay server
+                if (typeof TaskProcessor !== 'undefined' && TaskProcessor.syncWithServer) {
+                    const result = await TaskProcessor.syncWithServer();
+                    console.log('[Sync] TaskProcessor result:', result);
+                }
+
+                // 2. Force refresh services status
+                await checkAllServicesStatus();
+
+                // 3. Update header claude status
+                const healthRes = await fetch('http://127.0.0.1:8600/api/health');
+                const health = await healthRes.json();
+                const headerStatus = document.getElementById('header-claude-status');
+                if (headerStatus) {
+                    const busy = (health.queue?.pending > 0) || (health.queue?.processing > 0);
+                    headerStatus.textContent = busy ? 'Working' : 'Ready';
+                    headerStatus.style.color = busy ? '#8b5cf6' : '#22c55e';
+                }
+
+                // 4. Show toast notification
+                if (typeof ActivityLog !== 'undefined') {
+                    ActivityLog.success(`Synced - P:${health.queue?.pending || 0} W:${health.queue?.processing || 0}`);
+                }
+
+                console.log('[Sync] Complete:', health.queue);
+            } catch (err) {
+                console.error('[Sync] Failed:', err.message);
+                if (typeof ActivityLog !== 'undefined') {
+                    ActivityLog.error('Sync failed: ' + err.message);
+                }
+            }
+        }
+
+        function toggleChatPanel() {
+            document.getElementById('chat-panel').classList.toggle('collapsed');
+            document.querySelector('.main').style.marginRight =
+                document.getElementById('chat-panel').classList.contains('collapsed') ? '0' : '';
+        }
+
+        function toggleServicesPanel() {
+            const servicesNav = document.querySelector('.nav-item[data-page="services"]');
+            if (servicesNav) servicesNav.classList.toggle('expanded');
+        }
+
+        function showServiceDetails(serviceId) {
+            const svc = SERVICES[serviceId];
+            if (svc && svc.port) {
+                window.open(`http://${location.hostname}:${svc.port}`, '_blank');
+            }
+        }
+
+        function showSettingsModal() {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('settings-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'settings-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal" style="width: 400px;">
+                        <div class="modal-header">
+                            <h3>Settings</h3>
+                            <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="setting-group">
+                                <label class="setting-label">Voice</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <select id="voice-select" class="setting-select" onchange="changeVoice(this.value)" style="flex: 1;">
+                                        <option value="">Loading voices...</option>
+                                    </select>
+                                    <button onclick="testVoice()" class="btn-small" title="Test voice">🔊 Test</button>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Voice Rate</label>
+                                <input type="range" id="voice-rate" min="0.5" max="2" step="0.1" value="1"
+                                       onchange="changeVoiceRate(this.value)" class="setting-range">
+                                <span id="voice-rate-value">1.0x</span>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Voice Enabled</label>
+                                <input type="checkbox" id="voice-enabled" checked onchange="toggleVoice(this.checked)">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Populate voices
+            populateVoiceSelect();
+
+            // Show modal
+            modal.classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        // Doc Admin - Documentation management
+        function showDocAdmin() {
+            let modal = document.getElementById('doc-admin-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'doc-admin-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal modal-floating" style="width: 700px; max-height: 80vh; position: absolute;">
+                        <div class="modal-header" data-drag-handle="true">
+                            <h3>📄 Doc Admin</h3>
+                            <button class="modal-close" onclick="closeDocAdmin()">✕</button>
+                        </div>
+                        <div class="modal-body" style="overflow-y: auto;">
+                            <div class="doc-admin-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div class="doc-card" onclick="window.open('http://'+location.hostname+':8600/task-history.html','_blank')" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Task History</div>
+                                    <div style="font-size: 12px; color: #888;">View all past and present tasks</div>
+                                </div>
+                                <div class="doc-card" onclick="showDocsCenter()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">📚</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Documentation</div>
+                                    <div style="font-size: 12px; color: #888;">Project documentation</div>
+                                </div>
+                                <div class="doc-card" onclick="openStandards()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">📏</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Standards</div>
+                                    <div style="font-size: 12px; color: #888;">STANDARDS.md patterns</div>
+                                </div>
+                                <div class="doc-card" onclick="openClaude()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🤖</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">CLAUDE.md</div>
+                                    <div style="font-size: 12px; color: #888;">AI context file</div>
+                                </div>
+                                <div class="doc-card" onclick="openArchitecture()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🏗️</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Architecture</div>
+                                    <div style="font-size: 12px; color: #888;">System architecture</div>
+                                </div>
+                                <div class="doc-card" onclick="openTodo()" style="background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; cursor: pointer;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">TODO.md</div>
+                                    <div style="font-size: 12px; color: #888;">Development backlog</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #333;">
+                                <div style="font-size: 13px; color: #888; margin-bottom: 12px;">Quick Actions</div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button onclick="AdminKitt.sendQuick('open CLAUDE.md and show summary')" class="btn-secondary" style="font-size: 12px;">📖 Show CLAUDE.md</button>
+                                    <button onclick="AdminKitt.sendQuick('open STANDARDS.md and show summary')" class="btn-secondary" style="font-size: 12px;">📏 Show Standards</button>
+                                    <button onclick="AdminKitt.sendQuick('memstandards')" class="btn-secondary" style="font-size: 12px;">💾 Update Standards</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.onclick = (e) => { if (e.target === modal) closeDocAdmin(); };
+
+                // Make modal draggable
+                const floatingModal = modal.querySelector('.modal-floating');
+                const dragHandle = modal.querySelector('[data-drag-handle]');
+                if (floatingModal && dragHandle) {
+                    let isDragging = false;
+                    let offsetX = 0, offsetY = 0;
+
+                    dragHandle.addEventListener('mousedown', (e) => {
+                        if (e.target.closest('.modal-close')) return;
+                        isDragging = true;
+                        const rect = floatingModal.getBoundingClientRect();
+                        offsetX = e.clientX - rect.left;
+                        offsetY = e.clientY - rect.top;
+                        floatingModal.style.transition = 'none';
+                    });
+
+                    document.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+                        const x = e.clientX - offsetX;
+                        const y = e.clientY - offsetY;
+                        floatingModal.style.left = Math.max(0, Math.min(x, window.innerWidth - floatingModal.offsetWidth)) + 'px';
+                        floatingModal.style.top = Math.max(0, Math.min(y, window.innerHeight - floatingModal.offsetHeight)) + 'px';
+                    });
+
+                    document.addEventListener('mouseup', () => {
+                        isDragging = false;
+                        floatingModal.style.transition = '';
+                    });
+                }
+            }
+            modal.classList.add('active');
+        }
+
+        function closeDocAdmin() {
+            const modal = document.getElementById('doc-admin-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function openStandards() { AdminKitt.sendQuick('read STANDARDS.md'); closeDocAdmin(); }
+        function openClaude() { AdminKitt.sendQuick('read CLAUDE.md'); closeDocAdmin(); }
+        function openArchitecture() { AdminKitt.sendQuick('read ARCHITECTURE.md'); closeDocAdmin(); }
+        function openTodo() { AdminKitt.sendQuick('read TODO.md'); closeDocAdmin(); }
+
+        // Voice Entry Modal - manual voice output control
+        function showVoiceEntryModal() {
+            let modal = document.getElementById('voice-entry-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'voice-entry-modal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal modal-floating" style="width: 450px; position: absolute;">
+                        <div class="modal-header" data-drag-handle="true">
+                            <h3>🎤 Voice Entry</h3>
+                            <button class="modal-close" onclick="closeVoiceEntryModal()">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="setting-group">
+                                <label class="setting-label">Voice</label>
+                                <select id="voice-entry-voice-select" class="setting-select" onchange="updateVoiceEntryVoice(this.value)">
+                                    <option value="">Loading voices...</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Persona</label>
+                                <select id="voice-persona-select" class="setting-select">
+                                    <option value="heather">Heather (UK Female)</option>
+                                    <option value="shizhenxiang">Shǐ zhēn xiāng (Cantonese)</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Message Type</label>
+                                <select id="voice-type-select" class="setting-select">
+                                    <option value="system">System</option>
+                                    <option value="response">Response</option>
+                                    <option value="idle">Idle</option>
+                                    <option value="greeting">Greeting</option>
+                                    <option value="task">Task</option>
+                                    <option value="error">Error</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Text to Speak</label>
+                                <textarea id="voice-entry-text" class="setting-textarea" rows="4"
+                                    placeholder="Enter text for voice output..."></textarea>
+                            </div>
+                            <div class="setting-group" style="display: flex; gap: 10px;">
+                                <button onclick="speakVoiceEntry()" class="btn-primary" style="flex: 1;">
+                                    🔊 Speak
+                                </button>
+                                <button onclick="stopVoiceEntry()" class="btn-secondary">
+                                    ⏹ Stop
+                                </button>
+                            </div>
+                            <div class="setting-group">
+                                <label class="setting-label">Quick Phrases</label>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    <button onclick="setQuickPhrase('Hello! How can I help you today?')" class="btn-chip">Greeting</button>
+                                    <button onclick="setQuickPhrase('Working on it...')" class="btn-chip">Working</button>
+                                    <button onclick="setQuickPhrase('Done! Task completed successfully.')" class="btn-chip">Done</button>
+                                    <button onclick="setQuickPhrase('Let me think about that for a moment.')" class="btn-chip">Thinking</button>
+                                    <button onclick="setQuickPhrase('Something went wrong. Let me try again.')" class="btn-chip">Error</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Add styles for new elements
+                const style = document.createElement('style');
+                style.textContent = `
+                    .setting-textarea {
+                        width: 100%;
+                        padding: 10px;
+                        background: var(--bg-card, #2a2a3e);
+                        border: 1px solid var(--border-color, #333);
+                        border-radius: 6px;
+                        color: var(--text-primary, #e0e0e0);
+                        font-family: inherit;
+                        font-size: 13px;
+                        resize: vertical;
+                    }
+                    .setting-textarea:focus {
+                        outline: none;
+                        border-color: var(--accent-info, #4a9eff);
+                    }
+                    .btn-primary {
+                        background: var(--accent-info, #4a9eff);
+                        color: #fff;
+                        border: none;
+                        padding: 10px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    }
+                    .btn-primary:hover { opacity: 0.9; }
+                    .btn-secondary {
+                        background: var(--bg-card, #2a2a3e);
+                        color: var(--text-primary, #e0e0e0);
+                        border: 1px solid var(--border-color, #333);
+                        padding: 10px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                    }
+                    .btn-secondary:hover { background: #3a3a4e; }
+                    .btn-chip {
+                        background: var(--bg-card, #2a2a3e);
+                        color: var(--text-muted, #94a3b8);
+                        border: 1px solid var(--border-color, #333);
+                        padding: 4px 10px;
+                        border-radius: 12px;
+                        font-size: 11px;
+                        cursor: pointer;
+                    }
+                    .btn-chip:hover {
+                        background: #3a3a4e;
+                        color: var(--text-primary, #e0e0e0);
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Make modal draggable
+                const floatingModal = modal.querySelector('.modal-floating');
+                const dragHandle = modal.querySelector('[data-drag-handle]');
+                if (floatingModal && dragHandle) {
+                    let isDragging = false;
+                    let offsetX = 0, offsetY = 0;
+
+                    dragHandle.addEventListener('mousedown', (e) => {
+                        if (e.target.closest('.modal-close')) return;
+                        isDragging = true;
+                        const rect = floatingModal.getBoundingClientRect();
+                        offsetX = e.clientX - rect.left;
+                        offsetY = e.clientY - rect.top;
+                        floatingModal.style.transition = 'none';
+                    });
+
+                    document.addEventListener('mousemove', (e) => {
+                        if (!isDragging) return;
+                        const x = e.clientX - offsetX;
+                        const y = e.clientY - offsetY;
+                        floatingModal.style.left = Math.max(0, Math.min(x, window.innerWidth - floatingModal.offsetWidth)) + 'px';
+                        floatingModal.style.top = Math.max(0, Math.min(y, window.innerHeight - floatingModal.offsetHeight)) + 'px';
+                    });
+
+                    document.addEventListener('mouseup', () => {
+                        isDragging = false;
+                        floatingModal.style.transition = '';
+                    });
+                }
+            }
+            modal.classList.add('active');
+
+            // Populate voice selector
+            populateVoiceEntrySelect();
+        }
+
+        function populateVoiceEntrySelect() {
+            const select = document.getElementById('voice-entry-voice-select');
+            if (!select) return;
+
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => populateVoiceEntrySelect();
+                return;
+            }
+
+            select.innerHTML = voices.map(v =>
+                `<option value="${v.name}" ${v.name.includes('UK') && v.name.includes('Female') ? 'selected' : ''}>${v.name}</option>`
+            ).join('');
+
+            // Restore saved voice
+            const saved = localStorage.getItem('voice-entry-selected');
+            if (saved && [...select.options].some(o => o.value === saved)) {
+                select.value = saved;
+            }
+        }
+
+        function updateVoiceEntryVoice(voiceName) {
+            localStorage.setItem('voice-entry-selected', voiceName);
+        }
+
+        function closeVoiceEntryModal() {
+            const modal = document.getElementById('voice-entry-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function setQuickPhrase(text) {
+            const textarea = document.getElementById('voice-entry-text');
+            if (textarea) textarea.value = text;
+        }
+
+        function speakVoiceEntry() {
+            const text = document.getElementById('voice-entry-text').value.trim();
+            const persona = document.getElementById('voice-persona-select').value;
+            const messageType = document.getElementById('voice-type-select').value;
+
+            if (!text) {
+                alert('Please enter text to speak');
+                return;
+            }
+
+            // Determine voice options based on persona
+            let voiceOptions = {
+                messageType: messageType,
+                persona: persona === 'heather' ? 'Heather' : 'Shǐ zhēn xiāng'
+            };
+
+            // Use selected voice from dropdown (dynamic, works on all browsers)
+            const selectedVoice = document.getElementById('voice-entry-voice-select')?.value;
+            voiceOptions.voiceName = selectedVoice || '';
+            voiceOptions.rate = persona === 'shizhenxiang' ? 0.85 : 0.9;
+
+            // Use VoiceEngine to speak, with direct Web Speech API fallback
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.speakNow) {
+                try {
+                    VoiceEngine.speakNow(text, voiceOptions);
+                } catch (e) {
+                    console.error('[VoiceEntry] VoiceEngine error:', e);
+                    speakDirect(text, selectedVoice, voiceOptions.rate);
+                }
+            } else {
+                speakDirect(text, selectedVoice, voiceOptions.rate);
+            }
+        }
+
+        // Voice settings following STANDARDS.md voice UI standards
+        let agentVoiceSettings = {
+            enabled: localStorage.getItem('cc-voice-enabled') !== 'false',
+            voice: localStorage.getItem('voice-entry-selected') || '',
+            rate: 0.9,
+            pitch: 1.0,
+            volume: 1.0,
+            autoSpeak: true,
+            maxTtsLength: 800
+        };
+        let isSpeaking = false;
+        let speechDebounceTimer = null;
+
+        // Direct Web Speech API fallback for mobile/when VoiceEngine unavailable
+        function speakDirect(text, voiceName, rate) {
+            if (!window.speechSynthesis) {
+                alert('Speech synthesis not supported on this device');
+                return;
+            }
+
+            // Strip code blocks for cleaner speech
+            const plainText = text
+                .replace(/```[\s\S]*?```/g, 'code block')
+                .replace(/`[^`]+`/g, 'code');
+
+            // Skip long responses
+            if (plainText.length > agentVoiceSettings.maxTtsLength) {
+                console.log('[speakDirect] Skipping - text too long:', plainText.length);
+                return;
+            }
+
+            // Cancel any pending speech
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+
+            // 100ms delay after cancel per voice standards
+            setTimeout(() => {
+                const doSpeak = () => {
+                    const utterance = new SpeechSynthesisUtterance(plainText);
+                    const voices = window.speechSynthesis.getVoices();
+
+                    if (voiceName && voices.length > 0) {
+                        const voice = voices.find(v => v.name === voiceName);
+                        if (voice) utterance.voice = voice;
+                    }
+                    utterance.rate = rate || agentVoiceSettings.rate;
+                    utterance.pitch = agentVoiceSettings.pitch;
+                    utterance.volume = agentVoiceSettings.volume;
+
+                    utterance.onstart = () => {
+                        isSpeaking = true;
+                        console.log('[speakDirect] Started speaking');
+                    };
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        console.log('[speakDirect] Finished speaking');
+                    };
+                    utterance.onerror = (e) => {
+                        isSpeaking = false;
+                        console.error('[speakDirect] Error:', e.error);
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                };
+
+                // Mobile Chrome: voices load async, may need to wait
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length === 0) {
+                    window.speechSynthesis.onvoiceschanged = doSpeak;
+                    window.speechSynthesis.getVoices();
+                    setTimeout(doSpeak, 100);
+                } else {
+                    doSpeak();
+                }
+            }, 100);
+        }
+
+        // Debounced speak for streaming responses
+        function speakResponseDebounced(text, voiceName, rate) {
+            if (speechDebounceTimer) {
+                clearTimeout(speechDebounceTimer);
+            }
+            speechDebounceTimer = setTimeout(() => {
+                speakDirect(text, voiceName, rate);
+            }, 1000); // Wait 1s after text stops changing
+        }
+
+        // Stop speech
+        function stopSpeechDirect() {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                isSpeaking = false;
+            }
+        }
+
+        function stopVoiceEntry() {
+            if (typeof VoiceEngine !== 'undefined') {
+                VoiceEngine.stopSpeaking();
+            }
+        }
+
+        // Completed Tasks Floatable Window
+        let allTasksFilter = 'all';
+
+        async function showCompletedTasks() {
+            let panel = document.getElementById('tasks-panel');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.id = 'tasks-panel';
+                panel.className = 'floatable-panel';
+                panel.innerHTML = `
+                    <div class="fp-header">
+                        <div class="fp-title">
+                            <span>📋</span>
+                            <span>All Tasks</span>
+                        </div>
+                        <div class="fp-controls">
+                            <button class="fp-btn" onclick="loadCompletedTasks()" title="Refresh">🔄</button>
+                            <button class="fp-btn fp-pin" onclick="togglePanelPin('tasks-panel')" title="Pin/Unpin">📌</button>
+                            <button class="fp-btn" onclick="toggleTasksMinimize()" title="Minimize">─</button>
+                            <button class="fp-btn" onclick="closeCompletedTasksModal()" title="Close">✕</button>
+                        </div>
+                    </div>
+                    <div class="fp-tabs">
+                        <button class="fp-tab active" data-filter="all" onclick="filterTasks('all')">All</button>
+                        <button class="fp-tab" data-filter="pending" onclick="filterTasks('pending')">⏳ Pending</button>
+                        <button class="fp-tab" data-filter="processing" onclick="filterTasks('processing')">💭 Processing</button>
+                        <button class="fp-tab" data-filter="completed" onclick="filterTasks('completed')">✅ Completed</button>
+                        <button class="fp-tab" data-filter="failed" onclick="filterTasks('failed')">❌ Failed</button>
+                    </div>
+                    <div class="fp-body">
+                        <div id="completed-tasks-list" class="completed-tasks-list">
+                            <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="fp-footer">
+                        <span id="tasks-count" style="color:var(--text-muted);font-size:12px;">0 tasks</span>
+                        <a href="http://localhost:8600" target="_blank" style="color:var(--accent-info);font-size:12px;">Open Relay Queue ↗</a>
+                    </div>
+                `;
+                document.body.appendChild(panel);
+                addFloatablePanelStyles();
+                makeFloatableDraggable(panel);
+            }
+
+            panel.classList.remove('fp-hidden');
+            loadCompletedTasks();
+        }
+
+        function toggleTasksMinimize() {
+            const panel = document.getElementById('tasks-panel');
+            if (panel) panel.classList.toggle('fp-minimized');
+        }
+
+        function filterTasks(filter) {
+            allTasksFilter = filter;
+            document.querySelectorAll('.fp-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.filter === filter);
+            });
+            loadCompletedTasks();
+        }
+
+        function closeCompletedTasksModal() {
+            const panel = document.getElementById('tasks-panel');
+            if (panel) panel.classList.add('fp-hidden');
+        }
+
+        // Shared floatable panel styles
+        function addFloatablePanelStyles() {
+            if (document.getElementById('floatable-panel-styles')) return;
+            const style = document.createElement('style');
+            style.id = 'floatable-panel-styles';
+            style.textContent = `
+                .floatable-panel {
+                    position: fixed;
+                    bottom: 100px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 650px;
+                    height: 450px;
+                    min-width: 300px;
+                    min-height: 200px;
+                    background: var(--bg-card, #0d0d14);
+                    border: 1px solid var(--accent-info, #4a9eff);
+                    border-radius: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    z-index: 10000;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                    resize: both;
+                    overflow: hidden;
+                }
+                .floatable-panel::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 2px;
+                    right: 2px;
+                    width: 12px;
+                    height: 12px;
+                    background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%);
+                    pointer-events: none;
+                    border-radius: 0 0 6px 0;
+                }
+                .floatable-panel.fp-hidden { display: none; }
+                .floatable-panel.fp-minimized { height: 44px; resize: none; }
+                .floatable-panel.fp-minimized .fp-tabs,
+                .floatable-panel.fp-minimized .fp-body,
+                .floatable-panel.fp-minimized .fp-footer { display: none; }
+                .fp-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 14px;
+                    background: var(--bg-panel, #1a1a2e);
+                    border-bottom: 1px solid var(--border-color, #333);
+                    cursor: move;
+                    border-radius: 8px 8px 0 0;
+                    flex-shrink: 0;
+                }
+                .fp-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text-primary, #e0e0e0);
+                }
+                .fp-controls { display: flex; gap: 4px; }
+                .fp-btn {
+                    background: rgba(255,255,255,0.1);
+                    border: none;
+                    color: var(--text-muted, #aaa);
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
+                .fp-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+                .fp-btn.fp-pin { color: var(--text-muted); }
+                .fp-btn.fp-pin.pinned { color: #f59e0b; }
+                .floatable-panel.fp-pinned .fp-header { cursor: default; }
+                .floatable-panel.fp-pinned { border-color: #f59e0b; }
+                .fp-tabs {
+                    display: flex;
+                    gap: 4px;
+                    padding: 8px 14px;
+                    border-bottom: 1px solid var(--border-color, #333);
+                    background: rgba(0,0,0,0.2);
+                    flex-shrink: 0;
+                    flex-wrap: wrap;
+                }
+                .fp-tab {
+                    background: transparent;
+                    border: 1px solid transparent;
+                    color: var(--text-muted);
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: all 0.15s;
+                }
+                .fp-tab:hover { background: rgba(255,255,255,0.05); }
+                .fp-tab.active { background: var(--accent-info); color: #fff; }
+                .fp-body {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 0;
+                }
+                .fp-footer {
+                    padding: 8px 14px;
+                    border-top: 1px solid var(--border-color, #333);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex-shrink: 0;
+                }
+                .task-item {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid var(--border-color);
+                    transition: background 0.15s;
+                }
+                .task-item:hover { background: rgba(255,255,255,0.03); }
+                .task-item.crossed { opacity: 0.5; text-decoration: line-through; }
+                .task-status {
+                    display: inline-block;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
+                .task-status.pending { background: rgba(245,158,11,0.2); color: #f59e0b; }
+                .task-status.processing { background: rgba(139,92,246,0.2); color: #8b5cf6; }
+                .task-status.completed { background: rgba(34,197,94,0.2); color: #22c55e; }
+                .task-status.failed { background: rgba(239,68,68,0.2); color: #ef4444; }
+                .task-preview { margin-top: 6px; color: var(--text-primary); }
+                .task-meta { margin-top: 4px; font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+                #fp-snap-preview {
+                    position: fixed;
+                    background: rgba(74, 158, 255, 0.15);
+                    border: 2px dashed rgba(74, 158, 255, 0.6);
+                    border-radius: 8px;
+                    pointer-events: none;
+                    z-index: 9999;
+                    display: none;
+                    transition: all 0.15s ease;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Snap zones for floatable panels
+        const fpSnapConfig = {
+            threshold: 30,
+            zones: {
+                left: { x: 0, y: 0, w: 0.5, h: 1 },
+                right: { x: 0.5, y: 0, w: 0.5, h: 1 },
+                topLeft: { x: 0, y: 0, w: 0.5, h: 0.5 },
+                topRight: { x: 0.5, y: 0, w: 0.5, h: 0.5 },
+                bottomLeft: { x: 0, y: 0.5, w: 0.5, h: 0.5 },
+                bottomRight: { x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
+                full: { x: 0, y: 0, w: 1, h: 1 }
+            }
+        };
+
+        let fpSnapPreview = null;
+
+        function getFpSnapZone(x, y) {
+            const vw = window.innerWidth, vh = window.innerHeight, t = fpSnapConfig.threshold;
+            if (x < t && y < t) return 'topLeft';
+            if (x > vw - t && y < t) return 'topRight';
+            if (x < t && y > vh - t) return 'bottomLeft';
+            if (x > vw - t && y > vh - t) return 'bottomRight';
+            if (y < t && x > vw * 0.3 && x < vw * 0.7) return 'full';
+            if (x < t) return 'left';
+            if (x > vw - t) return 'right';
+            return null;
+        }
+
+        function showFpSnapPreview(zone) {
+            if (!fpSnapPreview) {
+                fpSnapPreview = document.createElement('div');
+                fpSnapPreview.id = 'fp-snap-preview';
+                document.body.appendChild(fpSnapPreview);
+            }
+            if (!zone) { fpSnapPreview.style.display = 'none'; return; }
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const z = fpSnapConfig.zones[zone], gap = 8;
+            fpSnapPreview.style.left = (z.x * vw + gap) + 'px';
+            fpSnapPreview.style.top = (z.y * vh + gap) + 'px';
+            fpSnapPreview.style.width = (z.w * vw - gap * 2) + 'px';
+            fpSnapPreview.style.height = (z.h * vh - gap * 2) + 'px';
+            fpSnapPreview.style.display = 'block';
+        }
+
+        function togglePanelPin(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const isPinned = panel.classList.toggle('fp-pinned');
+            const pinBtn = panel.querySelector('.fp-pin');
+            if (pinBtn) {
+                pinBtn.classList.toggle('pinned', isPinned);
+                pinBtn.title = isPinned ? 'Unpin (enable dragging)' : 'Pin (disable dragging)';
+            }
+        }
+
+        function makeFloatableDraggable(el) {
+            const header = el.querySelector('.fp-header');
+            let isDragging = false, startX, startY, initialX, initialY;
+            let pendingSnap = null, isSnapped = false, originalSize = null;
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.closest('button') || e.target.closest('a')) return;
+                if (el.classList.contains('fp-pinned')) return; // Don't drag if pinned
+                isDragging = true;
+                const rect = el.getBoundingClientRect();
+                startX = e.clientX; startY = e.clientY;
+                initialX = rect.left; initialY = rect.top;
+                el.style.transition = 'none';
+                el.style.transform = 'none';
+                if (isSnapped) {
+                    el.style.width = originalSize?.width + 'px';
+                    el.style.height = originalSize?.height + 'px';
+                    isSnapped = false;
+                    delete el.dataset.snapped;
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                el.style.left = (initialX + e.clientX - startX) + 'px';
+                el.style.top = (initialY + e.clientY - startY) + 'px';
+                el.style.right = 'auto'; el.style.bottom = 'auto';
+                pendingSnap = getFpSnapZone(e.clientX, e.clientY);
+                showFpSnapPreview(pendingSnap);
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                el.style.transition = '';
+                if (pendingSnap) {
+                    if (!isSnapped) originalSize = { width: el.offsetWidth, height: el.offsetHeight, left: el.offsetLeft, top: el.offsetTop };
+                    const vw = window.innerWidth, vh = window.innerHeight;
+                    const z = fpSnapConfig.zones[pendingSnap], gap = 8;
+                    el.style.left = (z.x * vw + gap) + 'px';
+                    el.style.top = (z.y * vh + gap) + 'px';
+                    el.style.width = (z.w * vw - gap * 2) + 'px';
+                    el.style.height = (z.h * vh - gap * 2) + 'px';
+                    isSnapped = true;
+                    el.dataset.snapped = pendingSnap;
+                }
+                showFpSnapPreview(null);
+                pendingSnap = null;
+            });
+
+            header.addEventListener('dblclick', (e) => {
+                if (e.target.closest('button')) return;
+                if (isSnapped && el.dataset.snapped === 'full') {
+                    if (originalSize) {
+                        el.style.left = originalSize.left + 'px';
+                        el.style.top = originalSize.top + 'px';
+                        el.style.width = originalSize.width + 'px';
+                        el.style.height = originalSize.height + 'px';
+                    }
+                    isSnapped = false;
+                    delete el.dataset.snapped;
+                } else {
+                    if (!isSnapped) originalSize = { width: el.offsetWidth, height: el.offsetHeight, left: el.offsetLeft, top: el.offsetTop };
+                    const z = fpSnapConfig.zones.full, gap = 8;
+                    el.style.left = gap + 'px';
+                    el.style.top = gap + 'px';
+                    el.style.width = (window.innerWidth - gap * 2) + 'px';
+                    el.style.height = (window.innerHeight - gap * 2) + 'px';
+                    isSnapped = true;
+                    el.dataset.snapped = 'full';
+                }
+            });
+        }
+
+        async function loadCompletedTasks() {
+            const list = document.getElementById('completed-tasks-list');
+            if (!list) return;
+
+            list.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8600/api/queue');
+                const data = await response.json();
+
+                if (!data.messages || data.messages.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No tasks in queue</div>';
+                    document.getElementById('tasks-count').textContent = '0 tasks';
+                    return;
+                }
+
+                // Filter tasks based on selected filter
+                let tasks = data.messages;
+                if (allTasksFilter !== 'all') {
+                    tasks = tasks.filter(t => t.status === allTasksFilter);
+                }
+
+                document.getElementById('tasks-count').textContent = `${tasks.length} of ${data.messages.length} tasks`;
+
+                if (tasks.length === 0) {
+                    list.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">No ${allTasksFilter} tasks</div>`;
+                    return;
+                }
+
+                list.innerHTML = tasks.map(task => `
+                    <div class="task-item ${task.crossed ? 'crossed' : ''}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span class="task-status ${task.status}">${task.status}</span>
+                            <span style="font-size:11px;color:var(--text-muted);">${task.id.substring(0,8)}...</span>
+                        </div>
+                        <div class="task-preview">${escapeHtml(task.preview || 'No preview')}</div>
+                        <div class="task-meta">
+                            <span>📅 ${new Date(task.createdAt).toLocaleString()}</span>
+                            ${task.retryCount > 0 ? `<span>🔄 ${task.retryCount} retries</span>` : ''}
+                            ${task.notes ? `<span>📝 ${escapeHtml(task.notes)}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    Error loading tasks: ${err.message}<br>
+                    <small>Make sure relay service is running on port 8600</small>
+                </div>`;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function populateVoiceSelect() {
+            const select = document.getElementById('voice-select');
+            if (!select) return;
+
+            const voices = window.speechSynthesis.getVoices();
+
+            // Voices load async in Chrome - if empty, wait for voiceschanged event
+            if (voices.length === 0) {
+                select.innerHTML = '<option value="">Loading voices...</option>';
+                window.speechSynthesis.onvoiceschanged = () => populateVoiceSelect();
+                return;
+            }
+
+            select.innerHTML = voices.map(v =>
+                `<option value="${v.name}" ${v.name.includes('UK') && v.name.includes('Female') ? 'selected' : ''}>${v.name}</option>`
+            ).join('');
+
+            // Select current voice if VoiceEngine has one
+            if (typeof VoiceEngine !== 'undefined') {
+                const current = VoiceEngine.getSelectedVoice?.()?.name;
+                if (current) select.value = current;
+            }
+        }
+
+        function changeVoice(voiceName) {
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setVoice) {
+                VoiceEngine.setVoice(voiceName);
+                console.log('[Settings] Voice changed to:', voiceName);
+            }
+        }
+
+        function changeVoiceRate(rate) {
+            document.getElementById('voice-rate-value').textContent = rate + 'x';
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setRate) {
+                VoiceEngine.setRate(parseFloat(rate));
+            }
+        }
+
+        function toggleVoice(enabled) {
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setEnabled) {
+                VoiceEngine.setEnabled(enabled);
+            }
+        }
+
+        function testVoice() {
+            const testPhrases = [
+                'Hello! This is how I sound.',
+                'Testing, one two three.',
+                'Hi there! Nice to meet you.',
+                'This is my voice. Do you like it?'
+            ];
+            const phrase = testPhrases[Math.floor(Math.random() * testPhrases.length)];
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.speak) {
+                VoiceEngine.speak(phrase);
+            }
+        }
+
+        function clearLogs() {
+            if (typeof UIPanels !== 'undefined' && UIPanels.clearLog) {
+                UIPanels.clearLog();
+            } else {
+                console.log('[CommandCenter] Clear logs - not yet implemented in v3.0');
+            }
+        }
+
+        async function syncMemory() {
+            console.log('[CommandCenter] Syncing memory (CLAUDE.md + STANDARDS.md)...');
+            addActivityItem('info', 'Syncing memory...', 'now');
+            try {
+                const res = await fetch('http://127.0.0.1:8600/api/knowledge/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: 'kittbox-' + Date.now() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const changed = data.results.filter(r => r.changed).length;
+                    if (changed > 0) {
+                        addActivityItem('success', `Memory synced: ${changed} file(s) backed up`, 'now');
+                    } else {
+                        addActivityItem('info', 'Memory already up to date', 'now');
+                    }
+                } else {
+                    addActivityItem('error', 'Memory sync failed: ' + (data.error || 'Unknown error'), 'now');
+                }
+            } catch (err) {
+                console.error('[CommandCenter] Memory sync failed:', err);
+                addActivityItem('error', 'Memory sync failed: ' + err.message, 'now');
+            }
+        }
+
+        function reconnectMSFS() {
+            // Restart DIM service via Master O to reconnect SimConnect
+            fetch('http://127.0.0.1:8500/api/services/simwidget/restart', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    console.log('[CommandCenter] DIM restart requested:', data);
+                    addActivityItem('info', 'DIM restarting to reconnect MSFS...', 'now');
+                })
+                .catch(err => console.error('[CommandCenter] DIM restart failed:', err));
+        }
+
+        // MSFS Data Polling
+        async function updateMSFSData() {
+            try {
+                const res = await fetch('http://127.0.0.1:8080/api/status');
+                const data = await res.json();
+
+                const statusEl = document.getElementById('simconnect-status');
+                const aircraftEl = document.getElementById('aircraft-name');
+
+                if (data.connected && data.flightData) {
+                    const fd = data.flightData;
+
+                    if (statusEl) {
+                        statusEl.textContent = '● SimConnect Connected';
+                        statusEl.className = 'connected';
+                    }
+                    if (aircraftEl) aircraftEl.textContent = fd.engineRunning ? 'In Flight' : 'On Ground';
+
+                    // Update flight stats
+                    const alt = document.getElementById('stat-altitude');
+                    const spd = document.getElementById('stat-speed');
+                    const hdg = document.getElementById('stat-heading');
+                    const fuel = document.getElementById('stat-fuel');
+
+                    if (alt) alt.textContent = Math.round(fd.altitude);
+                    if (spd) spd.textContent = Math.round(fd.groundSpeed || fd.speed);
+                    if (hdg) hdg.textContent = Math.round(fd.heading);
+                    if (fuel && fd.fuelCapacity > 0) {
+                        fuel.textContent = Math.round((fd.fuelTotal / fd.fuelCapacity) * 100);
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = '● SimConnect Disconnected';
+                        statusEl.className = 'disconnected';
+                    }
+                    if (aircraftEl) aircraftEl.textContent = 'No Aircraft';
+                }
+            } catch {
+                // DIM offline - don't spam errors
+            }
+        }
+
+        function startMSFSPolling() {
+            updateMSFSData();
+            setInterval(updateMSFSData, 2000);
+        }
+
+        function sendNTT() {
+            const input = document.getElementById('message-input');
+            if (input) {
+                input.value = 'ntt';
+                document.getElementById('btn-send').click();
+            }
+        }
+
+        // Active Tasks Card Integration
+        function updateActiveTasksCard() {
+            const taskList = document.getElementById('task-list');
+            if (!taskList || typeof TaskProcessor === 'undefined') return;
+
+            const queue = TaskProcessor.getQueue();
+            const currentTask = TaskProcessor.getCurrentTask();
+
+            // Build tasks array (current + queued)
+            const allTasks = [];
+            if (currentTask) allTasks.push(currentTask);
+            allTasks.push(...queue.filter(t => t.id !== currentTask?.id));
+
+            if (allTasks.length === 0) {
+                taskList.innerHTML = `
+                    <div class="task-item" style="opacity: 0.5;">
+                        <div class="task-status-icon queued">💭</div>
+                        <div class="task-content">
+                            <div class="task-title">No active tasks</div>
+                            <div class="task-meta">Send a message to Kitt to start</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const stateIcons = {
+                idle: '⏳',
+                queued: '📋',
+                waiting_for_claude: '⏳',
+                claude_processing: '💭',
+                complete: '✓',
+                error: '✗',
+                cancelled: '⊘'
+            };
+
+            const stateColors = {
+                idle: '#888',
+                queued: '#4a9eff',
+                waiting_for_claude: '#f59e0b',
+                claude_processing: '#8b5cf6',
+                complete: '#22c55e',
+                error: '#ef4444',
+                cancelled: '#666'
+            };
+
+            taskList.innerHTML = allTasks.slice(0, 5).map((task, idx) => {
+                const icon = stateIcons[task.state] || '📋';
+                const color = stateColors[task.state] || '#888';
+                const canCancel = ['queued', 'waiting_for_claude', 'claude_processing'].includes(task.state);
+
+                // Calculate elapsed time
+                const startTime = task.startedAt || task.queuedAt || task.createdAt;
+                const elapsed = startTime ? getElapsedTime(new Date(startTime)) : '';
+
+                // Better status messages
+                const stateLabels = {
+                    idle: 'Preparing...',
+                    queued: `Queued${elapsed ? ` • ${elapsed}` : ''}`,
+                    waiting_for_claude: `Sending to Claude... ${elapsed}`,
+                    claude_processing: `Claude thinking... ${elapsed}`,
+                    complete: 'Done',
+                    error: 'Failed',
+                    cancelled: 'Cancelled'
+                };
+
+                const statusText = task.statusMessage || stateLabels[task.state] || task.state;
+
+                return `
+                    <div class="task-item ${task.state === 'claude_processing' ? 'processing' : ''}">
+                        <div class="task-status-icon" style="color: ${color}">${icon}</div>
+                        <div class="task-content">
+                            <div class="task-title">${escapeHtmlSimple(task.content?.substring(0, 50) || 'Task')}${task.content?.length > 50 ? '...' : ''}</div>
+                            <div class="task-meta">${statusText}</div>
+                        </div>
+                        ${canCancel ? `<button class="task-cancel-btn" onclick="cancelActiveTask('${task.id}')" title="Cancel">✕</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtmlSimple(text) {
+            if (!text) return '';
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function getElapsedTime(startDate) {
+            const now = new Date();
+            const diffMs = now - startDate;
+            const diffSec = Math.floor(diffMs / 1000);
+            if (diffSec < 60) return `${diffSec}s`;
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin}m ${diffSec % 60}s`;
+            const diffHr = Math.floor(diffMin / 60);
+            return `${diffHr}h ${diffMin % 60}m`;
+        }
+
+        function cancelActiveTask(taskId) {
+            if (typeof TaskProcessor !== 'undefined' && TaskProcessor.cancel) {
+                TaskProcessor.cancel(taskId);
+            }
+        }
+
+        function toggleTasksMinimize() {
+            const card = document.querySelector('.card-tasks .card-body');
+            const btn = document.querySelector('.card-tasks .card-header button');
+            if (card) {
+                card.style.display = card.style.display === 'none' ? '' : 'none';
+                if (btn) btn.textContent = card.style.display === 'none' ? '▼' : '▲';
+            }
+        }
+
+        // Task reconciliation - move completed tasks to Recent Activity
+        function reconcileTaskToActivity(eventData) {
+            const task = eventData.task;
+            if (!task) return;
+
+            const taskPreview = (task.content || 'Task').substring(0, 40) + (task.content?.length > 40 ? '...' : '');
+
+            if (task.state === 'complete') {
+                addActivityItem('success', `Completed: ${taskPreview}`, 'now');
+            } else if (task.state === 'error') {
+                addActivityItem('error', `Failed: ${taskPreview} - ${task.error || 'Unknown error'}`, 'now');
+            } else if (task.state === 'cancelled') {
+                addActivityItem('warning', `Cancelled: ${taskPreview}`, 'now');
+            }
+
+            // Update the active tasks card
+            updateActiveTasksCard();
+        }
+
+        // Subscribe to TaskProcessor events when available
+        function initActiveTasksSubscription() {
+            if (typeof TaskProcessor !== 'undefined') {
+                // Update active tasks display
+                TaskProcessor.on('taskStateChange', updateActiveTasksCard);
+                TaskProcessor.on('taskProgress', updateActiveTasksCard);
+                TaskProcessor.on('taskQueued', (e) => {
+                    updateActiveTasksCard();
+                    addActivityItem('info', `Queued: ${(e.task?.content || 'Task').substring(0, 40)}...`, 'now');
+                });
+                TaskProcessor.on('taskStarted', (e) => {
+                    updateActiveTasksCard();
+                    addActivityItem('info', `Started: ${(e.task?.content || 'Task').substring(0, 40)}...`, 'now');
+                });
+
+                // Reconcile completed tasks to Recent Activity
+                TaskProcessor.on('taskComplete', reconcileTaskToActivity);
+                TaskProcessor.on('taskError', reconcileTaskToActivity);
+                TaskProcessor.on('taskCancelled', reconcileTaskToActivity);
+                TaskProcessor.on('taskRemoved', updateActiveTasksCard);
+
+                // Corrective action notification
+                TaskProcessor.on('taskCorrected', (e) => {
+                    updateActiveTasksCard();
+                    addActivityItem('warning', `Corrected: ${(e.task?.content || 'Task').substring(0, 30)}... - ${e.reason || 'stuck task'}`, 'now');
+                });
+
+                updateActiveTasksCard();
+                console.log('[CommandCenter] Active Tasks subscribed to TaskProcessor');
+            } else {
+                // Retry in 100ms
+                setTimeout(initActiveTasksSubscription, 100);
+            }
+        }
+
+        // Init after DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initActiveTasksSubscription, 200);
+        });
+
+        // Clear all task state (localStorage + DOM)
+        function clearTaskState() {
+            localStorage.removeItem('task-bubbles-state');
+            localStorage.removeItem('task-processor-state');
+            document.querySelectorAll('.task-bubble').forEach(el => el.remove());
+            if (typeof TaskProcessor !== 'undefined') {
+                TaskProcessor._state.queue = [];
+                TaskProcessor._state.currentTask = null;
+                TaskProcessor._state.lastTask = null;
+            }
+            updateActiveTasksCard();
+            addActivityItem('info', 'Task state cleared', 'now');
+            console.log('[CommandCenter] Task state cleared');
+        }
+        window.clearTaskState = clearTaskState;
+
+        // ==================== CLAUDE TASKS LIST ====================
+
+        function getTaskName(content) {
+            // Extract first line or first 40 chars as task name
+            if (!content) return 'Unknown task';
+            const firstLine = content.split('\n')[0];
+            return firstLine.length > 40 ? firstLine.substring(0, 40) + '...' : firstLine;
+        }
+
+        function getTaskDescription(content) {
+            // Get a short description from the content
+            if (!content) return '';
+            const lines = content.split('\n');
+            if (lines.length > 1) {
+                return lines[1].substring(0, 60) + (lines[1].length > 60 ? '...' : '');
+            }
+            return content.length > 60 ? content.substring(40, 100) + '...' : '';
+        }
+
+        // Average task duration in ms (default 2 minutes, updated from completed tasks)
+        let avgTaskDuration = parseInt(localStorage.getItem('cc-avg-task-duration')) || 120000;
+        let completedTaskTimes = JSON.parse(localStorage.getItem('cc-task-times') || '[]');
+
+        function formatDuration(ms) {
+            if (ms < 0) return '0s';
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (minutes > 0) return `${minutes}m ${secs}s`;
+            return `${secs}s`;
+        }
+
+        function calculateEstimate(processingAt) {
+            if (!processingAt) return null;
+            const startTime = new Date(processingAt).getTime();
+            const elapsed = Date.now() - startTime;
+            const remaining = avgTaskDuration - elapsed;
+            return {
+                elapsed,
+                remaining: Math.max(0, remaining),
+                progress: Math.min(100, (elapsed / avgTaskDuration) * 100)
+            };
+        }
+
+        
+        // Claude Tasks Panel Functions
+        function showClaudeTasksPanel() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) {
+                panel.classList.remove('hidden');
+                refreshTaskList();
+            }
+        }
+
+        function hideClaudeTasksPanel() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) panel.classList.add('hidden');
+        }
+
+        function toggleClaudeTasksPanel() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+                if (!panel.classList.contains('hidden')) refreshTaskList();
+            }
+        }
+
+        function toggleDashboard() {
+            const main = document.getElementById('main-content');
+            const fab = document.getElementById('dashboard-fab');
+            if (main && fab) {
+                main.classList.toggle('hidden');
+                fab.classList.toggle('collapsed');
+                fab.title = main.classList.contains('hidden') ? 'Show Dashboard' : 'Hide Dashboard';
+            }
+        }
+
+        function toggleClaudeTasksMinimize() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (panel) panel.classList.toggle('minimized');
+        }
+
+        // Generic Pin/Unpin function for any panel/window
+        function togglePinPanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const isPinned = panel.classList.toggle('panel-pinned');
+
+            // Update pin button state
+            const pinBtn = panel.querySelector('.ctp-pin, .fp-pin, [class*="-pin"]');
+            if (pinBtn) {
+                pinBtn.classList.toggle('pinned', isPinned);
+                pinBtn.title = isPinned ? 'Unpin (enable dragging)' : 'Pin (lock position)';
+            }
+
+            // Update header cursor
+            const header = panel.querySelector('.ctp-header, .fp-header, [class*="-header"]');
+            if (header) {
+                header.style.cursor = isPinned ? 'default' : 'move';
+            }
+
+            // Save pin state
+            localStorage.setItem(`panel-${panelId}-pinned`, isPinned);
+
+            console.log(`[Pin] ${panelId}: ${isPinned ? 'PINNED' : 'UNPINNED'}`);
+        }
+        window.togglePinPanel = togglePinPanel;
+
+        // Restore pin states on load
+        function restorePinStates() {
+            const panels = ['claude-tasks-panel', 'tasks-panel', 'claude-terminal-panel'];
+            panels.forEach(panelId => {
+                const isPinned = localStorage.getItem(`panel-${panelId}-pinned`) === 'true';
+                if (isPinned) {
+                    const panel = document.getElementById(panelId);
+                    if (panel) {
+                        panel.classList.add('panel-pinned');
+                        const pinBtn = panel.querySelector('.ctp-pin, .fp-pin, [class*="-pin"]');
+                        if (pinBtn) {
+                            pinBtn.classList.add('pinned');
+                            pinBtn.title = 'Unpin (enable dragging)';
+                        }
+                        const header = panel.querySelector('.ctp-header, .fp-header, [class*="-header"]');
+                        if (header) header.style.cursor = 'default';
+                    }
+                }
+            });
+        }
+
+        // Make Claude Tasks panel draggable
+        function initClaudeTasksDrag() {
+            const panel = document.getElementById('claude-tasks-panel');
+            if (!panel) return;
+
+            const header = panel.querySelector('.ctp-header');
+            if (!header) return;
+
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                if (panel.classList.contains('panel-pinned')) return; // Don't drag if pinned
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                const rect = panel.getBoundingClientRect();
+                startLeft = rect.left;
+                startTop = rect.top;
+                panel.style.transition = 'none';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                panel.style.left = (startLeft + dx) + 'px';
+                panel.style.top = (startTop + dy) + 'px';
+                panel.style.bottom = 'auto';
+                panel.style.right = 'auto';
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.style.transition = '';
+                    // Save position
+                    localStorage.setItem('claudeTasksPanelPos', JSON.stringify({
+                        left: panel.style.left,
+                        top: panel.style.top
+                    }));
+                }
+            });
+            
+            // Restore saved position
+            const saved = localStorage.getItem('claudeTasksPanelPos');
+            if (saved) {
+                try {
+                    const pos = JSON.parse(saved);
+                    panel.style.left = pos.left;
+                    panel.style.top = pos.top;
+                    panel.style.bottom = 'auto';
+                    panel.style.right = 'auto';
+                } catch(e) {}
+            }
+        }
+        
+        // Init on load
+        document.addEventListener('DOMContentLoaded', initClaudeTasksDrag);
+        document.addEventListener('DOMContentLoaded', restorePinStates);
+
+        // Claude Tasks filter state
+        let claudeTasksFilter = 'all';
+
+        function filterClaudeTasks(filter) {
+            claudeTasksFilter = filter;
+            document.querySelectorAll('.ctp-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.filter === filter);
+            });
+            refreshTaskList();
+        }
+
+async function refreshTaskList() {
+            const listEl = document.getElementById('claude-tasks-list');
+            if (!listEl) return;
+
+            try {
+                // Fetch tasks from relay service
+                const res = await fetch('http://127.0.0.1:8600/api/queue');
+                const data = await res.json();
+
+                if (!data.messages || data.messages.length === 0) {
+                    listEl.innerHTML = '<div class="task-empty">No tasks</div>';
+                    return;
+                }
+
+                // Sort: processing first, then pending, then others
+                const statusOrder = { processing: 0, pending: 1, completed: 2, failed: 3 };
+                let tasks = data.messages.sort((a, b) => {
+                    return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
+                });
+
+                // Apply filter
+                if (claudeTasksFilter !== 'all') {
+                    tasks = tasks.filter(t => t.status === claudeTasksFilter);
+                }
+
+                if (tasks.length === 0) {
+                    listEl.innerHTML = `<div class="task-empty">No ${claudeTasksFilter === 'all' ? '' : claudeTasksFilter + ' '}tasks</div>`;
+                    return;
+                }
+
+                // Render task items (show max 10)
+                listEl.innerHTML = tasks.slice(0, 10).map(task => {
+                    const shortId = task.id.substring(0, 8);
+                    const name = getTaskName(task.preview || task.content);
+                    const desc = getTaskDescription(task.preview || task.content);
+                    let status = task.status || 'pending';
+
+                    // Check if processing task is stale (>2 minutes)
+                    const isStale = status === 'processing' && task.createdAt &&
+                        (Date.now() - new Date(task.createdAt).getTime()) > 2 * 60 * 1000;
+                    if (isStale) status = 'stale';
+
+                    // Calculate estimate for processing tasks
+                    let timeInfo = '';
+                    if (status === 'processing' && task.processingAt) {
+                        const est = calculateEstimate(task.processingAt);
+                        if (est) {
+                            const remainingText = est.remaining > 0 ? `~${formatDuration(est.remaining)} left` : 'completing...';
+                            timeInfo = `
+                                <div class="claude-task-time">
+                                    <span class="task-elapsed">⏱ ${formatDuration(est.elapsed)}</span>
+                                    <span class="task-remaining">${remainingText}</span>
+                                    <div class="task-progress-bar">
+                                        <div class="task-progress-fill" style="width: ${est.progress}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    return `
+                        <div class="claude-task-item">
+                            <div class="claude-task-status ${status}"></div>
+                            <div class="claude-task-content">
+                                <div class="claude-task-header">
+                                    <span class="claude-task-id">${shortId}</span>
+                                    <span class="claude-task-status-text ${status}">${status}</span>
+                                </div>
+                                <div class="claude-task-name">${escapeHtmlSimple(name)}</div>
+                                ${desc ? `<div class="claude-task-desc">${escapeHtmlSimple(desc)}</div>` : ''}
+                                ${timeInfo}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Show count if more than displayed
+                if (tasks.length > 10) {
+                    listEl.innerHTML += `<div class="task-empty">+${tasks.length - 10} more tasks</div>`;
+                }
+
+            } catch (err) {
+                listEl.innerHTML = '<div class="task-empty">Could not load tasks</div>';
+                console.error('[TaskList] Error:', err);
+            }
+        }
+
+        // Auto-refresh task list every 3 seconds
+        let taskListInterval;
+        function startTaskListPolling() {
+            refreshTaskList();
+            taskListInterval = setInterval(refreshTaskList, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', startTaskListPolling);
+        window.refreshTaskList = refreshTaskList;
+
+        // ==================== VOICE TOGGLE ====================
+
+        let voiceEnabled = localStorage.getItem('cc-voice-enabled') !== 'false'; // Default enabled
+
+        function toggleVoiceEnabled() {
+            voiceEnabled = !voiceEnabled;
+            localStorage.setItem('cc-voice-enabled', voiceEnabled);
+
+            const btn = document.getElementById('btn-voice-toggle');
+            if (btn) {
+                btn.classList.toggle('muted', !voiceEnabled);
+                btn.textContent = voiceEnabled ? '🔊' : '🔇';
+                btn.title = voiceEnabled ? 'Voice On (click to mute)' : 'Voice Off (click to unmute)';
+            }
+
+            // Update VoiceEngine if available
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setEnabled) {
+                VoiceEngine.setEnabled(voiceEnabled);
+            }
+
+            console.log('[Voice] Voice', voiceEnabled ? 'enabled' : 'disabled');
+        }
+
+        // LLM Switcher
+        async function switchLLM(mode) {
+            try {
+                const response = await fetch('http://localhost:8610/api/llm/mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode })
+                });
+                const result = await response.json();
+                console.log('[LLM] Switched to:', mode, result);
+
+                // Update status text
+                const statusEl = document.getElementById('header-claude-status');
+                if (statusEl) {
+                    const labels = { local: 'Local LLM', aipc: 'ai-pc', claude: 'Claude' };
+                    statusEl.textContent = labels[mode] || mode;
+                }
+
+                // Save preference
+                localStorage.setItem('cc-llm-mode', mode);
+            } catch (err) {
+                console.error('[LLM] Switch failed:', err);
+                alert('Failed to switch LLM. Is Smart Router running?');
+            }
+        }
+
+        function restoreLLMMode() {
+            const saved = localStorage.getItem('cc-llm-mode') || 'local';
+            const select = document.getElementById('llm-select');
+            if (select) {
+                select.value = saved;
+                // Update status text
+                const statusEl = document.getElementById('header-claude-status');
+                if (statusEl) {
+                    const labels = { local: 'Local LLM', aipc: 'ai-pc', claude: 'Claude' };
+                    statusEl.textContent = labels[saved] || 'Ready';
+                }
+            }
+        }
+
+        function restoreVoiceState() {
+            const btn = document.getElementById('btn-voice-toggle');
+            if (btn) {
+                btn.classList.toggle('muted', !voiceEnabled);
+                btn.textContent = voiceEnabled ? '🔊' : '🔇';
+                btn.title = voiceEnabled ? 'Voice On (click to mute)' : 'Voice Off (click to unmute)';
+            }
+
+            // Apply to VoiceEngine
+            if (typeof VoiceEngine !== 'undefined' && VoiceEngine.setEnabled) {
+                VoiceEngine.setEnabled(voiceEnabled);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', restoreVoiceState);
+        document.addEventListener('DOMContentLoaded', restoreLLMMode);
+        window.toggleVoiceEnabled = toggleVoiceEnabled;
+        window.switchLLM = switchLLM;
+
+        function addActivityItem(type, message, time) {
+            const list = document.getElementById('activity-list');
+            if (!list) return;
+
+            const iconClass = { info: 'info', success: 'success', warning: 'warning', error: 'error' }[type] || 'info';
+            const iconSymbol = { info: 'ℹ', success: '✓', warning: '⚠', error: '✕' }[type] || 'ℹ';
+
+            const item = document.createElement('div');
+            item.className = 'activity-item';
+            item.innerHTML = `
+                <div class="activity-icon ${iconClass}">${iconSymbol}</div>
+                <div class="activity-content">
+                    <div class="activity-message">${message}</div>
+                </div>
+                <div class="activity-time">${time || 'now'}</div>
+            `;
+
+            list.insertBefore(item, list.firstChild);
+
+            // Keep only last 10 items
+            while (list.children.length > 10) {
+                list.removeChild(list.lastChild);
+            }
+        }
+
+        // Expose globally
+        window.addActivityItem = addActivityItem;
+        window.updateServiceUI = updateServiceUI;
+
+        // Activity Monitor Task Filters
+        function filterActivityTasks(filter) {
+            const filtersContainer = document.getElementById('activity-task-filters');
+            const activityLog = document.getElementById('activity-mini-log');
+            if (!filtersContainer || !activityLog) return;
+
+            // Update active tab
+            filtersContainer.querySelectorAll('.af-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+
+            // Filter activity items
+            activityLog.querySelectorAll('.activity-item').forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = '';
+                } else {
+                    const itemStatus = item.dataset.status || '';
+                    item.style.display = itemStatus === filter ? '' : 'none';
+                }
+            });
+        }
+        window.filterActivityTasks = filterActivityTasks;
+
+        // Card Minimize/Expand functionality
+        function toggleCardMinimize(cardClass) {
+            const card = document.querySelector(`.${cardClass}`);
+            if (!card) return;
+
+            const isMinimized = card.classList.toggle('minimized');
+            localStorage.setItem(`cc-${cardClass}-minimized`, isMinimized);
+
+            const btn = card.querySelector('.minimize-btn');
+            if (btn) {
+                btn.title = isMinimized ? 'Expand' : 'Minimize';
+            }
+        }
+
+        // Restore minimized state on load
+        function restoreCardMinimizedStates() {
+            const cardClasses = ['card-health', 'card-msfs', 'card-claude-terminal'];
+            cardClasses.forEach(cardClass => {
+                const isMinimized = localStorage.getItem(`cc-${cardClass}-minimized`) === 'true';
+                if (isMinimized) {
+                    const card = document.querySelector(`.${cardClass}`);
+                    if (card) {
+                        card.classList.add('minimized');
+                        const btn = card.querySelector('.minimize-btn');
+                        if (btn) btn.title = 'Expand';
+                    }
+                }
+            });
+        }
+
+        // Call on DOM ready
+        document.addEventListener('DOMContentLoaded', restoreCardMinimizedStates);
+        window.toggleCardMinimize = toggleCardMinimize;
+
+        // ==================== CARD RESIZE PERSISTENCE ====================
+        const resizableCards = ['card-health', 'card-msfs', 'card-claude-terminal'];
+
+        function saveCardSize(cardClass, width, height) {
+            localStorage.setItem(`cc-${cardClass}-width`, width);
+            localStorage.setItem(`cc-${cardClass}-height`, height);
+        }
+
+        function restoreCardSizes() {
+            resizableCards.forEach(cardClass => {
+                const card = document.querySelector(`.${cardClass}`);
+                if (!card) return;
+
+                const savedWidth = localStorage.getItem(`cc-${cardClass}-width`);
+                const savedHeight = localStorage.getItem(`cc-${cardClass}-height`);
+
+                if (savedWidth) card.style.width = savedWidth;
+                if (savedHeight) card.style.height = savedHeight;
+            });
+        }
+
+        // Use ResizeObserver to detect when cards are resized
+        function initCardResizeTracking() {
+            resizableCards.forEach(cardClass => {
+                const card = document.querySelector(`.${cardClass}`);
+                if (!card) return;
+
+                const observer = new ResizeObserver(entries => {
+                    for (const entry of entries) {
+                        const { width, height } = entry.contentRect;
+                        // Only save if user-initiated (not initial load)
+                        if (card.dataset.initialized) {
+                            saveCardSize(cardClass, `${width}px`, `${height}px`);
+                        }
+                    }
+                });
+
+                observer.observe(card);
+                // Mark as initialized after first observation
+                setTimeout(() => card.dataset.initialized = 'true', 100);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            restoreCardSizes();
+            initCardResizeTracking();
+            initDraggableCards();
+        });
+
+        // ==================== DRAGGABLE CARDS ====================
+        const draggableCards = [];
+
+        function makeCardDraggable(card, cardClass) {
+            const header = card.querySelector('.card-header');
+            if (!header) return;
+
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+
+            header.style.cursor = 'move';
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+
+                const rect = card.getBoundingClientRect();
+                startLeft = rect.left;
+                startTop = rect.top;
+
+                // Convert to fixed positioning if not already
+                if (!card.classList.contains('floating')) {
+                    card.classList.add('floating');
+                    card.style.position = 'fixed';
+                    card.style.left = rect.left + 'px';
+                    card.style.top = rect.top + 'px';
+                    card.style.width = rect.width + 'px';
+                    card.style.zIndex = '500';
+                }
+
+                card.style.transition = 'none';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const newLeft = startLeft + e.clientX - startX;
+                const newTop = startTop + e.clientY - startY;
+                card.style.left = newLeft + 'px';
+                card.style.top = newTop + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    card.style.transition = '';
+                    localStorage.setItem(`cc-${cardClass}-left`, card.style.left);
+                    localStorage.setItem(`cc-${cardClass}-top`, card.style.top);
+                    localStorage.setItem(`cc-${cardClass}-floating`, 'true');
+                }
+            });
+        }
+
+        function restoreCardPosition(card, cardClass) {
+            const isFloating = localStorage.getItem(`cc-${cardClass}-floating`) === 'true';
+            if (!isFloating) return;
+
+            const left = localStorage.getItem(`cc-${cardClass}-left`);
+            const top = localStorage.getItem(`cc-${cardClass}-top`);
+
+            if (left && top) {
+                card.classList.add('floating');
+                card.style.position = 'fixed';
+                card.style.left = left;
+                card.style.top = top;
+                card.style.zIndex = '500';
+            }
+        }
+
+        function initDraggableCards() {
+            draggableCards.forEach(cardClass => {
+                const card = document.querySelector(`.${cardClass}`);
+                if (!card) return;
+                restoreCardPosition(card, cardClass);
+                makeCardDraggable(card, cardClass);
+            });
+        }
+
+        // Reset card to grid position
+        function resetCardPosition(cardClass) {
+            const card = document.querySelector(`.${cardClass}`);
+            if (!card) return;
+            card.classList.remove('floating');
+            card.style.position = '';
+            card.style.left = '';
+            card.style.top = '';
+            card.style.zIndex = '';
+            localStorage.removeItem(`cc-${cardClass}-left`);
+            localStorage.removeItem(`cc-${cardClass}-top`);
+            localStorage.removeItem(`cc-${cardClass}-floating`);
+        }
+        window.resetCardPosition = resetCardPosition;
+    </script>
+</body>
+</html>

@@ -8,14 +8,6 @@
         "priority": "low",
         "completed": false,
         "createdAt": "2026-01-24T22:50:07.140Z"
-      },
-      {
-        "id": "1768923795617",
-        "text": "status",
-        "thought": "",
-        "priority": "mustdo",
-        "completed": false,
-        "createdAt": "2026-01-20T15:43:15.617Z"
       }
     ],
     "SimWidget": [],

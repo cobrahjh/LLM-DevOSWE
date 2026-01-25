@@ -1,24 +1,21 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, shell, Tray, Menu } = require('electron');
-const path = require('path');
+const { app, BrowserWindow, globalShortcut, ipcMain, shell } = require('electron');
 const { spawn } = require('child_process');
 
 let mainWindow;
-let tray;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 600,
-        height: 400,
-        minWidth: 400,
-        minHeight: 200,
-        maxWidth: 1000,
-        maxHeight: 800,
+        width: 450,
+        height: 80,
         frame: false,
         transparent: true,
         alwaysOnTop: true,
         skipTaskbar: true,
         resizable: true,
-        show: false,
+        minWidth: 300,
+        minHeight: 80,
+        maxWidth: 800,
+        maxHeight: 500,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -27,41 +24,29 @@ function createWindow() {
 
     mainWindow.loadFile('index.html');
 
-    // Center on screen
+    // Center at top of screen
     const { screen } = require('electron');
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    mainWindow.setPosition(Math.round((width - 600) / 2), Math.round((height - 400) / 3));
+    const { width } = screen.getPrimaryDisplay().workAreaSize;
+    mainWindow.setPosition(Math.round((width - 450) / 2), 100);
 
     mainWindow.once('ready-to-show', () => {
+        mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
         mainWindow.show();
     });
-}
 
-function createTray() {
-    tray = new Tray(path.join(__dirname, 'icon.png'));
-    const contextMenu = Menu.buildFromTemplate([
-        { label: 'Show', click: () => mainWindow.show() },
-        { label: 'Hide', click: () => mainWindow.hide() },
-        { type: 'separator' },
-        { label: 'Exit', click: () => app.quit() }
-    ]);
-    tray.setToolTip('Quick Search');
-    tray.setContextMenu(contextMenu);
-    tray.on('click', () => {
-        mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+    // Keep always on top
+    mainWindow.on('blur', () => {
+        if (mainWindow.isAlwaysOnTop()) {
+            mainWindow.setAlwaysOnTop(false);
+            mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+        }
     });
 }
 
 app.whenReady().then(() => {
     createWindow();
 
-    try {
-        createTray();
-    } catch (e) {
-        console.log('Tray not available');
-    }
-
-    // Global shortcut Ctrl+Space
+    // Toggle hotkey
     globalShortcut.register('CommandOrControl+Space', () => {
         if (mainWindow.isVisible()) {
             mainWindow.hide();
@@ -73,18 +58,14 @@ app.whenReady().then(() => {
     });
 });
 
-app.on('will-quit', () => {
-    globalShortcut.unregisterAll();
-});
+app.on('will-quit', () => globalShortcut.unregisterAll());
 
-// Handle running commands
+// IPC handlers
 ipcMain.on('run-command', (event, cmd) => {
     if (cmd.startsWith('http')) {
         shell.openExternal(cmd);
     } else {
-        // Use shell.openPath for apps or spawn for executables
         shell.openPath(cmd).catch(() => {
-            // Fallback: spawn with cmd.exe for commands like 'calc.exe'
             spawn('cmd.exe', ['/c', 'start', '', cmd], { detached: true, stdio: 'ignore' });
         });
     }
@@ -95,13 +76,7 @@ ipcMain.on('resize-window', (event, height) => {
     mainWindow.setSize(width, height);
 });
 
-ipcMain.on('hide-window', () => {
-    mainWindow.hide();
-});
-
-ipcMain.on('set-always-on-top', (event, value) => {
-    mainWindow.setAlwaysOnTop(value);
-});
+ipcMain.on('hide-window', () => mainWindow.hide());
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
