@@ -777,6 +777,101 @@ With `pointer-events: none` on inner elements.
 - **Text primary:** `#eee` / `#e2e8f0`
 - **Text muted:** `#94a3b8` / `#64748b`
 
+### 🔊 Voice UI Standards
+
+All voice-enabled UIs must follow these patterns for consistent TTS and speech recognition.
+
+#### Voice Settings Structure
+```javascript
+let voiceSettings = {
+  enabled: true,           // Master TTS toggle
+  voice: '',               // Selected voice name
+  rate: 0.9,               // Speech rate (0.5-2.0)
+  pitch: 1.0,              // Voice pitch (0.5-2.0)
+  volume: 1.0,             // Volume (0-1.0)
+  autoSpeak: true,         // Auto-speak responses
+  autoSubmit: true,        // Auto-submit after speech
+  autoSubmitDelay: 1.0,    // Seconds to wait before submit
+  maxTtsLength: 800        // Skip TTS for long responses
+};
+```
+
+#### TTS Best Practices
+1. **Debounce streaming responses** - Wait 1s after text stops changing before speaking
+2. **Cancel before speaking** - Always call `speechSynthesis.cancel()` with 100ms delay before new speech
+3. **Track speaking state** - Use `onstart`/`onend`/`onerror` handlers
+4. **Provide stop button** - Always give user ability to stop speech
+5. **Skip long responses** - Set max character limit (default 800)
+6. **Strip code blocks** - Replace ``` blocks with "code block" for cleaner speech
+
+```javascript
+function speakResponse(text) {
+  if (!voiceSettings.enabled || !voiceSettings.autoSpeak) return;
+
+  const plainText = text
+    .replace(/```[\s\S]*?```/g, 'code block')
+    .replace(/`[^`]+`/g, 'code');
+
+  if (plainText.length > voiceSettings.maxTtsLength) return;
+
+  speechSynthesis.cancel();
+  setTimeout(() => {
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.rate = voiceSettings.rate;
+    utterance.pitch = voiceSettings.pitch;
+    utterance.volume = voiceSettings.volume;
+
+    const voices = speechSynthesis.getVoices();
+    const voice = voices.find(v => v.name === voiceSettings.voice);
+    if (voice) utterance.voice = voice;
+
+    speechSynthesis.speak(utterance);
+  }, 100);
+}
+```
+
+#### Speech Recognition Best Practices
+1. **Auto-submit delay** - Configurable wait after speech ends (0-5s)
+2. **Show countdown** - Display "Sending in Xs..." during delay
+3. **Continuous mode option** - Keep mic active for multi-turn
+4. **Language setting** - Allow user to select recognition language
+
+```javascript
+recognition.onresult = (e) => {
+  const text = e.results[0][0].transcript;
+  document.getElementById('input').value = text;
+
+  if (voiceSettings.autoSubmit) {
+    const delay = voiceSettings.autoSubmitDelay * 1000;
+    if (delay > 0) {
+      showStatus('Sending in ' + voiceSettings.autoSubmitDelay + 's...');
+      setTimeout(() => submit(), delay);
+    } else {
+      submit();
+    }
+  }
+};
+```
+
+#### Voice Settings UI Requirements
+- Voice selector dropdown (English voices prioritized)
+- Rate/Pitch/Volume sliders with value display
+- Auto-speak toggle
+- Auto-submit toggle + delay slider
+- Test Voice button
+- Stop button (red, always visible during speech)
+- Settings persist to localStorage
+
+#### Default Voice (Heather)
+```javascript
+// Prefer UK Female voice for Heather persona
+const heather = voices.find(v =>
+  v.lang.startsWith('en') &&
+  v.name.includes('UK') &&
+  v.name.includes('Female')
+);
+```
+
 ## 🐛 Known Gotchas
 
 ### SimConnect Camera Events
