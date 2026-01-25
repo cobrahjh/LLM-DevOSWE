@@ -20,6 +20,8 @@ const VoiceEngine = (function() {
     let selectedVoice = null;
     let voiceRate = 0.9;
     let voicePitch = 1.0;
+    let voiceVolume = 1.0;
+    let autoSubmitDelay = 1.0; // seconds
 
     const config = {
         continuous: false,      // Keep listening after result
@@ -228,9 +230,34 @@ const VoiceEngine = (function() {
                             <input type="checkbox" id="voice-tts-toggle" checked>
                         </div>
                         <div class="voice-setting-row">
+                            <label>🗣 Auto-speak</label>
+                            <input type="checkbox" id="voice-auto-speak" checked>
+                            <span style="font-size:10px;color:#666;">Speak responses</span>
+                        </div>
+                        <div class="voice-setting-row">
+                            <label>📤 Auto-submit</label>
+                            <input type="checkbox" id="voice-auto-submit" checked>
+                            <span style="font-size:10px;color:#666;">Send after speech</span>
+                        </div>
+                        <div class="voice-setting-row" id="voice-delay-row">
+                            <label>⏱ Delay</label>
+                            <input type="range" id="voice-submit-delay" min="0" max="5" step="0.5" value="1">
+                            <span id="voice-delay-value">1.0s</span>
+                        </div>
+                        <div class="voice-setting-row">
                             <label>🎚 Rate</label>
                             <input type="range" id="voice-rate-slider" min="0.5" max="2" step="0.1" value="0.9">
                             <span id="voice-rate-value">0.9x</span>
+                        </div>
+                        <div class="voice-setting-row">
+                            <label>🎵 Pitch</label>
+                            <input type="range" id="voice-pitch-slider" min="0.5" max="2" step="0.1" value="1.0">
+                            <span id="voice-pitch-value">1.0</span>
+                        </div>
+                        <div class="voice-setting-row">
+                            <label>🔉 Volume</label>
+                            <input type="range" id="voice-volume-slider" min="0" max="1" step="0.1" value="1.0">
+                            <span id="voice-volume-value">1.0</span>
                         </div>
                         <div class="voice-setting-row">
                             <label>🎤 Voice</label>
@@ -265,11 +292,35 @@ const VoiceEngine = (function() {
             document.getElementById('voice-tts-toggle').onchange = (e) => {
                 setTTSEnabled(e.target.checked);
             };
+            document.getElementById('voice-auto-speak').onchange = (e) => {
+                config.speakResponses = e.target.checked;
+                localStorage.setItem('voice-auto-speak', e.target.checked);
+            };
+            document.getElementById('voice-auto-submit').onchange = (e) => {
+                config.autoSend = e.target.checked;
+                localStorage.setItem('voice-auto-submit', e.target.checked);
+                document.getElementById('voice-delay-row').style.display = e.target.checked ? 'flex' : 'none';
+            };
+            document.getElementById('voice-submit-delay').oninput = (e) => {
+                autoSubmitDelay = parseFloat(e.target.value);
+                document.getElementById('voice-delay-value').textContent = autoSubmitDelay.toFixed(1) + 's';
+                localStorage.setItem('voice-submit-delay', autoSubmitDelay);
+            };
             document.getElementById('voice-rate-slider').oninput = (e) => {
                 const rate = parseFloat(e.target.value);
                 setRate(rate);
                 document.getElementById('voice-rate-value').textContent = rate.toFixed(1) + 'x';
                 localStorage.setItem('voice-rate', rate);
+            };
+            document.getElementById('voice-pitch-slider').oninput = (e) => {
+                voicePitch = parseFloat(e.target.value);
+                document.getElementById('voice-pitch-value').textContent = voicePitch.toFixed(1);
+                localStorage.setItem('voice-pitch', voicePitch);
+            };
+            document.getElementById('voice-volume-slider').oninput = (e) => {
+                voiceVolume = parseFloat(e.target.value);
+                document.getElementById('voice-volume-value').textContent = voiceVolume.toFixed(1);
+                localStorage.setItem('voice-volume', voiceVolume);
             };
             document.getElementById('voice-select').onchange = (e) => {
                 setVoice(e.target.value);
@@ -954,12 +1005,21 @@ const VoiceEngine = (function() {
                 }
             }
 
-            // Send to Kitt if not a team task
+            // Send to Kitt if not a team task (with optional delay)
             if (config.autoSend && message && typeof AdminKitt !== 'undefined') {
-                AdminKitt.sendQuick(message);
+                if (autoSubmitDelay > 0) {
+                    showStatus(`Sending in ${autoSubmitDelay}s...`, '');
+                    setTimeout(() => {
+                        AdminKitt.sendQuick(message);
+                        hideStatus();
+                    }, autoSubmitDelay * 1000);
+                } else {
+                    AdminKitt.sendQuick(message);
+                    setTimeout(hideStatus, 2000);
+                }
+            } else {
+                setTimeout(hideStatus, 2000);
             }
-
-            setTimeout(hideStatus, 2000);
         } else {
             // Interim result
             showStatus(`"${transcript}..."`, 'listening');
@@ -1080,7 +1140,7 @@ const VoiceEngine = (function() {
             utterance.voice = voice;
             utterance.rate = options.rate || voiceRate;
             utterance.pitch = options.pitch || voicePitch;
-            utterance.volume = options.volume || 1.0;
+            utterance.volume = options.volume || voiceVolume;
 
             utterance.onstart = () => {
                 isSpeaking = true;
@@ -1304,6 +1364,54 @@ const VoiceEngine = (function() {
             const value = document.getElementById('voice-rate-value');
             if (slider) slider.value = voiceRate;
             if (value) value.textContent = voiceRate.toFixed(1) + 'x';
+        }
+
+        // Load pitch
+        const savedPitch = localStorage.getItem('voice-pitch');
+        if (savedPitch) {
+            voicePitch = parseFloat(savedPitch);
+            const slider = document.getElementById('voice-pitch-slider');
+            const value = document.getElementById('voice-pitch-value');
+            if (slider) slider.value = voicePitch;
+            if (value) value.textContent = voicePitch.toFixed(1);
+        }
+
+        // Load volume
+        const savedVolume = localStorage.getItem('voice-volume');
+        if (savedVolume) {
+            voiceVolume = parseFloat(savedVolume);
+            const slider = document.getElementById('voice-volume-slider');
+            const value = document.getElementById('voice-volume-value');
+            if (slider) slider.value = voiceVolume;
+            if (value) value.textContent = voiceVolume.toFixed(1);
+        }
+
+        // Load auto-speak
+        const savedAutoSpeak = localStorage.getItem('voice-auto-speak');
+        if (savedAutoSpeak !== null) {
+            config.speakResponses = savedAutoSpeak === 'true';
+            const toggle = document.getElementById('voice-auto-speak');
+            if (toggle) toggle.checked = config.speakResponses;
+        }
+
+        // Load auto-submit
+        const savedAutoSubmit = localStorage.getItem('voice-auto-submit');
+        if (savedAutoSubmit !== null) {
+            config.autoSend = savedAutoSubmit === 'true';
+            const toggle = document.getElementById('voice-auto-submit');
+            if (toggle) toggle.checked = config.autoSend;
+            const delayRow = document.getElementById('voice-delay-row');
+            if (delayRow) delayRow.style.display = config.autoSend ? 'flex' : 'none';
+        }
+
+        // Load submit delay
+        const savedDelay = localStorage.getItem('voice-submit-delay');
+        if (savedDelay) {
+            autoSubmitDelay = parseFloat(savedDelay);
+            const slider = document.getElementById('voice-submit-delay');
+            const value = document.getElementById('voice-delay-value');
+            if (slider) slider.value = autoSubmitDelay;
+            if (value) value.textContent = autoSubmitDelay.toFixed(1) + 's';
         }
 
         // Load TTS enabled state
