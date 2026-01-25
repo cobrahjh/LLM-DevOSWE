@@ -18,6 +18,6 @@ export default {
     },
     
     update(flightData) {
-        return { active: flightData.lightStrobe };
+        return { active: flightData.strobeLight };
     }
 };

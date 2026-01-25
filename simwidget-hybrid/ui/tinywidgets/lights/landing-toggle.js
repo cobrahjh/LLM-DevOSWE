@@ -18,6 +18,6 @@ export default {
     },
     
     update(flightData) {
-        return { active: flightData.lightLanding };
+        return { active: flightData.landingLight };
     }
 };

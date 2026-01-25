@@ -394,7 +394,8 @@ class MapWidget {
             // Rotate marker (using CSS transform)
             const markerEl = this.marker.getElement();
             if (markerEl) {
-                markerEl.style.transform += ' rotate(' + heading + 'deg)';
+                const baseTransform = markerEl.style.transform.replace(/rotate\([^)]+\)/g, '').trim();
+                markerEl.style.transform = baseTransform + ' rotate(' + heading + 'deg)';
                 markerEl.style.transformOrigin = 'center center';
             }
 

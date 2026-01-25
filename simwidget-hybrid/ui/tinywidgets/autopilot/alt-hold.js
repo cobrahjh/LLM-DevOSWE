@@ -18,6 +18,6 @@ export default {
     },
     
     update(flightData) {
-        return { active: flightData.apAltHold };
+        return { active: flightData.apAltLock };
     }
 };

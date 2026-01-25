@@ -18,6 +18,6 @@ export default {
     },
     
     update(flightData) {
-        return { active: flightData.lightBeacon };
+        return { active: flightData.beaconLight };
     }
 };

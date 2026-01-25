@@ -19,6 +19,6 @@ export default {
     },
     
     update(flightData) {
-        return { active: flightData.lightNav };
+        return { active: flightData.navLight };
     }
 };

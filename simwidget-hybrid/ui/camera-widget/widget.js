@@ -242,19 +242,40 @@ function updatePlatformIndicator() {
         platform.recommendations.forEach(rec => {
             const recDiv = document.createElement('div');
             recDiv.className = `recommendation ${rec.priority}`;
-            
-            const icon = rec.type === 'install' ? '💾' : 
+
+            const icon = rec.type === 'install' ? '💾' :
                         rec.type === 'system' ? '⚙️' : 'ℹ️';
-            
-            recDiv.innerHTML = `
-                <span class="rec-icon">${icon}</span>
-                <div class="rec-content">
-                    <div class="rec-title">${rec.title}</div>
-                    <div class="rec-description">${rec.description}</div>
-                    ${rec.url ? `<a href="${rec.url}" target="_blank" class="rec-link">Download</a>` : ''}
-                </div>
-            `;
-            
+
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'rec-icon';
+            iconSpan.textContent = icon;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'rec-content';
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'rec-title';
+            titleDiv.textContent = rec.title || '';
+
+            const descDiv = document.createElement('div');
+            descDiv.className = 'rec-description';
+            descDiv.textContent = rec.description || '';
+
+            contentDiv.appendChild(titleDiv);
+            contentDiv.appendChild(descDiv);
+
+            if (rec.url && typeof rec.url === 'string' && rec.url.startsWith('http')) {
+                const link = document.createElement('a');
+                link.href = rec.url;
+                link.target = '_blank';
+                link.className = 'rec-link';
+                link.textContent = 'Download';
+                contentDiv.appendChild(link);
+            }
+
+            recDiv.appendChild(iconSpan);
+            recDiv.appendChild(contentDiv);
+
             recommendations.appendChild(recDiv);
         });
     }
