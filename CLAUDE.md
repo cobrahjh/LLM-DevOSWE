@@ -203,10 +203,12 @@ See [docs/CAMERA-TROUBLESHOOTING.md](docs/CAMERA-TROUBLESHOOTING.md)
 
 | Node | IP | Role | Services |
 |------|----|----- |----------|
-| **Harold-PC** | 192.168.1.42 | Primary | All Hive services, MSFS |
-| **ROCK-PC** | 192.168.1.192 | Mirror | Hivemind (8700), Oracle (8800) |
+| **ROCK-PC** | 192.168.1.192 | Primary | Hivemind (8700), Oracle (3002) |
+| **Morpu-PC** | 192.168.1.97 | Mirror | Hivemind (8700), Oracle (3002) |
+| **Harold-PC** | 192.168.1.42 | Backup | MSFS, SimWidget, development |
+| **ai-pc** | 192.168.1.162 | Backup | Standby |
 
-### ROCK-PC Details
+### ROCK-PC (Primary)
 
 - **User:** stone-pc / 0812
 - **NSSM Services:** HiveHivemind, HiveOracle (auto-start)
@@ -220,16 +222,45 @@ $cred = New-Object System.Management.Automation.PSCredential('stone-pc', (Conver
 Invoke-Command -ComputerName ROCK-PC -Credential $cred -ScriptBlock { ... }
 
 # Test services
-curl http://192.168.1.192:8700/   # Hivemind
-curl http://192.168.1.192:8800/api/health  # Oracle
+curl http://192.168.1.192:8700/api/health  # Hivemind
+curl http://192.168.1.192:3002/api/health  # Oracle
+
+# NSSM management
+nssm status HiveHivemind
+nssm restart HiveOracle
 ```
+
+### Morpu-PC (Mirror)
+
+- **User:** Morpu-PC\stone-pc / 0812
+- **NSSM Services:** HiveHivemind, HiveOracle (auto-start)
+- **Paths:** C:\DevClaude, C:\LLM-DevOSWE, C:\LLM-Oracle, C:\kittbox-modules
+- **NSSM:** C:\DevClaude\nssm.exe
+- **Role:** Takes over if ROCK-PC fails
+
+```powershell
+# Remote access
+$cred = New-Object System.Management.Automation.PSCredential('Morpu-PC\stone-pc', (ConvertTo-SecureString '0812' -AsPlainText -Force))
+Invoke-Command -ComputerName Morpu-PC -Credential $cred -ScriptBlock { ... }
+
+# Test services
+curl http://192.168.1.97:8700/api/health  # Hivemind
+curl http://192.168.1.97:3002/api/health  # Oracle
+```
+
+### Harold-PC / ai-pc (Backup)
+
+- Development workstation with MSFS
+- Can be promoted if Primary + Mirror fail
 
 ---
 
 ## Quick Context
 
-- **This PC:** Harold-PC (192.168.1.42)
-- **Mirror PC:** ROCK-PC (192.168.1.192)
+- **This PC:** Harold-PC (192.168.1.42) - Backup
+- **Primary:** ROCK-PC (192.168.1.192)
+- **Mirror:** Morpu-PC (192.168.1.97)
+- **Backup:** ai-pc (192.168.1.162)
 - **LLMs:** Ollama + LM Studio (local)
 - **GitHub:** https://github.com/cobrahjh/LLM-DevOSWE
 - **Screenshots:** `C:\Users\hjhar\OneDrive\Pictures\screenshoots`
