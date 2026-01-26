@@ -203,7 +203,7 @@ See [docs/CAMERA-TROUBLESHOOTING.md](docs/CAMERA-TROUBLESHOOTING.md)
 
 | Node | IP | Role | Services |
 |------|----|----- |----------|
-| **ROCK-PC** | 192.168.1.192 | Primary | Hivemind (8700), Oracle (3002) |
+| **ROCK-PC** | 192.168.1.192 | Primary | Hivemind (8700), Oracle (8800) |
 | **Morpu-PC** | 192.168.1.97 | Mirror | Hivemind (8700), Oracle (3002) |
 | **Harold-PC** | 192.168.1.42 | Backup | MSFS, SimWidget, development |
 | **ai-pc** | 192.168.1.162 | Backup | Standby |
@@ -223,7 +223,7 @@ Invoke-Command -ComputerName ROCK-PC -Credential $cred -ScriptBlock { ... }
 
 # Test services
 curl http://192.168.1.192:8700/api/health  # Hivemind
-curl http://192.168.1.192:3002/api/health  # Oracle
+curl http://192.168.1.192:8800/api/health  # Oracle
 
 # NSSM management
 nssm status HiveHivemind
