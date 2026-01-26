@@ -136,7 +136,6 @@ Config: `Admin/caddy/Caddyfile`
 | **Claude** | Primary AI | Claude Code terminal |
 | **Kitt** | Local agent | KittBox UI (port 8585) |
 | **Nova** | Local LLM | LM Studio (port 1234) |
-| **Iris** | Remote fallback | ai-pc (192.168.1.162) |
 | **Heather** | Voice persona | TTS (Google UK Female) |
 
 **Details:** See [docs/PERSONAS.md](docs/PERSONAS.md)
@@ -200,11 +199,38 @@ See [docs/CAMERA-TROUBLESHOOTING.md](docs/CAMERA-TROUBLESHOOTING.md)
 
 ---
 
+## Network Nodes
+
+| Node | IP | Role | Services |
+|------|----|----- |----------|
+| **Harold-PC** | 192.168.1.42 | Primary | All Hive services, MSFS |
+| **ROCK-PC** | 192.168.1.192 | Mirror | Hivemind (8700), Oracle (8800) |
+
+### ROCK-PC Details
+
+- **User:** stone-pc / 0812
+- **NSSM Services:** HiveHivemind, HiveOracle (auto-start)
+- **Paths:** C:\DevClaude, C:\LLM-DevOSWE, C:\LLM-Oracle, C:\kittbox-modules
+- **NSSM:** C:\DevClaude\tools\nssm.exe
+- **Logs:** C:\DevClaude\logs\
+
+```powershell
+# Remote access
+$cred = New-Object System.Management.Automation.PSCredential('stone-pc', (ConvertTo-SecureString '0812' -AsPlainText -Force))
+Invoke-Command -ComputerName ROCK-PC -Credential $cred -ScriptBlock { ... }
+
+# Test services
+curl http://192.168.1.192:8700/   # Hivemind
+curl http://192.168.1.192:8800/api/health  # Oracle
+```
+
+---
+
 ## Quick Context
 
 - **This PC:** Harold-PC (192.168.1.42)
-- **Remote PC:** ai-pc (192.168.1.162)
-- **LLMs:** Ollama + LM Studio locally, Iris remote
+- **Mirror PC:** ROCK-PC (192.168.1.192)
+- **LLMs:** Ollama + LM Studio (local)
 - **GitHub:** https://github.com/cobrahjh/LLM-DevOSWE
 - **Screenshots:** `C:\Users\hjhar\OneDrive\Pictures\screenshoots`
 
