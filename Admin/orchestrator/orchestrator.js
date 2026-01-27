@@ -221,6 +221,28 @@ const SERVICES = {
         healthEndpoint: '/health',
         priority: 13,
         autoRestart: true
+    },
+    mcpbridge: {
+        id: 'mcpbridge',
+        name: 'MCP-Bridge',
+        port: 8860,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'mcp-bridge'),
+        start: 'node server.js',
+        winService: null,
+        healthEndpoint: '/api/health',
+        priority: 14,
+        autoRestart: true
+    },
+    dashboard: {
+        id: 'dashboard',
+        name: 'Hive Dashboard',
+        port: 8899,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-dashboard'),
+        start: 'node server.js',
+        winService: null,
+        healthEndpoint: '/api/health',
+        priority: 15,
+        autoRestart: true
     }
 };
 
@@ -274,6 +296,7 @@ async function checkServiceHealth(serviceId) {
             path: svc.healthEndpoint,
             timeout: 5000
         }, (res) => {
+            res.resume(); // Drain response body to free connection
             resolve({ healthy: res.statusCode === 200, statusCode: res.statusCode });
         });
 

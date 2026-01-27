@@ -48,6 +48,13 @@ tmpclaude-*/
 NUL
 nul
 
+# Diagnostic/temp text files
+nettest.txt
+oracle-error.txt
+oracle-startup.txt
+rock-diagnostic.txt
+status.txt
+
 # Auto-generated state files
 Admin/docsync/docsync-state.json
 
