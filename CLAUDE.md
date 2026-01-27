@@ -25,8 +25,10 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 | Port | Service | Purpose |
 |------|---------|---------|
 | 3002 | Oracle | LLM backend, project API |
+| 8500 | Orchestrator | 16-service watchdog, auto-restart |
 | 8585 | KittBox | Command Center UI |
-| 8600 | Relay | Message queue, persistence |
+| 8600 | Relay | Message queue, alerts, persistence |
+| 8860 | MCP Bridge | 7 MCP servers, tool proxy |
 | 8899 | Dashboard | Hive overview |
 | 11434 | Ollama | Local LLM |
 | 1234 | LM Studio | Local LLM |
@@ -107,18 +109,26 @@ Skills location: `.claude/skills/*.md`
 
 ## Service Management
 
-### Two Systems Running
+### Three Systems Running
 
-1. **LLM-DevOSWE (NSSM)** - Main services
-2. **DevClaude (HiveImmortal)** - Agent orchestration
+1. **Orchestrator (:8500)** - Primary watchdog for 16 services, health checks every 30s, auto-restart
+2. **NSSM** - Standalone services (HiveImmortal, Caddy, SmartPoller)
+3. **DevClaude (HiveImmortal)** - Agent orchestration
 
-**Rule:** If HiveImmortal manages it, do NOT create NSSM service.
+**Rule:** If Orchestrator manages it, do NOT create NSSM service. If HiveImmortal manages it, leave it to HiveImmortal.
 
 ### Quick Commands
 
 ```bash
-nssm restart HiveRelay        # Restart a service
+# Orchestrator (manages 16 services)
+curl http://localhost:8500/api/status        # Check all services
+curl -X POST http://localhost:8500/api/services/relay/restart  # Restart one
+
+# NSSM (standalone services)
 nssm restart HiveImmortal     # Restart all DevClaude services
+
+# Bootstrap (after fresh clone)
+setup.bat                     # Install all npm dependencies
 ```
 
 ### HTTPS Access
@@ -150,6 +160,7 @@ Config: `Admin/caddy/Caddyfile`
 | [SERVICE-REGISTRY.md](SERVICE-REGISTRY.md) | All services, ports, endpoints |
 | [STANDARDS.md](STANDARDS.md) | Code patterns, timing, conventions |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture diagrams |
+| [IMPROVEMENT-REPORT.md](IMPROVEMENT-REPORT.md) | MCP/Plugin integration roadmap, Phase 1-5 |
 | [docs/HIVE-PROTOCOLS.md](docs/HIVE-PROTOCOLS.md) | **Required protocols for all Hive AI** |
 | [docs/PERSONAS.md](docs/PERSONAS.md) | AI personas and voice settings |
 | [docs/INTEL-SOURCES.md](docs/INTEL-SOURCES.md) | Intel gathering configuration |

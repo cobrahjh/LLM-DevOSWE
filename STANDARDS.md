@@ -1,6 +1,6 @@
 # SimWidget Engine - Project Standards & Conventions
-**Version:** 1.6.0
-**Last Updated:** 2026-01-13
+**Version:** 1.7.0
+**Last Updated:** 2026-01-27
 
 This document captures proven patterns, timing defaults, and lessons learned throughout development. **Always reference this before implementing new features.**
 
@@ -254,29 +254,63 @@ nssm remove HiveServiceName confirm
 # - Archive or delete source files
 ```
 
-#### Current Hive Services (NSSM)
+#### Current Hive Services (Orchestrator-Managed)
+
+The Master Orchestrator (:8500) manages 16 services with health watchdog and auto-restart:
+
+| ID | Service | Port | Priority | Path |
+|----|---------|------|----------|------|
+| oracle | Oracle | 3002 | 0 | C:\LLM-Oracle\oracle.js |
+| simwidget | SimWidget Main | 8080 | 1 | simwidget-hybrid\backend\server.js |
+| agent | Agent (Kitt) | 8585 | 2 | Admin\agent\agent-server.js |
+| relay | Relay | 8600 | 3 | Admin\relay\relay-service.js |
+| remote | Remote Support | 8590 | 4 | Admin\remote-support\service.js |
+| bridge | Claude Bridge | 8601 | 5 | Admin\claude-bridge\bridge-server.js |
+| keysender | KeySender | - | 6 | KeySenderService (native) |
+| hivemind | Hive-Mind | 8701 | 7 | Admin\hive-mind\hive-mind-server.js |
+| terminalhub | Terminal Hub | 8771 | 8 | Admin\terminal-hub\terminal-hub-server.js |
+| hivebrain | Hive Brain Admin | 8800 | 9 | Admin\hive-brain\server.js |
+| hiveoracle | Hive Oracle | 8850 | 10 | Admin\hive-oracle\server.js |
+| hivebraindiscovery | Hive-Brain Discovery | 8810 | 11 | Admin\hive-brain\hive-brain.js |
+| mastermind | Master-Mind | 8820 | 12 | Admin\master-mind\master-mind.js |
+| hivemesh | Hive-Mesh | 8750 | 13 | C:\DevClaude\Hivemind\mesh\mesh.js |
+| mcpbridge | MCP-Bridge | 8860 | 14 | Admin\mcp-bridge\server.js |
+| dashboard | Dashboard | 8899 | 15 | Admin\hive-dashboard\server.js |
+
+#### NSSM Services (Standalone)
 
 | Service | Port | Status | Path |
 |---------|------|--------|------|
-| HiveOracle | 3002 | Auto | C:\LLM-Oracle\oracle.js |
-| HiveRelay | 8600 | Auto | Admin\relay\relay-service.js |
-| HiveKittBox | 8585 | Auto | Admin\agent\agent-server.js |
-| HiveKittLive | 8686 | Auto | C:\kittbox-modules\kitt-live |
-| HiveMind | 8701 | Auto | Admin\hive-mind\hive-mind.js |
-| HiveRemoteSupport | 8590 | Auto | Admin\remote-support\service.js |
 | HiveImmortal | - | Auto | C:\DevClaude\Hivemind\bootstrap\immortal.js |
 | HiveCaddy | 443 | Auto | Caddy reverse proxy |
 | HiveSmartPoller | - | Auto | Admin\relay\smart-poller.js |
 
 #### Golden Rules
 
-1. **Never run services in terminal windows** - Always use NSSM for production
+1. **Never run services in terminal windows** - Always use NSSM or Orchestrator
 2. **Test before registering** - Run manually first, fix all errors
 3. **Always add health endpoint** - Enables monitoring and auto-restart
 4. **Update SERVICE-REGISTRY.md** - Single source of truth for all services
 5. **Use descriptive names** - `HiveOracle` not `svc1`
 6. **Set auto-start** - Services should survive reboots
 7. **Close duplicate windows** - If you see a terminal running a registered service, close it
+8. **Run setup.bat after fresh clone** - Installs all npm dependencies
+
+#### Orchestrator Watchdog Pattern (Lessons Learned)
+
+**Health Check Connection Leak:** Always drain HTTP response bodies in health checks:
+```javascript
+const req = http.get({ hostname: 'localhost', port: svc.port, path: '/api/health', timeout: 5000 }, (res) => {
+    res.resume(); // CRITICAL: drain response body to free connection
+    resolve({ healthy: res.statusCode === 200 });
+});
+```
+
+**Recovery Threshold:** Require 3 consecutive healthy checks (90s at 30s interval) before marking service as recovered. Prevents flapping alerts.
+
+**MCP Package Namespace:** Use `@modelcontextprotocol/server-*` (not `@anthropic/mcp-server-*`). The old namespace packages were removed from npm.
+
+**Alert Auto-Expiry:** Stale alerts should auto-expire after 24h. Recovery alerts should auto-acknowledge previous failure alerts for the same service.
 
 #### Troubleshooting
 
@@ -286,6 +320,9 @@ nssm remove HiveServiceName confirm
 | Port already in use | Another instance running - kill it first |
 | Service starts then stops | Check logs, likely missing dependency |
 | Can't install service | Run PowerShell as Administrator |
+| Cannot find module | Run `npm install` in service directory or `setup.bat` |
+| MCP package 404 | Use `@modelcontextprotocol/server-*` namespace |
+| Health check hangs | Add `res.resume()` to drain response body |
 
 ## 🎮 Gamepad API Patterns
 
