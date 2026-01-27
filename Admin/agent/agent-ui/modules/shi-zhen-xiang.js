@@ -28,7 +28,7 @@ const ShiZhenXiang = (function() {
     let conversationLog = [];
     const MAX_LOG_SIZE = 20;  // Only repeat after 20 entries
     const PERSONA_ID = 'shiZhenXiang';
-    const RELAY_URL = 'http://192.168.1.42:8600';
+    const RELAY_URL = 'http://192.168.1.192:8600';
 
     // Last speech time for cooldowns
     let lastSpeechTime = 0;

@@ -1078,7 +1078,7 @@ const TaskBubbles = (function() {
         // Remove from relay if it has a relay ID
         if (task?.metadata?.relayId) {
             try {
-                await fetch(`http://192.168.1.42:8600/api/tasks/${task.metadata.relayId}`, {
+                await fetch(`http://192.168.1.192:8600/api/tasks/${task.metadata.relayId}`, {
                     method: 'DELETE'
                 });
                 if (typeof ActivityLog !== 'undefined') {
@@ -1108,7 +1108,7 @@ const TaskBubbles = (function() {
         if (relayId) {
             try {
                 // Release the task in relay so it can be picked up again
-                const res = await fetch(`http://192.168.1.42:8600/api/tasks/${relayId}/release`, {
+                const res = await fetch(`http://192.168.1.192:8600/api/tasks/${relayId}/release`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reason: 'Manual retry' })

@@ -258,11 +258,11 @@
 
 | Machine | IP | Role | Status |
 |---------|-----|------|--------|
-| Harold-PC | 192.168.1.42 | MSFS + Server | ✅ Active |
+| Harold-PC | 192.168.1.192 | MSFS + Server | ✅ Active |
 | Morpu-PC | 192.168.1.97 | Development | ✅ Active |
 
-**Access:** `net use H: \\192.168.1.42\DevClaude`  
-**Server:** `http://192.168.1.42:8080`
+**Access:** `net use H: \\192.168.1.192\DevClaude`  
+**Server:** `http://192.168.1.192:8080`
 
 ---
 

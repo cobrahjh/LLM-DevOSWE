@@ -2,7 +2,7 @@
 
 **Port:** 8771
 **Web UI:** http://localhost:8771
-**HTTPS:** https://192.168.1.42:8443/terminal/
+**HTTPS:** https://192.168.1.192:8443/terminal/
 
 Web-based terminal manager for the Hive. Manage multiple shell sessions, monitor processes, and bridge Windows Terminal output.
 

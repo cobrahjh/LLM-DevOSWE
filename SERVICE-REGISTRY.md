@@ -115,7 +115,7 @@
 - **Location:** `C:\LLM-DevOSWE\Admin\terminal-hub\terminal-hub-server.js`
 - **Purpose:** Web-based terminal manager, multi-shell support, process monitoring
 - **UI:** `http://localhost:8771`
-- **HTTPS:** `https://192.168.1.42:8443/terminal/` (via Caddy)
+- **HTTPS:** `https://192.168.1.192:8443/terminal/` (via Caddy)
 - **WebSocket:** Real-time terminal I/O
 - **Endpoints:**
   - `GET /api/health` - Health check

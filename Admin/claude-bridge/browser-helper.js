@@ -39,13 +39,13 @@ function log(msg) {
 app.get('/api/status', async (req, res) => {
     try {
         const http = require('http');
-        const checkUrl = 'http://192.168.1.42:8585/';
+        const checkUrl = 'http://192.168.1.192:8585/';
 
         http.get(checkUrl, (response) => {
             res.json({
                 success: true,
                 uiRunning: response.statusCode === 200,
-                sandboxUrl: 'http://192.168.1.42:8585/ollama-sandbox.html'
+                sandboxUrl: 'http://192.168.1.192:8585/ollama-sandbox.html'
             });
         }).on('error', () => {
             res.json({ success: false, uiRunning: false, error: 'UI not responding' });
@@ -57,7 +57,7 @@ app.get('/api/status', async (req, res) => {
 
 // Reload sandbox page (opens in default browser)
 app.post('/api/reload', (req, res) => {
-    const url = req.body.url || 'http://192.168.1.42:8585/ollama-sandbox.html';
+    const url = req.body.url || 'http://192.168.1.192:8585/ollama-sandbox.html';
     log(`Opening: ${url}`);
 
     // Windows: use start command to open in default browser
@@ -141,7 +141,7 @@ app.post('/api/test', (req, res) => {
     res.json({
         success: true,
         message: 'UI testing requires browser automation. Use the admin UI to test manually.',
-        suggestion: 'Open http://192.168.1.42:8585/ollama-sandbox.html and check DevTools console'
+        suggestion: 'Open http://192.168.1.192:8585/ollama-sandbox.html and check DevTools console'
     });
 });
 

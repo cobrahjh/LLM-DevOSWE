@@ -31,7 +31,7 @@ openssl req -x509 -newkey rsa:4096 ^
     -days 365 ^
     -nodes ^
     -subj "/CN=localhost/O=SimWidget/OU=Agent" ^
-    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:192.168.1.42"
+    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:192.168.1.192"
 
 if %errorlevel% equ 0 (
     echo.

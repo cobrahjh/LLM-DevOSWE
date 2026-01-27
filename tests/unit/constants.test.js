@@ -90,7 +90,7 @@ describe('getServiceUrl', () => {
     });
 
     test('should return correct URL with custom host', () => {
-        expect(getServiceUrl('relay', '192.168.1.42')).toBe('http://192.168.1.42:8600');
+        expect(getServiceUrl('relay', '192.168.1.192')).toBe('http://192.168.1.192:8600');
     });
 
     test('should throw for unknown service', () => {
@@ -108,7 +108,7 @@ describe('getHealthUrl', () => {
     });
 
     test('should handle custom host', () => {
-        expect(getHealthUrl('oracle', '192.168.1.42')).toBe('http://192.168.1.42:3002/api/health');
+        expect(getHealthUrl('oracle', '192.168.1.192')).toBe('http://192.168.1.192:3002/api/health');
     });
 });
 

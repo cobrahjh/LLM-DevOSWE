@@ -76,14 +76,14 @@ Or just double-click `start-agent.bat`
 ### 4. Access
 
 - **Local:** http://localhost:8585
-- **Phone:** http://192.168.1.42:8585
+- **Phone:** http://192.168.1.192:8585
 
 ## Usage
 
 ### From Phone
 
 1. Open browser
-2. Go to http://192.168.1.42:8585
+2. Go to http://192.168.1.192:8585
 3. Chat with Kit!
 
 ### Quick Actions

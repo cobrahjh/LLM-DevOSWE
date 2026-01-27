@@ -23,7 +23,7 @@ npm install
 node relay-service.js
 ```
 
-**UI:** http://192.168.1.42:8600
+**UI:** http://192.168.1.192:8600
 
 ## Endpoints
 
@@ -48,7 +48,7 @@ node agent-server.js
 
 **Option 2: API Call**
 ```bash
-curl -X POST http://192.168.1.42:8585/api/relay -H "Content-Type: application/json" -d "{\"enabled\": true}"
+curl -X POST http://192.168.1.192:8585/api/relay -H "Content-Type: application/json" -d "{\"enabled\": true}"
 ```
 
 **Option 3: .env file**

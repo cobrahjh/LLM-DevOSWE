@@ -26,7 +26,7 @@
     "morpu-pc": {
       "type": "micro-pc",
       "role": "always-on-hub",
-      "ip": "192.168.1.42",
+      "ip": "192.168.1.192",
       "os": "windows",
       "services": {
         "remote-exec": { "port": 8888, "enabled": true, "apiKey": "9036c4b39c12e233b43f4a700117b2614bd24f204bed23dedf1693524bf76867" },

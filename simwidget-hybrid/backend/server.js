@@ -252,12 +252,12 @@ app.get('/', (req, res) => {
 </head>
 <body>
     <h1>🎛️ SimWidget Command Center <span class="status">Online</span></h1>
-    <p class="version">Server v${SERVER_VERSION} | KeySender v${keySender.getVersion()} | <a href="http://192.168.1.42:8500" target="_blank">Master (O)</a></p>
+    <p class="version">Server v${SERVER_VERSION} | KeySender v${keySender.getVersion()} | <a href="http://192.168.1.192:8500" target="_blank">Master (O)</a></p>
     
     <div style="margin: 20px 0;">
-        <a href="http://192.168.1.42:8500" target="_blank" class="service-link master">🎛️ Master (O) :8500</a>
-        <a href="http://192.168.1.42:8585" target="_blank" class="service-link agent">🤖 Kitt Agent :8585</a>
-        <a href="http://192.168.1.42:8590" target="_blank" class="service-link remote">📡 Remote Support :8590</a>
+        <a href="http://192.168.1.192:8500" target="_blank" class="service-link master">🎛️ Master (O) :8500</a>
+        <a href="http://192.168.1.192:8585" target="_blank" class="service-link agent">🤖 Kitt Agent :8585</a>
+        <a href="http://192.168.1.192:8590" target="_blank" class="service-link remote">📡 Remote Support :8590</a>
     </div>
     
     <div class="grid">
@@ -343,8 +343,8 @@ app.get('/', (req, res) => {
             <ul>
                 <li><a href="/ui/">📂 /ui/</a> - All UI Widgets</li>
                 <li><a href="/backend/">📂 /backend/</a> - Backend Source</li>
-                <li><a href="http://192.168.1.42:8585" target="_blank">🤖 Kitt Agent</a></li>
-                <li><a href="http://192.168.1.42:8500" target="_blank">🎛️ Master Dashboard</a></li>
+                <li><a href="http://192.168.1.192:8585" target="_blank">🤖 Kitt Agent</a></li>
+                <li><a href="http://192.168.1.192:8500" target="_blank">🎛️ Master Dashboard</a></li>
             </ul>
         </div>
     </div>

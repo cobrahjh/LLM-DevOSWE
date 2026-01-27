@@ -594,7 +594,7 @@ troubleshoot.startServer(server, PORT, '0.0.0.0', () => {
     console.log('║   SimWidget Remote Support v1.1.0         ║');
     console.log('╠═══════════════════════════════════════════╣');
     console.log(`║  Local:   http://localhost:${PORT}            ║`);
-    console.log(`║  Network: http://192.168.1.42:${PORT}         ║`);
+    console.log(`║  Network: http://192.168.1.192:${PORT}         ║`);
     console.log('║                                           ║');
     console.log('║  API Key required for all operations      ║');
     console.log('║  /api/log endpoint for service monitoring ║');

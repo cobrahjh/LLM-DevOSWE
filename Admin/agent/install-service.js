@@ -39,7 +39,7 @@ if (process.argv.includes('--uninstall')) {
         console.log('✅ Service started!');
         console.log('');
         console.log('The agent will now auto-start on system boot.');
-        console.log('Access at: http://192.168.1.42:8585');
+        console.log('Access at: http://192.168.1.192:8585');
     });
 
     svc.on('alreadyinstalled', () => {

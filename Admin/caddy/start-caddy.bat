@@ -2,7 +2,7 @@
 echo Starting Caddy SSL Reverse Proxy...
 echo.
 echo Make sure hive.local is in your hosts file:
-echo   192.168.1.42 hive.local
+echo   192.168.1.192 hive.local
 echo.
 echo Access services via:
 echo   https://hive.local/oracle

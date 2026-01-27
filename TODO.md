@@ -51,7 +51,7 @@
 
 **Apply to:**
 - Port numbers (8080, 8500, 8585, 8590)
-- IP addresses (192.168.1.42)
+- IP addresses (192.168.1.192)
 - File paths
 - API endpoints
 - Timing/intervals (watchdog 30s, cooldowns)

@@ -87,7 +87,7 @@ GET /api/logs?file=audit&lines=100
 
 ## WebSocket API
 
-Connect: `ws://192.168.1.42:8590/ws?apiKey=<key>`
+Connect: `ws://192.168.1.192:8590/ws?apiKey=<key>`
 
 ### Execute with streaming output
 ```json

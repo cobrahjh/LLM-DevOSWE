@@ -125,7 +125,7 @@ const SERVICES = {
 const MACHINES = {
     primary: {
         name: 'Harold-PC',
-        ip: '192.168.1.42',
+        ip: '192.168.1.192',
         role: 'Primary'
     },
     secondary: {

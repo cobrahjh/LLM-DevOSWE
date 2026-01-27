@@ -30,7 +30,7 @@ const TeamTasks = (function() {
     let currentTask = null;
 
     // Relay API configuration
-    const RELAY_URL = 'http://192.168.1.42:8600';
+    const RELAY_URL = 'http://192.168.1.192:8600';
 
     // ==================== RELAY PERSISTENCE ====================
 

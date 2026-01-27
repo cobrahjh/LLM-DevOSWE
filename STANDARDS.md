@@ -40,11 +40,13 @@ This document captures proven patterns, timing defaults, and lessons learned thr
 - Escape paths in PowerShell: `"C:\Path With Spaces\file.js"`
 
 ### Network/URL Conventions
-- **Never use `localhost` or `127.0.0.1`** - always use the actual IP address
-- Dev machine IP: `192.168.1.42`
+- **User-facing URLs:** Always use the actual IP address (`192.168.1.192`)
+- **Internal health checks:** `localhost` is acceptable for same-machine service-to-service calls (e.g., Orchestrator health checks)
+- **Console log startup banners:** Show both localhost and LAN IP
+- Dev machine IP: `192.168.1.192` (ROCK-PC)
 - This ensures consistency across all devices (phone, other PCs, etc.)
-- Example: `http://192.168.1.42:8585/` not `http://localhost:8585/`
-- All documentation, code, and instructions must use IP addresses
+- Example: `http://192.168.1.192:8585/` not `http://localhost:8585/`
+- All documentation, code, and UI links must use IP addresses
 
 ### Process Management
 ```powershell
@@ -160,8 +162,8 @@ Restart-Service sshd
 
 | Direction | Account | Auth | Command |
 |-----------|---------|------|---------|
-| Harold-PC → ai-pc | hjhar | Key | `ssh hjhar@192.168.1.162` |
-| ai-pc → Harold-PC | hjhariSSH | Password (0812) | `ssh hjhariSSH@192.168.1.42` |
+| ROCK-PC → ai-pc | hjhar | Key | `ssh hjhar@192.168.1.162` |
+| ai-pc → ROCK-PC | hjhariSSH | Password (0812) | `ssh hjhariSSH@192.168.1.192` |
 
 ### Service Lifecycle Management (NSSM)
 

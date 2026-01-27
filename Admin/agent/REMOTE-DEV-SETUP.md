@@ -67,7 +67,7 @@ code-server --open "C:\LLM-DevOSWE\SimWidget_Engine"
 ### Access from Phone
 
 1. Open browser on phone
-2. Go to: `http://192.168.1.42:8443` (Harold-PC IP)
+2. Go to: `http://192.168.1.192:8443` (Harold-PC IP)
 3. Enter password
 4. Full VS Code in browser!
 
@@ -98,7 +98,7 @@ Set-Service -Name sshd -StartupType Automatic
 ### Access from Phone
 
 1. Install **Termius** or **JuiceSSH** app
-2. Connect to: `harold@192.168.1.42`
+2. Connect to: `harold@192.168.1.192`
 3. Full terminal access
 
 ---

@@ -366,7 +366,7 @@ async function checkBackendHealth(backendId) {
             healthUrl = `${backend.url}/v1/models`;
         }
 
-        const response = await httpRequest(healthUrl, { method: 'GET', timeout: 5000 });
+        const response = await httpRequest(healthUrl, { method: 'GET', timeout: 2000 });
 
         return {
             id: backendId,
@@ -395,19 +395,32 @@ async function checkAllBackends() {
 // REST API
 // ============================================
 
-// Health check
+// Cached backend status (refreshed every 30s in background)
+let cachedBackends = [];
+let lastBackendCheck = 0;
+
+async function refreshBackendCache() {
+    cachedBackends = await checkAllBackends();
+    lastBackendCheck = Date.now();
+}
+setInterval(refreshBackendCache, 30000);
+
+// Health check (instant response from cache)
 app.get('/api/health', async (req, res) => {
-    const backends = await checkAllBackends();
-    const online = backends.filter(b => b.status === 'online').length;
+    // First call or stale cache — refresh inline
+    if (cachedBackends.length === 0 || Date.now() - lastBackendCheck > 60000) {
+        await refreshBackendCache();
+    }
+    const online = cachedBackends.filter(b => b.status === 'online').length;
 
     res.json({
         status: 'ok',
         service: 'Master Mind',
         version: '1.0.0',
         backends: {
-            total: backends.length,
+            total: cachedBackends.length,
             online,
-            offline: backends.length - online
+            offline: cachedBackends.length - online
         },
         stats: {
             totalQueries: stats.totalQueries,

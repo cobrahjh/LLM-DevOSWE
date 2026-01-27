@@ -440,12 +440,12 @@ api.datastore.set('myKey', value);
 
 | Machine | IP | Role |
 |---------|-----|------|
-| **Harold-PC** | 192.168.1.42 | MSFS + Server |
+| **Harold-PC** | 192.168.1.192 | MSFS + Server |
 | **Morpu-PC** | 192.168.1.97 | Development |
 
 **Drive Mapping:**
 ```powershell
-net use H: \\192.168.1.42\DevClaude
+net use H: \\192.168.1.192\DevClaude
 ```
 
 ---

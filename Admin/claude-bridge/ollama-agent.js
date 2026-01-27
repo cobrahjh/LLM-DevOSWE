@@ -505,15 +505,15 @@ new text to replace with
 file content
 [/ACTION] - Write/create file
 [ACTION: list]directory[/ACTION] - List files in directory
-[ACTION: http]GET http://192.168.1.42:8600/api/status[/ACTION] - HTTP request
-[ACTION: http]POST http://192.168.1.42:8600/api/queue
+[ACTION: http]GET http://192.168.1.192:8600/api/status[/ACTION] - HTTP request
+[ACTION: http]POST http://192.168.1.192:8600/api/queue
 {"message": "hello"}
 [/ACTION] - HTTP POST with JSON body
 
 IMPORTANT RULES:
 - ALWAYS use [ACTION: type]content[/ACTION] format - brackets are required!
 - One action per response, wait for results
-- Use IP 192.168.1.42 never localhost or 127.0.0.1
+- Use IP 192.168.1.192 never localhost or 127.0.0.1
 - Maximum ${CONFIG.maxIterations} iterations allowed
 - Say [DONE] with summary when task is complete
 

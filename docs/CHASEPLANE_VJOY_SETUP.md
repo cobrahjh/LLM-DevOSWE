@@ -59,9 +59,9 @@ Open ChasePlane and go to **Settings > Controls**
 
 ### Via REST API:
 ```bash
-curl -X POST http://192.168.1.42:8080/api/camera/cinematic
-curl -X POST http://192.168.1.42:8080/api/camera/next
-curl -X POST http://192.168.1.42:8080/api/camera/toggle
+curl -X POST http://192.168.1.192:8080/api/camera/cinematic
+curl -X POST http://192.168.1.192:8080/api/camera/next
+curl -X POST http://192.168.1.192:8080/api/camera/toggle
 ```
 
 ### Via WebSocket:

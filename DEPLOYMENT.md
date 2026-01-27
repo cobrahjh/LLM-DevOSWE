@@ -111,7 +111,7 @@ cd C:\LLM-DevOSWE\Admin\agent && node agent-server.js
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Harold-PC     │     │    morpu-pc     │     │     ai-pc       │
 │   (Primary)     │────►│   (Secondary)   │────►│   (Fallback)    │
-│   192.168.1.42  │     │  192.168.1.xxx  │     │  192.168.1.162  │
+│   192.168.1.192  │     │  192.168.1.xxx  │     │  192.168.1.162  │
 ├─────────────────┤     ├─────────────────┤     ├─────────────────┤
 │ Relay     :8600 │     │ Relay     :8600 │     │ LM Studio :1234 │
 │ Oracle    :3002 │     │ Oracle    :3002 │     │ (Iris)          │
@@ -138,7 +138,7 @@ install.bat
 3. **Configure for network**
 Edit `.env` on secondary:
 ```
-PRIMARY_RELAY=http://192.168.1.42:8600
+PRIMARY_RELAY=http://192.168.1.192:8600
 NODE_NAME=morpu-pc
 ```
 

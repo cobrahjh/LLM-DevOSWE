@@ -4,7 +4,7 @@ const { execFile } = require('child_process');
 const path = require('path');
 
 const PORT = 8870;
-const RELAY_URL = 'http://192.168.1.42:8600';
+const RELAY_URL = 'http://192.168.1.192:8600';
 
 // Voice control state
 const state = {
@@ -275,7 +275,7 @@ function sendToTarget(text) {
 
         case 'kittbox':
             // Send to KittBox chat
-            fetch('http://192.168.1.42:8585/api/chat', {
+            fetch('http://192.168.1.192:8585/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text, voice: true })

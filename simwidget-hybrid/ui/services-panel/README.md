@@ -43,4 +43,4 @@ The widget uses `/api/services` endpoint added in server v1.9.0:
 
 Access at: http://localhost:8080/ui/services-panel/
 
-Or embedded in Agent UI at: http://192.168.1.42:8585
+Or embedded in Agent UI at: http://192.168.1.192:8585

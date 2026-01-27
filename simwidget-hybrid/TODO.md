@@ -38,7 +38,7 @@
   - Allows rapid UI iteration without simulator
 - [x] 🔴 Configure remote network access
   - Server binds to 0.0.0.0 for LAN access
-  - Harold-PC: 192.168.1.42:8080
+  - Harold-PC: 192.168.1.192:8080
   - Morpu-PC connects via browser
 - [x] 🟡 Install node-simconnect package
 - [x] 🟡 Create start-server.bat and run-server.bat scripts
@@ -62,10 +62,10 @@
 ## Architecture Reference
 
 ```
-Harold-PC (192.168.1.42)          Morpu-PC (192.168.1.97)
+Harold-PC (192.168.1.192)          Morpu-PC (192.168.1.97)
 ┌────────────────────┐            ┌────────────────────┐
 │  MSFS 2024         │            │  Browser           │
-│  ↓                 │            │  http://192.168.1.42:8080
+│  ↓                 │            │  http://192.168.1.192:8080
 │  SimConnect        │            │                    │
 │  ↓                 │            │                    │
 │  Backend Server    │◄──────────►│  WebSocket Client  │
@@ -84,7 +84,7 @@ Harold-PC (192.168.1.42)          Morpu-PC (192.168.1.97)
 
 **Browser URL (Morpu-PC):**
 ```
-http://192.168.1.42:8080
+http://192.168.1.192:8080
 ```
 
 **Kill server:**

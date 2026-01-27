@@ -68,7 +68,7 @@ class NodeDiscovery {
 
         // Check known IPs from hive-network.json
         const knownNodes = [
-            { ip: '192.168.1.42', hostname: 'harold-pc' },
+            { ip: '192.168.1.192', hostname: 'rock-pc' },
             { ip: '192.168.1.97', hostname: 'morpu-pc' },
             { ip: '192.168.1.162', hostname: 'ai-pc' }
         ];

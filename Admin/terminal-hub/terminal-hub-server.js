@@ -115,7 +115,9 @@ const server = http.createServer((req, res) => {
         const id = parseInt(url.pathname.split('/').pop());
         if (terminals.has(id)) {
             const term = terminals.get(id);
-            term.process.kill();
+            if (term.process) {
+                try { term.process.kill(); } catch (e) { /* already dead */ }
+            }
             terminals.delete(id);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ message: 'Terminal killed' }));
@@ -264,7 +266,11 @@ wss.on('connection', (ws, req) => {
         try {
             const data = JSON.parse(msg);
             if (data.type === 'input' && data.data) {
-                term.process.stdin.write(data.data);
+                if (term.process && term.process.stdin && !term.process.killed) {
+                    term.process.stdin.write(data.data);
+                } else {
+                    ws.send(JSON.stringify({ type: 'output', data: '[Terminal has no input stream]\r\n' }));
+                }
             } else if (data.type === 'resize' && data.cols && data.rows) {
                 // Resize not supported with basic spawn, would need node-pty
             }
@@ -384,10 +390,16 @@ function createTerminal(opts = {}) {
     terminals.set(id, term);
     console.log(`Terminal ${id} created: ${shellConfig.name} (${shellPath}) in ${cwd}`);
 
-    // Send initial newline after short delay to trigger prompt
+    // Send initial command to show prompt (piped stdio doesn't show PS prompt natively)
     setTimeout(() => {
         if (!proc.killed) {
-            proc.stdin.write('\r\n');
+            if (shellType === 'powershell') {
+                proc.stdin.write('Write-Output "[Terminal Hub] PowerShell ready - $(Get-Location)"; Write-Output ""\r\n');
+            } else if (shellType === 'cmd') {
+                proc.stdin.write('echo [Terminal Hub] CMD ready & echo.\r\n');
+            } else {
+                proc.stdin.write('echo "[Terminal Hub] Shell ready - $(pwd)"\n');
+            }
         }
     }, 500);
 
@@ -605,6 +617,7 @@ Endpoints:
   DELETE /api/terminals/:id - Kill terminal
   WS   /?id=N              - Connect to terminal
 
-Access: http://localhost:${PORT}
+Local:  http://localhost:${PORT}
+LAN:    http://192.168.1.192:${PORT}
 `);
 });

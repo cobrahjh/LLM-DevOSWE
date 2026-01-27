@@ -30,7 +30,7 @@ const AdminKitt = (function() {
         wsProtocol: location.protocol === 'https:' ? 'wss:' : 'ws:',
         reconnectDelay: 3000,
         keepAliveInterval: 25000,
-        isDevMachine: ['localhost', '127.0.0.1', '192.168.1.42'].includes(location.hostname)
+        isDevMachine: ['localhost', '127.0.0.1', '192.168.1.192'].includes(location.hostname)
     };
     
     // ==================== DOM ELEMENTS ====================

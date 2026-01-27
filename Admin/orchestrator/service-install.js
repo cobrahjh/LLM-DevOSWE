@@ -48,7 +48,7 @@ svc.on('start', () => {
     console.log('  Status:  sc query "SimWidget Master O"');
     console.log('  Remove:  node service-uninstall.js');
     console.log('');
-    console.log('Dashboard: http://192.168.1.42:8500');
+    console.log('Dashboard: http://192.168.1.192:8500');
 });
 
 svc.on('alreadyinstalled', () => {

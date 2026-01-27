@@ -744,10 +744,9 @@
 
     <script src="mobile-engine.js"></script>
     <script>
-        const host = location.hostname || 'localhost';
-        const port = location.port || '8750';
-        const API_BASE = `http://${host}:${port}`;
-        const WS_BASE = `ws://${host}:${port}`;
+        const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const API_BASE = `${location.protocol}//${location.host}`;
+        const WS_BASE = `${wsProtocol}//${location.host}`;
 
         let terminals = [];
         let activeTerminal = null;

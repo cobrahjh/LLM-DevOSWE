@@ -75,7 +75,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log('║       HIVE COMMAND CENTER DASHBOARD        ║');
     console.log('╠════════════════════════════════════════════╣');
     console.log(`║  URL: http://localhost:${PORT}                ║`);
-    console.log(`║  LAN: http://192.168.1.42:${PORT}             ║`);
+    console.log(`║  LAN: http://192.168.1.192:${PORT}             ║`);
     console.log('╚════════════════════════════════════════════╝');
     console.log('');
 });

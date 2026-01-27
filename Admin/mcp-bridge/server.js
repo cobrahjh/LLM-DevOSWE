@@ -566,7 +566,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('║         MCP-HIVE BRIDGE SERVICE            ║');
   console.log('╠════════════════════════════════════════════╣');
   console.log(`║  URL: http://localhost:${PORT}                ║`);
-  console.log(`║  LAN: http://192.168.1.42:${PORT}             ║`);
+  console.log(`║  LAN: http://192.168.1.192:${PORT}             ║`);
   console.log('║                                            ║');
   console.log(`║  Available Servers: ${Object.keys(MCP_SERVERS).length.toString().padEnd(22)}║`);
   console.log('║                                            ║');

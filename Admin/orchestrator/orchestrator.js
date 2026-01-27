@@ -986,7 +986,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log('║          SimWidget Master (O) v1.0.0              ║');
     console.log('╠═══════════════════════════════════════════════════╣');
     console.log(`║  Dashboard:  http://localhost:${PORT}                 ║`);
-    console.log(`║  Network:    http://192.168.1.42:${PORT}              ║`);
+    console.log(`║  Network:    http://192.168.1.192:${PORT}              ║`);
     console.log('║                                                   ║');
     console.log('║  Managed Services:                                ║');
     for (const [id, svc] of Object.entries(SERVICES)) {

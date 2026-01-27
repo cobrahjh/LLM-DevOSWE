@@ -196,6 +196,28 @@
         }
         .service-item:hover .service-open { color: #ff6b35; }
 
+        .restart-btn {
+            background: none;
+            border: 1px solid #444;
+            color: #888;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s, color 0.2s;
+            padding: 0;
+        }
+        .restart-btn.show { opacity: 0.8; }
+        .service-item:hover .restart-btn { opacity: 1; }
+        .restart-btn:hover { color: #ff6b35; border-color: #ff6b35; }
+        .restart-btn.spinning { animation: spin 1s linear infinite; opacity: 1; color: #00d9ff; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
         /* Intel Feed */
         .intel-card { grid-column: span 2; }
         .intel-tabs {
@@ -641,6 +663,30 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Service Logs -->
+            <div class="card collapsible-card" style="grid-column: 1 / -1;">
+                <div class="collapsible-header" onclick="toggleSection('logs')">
+                    <h3>
+                        <span>Service Logs</span>
+                        <span class="count" id="logsCount">0</span>
+                    </h3>
+                    <span class="collapsible-toggle" id="logs-toggle">▼</span>
+                </div>
+                <div class="collapsible-content" id="logs-content" style="display:none;">
+                    <div style="padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <select id="logSource" onchange="loadLogs()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:4px 8px;font-size:12px;">
+                            <option value="orchestrator">Master-O (Orchestrator)</option>
+                        </select>
+                        <button class="btn secondary" onclick="loadLogs()" style="padding:4px 10px;font-size:11px;">Refresh</button>
+                        <label style="color:#888;font-size:11px;display:flex;align-items:center;gap:4px;">
+                            <input type="checkbox" id="logAutoScroll" checked> Auto-scroll
+                        </label>
+                        <span style="color:#666;font-size:10px;margin-left:auto;" id="logTimestamp"></span>
+                    </div>
+                    <pre id="logContent" style="background:#0a0a14;color:#ccc;font-family:'Consolas','Courier New',monospace;font-size:11px;line-height:1.5;padding:12px;margin:0;max-height:400px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border-top:1px solid #222;">Loading logs...</pre>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -697,7 +743,7 @@
         let intelData = {};
         let healthData = {};
         let currentTab = 'news';
-        let collapsedSections = {};
+        let collapsedSections = { logs: true };
 
         // Update time
         function updateTime() {
@@ -727,8 +773,10 @@
 
             if (collapsedSections[section]) {
                 content.classList.remove('collapsed');
+                content.style.display = '';
                 toggle.classList.remove('collapsed');
                 collapsedSections[section] = false;
+                if (section === 'logs') loadLogs();
             } else {
                 content.classList.add('collapsed');
                 toggle.classList.add('collapsed');
@@ -806,6 +854,53 @@
         }
 
         // Load Services - with clickable items
+        // Map service names to Orchestrator keys for restart API
+        const SERVICE_KEY_MAP = {
+            'Oracle': 'oracle',
+            'SimWidget': 'simwidget',
+            'KittBox': 'agent',
+            'Remote Support': 'remote',
+            'Relay': 'relay',
+            'Claude Bridge': 'bridge',
+            'Hive-Mind': 'hivemind',
+            'Terminal Hub': 'terminalhub',
+            'Hive-Brain': 'hivebraindiscovery',
+            'Agents': 'hivebrain',
+            'Master-Mind': 'mastermind',
+            'Hive-Oracle': 'hiveoracle',
+            'Hive-Mesh': 'hivemesh',
+            'MCP-Bridge': 'mcpbridge',
+            'Dashboard': 'dashboard'
+        };
+
+        function renderServiceItem(s) {
+            const restartBtn = SERVICE_KEY_MAP[s.name]
+                ? '<button class="restart-btn' + (s.status !== 'online' ? ' show' : '') + '" onclick="event.stopPropagation();restartServiceQuick(\'' + s.name + '\',this)" title="Restart ' + s.name + '">&#x21bb;</button>'
+                : '';
+            return '<div class="service-item ' + s.status + '" onclick="openServiceDetail(\'' + s.name + '\', ' + s.port + ', \'' + s.status + '\', \'' + s.desc + '\')">' +
+                '<div><div class="service-name">' + s.name + '</div><div class="service-port">:' + s.port + ' - ' + s.desc + '</div></div>' +
+                '<div style="display:flex;align-items:center;gap:6px;">' + restartBtn + '<div class="service-status">' + s.status + '</div><div class="service-open">&rarr;</div></div></div>';
+        }
+
+        async function restartServiceQuick(name, btn) {
+            const svcKey = SERVICE_KEY_MAP[name];
+            if (!svcKey) return;
+            btn.classList.add('spinning');
+            btn.disabled = true;
+            try {
+                const res = await fetch('http://localhost:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
+                if (res.ok) {
+                    btn.style.color = '#00ff88';
+                    setTimeout(() => { loadServices(); }, 4000);
+                } else {
+                    btn.style.color = '#ff4444';
+                }
+            } catch (e) {
+                btn.style.color = '#ff4444';
+            }
+            setTimeout(() => { btn.classList.remove('spinning'); btn.disabled = false; btn.style.color = ''; }, 3000);
+        }
+
         async function loadServices() {
             const results = await Promise.all(SERVICES.map(async (svc) => {
                 try {
@@ -831,17 +926,9 @@
 
             let servicesHtml = '';
             servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin-bottom:6px;">Hive Core</div>';
-            servicesHtml += hiveServices.map(s =>
-                '<div class="service-item ' + s.status + '" onclick="openServiceDetail(\'' + s.name + '\', ' + s.port + ', \'' + s.status + '\', \'' + s.desc + '\')">' +
-                '<div><div class="service-name">' + s.name + '</div><div class="service-port">:' + s.port + ' - ' + s.desc + '</div></div>' +
-                '<div style="display:flex;align-items:center;"><div class="service-status">' + s.status + '</div><div class="service-open">→</div></div></div>'
-            ).join('');
+            servicesHtml += hiveServices.map(s => renderServiceItem(s)).join('');
             servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin:12px 0 6px;">Utilities</div>';
-            servicesHtml += utilServices.map(s =>
-                '<div class="service-item ' + s.status + '" onclick="openServiceDetail(\'' + s.name + '\', ' + s.port + ', \'' + s.status + '\', \'' + s.desc + '\')">' +
-                '<div><div class="service-name">' + s.name + '</div><div class="service-port">:' + s.port + ' - ' + s.desc + '</div></div>' +
-                '<div style="display:flex;align-items:center;"><div class="service-status">' + s.status + '</div><div class="service-open">→</div></div></div>'
-            ).join('');
+            servicesHtml += utilServices.map(s => renderServiceItem(s)).join('');
             document.getElementById('servicesList').innerHTML = servicesHtml;
         }
 
@@ -884,7 +971,7 @@
                 <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
                     <button class="btn" onclick="investigateService('${name}', ${port})" title="Run diagnostics on this service">🔍 Investigate</button>
                     <button class="btn secondary" onclick="openService('${name}', ${port})" title="Open ${name} web interface in new browser tab">Open in Browser</button>
-                    ${status === 'offline' ? `<button class="btn" style="background:#ff4444" onclick="restartService('${name}')" title="Attempt to restart this service via Master-O">🔄 Restart</button>` : ''}
+                    ${SERVICE_KEY_MAP[name] ? `<button class="btn" style="background:${status === 'offline' ? '#ff4444' : '#ff6b35'}" onclick="restartService('${name}')" title="Restart ${name} via Master-O">🔄 Restart</button>` : ''}
                     <button class="btn secondary" onclick="closeServiceModal()" title="Close this dialog (Esc)">Close</button>
                 </div>
             `;
@@ -1038,18 +1125,7 @@
             resultsEl.innerHTML = '<div class="loading">Requesting restart...</div>';
 
             try {
-                // Map service name to Master-O service key
-                const serviceMap = {
-                    'Oracle': 'oracle',
-                    'Relay': 'relay',
-                    'KittBox': 'agent',
-                    'Hive-Mind': 'hivemind',
-                    'Hive-Brain': 'hivebrain',
-                    'Hive-Oracle': 'hiveoracle',
-                    'Master-O': 'master'
-                };
-
-                const svcKey = serviceMap[name] || name.toLowerCase();
+                const svcKey = SERVICE_KEY_MAP[name] || name.toLowerCase();
 
                 const res = await fetch('http://localhost:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
 
@@ -1397,6 +1473,44 @@
                 await fetch(`http://localhost:8600/api/alerts/${id}/ack`, { method: 'POST' });
                 loadAlerts();
             } catch (e) { /* ignore */ }
+        }
+
+        // Service Logs
+        async function loadLogs() {
+            const logEl = document.getElementById('logContent');
+            const source = document.getElementById('logSource').value;
+            try {
+                let url;
+                if (source === 'orchestrator') {
+                    url = 'http://localhost:8500/api/log?lines=200';
+                }
+                const res = await fetchWithTimeout(url, 5000);
+                const data = await res.json();
+                const logText = data.log || 'No log data';
+                const lines = logText.split('\n');
+                document.getElementById('logsCount').textContent = lines.length;
+                document.getElementById('logTimestamp').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+                // Colorize log lines
+                logEl.innerHTML = lines.map(function(line) {
+                    if (/\[ERROR\]|error|FAIL|crashed/i.test(line)) return '<span style="color:#ff4444;">' + escapeHtml(line) + '</span>';
+                    if (/\[WARN\]|warn|UNREACHABLE|offline/i.test(line)) return '<span style="color:#ffaa00;">' + escapeHtml(line) + '</span>';
+                    if (/online|started|healthy|RECOVERED/i.test(line)) return '<span style="color:#00ff88;">' + escapeHtml(line) + '</span>';
+                    if (/restart/i.test(line)) return '<span style="color:#00d9ff;">' + escapeHtml(line) + '</span>';
+                    return escapeHtml(line);
+                }).join('\n');
+
+                if (document.getElementById('logAutoScroll').checked) {
+                    logEl.scrollTop = logEl.scrollHeight;
+                }
+            } catch (e) {
+                logEl.textContent = 'Failed to load logs: ' + e.message;
+                document.getElementById('logsCount').textContent = '!';
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         // Utility
