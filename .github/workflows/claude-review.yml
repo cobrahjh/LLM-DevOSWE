@@ -1,0 +1,74 @@
+name: Claude Code PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    name: Claude Review
+    if: |
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.issue.pull_request)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Review PR
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: |
+          # Get PR diff
+          gh pr diff $PR_NUMBER > /tmp/pr-diff.txt 2>/dev/null || true
+          PR_TITLE=$(gh pr view $PR_NUMBER --json title -q .title 2>/dev/null || echo "PR #$PR_NUMBER")
+          PR_BODY=$(gh pr view $PR_NUMBER --json body -q .body 2>/dev/null || echo "")
+
+          # Run Claude Code review
+          REVIEW=$(claude -p "You are reviewing a pull request for the SimWidget Hive project (Node.js, Electron, WebSocket, SimConnect).
+
+          PR Title: $PR_TITLE
+
+          PR Description:
+          $PR_BODY
+
+          Diff:
+          $(cat /tmp/pr-diff.txt | head -3000)
+
+          Review this PR concisely:
+          1. **Summary** - What does this PR do? (1-2 sentences)
+          2. **Issues** - Any bugs, security issues, or problems? List specific file:line references
+          3. **Suggestions** - Improvements worth making (max 3)
+          4. **Verdict** - APPROVE, REQUEST_CHANGES, or COMMENT
+
+          Keep it short. Focus on real issues, not style nitpicks. Reference the project CLAUDE.md rules (no port changes, always test, use existing infra)." 2>/dev/null || echo "Review generation failed")
+
+          # Post review as comment
+          if [ -n "$REVIEW" ] && [ "$REVIEW" != "Review generation failed" ]; then
+            gh pr comment $PR_NUMBER --body "## Claude Code Review
+
+          $REVIEW
+
+          ---
+          *Automated review by Claude Code via GitHub Actions*"
+          else
+            echo "Review failed or empty, skipping comment"
+          fi
