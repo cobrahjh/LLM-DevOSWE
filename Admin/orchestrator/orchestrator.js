@@ -78,6 +78,17 @@ function log(msg, level = 'INFO') {
 // ============================================
 
 const SERVICES = {
+    oracle: {
+        id: 'oracle',
+        name: 'Oracle',
+        port: 3002,
+        dir: 'C:\\LLM-Oracle',
+        start: 'node oracle.js',
+        winService: null,
+        healthEndpoint: '/api/health',
+        priority: 0,
+        autoRestart: true
+    },
     simwidget: {
         id: 'simwidget',
         name: 'SimWidget Main Server',
