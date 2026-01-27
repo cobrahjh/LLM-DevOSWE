@@ -736,19 +736,11 @@
             }
         }
 
-        // Load Briefing
-        let lastBriefingDate = null;
+        // Load Briefing (server auto-regenerates if stale >1h)
         async function loadBriefing() {
             try {
-                // Force regeneration if briefing is older than 1 hour
-                let url = `${API_BASE}/api/intel/briefing`;
-                if (lastBriefingDate && (Date.now() - new Date(lastBriefingDate).getTime()) > 60 * 60 * 1000) {
-                    url += '?force=true';
-                }
-                const res = await fetchWithTimeout(url);
+                const res = await fetchWithTimeout(`${API_BASE}/api/intel/briefing`);
                 const data = await res.json();
-                lastBriefingDate = data.date || null;
-
                 if (data.date) {
                     document.getElementById('briefingDate').textContent =
                         new Date(data.date).toLocaleString();
