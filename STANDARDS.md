@@ -278,14 +278,152 @@ nssm remove HiveServiceName confirm
 6. **Set auto-start** - Services should survive reboots
 7. **Close duplicate windows** - If you see a terminal running a registered service, close it
 
+#### CRITICAL: Service Ownership & Dual-Start Prevention
+
+**Problem discovered 2026-01-27:** Multiple startup systems (NSSM, HiveImmortal, start-all-servers.bat, manual `node server.js`) can start the SAME service, creating duplicate processes that crash-loop with `EADDRINUSE`. This is invisible because health checks hit the ORIGINAL working process while the watchdog silently loops in the background.
+
+**Root cause:** No single owner per service. Three systems manage overlapping sets of services:
+
+| System | What it manages | How |
+|--------|----------------|-----|
+| **NSSM** | 16 Windows services | Auto-start, auto-restart, survives reboot |
+| **HiveImmortal** | 13 child processes | Spawns node processes, health checks, auto-restart |
+| **start-all-servers.bat** | 8+ services | Opens cmd windows, one-shot start |
+
+**Overlap example:** HiveMind is BOTH an NSSM service AND managed by HiveImmortal. When both run, one gets EADDRINUSE.
+
+**Rules to prevent this:**
+
+1. **Every service has ONE owner** - either NSSM OR HiveImmortal, never both
+2. **Before starting any service manually** (`node server.js`), check if it's already running: `curl http://localhost:PORT/api/health`
+3. **Before killing a process**, check who owns it: `nssm status HiveServiceName` or check HiveImmortal logs
+4. **After editing service code**, restart via the OWNER system:
+   - NSSM-owned: `nssm restart HiveServiceName`
+   - HiveImmortal-owned: `nssm restart HiveImmortal` (restarts all children)
+   - If started manually: kill PID, restart manually
+5. **Never use start-all-servers.bat** if NSSM+HiveImmortal are running - it creates orphan duplicates
+6. **After any architecture change**, verify no crash-loops: `tail -20 C:\DevClaude\Hivemind\bootstrap\immortal.log`
+
+**Current ownership map (2026-01-27):**
+
+| Service | Port | Owner | NOT managed by |
+|---------|------|-------|----------------|
+| Oracle (daemon) | 3002 | NSSM (HiveOracle) | HiveImmortal |
+| Relay | 8600 | NSSM (HiveRelay) | HiveImmortal |
+| KittBox/Agent | 8585 | NSSM (HiveKittBox) | HiveImmortal |
+| Kitt Live | 8686 | NSSM (HiveKittLive) | HiveImmortal |
+| Hive-Mind | 8701 | NSSM (HiveMind) | HiveImmortal |
+| Remote Support | 8590 | NSSM (HiveRemoteSupport) | HiveImmortal |
+| Master Mind | 8820 | NSSM (HiveMasterMind) | HiveImmortal |
+| Caddy | 443 | NSSM (HiveCaddy) | HiveImmortal |
+| Hive Oracle | 8850 | start-all-servers.bat | Needs NSSM migration |
+| Mesh | 8750 | HiveImmortal | NSSM |
+| Hivemind Agent | 8700 | HiveImmortal | NSSM |
+| Personas | 8770 | HiveImmortal | NSSM |
+| Pulse | 8760 | HiveImmortal | NSSM |
+| Sync Agent | 8755 | HiveImmortal | NSSM |
+| Handoff Agent | 8756 | HiveImmortal | NSSM |
+
+**Fix applied (2026-01-27):** HiveImmortal now checks if a port is in use (TCP probe) before spawning. If occupied by an external process, it "adopts" the existing instance instead of crash-looping.
+
+#### Multi-Session Claude Safety
+
+**Problem:** Multiple Claude Code sessions can edit the same config files without knowing about each other's changes. Session A edits `master-mind.js`, session B edits it differently - last write wins, no merge.
+
+**Rules:**
+1. **Check git status before editing shared configs** - see if another session changed it
+2. **After editing any service config**, restart the owning service immediately
+3. **Verify the restart worked** - check health endpoint AND check for crash-loops in HiveImmortal log
+4. **Config files that affect multiple systems** (high-risk edits):
+   - `hive-oracle/server.js` - node discovery for entire colony
+   - `master-mind/master-mind.js` - LLM backend routing
+   - `oracle.js` - default LLM backend
+   - `immortal.js` - which services get managed
+   - `CLAUDE.md` - instructions for all sessions
+
 #### Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
 | Service won't start | Check `nssm get HiveX AppStderr` for errors |
-| Port already in use | Another instance running - kill it first |
+| Port already in use | Check ownership map above, kill the RIGHT process |
 | Service starts then stops | Check logs, likely missing dependency |
 | Can't install service | Run PowerShell as Administrator |
+| EADDRINUSE crash-loop | Check `tail -20 immortal.log`, likely dual-start |
+| Config change not taking effect | Process is running OLD code, restart the OWNER |
+| Multiple instances of same service | Check ownership map, kill orphans |
+
+### Incident: Invisible Crash-Loop (2026-01-27)
+
+**What happened:** During LLM migration to Rock-PC, config files were edited (hive-oracle, master-mind, oracle), processes killed and restarted manually. Meanwhile, HiveImmortal was crash-looping in the background for hours - invisible because:
+- Health checks hit the ORIGINAL working processes (started by start-all-servers.bat)
+- HiveImmortal's duplicate spawn attempts crashed silently with EADDRINUSE
+- `nssm restart HiveImmortal` left stale node processes running old code
+- No alert system for watchdog failures
+
+**Root causes:**
+1. No single owner per service - three systems manage overlapping sets
+2. `nssm restart` doesn't kill orphan child processes
+3. No port-in-use check before spawning
+4. No test environment - all changes go straight to production
+5. Multiple Claude sessions can edit the same configs without coordination
+
+**Fixes applied:**
+- `immortal.js`: TCP port check before spawn, adopted process tracking
+- `STANDARDS.md`: Ownership map, restart procedure, pre-change checklist
+
+**Pre-change checklist (MANDATORY before editing any service config):**
+1. `tail -5 C:\DevClaude\Hivemind\bootstrap\immortal.log` - verify no crash-loops
+2. Identify owner of the service you're changing (see ownership map above)
+3. After editing, restart via the CORRECT owner system
+4. Verify restart: `curl http://localhost:PORT/api/health`
+5. Verify no crash-loops: `tail -5 immortal.log`
+
+**NSSM restart procedure (safe):**
+```bash
+# WRONG - leaves orphan processes:
+nssm restart HiveImmortal
+
+# RIGHT - clean restart:
+nssm stop HiveImmortal
+# Kill any orphan node processes running the service script
+powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*immortal*' -and $_.Name -eq 'node.exe' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+nssm start HiveImmortal
+```
+
+### Test & Prototype Service Pattern
+
+**Current gap:** No way to test service changes without affecting production. Every edit to `server.js` requires restarting the live service.
+
+**Recommended pattern:**
+
+| Environment | Port Range | Purpose |
+|-------------|-----------|---------|
+| Production | 8xxx (standard) | Live services, NSSM/HiveImmortal managed |
+| Test | 9xxx (offset +1000) | Test instances, manually started |
+| Prototype | 7xxx (offset -1000) | Experimental features, temporary |
+
+**How to test a service change:**
+```bash
+# 1. Copy the service to test
+cd C:\LLM-DevOSWE\Admin\hive-oracle
+# 2. Run on test port
+PORT=9850 node server.js
+# 3. Test against test port
+curl http://localhost:9850/api/health
+# 4. If working, apply to production
+nssm restart HiveOracle  # (or appropriate owner)
+```
+
+**Parallel prototype pattern:**
+```bash
+# Run multiple experimental versions simultaneously
+PORT=7850 node server-v2.js &     # Prototype A
+PORT=7851 node server-v3.js &     # Prototype B
+# Compare outputs, pick the winner
+```
+
+**Key principle:** Production ports (8xxx) should NEVER be started manually. Only NSSM or HiveImmortal should touch production ports.
 
 ## 🎮 Gamepad API Patterns
 

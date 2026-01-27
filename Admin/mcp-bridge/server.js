@@ -89,6 +89,18 @@ const MCP_SERVERS = {
     },
     description: 'Slack integration',
     tools: ['slack_list_channels', 'slack_post_message', 'slack_reply_to_thread', 'slack_add_reaction', 'slack_get_channel_history', 'slack_get_thread_replies', 'slack_get_users', 'slack_get_user_profile']
+  },
+  'limitless-memory': {
+    command: 'node',
+    args: [path.join(__dirname, 'limitless-memory-mcp.js')],
+    description: 'Limitless Memory — persistent cross-session memory with FTS5, embeddings, semantic search, and dedup',
+    tools: ['memory_store', 'memory_recall', 'memory_search', 'memory_semantic', 'memory_stats', 'memory_get', 'memory_delete']
+  },
+  'relay-db': {
+    command: 'node',
+    args: [path.join(__dirname, 'relay-db-mcp.js')],
+    description: 'Read-only SQL access to Relay SQLite database (tasks, messages, memories, intel)',
+    tools: ['db_query', 'db_tables', 'db_describe', 'db_stats']
   }
 };
 

@@ -36,36 +36,98 @@ if (!fs.existsSync(DATA_DIR)) {
 // LLM BACKENDS CONFIGURATION
 // ============================================
 
+// ============================================
+// LLM BACKENDS - Distributed by Hardware Capability
+// ============================================
+// Harold-PC (RTX 4090 24GB, 9950X3D) = Orchestration ONLY, no LLM
+// Rock-PC (RTX 3080 12GB, 64GB RAM)  = Primary LLM node (all models)
+// Morpu-PC (Ryzen 7 iGPU, 28GB RAM)  = Light tasks (small models)
+// ai-pc                               = Fallback only
+
 const LLM_BACKENDS = {
-    ollama: {
-        name: 'Ollama',
+    // PRIMARY: Rock-PC - Large models on RTX 3080
+    'rock-primary': {
+        name: 'Rock-PC (Primary)',
         type: 'ollama',
-        url: 'http://localhost:11434',
-        model: 'qwen3-coder:latest',
+        url: 'http://192.168.1.192:11434',
+        model: 'qwen3-coder:latest',  // 30.5B - primary coding
         enabled: true,
         free: true,
         priority: 1,
-        timeout: 60000
+        timeout: 120000,
+        capabilities: ['code', 'large', 'agent']
     },
-    nova: {
-        name: 'Nova (LM Studio Local)',
-        type: 'openai',
-        url: 'http://localhost:1234',
-        model: 'local-model',
+    'rock-32b': {
+        name: 'Rock-PC (32B)',
+        type: 'ollama',
+        url: 'http://192.168.1.192:11434',
+        model: 'qwen2.5-coder:32b',  // 32.8B - complex tasks
         enabled: true,
         free: true,
         priority: 2,
-        timeout: 60000
+        timeout: 180000,
+        capabilities: ['code', 'large', 'complex']
     },
+    'rock-kitt': {
+        name: 'Rock-PC (Kitt Agent)',
+        type: 'ollama',
+        url: 'http://192.168.1.192:11434',
+        model: 'kitt:latest',  // SimWidget agent
+        enabled: true,
+        free: true,
+        priority: 1,
+        timeout: 60000,
+        capabilities: ['agent', 'simwidget']
+    },
+    'rock-14b': {
+        name: 'Rock-PC (14B Fast)',
+        type: 'ollama',
+        url: 'http://192.168.1.192:11434',
+        model: 'qwen2.5-coder:14b',  // 14.8B - fast coding
+        enabled: true,
+        free: true,
+        priority: 2,
+        timeout: 60000,
+        capabilities: ['code', 'medium', 'fast']
+    },
+
+    // LIGHT: Morpu-PC - Small models on CPU
+    'morpu-light': {
+        name: 'Morpu-PC (Light)',
+        type: 'openai',  // LM Studio uses OpenAI API
+        url: 'http://192.168.1.97:1234',
+        model: 'qwen2.5-coder-14b-instruct',
+        enabled: false,  // Enable when LM Studio is running
+        free: true,
+        priority: 3,
+        timeout: 90000,
+        capabilities: ['code', 'light', 'backup']
+    },
+
+    // FALLBACK: ai-pc (Iris)
     iris: {
-        name: 'Iris (LM Studio Remote)',
+        name: 'Iris (ai-pc Fallback)',
         type: 'openai',
         url: 'http://192.168.1.162:1234',
         model: 'vt-gwen-2.5-3b',
         enabled: true,
         free: true,
-        priority: 3,
-        timeout: 90000
+        priority: 4,
+        timeout: 90000,
+        capabilities: ['vision', 'small', 'fallback']
+    },
+
+    // Harold-PC: orchestration only, no LLM
+    'harold-local': {
+        name: 'Harold-PC (Disabled)',
+        type: 'ollama',
+        url: 'http://localhost:11434',
+        model: 'qwen2.5-coder:7b',
+        enabled: false,  // Harold-PC reserved for MSFS + orchestration, no LLM
+        free: true,
+        priority: 99,
+        timeout: 60000,
+        capabilities: []
     }
 };
 
@@ -351,6 +413,139 @@ async function smartQuery(prompt, options = {}) {
 }
 
 // ============================================
+// SEQUENTIAL THINKING (via MCP Bridge)
+// ============================================
+
+const MCP_BRIDGE = 'http://localhost:8860';
+
+async function callSequentialThinking(thought, options = {}) {
+    try {
+        const resp = await httpRequest(`${MCP_BRIDGE}/api/tool/sequentialthinking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 15000
+        }, JSON.stringify({
+            thought,
+            nextThoughtNeeded: options.nextThoughtNeeded !== false,
+            thoughtNumber: options.thoughtNumber || 1,
+            totalThoughts: options.totalThoughts || 5
+        }));
+        if (resp.status === 200 && resp.data?.success) {
+            return resp.data.result?.content?.[0]?.text || resp.data.result;
+        }
+        return null;
+    } catch (err) {
+        console.log(`[MasterMind] Sequential thinking unavailable: ${err.message}`);
+        return null;
+    }
+}
+
+async function decomposeQuery(prompt) {
+    // Try MCP sequential thinking first
+    const decomposition = await callSequentialThinking(
+        `Break down this complex question into 2-4 focused sub-questions that can each be answered independently by an LLM. Return ONLY a JSON array of strings, no other text. Question: "${prompt}"`,
+        { totalThoughts: 1, nextThoughtNeeded: false }
+    );
+    if (decomposition) {
+        try {
+            const match = decomposition.match(/\[[\s\S]*?\]/);
+            if (match) return JSON.parse(match[0]);
+        } catch {}
+    }
+    // Fallback: use fastest LLM backend for decomposition
+    console.log('[MasterMind] MCP unavailable, using LLM fallback for decomposition');
+    try {
+        const result = await smartQuery(
+            `Break down this question into 2-4 focused sub-questions. Return ONLY a JSON array of strings, no markdown, no explanation. Question: "${prompt}"`,
+            { model: 'qwen2.5-coder:14b' }
+        );
+        if (result.response) {
+            const match = result.response.match(/\[[\s\S]*?\]/);
+            if (match) return JSON.parse(match[0]);
+        }
+    } catch {}
+    return null;
+}
+
+async function synthesizeResponses(prompt, responses) {
+    const summaries = responses.map(r =>
+        `[${r.backend}] ${(r.response || '').substring(0, 500)}`
+    ).join('\n\n');
+    // Try MCP sequential thinking first
+    const synthesis = await callSequentialThinking(
+        `You received these responses to the question "${prompt}" from different LLMs. Synthesize them into a single, comprehensive answer. Resolve any contradictions by favoring the most detailed/accurate response.\n\n${summaries}`,
+        { totalThoughts: 1, nextThoughtNeeded: false }
+    );
+    if (synthesis) return synthesis;
+    // Fallback: use LLM backend for synthesis
+    console.log('[MasterMind] MCP unavailable, using LLM fallback for synthesis');
+    try {
+        const result = await smartQuery(
+            `Synthesize these responses into one comprehensive answer:\n\n${summaries}`,
+            { model: 'qwen2.5-coder:14b' }
+        );
+        return result.response || null;
+    } catch {}
+    return null;
+}
+
+async function thoughtfulQuery(prompt, options = {}) {
+    const startTime = Date.now();
+    console.log(`[MasterMind] Thoughtful query with sequential thinking...`);
+
+    // Step 1: Try to decompose complex query
+    const subQuestions = options.decompose !== false ? await decomposeQuery(prompt) : null;
+
+    let results;
+    if (subQuestions && subQuestions.length > 1) {
+        console.log(`[MasterMind] Decomposed into ${subQuestions.length} sub-questions`);
+        // Query each sub-question in parallel across backends
+        const subResults = await Promise.all(
+            subQuestions.map(sq => parallelQuery(sq, { ...options, _internal: true }))
+        );
+        // Collect best response per sub-question
+        const stepAnswers = subResults.map((sr, i) => ({
+            question: subQuestions[i],
+            answer: sr.fastest?.response || sr.responses?.[0]?.response || 'No answer',
+            backend: sr.fastest?.backend || sr.responses?.[0]?.backend || 'unknown'
+        }));
+        // Synthesize sub-answers
+        const synthesis = await synthesizeResponses(prompt, stepAnswers.map(s => ({
+            backend: `Step ${stepAnswers.indexOf(s) + 1} (${s.backend})`,
+            response: `Q: ${s.question}\nA: ${s.answer}`
+        })));
+        results = {
+            mode: 'thoughtful',
+            decomposed: true,
+            subQuestions,
+            stepAnswers,
+            synthesis: synthesis || stepAnswers.map(s => s.answer).join('\n\n'),
+            totalTime: Date.now() - startTime
+        };
+    } else {
+        // No decomposition needed — parallel query + synthesize
+        const parallel = await parallelQuery(prompt, options);
+        const synthesis = parallel.responses.length > 1
+            ? await synthesizeResponses(prompt, parallel.responses)
+            : null;
+        results = {
+            mode: 'thoughtful',
+            decomposed: false,
+            responses: parallel.responses,
+            consensus: parallel.consensus,
+            synthesis: synthesis || parallel.fastest?.response || null,
+            totalTime: Date.now() - startTime
+        };
+    }
+
+    stats.totalQueries++;
+    stats.lastQuery = Date.now();
+    saveStats();
+
+    return results;
+}
+
+// ============================================
 // BACKEND HEALTH CHECK
 // ============================================
 
@@ -440,6 +635,17 @@ app.post('/api/query/parallel', async (req, res) => {
     }
 
     const result = await parallelQuery(prompt, options || {});
+    res.json(result);
+});
+
+// Thoughtful query - sequential thinking + parallel
+app.post('/api/query/thoughtful', async (req, res) => {
+    const { prompt, options } = req.body;
+    if (!prompt) {
+        return res.status(400).json({ error: 'Prompt required' });
+    }
+
+    const result = await thoughtfulQuery(prompt, options || {});
     res.json(result);
 });
 

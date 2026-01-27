@@ -63,14 +63,12 @@ class NodeDiscovery {
             console.log('[Hive-Oracle] Hive Brain not available, using defaults');
         }
 
-        // Always check localhost
-        await this.probeNode({ ip: '127.0.0.1', hostname: HIVE_NODE });
-
-        // Check known IPs from hive-network.json
+        // Check known LLM nodes - ordered by priority (primary first)
+        // Harold-PC (localhost) runs orchestration only, no LLM
         const knownNodes = [
-            { ip: '192.168.1.42', hostname: 'harold-pc' },
-            { ip: '192.168.1.97', hostname: 'morpu-pc' },
-            { ip: '192.168.1.162', hostname: 'ai-pc' }
+            { ip: '192.168.1.192', hostname: 'rock-pc', role: 'primary', gpu: 'RTX 3080 12GB' },
+            { ip: '192.168.1.97', hostname: 'morpu-pc', role: 'light', gpu: 'iGPU' },
+            { ip: '192.168.1.162', hostname: 'ai-pc', role: 'fallback' }
         ];
 
         for (const node of knownNodes) {
@@ -85,9 +83,23 @@ class NodeDiscovery {
     async probeNode(device) {
         const { ip, hostname } = device;
 
+        // Helper: fetch with proper timeout via AbortController
+        const fetchWithTimeout = async (url, ms = 5000) => {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), ms);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
+                return res;
+            } catch (e) {
+                clearTimeout(timer);
+                throw e;
+            }
+        };
+
         // Try Ollama
         try {
-            const res = await fetch(`http://${ip}:11434/api/tags`, { timeout: 3000 });
+            const res = await fetchWithTimeout(`http://${ip}:11434/api/tags`, 5000);
             if (res.ok) {
                 const data = await res.json();
                 const models = data.models?.map(m => m.name) || [];
@@ -99,16 +111,20 @@ class NodeDiscovery {
                     models,
                     status: 'online',
                     load: 0,
-                    lastCheck: Date.now()
+                    lastCheck: Date.now(),
+                    role: device.role || 'unknown',
+                    gpu: device.gpu || 'unknown'
                 });
                 console.log(`[Hive-Oracle] Found Ollama at ${ip} (${models.length} models)`);
                 return;
             }
-        } catch {}
+        } catch (e) {
+            // Silent - try next protocol
+        }
 
         // Try LM Studio
         try {
-            const res = await fetch(`http://${ip}:1234/v1/models`, { timeout: 3000 });
+            const res = await fetchWithTimeout(`http://${ip}:1234/v1/models`, 5000);
             if (res.ok) {
                 const data = await res.json();
                 const models = data.data?.map(m => m.id) || [];
@@ -120,12 +136,16 @@ class NodeDiscovery {
                     models,
                     status: 'online',
                     load: 0,
-                    lastCheck: Date.now()
+                    lastCheck: Date.now(),
+                    role: device.role || 'unknown',
+                    gpu: device.gpu || 'unknown'
                 });
                 console.log(`[Hive-Oracle] Found LM Studio at ${ip} (${models.length} models)`);
                 return;
             }
-        } catch {}
+        } catch (e) {
+            // Silent - node not available
+        }
 
         // Node has no LLM
         if (colony.nodes.has(ip)) {

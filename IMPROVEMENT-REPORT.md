@@ -225,24 +225,24 @@ Add web search capability to Intel Gatherer.
 ## 4. Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1)
-- [ ] P1: Create MCP-Hive Bridge service skeleton
-- [ ] P2: Implement Memory ↔ Relay sync
-- [ ] P3: Route GitHub intel through MCP
+- [x] P1: Create MCP-Hive Bridge service skeleton — **DONE** (port 8860, 12 servers)
+- [x] P2: Implement Memory ↔ Relay sync — **DONE** (Limitless Memory: FTS5+embeddings+sync+MCP)
+- [x] P3: Route GitHub intel through MCP — **DONE** (31 repos, 12h auto-poll, stores as Limitless Memory)
 
 ### Phase 2: Integration (Week 2)
 - [ ] P4: Merge Puppeteer/Browser Bridge
-- [ ] P5: Add plugin dispatch to Relay
-- [ ] P6: Add sequential-thinking to Hive Oracle
+- [x] P5: Add plugin dispatch to Relay — **DONE** (32 plugins discovered, async dispatch, sync MCP exec)
+- [x] P6: Add sequential-thinking to Hive Oracle — **DONE** (Master Mind /api/query/thoughtful, LLM fallback)
 
 ### Phase 3: Enhancement (Week 3)
-- [ ] P7: SQLite MCP for Relay access
+- [x] P7: SQLite MCP for Relay access — **DONE** (relay-db-mcp.js, 4 tools, read-only, 37 tables)
 - [ ] P8: Slack alerts integration
 - [ ] Update Dashboard with MCP status
 
 ### Phase 4: Polish (Week 4)
 - [ ] P9-P11: Lower priority items
-- [ ] Documentation update
-- [ ] Performance optimization
+- [x] Documentation update — **DONE** (LIMITLESS-MEMORY.md, SERVICE-REGISTRY.md, IMPROVEMENT-REPORT.md)
+- [x] Performance optimization — **DONE** (PRAGMA tuning, FTS5 optimize, 768-dim embeddings)
 
 ---
 
@@ -270,14 +270,14 @@ These can be implemented immediately:
 
 ## 6. Metrics & Success Criteria
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| MCP Servers Active | 2/14 | 10/14 |
-| Plugin Usage | 0/day | 10/day |
-| Intel Sources | 3 | 6 |
-| Auto-fixes Applied | 0 | 5/week |
-| Memory Entries | 0 | 100+ |
-| Cross-AI Tool Calls | 0 | 50/day |
+| Metric | Before | Current | Target |
+|--------|--------|---------|--------|
+| MCP Servers Active | 2/14 | 12/14 | 12/14 ✅ |
+| Plugin Usage | 0/day | Available (32 plugins) | 10/day |
+| Intel Sources | 3 | 4 (GitHub poller added) | 6 |
+| Auto-fixes Applied | 0 | 0 | 5/week |
+| Memory Entries | 0 | 123 | 100+ ✅ |
+| Cross-AI Tool Calls | 0 | Available (MCP Bridge) | 50/day |
 
 ---
 

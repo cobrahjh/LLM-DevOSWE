@@ -1,11 +1,31 @@
 ---
 name: hive-aware
-description: Hive-aware operations with automatic service discovery and context
+description: Hive-aware operations with automatic service discovery, Claude Code integration, and context
+version: 2.0.0
 ---
 
 # Hive-Aware Operations
 
-When working in Harold's Hive environment, follow these patterns:
+When working in Harold's Hive environment, follow these patterns.
+
+## Claude Code Integration
+
+### Hooks (Automatic)
+- **SessionStart**: Hive status injected automatically
+- **PostToolUse**: All tool calls logged to Relay database
+- **Stop**: Memory backed up on session end
+- **PreToolUse**: Bash commands validated for security
+
+### Plugin Commands
+| Command | Description |
+|---------|-------------|
+| `/hive-status` | Full health check of all services |
+| `/relay-check` or `/msg` | Check pending Relay messages |
+| `/sync-memory` or `/syncmem` | Backup memory to database |
+| `/mcp-tools` | List available MCP tools |
+
+### MCP Servers Available
+filesystem, memory, github, puppeteer, fetch, sqlite, git, sequential-thinking
 
 ## Service Endpoints
 
