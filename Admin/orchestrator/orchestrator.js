@@ -184,9 +184,42 @@ const SERVICES = {
         port: 8850,
         dir: path.join(PROJECT_ROOT, 'Admin', 'hive-oracle'),
         start: 'node server.js',
-        winService: null,  // No Windows Service yet
+        winService: null,
         healthEndpoint: '/api/health',
         priority: 10,
+        autoRestart: true
+    },
+    hivebraindiscovery: {
+        id: 'hivebraindiscovery',
+        name: 'Hive-Brain Discovery',
+        port: 8810,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-brain'),
+        start: 'node hive-brain.js',
+        winService: null,
+        healthEndpoint: '/api/health',
+        priority: 11,
+        autoRestart: true
+    },
+    mastermind: {
+        id: 'mastermind',
+        name: 'Master-Mind',
+        port: 8820,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'master-mind'),
+        start: 'node master-mind.js',
+        winService: null,
+        healthEndpoint: '/api/health',
+        priority: 12,
+        autoRestart: true
+    },
+    hivemesh: {
+        id: 'hivemesh',
+        name: 'Hive-Mesh',
+        port: 8750,
+        dir: 'C:\\DevClaude\\Hivemind\\mesh',
+        start: 'node mesh.js',
+        winService: null,
+        healthEndpoint: '/health',
+        priority: 13,
         autoRestart: true
     }
 };
