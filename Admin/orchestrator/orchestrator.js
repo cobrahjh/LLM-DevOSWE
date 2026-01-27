@@ -263,23 +263,46 @@ async function checkPortInUse(port) {
     });
 }
 
+// Send alert to Relay's alert system
+function sendRelayAlert(severity, title, message, service) {
+    const body = JSON.stringify({ severity, source: 'orchestrator', title, message, service });
+    const req = http.request({
+        hostname: 'localhost', port: 8600,
+        path: '/api/alerts', method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    }, (res) => { res.resume(); });
+    req.on('error', () => {}); // Non-blocking, ignore errors
+    req.setTimeout(5000, () => req.destroy());
+    req.write(body);
+    req.end();
+}
+
+const previousHealthState = {};
+
 async function watchdogCheck() {
     if (!watchdogEnabled) return;
-    
+
     for (const [id, svc] of Object.entries(SERVICES)) {
         const state = serviceStates[id];
         const health = await checkServiceHealth(id);
         const portInUse = await checkPortInUse(svc.port);
-        
+        const wasHealthy = previousHealthState[id] !== false;
+
         state.running = portInUse;
         state.lastCheck = new Date().toISOString();
-        
+
         if (!health.healthy && svc.autoRestart && watchdogEnabled) {
+            // Alert on state change (healthy → unhealthy)
+            if (wasHealthy) {
+                sendRelayAlert('error', `${svc.name} is DOWN`, `Service ${svc.name} (port ${svc.port}) failed health check. Auto-restart enabled.`, svc.name);
+            }
+            previousHealthState[id] = false;
+
             // Check cooldown
-            const timeSinceLastStart = state.lastStart 
+            const timeSinceLastStart = state.lastStart
                 ? Date.now() - new Date(state.lastStart).getTime()
                 : Infinity;
-            
+
             if (timeSinceLastStart > RESTART_COOLDOWN && state.restartCount < MAX_RESTART_ATTEMPTS) {
                 log(`[Watchdog] ${svc.name} unhealthy, attempting restart (${state.restartCount + 1}/${MAX_RESTART_ATTEMPTS})`, 'WARN');
                 await startService(id);
@@ -287,8 +310,14 @@ async function watchdogCheck() {
             } else if (state.restartCount >= MAX_RESTART_ATTEMPTS) {
                 log(`[Watchdog] ${svc.name} max restart attempts reached`, 'ERROR');
                 state.error = 'Max restart attempts reached';
+                sendRelayAlert('critical', `${svc.name} UNREACHABLE`, `Service ${svc.name} failed ${MAX_RESTART_ATTEMPTS} restart attempts. Manual intervention required.`, svc.name);
             }
         } else if (health.healthy) {
+            // Alert on recovery (unhealthy → healthy)
+            if (!wasHealthy && previousHealthState[id] === false) {
+                sendRelayAlert('info', `${svc.name} recovered`, `Service ${svc.name} (port ${svc.port}) is back online.`, svc.name);
+            }
+            previousHealthState[id] = true;
             state.restartCount = 0;
             state.error = null;
         }

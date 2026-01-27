@@ -584,6 +584,20 @@ function initDatabase() {
         )
     `);
 
+    // ---- Alerts ----
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            severity TEXT NOT NULL DEFAULT 'warning',
+            source TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT,
+            service TEXT,
+            acknowledged INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL
+        )
+    `);
+
     log(`Database initialized: ${DB_FILE}`);
 }
 
@@ -5031,6 +5045,94 @@ app.post('/api/memory/import', (req, res) => {
         log(`Memory import error: ${err.message}`, 'ERROR');
         res.status(500).json({ error: err.message });
     }
+});
+
+// --- Alert System ---
+
+const ALERT_COOLDOWN = 60 * 1000; // 60s between same-source alerts
+const alertCooldowns = new Map();
+
+function sendAlert(severity, source, title, message, service) {
+    const cooldownKey = `${source}:${service || ''}:${title}`;
+    const lastSent = alertCooldowns.get(cooldownKey);
+    if (lastSent && Date.now() - lastSent < ALERT_COOLDOWN) return null;
+    alertCooldowns.set(cooldownKey, Date.now());
+
+    const now = Date.now();
+    const result = db.prepare(
+        'INSERT INTO alerts (severity, source, title, message, service, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(severity, source, title, message || '', service || '', now);
+    const alertId = result.lastInsertRowid;
+    log(`ALERT [${severity}] ${source}: ${title}${service ? ` (${service})` : ''}`);
+
+    broadcast({ type: 'alert', id: alertId, severity, source, title, message, service, timestamp: now });
+
+    sendSlackAlert(severity, title, message, service).catch(() => {});
+
+    return alertId;
+}
+
+async function sendSlackAlert(severity, title, message, service) {
+    const slackWebhook = process.env.SLACK_WEBHOOK_URL;
+    if (!slackWebhook) return;
+
+    const emoji = severity === 'critical' ? ':red_circle:' : severity === 'error' ? ':large_orange_circle:' : severity === 'warning' ? ':warning:' : ':information_source:';
+    const text = `${emoji} *${title}*${service ? ` — \`${service}\`` : ''}\n${message || ''}`;
+
+    try {
+        const url = new URL(slackWebhook);
+        const body = JSON.stringify({ text });
+        await new Promise((resolve, reject) => {
+            const mod = url.protocol === 'https:' ? https : http;
+            const req = mod.request({
+                hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80),
+                path: url.pathname, method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+            }, (res) => { res.resume(); resolve(); });
+            req.on('error', reject);
+            req.setTimeout(5000, () => { req.destroy(); reject(new Error('Slack timeout')); });
+            req.write(body);
+            req.end();
+        });
+    } catch (err) {
+        log(`Slack alert failed: ${err.message}`, 'WARN');
+    }
+}
+
+app.post('/api/alerts', (req, res) => {
+    const { severity, source, title, message, service } = req.body;
+    if (!title || !source) return res.status(400).json({ error: 'title and source are required' });
+    const id = sendAlert(severity || 'warning', source, title, message, service);
+    if (id === null) return res.json({ success: true, throttled: true });
+    res.json({ success: true, id });
+});
+
+app.get('/api/alerts', (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const severity = req.query.severity;
+    const unackOnly = req.query.unacknowledged === 'true';
+    let sql = 'SELECT * FROM alerts';
+    const conditions = [];
+    const params = [];
+    if (severity) { conditions.push('severity = ?'); params.push(severity); }
+    if (unackOnly) { conditions.push('acknowledged = 0'); }
+    if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ');
+    sql += ' ORDER BY created_at DESC LIMIT ?';
+    params.push(limit);
+    const alerts = db.prepare(sql).all(...params);
+    res.json({ count: alerts.length, alerts });
+});
+
+app.post('/api/alerts/:id/ack', (req, res) => {
+    const result = db.prepare('UPDATE alerts SET acknowledged = 1 WHERE id = ?').run(req.params.id);
+    res.json({ success: result.changes > 0 });
+});
+
+app.get('/api/alerts/summary', (req, res) => {
+    const since = Date.now() - 24 * 60 * 60 * 1000;
+    const summary = db.prepare('SELECT severity, COUNT(*) as count FROM alerts WHERE created_at > ? GROUP BY severity').all(since);
+    const unacked = db.prepare('SELECT COUNT(*) as count FROM alerts WHERE acknowledged = 0').get();
+    res.json({ last24h: summary, unacknowledged: unacked.count });
 });
 
 // --- Plugin Dispatch System ---
