@@ -1,5 +1,5 @@
 # Service Registry
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-01-26
 **Single source of truth for all services, ports, and endpoints**
 
 ---
@@ -19,6 +19,8 @@
 | 8621 | Google Drive | Optional | `node C:\LLM-DevOSWE\Admin\google-drive\drive-service.js` |
 | 8700 | Claude Bridge | Optional | `node C:\LLM-DevOSWE\Admin\claude-bridge\bridge-service.js` |
 | 8701 | Hive-Mind | Core | `node C:\LLM-DevOSWE\Admin\hive-mind\hive-mind-server.js` |
+| 8750 | Mesh | Core | `node C:\DevClaude\Hivemind\mesh\mesh.js` |
+| 8770 | Personas | Core | `node C:\DevClaude\Hivemind\personas\personas.js` |
 | 8771 | Terminal Hub | Core | `node C:\LLM-DevOSWE\Admin\terminal-hub\terminal-hub-server.js` |
 | 8800 | Agents (HiveImmortal) | Core | DevClaude Hivemind Oracle (16 agents) |
 | 8810 | Hive Brain | Core | `node C:\LLM-DevOSWE\Admin\hive-brain\hive-brain.js` |
@@ -116,6 +118,37 @@
   - Process list with CPU/RAM/window title
   - Windows Terminal integration with output bridging
   - Mobile responsive UI
+
+### Mesh (Port 8750)
+- **Location:** `C:\DevClaude\Hivemind\mesh\mesh.js` (managed by HiveImmortal)
+- **Purpose:** Agent mesh network and registration
+- **UI:** `http://localhost:8750`
+- **Endpoints:**
+  - `GET /api/health` - Health check (returns agent count)
+  - `GET /api/agents` - List registered agents
+  - `POST /api/agents/register` - Register new agent
+- **Features:**
+  - Agent discovery and registration
+  - Mesh networking for distributed agents
+  - Part of DevClaude Hivemind system
+
+### Personas (Port 8770)
+- **Location:** `C:\DevClaude\Hivemind\personas\personas.js` (managed by HiveImmortal)
+- **Purpose:** AI persona management - voice, personality, identity
+- **UI:** `http://localhost:8770`
+- **Endpoints:**
+  - `GET /api/agents` - List all personas
+  - `GET /api/agents/:id` - Get specific persona
+  - `POST /api/agents` - Create new persona
+  - `PUT /api/agents/:id` - Update persona
+  - `DELETE /api/agents/:id` - Delete persona
+  - `GET /test` - Voice test page
+- **Features:**
+  - Microsoft Natural voice support (Edge browser)
+  - Capability tiers: newborn, child, teen, adult, elder
+  - Personality traits: tone, verbosity, formality
+  - Custom greetings and status phrases
+  - Voice testing with Web Speech API
 
 ### Agents / HiveImmortal Oracle (Port 8800)
 - **Location:** `C:\DevClaude\Hivemind\Oracle\oracle.js` (managed by HiveImmortal)
