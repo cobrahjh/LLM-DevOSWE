@@ -28,6 +28,7 @@
 | 11434 | Ollama | External | `ollama serve` |
 | 1234 | Iris (ai-pc) | External | LM Studio on 192.168.1.162 |
 | 3003 | Hive Bridge (ai-pc) | External | `node C:\Hive\services\hive-bridge.js` |
+| 8750 | Hive-Mesh | Core | `node C:\DevClaude\Hivemind\mesh\mesh.js` |
 | 8860 | MCP-Hive Bridge | Core | `node C:\LLM-DevOSWE\Admin\mcp-bridge\server.js` |
 | 8870 | Hive Voice | Optional | `node C:\LLM-DevOSWE\Admin\hive-voice\voice-server.js` |
 | 8899 | Hive Dashboard | Core | `node C:\LLM-DevOSWE\Admin\hive-dashboard\server.js` |
@@ -74,7 +75,18 @@
 - **Location:** `C:\LLM-DevOSWE\Admin\orchestrator\orchestrator.js`
 - **Purpose:** Health watchdog, service auto-restart, dashboard
 - **UI:** `http://localhost:8500`
-- **Monitors:** All core services
+- **Monitors:** 16 services (Oracle, SimWidget, Agent, Relay, Remote Support, Claude Bridge, KeySender, Hive-Mind, Terminal Hub, Hive Brain Admin, Hive Oracle, Hive-Brain Discovery, Master-Mind, Hive-Mesh, MCP-Bridge, Dashboard)
+- **Health Check:** 30s interval, 3 consecutive healthy checks required for recovery, `res.resume()` to prevent connection leaks
+- **Alerts:** Sends alerts to Relay on service failure/recovery
+- **Endpoints:**
+  - `GET /api/health` - Master health
+  - `GET /api/status` - All services status
+  - `GET /api/services` - Service registry
+  - `POST /api/services/:id/start` - Start service
+  - `POST /api/services/:id/stop` - Stop service
+  - `POST /api/services/:id/restart` - Restart service
+  - `POST /api/start-all` - Start all services
+  - `GET /api/watchdog` - Watchdog status
 
 ### SimWidget Main (Port 8080)
 - **Location:** `C:\LLM-DevOSWE\simwidget-hybrid\backend\server.js`
@@ -200,6 +212,13 @@
   - Distributed memory across colony
   - Consensus aggregation for multiple responses
 
+### Hive-Mesh (Port 8750)
+- **Location:** `C:\DevClaude\Hivemind\mesh\mesh.js`
+- **Purpose:** Inter-service mesh networking for Hive communication
+- **Endpoints:**
+  - `GET /health` - Health check
+- **Managed by:** Orchestrator (priority 13)
+
 ### MCP-Hive Bridge (Port 8860)
 - **Location:** `C:\LLM-DevOSWE\Admin\mcp-bridge\server.js`
 - **Purpose:** Unified MCP server hub for all Hive AI
@@ -320,8 +339,8 @@
 ## Health Check
 
 ```powershell
-# Quick check all core services
-$ports = @(3002, 8080, 8500, 8585, 8590, 8600)
+# Quick check all core services (16 Orchestrator-managed)
+$ports = @(3002, 8080, 8500, 8585, 8590, 8600, 8701, 8750, 8771, 8800, 8810, 8820, 8850, 8860, 8899)
 foreach ($port in $ports) {
     $conn = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
     if ($conn) { Write-Host "OK: Port $port" -ForegroundColor Green }
@@ -339,29 +358,31 @@ foreach ($port in $ports) {
                     ├─────────────────────────────────────┤
                     │  Command Center    Kitt Live        │
                     │  :8585 (web)       Alt+K (desktop)  │
-                    │  Phone (KittBox)                    │
+                    │  Dashboard :8899   Phone (KittBox)  │
                     └──────────────┬──────────────────────┘
                                    │
-                    ┌──────────────▼──────────────────────┐
-                    │         RELAY SERVICE :8600         │
-                    │  Message queue, task persistence    │
-                    │  SQLite database, WebSocket events  │
-                    └──────────────┬──────────────────────┘
-                                   │
-         ┌─────────────────────────┼─────────────────────────┐
-         │                         │                         │
-         ▼                         ▼                         ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Oracle :3002   │    │  Agent :8585    │    │ Smart Router    │
-│  LLM Backend    │    │  Task Executor  │    │    :8610        │
-│  Project API    │    │  Command Center │    │  LLM Routing    │
-└────────┬────────┘    └─────────────────┘    └────────┬────────┘
-         │                                             │
-         │              ┌──────────────────────────────┤
-         ▼              ▼                              ▼
-┌─────────────────┐ ┌─────────────────┐    ┌─────────────────┐
-│ Ollama :11434   │ │ Claude Code     │    │ Iris :1234      │
-│ Local LLM       │ │ (Terminal)      │    │ Remote LLM      │
-│ qwen3-coder     │ │ FREE            │    │ ai-pc backup    │
-└─────────────────┘ └─────────────────┘    └─────────────────┘
+              ┌────────────────────┼────────────────────┐
+              ▼                    ▼                    ▼
+┌──────────────────────┐ ┌─────────────────┐ ┌──────────────────┐
+│ ORCHESTRATOR :8500   │ │  RELAY :8600    │ │  MCP BRIDGE      │
+│ 16-service watchdog  │ │  Messages/Tasks │ │    :8860         │
+│ Health + auto-restart│ │  Alerts/SQLite  │ │  7 MCP servers   │
+└──────────┬───────────┘ └────────┬────────┘ └──────────────────┘
+           │                      │
+    ┌──────┴──────────────────────┼──────────────────────────┐
+    │              │              │              │            │
+    ▼              ▼              ▼              ▼            ▼
+┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│Oracle   │ │SimWidget │ │Hive-Mind │ │Master-   │ │Hive      │
+│:3002    │ │:8080     │ │:8701     │ │Mind:8820 │ │Oracle    │
+│LLM API  │ │MSFS      │ │Monitor   │ │Parallel  │ │:8850     │
+└────┬────┘ └──────────┘ └──────────┘ │LLM Query │ │Dist. LLM │
+     │                                └────┬─────┘ └──────────┘
+     │              ┌──────────────────────┤
+     ▼              ▼                      ▼
+┌─────────────┐ ┌─────────────┐    ┌─────────────┐
+│Ollama:11434 │ │Claude Code  │    │Iris :1234   │
+│Local LLM    │ │(Terminal)   │    │Remote LLM   │
+│qwen3-coder  │ │FREE         │    │ai-pc backup │
+└─────────────┘ └─────────────┘    └─────────────┘
 ```

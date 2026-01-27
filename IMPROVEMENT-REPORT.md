@@ -1,6 +1,7 @@
 # Hive Improvement Report
 **Generated:** 2026-01-21
-**Status:** Ready for Review
+**Updated:** 2026-01-27
+**Status:** Phase 5 Complete
 
 ---
 
@@ -252,6 +253,14 @@ Add web search capability to Intel Gatherer.
 - [x] Dashboard endpoint fixes — **DONE** (Hive-Oracle /api/health, Master-O /api/health)
 - [x] Anomaly deduplication — **DONE** (collapsed duplicates with occurrence count)
 - [x] Settings cleanup — **DONE** (fixed invalid Bash patterns in settings.local.json)
+- [x] Orchestrator expansion — **DONE** (16 services: added Hive-Brain Discovery, Master-Mind, Hive-Mesh, MCP-Bridge, Dashboard, Oracle)
+- [x] Oracle watchdog — **DONE** (Oracle added at priority 0, auto-restart on failure)
+- [x] Health check connection fix — **DONE** (res.resume() to drain HTTP responses, prevents connection leaks)
+- [x] Bootstrap script — **DONE** (setup.bat runs npm install for all 10 service directories)
+- [x] Diagnostic cleanup — **DONE** (removed temp files, added to .gitignore)
+- [x] Notification plugin — **DONE** (notify.js + notify.ps1 for PostToolUse hook)
+- [x] Statusline plugin — **DONE** (statusline.sh for Claude Code status bar)
+- [x] Briefing auto-regeneration — **DONE** (dashboard reloads briefing when stale >1 hour)
 
 ### Remaining (Low Priority)
 - [ ] P9: Sentry MCP → Error aggregation (needs API key)
@@ -288,7 +297,7 @@ These can be implemented immediately:
 | Metric | Before | Current | Target |
 |--------|--------|---------|--------|
 | MCP Servers Active | 2/14 | 5/7 auto-started | 7/7 |
-| Hive Services Online | 4/15 | 12/15 | 15/15 |
+| Hive Services Online | 4/15 | 16/16 managed by Orchestrator | 16/16 |
 | Plugin Usage | 0/day | Available (7 servers) | 10/day |
 | Intel Sources | 3 | 5 (HN, Reddit, GitHub, Ollama, Brave) | 6 |
 | Auto-fixes Applied | 0 | Alert auto-expiry + recovery ack | 5/week |
@@ -296,6 +305,8 @@ These can be implemented immediately:
 | Cross-AI Tool Calls | 0 | Available (MCP Bridge) | 50/day |
 | Alert System | None | Active (Relay + Orchestrator + auto-expiry) | Real-time |
 | Dashboard Refresh | 60s | 30s + last-updated indicator | Real-time |
+| Orchestrator Services | 10 | 16 (all core + Oracle at priority 0) | 16 |
+| Bootstrap Time | Manual | setup.bat (one command) | Automated |
 
 ---
 
