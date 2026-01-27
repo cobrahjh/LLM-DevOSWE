@@ -27,13 +27,13 @@ app.use(express.json({ limit: '10mb' }));
 const MCP_SERVERS = {
   filesystem: {
     command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-filesystem', process.env.HOME || 'C:/Users/hjharissh'],
+    args: ['-y', '@modelcontextprotocol/server-filesystem', process.env.HOME || 'C:/Users/Stone-PC'],
     description: 'File system operations',
     tools: ['read_file', 'write_file', 'list_directory', 'create_directory', 'move_file', 'search_files', 'get_file_info']
   },
   memory: {
     command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-memory'],
+    args: ['-y', '@modelcontextprotocol/server-memory'],
     description: 'Persistent knowledge graph memory',
     tools: ['create_entities', 'create_relations', 'add_observations', 'delete_entities', 'delete_observations', 'delete_relations', 'read_graph', 'search_nodes', 'open_nodes']
   },
@@ -44,39 +44,15 @@ const MCP_SERVERS = {
     description: 'GitHub repository operations',
     tools: ['search_repositories', 'get_file_contents', 'create_or_update_file', 'push_files', 'create_issue', 'create_pull_request', 'fork_repository', 'create_branch', 'list_commits', 'list_issues', 'update_issue', 'add_issue_comment', 'search_code', 'search_issues', 'search_users', 'get_issue', 'get_pull_request', 'list_pull_requests', 'create_repository', 'get_me']
   },
-  fetch: {
-    command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-fetch'],
-    description: 'HTTP fetch operations',
-    tools: ['fetch']
-  },
-  sqlite: {
-    command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-sqlite'],
-    description: 'SQLite database operations',
-    tools: ['read_query', 'write_query', 'create_table', 'list_tables', 'describe_table', 'append_insight']
-  },
-  git: {
-    command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-git'],
-    description: 'Git version control operations',
-    tools: ['git_status', 'git_diff_unstaged', 'git_diff_staged', 'git_diff', 'git_commit', 'git_add', 'git_reset', 'git_log', 'git_create_branch', 'git_checkout', 'git_show', 'git_init', 'git_clone', 'git_branch_list', 'git_tag_list', 'git_remote_list', 'git_stash', 'git_stash_pop']
-  },
-  time: {
-    command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-time'],
-    description: 'Time and timezone operations',
-    tools: ['get_current_time', 'convert_time']
-  },
   'sequential-thinking': {
     command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-sequential-thinking'],
+    args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
     description: 'Step-by-step reasoning',
     tools: ['sequentialthinking']
   },
   puppeteer: {
     command: 'npx',
-    args: ['-y', '@anthropic/mcp-server-puppeteer'],
+    args: ['-y', '@modelcontextprotocol/server-puppeteer'],
     description: 'Browser automation',
     tools: ['puppeteer_navigate', 'puppeteer_screenshot', 'puppeteer_click', 'puppeteer_fill', 'puppeteer_select', 'puppeteer_hover', 'puppeteer_evaluate']
   },
@@ -564,6 +540,26 @@ app.get('/api/quick/search', async (req, res) => {
 // SERVER STARTUP
 // ============================================
 
+// Auto-start safe MCP servers (no API keys required)
+const AUTO_START_SERVERS = [
+  'filesystem', 'memory', 'github',
+  'sequential-thinking', 'puppeteer'
+];
+
+async function autoStartServers() {
+  console.log(`[MCP Bridge] Auto-starting ${AUTO_START_SERVERS.length} servers...`);
+  let started = 0;
+  for (const name of AUTO_START_SERVERS) {
+    try {
+      await getServer(name);
+      started++;
+    } catch (err) {
+      console.log(`[MCP Bridge] Failed to auto-start ${name}: ${err.message}`);
+    }
+  }
+  console.log(`[MCP Bridge] Auto-start complete: ${started}/${AUTO_START_SERVERS.length} servers ready`);
+}
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔════════════════════════════════════════════╗');
@@ -582,6 +578,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('║    POST /api/tool/:tool (auto-route)       ║');
   console.log('╚════════════════════════════════════════════╝');
   console.log('');
+
+  // Auto-start servers after bridge is listening
+  autoStartServers();
 });
 
 // Graceful shutdown

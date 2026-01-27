@@ -214,13 +214,18 @@
   - `GET /api/quick/search?q=` - Web search (Brave)
   - `GET /api/quick/read-file?path=` - Read file via MCP
   - `GET /api/quick/memory-recall?query=` - Memory recall
-- **MCP Servers (11):** filesystem, memory, github, fetch, sqlite, git, time, sequential-thinking, puppeteer, slack, brave-search
+- **MCP Servers (7):** filesystem, memory, github, sequential-thinking, puppeteer, slack, brave-search
+- **Auto-start:** 5 servers auto-start on boot (filesystem, memory, github, sequential-thinking, puppeteer)
+- **Needs API keys:** slack (SLACK_BOT_TOKEN), brave-search (BRAVE_API_KEY)
+- **Package namespace:** `@modelcontextprotocol/server-*`
 
 ### Hive Dashboard (Port 8899)
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-dashboard\server.js`
 - **Purpose:** Command Center overview dashboard
 - **UI:** `http://localhost:8899`
 - **Panels:** Daily Briefing, Services, Intel Feed (HN/GitHub/Discoveries/Web Search), Health Trends, Anomalies, Models, MCP Servers, Alerts
+- **Auto-refresh:** 30 seconds with last-updated indicator
+- **Features:** Anomaly deduplication, stale briefing auto-regeneration
 
 ---
 

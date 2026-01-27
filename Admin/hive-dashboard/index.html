@@ -513,6 +513,7 @@
         <h1>Hive Command Center</h1>
         <div class="header-actions">
             <span class="time" id="currentTime"></span>
+            <span id="lastRefresh" style="color:#666;font-size:11px;margin-right:8px;"></span>
             <button class="btn secondary" onclick="refreshAll()" title="Refresh all dashboard data (Shortcut: R)">Refresh</button>
             <button class="btn" onclick="forceIntelRefresh()" title="Force fetch fresh intel from all sources (HN, GitHub, Models)">Force Intel</button>
         </div>
@@ -682,12 +683,12 @@
             { name: 'Hive-Brain', port: 8810, endpoint: '/api/health', path: '/', desc: 'Device Discovery', hive: true },
             { name: 'Master-Mind', port: 8820, endpoint: '/api/health', path: '/', desc: 'Parallel LLM', hive: true },
             { name: 'Agents', port: 8800, endpoint: '/api/health', path: '/', desc: 'Agent Orchestrator (16)', hive: true },
-            { name: 'Hive-Oracle', port: 8850, endpoint: '/health', path: '/', desc: 'Distributed LLM', hive: true },
+            { name: 'Hive-Oracle', port: 8850, endpoint: '/api/health', path: '/', desc: 'Distributed LLM', hive: true },
             { name: 'Hive-Mesh', port: 8750, endpoint: '/health', path: '/', desc: 'Peer Network', hive: true },
             { name: 'MCP-Bridge', port: 8860, endpoint: '/api/health', path: '/', desc: 'MCP Server Hub', hive: true },
             { name: 'Dashboard', port: 8899, endpoint: '/api/health', path: '/', desc: 'Command Center', hive: true },
             // External / Utility Services
-            { name: 'Master-O', port: 8500, endpoint: '/api/status', path: '/', desc: 'Service Watchdog', hive: false },
+            { name: 'Master-O', port: 8500, endpoint: '/api/health', path: '/', desc: 'Service Watchdog', hive: false },
             { name: 'Ollama', port: 11434, endpoint: '/api/tags', path: '/', desc: 'Local LLM (qwen)', hive: false },
             { name: 'LM-Studio', port: 1234, endpoint: '/v1/models', path: '/', desc: 'Local LLM (Nova)', hive: false },
             { name: 'PMS50', port: 8830, endpoint: '/api/health', path: '/', desc: 'GTN750 Avionics', hive: false }
@@ -736,10 +737,17 @@
         }
 
         // Load Briefing
+        let lastBriefingDate = null;
         async function loadBriefing() {
             try {
-                const res = await fetchWithTimeout(`${API_BASE}/api/intel/briefing`);
+                // Force regeneration if briefing is older than 1 hour
+                let url = `${API_BASE}/api/intel/briefing`;
+                if (lastBriefingDate && (Date.now() - new Date(lastBriefingDate).getTime()) > 60 * 60 * 1000) {
+                    url += '?force=true';
+                }
+                const res = await fetchWithTimeout(url);
                 const data = await res.json();
+                lastBriefingDate = data.date || null;
 
                 if (data.date) {
                     document.getElementById('briefingDate').textContent =
@@ -1209,16 +1217,28 @@
                     return `<div class="chart-bar ${height < 50 ? 'low' : ''}" style="height:${height}%"></div>`;
                 }).join('');
 
-                // Anomalies
+                // Anomalies - deduplicate by services key
                 const anomalies = healthData.anomalies || [];
+                const deduped = [];
+                const seen = new Map();
+                anomalies.slice().reverse().forEach((a, i) => {
+                    const key = a.services.sort().join(',');
+                    if (seen.has(key)) {
+                        seen.get(key).count++;
+                    } else {
+                        const entry = { ...a, count: 1, origIndex: anomalies.length - 1 - i };
+                        deduped.push(entry);
+                        seen.set(key, entry);
+                    }
+                });
                 document.getElementById('anomalyCount').textContent = anomalies.length;
-                document.getElementById('anomalyList').innerHTML = anomalies.length ?
-                    anomalies.slice(-15).reverse().map((a, i) => `
-                        <div class="anomaly-item ${a.severity}" onclick="showAnomalyDetail(${anomalies.length - 1 - i})">
+                document.getElementById('anomalyList').innerHTML = deduped.length ?
+                    deduped.slice(0, 15).map(a => `
+                        <div class="anomaly-item ${a.severity}" onclick="showAnomalyDetail(${a.origIndex})">
                             <span class="anomaly-icon">${a.severity === 'high' ? '🔴' : '🟡'}</span>
                             <div class="anomaly-info">
                                 <div class="anomaly-services">${a.services.join(', ')} offline</div>
-                                <div class="anomaly-time">${timeAgo(a.timestamp)}</div>
+                                <div class="anomaly-time">${timeAgo(a.timestamp)}${a.count > 1 ? ` (×${a.count})` : ''}</div>
                             </div>
                             <div class="anomaly-drill">Details →</div>
                         </div>
@@ -1399,7 +1419,9 @@
         }
 
         // Actions
+        let lastRefreshTime = null;
         function refreshAll() {
+            lastRefreshTime = Date.now();
             loadBriefing();
             loadServices();
             loadIntel();
@@ -1408,6 +1430,13 @@
             loadMCP();
             loadAlerts();
         }
+
+        // Update "last refreshed" indicator every second
+        setInterval(() => {
+            if (!lastRefreshTime) return;
+            const secs = Math.floor((Date.now() - lastRefreshTime) / 1000);
+            document.getElementById('lastRefresh').textContent = secs < 5 ? 'Just updated' : `Updated ${secs}s ago`;
+        }, 1000);
 
         async function forceIntelRefresh() {
             try {

@@ -244,9 +244,20 @@ Add web search capability to Intel Gatherer.
 - [x] Performance optimization — **DONE** (Orchestrator stability: 3-check recovery threshold, KeySender auto-restart disabled, single-fire critical alerts)
 - [x] Documentation update — **DONE** (IMPROVEMENT-REPORT.md, SERVICE-REGISTRY.md updated)
 
+### Phase 5: Reliability & UX (2026-01-27)
+- [x] Fix crashing services — **DONE** (npm install for SimWidget, Agent, Remote Support, Hive Oracle, Hive-Brain, Master-Mind)
+- [x] Alert auto-expiry — **DONE** (24h auto-expire, auto-ack on service recovery)
+- [x] Dashboard auto-refresh — **DONE** (30s interval, last-refresh indicator)
+- [x] MCP package fix & auto-start — **DONE** (migrated to @modelcontextprotocol packages, 5/7 auto-start on bridge boot)
+- [x] Dashboard endpoint fixes — **DONE** (Hive-Oracle /api/health, Master-O /api/health)
+- [x] Anomaly deduplication — **DONE** (collapsed duplicates with occurrence count)
+- [x] Settings cleanup — **DONE** (fixed invalid Bash patterns in settings.local.json)
+
 ### Remaining (Low Priority)
 - [ ] P9: Sentry MCP → Error aggregation (needs API key)
 - [ ] P10: Postgres MCP → External DB access (needs Postgres setup)
+- [ ] Slack MCP → needs SLACK_BOT_TOKEN
+- [ ] Brave Search MCP → needs BRAVE_API_KEY
 
 ---
 
@@ -276,13 +287,15 @@ These can be implemented immediately:
 
 | Metric | Before | Current | Target |
 |--------|--------|---------|--------|
-| MCP Servers Active | 2/14 | 11/14 | 14/14 |
-| Plugin Usage | 0/day | Available (11 servers) | 10/day |
+| MCP Servers Active | 2/14 | 5/7 auto-started | 7/7 |
+| Hive Services Online | 4/15 | 12/15 | 15/15 |
+| Plugin Usage | 0/day | Available (7 servers) | 10/day |
 | Intel Sources | 3 | 5 (HN, Reddit, GitHub, Ollama, Brave) | 6 |
-| Auto-fixes Applied | 0 | Alert system active | 5/week |
+| Auto-fixes Applied | 0 | Alert auto-expiry + recovery ack | 5/week |
 | Memory Entries | 0 | MCP memory available | 100+ |
 | Cross-AI Tool Calls | 0 | Available (MCP Bridge) | 50/day |
-| Alert System | None | Active (Relay + Orchestrator) | Real-time |
+| Alert System | None | Active (Relay + Orchestrator + auto-expiry) | Real-time |
+| Dashboard Refresh | 60s | 30s + last-updated indicator | Real-time |
 
 ---
 
@@ -310,19 +323,24 @@ The installation of MCP servers and plugins significantly expands the Hive's pot
 ## Appendix A: MCP Server Package Names
 
 ```bash
-@anthropic/mcp-server-filesystem
-@anthropic/mcp-server-memory
+# Active (auto-started by MCP Bridge)
+@modelcontextprotocol/server-filesystem
+@modelcontextprotocol/server-memory
 @modelcontextprotocol/server-github
-@anthropic/mcp-server-puppeteer
-@anthropic/mcp-server-fetch
-@anthropic/mcp-server-sqlite
-@anthropic/mcp-server-postgres
-@modelcontextprotocol/server-slack
-@anthropic/mcp-server-git
-@anthropic/mcp-server-brave-search
-@anthropic/mcp-server-sequential-thinking
-@anthropic/mcp-server-everything
-@anthropic/mcp-server-time
+@modelcontextprotocol/server-sequential-thinking
+@modelcontextprotocol/server-puppeteer
+
+# Needs API keys
+@modelcontextprotocol/server-slack          # SLACK_BOT_TOKEN
+@modelcontextprotocol/server-brave-search   # BRAVE_API_KEY
+
+# Removed (packages no longer published on npm)
+# @anthropic/mcp-server-fetch
+# @anthropic/mcp-server-sqlite
+# @anthropic/mcp-server-git
+# @anthropic/mcp-server-time
+# @anthropic/mcp-server-postgres
+# @anthropic/mcp-server-everything
 ```
 
 ## Appendix B: Plugin Slash Commands
