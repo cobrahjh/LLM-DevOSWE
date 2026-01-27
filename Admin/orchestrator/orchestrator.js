@@ -142,7 +142,7 @@ const SERVICES = {
         winService: 'simwidgetkeysender',  // Windows Service ID
         healthEndpoint: null,  // Health checked via SC query
         priority: 6,
-        autoRestart: true,
+        autoRestart: false,  // No start command available - Windows Service only
         type: 'native'  // Flag for native Windows service (no Node.js)
     },
     hivemind: {
@@ -199,6 +199,7 @@ for (const id of Object.keys(SERVICES)) {
         lastCheck: null,
         lastStart: null,
         restartCount: 0,
+        consecutiveHealthy: 0,
         error: null
     };
 }
@@ -292,6 +293,8 @@ async function watchdogCheck() {
         state.lastCheck = new Date().toISOString();
 
         if (!health.healthy && svc.autoRestart && watchdogEnabled) {
+            state.consecutiveHealthy = 0;
+
             // Alert on state change (healthy -> unhealthy)
             if (wasHealthy) {
                 sendRelayAlert('error', `${svc.name} is DOWN`, `Service ${svc.name} (port ${svc.port}) failed health check. Auto-restart enabled.`, svc.name);
@@ -308,18 +311,24 @@ async function watchdogCheck() {
                 await startService(id);
                 state.restartCount++;
             } else if (state.restartCount >= MAX_RESTART_ATTEMPTS) {
-                log(`[Watchdog] ${svc.name} max restart attempts reached`, 'ERROR');
-                state.error = 'Max restart attempts reached';
-                sendRelayAlert('critical', `${svc.name} UNREACHABLE`, `Service ${svc.name} failed ${MAX_RESTART_ATTEMPTS} restart attempts. Manual intervention required.`, svc.name);
+                if (state.error !== 'Max restart attempts reached') {
+                    log(`[Watchdog] ${svc.name} max restart attempts reached`, 'ERROR');
+                    state.error = 'Max restart attempts reached';
+                    sendRelayAlert('critical', `${svc.name} UNREACHABLE`, `Service ${svc.name} failed ${MAX_RESTART_ATTEMPTS} restart attempts. Manual intervention required.`, svc.name);
+                }
             }
         } else if (health.healthy) {
-            // Alert on recovery (unhealthy -> healthy)
-            if (!wasHealthy && previousHealthState[id] === false) {
-                sendRelayAlert('info', `${svc.name} recovered`, `Service ${svc.name} (port ${svc.port}) is back online.`, svc.name);
+            state.consecutiveHealthy = (state.consecutiveHealthy || 0) + 1;
+
+            // Only reset restart count after 3 consecutive healthy checks (stability)
+            if (state.consecutiveHealthy >= 3) {
+                if (!wasHealthy && previousHealthState[id] === false) {
+                    sendRelayAlert('info', `${svc.name} recovered`, `Service ${svc.name} (port ${svc.port}) is back online.`, svc.name);
+                }
+                previousHealthState[id] = true;
+                state.restartCount = 0;
+                state.error = null;
             }
-            previousHealthState[id] = true;
-            state.restartCount = 0;
-            state.error = null;
         }
     }
 }
