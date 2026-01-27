@@ -241,9 +241,12 @@ Add web search capability to Intel Gatherer.
 
 ### Phase 4: Polish
 - [x] P11: Brave Search MCP — **DONE** (brave-search MCP in bridge, Oracle intel source, Dashboard web search tab)
-- [ ] P9: MSFS forum scraper
-- [ ] P10: Reddit auto-poster
+- [x] Performance optimization — **DONE** (Orchestrator stability: 3-check recovery threshold, KeySender auto-restart disabled, single-fire critical alerts)
 - [x] Documentation update — **DONE** (IMPROVEMENT-REPORT.md, SERVICE-REGISTRY.md updated)
+
+### Remaining (Low Priority)
+- [ ] P9: Sentry MCP → Error aggregation (needs API key)
+- [ ] P10: Postgres MCP → External DB access (needs Postgres setup)
 
 ---
 
