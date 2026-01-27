@@ -92,7 +92,9 @@
       "Bash(/c/Users/hjhar/AppData/Local/Programs/Python/Python313/python.exe:*)",
       "Bash(nssm list:*)",
       "Bash(nssm install:*)",
-      "Bash(nssm get:*)"
+      "Bash(nssm get:*)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [
       "Read(.env)",

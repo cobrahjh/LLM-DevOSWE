@@ -414,9 +414,58 @@
         .bottom-section {
             grid-column: span 3;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
         }
+
+        /* MCP Server Items */
+        .mcp-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border-left: 3px solid #333;
+            font-size: 12px;
+        }
+        .mcp-item.online { border-left-color: #00d9ff; }
+        .mcp-item.stopped { border-left-color: #666; }
+        .mcp-item.error { border-left-color: #ff4444; }
+        .mcp-name { color: #fff; font-weight: 500; }
+        .mcp-tools { color: #666; font-size: 10px; }
+        .mcp-status-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: #2a2a3e;
+        }
+        .mcp-item.online .mcp-status-badge { color: #00d9ff; }
+        .mcp-item.stopped .mcp-status-badge { color: #666; }
+
+        /* Alert Items */
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border-left: 3px solid #ff4444;
+            font-size: 12px;
+        }
+        .alert-item.info { border-left-color: #00d9ff; }
+        .alert-item.warning { border-left-color: #ffaa00; }
+        .alert-item.error { border-left-color: #ff4444; }
+        .alert-item.critical { border-left-color: #ff0066; }
+        .alert-icon { font-size: 14px; }
+        .alert-info { flex: 1; }
+        .alert-title { color: #fff; font-size: 12px; }
+        .alert-time { color: #666; font-size: 10px; }
+        .alert-ack { font-size: 10px; color: #666; cursor: pointer; padding: 2px 6px; border-radius: 4px; background: #2a2a3e; border: none; }
+        .alert-ack:hover { color: #00ff88; background: #1a3a2e; }
 
         /* Loading & Scrollbar */
         .loading {
@@ -443,6 +492,9 @@
         ::-webkit-scrollbar-thumb:hover { background: #444; }
 
         /* Responsive */
+        @media (max-width: 1400px) {
+            .bottom-section { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 1200px) {
             .dashboard { grid-template-columns: 1fr 1fr; }
             .briefing-card, .intel-card { grid-column: span 2; }
@@ -500,6 +552,7 @@
                 <button class="intel-tab active" data-tab="news">HN News</button>
                 <button class="intel-tab" data-tab="github">GitHub</button>
                 <button class="intel-tab" data-tab="discoveries">Discoveries</button>
+                <button class="intel-tab" data-tab="websearch">Web Search</button>
             </div>
             <div class="intel-content" id="intelContent">
                 <div class="loading">Loading intel</div>
@@ -556,31 +609,34 @@
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- MCP Servers -->
             <div class="card collapsible-card">
-                <div class="collapsible-header" onclick="toggleSection('actions')">
+                <div class="collapsible-header" onclick="toggleSection('mcp')">
                     <h3>
-                        <span>Quick Actions</span>
+                        <span>MCP Servers</span>
+                        <span class="count" id="mcpCount">0</span>
                     </h3>
-                    <span class="collapsible-toggle" id="actions-toggle">▼</span>
+                    <span class="collapsible-toggle" id="mcp-toggle">▼</span>
                 </div>
-                <div class="collapsible-content" id="actions-content">
-                    <div style="display:flex;flex-direction:column;gap:8px;">
-                        <div style="color:#888;font-size:10px;text-transform:uppercase;margin-bottom:4px;">Hive Services</div>
-                        <button class="btn secondary small" onclick="openService('Oracle', 3002)" title="LLM backend, Intel gathering, Project APIs">Open Oracle :3002</button>
-                        <button class="btn secondary small" onclick="openService('Relay', 8600)" title="Message queue, Task persistence, WebSocket events">Open Relay :8600</button>
-                        <button class="btn secondary small" onclick="openService('KittBox', 8585)" title="Command Center UI, Agent interface">Open KittBox :8585</button>
-                        <button class="btn secondary small" onclick="openService('Hive-Mind', 8701)" title="Real-time activity monitor, Service status">Open Hive-Mind :8701</button>
-                        <button class="btn secondary small" onclick="openService('Hive-Brain', 8800)" title="Device discovery, Colony management">Open Hive-Brain :8800</button>
-                        <button class="btn secondary small" onclick="openService('Hive-Oracle', 8850)" title="Distributed LLM orchestrator, Load balancing">Open Hive-Oracle :8850</button>
-                        <button class="btn secondary small" onclick="openService('Hive-Mesh', 8750)" title="Peer network, Real-time events">Open Hive-Mesh :8750</button>
-                        <div style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;">Utilities</div>
-                        <button class="btn secondary small" onclick="openService('Master-O', 8500)" title="Service watchdog, Auto-restart, Health monitoring">Open Master-O :8500</button>
-                        <button class="btn secondary small" onclick="openService('Ollama', 11434)" title="Local LLM server (qwen models)">Open Ollama :11434</button>
-                        <button class="btn secondary small" onclick="openService('LM-Studio', 1234)" title="Local LLM server (Nova)">Open LM-Studio :1234</button>
-                        <button class="btn secondary small" onclick="openService('PMS50', 8830)" title="GTN750 Avionics Prototype for MSFS 2024">Open PMS50 :8830</button>
-                        <div style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;">Actions</div>
-                        <button class="btn small" onclick="generateBriefing()" title="Generate a fresh daily briefing with latest intel">Generate New Briefing</button>
+                <div class="collapsible-content" id="mcp-content">
+                    <div class="collapsible-list" id="mcpList">
+                        <div class="loading">Loading</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Alerts -->
+            <div class="card collapsible-card">
+                <div class="collapsible-header" onclick="toggleSection('alerts')">
+                    <h3>
+                        <span>Alerts</span>
+                        <span class="count" id="alertCount">0</span>
+                    </h3>
+                    <span class="collapsible-toggle" id="alerts-toggle">▼</span>
+                </div>
+                <div class="collapsible-content" id="alerts-content">
+                    <div class="collapsible-list" id="alertList">
+                        <div style="color:#00ff88;text-align:center;padding:20px;">No alerts</div>
                     </div>
                 </div>
             </div>
@@ -628,6 +684,8 @@
             { name: 'Agents', port: 8800, endpoint: '/api/health', path: '/', desc: 'Agent Orchestrator (16)', hive: true },
             { name: 'Hive-Oracle', port: 8850, endpoint: '/health', path: '/', desc: 'Distributed LLM', hive: true },
             { name: 'Hive-Mesh', port: 8750, endpoint: '/health', path: '/', desc: 'Peer Network', hive: true },
+            { name: 'MCP-Bridge', port: 8860, endpoint: '/api/health', path: '/', desc: 'MCP Server Hub', hive: true },
+            { name: 'Dashboard', port: 8899, endpoint: '/api/health', path: '/', desc: 'Command Center', hive: true },
             // External / Utility Services
             { name: 'Master-O', port: 8500, endpoint: '/api/status', path: '/', desc: 'Service Watchdog', hive: false },
             { name: 'Ollama', port: 11434, endpoint: '/api/tags', path: '/', desc: 'Local LLM (qwen)', hive: false },
@@ -1101,6 +1159,17 @@
                     `).join('')}
                 `).join('') : '<div style="color:#666;padding:20px;text-align:center">No recent model discoveries</div>';
             }
+            else if (tab === 'websearch') {
+                content.innerHTML = `
+                    <div style="display:flex;gap:8px;margin-bottom:15px;">
+                        <input type="text" id="searchQuery" placeholder="Search the web via Brave..."
+                            style="flex:1;background:#0f0f1a;border:1px solid #333;border-radius:6px;padding:8px 12px;color:#fff;font-size:13px;outline:none;"
+                            onkeydown="if(event.key==='Enter')runWebSearch()">
+                        <button class="btn small" onclick="runWebSearch()">Search</button>
+                    </div>
+                    <div id="searchResults" style="color:#666;text-align:center;padding:20px;">Enter a query to search</div>
+                `;
+            }
         }
 
         // Tab clicks
@@ -1253,6 +1322,71 @@
             }
         }
 
+        // Load MCP Servers
+        async function loadMCP() {
+            try {
+                const res = await fetchWithTimeout('http://localhost:8860/api/status', 5000);
+                const data = await res.json();
+                const servers = data.servers || [];
+
+                const online = servers.filter(s => s.status === 'online').length;
+                document.getElementById('mcpCount').textContent = `${online}/${servers.length}`;
+
+                document.getElementById('mcpList').innerHTML = servers.map(s => `
+                    <div class="mcp-item ${s.status}">
+                        <div>
+                            <div class="mcp-name">${s.name}</div>
+                            <div class="mcp-tools">${s.description} (${s.toolCount} tools)</div>
+                        </div>
+                        <span class="mcp-status-badge">${s.status}</span>
+                    </div>
+                `).join('') || '<div style="color:#666;text-align:center;padding:20px;">No MCP servers</div>';
+            } catch (e) {
+                document.getElementById('mcpCount').textContent = 'offline';
+                document.getElementById('mcpList').innerHTML =
+                    '<div style="color:#666;text-align:center;padding:20px;">MCP Bridge :8860 offline</div>';
+            }
+        }
+
+        // Load Alerts
+        async function loadAlerts() {
+            try {
+                const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=15&unacked=true', 5000);
+                const data = await res.json();
+                const alerts = data.alerts || [];
+
+                document.getElementById('alertCount').textContent = alerts.length;
+
+                if (alerts.length === 0) {
+                    document.getElementById('alertList').innerHTML =
+                        '<div style="color:#00ff88;text-align:center;padding:20px;">No active alerts</div>';
+                    return;
+                }
+
+                const icons = { critical: '🚨', error: '🔴', warning: '🟡', info: '🔵' };
+                document.getElementById('alertList').innerHTML = alerts.map(a => `
+                    <div class="alert-item ${a.severity}">
+                        <span class="alert-icon">${icons[a.severity] || '⚪'}</span>
+                        <div class="alert-info">
+                            <div class="alert-title">${a.title}</div>
+                            <div class="alert-time">${a.service ? a.service + ' - ' : ''}${timeAgo(a.created_at)}</div>
+                        </div>
+                        <button class="alert-ack" onclick="ackAlert(${a.id})" title="Acknowledge">ACK</button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('alertList').innerHTML =
+                    '<div style="color:#666;text-align:center;padding:20px;">Alert system unavailable</div>';
+            }
+        }
+
+        async function ackAlert(id) {
+            try {
+                await fetch(`http://localhost:8600/api/alerts/${id}/ack`, { method: 'POST' });
+                loadAlerts();
+            } catch (e) { /* ignore */ }
+        }
+
         // Utility
         function timeAgo(dateStr) {
             if (!dateStr) return '';
@@ -1271,6 +1405,8 @@
             loadIntel();
             loadHealth();
             loadModels();
+            loadMCP();
+            loadAlerts();
         }
 
         async function forceIntelRefresh() {
@@ -1279,6 +1415,45 @@
                 setTimeout(refreshAll, 2000);
             } catch (e) {
                 alert('Failed to refresh intel');
+            }
+        }
+
+        async function runWebSearch() {
+            const query = document.getElementById('searchQuery')?.value;
+            if (!query) return;
+            const resultsEl = document.getElementById('searchResults');
+            resultsEl.innerHTML = '<div class="loading">Searching...</div>';
+
+            try {
+                const res = await fetchWithTimeout(`http://localhost:8860/api/quick/search?q=${encodeURIComponent(query)}&count=10`, 15000);
+                const data = await res.json();
+
+                if (data.error) {
+                    resultsEl.innerHTML = `<div style="color:#ff4444">${data.error}${data.hint ? '<br><span style="color:#888;font-size:11px;">' + data.hint + '</span>' : ''}</div>`;
+                    return;
+                }
+
+                const results = data.result?.content?.[0]?.text ? JSON.parse(data.result.content[0].text) : data.result;
+                const items = results?.web?.results || results?.results || [];
+
+                if (items.length === 0) {
+                    resultsEl.innerHTML = '<div style="color:#666;padding:20px;text-align:center">No results found</div>';
+                    return;
+                }
+
+                resultsEl.innerHTML = items.map(item => `
+                    <div class="intel-item">
+                        <div class="title">
+                            <a href="${item.url}" target="_blank">${item.title}</a>
+                        </div>
+                        <div style="color:#aaa;font-size:12px;margin:4px 0;">${item.description || ''}</div>
+                        <div class="meta">
+                            <span style="color:#00d9ff;">${new URL(item.url).hostname}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                resultsEl.innerHTML = `<div style="color:#ff4444">Search failed: ${e.message}<br><span style="color:#888;font-size:11px;">Ensure MCP Bridge :8860 is running with BRAVE_API_KEY</span></div>`;
             }
         }
 

@@ -90,17 +90,12 @@ const MCP_SERVERS = {
     description: 'Slack integration',
     tools: ['slack_list_channels', 'slack_post_message', 'slack_reply_to_thread', 'slack_add_reaction', 'slack_get_channel_history', 'slack_get_thread_replies', 'slack_get_users', 'slack_get_user_profile']
   },
-  'limitless-memory': {
-    command: 'node',
-    args: [path.join(__dirname, 'limitless-memory-mcp.js')],
-    description: 'Limitless Memory — persistent cross-session memory with FTS5, embeddings, semantic search, and dedup',
-    tools: ['memory_store', 'memory_recall', 'memory_search', 'memory_semantic', 'memory_stats', 'memory_get', 'memory_delete']
-  },
-  'relay-db': {
-    command: 'node',
-    args: [path.join(__dirname, 'relay-db-mcp.js')],
-    description: 'Read-only SQL access to Relay SQLite database (tasks, messages, memories, intel)',
-    tools: ['db_query', 'db_tables', 'db_describe', 'db_stats']
+  'brave-search': {
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-brave-search'],
+    env: { BRAVE_API_KEY: process.env.BRAVE_API_KEY || '' },
+    description: 'Web search via Brave Search API',
+    tools: ['brave_web_search', 'brave_local_search']
   }
 };
 
@@ -548,6 +543,20 @@ app.get('/api/quick/github-repo', async (req, res) => {
     res.json({ success: true, result });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Web search shortcut (Brave Search P11)
+app.get('/api/quick/search', async (req, res) => {
+  const { q, count } = req.query;
+  if (!q) return res.status(400).json({ error: 'q (query) required' });
+
+  try {
+    const client = await getServer('brave-search');
+    const result = await client.callTool('brave_web_search', { query: q, count: parseInt(count) || 10 });
+    res.json({ success: true, query: q, result });
+  } catch (err) {
+    res.status(500).json({ error: err.message, hint: 'Set BRAVE_API_KEY in .env' });
   }
 });
 

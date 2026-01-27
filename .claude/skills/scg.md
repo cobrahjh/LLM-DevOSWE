@@ -2,11 +2,15 @@
 
 Check Google Drive screenshots folder for new images.
 
-Location: `G:\My Drive\Screenshots\` (or similar Google Drive path)
+Location: `G:\My Drive\AI Development\Screenshots`
 
-1. List new screenshots
-2. Read/display each image
-3. Analyze what's shown
-4. Move processed screenshots to backup subfolder
+## Steps
 
-Note: Google Drive path may vary. Check for mounted drive letter.
+1. List all images in the folder
+2. Read and analyze each image
+3. Report findings to user
+4. Move processed screenshots to `G:\My Drive\AI Development\Screenshots\processed` subfolder
+
+## Usage
+
+Run `/scg` to check for new screenshots on Google Drive.

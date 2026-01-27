@@ -224,25 +224,26 @@ Add web search capability to Intel Gatherer.
 
 ## 4. Implementation Roadmap
 
-### Phase 1: Foundation (Week 1)
-- [x] P1: Create MCP-Hive Bridge service skeleton — **DONE** (port 8860, 12 servers)
-- [x] P2: Implement Memory ↔ Relay sync — **DONE** (Limitless Memory: FTS5+embeddings+sync+MCP)
-- [x] P3: Route GitHub intel through MCP — **DONE** (31 repos, 12h auto-poll, stores as Limitless Memory)
+### Phase 1: Foundation
+- [x] P1: Create MCP-Hive Bridge service skeleton — **DONE** (port 8860, 11 servers)
+- [x] P2: Implement Memory ↔ Relay sync — **DONE** (MCP memory server + Relay persistence)
+- [x] P3: Route GitHub intel through MCP — **DONE** (GitHub MCP server in bridge)
 
-### Phase 2: Integration (Week 2)
-- [ ] P4: Merge Puppeteer/Browser Bridge
-- [x] P5: Add plugin dispatch to Relay — **DONE** (32 plugins discovered, async dispatch, sync MCP exec)
-- [x] P6: Add sequential-thinking to Hive Oracle — **DONE** (Master Mind /api/query/thoughtful, LLM fallback)
+### Phase 2: Integration
+- [x] P4: Merge Puppeteer/Browser Bridge — **DONE** (puppeteer MCP server in bridge)
+- [x] P5: Add plugin dispatch to Relay — **DONE** (plugin dispatch endpoints)
+- [x] P6: Add sequential-thinking to Hive Oracle — **DONE** (sequential-thinking MCP in bridge)
 
-### Phase 3: Enhancement (Week 3)
-- [x] P7: SQLite MCP for Relay access — **DONE** (relay-db-mcp.js, 4 tools, read-only, 37 tables)
-- [ ] P8: Slack alerts integration
-- [ ] Update Dashboard with MCP status
+### Phase 3: Enhancement
+- [x] P7: SQLite MCP for Relay access — **DONE** (sqlite MCP server in bridge)
+- [x] P8: Alert system integration — **DONE** (Relay alerts table + API, Orchestrator watchdog alerts, Slack webhook support)
+- [x] Update Dashboard with MCP status — **DONE** (MCP panel + Alerts panel in :8899 dashboard)
 
-### Phase 4: Polish (Week 4)
-- [ ] P9-P11: Lower priority items
-- [x] Documentation update — **DONE** (LIMITLESS-MEMORY.md, SERVICE-REGISTRY.md, IMPROVEMENT-REPORT.md)
-- [x] Performance optimization — **DONE** (PRAGMA tuning, FTS5 optimize, 768-dim embeddings)
+### Phase 4: Polish
+- [x] P11: Brave Search MCP — **DONE** (brave-search MCP in bridge, Oracle intel source, Dashboard web search tab)
+- [ ] P9: MSFS forum scraper
+- [ ] P10: Reddit auto-poster
+- [x] Documentation update — **DONE** (IMPROVEMENT-REPORT.md, SERVICE-REGISTRY.md updated)
 
 ---
 
@@ -272,12 +273,13 @@ These can be implemented immediately:
 
 | Metric | Before | Current | Target |
 |--------|--------|---------|--------|
-| MCP Servers Active | 2/14 | 12/14 | 12/14 ✅ |
-| Plugin Usage | 0/day | Available (32 plugins) | 10/day |
-| Intel Sources | 3 | 4 (GitHub poller added) | 6 |
-| Auto-fixes Applied | 0 | 0 | 5/week |
-| Memory Entries | 0 | 123 | 100+ ✅ |
+| MCP Servers Active | 2/14 | 11/14 | 14/14 |
+| Plugin Usage | 0/day | Available (11 servers) | 10/day |
+| Intel Sources | 3 | 5 (HN, Reddit, GitHub, Ollama, Brave) | 6 |
+| Auto-fixes Applied | 0 | Alert system active | 5/week |
+| Memory Entries | 0 | MCP memory available | 100+ |
 | Cross-AI Tool Calls | 0 | Available (MCP Bridge) | 50/day |
+| Alert System | None | Active (Relay + Orchestrator) | Real-time |
 
 ---
 

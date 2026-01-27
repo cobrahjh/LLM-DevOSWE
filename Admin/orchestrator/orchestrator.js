@@ -263,7 +263,7 @@ async function checkPortInUse(port) {
     });
 }
 
-// Send alert to Relay's alert system
+// Send alert to Relay's alert system (P8)
 function sendRelayAlert(severity, title, message, service) {
     const body = JSON.stringify({ severity, source: 'orchestrator', title, message, service });
     const req = http.request({
@@ -292,7 +292,7 @@ async function watchdogCheck() {
         state.lastCheck = new Date().toISOString();
 
         if (!health.healthy && svc.autoRestart && watchdogEnabled) {
-            // Alert on state change (healthy → unhealthy)
+            // Alert on state change (healthy -> unhealthy)
             if (wasHealthy) {
                 sendRelayAlert('error', `${svc.name} is DOWN`, `Service ${svc.name} (port ${svc.port}) failed health check. Auto-restart enabled.`, svc.name);
             }
@@ -313,7 +313,7 @@ async function watchdogCheck() {
                 sendRelayAlert('critical', `${svc.name} UNREACHABLE`, `Service ${svc.name} failed ${MAX_RESTART_ATTEMPTS} restart attempts. Manual intervention required.`, svc.name);
             }
         } else if (health.healthy) {
-            // Alert on recovery (unhealthy → healthy)
+            // Alert on recovery (unhealthy -> healthy)
             if (!wasHealthy && previousHealthState[id] === false) {
                 sendRelayAlert('info', `${svc.name} recovered`, `Service ${svc.name} (port ${svc.port}) is back online.`, svc.name);
             }

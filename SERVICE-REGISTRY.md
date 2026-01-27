@@ -19,8 +19,6 @@
 | 8621 | Google Drive | Optional | `node C:\LLM-DevOSWE\Admin\google-drive\drive-service.js` |
 | 8700 | Claude Bridge | Optional | `node C:\LLM-DevOSWE\Admin\claude-bridge\bridge-service.js` |
 | 8701 | Hive-Mind | Core | `node C:\LLM-DevOSWE\Admin\hive-mind\hive-mind-server.js` |
-| 8750 | Mesh | Core | `node C:\DevClaude\Hivemind\mesh\mesh.js` |
-| 8770 | Personas | Core | `node C:\DevClaude\Hivemind\personas\personas.js` |
 | 8771 | Terminal Hub | Core | `node C:\LLM-DevOSWE\Admin\terminal-hub\terminal-hub-server.js` |
 | 8800 | Agents (HiveImmortal) | Core | DevClaude Hivemind Oracle (16 agents) |
 | 8810 | Hive Brain | Core | `node C:\LLM-DevOSWE\Admin\hive-brain\hive-brain.js` |
@@ -30,10 +28,9 @@
 | 11434 | Ollama | External | `ollama serve` |
 | 1234 | Iris (ai-pc) | External | LM Studio on 192.168.1.162 |
 | 3003 | Hive Bridge (ai-pc) | External | `node C:\Hive\services\hive-bridge.js` |
-| 8780 | Voice Bridge | Core | `node C:\DevClaude\VoiceAccess\voice-server.js` |
+| 8860 | MCP-Hive Bridge | Core | `node C:\LLM-DevOSWE\Admin\mcp-bridge\server.js` |
 | 8870 | Hive Voice | Optional | `node C:\LLM-DevOSWE\Admin\hive-voice\voice-server.js` |
-| 8880 | Hive Index | Core | `node C:\LLM-DevOSWE\Admin\hive-index\server.js` |
-| 8860 | MCP Bridge | Core | `node C:\LLM-DevOSWE\Admin\mcp-bridge\server.js` |
+| 8899 | Hive Dashboard | Core | `node C:\LLM-DevOSWE\Admin\hive-dashboard\server.js` |
 
 ---
 
@@ -51,37 +48,18 @@
 
 ### Relay (Port 8600)
 - **Location:** `C:\LLM-DevOSWE\Admin\relay\relay-service.js`
-- **Purpose:** Message relay, task queue, WebSocket events, Limitless Memory, update distribution
+- **Purpose:** Message relay, task queue, WebSocket events, alert system
 - **Endpoints:**
   - `GET /api/messages/pending` - Get pending messages
   - `POST /api/messages/:id/respond` - Respond to message
   - `GET /api/tasks` - List tasks
   - `GET /api/updates/:app` - Get app update manifest
-  - `POST /api/memory` - Store memory (with dedup + auto-embed)
-  - `GET /api/memory` - Search memories (FTS5)
-  - `GET /api/memory/recall?q=` - Smart recall (scored by importance+recency+access+semantic)
-  - `GET /api/memory/semantic?q=` - Semantic search via Ollama embeddings
-  - `GET /api/memory/stats` - Memory dashboard stats (includes embedding coverage)
-  - `POST /api/memory/bulk` - Batch store with dedup + auto-embed
-  - `GET /api/memory/export` - Export as JSON
-  - `POST /api/memory/import` - Import from JSON
-  - `POST /api/memory/embed` - Bulk re-embed (all or missing)
-  - `GET /api/memory/embeddings` - Embedding stats
-  - `POST /api/memory/archive-stale` - Auto-archive old/unused memories
-  - `GET /api/memory/sync/manifest` - Hash manifest for diff-based sync
-  - `POST /api/memory/sync/push` - Push to remote relay
-  - `POST /api/memory/sync/pull` - Pull from remote relay
-  - `POST /api/memory/sync` - Bidirectional sync
-  - `GET /api/memory/sync` - Sync history/status
-  - `GET /api/plugin/registry` - List all discoverable plugins (skills, commands, MCP tools)
-  - `POST /api/plugin/dispatch` - Dispatch a plugin for async execution
-  - `POST /api/plugin/execute` - Execute MCP tool synchronously via bridge
-  - `GET /api/plugin/pending` - Get pending plugin dispatches
-  - `POST /api/plugin/:taskId/complete` - Complete a plugin dispatch
-  - `POST /api/intel/github/poll` - Trigger GitHub release polling (31 repos)
-  - `GET /api/intel/github/latest` - Get latest poll results
-- **Database:** `C:\LLM-DevOSWE\Admin\relay\tasks.db` (SQLite + FTS5)
-- **Docs:** [LIMITLESS-MEMORY.md](docs/LIMITLESS-MEMORY.md)
+  - `POST /api/alerts` - Create alert (severity, source, title, message, service)
+  - `GET /api/alerts` - List alerts (filter: severity, since, unacked)
+  - `POST /api/alerts/:id/ack` - Acknowledge alert
+  - `GET /api/alerts/summary` - 24h alert summary
+- **Database:** `C:\LLM-DevOSWE\Admin\relay\tasks.db` (SQLite)
+- **Alert System:** Orchestrator sends service health alerts, Slack webhook support via SLACK_WEBHOOK_URL env var
 
 ### Agent/KittBox (Port 8585)
 - **Location:** `C:\LLM-DevOSWE\Admin\agent\agent-server.js`
@@ -146,53 +124,6 @@
   - Windows Terminal integration with output bridging
   - Mobile responsive UI
 
-### Voice Bridge (Port 8780)
-- **Location:** `C:\DevClaude\VoiceAccess\voice-server.js`
-- **NSSM Service:** HiveVoiceBridge
-- **Purpose:** Voice control UI for Hive services
-- **UI:** `http://localhost:8780`
-- **Endpoints:**
-  - `GET /` - Voice Bridge web UI
-  - `GET /health` - Health check
-  - `POST /voice` - Process voice command
-  - `WebSocket` - Real-time voice events
-- **Features:**
-  - Browser-based speech recognition
-  - Voice commands: "hive status", "open relay", "open kittbox", "ask [question]"
-  - Routes commands to Relay and Oracle
-  - Status display for Mesh and Relay
-
-### Mesh (Port 8750)
-- **Location:** `C:\DevClaude\Hivemind\mesh\mesh.js` (managed by HiveImmortal)
-- **Purpose:** Agent mesh network and registration
-- **UI:** `http://localhost:8750`
-- **Endpoints:**
-  - `GET /api/health` - Health check (returns agent count)
-  - `GET /api/agents` - List registered agents
-  - `POST /api/agents/register` - Register new agent
-- **Features:**
-  - Agent discovery and registration
-  - Mesh networking for distributed agents
-  - Part of DevClaude Hivemind system
-
-### Personas (Port 8770)
-- **Location:** `C:\DevClaude\Hivemind\personas\personas.js` (managed by HiveImmortal)
-- **Purpose:** AI persona management - voice, personality, identity
-- **UI:** `http://localhost:8770`
-- **Endpoints:**
-  - `GET /api/agents` - List all personas
-  - `GET /api/agents/:id` - Get specific persona
-  - `POST /api/agents` - Create new persona
-  - `PUT /api/agents/:id` - Update persona
-  - `DELETE /api/agents/:id` - Delete persona
-  - `GET /test` - Voice test page
-- **Features:**
-  - Microsoft Natural voice support (Edge browser)
-  - Capability tiers: newborn, child, teen, adult, elder
-  - Personality traits: tone, verbosity, formality
-  - Custom greetings and status phrases
-  - Voice testing with Web Speech API
-
 ### Agents / HiveImmortal Oracle (Port 8800)
 - **Location:** `C:\DevClaude\Hivemind\Oracle\oracle.js` (managed by HiveImmortal)
 - **Purpose:** Agent orchestration for DevClaude Hivemind
@@ -235,7 +166,6 @@
   - `POST /api/backends/:id/toggle` - Enable/disable backend
   - `POST /api/query/parallel` - Query ALL backends simultaneously
   - `POST /api/query/smart` - First response wins (fastest)
-  - `POST /api/query/thoughtful` - Sequential thinking + parallel + synthesis
   - `POST /api/query/:backend` - Query specific backend
   - `GET /api/stats` - Query statistics
   - `POST /api/stats/reset` - Reset statistics
@@ -246,7 +176,6 @@
 - **Features:**
   - Parallel queries to all backends
   - Smart query (first response wins)
-  - Thoughtful query (decomposes, queries in parallel, synthesizes via MCP or LLM fallback)
   - Result aggregation and consensus detection
   - Cost tracking for paid APIs (future)
 
@@ -271,29 +200,27 @@
   - Distributed memory across colony
   - Consensus aggregation for multiple responses
 
-### MCP Bridge (Port 8860)
+### MCP-Hive Bridge (Port 8860)
 - **Location:** `C:\LLM-DevOSWE\Admin\mcp-bridge\server.js`
-- **Purpose:** Central proxy exposing MCP server tools to all Hive AI
+- **Purpose:** Unified MCP server hub for all Hive AI
 - **Endpoints:**
-  - `GET /api/servers` - List all MCP servers and their tools
+  - `GET /api/health` - Health check
+  - `GET /api/status` - All servers status with tool counts
+  - `GET /api/servers` - List available MCP servers
   - `POST /api/servers/:name/start` - Start an MCP server
   - `POST /api/servers/:name/stop` - Stop an MCP server
-  - `POST /api/servers/:name/tools/:tool` - Call tool on specific server
-  - `POST /api/tool/:tool` - Auto-route tool call to correct server
-  - `POST /api/batch` - Batch tool calls
-- **MCP Servers (12):**
-  - `filesystem` - File system operations
-  - `memory` - Persistent knowledge graph
-  - `github` - GitHub repo operations
-  - `fetch` - HTTP requests
-  - `sqlite` - SQLite operations
-  - `git` - Version control
-  - `time` - Time/timezone utilities
-  - `sequential-thinking` - Step-by-step reasoning
-  - `puppeteer` - Browser automation
-  - `slack` - Slack integration
-  - `limitless-memory` - Limitless Memory MCP (7 tools)
-  - `relay-db` - Read-only SQL access to Relay database (4 tools)
+  - `POST /api/servers/:name/tools/:tool` - Call a tool
+  - `POST /api/tool/:tool` - Auto-route tool call
+  - `GET /api/quick/search?q=` - Web search (Brave)
+  - `GET /api/quick/read-file?path=` - Read file via MCP
+  - `GET /api/quick/memory-recall?query=` - Memory recall
+- **MCP Servers (11):** filesystem, memory, github, fetch, sqlite, git, time, sequential-thinking, puppeteer, slack, brave-search
+
+### Hive Dashboard (Port 8899)
+- **Location:** `C:\LLM-DevOSWE\Admin\hive-dashboard\server.js`
+- **Purpose:** Command Center overview dashboard
+- **UI:** `http://localhost:8899`
+- **Panels:** Daily Briefing, Services, Intel Feed (HN/GitHub/Discoveries/Web Search), Health Trends, Anomalies, Models, MCP Servers, Alerts
 
 ---
 
@@ -347,38 +274,20 @@
 
 ---
 
-## External Services (AI Nodes)
+## External Services
 
-### Ollama - Primary (Port 11434)
-- **Host:** 192.168.1.192 (Rock-PC)
-- **Role:** Primary LLM inference
+### Ollama (Port 11434)
+- **Host:** localhost
+- **Purpose:** Local LLM inference
 - **Models:**
-  - `qwen2.5-coder:7b` - Fast coding
-  - `qwen2.5-coder:14b` - Medium coding
-  - `qwen2.5-coder:32b` - Large coding (19.9GB)
-  - `qwen3-coder:latest` - Primary (30.5B, 18.6GB)
-  - `qwen:latest` - General (4B)
-  - `llama3:8b` - Meta Llama
-  - `llama3.2:3b` - Small Llama
-  - `kitt:latest` - SimWidget agent
-  - `kitt-general:latest` - General coding assistant
-  - `kitt-twitch:latest` - Accessibility specialist
-  - `kitt-16k:latest` - Extended context (16K)
-- **Endpoint:** `http://192.168.1.192:11434`
-- **SSH:** `ssh stone-pc@192.168.1.192`
+  - `qwen3-coder:latest` - Primary (30.5B, 34 tok/s)
+  - `qwen2.5-coder:7b` - Fast (172 tok/s)
+  - `kitt:latest` - Custom fine-tuned
 
-### LM Studio - Mirror (Port 1234)
-- **Host:** 192.168.1.97 (Morpu-PC)
-- **Role:** Secondary LLM / Mirror
-- **Models:** qwen2.5-coder-14b-instruct - *to be installed*
-- **Endpoint:** `http://192.168.1.97:1234`
-- **Status:** Pending setup
-
-### Iris - Fallback (Port 1234)
+### Iris (Port 1234)
 - **Host:** 192.168.1.162 (ai-pc)
-- **Role:** Remote LLM fallback
+- **Purpose:** Remote LLM fallback
 - **Models:** qwen3-vl-4b (vision), vt-gwen-2.5-3b
-- **Endpoint:** `http://192.168.1.162:1234`
 
 ### Hive Bridge (Port 3003)
 - **Host:** 192.168.1.162 (ai-pc)
@@ -390,17 +299,6 @@
   - `/v1/*` - Proxies to LM Studio OpenAI-compatible API
 - **Capabilities:** llm, vision, embeddings
 - **Firewall:** Ports 1234, 3003 open
-
-### AI Node Summary
-
-| Node | IP | Role | Service | Port | SSH |
-|------|-----|------|---------|------|-----|
-| **Rock-PC** | 192.168.1.192 | Primary | Ollama | 11434 | ✅ |
-| **Morpu-PC** | 192.168.1.97 | Mirror | LM Studio | 1234 | Pending |
-| **ai-pc** | 192.168.1.162 | Fallback | Iris/LM Studio | 1234 | Pending |
-| Harold-PC | 192.168.1.42 | Dev | Claude Code | - | Local |
-
-**Network Setup Guide:** See [docs/NETWORK-SETUP.md](docs/NETWORK-SETUP.md)
 
 ---
 
