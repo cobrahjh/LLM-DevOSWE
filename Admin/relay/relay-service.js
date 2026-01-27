@@ -3940,12 +3940,41 @@ async function sendSlackAlert(severity, title, message, service) {
     }
 }
 
+// Auto-expire stale alerts (24h) and auto-ack on recovery
+const ALERT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function expireStaleAlerts() {
+    const cutoff = new Date(Date.now() - ALERT_EXPIRY_MS).toISOString();
+    const result = db.prepare('UPDATE alerts SET acknowledged = 1 WHERE acknowledged = 0 AND created_at < ?').run(cutoff);
+    if (result.changes > 0) {
+        log(`Auto-expired ${result.changes} stale alerts older than 24h`);
+    }
+}
+
+function autoAckOnRecovery(service) {
+    if (!service) return;
+    const result = db.prepare(
+        'UPDATE alerts SET acknowledged = 1 WHERE acknowledged = 0 AND service = ? AND severity IN (?, ?, ?)'
+    ).run(service, 'warning', 'error', 'critical');
+    if (result.changes > 0) {
+        log(`Auto-acked ${result.changes} alerts for recovered service: ${service}`);
+    }
+}
+
+// Run expiry check every 15 minutes
+setInterval(expireStaleAlerts, 15 * 60 * 1000);
+
 // Create alert
 app.post('/api/alerts', (req, res) => {
     const { severity, source, title, message, service } = req.body;
     if (!title) return res.status(400).json({ error: 'title required' });
-    const id = sendAlert(severity || 'warning', source || 'external', title, message, service);
+    const sev = severity || 'warning';
+    const id = sendAlert(sev, source || 'external', title, message, service);
     if (id === null) return res.json({ throttled: true, message: 'Alert cooldown active' });
+    // Auto-ack previous alerts when service recovers
+    if (sev === 'info' && title && title.toLowerCase().includes('recovered') && service) {
+        autoAckOnRecovery(service);
+    }
     res.json({ id, success: true });
 });
 
