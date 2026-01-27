@@ -136,6 +136,7 @@ Config: `Admin/caddy/Caddyfile`
 | **Claude** | Primary AI | Claude Code terminal |
 | **Kitt** | Local agent | KittBox UI (port 8585) |
 | **Nova** | Local LLM | LM Studio (port 1234) |
+| **Iris** | Remote fallback | ai-pc (192.168.1.162) |
 | **Heather** | Voice persona | TTS (Google UK Female) |
 
 **Details:** See [docs/PERSONAS.md](docs/PERSONAS.md)
@@ -199,71 +200,58 @@ See [docs/CAMERA-TROUBLESHOOTING.md](docs/CAMERA-TROUBLESHOOTING.md)
 
 ---
 
-## Network Nodes
+## Quick Context
 
-| Node | IP | Role | Services |
-|------|----|----- |----------|
-| **ROCK-PC** | 192.168.1.192 | Primary | Hivemind (8700), Oracle (8800) |
-| **Morpu-PC** | 192.168.1.97 | Mirror | Hivemind (8700), Oracle (3002) |
-| **Harold-PC** | 192.168.1.42 | Backup | MSFS, SimWidget, development |
-| **ai-pc** | 192.168.1.162 | Backup | Standby |
-
-### ROCK-PC (Primary)
-
-- **User:** stone-pc / 0812
-- **NSSM Services:** HiveHivemind, HiveOracle (auto-start)
-- **Paths:** C:\DevClaude, C:\LLM-DevOSWE, C:\LLM-Oracle, C:\kittbox-modules
-- **NSSM:** C:\DevClaude\tools\nssm.exe
-- **Logs:** C:\DevClaude\logs\
-
-```powershell
-# Remote access
-$cred = New-Object System.Management.Automation.PSCredential('stone-pc', (ConvertTo-SecureString '0812' -AsPlainText -Force))
-Invoke-Command -ComputerName ROCK-PC -Credential $cred -ScriptBlock { ... }
-
-# Test services
-curl http://192.168.1.192:8700/api/health  # Hivemind
-curl http://192.168.1.192:8800/api/health  # Oracle
-
-# NSSM management
-nssm status HiveHivemind
-nssm restart HiveOracle
-```
-
-### Morpu-PC (Mirror)
-
-- **User:** Morpu-PC\stone-pc / 0812
-- **NSSM Services:** HiveHivemind, HiveOracle (auto-start)
-- **Paths:** C:\DevClaude, C:\LLM-DevOSWE, C:\LLM-Oracle, C:\kittbox-modules
-- **NSSM:** C:\DevClaude\nssm.exe
-- **Role:** Takes over if ROCK-PC fails
-
-```powershell
-# Remote access
-$cred = New-Object System.Management.Automation.PSCredential('Morpu-PC\stone-pc', (ConvertTo-SecureString '0812' -AsPlainText -Force))
-Invoke-Command -ComputerName Morpu-PC -Credential $cred -ScriptBlock { ... }
-
-# Test services
-curl http://192.168.1.97:8700/api/health  # Hivemind
-curl http://192.168.1.97:3002/api/health  # Oracle
-```
-
-### Harold-PC / ai-pc (Backup)
-
-- Development workstation with MSFS
-- Can be promoted if Primary + Mirror fail
+- **This PC:** ROCK-PC (192.168.1.192)
+- **Remote PC:** ai-pc (192.168.1.162)
+- **LLMs:** Ollama + LM Studio locally, Iris remote
+- **GitHub:** https://github.com/cobrahjh/LLM-DevOSWE
+- **Screenshots:** `C:\Users\hjhar\OneDrive\Pictures\screenshoots`
 
 ---
 
-## Quick Context
+## SSH Access
 
-- **This PC:** Harold-PC (192.168.1.42) - Backup
-- **Primary:** ROCK-PC (192.168.1.192)
-- **Mirror:** Morpu-PC (192.168.1.97)
-- **Backup:** ai-pc (192.168.1.162)
-- **LLMs:** Ollama + LM Studio (local)
-- **GitHub:** https://github.com/cobrahjh/LLM-DevOSWE
-- **Screenshots:** `C:\Users\hjhar\OneDrive\Pictures\screenshoots`
+SSH is configured for key-based authentication between machines.
+
+### Configuration
+
+| Setting | Value |
+|---------|-------|
+| Port | 22 |
+| Auth | Key-only (password disabled) |
+| Key Type | ED25519 |
+| Startup | Automatic (Windows service) |
+
+### Key Locations
+
+| Machine | Private Key | Authorized Keys |
+|---------|-------------|-----------------|
+| ROCK-PC | `C:\Users\Stone-PC\.ssh\id_ed25519` | `C:\Users\Stone-PC\.ssh\authorized_keys` |
+| ai-pc | `C:\Users\Stone-PC\.ssh\id_ed25519` | (same key copied) |
+
+### Usage
+
+```bash
+# From ai-pc to ROCK-PC
+ssh Stone-PC@192.168.1.192
+
+# From ROCK-PC to ai-pc (if SSH enabled there)
+ssh Stone-PC@192.168.1.162
+```
+
+### Management
+
+```powershell
+# Check service status
+Get-Service sshd
+
+# Restart SSH server
+Restart-Service sshd
+
+# Config file
+C:\ProgramData\ssh\sshd_config
+```
 
 ---
 
