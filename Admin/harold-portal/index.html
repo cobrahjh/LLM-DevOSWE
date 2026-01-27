@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Command Portal - Harold</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0e17;
+            color: #c8d6e5;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        a { color: #4fc3f7; text-decoration: none; }
+        a:hover { color: #81d4fa; text-decoration: underline; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #1e2a3a;
+        }
+        .header h1 {
+            color: #4fc3f7;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header .meta {
+            color: #576574;
+            font-size: 13px;
+        }
+        .header .meta span { color: #8395a7; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #1e2a3a;
+            border-radius: 10px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: #2d3f55; }
+
+        .card h2 {
+            font-size: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h2 .icon { font-size: 18px; }
+        .card.admin h2 { color: #f39c12; }
+        .card.reference h2 { color: #2ecc71; }
+        .card.guides h2 { color: #e74c3c; }
+        .card.services h2 { color: #9b59b6; }
+        .card.api h2 { color: #1abc9c; }
+        .card.simwidget h2 { color: #e67e22; }
+        .card.components h2 { color: #3498db; }
+        .card.infra h2 { color: #95a5a6; }
+
+        .doc-list { list-style: none; }
+        .doc-list li {
+            padding: 7px 0;
+            border-bottom: 1px solid #1a2332;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .doc-list li:last-child { border-bottom: none; }
+        .doc-list .desc {
+            color: #576574;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .doc-list .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge.core { background: #1a3a2a; color: #2ecc71; }
+        .badge.doc { background: #1a2a3a; color: #4fc3f7; }
+        .badge.live { background: #3a1a2a; color: #e74c3c; }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .svc-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #0d1520;
+            border: 1px solid #1e2a3a;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .svc-link:hover { background: #152030; text-decoration: none; }
+        .svc-link .port {
+            color: #576574;
+            font-size: 11px;
+            font-family: monospace;
+        }
+        .svc-link .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2ecc71;
+            flex-shrink: 0;
+        }
+
+        .screenshot-section {
+            margin-top: 32px;
+            text-align: center;
+        }
+        .screenshot-section h2 {
+            color: #4fc3f7;
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .screenshot-section img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid #1e2a3a;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 16px;
+            border-top: 1px solid #1e2a3a;
+            color: #576574;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 800px) {
+            .grid { grid-template-columns: 1fr; }
+            .service-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Hive Command Portal</h1>
+    <div class="meta">
+        ROCK-PC <span>(192.168.1.192)</span> &mdash;
+        <span id="syncDate">Last sync: loading...</span>
+    </div>
+</div>
+
+<!-- LIVE SERVICES -->
+<div class="grid">
+    <div class="card services" style="grid-column: 1 / -1;">
+        <h2><span class="icon">&#9889;</span> Live Services</h2>
+        <div class="service-grid">
+            <a href="http://localhost:8899" target="_blank" class="svc-link">
+                <span class="dot"></span> Dashboard <span class="port">:8899</span>
+            </a>
+            <a href="http://localhost:8585" target="_blank" class="svc-link">
+                <span class="dot"></span> KittBox / Agent <span class="port">:8585</span>
+            </a>
+            <a href="http://localhost:8500" target="_blank" class="svc-link">
+                <span class="dot"></span> Master Orchestrator <span class="port">:8500</span>
+            </a>
+            <a href="http://localhost:8080" target="_blank" class="svc-link">
+                <span class="dot"></span> SimWidget <span class="port">:8080</span>
+            </a>
+            <a href="http://localhost:8600" target="_blank" class="svc-link">
+                <span class="dot"></span> Relay <span class="port">:8600</span>
+            </a>
+            <a href="http://localhost:3002" target="_blank" class="svc-link">
+                <span class="dot"></span> Oracle <span class="port">:3002</span>
+            </a>
+            <a href="http://localhost:8860" target="_blank" class="svc-link">
+                <span class="dot"></span> MCP Bridge <span class="port">:8860</span>
+            </a>
+            <a href="http://localhost:8850" target="_blank" class="svc-link">
+                <span class="dot"></span> Hive Oracle <span class="port">:8850</span>
+            </a>
+            <a href="http://localhost:8590" target="_blank" class="svc-link">
+                <span class="dot"></span> Remote Support <span class="port">:8590</span>
+            </a>
+            <a href="http://localhost:8701" target="_blank" class="svc-link">
+                <span class="dot"></span> Hive-Mind <span class="port">:8701</span>
+            </a>
+            <a href="http://localhost:11434" target="_blank" class="svc-link">
+                <span class="dot"></span> Ollama <span class="port">:11434</span>
+            </a>
+            <a href="https://github.com/cobrahjh/LLM-DevOSWE" target="_blank" class="svc-link">
+                <span class="dot" style="background:#8b5cf6"></span> GitHub Repo
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- DOCUMENTATION -->
+<div class="grid">
+
+    <!-- Admin / System -->
+    <div class="card admin">
+        <h2><span class="icon">&#9881;</span> Admin &amp; System</h2>
+        <ul class="doc-list">
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/SERVICE-REGISTRY.md" target="_blank">SERVICE-REGISTRY.md</a> <span class="desc">All ports, services, endpoints</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/ARCHITECTURE.md" target="_blank">ARCHITECTURE.md</a> <span class="desc">System architecture</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/STANDARDS.md" target="_blank">STANDARDS.md</a> <span class="desc">Code patterns &amp; conventions</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/IMPROVEMENT-REPORT.md" target="_blank">IMPROVEMENT-REPORT.md</a> <span class="desc">Roadmap &amp; progress</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/DEPLOYMENT.md" target="_blank">DEPLOYMENT.md</a> <span class="desc">Deployment guide</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/TECH-STACK.md" target="_blank">TECH-STACK.md</a> <span class="desc">Technology stack</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/DIRECTORY-STRUCTURE.md" target="_blank">DIRECTORY-STRUCTURE.md</a> <span class="desc">File/folder layout</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/WINDOWS-SERVICES.md" target="_blank">WINDOWS-SERVICES.md</a> <span class="desc">NSSM service management</span></li>
+        </ul>
+    </div>
+
+    <!-- Reference / AI -->
+    <div class="card reference">
+        <h2><span class="icon">&#129302;</span> AI &amp; Hive Reference</h2>
+        <ul class="doc-list">
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/CLAUDE.md" target="_blank">CLAUDE.md</a> <span class="desc">Project overview &amp; rules</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/HIVE-PROTOCOLS.md" target="_blank">HIVE-PROTOCOLS.md</a> <span class="desc">AI behavior protocols</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/PERSONAS.md" target="_blank">PERSONAS.md</a> <span class="desc">AI identities &amp; voices</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/INTEL-SOURCES.md" target="_blank">INTEL-SOURCES.md</a> <span class="desc">Intel gathering config</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/CLAUDE-CODE-GUIDE.md" target="_blank">CLAUDE-CODE-GUIDE.md</a> <span class="desc">CLI reference &amp; hooks</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/CLAUDE-SESSIONS.md" target="_blank">CLAUDE-SESSIONS.md</a> <span class="desc">Session management</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/CLAUDE-CODE-INTEGRATION.md" target="_blank">CLAUDE-CODE-INTEGRATION.md</a> <span class="desc">Integration guide</span></li>
+        </ul>
+    </div>
+
+    <!-- SimWidget / Camera -->
+    <div class="card simwidget">
+        <h2><span class="icon">&#9992;</span> SimWidget &amp; Camera</h2>
+        <ul class="doc-list">
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/CAMERA-TROUBLESHOOTING.md" target="_blank">CAMERA-TROUBLESHOOTING.md</a> <span class="desc">Camera debug guide</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/CHASEPLANE-API.md" target="_blank">CHASEPLANE-API.md</a> <span class="desc">ChasePlane integration</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/CHASEPLANE_VJOY_SETUP.md" target="_blank">CHASEPLANE_VJOY_SETUP.md</a> <span class="desc">vJoy controller setup</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/SIMCONNECT_SIMVAR_WRITE_GUIDE.md" target="_blank">SIMCONNECT_SIMVAR_WRITE_GUIDE.md</a> <span class="desc">SimConnect write ops</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/SIMVARS-REFERENCE.md" target="_blank">SIMVARS-REFERENCE.md</a> <span class="desc">SimVar database</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/FLOW-PRO-REFERENCE.md" target="_blank">FLOW-PRO-REFERENCE.md</a> <span class="desc">Flow Pro widget reference</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/TELEMETRY-DESIGN.md" target="_blank">TELEMETRY-DESIGN.md</a> <span class="desc">Telemetry architecture</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/TELEMETRY-SETUP.md" target="_blank">TELEMETRY-SETUP.md</a> <span class="desc">Telemetry configuration</span></li>
+        </ul>
+    </div>
+
+    <!-- Components / Widgets -->
+    <div class="card components">
+        <h2><span class="icon">&#128230;</span> Components &amp; Widgets</h2>
+        <ul class="doc-list">
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/COMPONENT-REGISTRY.md" target="_blank">COMPONENT-REGISTRY.md</a> <span class="desc">UI components catalog</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/COMPONENT-ARCHITECTURE.md" target="_blank">COMPONENT-ARCHITECTURE.md</a> <span class="desc">Component design</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/WIDGET-CREATION-GUIDE.md" target="_blank">WIDGET-CREATION-GUIDE.md</a> <span class="desc">Build custom widgets</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/WIDGET-INVENTORY.md" target="_blank">WIDGET-INVENTORY.md</a> <span class="desc">All available widgets</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/PLUGINS.md" target="_blank">PLUGINS.md</a> <span class="desc">Plugin system</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/PLUGIN-DEVELOPMENT.md" target="_blank">PLUGIN-DEVELOPMENT.md</a> <span class="desc">Plugin dev guide</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/TINYWIDGET-ARCHITECTURE.md" target="_blank">TINYWIDGET-ARCHITECTURE.md</a> <span class="desc">TinyWidget system</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/ACCESSIBILITY-FRAMEWORK.md" target="_blank">ACCESSIBILITY-FRAMEWORK.md</a> <span class="desc">A11y standards</span></li>
+        </ul>
+    </div>
+
+    <!-- API Reference -->
+    <div class="card api">
+        <h2><span class="icon">&#128268;</span> API Reference</h2>
+        <ul class="doc-list">
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/API-ORACLE.md" target="_blank">API-ORACLE.md</a> <span class="desc">Oracle LLM endpoints</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/API-RELAY.md" target="_blank">API-RELAY.md</a> <span class="desc">Relay queue endpoints</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/COMMANDS.md" target="_blank">COMMANDS.md</a> <span class="desc">CLI commands</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/DOCSYNC-AGENT.md" target="_blank">DOCSYNC-AGENT.md</a> <span class="desc">DocSync system</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/RESOURCES.md" target="_blank">RESOURCES.md</a> <span class="desc">External resources</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/RESOURCES-DISCOVERY.md" target="_blank">RESOURCES-DISCOVERY.md</a> <span class="desc">Resource discovery</span></li>
+        </ul>
+    </div>
+
+    <!-- Infrastructure -->
+    <div class="card infra">
+        <h2><span class="icon">&#128421;</span> Infrastructure &amp; Setup</h2>
+        <ul class="doc-list">
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/GETTING-STARTED.md" target="_blank">GETTING-STARTED.md</a> <span class="desc">First-time setup</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/QUICKSTART.md" target="_blank">QUICKSTART.md</a> <span class="desc">Quick start guide</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/MINIMUM-REQUIREMENTS.md" target="_blank">MINIMUM-REQUIREMENTS.md</a> <span class="desc">System requirements</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/PROJECT-LAUNCHER.md" target="_blank">PROJECT-LAUNCHER.md</a> <span class="desc">Project launcher</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/docs/PROJECT-TRACKER.md" target="_blank">PROJECT-TRACKER.md</a> <span class="desc">Project tracking</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/README.md" target="_blank">README.md</a> <span class="desc">Project readme</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/TODO.md" target="_blank">TODO.md</a> <span class="desc">Master to-do list</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/PROJECT-INDEX.md" target="_blank">PROJECT-INDEX.md</a> <span class="desc">Project index</span></li>
+        </ul>
+    </div>
+
+    <!-- Service READMEs -->
+    <div class="card guides">
+        <h2><span class="icon">&#128218;</span> Service READMEs</h2>
+        <ul class="doc-list">
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/orchestrator/README.md" target="_blank">Orchestrator</a> <span class="desc">Watchdog service</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/relay/README.md" target="_blank">Relay</a> <span class="desc">Message queue</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/agent/README.md" target="_blank">Agent / KittBox</a> <span class="desc">Command center</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/remote-support/README.md" target="_blank">Remote Support</a> <span class="desc">Remote access</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/terminal-hub/README.md" target="_blank">Terminal Hub</a> <span class="desc">Terminal management</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/browser-extension/README.md" target="_blank">Browser Extension</a> <span class="desc">Browser bridge</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/hive-universal-install/README.md" target="_blank">Universal Install</a> <span class="desc">Cross-platform installer</span></li>
+            <li><a href="https://github.com/cobrahjh/LLM-DevOSWE/blob/master/Admin/msfs-addon/README.md" target="_blank">MSFS Addon</a> <span class="desc">MSFS integration</span></li>
+        </ul>
+    </div>
+</div>
+
+<!-- SCREENSHOT -->
+<div class="screenshot-section">
+    <h2>Dashboard Snapshot</h2>
+    <a href="screenshots/hive-dashboard.png" target="_blank">
+        <img src="screenshots/hive-dashboard.png" alt="Hive Dashboard Screenshot" />
+    </a>
+</div>
+
+<div class="footer">
+    <span>Hive Command Portal &mdash; Harold Admin</span>
+    <span>GitHub: <a href="https://github.com/cobrahjh/LLM-DevOSWE" target="_blank">cobrahjh/LLM-DevOSWE</a></span>
+</div>
+
+<script>
+    document.getElementById('syncDate').textContent = 'Last sync: ' + new Date().toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+</script>
+</body>
+</html>
