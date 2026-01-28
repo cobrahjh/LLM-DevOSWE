@@ -233,6 +233,17 @@ const SERVICES = {
         priority: 13,
         autoRestart: true
     },
+    personas: {
+        id: 'personas',
+        name: 'Hive Personas',
+        port: 8770,
+        dir: 'C:\\DevClaude\\Hivemind\\personas',
+        start: 'node personas.js',
+        winService: null,
+        healthEndpoint: '/health',
+        priority: 14,
+        autoRestart: true
+    },
     mcpbridge: {
         id: 'mcpbridge',
         name: 'MCP-Bridge',

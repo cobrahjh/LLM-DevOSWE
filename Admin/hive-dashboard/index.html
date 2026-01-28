@@ -1796,6 +1796,17 @@
                 loadAlerts();
             } catch (e) {}
         }
+        function openAllUIs() {
+            const uis = [
+                { port: 8899, name: 'Dashboard' },
+                { port: 8585, name: 'KittBox' },
+                { port: 8875, name: 'VoiceAccess' },
+                { port: 8770, name: 'Personas' },
+                { port: 8860, name: 'MCP Bridge' },
+                { port: 8800, name: 'Hive Voice' }
+            ];
+            uis.forEach((ui, i) => setTimeout(() => window.open('http://localhost:' + ui.port, '_blank'), i * 300));
+        }
 
         // Service Logs
         async function loadLogs() {
@@ -2112,6 +2123,13 @@
                 { label: 'Export Status', desc: 'Copy system status to clipboard', icon: '📤', action: () => { closeCmdPalette(); exportStatus(); } },
                 { label: 'Toggle Logs', desc: 'Show/hide the service logs panel', icon: '📜', action: () => { closeCmdPalette(); toggleSection('logs'); } },
                 { label: 'Settings', desc: 'Open dashboard settings', icon: '⚙', action: () => { closeCmdPalette(); openSettings(); } },
+                { label: 'Open KittBox', desc: 'Command Center :8585', icon: '🤖', action: () => { closeCmdPalette(); window.open('http://localhost:8585', '_blank'); } },
+                { label: 'Open VoiceAccess', desc: 'Voice management :8875', icon: '🎤', action: () => { closeCmdPalette(); window.open('http://localhost:8875', '_blank'); } },
+                { label: 'Open Personas', desc: 'AI personas :8770', icon: '👤', action: () => { closeCmdPalette(); window.open('http://localhost:8770', '_blank'); } },
+                { label: 'Open MCP Bridge', desc: 'MCP servers :8860', icon: '🔌', action: () => { closeCmdPalette(); window.open('http://localhost:8860', '_blank'); } },
+                { label: 'Open All UIs', desc: 'Open all service dashboards', icon: '🖥️', action: () => { closeCmdPalette(); openAllUIs(); } },
+                { label: 'Clear All Alerts', desc: 'Acknowledge all alerts', icon: '🔕', action: () => { closeCmdPalette(); ackAllAlerts(); } },
+                { label: 'System Health Check', desc: 'Check all services now', icon: '💚', action: () => { closeCmdPalette(); loadServices(); } },
             ];
             // Add restart commands for each service
             lastServiceResults.forEach(s => {
