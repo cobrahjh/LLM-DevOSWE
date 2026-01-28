@@ -116,6 +116,11 @@ hive.local {
 		reverse_proxy localhost:8870
 	}
 
+	# Kinship - AI Memory Companion (LifeLog)
+	handle_path /kinship/* {
+		reverse_proxy localhost:8766
+	}
+
 	# Widgets - Direct access to MSFS widgets
 	handle_path /widgets/* {
 		reverse_proxy localhost:8080
@@ -128,7 +133,7 @@ hive.local {
 
 	# Default - serve a status page or redirect to KittBox
 	handle {
-		respond "Hive is alive. Available routes: /dashboard, /oracle, /relay, /kitt, /simwidget, /hivemind, /hivebrain, /mastermind, /pms50, /agents, /hiveoracle, /mcpbridge, /voiceaccess, /voice, /widgets" 200
+		respond "Hive is alive. Available routes: /dashboard, /oracle, /relay, /kitt, /simwidget, /hivemind, /hivebrain, /mastermind, /pms50, /agents, /hiveoracle, /mcpbridge, /voiceaccess, /voice, /kinship, /widgets" 200
 	}
 
 	# Enable WebSocket support for SimWidget
