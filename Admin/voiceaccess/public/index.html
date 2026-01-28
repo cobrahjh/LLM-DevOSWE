@@ -96,16 +96,28 @@
   .test-result { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-top: 8px; white-space: pre-wrap; font-size: 0.85rem; display: none; }
   .test-result.visible { display: block; }
 
+  /* Persona edit icon */
+  .persona-edit-btn { background: none; border: none; color: #7d8590; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .persona-edit-btn:hover { color: #f97316; background: #f9731620; }
+  .persona-actions { display: flex; gap: 4px; align-items: center; }
+  .persona-test-btn { background: none; border: none; color: #7d8590; cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; }
+  .persona-test-btn:hover { color: #3fb950; background: #3fb95020; }
+
   /* Modal */
   .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
   .modal-overlay.active { display: flex; }
-  .modal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; width: 400px; max-width: 90vw; }
+  .modal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; width: 450px; max-width: 90vw; max-height: 90vh; overflow-y: auto; }
   .modal h3 { color: #f97316; margin-bottom: 12px; }
   .modal .form-group { margin-bottom: 10px; }
   .modal label { display: block; color: #7d8590; font-size: 0.8rem; margin-bottom: 4px; }
-  .modal input, .modal textarea { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #e6edf3; padding: 8px; border-radius: 4px; font-family: inherit; }
+  .modal input, .modal textarea, .modal select { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #e6edf3; padding: 8px; border-radius: 4px; font-family: inherit; font-size: 0.85rem; }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { outline: none; border-color: #f97316; }
   .modal textarea { min-height: 60px; resize: vertical; }
   .modal-btns { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-row input[type="range"] { flex: 1; }
+  .slider-row .slider-val { min-width: 40px; text-align: right; color: #58a6ff; font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -213,6 +225,86 @@
   </div>
 </div>
 
+<!-- Persona Edit Modal -->
+<div class="modal-overlay" id="personaEditModal">
+  <div class="modal">
+    <h3 id="personaEditTitle">Edit Persona</h3>
+    <input type="hidden" id="peId">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="peName">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <input type="text" id="peRole">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Voice</label>
+      <select id="peVoice">
+        <option value="Microsoft Ava (Natural)">Microsoft Ava (Natural)</option>
+        <option value="Microsoft Andrew (Natural)">Microsoft Andrew (Natural)</option>
+        <option value="Microsoft Emma (Natural)">Microsoft Emma (Natural)</option>
+        <option value="Microsoft Ryan (Natural)">Microsoft Ryan (Natural)</option>
+        <option value="Microsoft Jenny (Natural)">Microsoft Jenny (Natural)</option>
+        <option value="Microsoft Guy (Natural)">Microsoft Guy (Natural)</option>
+        <option value="Microsoft Aria (Natural)">Microsoft Aria (Natural)</option>
+        <option value="Microsoft Davis (Natural)">Microsoft Davis (Natural)</option>
+        <option value="Microsoft David">Microsoft David</option>
+        <option value="Microsoft Mark">Microsoft Mark</option>
+        <option value="Microsoft Zira">Microsoft Zira</option>
+        <option value="Google UK English Female">Google UK English Female</option>
+        <option value="Google US English">Google US English</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Rate</label>
+      <div class="slider-row">
+        <input type="range" id="peRate" min="0.5" max="2" step="0.1" value="1" oninput="document.getElementById('peRateVal').textContent=this.value+'x'">
+        <span class="slider-val" id="peRateVal">1x</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Pitch</label>
+      <div class="slider-row">
+        <input type="range" id="pePitch" min="0.5" max="2" step="0.1" value="1" oninput="document.getElementById('pePitchVal').textContent=this.value">
+        <span class="slider-val" id="pePitchVal">1</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Volume</label>
+      <div class="slider-row">
+        <input type="range" id="peVolume" min="0" max="100" step="5" value="100" oninput="document.getElementById('peVolVal').textContent=this.value+'%'">
+        <span class="slider-val" id="peVolVal">100%</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Greeting</label>
+      <textarea id="peGreeting" rows="2"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Personality</label>
+      <input type="text" id="pePersonality" placeholder="e.g. Calm, professional, witty">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cooldown (sec)</label>
+        <input type="number" id="peCooldown" min="1" max="300" value="30">
+      </div>
+      <div class="form-group">
+        <label>Idle Chat (min, 0=off)</label>
+        <input type="number" id="peIdleChat" min="0" max="60" value="0">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closePersonaEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="testPersonaVoice()">Test</button>
+      <button class="btn btn-primary" onclick="savePersona()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API = `${location.protocol}//${location.host}`;
 const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -245,7 +337,11 @@ async function loadPersonas() {
                         <span class="persona-name">${p.name}</span>
                         <span class="persona-role"> - ${p.role}</span>
                     </div>
-                    <span class="badge ${p.enabled ? 'active' : 'inactive'}">${p.id === settings.defaultPersona ? 'ACTIVE' : (p.enabled ? 'ON' : 'OFF')}</span>
+                    <div class="persona-actions">
+                        <button class="persona-test-btn" onclick="testPersonaVoiceById('${p.id}')" title="Test voice">&#128266;</button>
+                        <button class="persona-edit-btn" onclick="editPersona('${p.id}')" title="Edit persona">&#9998;</button>
+                        <span class="badge ${p.enabled ? 'active' : 'inactive'}">${p.id === settings.defaultPersona ? 'ACTIVE' : (p.enabled ? 'ON' : 'OFF')}</span>
+                    </div>
                 </div>
                 <div class="persona-config">
                     <label>Voice:</label><span>${p.voice}</span>
@@ -372,6 +468,103 @@ async function sendCommand() {
         resultEl.textContent = `Error: ${e.message}`;
         resultEl.style.color = '#f85149';
     }
+}
+
+// Persona editor
+let cachedPersonas = [];
+async function editPersona(id) {
+    if (cachedPersonas.length === 0) cachedPersonas = await api('/api/personas');
+    const p = cachedPersonas.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById('peId').value = p.id;
+    document.getElementById('peName').value = p.name || '';
+    document.getElementById('peRole').value = p.role || '';
+    document.getElementById('peGreeting').value = p.greeting || '';
+    document.getElementById('pePersonality').value = p.personality || '';
+    document.getElementById('peCooldown').value = (p.cooldown || 30000) / 1000;
+    document.getElementById('peIdleChat').value = p.idleChatInterval ? p.idleChatInterval / 60000 : 0;
+
+    // Voice select — try exact match, then partial
+    const voiceSel = document.getElementById('peVoice');
+    const voiceOpts = [...voiceSel.options].map(o => o.value);
+    if (voiceOpts.includes(p.voice)) {
+        voiceSel.value = p.voice;
+    } else {
+        // Add as custom option if not in list
+        const opt = document.createElement('option');
+        opt.value = p.voice; opt.textContent = p.voice;
+        voiceSel.appendChild(opt);
+        voiceSel.value = p.voice;
+    }
+
+    document.getElementById('peRate').value = p.rate || 1;
+    document.getElementById('peRateVal').textContent = (p.rate || 1) + 'x';
+    document.getElementById('pePitch').value = p.pitch || 1;
+    document.getElementById('pePitchVal').textContent = p.pitch || 1;
+    document.getElementById('peVolume').value = Math.round((p.volume || 1) * 100);
+    document.getElementById('peVolVal').textContent = Math.round((p.volume || 1) * 100) + '%';
+
+    document.getElementById('personaEditTitle').textContent = 'Edit ' + p.name;
+    document.getElementById('personaEditModal').classList.add('active');
+}
+
+function closePersonaEdit() {
+    document.getElementById('personaEditModal').classList.remove('active');
+}
+
+async function savePersona() {
+    const id = document.getElementById('peId').value;
+    const updates = {
+        name: document.getElementById('peName').value,
+        role: document.getElementById('peRole').value,
+        voice: document.getElementById('peVoice').value,
+        rate: parseFloat(document.getElementById('peRate').value),
+        pitch: parseFloat(document.getElementById('pePitch').value),
+        volume: parseInt(document.getElementById('peVolume').value) / 100,
+        greeting: document.getElementById('peGreeting').value,
+        personality: document.getElementById('pePersonality').value,
+        cooldown: parseInt(document.getElementById('peCooldown').value) * 1000,
+        idleChatInterval: parseInt(document.getElementById('peIdleChat').value) * 60000
+    };
+    try {
+        await apiPut('/api/personas/' + id, updates);
+        cachedPersonas = [];
+        closePersonaEdit();
+        loadPersonas();
+    } catch (e) { console.error('Save persona failed:', e); }
+}
+
+function testPersonaVoice() {
+    const voiceName = document.getElementById('peVoice').value;
+    const rate = parseFloat(document.getElementById('peRate').value);
+    const pitch = parseFloat(document.getElementById('pePitch').value);
+    const volume = parseInt(document.getElementById('peVolume').value) / 100;
+    const greeting = document.getElementById('peGreeting').value || 'Hello, this is how I sound.';
+    speakWith(voiceName, rate, pitch, volume, greeting);
+}
+
+async function testPersonaVoiceById(id) {
+    if (cachedPersonas.length === 0) cachedPersonas = await api('/api/personas');
+    const p = cachedPersonas.find(x => x.id === id);
+    if (!p) return;
+    speakWith(p.voice, p.rate || 1, p.pitch || 1, p.volume || 1, p.greeting || 'Hello, I am ' + p.name);
+}
+
+function speakWith(voiceName, rate, pitch, volume, text) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = speechSynthesis.getVoices();
+    // Match strategy: exact > Natural partial > any partial
+    const searchTerm = voiceName.replace(' (Natural)', '').split(' ').pop();
+    let voice = voices.find(v => v.name === voiceName) ||
+                voices.find(v => v.name.includes(searchTerm) && v.name.includes('Natural')) ||
+                voices.find(v => v.name.includes(searchTerm));
+    if (voice) u.voice = voice;
+    u.rate = rate;
+    u.pitch = pitch;
+    u.volume = volume;
+    speechSynthesis.speak(u);
 }
 
 // Speech recognition
@@ -560,6 +753,8 @@ function refreshAll() {
 refreshAll();
 connectWs();
 setInterval(() => { loadServices(); loadStats(); }, 30000);
+// Preload voices for TTS test buttons
+if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); }
 </script>
 </body>
 </html>
