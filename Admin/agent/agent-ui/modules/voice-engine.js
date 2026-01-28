@@ -93,8 +93,24 @@ const VoiceEngine = (function() {
 
     function loadVoices() {
         const voices = synthesis.getVoices();
-        // Preferred voice: Google UK English Female (Heather persona)
-        selectedVoice = voices.find(v => v.name.includes('Google UK English Female')) ||
+        if (!voices || voices.length === 0) return;
+
+        // Check localStorage for user-saved voice first
+        const savedVoiceName = localStorage.getItem('voice-selected');
+        if (savedVoiceName) {
+            const savedVoice = voices.find(v => v.name === savedVoiceName) ||
+                               voices.find(v => v.name.includes(savedVoiceName));
+            if (savedVoice) {
+                selectedVoice = savedVoice;
+                console.log('[VoiceEngine] Restored saved voice:', selectedVoice.name);
+                return;
+            }
+        }
+
+        // Fallback priority: Microsoft Natural > Google UK > Microsoft legacy > any English
+        selectedVoice = voices.find(v => /Microsoft.*Natural/i.test(v.name) && v.lang.startsWith('en')) ||
+                        voices.find(v => v.name.includes('Google UK English Female')) ||
+                        voices.find(v => /Microsoft.*(Aria|Guy|Jenny|Ryan)/i.test(v.name)) ||
                         voices.find(v => v.name.includes('Microsoft David')) ||
                         voices.find(v => v.name.includes('Microsoft Mark')) ||
                         voices.find(v => v.name.includes('Google US English')) ||

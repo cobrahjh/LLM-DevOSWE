@@ -617,7 +617,7 @@
                             <div class="setting-group">
                                 <label class="setting-label">Voice</label>
                                 <div style="display: flex; gap: 8px; align-items: center;">
-                                    <select id="voice-select" class="setting-select" onchange="changeVoice(this.value)" style="flex: 1;">
+                                    <select id="settings-voice-select" class="setting-select" onchange="changeVoice(this.value)" style="flex: 1;">
                                         <option value="">Loading voices...</option>
                                     </select>
                                     <button onclick="testVoice()" class="btn-small" title="Test voice">🔊 Test</button>
@@ -915,16 +915,18 @@
 
             const voices = window.speechSynthesis.getVoices();
             if (voices.length === 0) {
-                window.speechSynthesis.onvoiceschanged = () => populateVoiceEntrySelect();
+                setTimeout(populateVoiceEntrySelect, 300);
                 return;
             }
 
+            // Restore saved voice or use VoiceEngine's current selection
+            const saved = localStorage.getItem('voice-entry-selected') ||
+                          (typeof VoiceEngine !== 'undefined' && VoiceEngine.getSelectedVoice?.()?.name) || '';
+
             select.innerHTML = voices.map(v =>
-                `<option value="${v.name}" ${v.name.includes('UK') && v.name.includes('Female') ? 'selected' : ''}>${v.name}</option>`
+                `<option value="${v.name}" ${v.name === saved ? 'selected' : ''}>${v.name} (${v.lang})</option>`
             ).join('');
 
-            // Restore saved voice
-            const saved = localStorage.getItem('voice-entry-selected');
             if (saved && [...select.options].some(o => o.value === saved)) {
                 select.value = saved;
             }
@@ -1477,27 +1479,25 @@
         }
 
         function populateVoiceSelect() {
-            const select = document.getElementById('voice-select');
+            const select = document.getElementById('settings-voice-select');
             if (!select) return;
 
             const voices = window.speechSynthesis.getVoices();
 
-            // Voices load async in Chrome - if empty, wait for voiceschanged event
+            // Voices load async in Chrome - if empty, retry shortly
             if (voices.length === 0) {
                 select.innerHTML = '<option value="">Loading voices...</option>';
-                window.speechSynthesis.onvoiceschanged = () => populateVoiceSelect();
+                setTimeout(populateVoiceSelect, 300);
                 return;
             }
 
-            select.innerHTML = voices.map(v =>
-                `<option value="${v.name}" ${v.name.includes('UK') && v.name.includes('Female') ? 'selected' : ''}>${v.name}</option>`
-            ).join('');
+            // Get currently active voice from VoiceEngine or localStorage
+            const currentVoice = (typeof VoiceEngine !== 'undefined' && VoiceEngine.getSelectedVoice?.()?.name) ||
+                                 localStorage.getItem('voice-selected') || '';
 
-            // Select current voice if VoiceEngine has one
-            if (typeof VoiceEngine !== 'undefined') {
-                const current = VoiceEngine.getSelectedVoice?.()?.name;
-                if (current) select.value = current;
-            }
+            select.innerHTML = voices.map(v =>
+                `<option value="${v.name}" ${v.name === currentVoice ? 'selected' : ''}>${v.name} (${v.lang})</option>`
+            ).join('');
         }
 
         function changeVoice(voiceName) {
@@ -1538,6 +1538,59 @@
                 UIPanels.clearLog();
             } else {
                 console.log('[CommandCenter] Clear logs - not yet implemented in v3.0');
+            }
+        }
+
+        async function clearRelayQueue() {
+            try {
+                const res = await fetch('http://' + location.hostname + ':8600/api/queue/clear', { method: 'POST' });
+                if (res.ok) {
+                    if (typeof ActivityLog !== 'undefined') ActivityLog.success('Relay queue cleared');
+                } else {
+                    if (typeof ActivityLog !== 'undefined') ActivityLog.error('Failed to clear relay queue');
+                }
+            } catch (e) {
+                console.error('[CommandCenter] Clear queue failed:', e.message);
+                if (typeof ActivityLog !== 'undefined') ActivityLog.error('Relay unreachable');
+            }
+        }
+
+        async function restartAllServers() {
+            if (!confirm('Restart all services via Master-O?')) return;
+            try {
+                const res = await fetch('http://' + location.hostname + ':8500/api/restart-all', { method: 'POST' });
+                if (res.ok) {
+                    if (typeof ActivityLog !== 'undefined') ActivityLog.success('All services restarting...');
+                    setTimeout(checkAllServicesStatus, 5000);
+                } else {
+                    if (typeof ActivityLog !== 'undefined') ActivityLog.error('Restart-all failed');
+                }
+            } catch (e) {
+                console.error('[CommandCenter] Restart all failed:', e.message);
+                if (typeof ActivityLog !== 'undefined') ActivityLog.error('Master-O unreachable');
+            }
+        }
+
+        async function testService(serviceId) {
+            const svc = SERVICES[serviceId];
+            if (!svc) return;
+            try {
+                if (svc.native) {
+                    // Native services (like KeySender) - check via Master-O
+                    const res = await fetch('http://' + location.hostname + ':8500/api/status');
+                    const data = await res.json();
+                    const info = data.services?.[serviceId];
+                    const online = info?.running && info?.healthy;
+                    updateServiceUI(serviceId, online);
+                    if (typeof ActivityLog !== 'undefined') ActivityLog.success(svc.name + ': ' + (online ? 'Online' : 'Offline'));
+                } else if (svc.port) {
+                    const res = await fetch('http://' + location.hostname + ':' + svc.port + '/api/health', { signal: AbortSignal.timeout(3000) });
+                    updateServiceUI(serviceId, res.ok);
+                    if (typeof ActivityLog !== 'undefined') ActivityLog.success(svc.name + ': ' + (res.ok ? 'Online' : 'Error'));
+                }
+            } catch (e) {
+                updateServiceUI(serviceId, false);
+                if (typeof ActivityLog !== 'undefined') ActivityLog.error(svc.name + ': Offline');
             }
         }
 
