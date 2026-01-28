@@ -243,19 +243,34 @@
     <div class="form-group">
       <label>Voice</label>
       <select id="peVoice">
-        <option value="Microsoft Ava (Natural)">Microsoft Ava (Natural)</option>
-        <option value="Microsoft Andrew (Natural)">Microsoft Andrew (Natural)</option>
-        <option value="Microsoft Emma (Natural)">Microsoft Emma (Natural)</option>
-        <option value="Microsoft Ryan (Natural)">Microsoft Ryan (Natural)</option>
-        <option value="Microsoft Jenny (Natural)">Microsoft Jenny (Natural)</option>
-        <option value="Microsoft Guy (Natural)">Microsoft Guy (Natural)</option>
-        <option value="Microsoft Aria (Natural)">Microsoft Aria (Natural)</option>
-        <option value="Microsoft Davis (Natural)">Microsoft Davis (Natural)</option>
-        <option value="Microsoft David">Microsoft David</option>
-        <option value="Microsoft Mark">Microsoft Mark</option>
-        <option value="Microsoft Zira">Microsoft Zira</option>
-        <option value="Google UK English Female">Google UK English Female</option>
-        <option value="Google US English">Google US English</option>
+        <optgroup label="Microsoft Natural (Female)">
+          <option value="Microsoft Ava (Natural)">Ava (Natural)</option>
+          <option value="Microsoft Emma (Natural)">Emma (Natural)</option>
+          <option value="Microsoft Jenny (Natural)">Jenny (Natural)</option>
+          <option value="Microsoft Aria (Natural)">Aria (Natural)</option>
+          <option value="Microsoft Ana (Natural)">Ana (Natural)</option>
+          <option value="Microsoft Michelle (Natural)">Michelle (Natural)</option>
+          <option value="Microsoft Steffan (Natural)">Steffan (Natural)</option>
+        </optgroup>
+        <optgroup label="Microsoft Natural (Male)">
+          <option value="Microsoft Andrew (Natural)">Andrew (Natural)</option>
+          <option value="Microsoft Ryan (Natural)">Ryan (Natural)</option>
+          <option value="Microsoft Guy (Natural)">Guy (Natural)</option>
+          <option value="Microsoft Davis (Natural)">Davis (Natural)</option>
+          <option value="Microsoft Eric (Natural)">Eric (Natural)</option>
+          <option value="Microsoft Christopher (Natural)">Christopher (Natural)</option>
+          <option value="Microsoft Roger (Natural)">Roger (Natural)</option>
+          <option value="Microsoft Brian (Natural)">Brian (Natural)</option>
+        </optgroup>
+        <optgroup label="Microsoft Legacy">
+          <option value="Microsoft David">David</option>
+          <option value="Microsoft Mark">Mark</option>
+          <option value="Microsoft Zira">Zira</option>
+        </optgroup>
+        <optgroup label="Google">
+          <option value="Google UK English Female">UK English Female</option>
+          <option value="Google US English">US English</option>
+        </optgroup>
       </select>
     </div>
     <div class="form-group">
@@ -555,12 +570,20 @@ function speakWith(voiceName, rate, pitch, volume, text) {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     const voices = speechSynthesis.getVoices();
-    // Match strategy: exact > Natural partial > any partial
-    const searchTerm = voiceName.replace(' (Natural)', '').split(' ').pop();
+    // Match strategy: exact > Online Natural > Natural partial > any partial
+    // Edge uses "Microsoft Emma Online (Natural)" format, Chrome uses "Microsoft Emma (Natural)"
+    const searchTerm = voiceName.replace(' (Natural)', '').replace('Microsoft ', '').trim();
     let voice = voices.find(v => v.name === voiceName) ||
-                voices.find(v => v.name.includes(searchTerm) && v.name.includes('Natural')) ||
+                voices.find(v => v.name.includes(searchTerm) && v.name.includes('Natural') && v.lang.startsWith('en')) ||
+                voices.find(v => v.name.includes(searchTerm) && v.name.includes('Online') && v.lang.startsWith('en')) ||
+                voices.find(v => v.name.includes(searchTerm) && v.lang.startsWith('en')) ||
                 voices.find(v => v.name.includes(searchTerm));
-    if (voice) u.voice = voice;
+    if (voice) {
+        u.voice = voice;
+        console.log('[VoiceAccess] Using voice:', voice.name);
+    } else {
+        console.warn('[VoiceAccess] Voice not found:', voiceName, '- using default. Try Edge for Natural voices.');
+    }
     u.rate = rate;
     u.pitch = pitch;
     u.volume = volume;
@@ -726,7 +749,11 @@ function connectWs() {
                 const u = new SpeechSynthesisUtterance(msg.text);
                 if (msg.voice) {
                     const voices = speechSynthesis.getVoices();
-                    const match = voices.find(v => v.name.includes(msg.voice));
+                    const term = msg.voice.replace(' (Natural)', '').replace('Microsoft ', '').trim();
+                    const match = voices.find(v => v.name === msg.voice) ||
+                                  voices.find(v => v.name.includes(term) && v.name.includes('Natural') && v.lang.startsWith('en')) ||
+                                  voices.find(v => v.name.includes(term) && v.name.includes('Online') && v.lang.startsWith('en')) ||
+                                  voices.find(v => v.name.includes(term));
                     if (match) u.voice = match;
                 }
                 u.rate = msg.rate || 0.9;

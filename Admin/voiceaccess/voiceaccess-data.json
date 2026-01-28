@@ -17,7 +17,7 @@
       "id": "heather",
       "name": "Heather",
       "role": "Team Lead / PM",
-      "voice": "Google UK English Female",
+      "voice": "Microsoft Emma (Natural)",
       "rate": 0.9,
       "pitch": 1,
       "volume": 1,
@@ -32,9 +32,9 @@
       "id": "shiZhenXiang",
       "name": "Shǐ zhēn xiāng (史真香)",
       "role": "Programmer",
-      "voice": "Google 粵語（香港）",
+      "voice": "Microsoft Jenny (Natural)",
       "rate": 1,
-      "pitch": 1,
+      "pitch": 1.2,
       "volume": 1,
       "enabled": true,
       "idleChatInterval": 900000,
@@ -47,7 +47,7 @@
       "id": "kitt",
       "name": "Kitt",
       "role": "Local AI Agent",
-      "voice": "Microsoft David",
+      "voice": "Microsoft Ryan (Natural)",
       "rate": 1,
       "pitch": 0.9,
       "volume": 1,
@@ -94,6 +94,96 @@
       "persona": "heather",
       "source": "test",
       "timestamp": "2026-01-28T02:21:52.998Z"
+    },
+    {
+      "id": "mkxetewgclva",
+      "text": "what do you want? i suck like shit at programming. i aint no matha fucking mack daddy wiggada wiggida neeeega!",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"what do you want? i suck like shit at programming. i aint no matha fucking mack daddy wiggada wiggida neeeega!\""
+      },
+      "persona": "shiZhenXiang",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T02:32:07.600Z"
+    },
+    {
+      "id": "mkxetqudlpbp",
+      "text": "hello",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"hello\""
+      },
+      "persona": "shiZhenXiang",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T02:32:23.077Z"
+    },
+    {
+      "id": "mkxeygovp660",
+      "text": "booo",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"booo\""
+      },
+      "persona": "heather",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T02:36:03.199Z"
+    },
+    {
+      "id": "mkxf06yfi5v1",
+      "text": "booo",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"booo\""
+      },
+      "persona": "heather",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T02:37:23.895Z"
+    },
+    {
+      "id": "mkxgefryhsbz",
+      "text": "boo",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"boo\""
+      },
+      "persona": "heather",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T03:16:28.126Z"
+    },
+    {
+      "id": "mkxgk72femf8",
+      "text": "pooop",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"pooop\""
+      },
+      "persona": "heather",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T03:20:56.775Z"
     }
   ]
 }

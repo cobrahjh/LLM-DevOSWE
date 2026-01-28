@@ -107,12 +107,12 @@ const VoiceEngine = (function() {
             }
         }
 
-        // Fallback priority: Microsoft Natural > Google UK > Microsoft legacy > any English
-        selectedVoice = voices.find(v => /Microsoft.*Natural/i.test(v.name) && v.lang.startsWith('en')) ||
+        // Fallback priority: Heather's Natural voice > any English Natural > Google UK > legacy > any English
+        selectedVoice = voices.find(v => v.name.includes('Emma') && v.name.includes('Natural')) ||
+                        voices.find(v => /Microsoft.*(Emma|Aria|Ava|Jenny)/i.test(v.name) && v.lang.startsWith('en')) ||
+                        voices.find(v => /Microsoft.*Natural/i.test(v.name) && v.lang.startsWith('en')) ||
                         voices.find(v => v.name.includes('Google UK English Female')) ||
-                        voices.find(v => /Microsoft.*(Aria|Guy|Jenny|Ryan)/i.test(v.name)) ||
                         voices.find(v => v.name.includes('Microsoft David')) ||
-                        voices.find(v => v.name.includes('Microsoft Mark')) ||
                         voices.find(v => v.name.includes('Google US English')) ||
                         voices.find(v => v.lang.startsWith('en')) ||
                         voices[0];
