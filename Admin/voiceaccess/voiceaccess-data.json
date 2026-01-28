@@ -184,6 +184,36 @@
       "persona": "heather",
       "source": "dashboard",
       "timestamp": "2026-01-28T03:20:56.775Z"
+    },
+    {
+      "id": "mkxiaqr798ss",
+      "text": "kl;",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"kl;\""
+      },
+      "persona": "heather",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T04:09:34.963Z"
+    },
+    {
+      "id": "mkxihk78tk4q",
+      "text": "I tapped the wrong thing, you see.",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"I tapped the wrong thing, you see.\""
+      },
+      "persona": "heather",
+      "source": "dashboard",
+      "timestamp": "2026-01-28T04:14:53.060Z"
     }
   ]
 }

@@ -29,6 +29,7 @@
 | 1234 | Iris (ai-pc) | External | LM Studio on 192.168.1.162 |
 | 3003 | Hive Bridge (ai-pc) | External | `node C:\Hive\services\hive-bridge.js` |
 | 8750 | Hive-Mesh | Core | `node C:\DevClaude\Hivemind\mesh\mesh.js` |
+| 8770 | Hive Personas | Core | `node C:\DevClaude\Hivemind\personas\personas.js` |
 | 8860 | MCP-Hive Bridge | Core | `node C:\LLM-DevOSWE\Admin\mcp-bridge\server.js` |
 | 8870 | Hive Voice | Optional | `node C:\LLM-DevOSWE\Admin\hive-voice\voice-server.js` |
 | 8875 | VoiceAccess | Core | `node C:\LLM-DevOSWE\Admin\voiceaccess\server.js` |
@@ -220,6 +221,25 @@
 - **Endpoints:**
   - `GET /health` - Health check
 - **Managed by:** Orchestrator (priority 13)
+
+### Hive Personas (Port 8770)
+- **Location:** `C:\DevClaude\Hivemind\personas\personas.js`
+- **Purpose:** AI persona registry — identity, voice, personality for all Hive agents
+- **UI:** `http://localhost:8770`
+- **Features:**
+  - Persona cards with avatar, voice settings, personality traits, greeting
+  - Capability tiers: newborn, child, teen, adult, elder
+  - New agents get "newborn" voice so Harold knows
+  - Web Speech API voice testing
+- **Endpoints:**
+  - `GET /health` - Health check
+  - `GET /api/agents` - List all personas
+  - `GET /api/agents/:id` - Get specific persona
+  - `POST /api/agents` - Create new persona (id, name, role, capability)
+  - `PUT /api/agents/:id` - Update persona (voice, personality, greeting, etc.)
+  - `DELETE /api/agents/:id` - Delete persona
+- **Data:** `C:\DevClaude\Hivemind\personas\personas.json`
+- **Note:** Not in git repo (C:\DevClaude is separate from C:\LLM-DevOSWE)
 
 ### MCP-Hive Bridge (Port 8860)
 - **Location:** `C:\LLM-DevOSWE\Admin\mcp-bridge\server.js`
