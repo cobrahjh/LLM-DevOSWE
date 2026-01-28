@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP-Hive Bridge</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: 'Consolas', 'Monaco', monospace; }
+  .header { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+  h1 { color: #a78bfa; font-size: 1.4rem; }
+  .subtitle { color: #7d8590; font-size: 0.8rem; }
+  .header-right { display: flex; gap: 10px; align-items: center; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .status-dot.green { background: #3fb950; }
+  .status-dot.red { background: #f85149; }
+  .status-dot.yellow { background: #d29922; }
+  .container { padding: 16px; max-width: 1400px; margin: 0 auto; }
+
+  /* Stats */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-num { font-size: 1.8rem; font-weight: bold; color: #a78bfa; }
+  .stat-label { font-size: 0.75rem; color: #7d8590; }
+
+  /* Cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .card h2 { color: #a78bfa; font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px solid #21262d; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .card h2 .count { background: #30363d; color: #7d8590; padding: 1px 8px; border-radius: 10px; font-size: 0.75rem; }
+  .full-width { grid-column: 1 / -1; }
+
+  /* Server cards */
+  .server { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+  .server-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .server-name { font-weight: bold; color: #e6edf3; font-size: 0.9rem; }
+  .server-desc { color: #7d8590; font-size: 0.78rem; margin-bottom: 6px; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+  .badge.online { background: #0d3520; color: #3fb950; }
+  .badge.stopped { background: #3d2e00; color: #d29922; }
+  .badge.error { background: #3d1418; color: #f85149; }
+  .tool-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .tool-tag { background: #1c2333; color: #a78bfa; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+  .tool-tag:hover { background: #2d3548; }
+  .server-actions { display: flex; gap: 4px; margin-top: 8px; }
+
+  /* Buttons */
+  .btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: bold; }
+  .btn-primary { background: #a78bfa; color: #fff; }
+  .btn-primary:hover { background: #8b6fdf; }
+  .btn-secondary { background: #30363d; color: #e6edf3; }
+  .btn-secondary:hover { background: #484f58; }
+  .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+  .btn-danger { background: #3d1418; color: #f85149; }
+  .btn-danger:hover { background: #5a1d23; }
+  .btn-success { background: #0d3520; color: #3fb950; }
+  .btn-success:hover { background: #165c31; }
+
+  /* Tool explorer */
+  .explorer-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  select, input[type="text"], textarea {
+    background: #0d1117; border: 1px solid #30363d; color: #e6edf3;
+    padding: 8px 10px; border-radius: 6px; font-family: inherit; font-size: 0.85rem;
+  }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: #a78bfa; }
+  textarea { width: 100%; min-height: 80px; resize: vertical; }
+  .result-box {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+    padding: 10px; margin-top: 8px; max-height: 400px; overflow: auto;
+    font-size: 0.82rem; white-space: pre-wrap; word-break: break-word; display: none;
+  }
+  .result-box.visible { display: block; }
+  .result-box.success { border-color: #3fb950; }
+  .result-box.error { border-color: #f85149; }
+
+  /* Quick actions */
+  .quick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+  .quick-item { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; }
+  .quick-item label { display: block; color: #a78bfa; font-size: 0.8rem; margin-bottom: 4px; font-weight: bold; }
+  .quick-item .input-row { display: flex; gap: 6px; }
+  .quick-item input { flex: 1; }
+  .quick-result { margin-top: 6px; font-size: 0.8rem; color: #7d8590; max-height: 150px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+
+  /* Memory graph */
+  .entity { background: #1c2333; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 6px; }
+  .entity-name { color: #a78bfa; font-weight: bold; font-size: 0.85rem; }
+  .entity-type { color: #7d8590; font-size: 0.75rem; }
+  .entity-obs { color: #58a6ff; font-size: 0.78rem; margin-top: 4px; }
+  .relation { color: #7d8590; font-size: 0.8rem; padding: 4px 0; }
+  .relation span { color: #a78bfa; }
+
+  .empty { color: #484f58; font-style: italic; padding: 12px 0; text-align: center; }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #30363d; border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>MCP-Hive Bridge</h1>
+    <div class="subtitle">Model Context Protocol Server Manager</div>
+  </div>
+  <div class="header-right">
+    <span id="healthStatus"><span class="status-dot red"></span> Connecting...</span>
+    <span id="uptime" style="color:#7d8590;font-size:0.8rem"></span>
+    <button class="btn btn-secondary btn-sm" onclick="refreshAll()">Refresh</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stat-grid">
+    <div class="stat-box"><div class="stat-num" id="statTotal">--</div><div class="stat-label">Servers</div></div>
+    <div class="stat-box"><div class="stat-num" id="statOnline">--</div><div class="stat-label">Online</div></div>
+    <div class="stat-box"><div class="stat-num" id="statTools">--</div><div class="stat-label">Tools</div></div>
+    <div class="stat-box"><div class="stat-num" id="statUptime">--</div><div class="stat-label">Uptime</div></div>
+  </div>
+
+  <!-- Server Cards -->
+  <div class="card full-width" style="margin-bottom:14px">
+    <h2>MCP Servers <span class="count" id="serverCount">0</span></h2>
+    <div id="serverList"><div class="empty">Loading servers...</div></div>
+  </div>
+
+  <!-- Tool Explorer -->
+  <div class="card full-width" style="margin-bottom:14px">
+    <h2>Tool Explorer</h2>
+    <div class="explorer-row">
+      <select id="explorerServer" onchange="loadServerTools()" style="min-width:160px">
+        <option value="">Select server...</option>
+      </select>
+      <select id="explorerTool" onchange="loadToolSchema()" style="min-width:200px">
+        <option value="">Select tool...</option>
+      </select>
+      <button class="btn btn-primary" onclick="executeTool()">Execute</button>
+      <button class="btn btn-secondary" onclick="clearExplorer()">Clear</button>
+    </div>
+    <div id="toolSchemaHint" style="color:#7d8590;font-size:0.78rem;margin-bottom:6px"></div>
+    <textarea id="explorerArgs" placeholder='{"key": "value"}'></textarea>
+    <div class="result-box" id="explorerResult"></div>
+  </div>
+
+  <div class="grid">
+    <!-- Quick Actions -->
+    <div class="card full-width">
+      <h2>Quick Actions</h2>
+      <div class="quick-grid">
+        <div class="quick-item">
+          <label>Read File</label>
+          <div class="input-row">
+            <input type="text" id="qReadPath" placeholder="C:\path\to\file">
+            <button class="btn btn-primary btn-sm" onclick="quickReadFile()">Read</button>
+          </div>
+          <div class="quick-result" id="qReadResult"></div>
+        </div>
+        <div class="quick-item">
+          <label>Memory Search</label>
+          <div class="input-row">
+            <input type="text" id="qMemQuery" placeholder="Search knowledge graph...">
+            <button class="btn btn-primary btn-sm" onclick="quickMemorySearch()">Search</button>
+          </div>
+          <div class="quick-result" id="qMemResult"></div>
+        </div>
+        <div class="quick-item">
+          <label>GitHub Repo</label>
+          <div class="input-row">
+            <input type="text" id="qGhOwner" placeholder="owner" style="width:80px">
+            <input type="text" id="qGhRepo" placeholder="repo" style="width:80px">
+            <input type="text" id="qGhPath" placeholder="path" style="flex:1">
+            <button class="btn btn-primary btn-sm" onclick="quickGithub()">Fetch</button>
+          </div>
+          <div class="quick-result" id="qGhResult"></div>
+        </div>
+        <div class="quick-item">
+          <label>Web Search</label>
+          <div class="input-row">
+            <input type="text" id="qSearchQuery" placeholder="Search the web...">
+            <button class="btn btn-primary btn-sm" onclick="quickSearch()">Search</button>
+          </div>
+          <div class="quick-result" id="qSearchResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Memory Graph -->
+    <div class="card full-width">
+      <h2>Memory Graph <button class="btn btn-secondary btn-sm" onclick="loadMemoryGraph()">Load Graph</button></h2>
+      <div id="memoryGraph"><div class="empty">Click "Load Graph" to view knowledge graph</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = `${location.protocol}//${location.host}`;
+let allServers = [];
+let allToolDefs = {};
+
+async function api(path) { return (await fetch(`${API}${path}`)).json(); }
+async function apiPost(path, body) {
+    return (await fetch(`${API}${path}`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body || {})
+    })).json();
+}
+
+function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+function fmtUptime(s) {
+    s = Math.floor(s);
+    if (s < 60) return s + 's';
+    if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+    return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+}
+
+// Load status
+async function loadStatus() {
+    try {
+        const data = await api('/api/status');
+        document.getElementById('healthStatus').innerHTML =
+            '<span class="status-dot green"></span> Online';
+        document.getElementById('uptime').textContent = fmtUptime(data.uptime);
+        document.getElementById('statUptime').textContent = fmtUptime(data.uptime);
+        document.getElementById('statTotal').textContent = data.summary.total;
+        document.getElementById('statOnline').textContent = data.summary.online;
+        document.getElementById('serverCount').textContent = data.summary.total;
+
+        allServers = data.servers;
+        let totalTools = 0;
+        allServers.forEach(s => totalTools += s.toolCount || 0);
+        document.getElementById('statTools').textContent = totalTools;
+
+        renderServers(data.servers);
+        populateExplorerServers(data.servers);
+    } catch (e) {
+        document.getElementById('healthStatus').innerHTML =
+            '<span class="status-dot red"></span> Offline';
+        console.error('Status load failed:', e);
+    }
+}
+
+function renderServers(servers) {
+    const el = document.getElementById('serverList');
+    if (!servers.length) { el.innerHTML = '<div class="empty">No servers configured</div>'; return; }
+
+    el.innerHTML = servers.map(s => {
+        const statusClass = s.status === 'online' ? 'online' : (s.status === 'error' ? 'error' : 'stopped');
+        const tools = s.tools || [];
+        return `
+        <div class="server">
+            <div class="server-header">
+                <span class="server-name">${escHtml(s.name)}</span>
+                <div style="display:flex;gap:6px;align-items:center">
+                    <span style="color:#7d8590;font-size:0.75rem">${s.toolCount || tools.length} tools</span>
+                    <span class="badge ${statusClass}">${s.status.toUpperCase()}</span>
+                </div>
+            </div>
+            <div class="server-desc">${escHtml(s.description || '')}</div>
+            ${s.error ? `<div style="color:#f85149;font-size:0.75rem">Error: ${escHtml(s.error)}</div>` : ''}
+            <div class="tool-list">
+                ${tools.map(t => `<span class="tool-tag" onclick="selectTool('${escHtml(s.name)}','${escHtml(typeof t === 'string' ? t : t.name)}')" title="Click to use in explorer">${escHtml(typeof t === 'string' ? t : t.name)}</span>`).join('')}
+            </div>
+            <div class="server-actions">
+                ${s.status !== 'online'
+                    ? `<button class="btn btn-success btn-sm" onclick="startServer('${escHtml(s.name)}')">Start</button>`
+                    : `<button class="btn btn-danger btn-sm" onclick="stopServer('${escHtml(s.name)}')">Stop</button>`
+                }
+                <button class="btn btn-secondary btn-sm" onclick="selectServer('${escHtml(s.name)}')">Explore Tools</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Server controls
+async function startServer(name) {
+    try {
+        await apiPost(`/api/servers/${name}/start`);
+        loadStatus();
+    } catch (e) { alert('Start failed: ' + e.message); }
+}
+
+async function stopServer(name) {
+    try {
+        await apiPost(`/api/servers/${name}/stop`);
+        loadStatus();
+    } catch (e) { alert('Stop failed: ' + e.message); }
+}
+
+// Tool Explorer
+function populateExplorerServers(servers) {
+    const sel = document.getElementById('explorerServer');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select server...</option>' +
+        servers.filter(s => s.status === 'online').map(s =>
+            `<option value="${escHtml(s.name)}" ${s.name === current ? 'selected' : ''}>${escHtml(s.name)} (${s.toolCount || 0} tools)</option>`
+        ).join('');
+}
+
+async function loadServerTools() {
+    const server = document.getElementById('explorerServer').value;
+    const toolSel = document.getElementById('explorerTool');
+    if (!server) { toolSel.innerHTML = '<option value="">Select tool...</option>'; return; }
+
+    try {
+        const data = await api(`/api/servers/${server}/tools`);
+        allToolDefs[server] = data.tools || [];
+        toolSel.innerHTML = '<option value="">Select tool...</option>' +
+            (data.tools || []).map(t =>
+                `<option value="${escHtml(t.name)}">${escHtml(t.name)}</option>`
+            ).join('');
+    } catch (e) {
+        toolSel.innerHTML = '<option value="">Error loading tools</option>';
+    }
+}
+
+function loadToolSchema() {
+    const server = document.getElementById('explorerServer').value;
+    const tool = document.getElementById('explorerTool').value;
+    const hint = document.getElementById('toolSchemaHint');
+    const args = document.getElementById('explorerArgs');
+
+    if (!tool || !server) { hint.textContent = ''; return; }
+
+    const tools = allToolDefs[server] || [];
+    const def = tools.find(t => t.name === tool);
+    if (def) {
+        hint.textContent = def.description || '';
+        if (def.inputSchema && def.inputSchema.properties) {
+            const example = {};
+            for (const [k, v] of Object.entries(def.inputSchema.properties)) {
+                example[k] = v.type === 'string' ? '' : (v.type === 'number' ? 0 : (v.type === 'boolean' ? false : null));
+            }
+            args.value = JSON.stringify(example, null, 2);
+        }
+    }
+}
+
+async function executeTool() {
+    const server = document.getElementById('explorerServer').value;
+    const tool = document.getElementById('explorerTool').value;
+    const resultEl = document.getElementById('explorerResult');
+
+    if (!server || !tool) { alert('Select a server and tool first'); return; }
+
+    let args = {};
+    try {
+        const raw = document.getElementById('explorerArgs').value.trim();
+        if (raw) args = JSON.parse(raw);
+    } catch (e) { alert('Invalid JSON: ' + e.message); return; }
+
+    resultEl.className = 'result-box visible';
+    resultEl.textContent = 'Executing...';
+    resultEl.style.color = '#7d8590';
+
+    try {
+        const res = await fetch(`${API}/api/servers/${server}/tools/${tool}`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(args)
+        });
+        const data = await res.json();
+        resultEl.className = 'result-box visible ' + (data.success ? 'success' : 'error');
+        resultEl.style.color = data.success ? '#3fb950' : '#f85149';
+        resultEl.textContent = JSON.stringify(data.result || data, null, 2);
+    } catch (e) {
+        resultEl.className = 'result-box visible error';
+        resultEl.style.color = '#f85149';
+        resultEl.textContent = 'Error: ' + e.message;
+    }
+}
+
+function clearExplorer() {
+    document.getElementById('explorerArgs').value = '';
+    document.getElementById('explorerResult').className = 'result-box';
+    document.getElementById('toolSchemaHint').textContent = '';
+}
+
+function selectServer(name) {
+    document.getElementById('explorerServer').value = name;
+    loadServerTools();
+    document.getElementById('explorerServer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function selectTool(server, tool) {
+    document.getElementById('explorerServer').value = server;
+    loadServerTools().then(() => {
+        document.getElementById('explorerTool').value = tool;
+        loadToolSchema();
+    });
+    document.getElementById('explorerServer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Quick actions
+async function quickReadFile() {
+    const path = document.getElementById('qReadPath').value.trim();
+    if (!path) return;
+    const el = document.getElementById('qReadResult');
+    el.textContent = 'Reading...';
+    try {
+        const data = await api(`/api/quick/read-file?path=${encodeURIComponent(path)}`);
+        el.textContent = data.success ? (typeof data.result === 'string' ? data.result : JSON.stringify(data.result, null, 2)) : (data.error || 'Failed');
+        el.style.color = data.success ? '#3fb950' : '#f85149';
+    } catch (e) { el.textContent = 'Error: ' + e.message; el.style.color = '#f85149'; }
+}
+
+async function quickMemorySearch() {
+    const q = document.getElementById('qMemQuery').value.trim();
+    if (!q) return;
+    const el = document.getElementById('qMemResult');
+    el.textContent = 'Searching...';
+    try {
+        const data = await api(`/api/quick/memory-recall?query=${encodeURIComponent(q)}`);
+        el.textContent = data.success ? JSON.stringify(data.result, null, 2) : (data.error || 'No results');
+        el.style.color = data.success ? '#3fb950' : '#f85149';
+    } catch (e) { el.textContent = 'Error: ' + e.message; el.style.color = '#f85149'; }
+}
+
+async function quickGithub() {
+    const owner = document.getElementById('qGhOwner').value.trim();
+    const repo = document.getElementById('qGhRepo').value.trim();
+    const path = document.getElementById('qGhPath').value.trim();
+    if (!owner || !repo) return;
+    const el = document.getElementById('qGhResult');
+    el.textContent = 'Fetching...';
+    try {
+        let url = `/api/quick/github-repo?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
+        if (path) url += `&path=${encodeURIComponent(path)}`;
+        const data = await api(url);
+        el.textContent = data.success ? JSON.stringify(data.result, null, 2) : (data.error || 'Failed');
+        el.style.color = data.success ? '#3fb950' : '#f85149';
+    } catch (e) { el.textContent = 'Error: ' + e.message; el.style.color = '#f85149'; }
+}
+
+async function quickSearch() {
+    const q = document.getElementById('qSearchQuery').value.trim();
+    if (!q) return;
+    const el = document.getElementById('qSearchResult');
+    el.textContent = 'Searching...';
+    try {
+        const data = await api(`/api/quick/search?q=${encodeURIComponent(q)}`);
+        el.textContent = data.success ? JSON.stringify(data.result, null, 2) : (data.error || 'Search unavailable (needs BRAVE_API_KEY)');
+        el.style.color = data.success ? '#3fb950' : '#f85149';
+    } catch (e) { el.textContent = 'Error: ' + e.message; el.style.color = '#f85149'; }
+}
+
+// Memory graph
+async function loadMemoryGraph() {
+    const el = document.getElementById('memoryGraph');
+    el.innerHTML = '<div class="empty"><span class="spinner"></span> Loading graph...</div>';
+    try {
+        const data = await apiPost('/api/servers/memory/tools/read_graph', {});
+        const result = data.result;
+        if (!result || !data.success) {
+            el.innerHTML = `<div class="empty">${escHtml(data.error || 'Memory server not available')}</div>`;
+            return;
+        }
+
+        // Parse graph content — MCP memory returns content array
+        let graph = null;
+        if (result.content) {
+            const textContent = result.content.find(c => c.type === 'text');
+            if (textContent) {
+                try { graph = JSON.parse(textContent.text); } catch { graph = null; }
+            }
+        } else if (result.entities || result.relations) {
+            graph = result;
+        }
+
+        if (!graph || (!graph.entities?.length && !graph.relations?.length)) {
+            el.innerHTML = '<div class="empty">Knowledge graph is empty</div>';
+            return;
+        }
+
+        let html = '';
+        if (graph.entities?.length) {
+            html += '<div style="margin-bottom:10px;color:#7d8590;font-size:0.8rem">' + graph.entities.length + ' entities</div>';
+            html += graph.entities.map(e => `
+                <div class="entity">
+                    <div class="entity-name">${escHtml(e.name)}</div>
+                    <div class="entity-type">${escHtml(e.entityType || '')}</div>
+                    ${(e.observations || []).map(o => `<div class="entity-obs">${escHtml(o)}</div>`).join('')}
+                </div>
+            `).join('');
+        }
+        if (graph.relations?.length) {
+            html += '<div style="margin-top:10px;margin-bottom:6px;color:#7d8590;font-size:0.8rem">' + graph.relations.length + ' relations</div>';
+            html += graph.relations.map(r =>
+                `<div class="relation"><span>${escHtml(r.from)}</span> &rarr; ${escHtml(r.relationType)} &rarr; <span>${escHtml(r.to)}</span></div>`
+            ).join('');
+        }
+        el.innerHTML = html;
+    } catch (e) {
+        el.innerHTML = `<div class="empty" style="color:#f85149">Error: ${escHtml(e.message)}</div>`;
+    }
+}
+
+function refreshAll() { loadStatus(); }
+
+// Init
+loadStatus();
+setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>
