@@ -3949,6 +3949,14 @@ function expireStaleAlerts() {
     if (result.changes > 0) {
         log(`Auto-expired ${result.changes} stale alerts older than 24h`);
     }
+    // Auto-ack info/recovery alerts older than 1 hour (they clutter the panel)
+    const recoveryCutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const recoveryResult = db.prepare(
+        "UPDATE alerts SET acknowledged = 1 WHERE acknowledged = 0 AND severity = 'info' AND created_at < ?"
+    ).run(recoveryCutoff);
+    if (recoveryResult.changes > 0) {
+        log(`Auto-expired ${recoveryResult.changes} info/recovery alerts older than 1h`);
+    }
 }
 
 function autoAckOnRecovery(service) {

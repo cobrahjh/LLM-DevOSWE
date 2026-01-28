@@ -537,6 +537,7 @@
             <span class="time" id="currentTime"></span>
             <span id="lastRefresh" style="color:#666;font-size:11px;margin-right:8px;"></span>
             <button class="btn secondary" onclick="refreshAll()" title="Refresh all dashboard data (Shortcut: R)">Refresh</button>
+            <button class="btn" style="background:#ff4444" onclick="restartAllOffline()" title="Restart all offline services via Master-O">Restart Offline</button>
             <button class="btn" onclick="forceIntelRefresh()" title="Force fetch fresh intel from all sources (HN, GitHub, Models)">Force Intel</button>
         </div>
     </div>
@@ -723,9 +724,13 @@
         const SERVICES = [
             // Core Hive Services
             { name: 'Oracle', port: 3002, endpoint: '/api/health', path: '/', desc: 'LLM backend, Intel gathering', hive: true },
+            { name: 'SimWidget', port: 8080, endpoint: '/api/status', path: '/', desc: 'MSFS Flight Sim Server', hive: true },
             { name: 'Relay', port: 8600, endpoint: '/api/health', path: '/', desc: 'Message queue, Tasks', hive: true },
             { name: 'KittBox', port: 8585, endpoint: '/api/health', path: '/', desc: 'Command Center UI', hive: true },
+            { name: 'Remote Support', port: 8590, endpoint: '/api/health', path: '/', desc: 'Remote Assistance', hive: true },
+            { name: 'Claude Bridge', port: 8601, endpoint: '/api/health', path: '/', desc: 'Claude API Bridge', hive: true },
             { name: 'Hive-Mind', port: 8701, endpoint: '/api/health', path: '/', desc: 'Activity Monitor', hive: true },
+            { name: 'Terminal Hub', port: 8771, endpoint: '/api/health', path: '/', desc: 'Terminal Manager', hive: true },
             { name: 'Hive-Brain', port: 8810, endpoint: '/api/health', path: '/', desc: 'Device Discovery', hive: true },
             { name: 'Master-Mind', port: 8820, endpoint: '/api/health', path: '/', desc: 'Parallel LLM', hive: true },
             { name: 'Agents', port: 8800, endpoint: '/api/health', path: '/', desc: 'Agent Orchestrator (16)', hive: true },
@@ -1543,6 +1548,28 @@
             const secs = Math.floor((Date.now() - lastRefreshTime) / 1000);
             document.getElementById('lastRefresh').textContent = secs < 5 ? 'Just updated' : `Updated ${secs}s ago`;
         }, 1000);
+
+        async function restartAllOffline() {
+            try {
+                const res = await fetchWithTimeout('http://localhost:8500/api/status', 5000);
+                const data = await res.json();
+                const offline = Object.entries(data.services).filter(([k, v]) => !v.healthy && v.port);
+                if (offline.length === 0) { alert('All services are healthy!'); return; }
+                const names = offline.map(([k, v]) => v.name).join(', ');
+                if (!confirm('Restart ' + offline.length + ' offline services?\n\n' + names)) return;
+                let restarted = 0;
+                for (const [id] of offline) {
+                    try {
+                        await fetch('http://localhost:8500/api/services/' + id + '/restart', { method: 'POST' });
+                        restarted++;
+                    } catch (e) {}
+                }
+                alert('Restarted ' + restarted + '/' + offline.length + ' services. Refreshing in 5s...');
+                setTimeout(refreshAll, 5000);
+            } catch (e) {
+                alert('Master-O unreachable: ' + e.message);
+            }
+        }
 
         async function forceIntelRefresh() {
             try {
