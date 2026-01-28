@@ -32,6 +32,7 @@
 | 8860 | MCP-Hive Bridge | Core | `node C:\LLM-DevOSWE\Admin\mcp-bridge\server.js` |
 | 8870 | Hive Voice | Optional | `node C:\LLM-DevOSWE\Admin\hive-voice\voice-server.js` |
 | 8875 | VoiceAccess | Core | `node C:\LLM-DevOSWE\Admin\voiceaccess\server.js` |
+| 8766 | Kinship | Optional | `node C:\kinship\server.js` |
 | 8899 | Hive Dashboard | Core | `node C:\LLM-DevOSWE\Admin\hive-dashboard\server.js` |
 
 ---
@@ -314,6 +315,24 @@
   - Procedures (SID/STAR/Approaches)
   - Traffic display (TCAS)
   - Terrain awareness
+
+### Kinship (Port 8766)
+- **Location:** `C:\kinship\server.js`
+- **Purpose:** AI Memory Companion - voice-first personal journaling
+- **UI:** `http://localhost:8766`
+- **Caddy:** `https://hive.local/kinship`
+- **Endpoints:**
+  - `GET /api/health` - Service health
+  - `GET /api/status` - Stats (total entries, today count)
+  - `POST /api/lifelog/ingest` - Upload voice note
+  - `GET /api/lifelog/entries` - Get all entries
+  - `GET /api/lifelog/search?q=` - Search entries
+  - `DELETE /api/lifelog/entries/:id` - Delete entry
+- **Features:**
+  - Tap-to-record voice capture
+  - Context tagging (auto, health, idea, personal, work)
+  - Journal view with delete
+  - PWA installable
 
 ---
 
