@@ -2134,23 +2134,22 @@
         function closeCmdPalette() {
             document.getElementById('cmdPalette').classList.remove('active');
         }
+        let _filteredCmds = [];
         function filterCommands() {
             const q = document.getElementById('cmdInput').value.toLowerCase();
-            const cmds = getCommands().filter(c => !q || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
-            cmdSelectedIdx = Math.min(cmdSelectedIdx, cmds.length - 1);
-            document.getElementById('cmdResults').innerHTML = cmds.slice(0, 15).map((c, i) =>
-                '<div class="cmd-item' + (i === cmdSelectedIdx ? ' selected' : '') + '" onmouseenter="cmdSelectedIdx=' + i + ';filterCommands()" onclick="getCommands().filter(c=>!document.getElementById(\'cmdInput\').value.toLowerCase()||c.label.toLowerCase().includes(document.getElementById(\'cmdInput\').value.toLowerCase())||c.desc.toLowerCase().includes(document.getElementById(\'cmdInput\').value.toLowerCase()))[' + i + '].action()" style="display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;border-radius:8px;' + (i === cmdSelectedIdx ? 'background:#2a2a3e;' : '') + '">' +
+            _filteredCmds = getCommands().filter(c => !q || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
+            cmdSelectedIdx = Math.min(cmdSelectedIdx, _filteredCmds.length - 1);
+            document.getElementById('cmdResults').innerHTML = _filteredCmds.slice(0, 15).map((c, i) =>
+                '<div class="cmd-item' + (i === cmdSelectedIdx ? ' selected' : '') + '" onmouseenter="cmdSelectedIdx=' + i + ';filterCommands()" onclick="_filteredCmds[' + i + '].action()" style="display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;border-radius:8px;' + (i === cmdSelectedIdx ? 'background:#2a2a3e;' : '') + '">' +
                 '<span style="font-size:16px;">' + c.icon + '</span>' +
                 '<div><div style="color:#fff;font-size:13px;">' + c.label + '</div><div style="color:#666;font-size:11px;">' + c.desc + '</div></div>' +
                 '</div>'
             ).join('') || '<div style="color:#666;text-align:center;padding:20px;">No matching commands</div>';
         }
         function handleCmdKey(e) {
-            const q = document.getElementById('cmdInput').value.toLowerCase();
-            const cmds = getCommands().filter(c => !q || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
-            if (e.key === 'ArrowDown') { e.preventDefault(); cmdSelectedIdx = Math.min(cmdSelectedIdx + 1, cmds.length - 1); filterCommands(); }
+            if (e.key === 'ArrowDown') { e.preventDefault(); cmdSelectedIdx = Math.min(cmdSelectedIdx + 1, _filteredCmds.length - 1); filterCommands(); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); cmdSelectedIdx = Math.max(cmdSelectedIdx - 1, 0); filterCommands(); }
-            else if (e.key === 'Enter' && cmds[cmdSelectedIdx]) { e.preventDefault(); cmds[cmdSelectedIdx].action(); }
+            else if (e.key === 'Enter' && _filteredCmds[cmdSelectedIdx]) { e.preventDefault(); _filteredCmds[cmdSelectedIdx].action(); }
             else if (e.key === 'Escape') { closeCmdPalette(); }
         }
 
