@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hive Command Center</title>
+    <link id="favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23666'/></svg>">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -547,7 +548,10 @@
         <div class="card briefing-card">
             <div class="card-header">
                 <h2>Daily Briefing</h2>
-                <span class="badge" id="briefingDate">Loading...</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn small secondary" onclick="regenerateBriefing(this)" title="Force-regenerate briefing from Oracle (fetches fresh data)">Regenerate</button>
+                    <span class="badge" id="briefingDate">Loading...</span>
+                </div>
             </div>
             <div class="briefing-content" id="briefingStats">
                 <div class="loading">Loading briefing</div>
@@ -678,6 +682,8 @@
                     <div style="padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                         <select id="logSource" onchange="loadLogs()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:4px 8px;font-size:12px;">
                             <option value="orchestrator">Master-O (Orchestrator)</option>
+                            <option value="alerts">Alert History (Relay)</option>
+                            <option value="services">Service Status Snapshot</option>
                         </select>
                         <button class="btn secondary" onclick="loadLogs()" style="padding:4px 10px;font-size:11px;">Refresh</button>
                         <label style="color:#888;font-size:11px;display:flex;align-items:center;gap:4px;">
@@ -720,30 +726,49 @@
     <script>
         const API_BASE = 'http://localhost:3002';
 
-        // All hive services with their details
-        const SERVICES = [
-            // Core Hive Services
-            { name: 'Oracle', port: 3002, endpoint: '/api/health', path: '/', desc: 'LLM backend, Intel gathering', hive: true },
-            { name: 'SimWidget', port: 8080, endpoint: '/api/status', path: '/', desc: 'MSFS Flight Sim Server', hive: true },
-            { name: 'Relay', port: 8600, endpoint: '/api/health', path: '/', desc: 'Message queue, Tasks', hive: true },
-            { name: 'KittBox', port: 8585, endpoint: '/api/health', path: '/', desc: 'Command Center UI', hive: true },
-            { name: 'Remote Support', port: 8590, endpoint: '/api/health', path: '/', desc: 'Remote Assistance', hive: true },
-            { name: 'Claude Bridge', port: 8601, endpoint: '/api/health', path: '/', desc: 'Claude API Bridge', hive: true },
-            { name: 'Hive-Mind', port: 8701, endpoint: '/api/health', path: '/', desc: 'Activity Monitor', hive: true },
-            { name: 'Terminal Hub', port: 8771, endpoint: '/api/health', path: '/', desc: 'Terminal Manager', hive: true },
-            { name: 'Hive-Brain', port: 8810, endpoint: '/api/health', path: '/', desc: 'Device Discovery', hive: true },
-            { name: 'Master-Mind', port: 8820, endpoint: '/api/health', path: '/', desc: 'Parallel LLM', hive: true },
-            { name: 'Agents', port: 8800, endpoint: '/api/health', path: '/', desc: 'Agent Orchestrator (16)', hive: true },
-            { name: 'Hive-Oracle', port: 8850, endpoint: '/api/health', path: '/', desc: 'Distributed LLM', hive: true },
-            { name: 'Hive-Mesh', port: 8750, endpoint: '/health', path: '/', desc: 'Peer Network', hive: true },
-            { name: 'MCP-Bridge', port: 8860, endpoint: '/api/health', path: '/', desc: 'MCP Server Hub', hive: true },
-            { name: 'Dashboard', port: 8899, endpoint: '/api/health', path: '/', desc: 'Command Center', hive: true },
-            // External / Utility Services
+        // Utility services not managed by the Orchestrator
+        const UTILITY_SERVICES = [
             { name: 'Master-O', port: 8500, endpoint: '/api/health', path: '/', desc: 'Service Watchdog', hive: false },
             { name: 'Ollama', port: 11434, endpoint: '/api/tags', path: '/', desc: 'Local LLM (qwen)', hive: false },
             { name: 'LM-Studio', port: 1234, endpoint: '/v1/models', path: '/', desc: 'Local LLM (Nova)', hive: false },
             { name: 'PMS50', port: 8830, endpoint: '/api/health', path: '/', desc: 'GTN750 Avionics', hive: false }
         ];
+
+        // Services list — populated from Orchestrator on first load
+        let SERVICES = [...UTILITY_SERVICES];
+
+        async function populateServicesFromOrchestrator() {
+            try {
+                const res = await fetchWithTimeout('http://localhost:8500/api/services', 3000);
+                const registry = await res.json();
+                const hiveServices = Object.entries(registry)
+                    .filter(([id, svc]) => svc.port && svc.healthEndpoint)
+                    .map(([id, svc]) => ({
+                        name: svc.name,
+                        port: svc.port,
+                        endpoint: svc.healthEndpoint,
+                        path: '/',
+                        desc: svc.name,
+                        hive: true,
+                        orchestratorId: id
+                    }));
+                SERVICES = [...hiveServices, ...UTILITY_SERVICES];
+                // Auto-populate SERVICE_KEY_MAP from orchestrator IDs
+                hiveServices.forEach(s => { SERVICE_KEY_MAP[s.name] = s.orchestratorId; });
+                console.log('[Dashboard] Loaded ' + hiveServices.length + ' services from Orchestrator');
+            } catch (e) {
+                console.log('[Dashboard] Orchestrator unavailable, using fallback list');
+                SERVICES = [
+                    { name: 'Oracle', port: 3002, endpoint: '/api/health', path: '/', desc: 'LLM backend', hive: true },
+                    { name: 'SimWidget', port: 8080, endpoint: '/api/status', path: '/', desc: 'MSFS Server', hive: true },
+                    { name: 'Relay', port: 8600, endpoint: '/api/health', path: '/', desc: 'Message queue', hive: true },
+                    { name: 'KittBox', port: 8585, endpoint: '/api/health', path: '/', desc: 'Command Center', hive: true },
+                    { name: 'Hive-Mind', port: 8701, endpoint: '/api/health', path: '/', desc: 'Activity Monitor', hive: true },
+                    { name: 'Dashboard', port: 8899, endpoint: '/api/health', path: '/', desc: 'This dashboard', hive: true },
+                    ...UTILITY_SERVICES
+                ];
+            }
+        }
 
         let intelData = {};
         let healthData = {};
@@ -860,7 +885,7 @@
 
         // Load Services - with clickable items
         // Map service names to Orchestrator keys for restart API
-        const SERVICE_KEY_MAP = {
+        let SERVICE_KEY_MAP = {
             'Oracle': 'oracle',
             'SimWidget': 'simwidget',
             'KittBox': 'agent',
@@ -878,13 +903,25 @@
             'Dashboard': 'dashboard'
         };
 
+        function formatUptime(val) {
+            if (!val) return '';
+            let secs = typeof val === 'string' ? parseInt(val) : val;
+            if (isNaN(secs) || secs <= 0) return '';
+            if (secs < 60) return secs + 's';
+            if (secs < 3600) return Math.floor(secs / 60) + 'm';
+            if (secs < 86400) return Math.floor(secs / 3600) + 'h ' + Math.floor((secs % 3600) / 60) + 'm';
+            return Math.floor(secs / 86400) + 'd ' + Math.floor((secs % 86400) / 3600) + 'h';
+        }
+
         function renderServiceItem(s) {
             const restartBtn = SERVICE_KEY_MAP[s.name]
                 ? '<button class="restart-btn' + (s.status !== 'online' ? ' show' : '') + '" onclick="event.stopPropagation();restartServiceQuick(\'' + s.name + '\',this)" title="Restart ' + s.name + '">&#x21bb;</button>'
                 : '';
+            const uptimeStr = formatUptime(s.uptime);
+            const uptimeHtml = uptimeStr ? '<span style="color:#666;font-size:10px;margin-left:6px;" title="Uptime">' + uptimeStr + '</span>' : '';
             return '<div class="service-item ' + s.status + '" onclick="openServiceDetail(\'' + s.name + '\', ' + s.port + ', \'' + s.status + '\', \'' + s.desc + '\')">' +
                 '<div><div class="service-name">' + s.name + '</div><div class="service-port">:' + s.port + ' - ' + s.desc + '</div></div>' +
-                '<div style="display:flex;align-items:center;gap:6px;">' + restartBtn + '<div class="service-status">' + s.status + '</div><div class="service-open">&rarr;</div></div></div>';
+                '<div style="display:flex;align-items:center;gap:6px;">' + uptimeHtml + restartBtn + '<div class="service-status">' + s.status + '</div><div class="service-open">&rarr;</div></div></div>';
         }
 
         async function restartServiceQuick(name, btn) {
@@ -913,12 +950,17 @@
                     const res = await fetchWithTimeout(url, 5000);
                     // Some endpoints return non-200 but are still "alive"
                     if (res.ok || res.status === 404 || res.status === 401) {
-                        return { ...svc, status: 'online' };
+                        let uptime = null;
+                        try {
+                            const data = await res.clone().json();
+                            uptime = data.uptime || data.uptimeSeconds || null;
+                        } catch (e) {}
+                        return { ...svc, status: 'online', uptime };
                     }
-                    return { ...svc, status: 'error' };
+                    return { ...svc, status: 'error', uptime: null };
                 } catch (e) {
                     console.log(svc.name + ' check failed:', e.message);
-                    return { ...svc, status: 'offline' };
+                    return { ...svc, status: 'offline', uptime: null };
                 }
             }));
 
@@ -935,6 +977,17 @@
             servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin:12px 0 6px;">Utilities</div>';
             servicesHtml += utilServices.map(s => renderServiceItem(s)).join('');
             document.getElementById('servicesList').innerHTML = servicesHtml;
+
+            // Update page title and favicon based on health
+            updateTitleAndFavicon(online, results.length);
+        }
+
+        function updateTitleAndFavicon(online, total) {
+            const ratio = total > 0 ? online / total : 0;
+            document.title = '(' + online + '/' + total + ') Hive Command Center';
+            const color = ratio >= 0.9 ? '%2300ff88' : ratio >= 0.7 ? '%23ffaa00' : '%23ff4444';
+            document.getElementById('favicon').href =
+                "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='" + color + "'/><text x='50' y='68' text-anchor='middle' font-size='40' fill='white' font-family='sans-serif'>" + online + "</text></svg>";
         }
 
         // Open service in new tab
@@ -1485,23 +1538,45 @@
             const logEl = document.getElementById('logContent');
             const source = document.getElementById('logSource').value;
             try {
-                let url;
+                let lines = [];
+
                 if (source === 'orchestrator') {
-                    url = 'http://localhost:8500/api/log?lines=200';
+                    const res = await fetchWithTimeout('http://localhost:8500/api/log?lines=200', 5000);
+                    const data = await res.json();
+                    lines = (data.log || 'No log data').split('\n');
+                } else if (source === 'alerts') {
+                    const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=100', 5000);
+                    const data = await res.json();
+                    const alerts = data.alerts || [];
+                    lines = alerts.map(function(a) {
+                        const ts = new Date(a.created_at).toLocaleString();
+                        const sev = (a.severity || 'info').toUpperCase().padEnd(8);
+                        const svc = (a.service || 'system').padEnd(15);
+                        return '[' + ts + '] [' + sev + '] ' + svc + ' ' + a.title + (a.acknowledged ? ' [ACK]' : '');
+                    });
+                    if (lines.length === 0) lines = ['No alerts in the last 24h'];
+                } else if (source === 'services') {
+                    const res = await fetchWithTimeout('http://localhost:8500/api/status', 5000);
+                    const data = await res.json();
+                    lines = ['=== Service Status Snapshot — ' + new Date().toLocaleString() + ' ===', ''];
+                    Object.entries(data.services || {}).forEach(function(entry) {
+                        var id = entry[0], svc = entry[1];
+                        var status = svc.healthy ? 'ONLINE ' : 'OFFLINE';
+                        var restarts = svc.restartCount ? ' (restarts: ' + svc.restartCount + ')' : '';
+                        lines.push('[' + status + '] ' + (svc.name || id).padEnd(22) + ':' + (svc.port || '?') + restarts);
+                    });
                 }
-                const res = await fetchWithTimeout(url, 5000);
-                const data = await res.json();
-                const logText = data.log || 'No log data';
-                const lines = logText.split('\n');
+
                 document.getElementById('logsCount').textContent = lines.length;
                 document.getElementById('logTimestamp').textContent = 'Updated ' + new Date().toLocaleTimeString();
 
                 // Colorize log lines
                 logEl.innerHTML = lines.map(function(line) {
-                    if (/\[ERROR\]|error|FAIL|crashed/i.test(line)) return '<span style="color:#ff4444;">' + escapeHtml(line) + '</span>';
-                    if (/\[WARN\]|warn|UNREACHABLE|offline/i.test(line)) return '<span style="color:#ffaa00;">' + escapeHtml(line) + '</span>';
-                    if (/online|started|healthy|RECOVERED/i.test(line)) return '<span style="color:#00ff88;">' + escapeHtml(line) + '</span>';
+                    if (/\[ERROR\]|error|FAIL|crashed|OFFLINE|CRITICAL/i.test(line)) return '<span style="color:#ff4444;">' + escapeHtml(line) + '</span>';
+                    if (/\[WARN\]|warn|UNREACHABLE|WARNING/i.test(line)) return '<span style="color:#ffaa00;">' + escapeHtml(line) + '</span>';
+                    if (/online|started|healthy|RECOVERED|INFO|ACK/i.test(line)) return '<span style="color:#00ff88;">' + escapeHtml(line) + '</span>';
                     if (/restart/i.test(line)) return '<span style="color:#00d9ff;">' + escapeHtml(line) + '</span>';
+                    if (/^===/.test(line)) return '<span style="color:#ff6b35;font-weight:bold;">' + escapeHtml(line) + '</span>';
                     return escapeHtml(line);
                 }).join('\n');
 
@@ -1619,13 +1694,21 @@
             }
         }
 
-        async function generateBriefing() {
+        async function regenerateBriefing(btn) {
+            if (btn) { btn.textContent = 'Generating...'; btn.disabled = true; }
             try {
-                await fetch(`${API_BASE}/api/intel/refresh`, { method: 'POST' });
-                setTimeout(loadBriefing, 3000);
+                document.getElementById('briefingSummary').innerHTML = '<div class="loading">Regenerating briefing...</div>';
+                const res = await fetchWithTimeout(API_BASE + '/api/intel/briefing?force=true', 15000);
+                const data = await res.json();
+                if (data.date) {
+                    document.getElementById('briefingDate').textContent = new Date(data.date).toLocaleString();
+                }
+                // Reload the full briefing display
+                await loadBriefing();
             } catch (e) {
-                alert('Failed to generate briefing');
+                document.getElementById('briefingSummary').innerHTML = '<div style="color:#ff4444">Failed to regenerate briefing: ' + e.message + '</div>';
             }
+            if (btn) { btn.textContent = 'Regenerate'; btn.disabled = false; }
         }
 
         // Keyboard shortcuts
@@ -1638,9 +1721,12 @@
             }
         });
 
-        // Init
-        refreshAll();
-        setInterval(refreshAll, 30000);
+        // Init — populate services from Orchestrator, then start refresh cycle
+        (async () => {
+            await populateServicesFromOrchestrator();
+            refreshAll();
+            setInterval(refreshAll, 30000);
+        })();
     </script>
 </body>
 </html>
