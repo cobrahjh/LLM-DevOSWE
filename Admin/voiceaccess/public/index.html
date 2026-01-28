@@ -376,11 +376,24 @@ async function sendCommand() {
 
 // Speech recognition
 function toggleListen() {
+    const btn = document.getElementById('btnListen');
+    const resultEl = document.getElementById('cmdResult');
+
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        alert('Speech recognition not supported in this browser');
+        resultEl.textContent = 'Speech recognition not supported in this browser. Use Chrome or Edge.';
+        resultEl.style.color = '#f85149';
+        resultEl.classList.add('visible');
         return;
     }
-    const btn = document.getElementById('btnListen');
+
+    // Secure context check — Speech Recognition requires HTTPS or localhost
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        resultEl.textContent = 'Microphone requires HTTPS or localhost. Access via: http://localhost:8875 or https://hive.local/voiceaccess';
+        resultEl.style.color = '#f85149';
+        resultEl.classList.add('visible');
+        return;
+    }
+
     if (recognition) {
         recognition.stop();
         recognition = null;
@@ -389,26 +402,71 @@ function toggleListen() {
         btn.classList.add('btn-secondary');
         return;
     }
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SR();
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
+
     recognition.onresult = (e) => {
-        const text = e.results[0][0].transcript;
+        const last = e.results[e.results.length - 1];
+        const text = last[0].transcript;
         document.getElementById('cmdInput').value = text;
-        sendCommand();
+        if (last.isFinal) {
+            resultEl.textContent = 'Heard: "' + text + '"';
+            resultEl.style.color = '#58a6ff';
+            resultEl.classList.add('visible');
+            sendCommand();
+        } else {
+            resultEl.textContent = 'Hearing: "' + text + '..."';
+            resultEl.style.color = '#7d8590';
+            resultEl.classList.add('visible');
+        }
     };
+
+    recognition.onerror = (e) => {
+        console.error('[VoiceAccess] Speech error:', e.error);
+        recognition = null;
+        btn.textContent = 'Listen';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+
+        const msgs = {
+            'not-allowed': 'Microphone access denied. Click the lock icon in the address bar to allow mic access.',
+            'no-speech': 'No speech detected. Try again.',
+            'audio-capture': 'No microphone found. Check your audio input device.',
+            'network': 'Network error. Speech recognition requires an internet connection (uses Google servers).',
+            'aborted': 'Listening cancelled.',
+            'service-not-allowed': 'Speech service not allowed. Access via http://localhost:8875 instead.'
+        };
+        resultEl.textContent = msgs[e.error] || 'Speech error: ' + e.error;
+        resultEl.style.color = '#f85149';
+        resultEl.classList.add('visible');
+    };
+
     recognition.onend = () => {
         recognition = null;
         btn.textContent = 'Listen';
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-secondary');
     };
-    recognition.start();
-    btn.textContent = 'Listening...';
-    btn.classList.remove('btn-secondary');
-    btn.classList.add('btn-primary');
+
+    try {
+        recognition.start();
+        btn.textContent = 'Listening...';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
+        resultEl.textContent = 'Listening... speak now';
+        resultEl.style.color = '#3fb950';
+        resultEl.classList.add('visible');
+    } catch (err) {
+        recognition = null;
+        btn.textContent = 'Listen';
+        resultEl.textContent = 'Failed to start: ' + err.message + '. Try http://localhost:8875';
+        resultEl.style.color = '#f85149';
+        resultEl.classList.add('visible');
+    }
 }
 
 // Macros
