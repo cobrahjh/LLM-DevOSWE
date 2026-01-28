@@ -602,9 +602,9 @@ function toggleListen() {
         return;
     }
 
-    // Secure context check — Speech Recognition requires HTTPS or localhost
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-        resultEl.textContent = 'Microphone requires HTTPS or localhost. Access via: http://localhost:8875 or https://hive.local/voiceaccess';
+    // Secure context check — Speech Recognition requires secure context
+    if (!window.isSecureContext) {
+        resultEl.textContent = 'Microphone requires a secure context. Access via: http://localhost:8875, or enable edge://flags/#unsafely-treat-insecure-origin-as-secure for this URL';
         resultEl.style.color = '#f85149';
         resultEl.classList.add('visible');
         return;
