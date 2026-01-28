@@ -2102,7 +2102,7 @@
         }
 
         // Command Palette
-        let cmdSelectedIdx = 0;
+        var cmdSelectedIdx = 0;
         function getCommands() {
             const cmds = [
                 { label: 'Refresh Dashboard', desc: 'Reload all dashboard data', icon: '🔄', action: () => { closeCmdPalette(); refreshAll(); } },
@@ -2134,7 +2134,7 @@
         function closeCmdPalette() {
             document.getElementById('cmdPalette').classList.remove('active');
         }
-        let _filteredCmds = [];
+        var _filteredCmds = [];
         function filterCommands() {
             const q = document.getElementById('cmdInput').value.toLowerCase();
             _filteredCmds = getCommands().filter(c => !q || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
