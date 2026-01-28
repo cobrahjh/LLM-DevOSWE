@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hive Oracle - LLM Colony</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: 'Consolas', 'Monaco', monospace; padding: 20px; }
+  h1 { color: #f97316; font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle { color: #7d8590; font-size: 0.85rem; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .card h2 { color: #f97316; font-size: 1rem; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+  .stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #21262d; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: #7d8590; }
+  .stat-value { color: #58a6ff; font-weight: bold; }
+  .stat-value.online { color: #3fb950; }
+  .stat-value.offline { color: #f85149; }
+  .node { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 12px; margin-bottom: 8px; }
+  .node-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .node-name { font-weight: bold; color: #e6edf3; }
+  .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+  .badge.online { background: #0d3520; color: #3fb950; }
+  .badge.offline { background: #3d1418; color: #f85149; }
+  .badge.ollama { background: #1a1a2e; color: #a78bfa; }
+  .badge.lmstudio { background: #1a2e1a; color: #86efac; }
+  .model-tag { display: inline-block; background: #1c2333; border: 1px solid #30363d; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin: 2px; color: #7d8590; }
+  .query-box { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; padding: 12px; font-family: inherit; font-size: 0.9rem; resize: vertical; min-height: 80px; }
+  .query-box:focus { outline: none; border-color: #f97316; }
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: bold; }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #ea580c; }
+  .btn-secondary { background: #30363d; color: #e6edf3; }
+  .btn-secondary:hover { background: #484f58; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .result-box { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 12px; margin-top: 10px; white-space: pre-wrap; font-size: 0.85rem; max-height: 400px; overflow-y: auto; display: none; }
+  .result-box.visible { display: block; }
+  .result-meta { color: #7d8590; font-size: 0.75rem; margin-top: 6px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .refresh-btn { background: #30363d; border: 1px solid #484f58; color: #e6edf3; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.8rem; }
+  .refresh-btn:hover { background: #484f58; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .status-dot.green { background: #3fb950; }
+  .status-dot.red { background: #f85149; }
+  .fact-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.85rem; }
+  .fact-key { color: #a78bfa; }
+  .fact-val { color: #e6edf3; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+  .empty { color: #484f58; font-style: italic; padding: 12px 0; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #30363d; border-top-color: #f97316; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .section-full { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Hive Oracle</h1>
+    <div class="subtitle">Distributed LLM Colony Orchestrator</div>
+  </div>
+  <div class="header-right">
+    <span id="wsStatus"><span class="status-dot red"></span>Connecting...</span>
+    <button class="refresh-btn" onclick="refreshAll()">Refresh</button>
+    <button class="refresh-btn" onclick="discover()">Discover Nodes</button>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- Colony Stats -->
+  <div class="card">
+    <h2>Colony Status</h2>
+    <div id="colonyStats">
+      <div class="stat-row"><span class="stat-label">Total Nodes</span><span class="stat-value" id="totalNodes">--</span></div>
+      <div class="stat-row"><span class="stat-label">Online</span><span class="stat-value online" id="onlineNodes">--</span></div>
+      <div class="stat-row"><span class="stat-label">Total Models</span><span class="stat-value" id="totalModels">--</span></div>
+      <div class="stat-row"><span class="stat-label">Host</span><span class="stat-value" id="hostNode">--</span></div>
+      <div class="stat-row"><span class="stat-label">Last Scan</span><span class="stat-value" id="lastScan">--</span></div>
+    </div>
+  </div>
+
+  <!-- Nodes -->
+  <div class="card">
+    <h2>LLM Nodes</h2>
+    <div id="nodeList"><div class="empty">Loading...</div></div>
+  </div>
+
+  <!-- Models -->
+  <div class="card">
+    <h2>Available Models</h2>
+    <div id="modelList"><div class="empty">Loading...</div></div>
+  </div>
+
+  <!-- Memory -->
+  <div class="card">
+    <h2>Distributed Memory</h2>
+    <div id="factsList"><div class="empty">No facts stored</div></div>
+  </div>
+
+  <!-- Query -->
+  <div class="card section-full">
+    <h2>Query LLMs</h2>
+    <textarea class="query-box" id="queryInput" placeholder="Enter a prompt to query the colony..."></textarea>
+    <div class="btn-row">
+      <select id="modelSelect" style="background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:8px;border-radius:6px;font-family:inherit;">
+        <option value="">Auto (best node)</option>
+      </select>
+      <button class="btn btn-primary" id="btnGenerate" onclick="queryGenerate()">Generate</button>
+      <button class="btn btn-secondary" id="btnMasterMind" onclick="queryMasterMind()">Master Mind (All)</button>
+    </div>
+    <div class="result-box" id="resultBox"></div>
+    <div class="result-meta" id="resultMeta"></div>
+  </div>
+</div>
+
+<script>
+const API = `${location.protocol}//${location.host}`;
+const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+let ws = null;
+
+// Fetch helpers
+async function api(path) {
+  const res = await fetch(`${API}${path}`);
+  return res.json();
+}
+
+async function apiPost(path, body) {
+  const res = await fetch(`${API}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+// Load colony data
+async function loadHealth() {
+  try {
+    const data = await api('/api/health');
+    document.getElementById('totalNodes').textContent = data.colony.nodes;
+    document.getElementById('onlineNodes').textContent = data.colony.online;
+    document.getElementById('totalModels').textContent = data.colony.totalModels;
+    document.getElementById('hostNode').textContent = data.node;
+    document.getElementById('lastScan').textContent = new Date(data.timestamp).toLocaleTimeString();
+  } catch (e) {
+    console.error('Health fetch failed:', e);
+  }
+}
+
+async function loadNodes() {
+  try {
+    const nodes = await api('/api/nodes');
+    const el = document.getElementById('nodeList');
+    if (nodes.length === 0) {
+      el.innerHTML = '<div class="empty">No nodes discovered</div>';
+      return;
+    }
+    el.innerHTML = nodes.map(n => `
+      <div class="node">
+        <div class="node-header">
+          <span class="node-name">${n.hostname}</span>
+          <span>
+            <span class="badge ${n.type}">${n.type}</span>
+            <span class="badge ${n.status}">${n.status}</span>
+          </span>
+        </div>
+        <div style="font-size:0.8rem;color:#7d8590;margin-bottom:6px">${n.ip}:${n.port} | Load: ${n.load}</div>
+        <div>${n.models.map(m => `<span class="model-tag">${m}</span>`).join('')}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('nodeList').innerHTML = '<div class="empty">Failed to load nodes</div>';
+  }
+}
+
+async function loadModels() {
+  try {
+    const models = await api('/api/models');
+    const el = document.getElementById('modelList');
+    const sel = document.getElementById('modelSelect');
+    if (models.length === 0) {
+      el.innerHTML = '<div class="empty">No models available</div>';
+      return;
+    }
+    // Group by node
+    const byNode = {};
+    models.forEach(m => {
+      if (!byNode[m.node]) byNode[m.node] = [];
+      byNode[m.node].push(m);
+    });
+    el.innerHTML = Object.entries(byNode).map(([node, ms]) => `
+      <div style="margin-bottom:8px">
+        <div style="font-size:0.8rem;color:#7d8590;margin-bottom:4px">${node}</div>
+        ${ms.map(m => `<span class="model-tag">${m.name}</span>`).join('')}
+      </div>
+    `).join('');
+    // Populate select
+    sel.innerHTML = '<option value="">Auto (best node)</option>' +
+      models.map(m => `<option value="${m.name}">${m.name} (${m.node})</option>`).join('');
+  } catch (e) {
+    document.getElementById('modelList').innerHTML = '<div class="empty">Failed to load models</div>';
+  }
+}
+
+async function loadFacts() {
+  try {
+    const facts = await api('/api/memory/facts');
+    const el = document.getElementById('factsList');
+    const keys = Object.keys(facts);
+    if (keys.length === 0) {
+      el.innerHTML = '<div class="empty">No facts stored</div>';
+      return;
+    }
+    el.innerHTML = keys.map(k => `
+      <div class="fact-row">
+        <span class="fact-key">${k}</span>
+        <span class="fact-val" title="${String(facts[k].value)}">${String(facts[k].value).substring(0, 50)}</span>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('factsList').innerHTML = '<div class="empty">Failed to load facts</div>';
+  }
+}
+
+// Query functions
+async function queryGenerate() {
+  const prompt = document.getElementById('queryInput').value.trim();
+  if (!prompt) return;
+  const model = document.getElementById('modelSelect').value || undefined;
+  const box = document.getElementById('resultBox');
+  const meta = document.getElementById('resultMeta');
+  const btn = document.getElementById('btnGenerate');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  box.textContent = '';
+  box.classList.add('visible');
+  meta.textContent = '';
+
+  try {
+    const result = await apiPost('/api/generate', { prompt, model });
+    box.textContent = result.response || result.error || 'No response';
+    meta.textContent = `Node: ${result.node} | Model: ${result.model} | ${result.elapsed}ms`;
+  } catch (e) {
+    box.textContent = `Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate';
+  }
+}
+
+async function queryMasterMind() {
+  const prompt = document.getElementById('queryInput').value.trim();
+  if (!prompt) return;
+  const box = document.getElementById('resultBox');
+  const meta = document.getElementById('resultMeta');
+  const btn = document.getElementById('btnMasterMind');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Querying all...';
+  box.textContent = '';
+  box.classList.add('visible');
+  meta.textContent = '';
+
+  try {
+    const result = await apiPost('/api/master-mind', { prompt });
+    let output = `=== Master Mind: ${result.successful}/${result.totalNodes} nodes responded ===\n\n`;
+    for (const r of result.results) {
+      output += `--- ${r.node} (${r.model}) [${r.elapsed}ms] ---\n`;
+      output += r.status === 'success' ? r.response : `ERROR: ${r.error}`;
+      output += '\n\n';
+    }
+    box.textContent = output;
+    meta.textContent = `${result.successful}/${result.totalNodes} nodes | Best: ${result.bestResponse?.node || 'none'}`;
+  } catch (e) {
+    box.textContent = `Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Master Mind (All)';
+  }
+}
+
+async function discover() {
+  try {
+    await apiPost('/api/nodes/discover', {});
+    refreshAll();
+  } catch (e) {
+    console.error('Discovery failed:', e);
+  }
+}
+
+// WebSocket
+function connectWs() {
+  ws = new WebSocket(`${wsProto}//${location.host}`);
+  ws.onopen = () => {
+    document.getElementById('wsStatus').innerHTML = '<span class="status-dot green"></span>Connected';
+  };
+  ws.onclose = () => {
+    document.getElementById('wsStatus').innerHTML = '<span class="status-dot red"></span>Disconnected';
+    setTimeout(connectWs, 5000);
+  };
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'init') {
+        // Got initial state via WS
+      } else if (msg.type === 'fact_update') {
+        loadFacts();
+      }
+    } catch {}
+  };
+}
+
+function refreshAll() {
+  loadHealth();
+  loadNodes();
+  loadModels();
+  loadFacts();
+}
+
+// Init
+refreshAll();
+connectWs();
+setInterval(refreshAll, 30000);
+</script>
+</body>
+</html>
