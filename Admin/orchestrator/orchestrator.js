@@ -254,6 +254,17 @@ const SERVICES = {
         healthEndpoint: '/api/health',
         priority: 15,
         autoRestart: true
+    },
+    voiceaccess: {
+        id: 'voiceaccess',
+        name: 'VoiceAccess',
+        port: 8875,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'voiceaccess'),
+        start: 'node server.js',
+        winService: null,
+        healthEndpoint: '/api/health',
+        priority: 16,
+        autoRestart: true
     }
 };
 

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceAccess - Voice Management</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: 'Consolas', 'Monaco', monospace; }
+  .header { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+  h1 { color: #f97316; font-size: 1.4rem; }
+  .header-right { display: flex; gap: 10px; align-items: center; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .status-dot.green { background: #3fb950; }
+  .status-dot.red { background: #f85149; }
+  .subtitle { color: #7d8590; font-size: 0.8rem; }
+  .container { padding: 16px; max-width: 1400px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .card h2 { color: #f97316; font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px solid #21262d; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .card h2 .count { background: #30363d; color: #7d8590; padding: 1px 8px; border-radius: 10px; font-size: 0.75rem; }
+  .full-width { grid-column: 1 / -1; }
+
+  /* Persona cards */
+  .persona { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+  .persona-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .persona-name { font-weight: bold; color: #e6edf3; }
+  .persona-role { color: #7d8590; font-size: 0.8rem; }
+  .persona-config { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.8rem; }
+  .persona-config label { color: #7d8590; }
+  .persona-config span { color: #58a6ff; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+  .badge.active { background: #0d3520; color: #3fb950; }
+  .badge.inactive { background: #3d1418; color: #f85149; }
+
+  /* Services */
+  .svc-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #21262d; font-size: 0.85rem; }
+  .svc-row:last-child { border-bottom: none; }
+  .svc-name { color: #e6edf3; }
+  .svc-port { color: #7d8590; }
+  .svc-status { font-weight: bold; }
+  .svc-status.online { color: #3fb950; }
+  .svc-status.offline { color: #f85149; }
+
+  /* Stats */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+  .stat-box { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat-num { font-size: 1.8rem; font-weight: bold; color: #58a6ff; }
+  .stat-label { font-size: 0.75rem; color: #7d8590; }
+
+  /* Command input */
+  .cmd-bar { display: flex; gap: 8px; margin-bottom: 10px; }
+  .cmd-input { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; padding: 10px 14px; font-family: inherit; font-size: 0.9rem; }
+  .cmd-input:focus { outline: none; border-color: #f97316; }
+  .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: bold; }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #ea580c; }
+  .btn-secondary { background: #30363d; color: #e6edf3; }
+  .btn-secondary:hover { background: #484f58; }
+  .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+  .btn-danger { background: #3d1418; color: #f85149; }
+  .btn-danger:hover { background: #5a1d23; }
+
+  /* History */
+  .history-item { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 8px 10px; margin-bottom: 4px; font-size: 0.82rem; }
+  .history-item .meta { display: flex; justify-content: space-between; color: #7d8590; font-size: 0.72rem; margin-top: 4px; }
+  .history-text { color: #e6edf3; }
+  .history-result { color: #3fb950; margin-top: 3px; }
+  .history-result.failed { color: #f85149; }
+
+  /* Macros */
+  .macro-item { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .macro-trigger { color: #a78bfa; font-weight: bold; }
+  .macro-action { color: #7d8590; font-size: 0.8rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+  .macro-btns { display: flex; gap: 4px; }
+
+  /* Settings */
+  .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #21262d; }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { color: #7d8590; font-size: 0.85rem; }
+  .setting-value { color: #58a6ff; font-size: 0.85rem; }
+  input[type="text"], select { background: #0d1117; border: 1px solid #30363d; color: #e6edf3; padding: 4px 8px; border-radius: 4px; font-family: inherit; font-size: 0.85rem; }
+
+  /* Chart */
+  .chart-bar { display: flex; align-items: flex-end; gap: 2px; height: 60px; padding: 4px 0; }
+  .chart-col { flex: 1; background: #1c2333; border-radius: 2px 2px 0 0; min-height: 2px; position: relative; }
+  .chart-col:hover { background: #f97316; }
+  .chart-labels { display: flex; gap: 2px; font-size: 0.6rem; color: #484f58; }
+  .chart-labels span { flex: 1; text-align: center; }
+
+  .empty { color: #484f58; font-style: italic; padding: 12px 0; text-align: center; }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #30363d; border-top-color: #f97316; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Test result */
+  .test-result { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-top: 8px; white-space: pre-wrap; font-size: 0.85rem; display: none; }
+  .test-result.visible { display: block; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; width: 400px; max-width: 90vw; }
+  .modal h3 { color: #f97316; margin-bottom: 12px; }
+  .modal .form-group { margin-bottom: 10px; }
+  .modal label { display: block; color: #7d8590; font-size: 0.8rem; margin-bottom: 4px; }
+  .modal input, .modal textarea { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #e6edf3; padding: 8px; border-radius: 4px; font-family: inherit; }
+  .modal textarea { min-height: 60px; resize: vertical; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>VoiceAccess</h1>
+    <div class="subtitle">Centralized Voice Management</div>
+  </div>
+  <div class="header-right">
+    <span id="wsStatus"><span class="status-dot red"></span> Connecting...</span>
+    <span id="activePersona" style="color:#a78bfa"></span>
+    <button class="btn btn-secondary btn-sm" onclick="refreshAll()">Refresh</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats row -->
+  <div class="stat-grid">
+    <div class="stat-box"><div class="stat-num" id="statPersonas">--</div><div class="stat-label">Personas</div></div>
+    <div class="stat-box"><div class="stat-num" id="statMacros">--</div><div class="stat-label">Macros</div></div>
+    <div class="stat-box"><div class="stat-num" id="statCommands">--</div><div class="stat-label">Commands (24h)</div></div>
+    <div class="stat-box"><div class="stat-num" id="statSuccess">--</div><div class="stat-label">Success %</div></div>
+  </div>
+
+  <!-- Command bar -->
+  <div class="card full-width" style="margin-bottom:14px">
+    <h2>Voice Command</h2>
+    <div class="cmd-bar">
+      <input type="text" class="cmd-input" id="cmdInput" placeholder="Type a voice command... (status, restart relay, query what is Node.js, say hello)" onkeydown="if(event.key==='Enter')sendCommand()">
+      <select id="cmdPersona" style="width:120px"><option value="">Auto</option></select>
+      <button class="btn btn-primary" onclick="sendCommand()">Send</button>
+      <button class="btn btn-secondary" onclick="toggleListen()" id="btnListen">Listen</button>
+    </div>
+    <div class="test-result" id="cmdResult"></div>
+  </div>
+
+  <div class="grid">
+    <!-- Personas -->
+    <div class="card">
+      <h2>Personas <span class="count" id="personaCount">0</span></h2>
+      <div id="personaList"><div class="empty">Loading...</div></div>
+    </div>
+
+    <!-- Voice Services -->
+    <div class="card">
+      <h2>Voice Services</h2>
+      <div id="serviceList"><div class="empty">Loading...</div></div>
+    </div>
+
+    <!-- Activity Chart -->
+    <div class="card">
+      <h2>Activity (24h)</h2>
+      <div class="chart-bar" id="activityChart"></div>
+      <div class="chart-labels" id="chartLabels"></div>
+    </div>
+
+    <!-- Macros -->
+    <div class="card">
+      <h2>Macros <span class="count" id="macroCount">0</span></h2>
+      <button class="btn btn-secondary btn-sm" onclick="showMacroModal()" style="margin-bottom:8px">+ New Macro</button>
+      <div id="macroList"><div class="empty">No macros defined</div></div>
+    </div>
+
+    <!-- Command History -->
+    <div class="card full-width">
+      <h2>Command History <span class="count" id="historyCount">0</span>
+        <button class="btn btn-danger btn-sm" onclick="clearHistory()">Clear</button>
+      </h2>
+      <div id="historyList" style="max-height:400px;overflow-y:auto"><div class="empty">No commands yet</div></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+      <h2>Settings</h2>
+      <div id="settingsPanel"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Macro Modal -->
+<div class="modal-overlay" id="macroModal">
+  <div class="modal">
+    <h3 id="macroModalTitle">New Macro</h3>
+    <input type="hidden" id="macroEditId">
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="macroName" placeholder="e.g., Deploy Production">
+    </div>
+    <div class="form-group">
+      <label>Trigger Phrase</label>
+      <input type="text" id="macroTrigger" placeholder="e.g., deploy prod">
+    </div>
+    <div class="form-group">
+      <label>Action (URL or command)</label>
+      <textarea id="macroAction" placeholder="e.g., http://localhost:8500/api/services/simwidget/restart"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" id="macroDesc" placeholder="e.g., Restarts SimWidget for deployment">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeMacroModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMacro()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = `${location.protocol}//${location.host}`;
+const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+let ws = null;
+let recognition = null;
+
+async function api(path) { return (await fetch(`${API}${path}`)).json(); }
+async function apiPost(path, body) { return (await fetch(`${API}${path}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })).json(); }
+async function apiPut(path, body) { return (await fetch(`${API}${path}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })).json(); }
+async function apiDelete(path) { return (await fetch(`${API}${path}`, { method: 'DELETE' })).json(); }
+
+// Load data
+async function loadPersonas() {
+    try {
+        const personas = await api('/api/personas');
+        const settings = await api('/api/settings');
+        const el = document.getElementById('personaList');
+        const sel = document.getElementById('cmdPersona');
+        document.getElementById('personaCount').textContent = personas.length;
+        document.getElementById('statPersonas').textContent = personas.length;
+        document.getElementById('activePersona').textContent = settings.defaultPersona;
+
+        sel.innerHTML = '<option value="">Auto</option>' +
+            personas.map(p => `<option value="${p.id}" ${p.id === settings.defaultPersona ? 'selected' : ''}>${p.name}</option>`).join('');
+
+        el.innerHTML = personas.map(p => `
+            <div class="persona">
+                <div class="persona-header">
+                    <div>
+                        <span class="persona-name">${p.name}</span>
+                        <span class="persona-role"> - ${p.role}</span>
+                    </div>
+                    <span class="badge ${p.enabled ? 'active' : 'inactive'}">${p.id === settings.defaultPersona ? 'ACTIVE' : (p.enabled ? 'ON' : 'OFF')}</span>
+                </div>
+                <div class="persona-config">
+                    <label>Voice:</label><span>${p.voice}</span>
+                    <label>Rate:</label><span>${p.rate}x</span>
+                    <label>Cooldown:</label><span>${p.cooldown/1000}s</span>
+                    <label>Idle Chat:</label><span>${p.idleChatInterval ? (p.idleChatInterval/60000)+'m' : 'Off'}</span>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error('Personas load failed:', e); }
+}
+
+async function loadServices() {
+    try {
+        const services = await api('/api/services');
+        document.getElementById('serviceList').innerHTML = services.map(s => `
+            <div class="svc-row">
+                <span class="svc-name">${s.name}</span>
+                <span class="svc-port">:${s.port}</span>
+                <span class="svc-status ${s.status}">${s.status}</span>
+            </div>
+        `).join('');
+    } catch (e) { document.getElementById('serviceList').innerHTML = '<div class="empty">Failed to load</div>'; }
+}
+
+async function loadHistory() {
+    try {
+        const history = await api('/api/history?limit=50');
+        document.getElementById('historyCount').textContent = history.length;
+        if (history.length === 0) {
+            document.getElementById('historyList').innerHTML = '<div class="empty">No commands yet</div>';
+            return;
+        }
+        document.getElementById('historyList').innerHTML = history.map(h => `
+            <div class="history-item">
+                <div class="history-text">${escHtml(h.text)}</div>
+                <div class="history-result ${h.result?.success ? '' : 'failed'}">${escHtml(h.result?.response || '')}</div>
+                <div class="meta">
+                    <span>${h.parsed?.action || h.parsed?.type || '?'} → ${h.parsed?.target || '?'}</span>
+                    <span>${h.persona}</span>
+                    <span>${new Date(h.timestamp).toLocaleTimeString()}</span>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error('History load failed:', e); }
+}
+
+async function loadStats() {
+    try {
+        const stats = await api('/api/history/stats');
+        document.getElementById('statCommands').textContent = stats.last24h;
+        document.getElementById('statSuccess').textContent = stats.successRate + '%';
+
+        // Activity chart
+        const max = Math.max(...stats.hourly, 1);
+        const chart = document.getElementById('activityChart');
+        const labels = document.getElementById('chartLabels');
+        chart.innerHTML = stats.hourly.map((v, i) =>
+            `<div class="chart-col" style="height:${Math.max(v/max*100, 3)}%" title="${i}:00 - ${v} commands"></div>`
+        ).join('');
+        labels.innerHTML = stats.hourly.map((_, i) =>
+            i % 4 === 0 ? `<span>${i}</span>` : '<span></span>'
+        ).join('');
+    } catch (e) { console.error('Stats load failed:', e); }
+}
+
+async function loadMacros() {
+    try {
+        const macros = await api('/api/macros');
+        document.getElementById('macroCount').textContent = macros.length;
+        document.getElementById('statMacros').textContent = macros.length;
+        if (macros.length === 0) {
+            document.getElementById('macroList').innerHTML = '<div class="empty">No macros defined</div>';
+            return;
+        }
+        document.getElementById('macroList').innerHTML = macros.map(m => `
+            <div class="macro-item">
+                <div>
+                    <div class="macro-trigger">"${escHtml(m.trigger)}"</div>
+                    <div class="macro-action">${escHtml(m.name)} → ${escHtml(m.action)}</div>
+                </div>
+                <div class="macro-btns">
+                    <button class="btn btn-secondary btn-sm" onclick="editMacro('${m.id}')">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteMacro('${m.id}')">Del</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error('Macros load failed:', e); }
+}
+
+async function loadSettings() {
+    try {
+        const s = await api('/api/settings');
+        document.getElementById('settingsPanel').innerHTML = `
+            <div class="setting-row"><span class="setting-label">Wake Word</span><span class="setting-value">${s.wakeWord}</span></div>
+            <div class="setting-row"><span class="setting-label">Default Persona</span><span class="setting-value">${s.defaultPersona}</span></div>
+            <div class="setting-row"><span class="setting-label">Default Target</span><span class="setting-value">${s.defaultTarget}</span></div>
+            <div class="setting-row"><span class="setting-label">TTS Voice</span><span class="setting-value">${s.tts.voice}</span></div>
+            <div class="setting-row"><span class="setting-label">TTS Rate</span><span class="setting-value">${s.tts.rate}x</span></div>
+            <div class="setting-row"><span class="setting-label">Auto-Speak</span><span class="setting-value">${s.autoSpeak ? 'Yes' : 'No'}</span></div>
+        `;
+    } catch (e) { console.error('Settings load failed:', e); }
+}
+
+// Commands
+async function sendCommand() {
+    const input = document.getElementById('cmdInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const persona = document.getElementById('cmdPersona').value || undefined;
+    const resultEl = document.getElementById('cmdResult');
+    resultEl.classList.add('visible');
+    resultEl.textContent = 'Processing...';
+
+    try {
+        const result = await apiPost('/api/command', { text, persona, source: 'dashboard' });
+        resultEl.textContent = `[${result.parsed?.action || result.parsed?.type}] ${result.response}`;
+        resultEl.style.color = result.success ? '#3fb950' : '#f85149';
+        input.value = '';
+        loadHistory();
+        loadStats();
+    } catch (e) {
+        resultEl.textContent = `Error: ${e.message}`;
+        resultEl.style.color = '#f85149';
+    }
+}
+
+// Speech recognition
+function toggleListen() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Speech recognition not supported in this browser');
+        return;
+    }
+    const btn = document.getElementById('btnListen');
+    if (recognition) {
+        recognition.stop();
+        recognition = null;
+        btn.textContent = 'Listen';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+        return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SR();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    recognition.onresult = (e) => {
+        const text = e.results[0][0].transcript;
+        document.getElementById('cmdInput').value = text;
+        sendCommand();
+    };
+    recognition.onend = () => {
+        recognition = null;
+        btn.textContent = 'Listen';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    };
+    recognition.start();
+    btn.textContent = 'Listening...';
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-primary');
+}
+
+// Macros
+function showMacroModal(macro) {
+    document.getElementById('macroEditId').value = macro?.id || '';
+    document.getElementById('macroName').value = macro?.name || '';
+    document.getElementById('macroTrigger').value = macro?.trigger || '';
+    document.getElementById('macroAction').value = macro?.action || '';
+    document.getElementById('macroDesc').value = macro?.description || '';
+    document.getElementById('macroModalTitle').textContent = macro ? 'Edit Macro' : 'New Macro';
+    document.getElementById('macroModal').classList.add('active');
+}
+function closeMacroModal() { document.getElementById('macroModal').classList.remove('active'); }
+
+async function saveMacro() {
+    const id = document.getElementById('macroEditId').value;
+    const data = {
+        name: document.getElementById('macroName').value,
+        trigger: document.getElementById('macroTrigger').value,
+        action: document.getElementById('macroAction').value,
+        description: document.getElementById('macroDesc').value
+    };
+    if (!data.trigger || !data.action) return alert('Trigger and action required');
+    if (id) { await apiPut(`/api/macros/${id}`, data); }
+    else { await apiPost('/api/macros', data); }
+    closeMacroModal();
+    loadMacros();
+}
+
+async function editMacro(id) {
+    const macros = await api('/api/macros');
+    const macro = macros.find(m => m.id === id);
+    if (macro) showMacroModal(macro);
+}
+
+async function deleteMacro(id) {
+    await apiDelete(`/api/macros/${id}`);
+    loadMacros();
+}
+
+async function clearHistory() {
+    await apiDelete('/api/history');
+    loadHistory();
+    loadStats();
+}
+
+// WebSocket
+function connectWs() {
+    ws = new WebSocket(`${wsProto}//${location.host}`);
+    ws.onopen = () => {
+        document.getElementById('wsStatus').innerHTML = '<span class="status-dot green"></span> Connected';
+    };
+    ws.onclose = () => {
+        document.getElementById('wsStatus').innerHTML = '<span class="status-dot red"></span> Disconnected';
+        setTimeout(connectWs, 5000);
+    };
+    ws.onmessage = (e) => {
+        try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'command') { loadHistory(); loadStats(); }
+            else if (msg.type === 'persona_changed' || msg.type === 'persona_updated') { loadPersonas(); }
+            else if (msg.type === 'settings_updated') { loadSettings(); loadPersonas(); }
+            else if (msg.type === 'speak' && 'speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(msg.text);
+                if (msg.voice) {
+                    const voices = speechSynthesis.getVoices();
+                    const match = voices.find(v => v.name.includes(msg.voice));
+                    if (match) u.voice = match;
+                }
+                u.rate = msg.rate || 0.9;
+                u.pitch = msg.pitch || 1.0;
+                u.volume = msg.volume || 1.0;
+                speechSynthesis.speak(u);
+            }
+        } catch {}
+    };
+}
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function refreshAll() {
+    loadPersonas();
+    loadServices();
+    loadHistory();
+    loadStats();
+    loadMacros();
+    loadSettings();
+}
+
+// Init
+refreshAll();
+connectWs();
+setInterval(() => { loadServices(); loadStats(); }, 30000);
+</script>
+</body>
+</html>

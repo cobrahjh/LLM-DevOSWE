@@ -31,6 +31,7 @@
 | 8750 | Hive-Mesh | Core | `node C:\DevClaude\Hivemind\mesh\mesh.js` |
 | 8860 | MCP-Hive Bridge | Core | `node C:\LLM-DevOSWE\Admin\mcp-bridge\server.js` |
 | 8870 | Hive Voice | Optional | `node C:\LLM-DevOSWE\Admin\hive-voice\voice-server.js` |
+| 8875 | VoiceAccess | Core | `node C:\LLM-DevOSWE\Admin\voiceaccess\server.js` |
 | 8899 | Hive Dashboard | Core | `node C:\LLM-DevOSWE\Admin\hive-dashboard\server.js` |
 
 ---
@@ -237,6 +238,24 @@
 - **Auto-start:** 5 servers auto-start on boot (filesystem, memory, github, sequential-thinking, puppeteer)
 - **Needs API keys:** slack (SLACK_BOT_TOKEN), brave-search (BRAVE_API_KEY)
 - **Package namespace:** `@modelcontextprotocol/server-*`
+
+### VoiceAccess (Port 8875)
+- **Location:** `C:\LLM-DevOSWE\Admin\voiceaccess\server.js`
+- **Purpose:** Centralized voice access management — admin/control layer for voice ecosystem
+- **UI:** `http://localhost:8875`
+- **Features:** Persona management, voice command routing, macro system, command history/analytics
+- **Endpoints:**
+  - `POST /api/command` - Process voice command text
+  - `GET /api/personas` - List persona configs
+  - `PUT /api/personas/:id` - Update persona settings
+  - `GET/POST/PUT/DELETE /api/macros` - Voice macro CRUD
+  - `GET /api/history` - Command history (filterable)
+  - `GET /api/history/stats` - 24h analytics
+  - `GET/PUT /api/settings` - Global voice settings
+  - `POST /api/speak` - Broadcast TTS to WebSocket clients
+  - `GET /api/services` - Voice service status
+- **WebSocket:** Real-time command events, TTS broadcast, persona changes
+- **Data:** `voiceaccess-data.json` (personas, macros, settings, history)
 
 ### Hive Dashboard (Port 8899)
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-dashboard\server.js`

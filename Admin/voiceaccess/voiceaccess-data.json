@@ -1,0 +1,99 @@
+{
+  "settings": {
+    "wakeWord": "hey kitt",
+    "defaultPersona": "heather",
+    "defaultTarget": "claude",
+    "tts": {
+      "voice": "Google UK English Female",
+      "rate": 0.9,
+      "pitch": 1,
+      "volume": 1
+    },
+    "autoSpeak": true,
+    "commandTimeout": 60000
+  },
+  "personas": {
+    "heather": {
+      "id": "heather",
+      "name": "Heather",
+      "role": "Team Lead / PM",
+      "voice": "Google UK English Female",
+      "rate": 0.9,
+      "pitch": 1,
+      "volume": 1,
+      "enabled": true,
+      "idleChatInterval": 300000,
+      "idleChatChance": 0.5,
+      "cooldown": 30000,
+      "greeting": "Hey! Heather here. How's it going?",
+      "personality": "Quick-witted, funny, professional, supportive"
+    },
+    "shiZhenXiang": {
+      "id": "shiZhenXiang",
+      "name": "Shǐ zhēn xiāng (史真香)",
+      "role": "Programmer",
+      "voice": "Google 粵語（香港）",
+      "rate": 1,
+      "pitch": 1,
+      "volume": 1,
+      "enabled": true,
+      "idleChatInterval": 900000,
+      "idleChatChance": 0.3,
+      "cooldown": 30000,
+      "greeting": "Oh! Hi boss! I was just... definitely not breaking anything.",
+      "personality": "Self-deprecating, wonders why she is a bad programmer, supportive"
+    },
+    "kitt": {
+      "id": "kitt",
+      "name": "Kitt",
+      "role": "Local AI Agent",
+      "voice": "Microsoft David",
+      "rate": 1,
+      "pitch": 0.9,
+      "volume": 1,
+      "enabled": true,
+      "idleChatInterval": 0,
+      "idleChatChance": 0,
+      "cooldown": 5000,
+      "greeting": "Kitt online. Ready for commands.",
+      "personality": "Efficient, concise, technical"
+    }
+  },
+  "macros": [],
+  "history": [
+    {
+      "id": "mkxefvk1si1c",
+      "text": "status",
+      "parsed": {
+        "type": "intent",
+        "action": "status",
+        "target": "orchestrator",
+        "tier": 0
+      },
+      "result": {
+        "success": false,
+        "response": "Could not reach Orchestrator."
+      },
+      "persona": "heather",
+      "source": "test",
+      "timestamp": "2026-01-28T02:21:36.001Z"
+    },
+    {
+      "id": "mkxeg8o6kcfj",
+      "text": "say hello from VoiceAccess",
+      "parsed": {
+        "type": "intent",
+        "action": "speak",
+        "target": "tts",
+        "tier": 0
+      },
+      "result": {
+        "success": true,
+        "response": "Speaking: \"hello from VoiceAccess\""
+      },
+      "persona": "heather",
+      "source": "test",
+      "timestamp": "2026-01-28T02:21:52.998Z"
+    }
+  ]
+}
