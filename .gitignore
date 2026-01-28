@@ -28,12 +28,18 @@ out/
 # Downloaded archives (already extracted)
 *.zip
 
-# Claude Code temp directories
+# Claude Code temp files and directories
 tmpclaude-*/
+tmpclaude-*
 
 # Backup files
 *.bak
 *.backup
+*_backup.*
+*.backup2
+*.migrated
+*.orig
+*.old
 
 # Database files
 *.db
