@@ -122,37 +122,39 @@
         .briefing-card { grid-column: span 2; }
         .briefing-content {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
         }
         .briefing-stat {
             text-align: center;
-            padding: 15px;
+            padding: 10px 8px;
             background: #0f0f1a;
             border-radius: 8px;
         }
         .briefing-stat .value {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
             color: #fff;
         }
         .briefing-stat .label {
-            font-size: 11px;
+            font-size: 10px;
             color: #888;
-            margin-top: 5px;
+            margin-top: 4px;
             text-transform: uppercase;
         }
         .briefing-stat.good .value { color: #00ff88; }
         .briefing-stat.warn .value { color: #ffaa00; }
         .briefing-stat.bad .value { color: #ff4444; }
         .briefing-summary {
-            margin-top: 15px;
-            padding: 15px;
+            margin-top: 10px;
+            padding: 12px;
             background: #0f0f1a;
             border-radius: 8px;
-            font-size: 13px;
-            line-height: 1.6;
+            font-size: 12px;
+            line-height: 1.5;
             color: #ccc;
+            max-height: 140px;
+            overflow-y: auto;
         }
 
         /* Services Grid */
@@ -542,6 +544,7 @@
             <button class="btn" onclick="forceIntelRefresh()" title="Force fetch fresh intel from all sources (HN, GitHub, Models)">Force Intel</button>
             <button class="btn secondary" onclick="exportStatus()" title="Copy system status to clipboard">Export</button>
             <button class="btn secondary" onclick="openCmdPalette()" title="Quick command palette (Ctrl+K)" style="font-size:11px;padding:6px 10px;">Ctrl+K</button>
+            <button class="btn secondary" onclick="openSettings()" title="Dashboard settings" style="font-size:14px;padding:5px 10px;">&#9881;</button>
         </div>
     </div>
 
@@ -680,6 +683,16 @@
                     <span class="collapsible-toggle" id="alerts-toggle">▼</span>
                 </div>
                 <div class="collapsible-content" id="alerts-content">
+                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+                        <select id="alertSeverityFilter" onchange="loadAlerts()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:3px 6px;font-size:10px;">
+                            <option value="all">All</option>
+                            <option value="critical">Critical</option>
+                            <option value="error">Error</option>
+                            <option value="warning">Warning</option>
+                            <option value="info">Info</option>
+                        </select>
+                        <button class="btn small secondary" onclick="ackAllAlerts()" style="font-size:10px;padding:3px 8px;">Clear All</button>
+                    </div>
                     <div class="collapsible-list" id="alertList">
                         <div style="color:#00ff88;text-align:center;padding:20px;">No alerts</div>
                     </div>
@@ -721,6 +734,56 @@
                 style="width:100%;background:#1a1a2e;border:none;border-bottom:1px solid #333;border-radius:12px 12px 0 0;padding:16px 20px;color:#fff;font-size:15px;outline:none;"
                 oninput="filterCommands()" onkeydown="handleCmdKey(event)">
             <div id="cmdResults" style="max-height:350px;overflow-y:auto;padding:8px;"></div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h2>Dashboard Settings</h2>
+                <button class="modal-close" onclick="closeSettings()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <label style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+                        <div>
+                            <div style="color:#fff;font-size:13px;">Auto-restart offline services</div>
+                            <div style="color:#666;font-size:11px;">Restart after 3 consecutive failed checks</div>
+                        </div>
+                        <input type="checkbox" id="setAutoRestart" onchange="toggleSetting('autoRestart', this.checked)" style="width:18px;height:18px;accent-color:#ff6b35;">
+                    </label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+                        <div>
+                            <div style="color:#fff;font-size:13px;">Alert sound</div>
+                            <div style="color:#666;font-size:11px;">Audio ping on new critical/error alerts</div>
+                        </div>
+                        <input type="checkbox" id="setAlertSound" onchange="toggleSetting('alertSound', this.checked)" style="width:18px;height:18px;accent-color:#ff6b35;">
+                    </label>
+                    <label style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+                        <div>
+                            <div style="color:#fff;font-size:13px;">Desktop notifications</div>
+                            <div style="color:#666;font-size:11px;">Browser notifications for state changes</div>
+                        </div>
+                        <input type="checkbox" id="setNotifications" onchange="toggleSetting('desktopNotifications', this.checked)" style="width:18px;height:18px;accent-color:#ff6b35;">
+                    </label>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="color:#fff;font-size:13px;">Refresh interval</div>
+                            <div style="color:#666;font-size:11px;">Seconds between auto-refresh</div>
+                        </div>
+                        <select id="setRefreshInterval" onchange="changeRefreshInterval(this.value)" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:4px 8px;font-size:12px;">
+                            <option value="15">15s</option>
+                            <option value="30">30s</option>
+                            <option value="60">60s</option>
+                            <option value="120">2m</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top:20px;padding-top:14px;border-top:1px solid #2a2a3e;text-align:center;">
+                    <button class="btn small secondary" onclick="resetSettings()" style="font-size:11px;">Reset to Defaults</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -852,10 +915,23 @@
                 }
 
                 const h = data.highlights || {};
+                // Calculate uptime % from sparkline data
+                let uptimePct = '--';
+                if (Object.keys(serviceSparklineData).length > 0) {
+                    let totalChecks = 0, onlineChecks = 0;
+                    Object.values(serviceSparklineData).forEach(arr => {
+                        arr.forEach(v => { totalChecks++; if (v === 1) onlineChecks++; });
+                    });
+                    if (totalChecks > 0) uptimePct = Math.round(onlineChecks / totalChecks * 100) + '%';
+                }
                 document.getElementById('briefingStats').innerHTML = `
                     <div class="briefing-stat ${getHealthClass(h.hive)}">
                         <div class="value">${h.hive || '--'}</div>
                         <div class="label">Hive Status</div>
+                    </div>
+                    <div class="briefing-stat ${uptimePct !== '--' && parseInt(uptimePct) >= 95 ? 'good' : uptimePct !== '--' && parseInt(uptimePct) >= 80 ? 'warn' : ''}">
+                        <div class="value">${uptimePct}</div>
+                        <div class="label">Uptime</div>
                     </div>
                     <div class="briefing-stat">
                         <div class="value">${h.models || '--'}</div>
@@ -974,25 +1050,37 @@
         async function restartServiceQuick(name, btn) {
             const svcKey = SERVICE_KEY_MAP[name];
             if (!svcKey) return;
-            btn.classList.add('spinning');
-            btn.disabled = true;
+            if (btn) { btn.classList.add('spinning'); btn.disabled = true; }
             try {
                 const res = await fetch('http://localhost:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
                 if (res.ok) {
-                    btn.style.color = '#00ff88';
+                    if (btn) btn.style.color = '#00ff88';
                     setTimeout(() => { loadServices(); }, 4000);
                 } else {
-                    btn.style.color = '#ff4444';
+                    if (btn) btn.style.color = '#ff4444';
                 }
             } catch (e) {
-                btn.style.color = '#ff4444';
+                if (btn) btn.style.color = '#ff4444';
             }
-            setTimeout(() => { btn.classList.remove('spinning'); btn.disabled = false; btn.style.color = ''; }, 3000);
+            if (btn) setTimeout(() => { btn.classList.remove('spinning'); btn.disabled = false; btn.style.color = ''; }, 3000);
         }
 
         let lastServiceResults = [];
         let previousServiceStates = {};
         let serviceSparklineData = {}; // { name: [1,1,0,1,...] } — last 60 checks
+        let serviceLatencyHistory = {}; // { name: [ms, ms, ...] } — last 60 latency samples
+        let offlineStreakCount = {}; // { name: consecutiveOfflineCount }
+
+        // Dashboard settings with localStorage persistence
+        const SETTINGS_KEY = 'hiveDashSettings';
+        let dashSettings = Object.assign({
+            autoRestart: false,
+            refreshInterval: 30,
+            alertSound: false,
+            desktopNotifications: true,
+            compactMode: false
+        }, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'));
+        function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(dashSettings)); }
 
         async function loadServices() {
             const results = await Promise.all(SERVICES.map(async (svc) => {
@@ -1020,12 +1108,35 @@
             // Desktop notifications for state changes
             notifyStateChanges(results);
 
-            // Track sparkline data (last 60 checks per service)
+            // Track sparkline + latency history (last 60 checks per service)
             results.forEach(s => {
                 if (!serviceSparklineData[s.name]) serviceSparklineData[s.name] = [];
                 serviceSparklineData[s.name].push(s.status === 'online' ? 1 : 0);
                 if (serviceSparklineData[s.name].length > 60) serviceSparklineData[s.name].shift();
+
+                if (!serviceLatencyHistory[s.name]) serviceLatencyHistory[s.name] = [];
+                serviceLatencyHistory[s.name].push(s.latency || 0);
+                if (serviceLatencyHistory[s.name].length > 60) serviceLatencyHistory[s.name].shift();
             });
+
+            // Auto-restart on extended downtime (3+ consecutive checks)
+            if (dashSettings.autoRestart) {
+                results.forEach(s => {
+                    if (s.status === 'offline') {
+                        offlineStreakCount[s.name] = (offlineStreakCount[s.name] || 0) + 1;
+                        if (offlineStreakCount[s.name] === 3 && SERVICE_KEY_MAP[s.name]) {
+                            console.log('[AutoRestart] ' + s.name + ' offline for 3 checks, restarting...');
+                            fetch('http://localhost:8500/api/services/' + SERVICE_KEY_MAP[s.name] + '/restart', { method: 'POST' }).catch(() => {});
+                            if (Notification.permission === 'granted') {
+                                new Notification('Hive: Auto-restarting ' + s.name, { body: 'Offline for 3+ checks', tag: 'hive-autorestart-' + s.name });
+                            }
+                            offlineStreakCount[s.name] = -10; // cooldown: won't trigger again for 10 more checks
+                        }
+                    } else {
+                        offlineStreakCount[s.name] = 0;
+                    }
+                });
+            }
 
             const online = results.filter(s => s.status === 'online').length;
             document.getElementById('servicesCount').textContent = `${online}/${results.length}`;
@@ -1132,6 +1243,9 @@
                     </span>
                 </div>
 
+                <div style="margin-top:15px;">
+                    ${renderLatencyChart(name)}
+                </div>
                 <div id="investigateResults" style="margin-top:15px;"></div>
 
                 <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -1610,13 +1724,36 @@
         }
 
         // Load Alerts
+        let lastAlertIds = new Set();
         async function loadAlerts() {
             try {
-                const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=15&unacked=true', 5000);
+                const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=30&unacked=true', 5000);
                 const data = await res.json();
-                const alerts = data.alerts || [];
+                let alerts = data.alerts || [];
+
+                // Apply severity filter
+                const sevFilter = document.getElementById('alertSeverityFilter')?.value || 'all';
+                if (sevFilter !== 'all') {
+                    alerts = alerts.filter(a => a.severity === sevFilter);
+                }
 
                 document.getElementById('alertCount').textContent = alerts.length;
+
+                // Audio ping for new critical/error alerts
+                if (dashSettings.alertSound) {
+                    const newCritical = alerts.filter(a => (a.severity === 'critical' || a.severity === 'error') && !lastAlertIds.has(a.id));
+                    if (newCritical.length > 0 && lastAlertIds.size > 0) {
+                        try {
+                            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                            const osc = ctx.createOscillator();
+                            const gain = ctx.createGain();
+                            osc.connect(gain); gain.connect(ctx.destination);
+                            osc.frequency.value = 880; gain.gain.value = 0.15;
+                            osc.start(); osc.stop(ctx.currentTime + 0.15);
+                        } catch (e) {}
+                    }
+                }
+                lastAlertIds = new Set(alerts.map(a => a.id));
 
                 if (alerts.length === 0) {
                     document.getElementById('alertList').innerHTML =
@@ -1646,6 +1783,18 @@
                 await fetch(`http://localhost:8600/api/alerts/${id}/ack`, { method: 'POST' });
                 loadAlerts();
             } catch (e) { /* ignore */ }
+        }
+
+        async function ackAllAlerts() {
+            try {
+                const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=50&unacked=true', 5000);
+                const data = await res.json();
+                const alerts = data.alerts || [];
+                await Promise.all(alerts.map(a =>
+                    fetch('http://localhost:8600/api/alerts/' + a.id + '/ack', { method: 'POST' }).catch(() => {})
+                ));
+                loadAlerts();
+            } catch (e) {}
         }
 
         // Service Logs
@@ -1849,7 +1998,7 @@
 
         // Desktop notifications for service state changes
         function notifyStateChanges(results) {
-            if (Notification.permission !== 'granted') return;
+            if (!dashSettings.desktopNotifications || Notification.permission !== 'granted') return;
             const wentOffline = [];
             const cameOnline = [];
             results.forEach(function(s) {
@@ -1866,6 +2015,32 @@
             if (cameOnline.length > 0) {
                 new Notification('Hive: Services RECOVERED', { body: cameOnline.join(', '), icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%2300ff88"/></svg>', tag: 'hive-up' });
             }
+        }
+
+        // Latency chart for service detail modal
+        function renderLatencyChart(name) {
+            const data = serviceLatencyHistory[name];
+            const sparkData = serviceSparklineData[name];
+            if (!data || data.length < 2) return '<div style="background:#0f0f1a;border-radius:8px;padding:15px;"><div style="color:#888;font-size:11px;text-transform:uppercase;margin-bottom:8px;">Response Time History</div><div style="color:#666;font-size:12px;">Collecting data... (available after 2+ checks)</div></div>';
+            const maxMs = Math.max(...data, 1);
+            const w = 480, h = 60;
+            const barW = w / data.length;
+            let bars = data.map((ms, i) => {
+                const online = sparkData && sparkData[i] !== undefined ? sparkData[i] : 1;
+                const barH = online ? Math.max(2, ms / maxMs * h) : h;
+                const color = !online ? '#ff4444' : ms < 100 ? '#00ff88' : ms < 500 ? '#ffaa00' : '#ff4444';
+                return '<rect x="' + (i * barW) + '" y="' + (h - barH) + '" width="' + Math.max(barW - 1, 1) + '" height="' + barH + '" fill="' + color + '" opacity="0.7"/>';
+            }).join('');
+            const avg = Math.round(data.filter(d => d > 0).reduce((a, b) => a + b, 0) / data.filter(d => d > 0).length) || 0;
+            const maxVal = Math.max(...data.filter(d => d > 0));
+            const uptimePct = sparkData ? Math.round(sparkData.filter(v => v === 1).length / sparkData.length * 100) : '--';
+            return '<div style="background:#0f0f1a;border-radius:8px;padding:15px;">' +
+                '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
+                '<span style="color:#888;font-size:11px;text-transform:uppercase;">Response Time History</span>' +
+                '<span style="color:#666;font-size:10px;">Avg: <span style="color:#fff;">' + avg + 'ms</span> | Max: <span style="color:#ffaa00;">' + maxVal + 'ms</span> | Uptime: <span style="color:#00ff88;">' + uptimePct + '%</span></span>' +
+                '</div>' +
+                '<svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' + bars + '</svg>' +
+                '</div>';
         }
 
         // Incident Timeline — visualize service drops from health history
@@ -1936,6 +2111,7 @@
                 { label: 'Restart All Offline', desc: 'Restart all unhealthy services', icon: '🔴', action: () => { closeCmdPalette(); restartAllOffline(); } },
                 { label: 'Export Status', desc: 'Copy system status to clipboard', icon: '📤', action: () => { closeCmdPalette(); exportStatus(); } },
                 { label: 'Toggle Logs', desc: 'Show/hide the service logs panel', icon: '📜', action: () => { closeCmdPalette(); toggleSection('logs'); } },
+                { label: 'Settings', desc: 'Open dashboard settings', icon: '⚙', action: () => { closeCmdPalette(); openSettings(); } },
             ];
             // Add restart commands for each service
             lastServiceResults.forEach(s => {
@@ -1978,6 +2154,39 @@
             else if (e.key === 'Escape') { closeCmdPalette(); }
         }
 
+        // Settings panel
+        let refreshIntervalId = null;
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+            document.getElementById('setAutoRestart').checked = dashSettings.autoRestart;
+            document.getElementById('setAlertSound').checked = dashSettings.alertSound;
+            document.getElementById('setNotifications').checked = dashSettings.desktopNotifications;
+            document.getElementById('setRefreshInterval').value = String(dashSettings.refreshInterval);
+        }
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+        function toggleSetting(key, value) {
+            dashSettings[key] = value;
+            saveSettings();
+            if (key === 'desktopNotifications' && value && 'Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+        function changeRefreshInterval(val) {
+            dashSettings.refreshInterval = parseInt(val);
+            saveSettings();
+            if (refreshIntervalId) clearInterval(refreshIntervalId);
+            refreshIntervalId = setInterval(refreshAll, dashSettings.refreshInterval * 1000);
+        }
+        function resetSettings() {
+            dashSettings = { autoRestart: false, refreshInterval: 30, alertSound: false, desktopNotifications: true, compactMode: false };
+            saveSettings();
+            openSettings(); // re-render checkboxes
+            if (refreshIntervalId) clearInterval(refreshIntervalId);
+            refreshIntervalId = setInterval(refreshAll, 30000);
+        }
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -2000,7 +2209,7 @@
             }
             await populateServicesFromOrchestrator();
             refreshAll();
-            setInterval(refreshAll, 30000);
+            refreshIntervalId = setInterval(refreshAll, dashSettings.refreshInterval * 1000);
         })();
     </script>
 </body>
