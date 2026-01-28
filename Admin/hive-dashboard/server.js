@@ -7,6 +7,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const PORT = 8899;
 const PUBLIC_DIR = __dirname;
@@ -42,6 +43,27 @@ const server = http.createServer((req, res) => {
             service: 'hive-dashboard',
             port: PORT,
             uptime: process.uptime()
+        }));
+        return;
+    }
+
+    // System resource stats endpoint
+    if (req.url === '/api/system') {
+        const cpus = os.cpus();
+        const totalMem = os.totalmem();
+        const freeMem = os.freemem();
+        const usedMem = totalMem - freeMem;
+        const avgLoad = cpus.reduce((sum, cpu) => {
+            const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
+            return sum + (1 - cpu.times.idle / total);
+        }, 0) / cpus.length;
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            cpu: { cores: cpus.length, usage: Math.round(avgLoad * 100), model: cpus[0]?.model || 'Unknown' },
+            memory: { total: totalMem, used: usedMem, free: freeMem, percent: Math.round(usedMem / totalMem * 100) },
+            os: { platform: os.platform(), hostname: os.hostname(), uptime: os.uptime() },
+            node: { version: process.version, pid: process.pid, memUsage: process.memoryUsage().rss }
         }));
         return;
     }

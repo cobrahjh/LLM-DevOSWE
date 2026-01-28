@@ -543,6 +543,18 @@
         </div>
     </div>
 
+    <!-- System Resource Bar -->
+    <div id="systemBar" style="display:flex;gap:20px;align-items:center;padding:8px 16px;background:rgba(15,15,26,0.8);border:1px solid #2a2a3e;border-radius:8px;margin-bottom:16px;font-size:11px;color:#888;">
+        <span style="color:#666;">SYSTEM</span>
+        <span>CPU: <span id="sysCpu" style="color:#fff;">--</span>%</span>
+        <div style="flex:0 0 60px;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;"><div id="sysCpuBar" style="height:100%;width:0%;background:#ff6b35;border-radius:3px;transition:width 0.5s;"></div></div>
+        <span>RAM: <span id="sysRam" style="color:#fff;">--</span>%</span>
+        <div style="flex:0 0 60px;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;"><div id="sysRamBar" style="height:100%;width:0%;background:#00d9ff;border-radius:3px;transition:width 0.5s;"></div></div>
+        <span>Host: <span id="sysHost" style="color:#aaa;">--</span></span>
+        <span>Uptime: <span id="sysUptime" style="color:#aaa;">--</span></span>
+        <span style="margin-left:auto;color:#555;">Node <span id="sysNode">--</span></span>
+    </div>
+
     <div class="dashboard">
         <!-- Briefing Card -->
         <div class="card briefing-card">
@@ -565,7 +577,9 @@
                 <h2>Services</h2>
                 <span class="badge" id="servicesCount">0/0</span>
             </div>
-            <div class="service-list" id="servicesList">
+            <input type="text" id="serviceFilter" placeholder="Filter services..." oninput="filterServices()"
+                style="width:100%;background:#0f0f1a;border:1px solid #333;border-radius:6px;padding:6px 10px;color:#e0e0e0;font-size:12px;margin-bottom:10px;outline:none;">
+            <div class="service-list" id="servicesList" style="max-height:600px;overflow-y:auto;">
                 <div class="loading">Loading</div>
             </div>
         </div>
@@ -913,15 +927,23 @@
             return Math.floor(secs / 86400) + 'd ' + Math.floor((secs % 86400) / 3600) + 'h';
         }
 
+        function latencyColor(ms) {
+            if (ms === null || ms === undefined) return '#666';
+            if (ms < 100) return '#00ff88';
+            if (ms < 500) return '#ffaa00';
+            return '#ff4444';
+        }
+
         function renderServiceItem(s) {
             const restartBtn = SERVICE_KEY_MAP[s.name]
                 ? '<button class="restart-btn' + (s.status !== 'online' ? ' show' : '') + '" onclick="event.stopPropagation();restartServiceQuick(\'' + s.name + '\',this)" title="Restart ' + s.name + '">&#x21bb;</button>'
                 : '';
             const uptimeStr = formatUptime(s.uptime);
-            const uptimeHtml = uptimeStr ? '<span style="color:#666;font-size:10px;margin-left:6px;" title="Uptime">' + uptimeStr + '</span>' : '';
+            const uptimeHtml = uptimeStr ? '<span style="color:#666;font-size:10px;" title="Uptime">' + uptimeStr + '</span>' : '';
+            const latencyHtml = s.latency != null ? '<span style="color:' + latencyColor(s.latency) + ';font-size:10px;font-family:monospace;" title="Response time">' + s.latency + 'ms</span>' : '';
             return '<div class="service-item ' + s.status + '" onclick="openServiceDetail(\'' + s.name + '\', ' + s.port + ', \'' + s.status + '\', \'' + s.desc + '\')">' +
                 '<div><div class="service-name">' + s.name + '</div><div class="service-port">:' + s.port + ' - ' + s.desc + '</div></div>' +
-                '<div style="display:flex;align-items:center;gap:6px;">' + uptimeHtml + restartBtn + '<div class="service-status">' + s.status + '</div><div class="service-open">&rarr;</div></div></div>';
+                '<div style="display:flex;align-items:center;gap:6px;">' + latencyHtml + uptimeHtml + restartBtn + '<div class="service-status">' + s.status + '</div><div class="service-open">&rarr;</div></div></div>';
         }
 
         async function restartServiceQuick(name, btn) {
@@ -943,11 +965,16 @@
             setTimeout(() => { btn.classList.remove('spinning'); btn.disabled = false; btn.style.color = ''; }, 3000);
         }
 
+        let lastServiceResults = [];
+        let previousServiceStates = {};
+
         async function loadServices() {
             const results = await Promise.all(SERVICES.map(async (svc) => {
+                const t0 = Date.now();
                 try {
                     const url = 'http://localhost:' + svc.port + svc.endpoint;
                     const res = await fetchWithTimeout(url, 5000);
+                    const latency = Date.now() - t0;
                     // Some endpoints return non-200 but are still "alive"
                     if (res.ok || res.status === 404 || res.status === 401) {
                         let uptime = null;
@@ -955,31 +982,79 @@
                             const data = await res.clone().json();
                             uptime = data.uptime || data.uptimeSeconds || null;
                         } catch (e) {}
-                        return { ...svc, status: 'online', uptime };
+                        return { ...svc, status: 'online', uptime, latency };
                     }
-                    return { ...svc, status: 'error', uptime: null };
+                    return { ...svc, status: 'error', uptime: null, latency };
                 } catch (e) {
                     console.log(svc.name + ' check failed:', e.message);
-                    return { ...svc, status: 'offline', uptime: null };
+                    return { ...svc, status: 'offline', uptime: null, latency: null };
                 }
             }));
 
+            // Desktop notifications for state changes
+            notifyStateChanges(results);
+
             const online = results.filter(s => s.status === 'online').length;
             document.getElementById('servicesCount').textContent = `${online}/${results.length}`;
-
-            // Separate hive vs utility services
-            const hiveServices = results.filter(s => s.hive);
-            const utilServices = results.filter(s => !s.hive);
-
-            let servicesHtml = '';
-            servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin-bottom:6px;">Hive Core</div>';
-            servicesHtml += hiveServices.map(s => renderServiceItem(s)).join('');
-            servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin:12px 0 6px;">Utilities</div>';
-            servicesHtml += utilServices.map(s => renderServiceItem(s)).join('');
-            document.getElementById('servicesList').innerHTML = servicesHtml;
+            lastServiceResults = results;
+            renderFilteredServices();
 
             // Update page title and favicon based on health
             updateTitleAndFavicon(online, results.length);
+        }
+
+        function renderFilteredServices() {
+            const filter = (document.getElementById('serviceFilter')?.value || '').toLowerCase();
+            const results = filter
+                ? lastServiceResults.filter(s => s.name.toLowerCase().includes(filter) || s.desc.toLowerCase().includes(filter) || String(s.port).includes(filter))
+                : lastServiceResults;
+
+            // Group into categories
+            const categories = {
+                'Infrastructure': ['Oracle', 'Relay Service', 'Hive Dashboard', 'Master-O', 'Terminal Hub'],
+                'AI / LLM': ['Master-Mind', 'Hive Oracle (LLM)', 'Hive Brain Admin', 'Hive-Brain Discovery', 'MCP-Bridge', 'Ollama', 'LM-Studio'],
+                'Network': ['Hive-Mind Monitor', 'Hive-Mesh', 'Claude Bridge', 'Remote Support'],
+                'Applications': ['SimWidget Main Server', 'Agent (Kitt)', 'PMS50']
+            };
+            const categorized = new Set();
+            let servicesHtml = '';
+
+            for (const [cat, names] of Object.entries(categories)) {
+                const group = results.filter(s => names.includes(s.name));
+                if (group.length === 0) continue;
+                group.forEach(s => categorized.add(s.name));
+                const groupOnline = group.filter(s => s.status === 'online').length;
+                const color = groupOnline === group.length ? '#00ff88' : groupOnline > 0 ? '#ffaa00' : '#ff4444';
+                servicesHtml += '<div class="svc-group-header" onclick="toggleServiceGroup(this)" style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;">';
+                servicesHtml += '<span>' + cat + '</span>';
+                servicesHtml += '<span style="color:' + color + ';font-size:9px;">' + groupOnline + '/' + group.length + ' ▼</span>';
+                servicesHtml += '</div>';
+                servicesHtml += '<div class="svc-group">';
+                servicesHtml += group.map(s => renderServiceItem(s)).join('');
+                servicesHtml += '</div>';
+            }
+
+            // Uncategorized
+            const uncategorized = results.filter(s => !categorized.has(s.name));
+            if (uncategorized.length > 0) {
+                servicesHtml += '<div style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;">Other</div>';
+                servicesHtml += uncategorized.map(s => renderServiceItem(s)).join('');
+            }
+
+            document.getElementById('servicesList').innerHTML = servicesHtml || '<div style="color:#666;text-align:center;padding:20px;">No matches</div>';
+        }
+
+        function filterServices() { renderFilteredServices(); }
+
+        function toggleServiceGroup(header) {
+            const group = header.nextElementSibling;
+            if (group.style.display === 'none') {
+                group.style.display = '';
+                header.querySelector('span:last-child').textContent = header.querySelector('span:last-child').textContent.replace('▶', '▼');
+            } else {
+                group.style.display = 'none';
+                header.querySelector('span:last-child').textContent = header.querySelector('span:last-child').textContent.replace('▼', '▶');
+            }
         }
 
         function updateTitleAndFavicon(online, total) {
@@ -1615,6 +1690,7 @@
             loadModels();
             loadMCP();
             loadAlerts();
+            loadSystem();
         }
 
         // Update "last refreshed" indicator every second
@@ -1711,18 +1787,62 @@
             if (btn) { btn.textContent = 'Regenerate'; btn.disabled = false; }
         }
 
+        // Load system resources from dashboard server
+        async function loadSystem() {
+            try {
+                const res = await fetchWithTimeout('http://localhost:8899/api/system', 3000);
+                const d = await res.json();
+                document.getElementById('sysCpu').textContent = d.cpu.usage;
+                document.getElementById('sysCpuBar').style.width = d.cpu.usage + '%';
+                document.getElementById('sysCpuBar').style.background = d.cpu.usage > 80 ? '#ff4444' : d.cpu.usage > 50 ? '#ffaa00' : '#ff6b35';
+                document.getElementById('sysRam').textContent = d.memory.percent;
+                document.getElementById('sysRamBar').style.width = d.memory.percent + '%';
+                document.getElementById('sysRamBar').style.background = d.memory.percent > 85 ? '#ff4444' : d.memory.percent > 60 ? '#ffaa00' : '#00d9ff';
+                document.getElementById('sysHost').textContent = d.os.hostname;
+                document.getElementById('sysUptime').textContent = formatUptime(d.os.uptime);
+                document.getElementById('sysNode').textContent = d.node.version;
+            } catch (e) {
+                document.getElementById('sysCpu').textContent = '?';
+                document.getElementById('sysRam').textContent = '?';
+            }
+        }
+
+        // Desktop notifications for service state changes
+        function notifyStateChanges(results) {
+            if (Notification.permission !== 'granted') return;
+            const wentOffline = [];
+            const cameOnline = [];
+            results.forEach(function(s) {
+                const prev = previousServiceStates[s.name];
+                if (prev && prev !== s.status) {
+                    if (s.status === 'offline') wentOffline.push(s.name);
+                    else if (prev === 'offline' && s.status === 'online') cameOnline.push(s.name);
+                }
+                previousServiceStates[s.name] = s.status;
+            });
+            if (wentOffline.length > 0) {
+                new Notification('Hive: Services DOWN', { body: wentOffline.join(', '), icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23ff4444"/></svg>', tag: 'hive-down' });
+            }
+            if (cameOnline.length > 0) {
+                new Notification('Hive: Services RECOVERED', { body: cameOnline.join(', '), icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%2300ff88"/></svg>', tag: 'hive-up' });
+            }
+        }
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
             }
-            if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+            if (e.key === 'r' && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT') {
                 refreshAll();
             }
         });
 
         // Init — populate services from Orchestrator, then start refresh cycle
         (async () => {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
             await populateServicesFromOrchestrator();
             refreshAll();
             setInterval(refreshAll, 30000);
