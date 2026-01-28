@@ -616,7 +616,7 @@ function broadcastWs(data) {
 
 loadData();
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
     console.log('');
     console.log('╔══════════════════════════════════════════════╗');
     console.log('║           VOICE ACCESS                        ║');
