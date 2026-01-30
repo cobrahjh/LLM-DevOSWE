@@ -85,6 +85,9 @@ class Dashboard {
         // Voice settings
         this.initVoiceSettings();
 
+        // SimConnect settings
+        this.initSimConnectSettings();
+
         this.presetBtns.forEach(btn => {
             btn.addEventListener('click', () => this.loadPreset(btn.dataset.preset));
         });
@@ -622,6 +625,100 @@ class Dashboard {
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             this.isSpeaking = false;
+        }
+    }
+
+    // SimConnect settings
+    initSimConnectSettings() {
+        const hostInput = document.getElementById('simconnect-host');
+        const portInput = document.getElementById('simconnect-port');
+        const statusEl = document.getElementById('simconnect-status');
+        const connectBtn = document.getElementById('simconnect-connect');
+        const localBtn = document.getElementById('simconnect-local');
+
+        // Load current status
+        this.loadSimConnectStatus();
+
+        // Connect to remote
+        connectBtn?.addEventListener('click', async () => {
+            const host = hostInput.value.trim();
+            const port = parseInt(portInput.value) || 500;
+
+            if (!host) {
+                this.showToast('Enter remote IP address');
+                return;
+            }
+
+            statusEl.textContent = 'Connecting...';
+            statusEl.style.color = '#d29922';
+
+            try {
+                const res = await fetch('/api/simconnect/remote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host, port })
+                });
+                const data = await res.json();
+                this.showToast(data.message || 'Connecting...');
+
+                // Check status after a delay
+                setTimeout(() => this.loadSimConnectStatus(), 3000);
+            } catch (e) {
+                statusEl.textContent = 'Error: ' + e.message;
+                statusEl.style.color = '#f85149';
+            }
+        });
+
+        // Use local
+        localBtn?.addEventListener('click', async () => {
+            statusEl.textContent = 'Connecting to local...';
+            statusEl.style.color = '#d29922';
+            hostInput.value = '';
+
+            try {
+                const res = await fetch('/api/simconnect/remote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host: null })
+                });
+                const data = await res.json();
+                this.showToast(data.message || 'Connecting to local...');
+
+                setTimeout(() => this.loadSimConnectStatus(), 3000);
+            } catch (e) {
+                statusEl.textContent = 'Error: ' + e.message;
+                statusEl.style.color = '#f85149';
+            }
+        });
+    }
+
+    async loadSimConnectStatus() {
+        const hostInput = document.getElementById('simconnect-host');
+        const portInput = document.getElementById('simconnect-port');
+        const statusEl = document.getElementById('simconnect-status');
+
+        try {
+            const res = await fetch('/api/simconnect/status');
+            const data = await res.json();
+
+            if (data.connected) {
+                statusEl.textContent = '✓ Connected';
+                statusEl.style.color = '#3fb950';
+            } else if (data.mockMode) {
+                statusEl.textContent = '⚠ Mock Mode (MSFS not found)';
+                statusEl.style.color = '#d29922';
+            } else {
+                statusEl.textContent = '✗ Disconnected';
+                statusEl.style.color = '#f85149';
+            }
+
+            if (data.remoteHost) {
+                hostInput.value = data.remoteHost;
+                portInput.value = data.remotePort || 500;
+            }
+        } catch (e) {
+            statusEl.textContent = 'Error loading status';
+            statusEl.style.color = '#f85149';
         }
     }
 }

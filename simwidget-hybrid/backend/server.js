@@ -910,6 +910,60 @@ app.post('/api/config', (req, res) => {
     }
 });
 
+// SimConnect remote settings endpoint
+app.post('/api/simconnect/remote', async (req, res) => {
+    const { host, port } = req.body;
+    console.log(`[SimConnect] Setting remote host: ${host}:${port || 500}`);
+
+    try {
+        // Save to config
+        let config = {};
+        if (fs.existsSync(CONFIG_PATH)) {
+            config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+        }
+        config.simconnect = { remoteHost: host || null, remotePort: port || 500 };
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+
+        // Close existing connection
+        if (simConnectConnection) {
+            try {
+                simConnectConnection.close();
+            } catch (e) {}
+            simConnectConnection = null;
+            isSimConnected = false;
+            flightData.connected = false;
+        }
+
+        // Reconnect with new settings
+        if (host) {
+            setTimeout(() => initSimConnect(), 500);
+            res.json({ success: true, message: `Connecting to ${host}:${port || 500}...` });
+        } else {
+            // Clear remote, try local
+            setTimeout(() => initSimConnect(), 500);
+            res.json({ success: true, message: 'Cleared remote, connecting to local MSFS...' });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/simconnect/status', (req, res) => {
+    let config = {};
+    try {
+        if (fs.existsSync(CONFIG_PATH)) {
+            config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+        }
+    } catch (e) {}
+
+    res.json({
+        connected: isSimConnected,
+        remoteHost: config.simconnect?.remoteHost || null,
+        remotePort: config.simconnect?.remotePort || 500,
+        mockMode: !isSimConnected
+    });
+});
+
 // Graceful shutdown endpoint
 app.post('/api/shutdown', (req, res) => {
     console.log('[Server] Shutdown requested via API');
@@ -2336,9 +2390,24 @@ async function initSimConnect() {
     try {
         const { open, Protocol, SimConnectDataType } = require('node-simconnect');
 
-        // Remote SimConnect support - set SIMCONNECT_HOST environment variable
-        const remoteHost = process.env.SIMCONNECT_HOST || null;
-        const remotePort = parseInt(process.env.SIMCONNECT_PORT) || 500;
+        // Remote SimConnect support - read from config file first, then env vars
+        let remoteHost = process.env.SIMCONNECT_HOST || null;
+        let remotePort = parseInt(process.env.SIMCONNECT_PORT) || 500;
+
+        // Check config file for remote settings
+        try {
+            if (fs.existsSync(CONFIG_PATH)) {
+                const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+                if (config.simconnect?.remoteHost) {
+                    remoteHost = config.simconnect.remoteHost;
+                }
+                if (config.simconnect?.remotePort) {
+                    remotePort = parseInt(config.simconnect.remotePort) || 500;
+                }
+            }
+        } catch (e) {
+            console.log('[SimConnect] Could not read config:', e.message);
+        }
 
         if (remoteHost) {
             console.log(`Connecting to MSFS on remote host ${remoteHost}:${remotePort}...`);

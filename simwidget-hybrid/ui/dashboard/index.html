@@ -54,6 +54,26 @@
             </div>
             <div class="settings-body">
                 <div class="settings-section">
+                    <h3>✈️ SimConnect</h3>
+                    <div class="setting-row">
+                        <label>Connection Status</label>
+                        <span id="simconnect-status" style="color:#888">Checking...</span>
+                    </div>
+                    <div class="setting-row">
+                        <label>Remote MSFS IP</label>
+                        <input type="text" id="simconnect-host" placeholder="e.g. 192.168.1.100" style="width:150px">
+                    </div>
+                    <div class="setting-row">
+                        <label>Port</label>
+                        <input type="number" id="simconnect-port" value="500" style="width:80px">
+                    </div>
+                    <div class="setting-row">
+                        <button class="btn-test" id="simconnect-connect">🔗 Connect Remote</button>
+                        <button class="btn-test" id="simconnect-local" style="margin-left:8px">🏠 Use Local</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <h3>🔊 Voice Announcements</h3>
                     <div class="setting-row">
                         <label>Enable Voice</label>
