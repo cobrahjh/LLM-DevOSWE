@@ -38,7 +38,8 @@ const Services = (function() {
         personas: { port: 8770, name: 'Personas', canStart: true, healthEndpoint: '/health' },
         mcpbridge: { port: 8860, name: 'MCP Bridge', canStart: true },
         dashboard: { port: 8899, name: 'Dashboard', canStart: true },
-        voiceaccess: { port: 8875, name: 'VoiceAccess', canStart: true }
+        voiceaccess: { port: 8875, name: 'VoiceAccess', canStart: true },
+        hivevoice: { port: 8870, name: 'Hive Voice', canStart: true }
     };
     
     let currentServiceMode = 'dev';

@@ -276,6 +276,17 @@ const SERVICES = {
         healthEndpoint: '/api/health',
         priority: 16,
         autoRestart: true
+    },
+    hivevoice: {
+        id: 'hivevoice',
+        name: 'Hive Voice',
+        port: 8870,
+        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-voice'),
+        start: 'node voice-server.js',
+        winService: null,
+        healthEndpoint: '/api/health',
+        priority: 17,
+        autoRestart: true
     }
 };
 
