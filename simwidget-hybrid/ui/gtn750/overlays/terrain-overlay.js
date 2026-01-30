@@ -14,6 +14,11 @@ class TerrainOverlay {
         this.cache = new Map();
         this.cacheTimeout = 60000; // 1 minute cache
 
+        // View mode: '360' (full circle) or 'arc' (forward 120 degree arc)
+        this.viewMode = '360';
+        this.arcAngle = 120; // degrees for arc mode
+        this.range = 10; // NM range for terrain page
+
         // TAWS configuration
         this.taws = {
             enabled: true,
@@ -47,6 +52,51 @@ class TerrainOverlay {
      */
     setEnabled(enabled) {
         this.enabled = enabled;
+    }
+
+    /**
+     * Set view mode: '360' or 'arc'
+     */
+    setViewMode(mode) {
+        if (mode === '360' || mode === 'arc') {
+            this.viewMode = mode;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get current view mode
+     */
+    getViewMode() {
+        return this.viewMode;
+    }
+
+    /**
+     * Toggle between 360 and Arc view modes
+     */
+    toggleViewMode() {
+        this.viewMode = this.viewMode === '360' ? 'arc' : '360';
+        return this.viewMode;
+    }
+
+    /**
+     * Set terrain page range
+     */
+    setRange(range) {
+        const validRanges = [2, 5, 10, 20, 50];
+        if (validRanges.includes(range)) {
+            this.range = range;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get current range
+     */
+    getRange() {
+        return this.range;
     }
 
     /**
