@@ -39,7 +39,9 @@ const Services = (function() {
         mcpbridge: { port: 8860, name: 'MCP Bridge', canStart: true },
         dashboard: { port: 8899, name: 'Dashboard', canStart: true },
         voiceaccess: { port: 8875, name: 'VoiceAccess', canStart: true },
-        hivevoice: { port: 8870, name: 'Hive Voice', canStart: true }
+        hivevoice: { port: 8870, name: 'Hive Voice', canStart: true },
+        dictationhost: { port: 8753, name: 'Dictation Host', canStart: true, healthEndpoint: '/health' },
+        dictationclient: { port: 8760, name: 'Dictation Client', canStart: true, healthEndpoint: '/health' }
     };
     
     let currentServiceMode = 'dev';

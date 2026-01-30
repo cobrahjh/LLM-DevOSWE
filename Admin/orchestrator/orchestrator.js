@@ -287,6 +287,28 @@ const SERVICES = {
         healthEndpoint: '/api/health',
         priority: 17,
         autoRestart: true
+    },
+    dictationhost: {
+        id: 'dictationhost',
+        name: 'Dictation Host',
+        port: 8753,
+        dir: 'C:\\DevClaude\\Hivemind\\voice\\dictation-relay',
+        start: 'node terminal-host.js',
+        winService: null,
+        healthEndpoint: '/health',
+        priority: 18,
+        autoRestart: true
+    },
+    dictationclient: {
+        id: 'dictationclient',
+        name: 'Dictation Client',
+        port: 8760,
+        dir: 'C:\\DevClaude\\Hivemind\\voice\\dictation-relay',
+        start: 'node terminal-client.js',
+        winService: null,
+        healthEndpoint: '/health',
+        priority: 19,
+        autoRestart: true
     }
 };
 
