@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Admin Console</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(0,0,0,0.4);
+            border-bottom: 2px solid #ff6b35;
+        }
+        .header h1 {
+            font-size: 22px;
+            background: linear-gradient(90deg, #ff6b35, #ff9f1c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-nav {
+            display: flex;
+            gap: 12px;
+        }
+        .header-nav a {
+            color: #888;
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .header-nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .header-nav a.active { color: #ff6b35; background: rgba(255,107,53,0.1); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 20px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid #2a2a3e;
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 10px 18px;
+            border: none;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .tab.active { color: #ff6b35; background: rgba(255,107,53,0.15); }
+
+        /* Content */
+        .content { padding: 20px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .card h3 {
+            color: #ff6b35;
+            font-size: 14px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+        /* Service cards */
+        .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .svc-card {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .svc-card.online { border-color: #22c55e; }
+        .svc-card.offline { border-color: #ef4444; opacity: 0.7; }
+        .svc-name { font-weight: 500; font-size: 13px; }
+        .svc-port { color: #666; font-size: 11px; }
+        .svc-status { width: 10px; height: 10px; border-radius: 50%; }
+        .svc-status.online { background: #22c55e; }
+        .svc-status.offline { background: #ef4444; }
+        .svc-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .svc-actions button {
+            padding: 4px 10px;
+            font-size: 11px;
+            border: 1px solid #444;
+            background: rgba(255,255,255,0.05);
+            color: #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .svc-actions button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .svc-actions button.restart { border-color: #f59e0b; color: #f59e0b; }
+
+        /* Device cards */
+        .device-card {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .device-card.hive { border-color: #22c55e; }
+        .device-ip { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .device-meta { color: #666; font-size: 12px; margin-bottom: 8px; }
+        .device-services { display: flex; flex-wrap: wrap; gap: 4px; }
+        .device-svc-tag { padding: 2px 8px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 10px; }
+
+        /* LLM Panel */
+        .llm-input {
+            width: 100%;
+            min-height: 80px;
+            background: #0a0a0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            color: #e0e0e0;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 12px;
+        }
+        .llm-input:focus { outline: none; border-color: #ff6b35; }
+        .llm-results { display: grid; gap: 12px; }
+        .llm-result {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .llm-result-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .llm-result-name { color: #a855f7; font-weight: 600; }
+        .llm-result-time { color: #22c55e; font-size: 12px; }
+        .llm-result-content { font-size: 13px; color: #ccc; max-height: 150px; overflow-y: auto; white-space: pre-wrap; }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #ff6b35, #ff9f1c); color: #fff; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,53,0.3); }
+        .btn-secondary { background: #2a2a3e; color: #ccc; }
+        .btn-secondary:hover { background: #3a3a4e; color: #fff; }
+
+        /* Stats */
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value { font-size: 28px; font-weight: 700; color: #ff6b35; }
+        .stat-label { font-size: 11px; color: #666; margin-top: 4px; text-transform: uppercase; }
+
+        /* Activity feed */
+        .activity-feed { max-height: 400px; overflow-y: auto; }
+        .activity-item {
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: rgba(0,0,0,0.2);
+            border-left: 3px solid #a855f7;
+            border-radius: 0 6px 6px 0;
+        }
+        .activity-item.oracle { border-color: #f59e0b; }
+        .activity-item.relay { border-color: #3b82f6; }
+        .activity-item.system { border-color: #666; }
+        .activity-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .activity-source { font-size: 10px; text-transform: uppercase; font-weight: 600; }
+        .activity-item.oracle .activity-source { color: #f59e0b; }
+        .activity-item.relay .activity-source { color: #3b82f6; }
+        .activity-time { font-size: 10px; color: #666; }
+        .activity-content { font-size: 12px; color: #ccc; }
+
+        /* Voice panel */
+        .persona-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .persona-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .persona-name { font-weight: 600; color: #fff; }
+        .persona-role { color: #666; font-size: 12px; }
+        .persona-config { font-size: 11px; color: #888; }
+        .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+        .badge.active { background: rgba(34,197,94,0.2); color: #22c55e; }
+
+        /* Quick links */
+        .quick-links { display: flex; flex-wrap: wrap; gap: 8px; }
+        .quick-link {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #ccc;
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .quick-link:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #ff6b35; }
+
+        /* Loading */
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #333; border-top-color: #ff6b35; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .tabs { flex-wrap: nowrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hive Admin Console</h1>
+        <div class="header-nav">
+            <a href="/">Dashboard</a>
+            <a href="/admin.html" class="active">Admin</a>
+            <a href="http://localhost:8585" target="_blank">KittBox</a>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showPanel('services')">Services</button>
+        <button class="tab" onclick="showPanel('activity')">Activity</button>
+        <button class="tab" onclick="showPanel('llm')">LLM</button>
+        <button class="tab" onclick="showPanel('devices')">Devices</button>
+        <button class="tab" onclick="showPanel('voice')">Voice</button>
+        <button class="tab" onclick="showPanel('links')">Quick Links</button>
+    </div>
+
+    <div class="content">
+        <!-- Services Panel -->
+        <div id="panel-services" class="panel active">
+            <div class="grid-4" style="margin-bottom:20px;">
+                <div class="stat-box"><div class="stat-value" id="stat-online">--</div><div class="stat-label">Online</div></div>
+                <div class="stat-box"><div class="stat-value" id="stat-offline">--</div><div class="stat-label">Offline</div></div>
+                <div class="stat-box"><div class="stat-value" id="stat-total">--</div><div class="stat-label">Total</div></div>
+                <div class="stat-box"><div class="stat-value" id="stat-uptime">--</div><div class="stat-label">Uptime</div></div>
+            </div>
+            <div class="card">
+                <h3>Service Control <button class="btn btn-secondary" style="float:right;padding:4px 12px;font-size:11px;" onclick="loadServices()">Refresh</button></h3>
+                <div id="services-grid" class="svc-grid"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+            <div class="card">
+                <h3>Bulk Actions</h3>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="restartAll()">Restart All Services</button>
+                    <button class="btn btn-secondary" onclick="stopAll()">Stop All</button>
+                    <button class="btn btn-secondary" onclick="startAll()">Start All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Panel -->
+        <div id="panel-activity" class="panel">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Live Activity Feed</h3>
+                    <div id="activity-feed" class="activity-feed"><div class="loading">Connecting...</div></div>
+                </div>
+                <div class="card">
+                    <h3>Statistics</h3>
+                    <div class="grid-4" style="margin-bottom:16px;">
+                        <div class="stat-box"><div class="stat-value" id="act-events">0</div><div class="stat-label">Events</div></div>
+                        <div class="stat-box"><div class="stat-value" id="act-tasks">0</div><div class="stat-label">Tasks</div></div>
+                        <div class="stat-box"><div class="stat-value" id="act-queries">0</div><div class="stat-label">Queries</div></div>
+                        <div class="stat-box"><div class="stat-value" id="act-uptime">0s</div><div class="stat-label">Uptime</div></div>
+                    </div>
+                    <div id="active-processes" style="color:#666;font-size:12px;">No active processes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LLM Panel -->
+        <div id="panel-llm" class="panel">
+            <div class="card">
+                <h3>LLM Backends <span id="llm-backend-count" style="color:#666;font-weight:normal;"></span></h3>
+                <div id="llm-backends" class="svc-grid"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+            <div class="card">
+                <h3>Query LLMs</h3>
+                <textarea class="llm-input" id="llm-prompt" placeholder="Enter your prompt..."></textarea>
+                <div style="display:flex;gap:12px;margin-bottom:16px;">
+                    <button class="btn btn-primary" onclick="queryParallel()">Query All (Parallel)</button>
+                    <button class="btn btn-secondary" onclick="querySmart()">Smart (Fastest)</button>
+                </div>
+                <div id="llm-results" class="llm-results"></div>
+            </div>
+        </div>
+
+        <!-- Devices Panel -->
+        <div id="panel-devices" class="panel">
+            <div class="grid-4" style="margin-bottom:20px;">
+                <div class="stat-box"><div class="stat-value" id="dev-total">--</div><div class="stat-label">Total</div></div>
+                <div class="stat-box"><div class="stat-value" id="dev-hive">--</div><div class="stat-label">Hive Nodes</div></div>
+                <div class="stat-box"><div class="stat-value" id="dev-known">--</div><div class="stat-label">Known</div></div>
+                <div class="stat-box"><div class="stat-value" id="dev-pending">--</div><div class="stat-label">Pending</div></div>
+            </div>
+            <div class="card">
+                <h3>Colony (Approved) <button class="btn btn-primary" style="float:right;padding:4px 12px;font-size:11px;" onclick="scanNetwork()">Scan Network</button></h3>
+                <div id="devices-known" class="grid-3"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+            <div class="card">
+                <h3>Discovered (Pending)</h3>
+                <div id="devices-pending" class="grid-3"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+        </div>
+
+        <!-- Voice Panel -->
+        <div id="panel-voice" class="panel">
+            <div class="grid-4" style="margin-bottom:20px;">
+                <div class="stat-box"><div class="stat-value" id="voice-personas">--</div><div class="stat-label">Personas</div></div>
+                <div class="stat-box"><div class="stat-value" id="voice-macros">--</div><div class="stat-label">Macros</div></div>
+                <div class="stat-box"><div class="stat-value" id="voice-cmds">--</div><div class="stat-label">Commands 24h</div></div>
+                <div class="stat-box"><div class="stat-value" id="voice-success">--</div><div class="stat-label">Success %</div></div>
+            </div>
+            <div class="card">
+                <h3>Voice Command</h3>
+                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                    <input type="text" id="voice-input" class="llm-input" style="min-height:auto;flex:1;" placeholder="Type a voice command... (status, restart relay, say hello)" onkeydown="if(event.key==='Enter')sendVoiceCommand()">
+                    <button class="btn btn-primary" onclick="sendVoiceCommand()">Send</button>
+                </div>
+                <div id="voice-result" style="color:#666;font-size:13px;"></div>
+            </div>
+            <div class="card">
+                <h3>Personas</h3>
+                <div id="voice-personas-list" class="grid-3"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+        </div>
+
+        <!-- Quick Links Panel -->
+        <div id="panel-links" class="panel">
+            <div class="card">
+                <h3>Service UIs</h3>
+                <div class="quick-links" id="service-links"></div>
+            </div>
+            <div class="card">
+                <h3>External Tools</h3>
+                <div class="quick-links">
+                    <a class="quick-link" href="http://localhost:11434" target="_blank">Ollama API</a>
+                    <a class="quick-link" href="http://localhost:1234" target="_blank">LM Studio</a>
+                    <a class="quick-link" href="https://github.com/cobrahjh/LLM-DevOSWE" target="_blank">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const HOST = location.hostname || 'localhost';
+        let activityEvents = 0, activityTasks = 0, activityQueries = 0;
+        let startTime = Date.now();
+
+        // Panel switching
+        function showPanel(panel) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('panel-' + panel).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load panel data
+            if (panel === 'services') loadServices();
+            if (panel === 'activity') initActivity();
+            if (panel === 'llm') loadLLMBackends();
+            if (panel === 'devices') loadDevices();
+            if (panel === 'voice') loadVoice();
+            if (panel === 'links') loadServiceLinks();
+        }
+
+        // Services Panel
+        async function loadServices() {
+            try {
+                const res = await fetch(`http://${HOST}:8500/api/status`);
+                const data = await res.json();
+                const services = Object.entries(data.services);
+
+                let online = 0, offline = 0;
+                const html = services.map(([id, svc]) => {
+                    const isOnline = svc.healthy;
+                    if (isOnline) online++; else offline++;
+                    return `
+                        <div class="svc-card ${isOnline ? 'online' : 'offline'}">
+                            <div>
+                                <div class="svc-name">${svc.name}</div>
+                                <div class="svc-port">:${svc.port || 'N/A'}</div>
+                                <div class="svc-actions">
+                                    <button class="restart" onclick="restartService('${id}')">Restart</button>
+                                    <button onclick="window.open('http://${HOST}:${svc.port}','_blank')">Open</button>
+                                </div>
+                            </div>
+                            <div class="svc-status ${isOnline ? 'online' : 'offline'}"></div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('services-grid').innerHTML = html;
+                document.getElementById('stat-online').textContent = online;
+                document.getElementById('stat-offline').textContent = offline;
+                document.getElementById('stat-total').textContent = services.length;
+                document.getElementById('stat-uptime').textContent = Math.round(online/services.length*100) + '%';
+            } catch (e) {
+                document.getElementById('services-grid').innerHTML = '<div style="color:#ef4444;">Failed to load services</div>';
+            }
+        }
+
+        async function restartService(id) {
+            try {
+                await fetch(`http://${HOST}:8500/api/services/${id}/restart`, { method: 'POST' });
+                setTimeout(loadServices, 2000);
+            } catch (e) { alert('Restart failed: ' + e.message); }
+        }
+
+        async function restartAll() {
+            if (!confirm('Restart all services?')) return;
+            await fetch(`http://${HOST}:8500/api/stop-all`, { method: 'POST' });
+            setTimeout(() => fetch(`http://${HOST}:8500/api/start-all`, { method: 'POST' }), 2000);
+            setTimeout(loadServices, 5000);
+        }
+
+        async function stopAll() {
+            if (!confirm('Stop all services?')) return;
+            await fetch(`http://${HOST}:8500/api/stop-all`, { method: 'POST' });
+            setTimeout(loadServices, 2000);
+        }
+
+        async function startAll() {
+            await fetch(`http://${HOST}:8500/api/start-all`, { method: 'POST' });
+            setTimeout(loadServices, 3000);
+        }
+
+        // Activity Panel
+        function initActivity() {
+            const feed = document.getElementById('activity-feed');
+            feed.innerHTML = '<div class="activity-item system"><div class="activity-header"><span class="activity-source">System</span><span class="activity-time">' + new Date().toLocaleTimeString() + '</span></div><div class="activity-content">Activity monitor initialized</div></div>';
+
+            // Connect to Relay WebSocket
+            try {
+                const ws = new WebSocket(`ws://${HOST}:8600`);
+                ws.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        addActivity(data.type || 'event', JSON.stringify(data).substring(0, 100));
+                    } catch {}
+                };
+                ws.onopen = () => addActivity('system', 'Connected to Relay WebSocket');
+                ws.onerror = () => addActivity('system', 'WebSocket error');
+            } catch {}
+
+            // Update uptime
+            setInterval(() => {
+                const secs = Math.floor((Date.now() - startTime) / 1000);
+                const mins = Math.floor(secs / 60);
+                document.getElementById('act-uptime').textContent = mins > 0 ? mins + 'm' : secs + 's';
+            }, 1000);
+        }
+
+        function addActivity(source, content) {
+            activityEvents++;
+            document.getElementById('act-events').textContent = activityEvents;
+            const feed = document.getElementById('activity-feed');
+            const item = document.createElement('div');
+            item.className = 'activity-item ' + source;
+            item.innerHTML = `<div class="activity-header"><span class="activity-source">${source}</span><span class="activity-time">${new Date().toLocaleTimeString()}</span></div><div class="activity-content">${content}</div>`;
+            feed.insertBefore(item, feed.firstChild);
+            while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+        }
+
+        // LLM Panel
+        async function loadLLMBackends() {
+            try {
+                const res = await fetch(`http://${HOST}:8820/api/backends`);
+                const backends = await res.json();
+                const online = backends.filter(b => b.status === 'online').length;
+                document.getElementById('llm-backend-count').textContent = `(${online}/${backends.length} online)`;
+                document.getElementById('llm-backends').innerHTML = backends.map(b => `
+                    <div class="svc-card ${b.status === 'online' ? 'online' : 'offline'}">
+                        <div>
+                            <div class="svc-name">${b.name}</div>
+                            <div class="svc-port">${b.type} • ${b.free ? 'Free' : 'Paid'}</div>
+                        </div>
+                        <div class="svc-status ${b.status === 'online' ? 'online' : 'offline'}"></div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('llm-backends').innerHTML = '<div style="color:#666;">Master-Mind offline</div>';
+            }
+        }
+
+        async function queryParallel() {
+            const prompt = document.getElementById('llm-prompt').value;
+            if (!prompt) return;
+            document.getElementById('llm-results').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const res = await fetch(`http://${HOST}:8820/api/query/parallel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+                document.getElementById('llm-results').innerHTML = (data.responses || []).map(r => `
+                    <div class="llm-result">
+                        <div class="llm-result-header">
+                            <span class="llm-result-name">${r.backend}</span>
+                            <span class="llm-result-time">${r.responseTime}ms</span>
+                        </div>
+                        <div class="llm-result-content">${(r.response || '').substring(0, 500)}</div>
+                    </div>
+                `).join('') || 'No results';
+            } catch (e) {
+                document.getElementById('llm-results').innerHTML = '<div style="color:#ef4444;">Query failed</div>';
+            }
+        }
+
+        async function querySmart() {
+            const prompt = document.getElementById('llm-prompt').value;
+            if (!prompt) return;
+            document.getElementById('llm-results').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const res = await fetch(`http://${HOST}:8820/api/query/smart`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+                document.getElementById('llm-results').innerHTML = `
+                    <div class="llm-result" style="border-color:#22c55e;">
+                        <div class="llm-result-header">
+                            <span class="llm-result-name">Winner: ${data.winner}</span>
+                            <span class="llm-result-time">${data.responseTime}ms</span>
+                        </div>
+                        <div class="llm-result-content">${(data.response || '').substring(0, 500)}</div>
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('llm-results').innerHTML = '<div style="color:#ef4444;">Query failed</div>';
+            }
+        }
+
+        // Devices Panel
+        async function loadDevices() {
+            try {
+                const res = await fetch(`http://${HOST}:8810/api/devices`);
+                const devices = await res.json();
+
+                const all = [...devices.known, ...devices.discovered];
+                const hive = all.filter(d => d.isHiveNode);
+
+                document.getElementById('dev-total').textContent = all.length;
+                document.getElementById('dev-hive').textContent = hive.length;
+                document.getElementById('dev-known').textContent = devices.known.length;
+                document.getElementById('dev-pending').textContent = devices.discovered.length;
+
+                document.getElementById('devices-known').innerHTML = devices.known.length ? devices.known.map(d => `
+                    <div class="device-card ${d.isHiveNode ? 'hive' : ''}">
+                        <div class="device-ip">${d.ip}</div>
+                        <div class="device-meta">${d.os || 'Unknown'} ${d.hostname ? '• ' + d.hostname : ''}</div>
+                        <div class="device-services">${d.services.slice(0,5).map(s => '<span class="device-svc-tag">' + s.service + '</span>').join('')}</div>
+                    </div>
+                `).join('') : '<div style="color:#666;">No approved devices</div>';
+
+                document.getElementById('devices-pending').innerHTML = devices.discovered.length ? devices.discovered.map(d => `
+                    <div class="device-card">
+                        <div class="device-ip">${d.ip} <button class="btn btn-secondary" style="padding:2px 8px;font-size:10px;float:right;" onclick="approveDevice('${d.ip}')">Approve</button></div>
+                        <div class="device-meta">${d.os || 'Unknown'}</div>
+                        <div class="device-services">${d.services.slice(0,5).map(s => '<span class="device-svc-tag">' + s.service + '</span>').join('')}</div>
+                    </div>
+                `).join('') : '<div style="color:#666;">No pending devices</div>';
+            } catch (e) {
+                document.getElementById('devices-known').innerHTML = '<div style="color:#666;">Hive Brain offline</div>';
+                document.getElementById('devices-pending').innerHTML = '';
+            }
+        }
+
+        async function scanNetwork() {
+            try {
+                await fetch(`http://${HOST}:8810/api/discover`, { method: 'POST' });
+                setTimeout(loadDevices, 5000);
+            } catch (e) { alert('Scan failed'); }
+        }
+
+        async function approveDevice(ip) {
+            try {
+                await fetch(`http://${HOST}:8810/api/devices/${ip}/approve`, { method: 'POST' });
+                loadDevices();
+            } catch (e) { alert('Approve failed'); }
+        }
+
+        // Voice Panel
+        async function loadVoice() {
+            try {
+                const [personas, stats] = await Promise.all([
+                    fetch(`http://${HOST}:8875/api/personas`).then(r => r.json()),
+                    fetch(`http://${HOST}:8875/api/history/stats`).then(r => r.json())
+                ]);
+
+                document.getElementById('voice-personas').textContent = personas.length;
+                document.getElementById('voice-cmds').textContent = stats.last24h || 0;
+                document.getElementById('voice-success').textContent = (stats.successRate || 0) + '%';
+
+                document.getElementById('voice-personas-list').innerHTML = personas.map(p => `
+                    <div class="persona-card">
+                        <div class="persona-header">
+                            <span class="persona-name">${p.name}</span>
+                            <span class="badge active">${p.enabled ? 'ON' : 'OFF'}</span>
+                        </div>
+                        <div class="persona-role">${p.role}</div>
+                        <div class="persona-config">Voice: ${p.voice} • Rate: ${p.rate}x</div>
+                    </div>
+                `).join('');
+
+                const macros = await fetch(`http://${HOST}:8875/api/macros`).then(r => r.json());
+                document.getElementById('voice-macros').textContent = macros.length;
+            } catch (e) {
+                document.getElementById('voice-personas-list').innerHTML = '<div style="color:#666;">VoiceAccess offline</div>';
+            }
+        }
+
+        async function sendVoiceCommand() {
+            const text = document.getElementById('voice-input').value;
+            if (!text) return;
+            try {
+                const res = await fetch(`http://${HOST}:8875/api/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, source: 'admin' })
+                });
+                const data = await res.json();
+                document.getElementById('voice-result').innerHTML = `<span style="color:${data.success ? '#22c55e' : '#ef4444'}">${data.response || 'Command sent'}</span>`;
+                document.getElementById('voice-input').value = '';
+            } catch (e) {
+                document.getElementById('voice-result').innerHTML = '<span style="color:#ef4444;">Command failed</span>';
+            }
+        }
+
+        // Quick Links Panel
+        async function loadServiceLinks() {
+            const links = [
+                { name: 'Dashboard', port: 8899 },
+                { name: 'KittBox', port: 8585 },
+                { name: 'Orchestrator', port: 8500 },
+                { name: 'Hive-Mind', port: 8701 },
+                { name: 'Terminal Hub', port: 8771 },
+                { name: 'Master-Mind', port: 8820 },
+                { name: 'Hive Oracle', port: 8850 },
+                { name: 'MCP Bridge', port: 8860 },
+                { name: 'VoiceAccess', port: 8875 },
+                { name: 'Hive Brain', port: 8810 },
+                { name: 'Personas', port: 8770 }
+            ];
+            document.getElementById('service-links').innerHTML = links.map(l =>
+                `<a class="quick-link" href="http://${HOST}:${l.port}" target="_blank">${l.name} :${l.port}</a>`
+            ).join('');
+        }
+
+        // Init
+        loadServices();
+    </script>
+</body>
+</html>
