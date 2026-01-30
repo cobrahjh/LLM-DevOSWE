@@ -168,10 +168,10 @@ class AutopilotWidget extends SimWidgetBase {
             case 'AP_MASTER':
                 this.ap.master = !this.ap.master;
                 break;
-            case 'FLIGHT_DIRECTOR':
+            case 'TOGGLE_FLIGHT_DIRECTOR':
                 this.ap.flightDirector = !this.ap.flightDirector;
                 break;
-            case 'YAW_DAMPER':
+            case 'YAW_DAMPER_TOGGLE':
                 this.ap.yawDamper = !this.ap.yawDamper;
                 break;
             case 'AP_HDG_HOLD':
@@ -230,7 +230,7 @@ class AutopilotWidget extends SimWidgetBase {
     }
 
     onSimData(data) {
-        // Update current values from sim data
+        // Update current values from sim data (server field names)
         if (data.heading !== undefined) {
             this.current.heading = Math.round(data.heading);
         }
@@ -240,29 +240,32 @@ class AutopilotWidget extends SimWidgetBase {
         if (data.verticalSpeed !== undefined) {
             this.current.vs = Math.round(data.verticalSpeed);
         }
-        if (data.groundSpeed !== undefined) {
-            this.current.speed = Math.round(data.groundSpeed);
-        }
-        if (data.airspeed !== undefined) {
-            this.current.speed = Math.round(data.airspeed);
+        if (data.speed !== undefined) {
+            this.current.speed = Math.round(data.speed);
         }
 
-        // Update AP states if provided
+        // Update AP states from server flightData
         if (data.apMaster !== undefined) this.ap.master = data.apMaster;
-        if (data.apFD !== undefined) this.ap.flightDirector = data.apFD;
-        if (data.apYD !== undefined) this.ap.yawDamper = data.apYD;
-        if (data.apHDG !== undefined) this.ap.headingHold = data.apHDG;
-        if (data.apALT !== undefined) this.ap.altitudeHold = data.apALT;
-        if (data.apVS !== undefined) this.ap.vsHold = data.apVS;
-        if (data.apSPD !== undefined) this.ap.speedHold = data.apSPD;
-        if (data.apNAV !== undefined) this.ap.navHold = data.apNAV;
-        if (data.apAPR !== undefined) this.ap.aprHold = data.apAPR;
+        if (data.apFlightDirector !== undefined) this.ap.flightDirector = data.apFlightDirector;
+        if (data.apYawDamper !== undefined) this.ap.yawDamper = data.apYawDamper;
+        if (data.apHdgLock !== undefined) this.ap.headingHold = data.apHdgLock;
+        if (data.apAltLock !== undefined) this.ap.altitudeHold = data.apAltLock;
+        if (data.apVsLock !== undefined) this.ap.vsHold = data.apVsLock;
+        if (data.apSpdLock !== undefined) this.ap.speedHold = data.apSpdLock;
+        if (data.apNavLock !== undefined) this.ap.navHold = data.apNavLock;
+        if (data.apAprLock !== undefined) this.ap.aprHold = data.apAprLock;
+        if (data.apBcLock !== undefined) this.ap.bcHold = data.apBcLock;
 
-        // Update set values if provided
-        if (data.hdgSet !== undefined) this.setValues.heading = Math.round(data.hdgSet);
-        if (data.altSet !== undefined) this.setValues.altitude = Math.round(data.altSet);
-        if (data.vsSet !== undefined) this.setValues.vs = Math.round(data.vsSet);
-        if (data.spdSet !== undefined) this.setValues.speed = Math.round(data.spdSet);
+        // Update set values from server flightData
+        if (data.apHdgSet !== undefined) this.setValues.heading = Math.round(data.apHdgSet);
+        if (data.apAltSet !== undefined) this.setValues.altitude = Math.round(data.apAltSet);
+        if (data.apVsSet !== undefined) this.setValues.vs = Math.round(data.apVsSet);
+        if (data.apSpdSet !== undefined) this.setValues.speed = Math.round(data.apSpdSet);
+
+        // Navigation source
+        if (data.apNavSelected !== undefined) {
+            this.current.navSource = data.apNavSelected === 1 ? 'NAV1' : data.apNavSelected === 2 ? 'NAV2' : 'GPS';
+        }
 
         this.render();
     }
@@ -360,6 +363,16 @@ class AutopilotWidget extends SimWidgetBase {
         // Nav source
         if (this.elements.navSource) {
             this.elements.navSource.textContent = this.current.navSource;
+        }
+    }
+
+    /**
+     * Handle WebSocket messages from server
+     * Override SimWidgetBase.onMessage
+     */
+    onMessage(msg) {
+        if (msg.type === 'flightData' && msg.data) {
+            this.onSimData(msg.data);
         }
     }
 }

@@ -166,8 +166,8 @@ class EngineMonitorWidget extends SimWidgetBase {
      * Handle incoming messages
      */
     onMessage(msg) {
-        if (msg.type === 'flightData' || msg.data) {
-            this.updateEngineData(msg.data || msg);
+        if (msg.type === 'flightData' && msg.data) {
+            this.updateEngineData(msg.data);
         }
     }
 

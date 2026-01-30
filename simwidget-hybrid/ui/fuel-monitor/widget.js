@@ -128,90 +128,51 @@ class FuelMonitorWidget extends SimWidgetBase {
      * Handle incoming flight data
      */
     onMessage(msg) {
-        if (msg.type === 'flightData' || msg.data) {
-            this.updateFuelData(msg.data || msg);
+        if (msg.type === 'flightData' && msg.data) {
+            this.updateFuelData(msg.data);
         }
     }
 
     /**
-     * Update fuel data from SimConnect
+     * Update fuel data from server flightData
      */
     updateFuelData(data) {
-        // Map SimConnect variables to local state
-        // Total fuel quantity (gallons)
-        if (data.FUEL_TOTAL_QUANTITY !== undefined) {
-            this.fuel.totalGallons = data.FUEL_TOTAL_QUANTITY;
-        } else if (data.fuelTotalQuantity !== undefined) {
-            this.fuel.totalGallons = data.fuelTotalQuantity;
+        // Total fuel quantity (gallons) - server field: fuelTotal
+        if (data.fuelTotal !== undefined) {
+            this.fuel.totalGallons = data.fuelTotal;
         }
 
-        // Total capacity
-        if (data.FUEL_TOTAL_CAPACITY !== undefined) {
-            this.fuel.totalCapacity = data.FUEL_TOTAL_CAPACITY;
-        } else if (data.fuelTotalCapacity !== undefined) {
-            this.fuel.totalCapacity = data.fuelTotalCapacity;
+        // Total capacity - server field: fuelCapacity
+        if (data.fuelCapacity !== undefined) {
+            this.fuel.totalCapacity = data.fuelCapacity;
         }
 
-        // Left tank
-        if (data.FUEL_LEFT_QUANTITY !== undefined) {
-            this.fuel.leftTank = data.FUEL_LEFT_QUANTITY;
-        } else if (data.fuelLeftQuantity !== undefined) {
-            this.fuel.leftTank = data.fuelLeftQuantity;
+        // Left tank - server field: fuelTankLeftMain
+        if (data.fuelTankLeftMain !== undefined) {
+            this.fuel.leftTank = data.fuelTankLeftMain;
         }
 
-        // Right tank
-        if (data.FUEL_RIGHT_QUANTITY !== undefined) {
-            this.fuel.rightTank = data.FUEL_RIGHT_QUANTITY;
-        } else if (data.fuelRightQuantity !== undefined) {
-            this.fuel.rightTank = data.fuelRightQuantity;
+        // Right tank - server field: fuelTankRightMain
+        if (data.fuelTankRightMain !== undefined) {
+            this.fuel.rightTank = data.fuelTankRightMain;
         }
 
-        // Tank capacities
-        if (data.FUEL_LEFT_CAPACITY !== undefined) {
-            this.fuel.leftCapacity = data.FUEL_LEFT_CAPACITY;
+        // Tank capacities - server fields: fuelTankLeftMainCap, fuelTankRightMainCap
+        if (data.fuelTankLeftMainCap !== undefined) {
+            this.fuel.leftCapacity = data.fuelTankLeftMainCap;
         }
-        if (data.FUEL_RIGHT_CAPACITY !== undefined) {
-            this.fuel.rightCapacity = data.FUEL_RIGHT_CAPACITY;
-        }
-
-        // Fuel flow (convert from lbs/hr to gal/hr if needed)
-        if (data.ENG_FUEL_FLOW_GPH_1 !== undefined) {
-            this.fuel.flowRate = data.ENG_FUEL_FLOW_GPH_1;
-            if (data.ENG_FUEL_FLOW_GPH_2 !== undefined) {
-                this.fuel.flowRate += data.ENG_FUEL_FLOW_GPH_2;
-            }
-        } else if (data.fuelFlowGPH !== undefined) {
-            this.fuel.flowRate = data.fuelFlowGPH;
-        } else if (data.GENERAL_ENG_FUEL_USED !== undefined) {
-            // Fallback: estimate from fuel used
+        if (data.fuelTankRightMainCap !== undefined) {
+            this.fuel.rightCapacity = data.fuelTankRightMainCap;
         }
 
-        // Fuel pump
-        if (data.GENERAL_ENG_FUEL_PUMP_SWITCH_1 !== undefined) {
-            this.fuel.pumpOn = data.GENERAL_ENG_FUEL_PUMP_SWITCH_1 !== 0;
-        } else if (data.fuelPump !== undefined) {
-            this.fuel.pumpOn = data.fuelPump;
+        // Fuel flow - server field: fuelFlow
+        if (data.fuelFlow !== undefined) {
+            this.fuel.flowRate = data.fuelFlow;
         }
 
-        // Fuel selector
-        if (data.FUEL_TANK_SELECTOR_1 !== undefined) {
-            this.fuel.selector = this.mapSelector(data.FUEL_TANK_SELECTOR_1);
-        } else if (data.fuelSelector !== undefined) {
-            this.fuel.selector = data.fuelSelector;
-        }
-
-        // Ground speed for range calculation
-        if (data.GROUND_VELOCITY !== undefined) {
-            this.flight.groundSpeed = data.GROUND_VELOCITY;
-        } else if (data.groundSpeed !== undefined) {
+        // Ground speed for range calculation - server field: groundSpeed
+        if (data.groundSpeed !== undefined) {
             this.flight.groundSpeed = data.groundSpeed;
-        }
-
-        // On ground status
-        if (data.SIM_ON_GROUND !== undefined) {
-            this.flight.onGround = data.SIM_ON_GROUND;
-        } else if (data.onGround !== undefined) {
-            this.flight.onGround = data.onGround;
         }
 
         // Track initial fuel for "used" calculation
