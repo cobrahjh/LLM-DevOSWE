@@ -937,6 +937,11 @@ class GTN750Widget {
         ctx.fillStyle = '#0a1520';
         ctx.fillRect(0, 0, w, h);
 
+        // Range rings (drawn first, behind everything)
+        if (this.declutterLevel < 2) {
+            this.renderRangeRings(ctx, cx, cy, w, h);
+        }
+
         // Terrain overlay using TerrainOverlay class
         if (this.map.showTerrain && this.terrainOverlay) {
             this.terrainOverlay.setEnabled(true);
@@ -1151,6 +1156,62 @@ class GTN750Widget {
         ctx.fillText(labelText, labelX + 7, labelY);
 
         ctx.restore();
+    }
+
+    renderRangeRings(ctx, cx, cy, w, h) {
+        const range = this.map.range;
+        const pixelsPerNm = Math.min(w, h) / 2 / range;
+
+        ctx.strokeStyle = 'rgba(40, 80, 100, 0.6)';
+        ctx.lineWidth = 1;
+
+        // Calculate ring intervals based on range
+        let interval;
+        if (range <= 5) interval = 1;
+        else if (range <= 10) interval = 2;
+        else if (range <= 25) interval = 5;
+        else if (range <= 50) interval = 10;
+        else interval = 25;
+
+        // Draw rings at intervals
+        for (let r = interval; r <= range; r += interval) {
+            const radius = r * pixelsPerNm;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Label the ring (right side)
+            if (this.declutterLevel < 1) {
+                ctx.font = '9px Consolas, monospace';
+                ctx.fillStyle = 'rgba(80, 160, 200, 0.8)';
+                ctx.textAlign = 'left';
+                ctx.fillText(`${r}`, cx + radius + 3, cy + 3);
+            }
+        }
+
+        // Draw cardinal direction lines (subtle)
+        if (this.declutterLevel < 1) {
+            ctx.strokeStyle = 'rgba(40, 80, 100, 0.3)';
+            ctx.setLineDash([4, 8]);
+
+            const rotation = this.getMapRotation() * Math.PI / 180;
+            const maxRadius = range * pixelsPerNm;
+
+            // North-South line
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.sin(rotation) * maxRadius, cy - Math.cos(rotation) * maxRadius);
+            ctx.lineTo(cx - Math.sin(rotation) * maxRadius, cy + Math.cos(rotation) * maxRadius);
+            ctx.stroke();
+
+            // East-West line
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(rotation) * maxRadius, cy + Math.sin(rotation) * maxRadius);
+            ctx.lineTo(cx - Math.cos(rotation) * maxRadius, cy - Math.sin(rotation) * maxRadius);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+        }
     }
 
     renderBearingPointers(ctx, cx, cy, radius) {
