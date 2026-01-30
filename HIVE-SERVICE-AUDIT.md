@@ -26,14 +26,24 @@ WEB UIs:
 
 ## STARTUP METHODS
 
-### Method 1: start-hive.bat (RECOMMENDED)
-**Location:** `C:\LLM-DevOSWE\start-hive.bat`
+### Method 1: hive CLI (RECOMMENDED)
+**Location:** `C:\LLM-DevOSWE\hive.bat`
 
-This is the primary startup method. It starts services in dependency order:
+Unified command interface. All services launch with **hidden windows** (no desktop clutter).
 
+```bash
+hive start              # Start all services
+hive stop               # Stop all services
+hive status             # Health check all services
+hive restart oracle     # Restart specific service
+hive open dashboard     # Open UI in browser
+hive open all           # Open Dashboard, KittBox, Orchestrator
+```
+
+Startup order (via start-hive.bat):
 ```
 1. Ollama        → LLM engine (if not running)
-2. Relay :8600   → Message bus first
+2. Relay :8600   → Message bus first (HiveStore)
 3. Oracle :3002  → LLM API
 4. Orchestrator  → Watchdog auto-starts remaining 15 services
 ```

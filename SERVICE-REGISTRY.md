@@ -1,6 +1,22 @@
 # Service Registry
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-01-30
 **Single source of truth for all services, ports, and endpoints**
+
+## HiveStore (Persistence Layer)
+All Hive services use **HiveStore** - unified SQLite backend with `better-sqlite3` + WAL mode.
+
+| Database | Location | Purpose |
+|----------|----------|---------|
+| relay.db | `Admin/relay/` | Tasks, alerts, conversations, knowledge, sessions (18 tables) |
+| oracle.db | `C:/LLM-Oracle/` | Project data, intel cache |
+| colony.db | `Admin/hive-brain/` | LLM node discovery |
+
+## Startup
+```bash
+hive start      # Start all services (hidden windows)
+hive stop       # Stop all services
+hive status     # Health check
+```
 
 ---
 
