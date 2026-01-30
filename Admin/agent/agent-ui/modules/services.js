@@ -22,11 +22,23 @@ const Services = (function() {
     
     const serverConfig = {
         master: { port: 8500, name: 'Master (O)', canStart: false, mode: 'orchestrator' },
-        simwidget: { port: 8080, name: 'Main Server', canStart: true, healthEndpoint: '/api/status' },
-        agent: { port: 8585, name: 'Agent (Kitt)', canStart: true },
+        oracle: { port: 3002, name: 'Oracle', canStart: true },
+        simwidget: { port: 8080, name: 'SimWidget', canStart: true, healthEndpoint: '/api/status' },
+        agent: { port: 8585, name: 'KittBox', canStart: true },
         remote: { port: 8590, name: 'Remote Support', canStart: true },
-        relay: { port: 8600, name: 'Relay Service', canStart: true },
-        bridge: { port: 8601, name: 'Claude Bridge', canStart: true }
+        relay: { port: 8600, name: 'Relay + HiveStore', canStart: true },
+        bridge: { port: 8601, name: 'Claude Bridge', canStart: true },
+        hivemind: { port: 8701, name: 'Hive-Mind', canStart: true },
+        terminalhub: { port: 8771, name: 'Terminal Hub', canStart: true },
+        hivebrain: { port: 8800, name: 'Hive Brain', canStart: true },
+        hivebraindiscovery: { port: 8810, name: 'Brain Discovery', canStart: true },
+        mastermind: { port: 8820, name: 'Master-Mind', canStart: true },
+        hiveoracle: { port: 8850, name: 'Hive Oracle', canStart: true },
+        hivemesh: { port: 8750, name: 'Hive-Mesh', canStart: true, healthEndpoint: '/health' },
+        personas: { port: 8770, name: 'Personas', canStart: true, healthEndpoint: '/health' },
+        mcpbridge: { port: 8860, name: 'MCP Bridge', canStart: true },
+        dashboard: { port: 8899, name: 'Dashboard', canStart: true },
+        voiceaccess: { port: 8875, name: 'VoiceAccess', canStart: true }
     };
     
     let currentServiceMode = 'dev';
@@ -74,19 +86,21 @@ const Services = (function() {
     async function checkServer(serverId) {
         const dot = document.getElementById(`dot-${serverId}`);
         const cfg = serverConfig[serverId];
-        if (!dot || !cfg) return false;
-        
-        dot.className = 'server-dot checking';
+        if (!cfg) return false;
+
+        if (dot) dot.className = 'service-dot warning';
         try {
             const endpoint = cfg.healthEndpoint || '/api/health';
-            const res = await fetch(`http://${config.baseHost}:${cfg.port}${endpoint}`, { 
+            const res = await fetch(`http://${config.baseHost}:${cfg.port}${endpoint}`, {
                 method: 'GET',
                 signal: AbortSignal.timeout(2000)
             });
-            dot.className = res.ok ? 'server-dot running' : 'server-dot stopped';
+            if (dot) dot.className = res.ok ? 'service-dot online' : 'service-dot offline';
+            updateServiceCount();
             return res.ok;
         } catch {
-            dot.className = 'server-dot stopped';
+            if (dot) dot.className = 'service-dot offline';
+            updateServiceCount();
             return false;
         }
     }
@@ -155,7 +169,7 @@ const Services = (function() {
         const dot = document.getElementById(`dot-${serverId}`);
         
         if (btn) AdminKitt.setButtonState(btn, 'loading', '⏳');
-        if (dot) dot.className = 'server-dot starting';
+        if (dot) dot.className = 'service-dot warning';
         AdminKitt.addMessage('system', `▶ Starting ${cfg.name}...`, { fadeAfter: 5000 });
         
         try {
@@ -166,12 +180,12 @@ const Services = (function() {
                 setTimeout(() => checkServer(serverId), 3000);
             } else {
                 if (btn) AdminKitt.setButtonState(btn, 'error', '✗', 2000);
-                if (dot) dot.className = 'server-dot stopped';
+                if (dot) dot.className = 'service-dot offline';
                 AdminKitt.addMessage('error', `❌ Failed to start ${cfg.name}`);
             }
         } catch (e) {
             if (btn) AdminKitt.setButtonState(btn, 'error', '✗', 2000);
-            if (dot) dot.className = 'server-dot stopped';
+            if (dot) dot.className = 'service-dot offline';
             AdminKitt.addMessage('error', `❌ Master (O) unavailable. Start manually or launch Master first.`);
         }
     }
@@ -185,7 +199,7 @@ const Services = (function() {
 
         for (const [id] of Object.entries(serverConfig)) {
             const dot = document.getElementById(`dot-${id}`);
-            if (dot) dot.className = 'server-dot starting';
+            if (dot) dot.className = 'service-dot warning';
         }
 
         try {
@@ -208,7 +222,7 @@ const Services = (function() {
         const cfg = serverConfig[serverId];
         if (!cfg) return;
         const dot = document.getElementById(`dot-${serverId}`);
-        if (dot) dot.className = 'server-dot starting';
+        if (dot) dot.className = 'service-dot warning';
 
         AdminKitt.addMessage('system', `🔄 Restarting ${cfg.name}...`, { fadeAfter: 5000 });
 
@@ -218,11 +232,11 @@ const Services = (function() {
                 AdminKitt.addMessage('system', `✅ ${cfg.name} restarting`, { fadeAfter: 5000 });
                 setTimeout(() => checkServer(serverId), 3000);
             } else {
-                if (dot) dot.className = 'server-dot stopped';
+                if (dot) dot.className = 'service-dot offline';
                 AdminKitt.addMessage('error', `❌ Failed to restart ${cfg.name}`);
             }
         } catch (e) {
-            if (dot) dot.className = 'server-dot stopped';
+            if (dot) dot.className = 'service-dot offline';
             AdminKitt.addMessage('error', '❌ Master (O) unavailable');
         }
     }
@@ -237,7 +251,7 @@ const Services = (function() {
         try {
             const res = await fetch(`http://${config.baseHost}:8500/api/services/${serverId}/stop`, { method: 'POST' });
             if (res.ok) {
-                if (dot) dot.className = 'server-dot stopped';
+                if (dot) dot.className = 'service-dot offline';
                 AdminKitt.addMessage('system', `✅ ${cfg.name} stopped`, { fadeAfter: 5000 });
             } else {
                 AdminKitt.addMessage('error', `❌ Failed to stop ${cfg.name}`);
@@ -260,7 +274,7 @@ const Services = (function() {
                 AdminKitt.addMessage('system', '✅ All servers stopped', { fadeAfter: 5000 });
                 for (const [id] of Object.entries(serverConfig)) {
                     const dot = document.getElementById(`dot-${id}`);
-                    if (dot) dot.className = 'server-dot stopped';
+                    if (dot) dot.className = 'service-dot offline';
                 }
             } else {
                 if (btn) AdminKitt.setButtonState(btn, 'error', '✗', 2000);
@@ -341,29 +355,75 @@ const Services = (function() {
         }
     }
     
+    // ==================== RENDER SERVICES GRID ====================
+    function renderServicesGrid() {
+        const grid = document.getElementById('services-grid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+        for (const [id, cfg] of Object.entries(serverConfig)) {
+            const div = document.createElement('div');
+            div.className = 'service-card';
+            div.dataset.server = id;
+            div.innerHTML = `
+                <div class="service-card-header">
+                    <span class="service-dot offline" id="dot-${id}"></span>
+                    <span class="service-name">${cfg.name}<span class="service-port">:${cfg.port || '--'}</span></span>
+                </div>
+                <div class="service-actions">
+                    ${cfg.canStart ? `
+                        <button class="service-action-btn" onclick="startServer('${id}')" title="Start">▶</button>
+                        <button class="service-action-btn" onclick="restartServer('${id}')" title="Restart">🔄</button>
+                        <button class="service-action-btn" onclick="stopServer('${id}')" title="Stop">⏹</button>
+                    ` : '<span style="font-size:9px;color:var(--text-muted)">master</span>'}
+                </div>
+            `;
+            grid.appendChild(div);
+        }
+        updateServiceCount();
+    }
+
+    function updateServiceCount() {
+        const countEl = document.getElementById('service-count');
+        if (!countEl) return;
+        let online = 0;
+        for (const id of Object.keys(serverConfig)) {
+            const dot = document.getElementById(`dot-${id}`);
+            if (dot && dot.classList.contains('online')) online++;
+        }
+        countEl.textContent = `${online}/${Object.keys(serverConfig).length}`;
+    }
+
     // ==================== INITIALIZATION ====================
     function init() {
-        // Service control buttons
+        // Render services grid dynamically
+        renderServicesGrid();
+
+        // Service control buttons (legacy)
         document.querySelectorAll('.service-row').forEach(row => {
             const service = row.dataset.service;
             row.querySelectorAll('.btn-start, .btn-stop, .btn-restart').forEach(btn => {
                 btn.addEventListener('click', (e) => controlService(service, btn.dataset.action, e.target));
             });
         });
-        
+
         // Initial checks
         loadServiceMode();
         checkAllServices();
-        
+
         // Check servers on load
         setTimeout(() => {
             for (const id of Object.keys(serverConfig)) {
                 checkServer(id);
             }
+            updateServiceCount();
         }, 1000);
-        
-        // Periodic checks
-        setInterval(checkAllServices, config.checkInterval);
+
+        // Periodic checks with count update
+        setInterval(() => {
+            checkAllServices();
+            updateServiceCount();
+        }, config.checkInterval);
     }
     
     // ==================== PUBLIC API ====================
