@@ -810,6 +810,116 @@ app.get('/api/weather/radar', async (req, res) => {
     }
 });
 
+// Nearby airports API
+app.get('/api/nearby/airports', async (req, res) => {
+    const lat = parseFloat(req.query.lat) || flightData.latitude || 40.6413;
+    const lon = parseFloat(req.query.lon) || flightData.longitude || -73.7781;
+    const radius = parseInt(req.query.radius) || 50; // Default 50nm radius
+
+    // Check cache (based on rounded position)
+    const cacheKey = `nearby_apt_${Math.round(lat)}_${Math.round(lon)}`;
+    const cached = weatherCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < 300000) { // 5 min cache
+        return res.json(cached.data);
+    }
+
+    try {
+        // Use aviationAPI airports endpoint
+        const apiUrl = `https://api.aviationapi.com/v1/airports?lat=${lat}&lon=${lon}&dist=${radius}`;
+        const response = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+
+        if (response.ok) {
+            const data = await response.json();
+            // Format airports with distance and bearing
+            const airports = (Array.isArray(data) ? data : Object.values(data).flat())
+                .filter(apt => apt.icao || apt.ident)
+                .map(apt => {
+                    const aptLat = parseFloat(apt.latitude || apt.lat);
+                    const aptLon = parseFloat(apt.longitude || apt.lon);
+                    const dist = calculateDistance(lat, lon, aptLat, aptLon);
+                    const brg = calculateBearing(lat, lon, aptLat, aptLon);
+                    return {
+                        icao: apt.icao || apt.ident,
+                        name: apt.name || apt.facility_name,
+                        type: apt.type || 'AIRPORT',
+                        lat: aptLat,
+                        lon: aptLon,
+                        elevation: apt.elevation || apt.elev,
+                        distance: Math.round(dist * 10) / 10,
+                        bearing: Math.round(brg),
+                        runways: apt.runways || []
+                    };
+                })
+                .filter(apt => apt.distance <= radius)
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 25); // Limit to 25 nearest
+
+            const result = { airports, source: 'aviationapi', count: airports.length };
+            weatherCache.set(cacheKey, { data: result, timestamp: Date.now() });
+            return res.json(result);
+        }
+    } catch (e) {
+        console.log('[Nearby] API failed:', e.message);
+    }
+
+    // Fallback: generate sample airports around position
+    const sampleAirports = generateSampleAirports(lat, lon, radius);
+    res.json({ airports: sampleAirports, source: 'sample', count: sampleAirports.length });
+});
+
+// Generate sample airports for demo/fallback
+function generateSampleAirports(lat, lon, radius) {
+    const types = ['LARGE', 'MEDIUM', 'SMALL', 'HELIPORT'];
+    const prefixes = ['K', 'C', 'E', 'L'];
+    const airports = [];
+    const count = 8 + Math.floor(Math.random() * 8);
+
+    for (let i = 0; i < count; i++) {
+        const bearing = (i * 360 / count) + Math.random() * 30;
+        const distance = 5 + Math.random() * (radius - 5);
+        const bearingRad = bearing * Math.PI / 180;
+
+        const aptLat = lat + (distance * Math.cos(bearingRad)) / 60;
+        const aptLon = lon + (distance * Math.sin(bearingRad)) / (60 * Math.cos(lat * Math.PI / 180));
+
+        const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+        const code = `${prefix}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`;
+
+        airports.push({
+            icao: code,
+            name: `${code} Regional Airport`,
+            type: types[Math.floor(Math.random() * types.length)],
+            lat: aptLat,
+            lon: aptLon,
+            elevation: Math.round(500 + Math.random() * 2000),
+            distance: Math.round(distance * 10) / 10,
+            bearing: Math.round(bearing),
+            runways: [{ id: `${Math.floor(Math.random() * 36).toString().padStart(2, '0')}`, length: 3000 + Math.floor(Math.random() * 7000) }]
+        });
+    }
+
+    return airports.sort((a, b) => a.distance - b.distance);
+}
+
+// Helper functions for distance/bearing
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 3440.065; // Earth radius in nautical miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function calculateBearing(lat1, lon1, lat2, lon2) {
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+    const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+              Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+    return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+}
+
 // Charts API - fetch available charts for an airport
 app.get('/api/charts/:icao', async (req, res) => {
     const icao = req.params.icao.toUpperCase();

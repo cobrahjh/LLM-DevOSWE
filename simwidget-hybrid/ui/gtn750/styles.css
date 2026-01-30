@@ -864,6 +864,61 @@ body {
     padding: 6px;
 }
 
+/* NRST Items */
+.gtn-nrst-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    background: var(--gtn-bg-light);
+    border-radius: 4px;
+    cursor: pointer;
+    gap: 8px;
+}
+
+.gtn-nrst-item:hover {
+    background: var(--gtn-accent);
+}
+
+.gtn-nrst-item.selected {
+    background: var(--gtn-accent);
+    border: 1px solid var(--gtn-green);
+}
+
+.nrst-id {
+    font-weight: 600;
+    color: var(--gtn-green);
+    min-width: 50px;
+}
+
+.nrst-name {
+    flex: 1;
+    color: var(--gtn-text);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nrst-dist {
+    min-width: 50px;
+    text-align: right;
+    color: var(--gtn-cyan);
+}
+
+.nrst-brg {
+    min-width: 40px;
+    text-align: right;
+    color: var(--gtn-yellow);
+}
+
+.nrst-info {
+    min-width: 45px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--gtn-gray);
+}
+
 .gtn-proc-airport {
     display: flex;
     align-items: center;

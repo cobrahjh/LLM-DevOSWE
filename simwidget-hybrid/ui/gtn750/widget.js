@@ -168,6 +168,18 @@ class GTN750Widget {
             }
         });
 
+        // Initialize Nearest page
+        this.nearestPage = new NearestPage({
+            core: this.core,
+            serverPort: this.serverPort,
+            onItemSelect: (item, type) => {
+                console.log(`[GTN750] Nearest ${type} selected: ${item.icao || item.id}`);
+            },
+            onDirectTo: (item) => {
+                this.directTo(item);
+            }
+        });
+
         // Initialize System page
         this.systemPage = new SystemPage({
             core: this.core,
@@ -349,6 +361,12 @@ class GTN750Widget {
                         this.chartsPage.setAirport(dest.ident);
                     }
                 }
+            }
+        }
+        if (pageId === 'nrst') {
+            if (this.nearestPage) {
+                this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
+                this.nearestPage.init();
             }
         }
         if (pageId === 'system') {
@@ -1835,77 +1853,10 @@ class GTN750Widget {
 
     // ===== NEAREST =====
     switchNearestType(type) {
-        document.querySelectorAll('.nrst-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.type === type);
-        });
-        this.fetchNearestAirports(type);
-    }
-
-    async fetchNearestAirports(type = 'apt') {
-        if (!this.elements.nrstList) return;
-
-        try {
-            const url = `http://${location.hostname}:${this.serverPort}/api/airports/nearest?lat=${this.data.latitude}&lng=${this.data.longitude}&limit=10&type=${type}`;
-            const response = await fetch(url);
-            if (response.ok) {
-                const items = await response.json();
-                this.displayNearestItems(items);
-            }
-        } catch (e) {
-            this.elements.nrstList.textContent = '';
-            const empty = document.createElement('div');
-            empty.className = 'gtn-nrst-empty';
-            empty.textContent = 'No data available';
-            this.elements.nrstList.appendChild(empty);
+        if (this.nearestPage) {
+            this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
+            this.nearestPage.switchType(type);
         }
-    }
-
-    displayNearestItems(items) {
-        if (!this.elements.nrstList) return;
-        this.elements.nrstList.textContent = '';
-
-        if (!items?.length) {
-            const empty = document.createElement('div');
-            empty.className = 'gtn-nrst-empty';
-            empty.textContent = 'None nearby';
-            this.elements.nrstList.appendChild(empty);
-            return;
-        }
-
-        items.forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'gtn-nrst-item';
-
-            const left = document.createElement('div');
-            const ident = document.createElement('div');
-            ident.className = 'gtn-nrst-ident';
-            ident.textContent = item.icao || item.ident;
-            const name = document.createElement('div');
-            name.className = 'gtn-nrst-name';
-            name.textContent = item.name || '';
-            left.appendChild(ident);
-            left.appendChild(name);
-
-            const right = document.createElement('div');
-            right.className = 'gtn-nrst-data';
-            const dist = document.createElement('div');
-            dist.textContent = (item.distance || 0).toFixed(1) + ' NM';
-            const brg = document.createElement('div');
-            brg.textContent = (item.bearing || 0).toString().padStart(3, '0') + '°';
-            right.appendChild(dist);
-            right.appendChild(brg);
-
-            el.appendChild(left);
-            el.appendChild(right);
-
-            el.addEventListener('click', () => {
-                if (this.elements.wptSearch) this.elements.wptSearch.value = item.icao || item.ident;
-                this.pageManager.switchPage('wpt');
-                this.searchWaypoint();
-            });
-
-            this.elements.nrstList.appendChild(el);
-        });
     }
 
     // ===== PROCEDURES =====
