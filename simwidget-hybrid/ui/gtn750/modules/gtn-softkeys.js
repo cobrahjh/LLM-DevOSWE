@@ -102,7 +102,7 @@ class GTNSoftKeys {
             { label: 'ARR', action: 'proc-arrival' },
             { label: 'APR', action: 'proc-approach' },
             { label: 'LOAD', action: 'load-proc' },
-            { label: 'PRVW', action: 'preview-proc' },
+            { label: 'CHART', action: 'view-proc-chart' },
             { label: 'BACK', action: 'back' }
         ]);
 

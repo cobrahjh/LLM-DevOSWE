@@ -557,6 +557,9 @@ class GTN750Widget {
             case 'preview-proc':
                 this.previewProcedure();
                 break;
+            case 'view-proc-chart':
+                if (this.proceduresPage) this.proceduresPage.viewChart();
+                break;
 
             // AUX page
             case 'aux-trip':

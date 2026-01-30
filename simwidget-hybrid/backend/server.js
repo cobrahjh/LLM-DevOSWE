@@ -873,6 +873,122 @@ app.get('/api/charts/:icao', async (req, res) => {
     res.json(fallback);
 });
 
+// Procedures API - extract procedures from charts data
+app.get('/api/procedures/:icao', async (req, res) => {
+    const icao = req.params.icao.toUpperCase();
+
+    if (!/^[A-Z]{3,4}$/.test(icao)) {
+        return res.status(400).json({ error: 'Invalid ICAO code' });
+    }
+
+    // Check cache
+    const cached = weatherCache.get(`procedures_${icao}`);
+    if (cached && Date.now() - cached.timestamp < 3600000) {
+        return res.json(cached.data);
+    }
+
+    try {
+        // Fetch charts to extract procedure names
+        const apiUrl = `https://api.aviationapi.com/v1/charts?apt=${icao}`;
+        const response = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+
+        if (response.ok) {
+            const data = await response.json();
+            const chartList = data[icao] || [];
+
+            const departures = [];
+            const arrivals = [];
+            const approaches = [];
+
+            chartList.forEach(chart => {
+                const name = chart.chart_name || '';
+                const code = chart.chart_code || '';
+
+                // Extract runway from name
+                const rwyMatch = name.match(/RWY\s*(\d{1,2}[LRC]?(?:\/\d{1,2}[LRC]?)?)/i);
+                const runway = rwyMatch ? rwyMatch[1] : 'ALL';
+
+                if (code === 'DP' || code.includes('SID')) {
+                    // Skip continuation pages
+                    if (!name.includes('CONT.')) {
+                        departures.push({
+                            id: chart.chart_seq || chart.pdf_name,
+                            name: name,
+                            runway: runway,
+                            transition: 'RADAR',
+                            chartUrl: chart.pdf_path
+                        });
+                    }
+                } else if (code === 'STAR') {
+                    if (!name.includes('CONT.')) {
+                        arrivals.push({
+                            id: chart.chart_seq || chart.pdf_name,
+                            name: name,
+                            runway: runway,
+                            transition: 'ALL',
+                            chartUrl: chart.pdf_path
+                        });
+                    }
+                } else if (code === 'IAP') {
+                    // Determine approach type
+                    let type = 'OTHER';
+                    let category = '';
+                    if (name.includes('ILS')) {
+                        type = 'ILS';
+                        if (name.includes('CAT II') || name.includes('CAT III')) {
+                            category = name.includes('CAT III') ? 'CAT III' : 'CAT II';
+                        } else {
+                            category = 'CAT I';
+                        }
+                    } else if (name.includes('RNAV') || name.includes('GPS')) {
+                        type = 'RNAV';
+                        category = name.includes('LPV') ? 'LPV' : 'LNAV';
+                    } else if (name.includes('VOR')) {
+                        type = 'VOR';
+                    } else if (name.includes('LOC')) {
+                        type = 'LOC';
+                    } else if (name.includes('NDB')) {
+                        type = 'NDB';
+                    } else if (name.includes('VISUAL')) {
+                        type = 'VISUAL';
+                    }
+
+                    approaches.push({
+                        id: chart.chart_seq || chart.pdf_name,
+                        name: name,
+                        runway: runway,
+                        type: type,
+                        category: category,
+                        chartUrl: chart.pdf_path
+                    });
+                }
+            });
+
+            const result = {
+                airport: icao,
+                departures,
+                arrivals,
+                approaches,
+                source: 'aviationapi'
+            };
+
+            weatherCache.set(`procedures_${icao}`, { data: result, timestamp: Date.now() });
+            return res.json(result);
+        }
+    } catch (e) {
+        console.log(`[Procedures] API failed for ${icao}: ${e.message}`);
+    }
+
+    // Return empty for fallback
+    res.json({
+        airport: icao,
+        departures: [],
+        arrivals: [],
+        approaches: [],
+        source: 'none'
+    });
+});
+
 // Helper: Map chart codes to types
 function mapChartType(code) {
     if (!code) return 'OTHER';

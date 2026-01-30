@@ -335,6 +335,31 @@ class ProceduresPage {
         this.previewWaypoints = [];
         this.renderProcedureList();
     }
+
+    /**
+     * View chart for selected procedure
+     */
+    viewChart() {
+        if (!this.selectedProcedure) {
+            console.warn('[GTN750] No procedure selected');
+            return;
+        }
+
+        // Use chart URL if available
+        if (this.selectedProcedure.chartUrl) {
+            window.open(this.selectedProcedure.chartUrl, '_blank', 'width=900,height=1100,scrollbars=yes');
+        } else if (this.selectedAirport) {
+            // Fall back to ChartFox
+            window.open(`https://chartfox.org/${this.selectedAirport}`, '_blank');
+        }
+    }
+
+    /**
+     * Check if selected procedure has a chart
+     */
+    hasChart() {
+        return !!(this.selectedProcedure?.chartUrl);
+    }
 }
 
 // Export
