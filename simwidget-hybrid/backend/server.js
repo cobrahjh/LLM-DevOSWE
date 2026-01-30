@@ -634,6 +634,54 @@ function checkMsfsRunning() {
 const weatherCache = new Map();
 const WEATHER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Nearby airports METAR (within radius) - must be before :icao route
+app.get('/api/weather/metar/nearby', async (req, res) => {
+    const { lat, lon, radius = 100 } = req.query;
+
+    if (!lat || !lon) {
+        return res.status(400).json({ error: 'Provide lat and lon' });
+    }
+
+    try {
+        // Use AWC for bulk METAR fetch within bounding box
+        const latNum = parseFloat(lat);
+        const lonNum = parseFloat(lon);
+        const radiusNm = parseFloat(radius);
+
+        // Rough bounding box (1 degree ~ 60nm)
+        const latDelta = radiusNm / 60;
+        const lonDelta = radiusNm / (60 * Math.cos(latNum * Math.PI / 180));
+
+        const bbox = `${latNum - latDelta},${lonNum - lonDelta},${latNum + latDelta},${lonNum + lonDelta}`;
+        const awcUrl = `https://aviationweather.gov/api/data/metar?bbox=${bbox}&format=json`;
+
+        const response = await fetch(awcUrl, { signal: AbortSignal.timeout(8000) });
+
+        if (response.ok) {
+            const data = await response.json();
+            const metars = (data || []).map(m => ({
+                icao: m.icaoId,
+                raw: m.rawOb,
+                lat: m.lat,
+                lon: m.lon,
+                flight_rules: m.fltcat,
+                temp: m.temp,
+                dewp: m.dewp,
+                wdir: m.wdir,
+                wspd: m.wspd,
+                visib: m.visib,
+                altim: m.altim
+            }));
+            return res.json({ metars, count: metars.length });
+        }
+
+        res.status(502).json({ error: 'AWC API unavailable' });
+    } catch (e) {
+        console.log('[Weather] Nearby METAR failed:', e.message);
+        res.status(500).json({ error: 'Failed to fetch nearby METARs' });
+    }
+});
+
 app.get('/api/weather/metar/:icao', async (req, res) => {
     const icao = req.params.icao.toUpperCase();
 
@@ -729,6 +777,37 @@ app.get('/api/weather/taf/:icao', async (req, res) => {
     }
 
     res.status(404).json({ error: `No TAF found for ${icao}` });
+});
+
+// RainViewer radar data (free, no API key)
+app.get('/api/weather/radar', async (req, res) => {
+    try {
+        const cached = weatherCache.get('radar_tiles');
+        if (cached && Date.now() - cached.timestamp < 60000) { // 1 min cache
+            return res.json(cached.data);
+        }
+
+        const response = await fetch('https://api.rainviewer.com/public/weather-maps.json', {
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const result = {
+                generated: data.generated,
+                host: data.host,
+                radar: data.radar?.past?.slice(-6) || [], // Last 6 frames
+                satellite: data.satellite?.infrared?.slice(-3) || []
+            };
+            weatherCache.set('radar_tiles', { data: result, timestamp: Date.now() });
+            return res.json(result);
+        }
+
+        res.status(502).json({ error: 'RainViewer API unavailable' });
+    } catch (e) {
+        console.log('[Weather] Radar fetch failed:', e.message);
+        res.status(500).json({ error: 'Failed to fetch radar data' });
+    }
 });
 
 // SimBrief OFP proxy (CORS bypass)

@@ -108,7 +108,7 @@ class WeatherOverlay {
         }
 
         if (this.layers.metar) {
-            this.renderMetarDots(ctx, latitude, longitude, mapSettings);
+            this.renderMetarDotsReal(ctx, latitude, longitude, mapSettings);
         }
 
         if (this.layers.winds) {
@@ -501,16 +501,21 @@ class WeatherOverlay {
     }
 
     /**
-     * Fetch real radar data from RainViewer API
-     * (For future implementation)
+     * Fetch real radar data from backend (RainViewer proxy)
      */
     async fetchRadarData() {
         try {
-            const response = await fetch(this.rainViewerApi);
+            const port = location.port || (location.protocol === 'https:' ? 443 : 80);
+            const response = await fetch(`http://${location.hostname}:${port}/api/weather/radar`);
             const data = await response.json();
-            if (data.radar && data.radar.past) {
-                this.radarFrames = data.radar.past;
-                this.radarTimestamp = this.radarFrames[this.radarFrames.length - 1].time;
+
+            if (data.radar && data.radar.length > 0) {
+                this.radarFrames = data.radar;
+                this.radarHost = data.host;
+                const latest = this.radarFrames[this.radarFrames.length - 1];
+                this.radarTimestamp = latest.time;
+                this.radarAge = Math.round((Date.now() / 1000 - latest.time) / 60);
+                console.log(`[GTN750] Radar data loaded: ${this.radarFrames.length} frames, ${this.radarAge}min old`);
             }
         } catch (e) {
             console.warn('[GTN750] Failed to fetch radar data:', e);
@@ -518,10 +523,161 @@ class WeatherOverlay {
     }
 
     /**
+     * Fetch METARs for nearby airports
+     */
+    async fetchNearbyMetars(lat, lon, radius = 100) {
+        if (Date.now() - this.lastMetarFetch < this.metarFetchInterval) {
+            return; // Rate limit
+        }
+
+        try {
+            const port = location.port || (location.protocol === 'https:' ? 443 : 80);
+            const url = `http://${location.hostname}:${port}/api/weather/metar/nearby?lat=${lat}&lon=${lon}&radius=${radius}`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.metars && data.metars.length > 0) {
+                this.metarData.clear();
+                data.metars.forEach(m => {
+                    this.metarData.set(m.icao, {
+                        icao: m.icao,
+                        lat: m.lat,
+                        lon: m.lon,
+                        category: m.flight_rules || 'VFR',
+                        raw: m.raw,
+                        temp: m.temp,
+                        dewp: m.dewp,
+                        wdir: m.wdir,
+                        wspd: m.wspd,
+                        visib: m.visib
+                    });
+                });
+                this.lastMetarFetch = Date.now();
+                console.log(`[GTN750] Loaded ${data.metars.length} METARs`);
+            }
+        } catch (e) {
+            console.warn('[GTN750] Failed to fetch nearby METARs:', e);
+        }
+    }
+
+    /**
+     * Fetch single METAR
+     */
+    async fetchMetar(icao) {
+        try {
+            const port = location.port || (location.protocol === 'https:' ? 443 : 80);
+            const response = await fetch(`http://${location.hostname}:${port}/api/weather/metar/${icao}`);
+            const data = await response.json();
+
+            if (data.raw || data.station) {
+                return {
+                    icao: data.station || icao,
+                    raw: data.raw,
+                    category: data.flight_rules || 'VFR',
+                    temp: data.temperature?.value,
+                    dewp: data.dewpoint?.value,
+                    wdir: data.wind_direction?.value,
+                    wspd: data.wind_speed?.value,
+                    visib: data.visibility?.value,
+                    altim: data.altimeter?.value
+                };
+            }
+        } catch (e) {
+            console.warn(`[GTN750] Failed to fetch METAR for ${icao}:`, e);
+        }
+        return null;
+    }
+
+    /**
+     * Render METAR dots using real data when available
+     */
+    renderMetarDotsReal(ctx, lat, lon, mapSettings) {
+        const { range, width, height, orientation, heading } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+        const rotation = orientation === 'north' ? 0 : heading;
+
+        // Use real METAR data if available, otherwise fall back to simulated
+        const stations = this.metarData.size > 0
+            ? Array.from(this.metarData.values())
+            : this.generateSimulatedMetar(lat, lon, range);
+
+        stations.forEach(station => {
+            const dist = this.core.calculateDistance(lat, lon, station.lat, station.lon);
+            if (dist > range) return;
+
+            const brg = this.core.calculateBearing(lat, lon, station.lat, station.lon);
+            const angle = this.core.toRad(brg - rotation);
+
+            const x = cx + Math.sin(angle) * dist * pixelsPerNm;
+            const y = cy - Math.cos(angle) * dist * pixelsPerNm;
+
+            // Draw METAR dot
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = this.metarColors[station.category] || '#888888';
+            ctx.fill();
+
+            // Draw station ID
+            ctx.font = '8px Consolas, monospace';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(station.icao, x, y - 8);
+        });
+    }
+
+    /**
+     * Start auto-refresh for weather data
+     */
+    startAutoRefresh(lat, lon) {
+        // Initial fetch
+        this.fetchRadarData();
+        this.fetchNearbyMetars(lat, lon);
+
+        // Refresh radar every 2 minutes
+        this.radarRefreshInterval = setInterval(() => {
+            this.fetchRadarData();
+        }, 120000);
+
+        // Refresh METARs every 5 minutes
+        this.metarRefreshInterval = setInterval(() => {
+            this.fetchNearbyMetars(lat, lon);
+        }, 300000);
+    }
+
+    /**
+     * Stop auto-refresh
+     */
+    stopAutoRefresh() {
+        if (this.radarRefreshInterval) {
+            clearInterval(this.radarRefreshInterval);
+        }
+        if (this.metarRefreshInterval) {
+            clearInterval(this.metarRefreshInterval);
+        }
+    }
+
+    /**
+     * Get current METAR text for display
+     */
+    getMetarText(icao) {
+        const metar = this.metarData.get(icao);
+        return metar?.raw || 'No METAR available';
+    }
+
+    /**
      * Get layer states
      */
     getLayers() {
         return { ...this.layers };
+    }
+
+    /**
+     * Get radar age in minutes
+     */
+    getRadarAge() {
+        return this.radarAge;
     }
 }
 

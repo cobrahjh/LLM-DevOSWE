@@ -448,6 +448,11 @@ class GTN750Widget {
                 break;
             case 'toggle-weather':
                 this.map.showWeather = detail.active;
+                if (detail.active && this.weatherOverlay) {
+                    this.weatherOverlay.startAutoRefresh(this.data.latitude, this.data.longitude);
+                } else if (this.weatherOverlay) {
+                    this.weatherOverlay.stopAutoRefresh();
+                }
                 break;
             case 'declutter':
                 this.cycleDeclutter();
@@ -1079,10 +1084,31 @@ class GTN750Widget {
             w, h
         );
 
-        // Update METAR display
+        // Update METAR display - show nearest METAR if available
         if (this.elements.wxMetarText) {
-            // In production, this would show actual METAR
-            this.elements.wxMetarText.textContent = 'Weather data simulated';
+            const metarData = this.weatherOverlay.metarData;
+            if (metarData && metarData.size > 0) {
+                // Find nearest airport with METAR
+                let nearest = null;
+                let nearestDist = Infinity;
+                metarData.forEach(m => {
+                    const dist = this.core.calculateDistance(
+                        this.data.latitude, this.data.longitude,
+                        m.lat, m.lon
+                    );
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearest = m;
+                    }
+                });
+                if (nearest) {
+                    this.elements.wxMetarText.textContent = nearest.raw || `${nearest.icao}: ${nearest.category}`;
+                } else {
+                    this.elements.wxMetarText.textContent = 'No METAR data';
+                }
+            } else {
+                this.elements.wxMetarText.textContent = 'Fetching weather...';
+            }
         }
     }
 
