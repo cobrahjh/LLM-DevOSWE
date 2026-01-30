@@ -74,6 +74,13 @@ class GTN750Widget {
             signalValid: true // NAV signal valid
         };
 
+        // OBS (Omni-Bearing Selector) mode for holding patterns
+        this.obs = {
+            active: false,    // OBS mode enabled
+            course: 0,        // Selected OBS course (0-359)
+            suspended: false  // Waypoint sequencing suspended
+        };
+
         // TAWS
         this.taws = { active: true, inhibited: false };
 
@@ -647,6 +654,23 @@ class GTN750Widget {
                 }
                 break;
 
+            // OBS mode controls
+            case 'obs-toggle':
+                this.toggleObs();
+                break;
+            case 'obs-crs-up':
+                this.adjustObsCourse(1);
+                break;
+            case 'obs-crs-down':
+                this.adjustObsCourse(-1);
+                break;
+            case 'obs-crs-up-10':
+                this.adjustObsCourse(10);
+                break;
+            case 'obs-crs-down-10':
+                this.adjustObsCourse(-10);
+                break;
+
             default:
                 console.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
@@ -1005,6 +1029,11 @@ class GTN750Widget {
             this.renderRoute(ctx, cx, cy, w, h);
         }
 
+        // OBS course line (when OBS mode active)
+        if (this.obs.active) {
+            this.renderObsCourseLine(ctx, cx, cy, w, h);
+        }
+
         // Traffic overlay (render after route, before aircraft)
         if (this.map.showTraffic && this.trafficOverlay) {
             this.trafficOverlay.setEnabled(true);
@@ -1098,6 +1127,81 @@ class GTN750Widget {
         ctx.fillStyle = '#00ccff';
         ctx.textAlign = 'center';
         ctx.fillText(modeLabels[this.map.orientation] || 'TRK', x, y + 34);
+    }
+
+    renderObsCourseLine(ctx, cx, cy, w, h) {
+        if (!this.obs.active) return;
+
+        const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
+        if (!wp || !wp.lat || !wp.lng) return;
+
+        ctx.save();
+
+        // Get waypoint position on screen
+        const wpPos = this.core.geoToScreen(
+            wp.lat, wp.lng,
+            this.data.latitude, this.data.longitude,
+            this.map.range, w, h,
+            this.getMapRotation()
+        );
+
+        // Draw OBS course line through waypoint
+        const courseRad = (this.obs.course - this.getMapRotation()) * Math.PI / 180;
+        const lineLength = Math.max(w, h) * 1.5;
+
+        // Line extends both TO and FROM the waypoint
+        const x1 = wpPos.x - Math.sin(courseRad) * lineLength;
+        const y1 = wpPos.y + Math.cos(courseRad) * lineLength;
+        const x2 = wpPos.x + Math.sin(courseRad) * lineLength;
+        const y2 = wpPos.y - Math.cos(courseRad) * lineLength;
+
+        // Draw dashed magenta line for OBS course
+        ctx.beginPath();
+        ctx.setLineDash([8, 4]);
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = 2;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // OBS course indicator at waypoint
+        ctx.beginPath();
+        ctx.arc(wpPos.x, wpPos.y, 8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Arrow head indicating TO direction
+        const arrowDist = 40;
+        const arrowX = wpPos.x - Math.sin(courseRad) * arrowDist;
+        const arrowY = wpPos.y + Math.cos(courseRad) * arrowDist;
+
+        ctx.beginPath();
+        ctx.fillStyle = '#ff00ff';
+        const arrowSize = 8;
+        ctx.moveTo(
+            arrowX - Math.sin(courseRad) * arrowSize,
+            arrowY + Math.cos(courseRad) * arrowSize
+        );
+        ctx.lineTo(
+            arrowX + Math.cos(courseRad) * arrowSize / 2,
+            arrowY + Math.sin(courseRad) * arrowSize / 2
+        );
+        ctx.lineTo(
+            arrowX - Math.cos(courseRad) * arrowSize / 2,
+            arrowY - Math.sin(courseRad) * arrowSize / 2
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // OBS label with course
+        ctx.font = 'bold 11px Consolas, monospace';
+        ctx.fillStyle = '#ff00ff';
+        ctx.textAlign = 'center';
+        ctx.fillText(`OBS ${this.obs.course.toString().padStart(3, '0')}°`, cx, 25);
+
+        ctx.restore();
     }
 
     renderWindVector(ctx, x, y) {
@@ -2263,6 +2367,9 @@ class GTN750Widget {
         const now = Date.now();
         if (now - this.lastSequenceTime < 3000) return;
 
+        // Skip if OBS mode is active (sequencing suspended)
+        if (this.obs.suspended) return;
+
         // Skip if no flight plan or no position data
         if (!this.flightPlan?.waypoints?.length) return;
         if (!this.data.latitude || !this.data.longitude) return;
@@ -2417,19 +2524,119 @@ class GTN750Widget {
                 break;
             case 'GPS':
             default:
-                this.cdi = {
-                    source: 'GPS',
-                    needle: this.gps.cdi,
-                    dtk: this.gps.dtk || this.cdi.dtk,
-                    xtrk: Math.abs(this.gps.xtrk),
-                    toFrom: 1, // GPS always shows TO
-                    gsNeedle: Math.round(this.gps.vertError * 40),
-                    gsValid: this.gps.approachMode,
-                    signalValid: true
-                };
+                if (this.obs.active) {
+                    // OBS mode - use selected course instead of direct track
+                    const obsCdi = this.calculateObsCdi();
+                    this.cdi = {
+                        source: 'OBS',
+                        needle: obsCdi.needle,
+                        dtk: this.obs.course,
+                        xtrk: obsCdi.xtrk,
+                        toFrom: obsCdi.toFrom,
+                        gsNeedle: Math.round(this.gps.vertError * 40),
+                        gsValid: this.gps.approachMode,
+                        signalValid: true
+                    };
+                } else {
+                    this.cdi = {
+                        source: 'GPS',
+                        needle: this.gps.cdi,
+                        dtk: this.gps.dtk || this.cdi.dtk,
+                        xtrk: Math.abs(this.gps.xtrk),
+                        toFrom: 1, // GPS always shows TO
+                        gsNeedle: Math.round(this.gps.vertError * 40),
+                        gsValid: this.gps.approachMode,
+                        signalValid: true
+                    };
+                }
         }
 
         this.renderCdi();
+    }
+
+    // ===== OBS MODE =====
+    toggleObs() {
+        this.obs.active = !this.obs.active;
+
+        if (this.obs.active) {
+            // When activating OBS, set course to current DTK or bearing to waypoint
+            const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
+            if (wp && this.data.latitude && this.data.longitude) {
+                const brg = this.core.calculateBearing(
+                    this.data.latitude, this.data.longitude,
+                    wp.lat, wp.lng
+                );
+                this.obs.course = Math.round(brg);
+            } else {
+                this.obs.course = this.cdi.dtk || this.data.heading || 0;
+            }
+            this.obs.suspended = true; // Suspend waypoint sequencing
+            console.log(`[GTN750] OBS mode ON - Course: ${this.obs.course}°`);
+        } else {
+            this.obs.suspended = false;
+            console.log('[GTN750] OBS mode OFF - Resuming leg mode');
+        }
+
+        this.updateCdiFromSource();
+        this.updateObsDisplay();
+    }
+
+    adjustObsCourse(delta) {
+        if (!this.obs.active) return;
+
+        this.obs.course = (this.obs.course + delta + 360) % 360;
+        console.log(`[GTN750] OBS course: ${this.obs.course}°`);
+        this.updateCdiFromSource();
+        this.updateObsDisplay();
+    }
+
+    setObsCourse(course) {
+        this.obs.course = ((course % 360) + 360) % 360;
+        if (this.obs.active) {
+            this.updateCdiFromSource();
+            this.updateObsDisplay();
+        }
+    }
+
+    calculateObsCdi() {
+        // Calculate CDI deflection based on OBS course
+        const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
+        if (!wp || !this.data.latitude || !this.data.longitude) {
+            return { needle: 0, xtrk: 0, toFrom: 2 };
+        }
+
+        // Calculate bearing and distance to waypoint
+        const brg = this.core.calculateBearing(
+            this.data.latitude, this.data.longitude,
+            wp.lat, wp.lng
+        );
+        const dist = this.core.calculateDistance(
+            this.data.latitude, this.data.longitude,
+            wp.lat, wp.lng
+        );
+
+        // Calculate cross-track error from OBS course
+        const courseDiff = this.core.normalizeAngle(brg - this.obs.course);
+        const xtrk = dist * Math.sin(this.core.toRad(courseDiff));
+
+        // CDI needle: full scale at 2nm (GPS), or 1nm (approach mode)
+        const fullScale = this.gps.approachMode ? 1.0 : 2.0;
+        const needle = Math.round(Math.max(-127, Math.min(127, (xtrk / fullScale) * 127)));
+
+        // TO/FROM: TO if within 90° of course, FROM otherwise
+        const toFrom = Math.abs(courseDiff) < 90 ? 1 : 0;
+
+        return { needle, xtrk: Math.abs(xtrk), toFrom };
+    }
+
+    updateObsDisplay() {
+        // Update OBS indicator elements if they exist
+        if (this.elements.obsIndicator) {
+            this.elements.obsIndicator.style.display = this.obs.active ? 'block' : 'none';
+        }
+        if (this.elements.obsCourse) {
+            this.elements.obsCourse.textContent = this.obs.course.toString().padStart(3, '0') + '°';
+        }
     }
 
     renderCdi() {
