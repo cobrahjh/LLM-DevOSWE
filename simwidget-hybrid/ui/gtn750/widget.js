@@ -60,6 +60,7 @@ class GTN750Widget {
         // Flight plan
         this.flightPlan = null;
         this.activeWaypointIndex = 0;
+        this.lastSequenceTime = 0; // Throttle for auto-sequencing
 
         // CDI (extended for GPS/NAV source switching)
         this.cdi = {
@@ -660,6 +661,15 @@ class GTN750Widget {
             }
             if (type === 'waypoint-select') {
                 this.selectWaypoint(data.index);
+            }
+            if (type === 'waypoint-sequence') {
+                // Another widget sequenced - sync our state
+                if (this.flightPlan?.waypoints?.[data.passedIndex]) {
+                    this.flightPlan.waypoints[data.passedIndex].passed = true;
+                }
+                this.activeWaypointIndex = data.activeIndex;
+                this.renderFlightPlan();
+                this.updateWaypointDisplay();
             }
         };
     }
@@ -2247,6 +2257,135 @@ class GTN750Widget {
         }
     }
 
+    // ===== WAYPOINT AUTO-SEQUENCING =====
+    checkWaypointSequencing() {
+        // Throttle: minimum 3 seconds between sequences
+        const now = Date.now();
+        if (now - this.lastSequenceTime < 3000) return;
+
+        // Skip if no flight plan or no position data
+        if (!this.flightPlan?.waypoints?.length) return;
+        if (!this.data.latitude || !this.data.longitude) return;
+
+        // Skip if already at the last waypoint
+        if (this.activeWaypointIndex >= this.flightPlan.waypoints.length - 1) return;
+
+        // Get the active waypoint
+        const wp = this.flightPlan.waypoints[this.activeWaypointIndex];
+        if (!wp || !wp.lat || !wp.lng) return;
+
+        // Calculate distance to active waypoint
+        const dist = this.core.calculateDistance(
+            this.data.latitude, this.data.longitude,
+            wp.lat, wp.lng
+        );
+
+        // Sequencing threshold: 0.5nm or 2% of leg distance (whichever is smaller)
+        // For holding patterns or procedure turns, use larger threshold
+        const legDist = wp.distanceFromPrev || 5;
+        const threshold = Math.min(0.5, legDist * 0.1);
+
+        // Only sequence if:
+        // 1. Within threshold distance
+        // 2. Aircraft is moving (groundspeed > 15 knots)
+        // 3. Track is roughly aligned with course to waypoint (within 90°)
+        if (dist <= threshold && this.data.groundSpeed > 15) {
+            const brg = this.core.calculateBearing(
+                this.data.latitude, this.data.longitude,
+                wp.lat, wp.lng
+            );
+            const trackError = Math.abs(this.core.normalizeAngle(this.data.track - brg));
+
+            // If track is within 90° of waypoint bearing, we're heading toward it
+            // Allow wider margin (120°) since we might be crossing the waypoint
+            if (trackError < 120 || dist < 0.2) {
+                this.sequenceToNextWaypoint();
+            }
+        }
+    }
+
+    sequenceToNextWaypoint() {
+        // Update throttle timestamp
+        this.lastSequenceTime = Date.now();
+
+        // Mark current waypoint as passed
+        const passedWp = this.flightPlan.waypoints[this.activeWaypointIndex];
+        if (passedWp) {
+            passedWp.passed = true;
+            console.log(`[GTN750] Sequenced past ${passedWp.ident}, advancing to next waypoint`);
+        }
+
+        // Advance to next waypoint
+        this.activeWaypointIndex++;
+
+        // Update display
+        if (this.activeWaypointIndex < this.flightPlan.waypoints.length) {
+            const nextWp = this.flightPlan.waypoints[this.activeWaypointIndex];
+            console.log(`[GTN750] Active waypoint: ${nextWp?.ident}`);
+
+            // Update active waypoint reference
+            this.activeWaypoint = {
+                ident: nextWp.ident,
+                lat: nextWp.lat,
+                lon: nextWp.lng
+            };
+
+            // Broadcast to sync channel
+            if (this.syncChannel) {
+                this.syncChannel.postMessage({
+                    type: 'waypoint-sequence',
+                    data: {
+                        passedIndex: this.activeWaypointIndex - 1,
+                        activeIndex: this.activeWaypointIndex,
+                        passedIdent: passedWp?.ident,
+                        activeIdent: nextWp?.ident
+                    }
+                });
+            }
+
+            // Play audio cue if available
+            this.playSequenceChime();
+        } else {
+            // Reached final waypoint
+            console.log('[GTN750] Arrived at final waypoint');
+            this.activeWaypoint = null;
+        }
+
+        // Update UI
+        this.renderFlightPlan();
+        this.updateFplHeader();
+        this.updateWaypointDisplay();
+    }
+
+    playSequenceChime() {
+        // Play a brief tone to indicate waypoint sequence
+        if (!this.audioContext) {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                return; // Audio not available
+            }
+        }
+
+        try {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.type = 'sine';
+            osc.frequency.value = 880; // A5 note
+            gain.gain.value = 0.1;
+
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
+            osc.stop(this.audioContext.currentTime + 0.15);
+        } catch (e) {
+            // Ignore audio errors
+        }
+    }
+
     // ===== CDI SOURCE SWITCHING =====
     updateCdiFromSource() {
         const source = this.data.navSource;
@@ -2674,6 +2813,7 @@ class GTN750Widget {
         this.updateUI();
         this.updateWaypointDisplay();
         this.updateCdiFromSource();
+        this.checkWaypointSequencing();
     }
 
     updateUI() {
