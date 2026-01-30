@@ -2335,10 +2335,22 @@ function broadcastFlightData() {
 async function initSimConnect() {
     try {
         const { open, Protocol, SimConnectDataType } = require('node-simconnect');
-        
-        console.log('Connecting to MSFS...');
-        
-        const { recvOpen, handle } = await open('SimWidget', Protocol.KittyHawk);
+
+        // Remote SimConnect support - set SIMCONNECT_HOST environment variable
+        const remoteHost = process.env.SIMCONNECT_HOST || null;
+        const remotePort = parseInt(process.env.SIMCONNECT_PORT) || 500;
+
+        if (remoteHost) {
+            console.log(`Connecting to MSFS on remote host ${remoteHost}:${remotePort}...`);
+        } else {
+            console.log('Connecting to MSFS...');
+        }
+
+        const connectOptions = remoteHost
+            ? { remote: { host: remoteHost, port: remotePort } }
+            : {};
+
+        const { recvOpen, handle } = await open('SimWidget', Protocol.KittyHawk, connectOptions);
         
         console.log('Connected to MSFS:', recvOpen.applicationName);
         simConnectConnection = handle;

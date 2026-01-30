@@ -262,6 +262,68 @@ class TerrainOverlay {
     }
 
     /**
+     * Render terrain grid with Arc view (forward 120 degree only)
+     */
+    renderTerrainGridArc(ctx, grid, aircraft, width, height) {
+        const { altitude } = aircraft;
+        const range = this.range;
+        const cx = width / 2;
+        const cy = height * 0.85;
+        const pixelsPerNm = Math.min(width, height * 0.8) / range;
+        const cellsPerSide = grid.length;
+        const cellPixelSize = (range * 2 * pixelsPerNm) / cellsPerSide;
+        const halfArc = (this.arcAngle / 2) * Math.PI / 180;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, range * pixelsPerNm, -Math.PI / 2 - halfArc, -Math.PI / 2 + halfArc);
+        ctx.closePath();
+        ctx.clip();
+
+        for (let row = 0; row < cellsPerSide; row++) {
+            for (let col = 0; col < cellsPerSide; col++) {
+                const cell = grid[row][col];
+                const angle = Math.atan2(cell.nmX, -cell.nmY);
+                if (Math.abs(angle) > halfArc) continue;
+                const distance = Math.sqrt(cell.nmX * cell.nmX + cell.nmY * cell.nmY);
+                if (distance > range) continue;
+                const clearance = altitude - cell.elevation;
+                const color = this.getClearanceColor(clearance);
+                if (color !== 'transparent') {
+                    const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
+                    const y = cy + cell.nmY * pixelsPerNm - cellPixelSize / 2;
+                    ctx.fillStyle = color;
+                    ctx.globalAlpha = 0.6;
+                    ctx.fillRect(x, y, cellPixelSize + 1, cellPixelSize + 1);
+                }
+            }
+        }
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+
+        // Draw arc outline
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, range * pixelsPerNm, -Math.PI / 2 - halfArc, -Math.PI / 2 + halfArc);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Draw range arcs
+        ctx.strokeStyle = '#00aa00';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        [0.25, 0.5, 0.75].forEach(fraction => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, range * fraction * pixelsPerNm, -Math.PI / 2 - halfArc, -Math.PI / 2 + halfArc);
+            ctx.stroke();
+        });
+        ctx.setLineDash([]);
+    }
+
+    /**
      * Get color based on terrain clearance
      */
     getClearanceColor(clearance) {
@@ -362,46 +424,94 @@ class TerrainOverlay {
     }
 
     /**
-     * Render dedicated terrain page view
+     * Render dedicated terrain page view with 360/Arc mode support
      */
     renderTerrainPage(ctx, aircraft, width, height) {
-        const range = 10; // Fixed 10nm range for terrain page
-        const terrainGrid = this.getTerrainGrid(aircraft.latitude, aircraft.longitude, range);
+        const terrainGrid = this.getTerrainGrid(aircraft.latitude, aircraft.longitude, this.range);
 
-        // Full terrain view without rotation
-        this.renderTerrainGrid(ctx, terrainGrid, aircraft, {
-            range,
-            orientation: 'track',
-            width,
-            height
-        });
+        // Clear background
+        ctx.fillStyle = '#0a1520';
+        ctx.fillRect(0, 0, width, height);
 
-        // Draw aircraft symbol at center
-        const cx = width / 2;
-        const cy = height / 2;
+        if (this.viewMode === 'arc') {
+            // Arc view - forward 120 only, aircraft at bottom
+            this.renderTerrainGridArc(ctx, terrainGrid, aircraft, width, height);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - 10);
-        ctx.lineTo(cx - 7, cy + 8);
-        ctx.lineTo(cx, cy + 4);
-        ctx.lineTo(cx + 7, cy + 8);
-        ctx.closePath();
-        ctx.fill();
+            // Draw aircraft at bottom center
+            const cx = width / 2;
+            const cy = height * 0.85;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 10);
+            ctx.lineTo(cx - 7, cy + 8);
+            ctx.lineTo(cx, cy + 4);
+            ctx.lineTo(cx + 7, cy + 8);
+            ctx.closePath();
+            ctx.fill();
 
-        // Draw range ring
-        const pixelsPerNm = Math.min(width, height) / 2 / range;
-        ctx.strokeStyle = '#00ff00';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.arc(cx, cy, 5 * pixelsPerNm, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+            // Draw view mode indicator
+            ctx.fillStyle = '#00ff00';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('ARC', 10, 20);
+        } else {
+            // 360 view - full circle, aircraft at center
+            this.renderTerrainGrid(ctx, terrainGrid, aircraft, {
+                range: this.range,
+                orientation: 'track',
+                width,
+                height
+            });
 
-        // Update clearance display
-        const minClearance = this.getMinClearance(terrainGrid, aircraft.altitude);
-        return minClearance;
+            // Draw aircraft symbol at center
+            const cx = width / 2;
+            const cy = height / 2;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 10);
+            ctx.lineTo(cx - 7, cy + 8);
+            ctx.lineTo(cx, cy + 4);
+            ctx.lineTo(cx + 7, cy + 8);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw range rings
+            const pixelsPerNm = Math.min(width, height) / 2 / this.range;
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            [0.5, 1].forEach(fraction => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, this.range * fraction * pixelsPerNm, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+
+            // Draw compass rose
+            ctx.fillStyle = '#00ff00';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            const radius = this.range * pixelsPerNm - 15;
+            ctx.fillText('N', cx, cy - radius);
+            ctx.fillText('S', cx, cy + radius + 10);
+            ctx.fillText('E', cx + radius + 5, cy + 4);
+            ctx.fillText('W', cx - radius - 5, cy + 4);
+
+            // Draw view mode indicator
+            ctx.fillStyle = '#00ff00';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('360', 10, 20);
+        }
+
+        // Draw range indicator
+        ctx.fillStyle = '#00ffff';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(this.range + ' NM', width - 10, 20);
+
+        // Return minimum clearance
+        return this.getMinClearance(terrainGrid, aircraft.altitude);
     }
 
     /**
