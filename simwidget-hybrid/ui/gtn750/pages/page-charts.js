@@ -114,7 +114,7 @@ class ChartsPage {
         this.showLoading();
 
         try {
-            // Try to fetch from server (which could proxy to ChartFox)
+            // Fetch from server API (proxies to aviationAPI or ChartFox)
             const response = await fetch(
                 `http://${location.hostname}:${this.serverPort}/api/charts/${this.selectedAirport}`
             );
@@ -122,13 +122,23 @@ class ChartsPage {
             if (response.ok) {
                 const data = await response.json();
                 this.charts = data.charts || [];
+                this.chartSource = data.source || 'unknown';
+                console.log(`[GTN750] Loaded ${this.charts.length} charts from ${this.chartSource}`);
+
+                // If no real charts found, generate samples
+                if (this.charts.length === 0 || (this.charts.length === 1 && this.charts[0].type === 'ALL')) {
+                    this.charts = this.generateSampleCharts(this.selectedAirport);
+                    this.chartSource = 'sample';
+                }
             } else {
                 // Generate sample charts for demonstration
                 this.charts = this.generateSampleCharts(this.selectedAirport);
+                this.chartSource = 'sample';
             }
         } catch (e) {
             console.log(`[GTN750] Using sample charts for ${this.selectedAirport}`);
             this.charts = this.generateSampleCharts(this.selectedAirport);
+            this.chartSource = 'sample';
         }
 
         this.renderChartList();
@@ -289,20 +299,35 @@ class ChartsPage {
             return;
         }
 
-        // Open ChartFox in new window/tab
+        // Get best available URL
         const url = this.getChartUrl(this.selectedChart);
-        window.open(url, '_blank', 'width=800,height=1000');
+        console.log(`[GTN750] Opening chart: ${this.selectedChart.name} - ${url}`);
+
+        // Open in new window/tab
+        window.open(url, '_blank', 'width=900,height=1100,scrollbars=yes');
     }
 
     /**
-     * Get chart URL - tries ChartFox first, falls back to FAA
+     * Get chart URL - priority: FAA PDF > faanfd18 > ChartFox
      */
     getChartUrl(chart) {
-        if (chart.url) return chart.url;
+        // Real PDF from aviationAPI
+        if (chart.url && chart.url.includes('.pdf')) {
+            return chart.url;
+        }
 
-        // Generate ChartFox URL
-        const icao = this.selectedAirport;
-        return `https://chartfox.org/${icao}`;
+        // FAA NFD18 format URL
+        if (chart.faanfd18) {
+            return chart.faanfd18;
+        }
+
+        // Custom URL from API
+        if (chart.url && !chart.url.includes('chartfox.org')) {
+            return chart.url;
+        }
+
+        // Fallback to ChartFox airport page
+        return `https://chartfox.org/${this.selectedAirport}`;
     }
 
     /**

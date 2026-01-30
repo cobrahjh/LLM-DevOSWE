@@ -810,6 +810,82 @@ app.get('/api/weather/radar', async (req, res) => {
     }
 });
 
+// Charts API - fetch available charts for an airport
+app.get('/api/charts/:icao', async (req, res) => {
+    const icao = req.params.icao.toUpperCase();
+
+    if (!/^[A-Z]{3,4}$/.test(icao)) {
+        return res.status(400).json({ error: 'Invalid ICAO code' });
+    }
+
+    // Check cache
+    const cached = weatherCache.get(`charts_${icao}`);
+    if (cached && Date.now() - cached.timestamp < 3600000) { // 1 hour cache
+        return res.json(cached.data);
+    }
+
+    try {
+        // Try aviationAPI.com for chart data (free)
+        const apiUrl = `https://api.aviationapi.com/v1/charts?apt=${icao}`;
+        const response = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+
+        if (response.ok) {
+            const data = await response.json();
+            const charts = [];
+
+            // aviationAPI returns charts as array: {"KJFK": [{chart}, {chart}, ...]}
+            const chartList = data[icao] || [];
+            if (Array.isArray(chartList)) {
+                chartList.forEach(chart => {
+                    charts.push({
+                        id: chart.chart_seq || chart.chart_code,
+                        name: chart.chart_name || 'Unknown',
+                        type: mapChartType(chart.chart_code),
+                        url: chart.pdf_path || `https://chartfox.org/${icao}`,
+                        pdfName: chart.pdf_name
+                    });
+                });
+            }
+
+            if (charts.length > 0) {
+                const result = { airport: icao, charts, count: charts.length, source: 'aviationapi' };
+                weatherCache.set(`charts_${icao}`, { data: result, timestamp: Date.now() });
+                return res.json(result);
+            }
+        }
+    } catch (e) {
+        console.log(`[Charts] AviationAPI failed for ${icao}: ${e.message}`);
+    }
+
+    // Fallback: return ChartFox URL only
+    const fallback = {
+        airport: icao,
+        charts: [{
+            id: 'chartfox',
+            name: `${icao} Charts`,
+            type: 'ALL',
+            url: `https://chartfox.org/${icao}`
+        }],
+        count: 1,
+        source: 'chartfox'
+    };
+
+    res.json(fallback);
+});
+
+// Helper: Map chart codes to types
+function mapChartType(code) {
+    if (!code) return 'OTHER';
+    code = code.toUpperCase();
+    if (code.includes('APD') || code.includes('AIRPORT')) return 'APD';
+    if (code.includes('IAP') || code.includes('ILS') || code.includes('RNAV') || code.includes('VOR') || code.includes('LOC')) return 'IAP';
+    if (code.includes('DP') || code.includes('SID') || code.includes('DEPARTURE')) return 'DP';
+    if (code.includes('STAR') || code.includes('ARRIVAL')) return 'STAR';
+    if (code.includes('MIN')) return 'MIN';
+    if (code.includes('HOT')) return 'HOT';
+    return 'OTHER';
+}
+
 // SimBrief OFP proxy (CORS bypass)
 app.get('/api/simbrief/ofp', async (req, res) => {
     const { userid, username } = req.query;
