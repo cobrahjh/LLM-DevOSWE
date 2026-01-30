@@ -520,6 +520,22 @@ body {
     min-width: 80px;
 }
 
+.setting-row input[type="text"],
+.setting-row input[type="number"] {
+    padding: 8px 12px;
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 12px;
+}
+
+.setting-row input[type="text"]:focus,
+.setting-row input[type="number"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
 .setting-row input[type="checkbox"] {
     width: 18px;
     height: 18px;

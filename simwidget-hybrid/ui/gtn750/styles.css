@@ -338,16 +338,15 @@ body {
 .field-selector {
     display: none;
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.95);
+    background: rgba(0, 10, 20, 0.98);
     border: 2px solid var(--gtn-cyan);
     border-radius: 6px;
-    padding: 8px;
+    padding: 6px;
     z-index: 100;
-    max-height: 200px;
+    max-height: 220px;
     overflow-y: auto;
+    min-width: 140px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
 }
 
 .field-selector.visible {
@@ -355,15 +354,39 @@ body {
 }
 
 .field-option {
-    padding: 6px 12px;
+    padding: 8px 12px;
     font-size: 11px;
     color: var(--gtn-white);
     cursor: pointer;
     border-radius: 3px;
+    white-space: nowrap;
+    transition: background 0.15s;
 }
 
 .field-option:hover {
     background: var(--gtn-blue);
+}
+
+.field-option.selected {
+    background: var(--gtn-accent);
+    color: var(--gtn-cyan);
+    font-weight: bold;
+}
+
+/* Make corner fields look tappable */
+.corner-field {
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+.corner-field:hover {
+    background: rgba(0, 136, 255, 0.2);
+}
+
+.corner-field:active {
+    background: rgba(0, 136, 255, 0.4);
 }
 
 /* Position Display */

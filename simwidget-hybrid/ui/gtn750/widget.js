@@ -48,6 +48,15 @@ class GTN750Widget {
             showWeather: false
         };
 
+        // Data field configuration (corner fields on map)
+        this.dataFields = {
+            'top-left': 'trk',
+            'top-right': 'gs',
+            'bottom-left': 'alt',
+            'bottom-right': 'ete'
+        };
+        this.activeFieldPosition = null; // Currently selected field for editing
+
         // Flight plan
         this.flightPlan = null;
         this.activeWaypointIndex = 0;
@@ -89,6 +98,7 @@ class GTN750Widget {
         this.initSoftKeys();
         this.bindEvents();
         this.bindTawsAlerts();
+        this.loadDataFieldConfig();
         this.connect();
         this.startClock();
         this.fetchFlightPlan();
@@ -855,6 +865,28 @@ class GTN750Widget {
             this.map.orientation = e.target.value;
         });
 
+        // Data field customization - corner fields
+        document.querySelectorAll('.corner-field').forEach(field => {
+            field.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openFieldSelector(field);
+            });
+        });
+
+        // Field selector options
+        document.querySelectorAll('.field-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const type = option.dataset.type;
+                this.selectFieldType(type);
+            });
+        });
+
+        // Close field selector on outside click
+        document.addEventListener('click', () => {
+            this.closeFieldSelector();
+        });
+
         // Note: wheel/touch events now handled by MapControls
     }
 
@@ -1203,10 +1235,160 @@ class GTN750Widget {
     }
 
     updateDatafields() {
-        if (this.elements.dfGs) this.elements.dfGs.textContent = Math.round(this.data.groundSpeed);
-        if (this.elements.dfTrk) this.elements.dfTrk.textContent = this.core.formatHeading(this.data.track || this.data.heading);
-        if (this.elements.dfAlt) this.elements.dfAlt.textContent = this.core.formatAltitude(this.data.altitude);
+        // Update each corner field based on configuration
+        const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+        positions.forEach(pos => {
+            const field = document.querySelector(`.corner-field.${pos}`);
+            if (field) {
+                const type = this.dataFields[pos];
+                const { label, value } = this.getFieldData(type);
+                const labelEl = field.querySelector('.corner-label');
+                const valueEl = field.querySelector('.corner-value');
+                if (labelEl) labelEl.textContent = label;
+                if (valueEl) valueEl.textContent = value;
+            }
+        });
+
+        // Range is always shown in range selector
         if (this.elements.dfRange) this.elements.dfRange.textContent = this.map.range;
+    }
+
+    /**
+     * Get data for a specific field type
+     */
+    getFieldData(type) {
+        const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
+        let dist = 0, brg = 0, ete = 0;
+
+        if (wp && this.data.latitude && wp.lat && wp.lng) {
+            dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
+            brg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
+            if (this.data.groundSpeed > 0) {
+                ete = (dist / this.data.groundSpeed) * 60;
+            }
+        }
+
+        switch (type) {
+            case 'trk':
+                return { label: 'TRK', value: this.core.formatHeading(this.data.track || this.data.heading) };
+            case 'gs':
+                return { label: 'GS', value: Math.round(this.data.groundSpeed) + 'kt' };
+            case 'alt':
+                return { label: 'ALT', value: this.core.formatAltitude(this.data.altitude) };
+            case 'vs':
+                return { label: 'VS', value: Math.round(this.data.verticalSpeed) + 'fpm' };
+            case 'hdg':
+                return { label: 'HDG', value: this.core.formatHeading(this.data.heading) };
+            case 'dis':
+                return { label: 'DIS', value: dist > 0 ? dist.toFixed(1) + 'nm' : '--.-nm' };
+            case 'ete':
+                return { label: 'ETE', value: ete > 0 ? this.core.formatEte(ete) : '--:--' };
+            case 'brg':
+                return { label: 'BRG', value: brg > 0 ? Math.round(brg) + '°' : '---°' };
+            case 'dtk':
+                return { label: 'DTK', value: this.cdi.dtk ? Math.round(this.cdi.dtk) + '°' : '---°' };
+            case 'xtk':
+                return { label: 'XTK', value: this.cdi.xtrk ? this.cdi.xtrk.toFixed(1) + 'nm' : '0.0nm' };
+            case 'wind':
+                const windDir = this.data.windDirection || 0;
+                const windSpd = this.data.windSpeed || 0;
+                return { label: 'WIND', value: Math.round(windDir) + '°/' + Math.round(windSpd) + 'kt' };
+            case 'time':
+                return { label: 'TIME', value: this.core.formatTime(this.data.zuluTime) || '--:--Z' };
+            case 'off':
+                return { label: '', value: '' };
+            default:
+                return { label: type.toUpperCase(), value: '---' };
+        }
+    }
+
+    /**
+     * Open field selector popup near a corner field
+     */
+    openFieldSelector(field) {
+        const selector = document.getElementById('field-selector');
+        if (!selector) return;
+
+        // Determine position from field class
+        const classList = field.classList;
+        let position = null;
+        ['top-left', 'top-right', 'bottom-left', 'bottom-right'].forEach(pos => {
+            if (classList.contains(pos)) position = pos;
+        });
+
+        if (!position) return;
+
+        this.activeFieldPosition = position;
+
+        // Position selector near the field
+        const rect = field.getBoundingClientRect();
+        const parentRect = field.parentElement.getBoundingClientRect();
+
+        selector.style.display = 'block';
+
+        // Position based on which corner
+        if (position.includes('left')) {
+            selector.style.left = (rect.left - parentRect.left) + 'px';
+            selector.style.right = 'auto';
+        } else {
+            selector.style.right = (parentRect.right - rect.right) + 'px';
+            selector.style.left = 'auto';
+        }
+
+        if (position.includes('top')) {
+            selector.style.top = (rect.bottom - parentRect.top + 5) + 'px';
+            selector.style.bottom = 'auto';
+        } else {
+            selector.style.bottom = (parentRect.bottom - rect.top + 5) + 'px';
+            selector.style.top = 'auto';
+        }
+
+        // Highlight current selection
+        const currentType = this.dataFields[position];
+        document.querySelectorAll('.field-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.type === currentType);
+        });
+    }
+
+    /**
+     * Close field selector popup
+     */
+    closeFieldSelector() {
+        const selector = document.getElementById('field-selector');
+        if (selector) {
+            selector.style.display = 'none';
+        }
+        this.activeFieldPosition = null;
+    }
+
+    /**
+     * Select a field type for the active position
+     */
+    selectFieldType(type) {
+        if (!this.activeFieldPosition) return;
+
+        this.dataFields[this.activeFieldPosition] = type;
+
+        // Save to localStorage
+        try {
+            localStorage.setItem('gtn750-datafields', JSON.stringify(this.dataFields));
+        } catch (e) {}
+
+        // Update immediately
+        this.updateDatafields();
+        this.closeFieldSelector();
+    }
+
+    /**
+     * Load saved data field configuration
+     */
+    loadDataFieldConfig() {
+        try {
+            const saved = localStorage.getItem('gtn750-datafields');
+            if (saved) {
+                this.dataFields = { ...this.dataFields, ...JSON.parse(saved) };
+            }
+        } catch (e) {}
     }
 
     updateMapOrientation() {
