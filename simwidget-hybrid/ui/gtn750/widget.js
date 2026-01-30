@@ -1019,6 +1019,11 @@ class GTN750Widget {
         // Wind vector indicator (top-left corner)
         this.renderWindVector(ctx, 50, 50);
 
+        // Bearing pointers (BRG1/BRG2)
+        if (this.map.showBearingPointers !== false) {
+            this.renderBearingPointers(ctx, w / 2, h / 2, Math.min(w, h) / 2 - 30);
+        }
+
         // Update datafields
         this.updateDatafields();
     }
@@ -1144,6 +1149,105 @@ class GTN750Widget {
 
         ctx.fillStyle = '#ffa500';
         ctx.fillText(labelText, labelX + 7, labelY);
+
+        ctx.restore();
+    }
+
+    renderBearingPointers(ctx, cx, cy, radius) {
+        const mapRotation = this.getMapRotation();
+
+        // BRG1 - Single needle pointer to NAV1 station (cyan)
+        if (this.nav1 && this.nav1.signal > 10) {
+            const bearing = this.nav1.radial + 180; // Radial is FROM, we want TO
+            this.drawBearingPointer(ctx, cx, cy, radius, bearing - mapRotation, '#00ffff', 'single', '1');
+        }
+
+        // BRG2 - Double needle pointer to NAV2 station (white)
+        if (this.nav2 && this.nav2.signal > 10) {
+            const bearing = this.nav2.radial + 180;
+            this.drawBearingPointer(ctx, cx, cy, radius, bearing - mapRotation, '#ffffff', 'double', '2');
+        }
+
+        // Active waypoint pointer (magenta) if no NAV signals
+        if ((!this.nav1?.signal || this.nav1.signal < 10) && this.activeWaypoint) {
+            const bearing = this.core.calculateBearing(
+                this.data.latitude, this.data.longitude,
+                this.activeWaypoint.lat, this.activeWaypoint.lon
+            );
+            this.drawBearingPointer(ctx, cx, cy, radius, bearing - mapRotation, '#ff00ff', 'single', 'W');
+        }
+    }
+
+    drawBearingPointer(ctx, cx, cy, radius, angle, color, style, label) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle * Math.PI / 180);
+
+        const innerRadius = radius - 20;
+        const outerRadius = radius + 5;
+
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+
+        if (style === 'single') {
+            // Single arrow pointer
+            // Head (pointing out)
+            ctx.beginPath();
+            ctx.moveTo(0, -outerRadius);
+            ctx.lineTo(-6, -outerRadius + 12);
+            ctx.lineTo(6, -outerRadius + 12);
+            ctx.closePath();
+            ctx.fill();
+
+            // Shaft
+            ctx.beginPath();
+            ctx.moveTo(0, -outerRadius + 12);
+            ctx.lineTo(0, -innerRadius);
+            ctx.stroke();
+
+            // Tail (opposite end)
+            ctx.beginPath();
+            ctx.moveTo(0, innerRadius);
+            ctx.lineTo(0, outerRadius - 10);
+            ctx.stroke();
+        } else {
+            // Double arrow pointer (two parallel lines)
+            const offset = 3;
+
+            // Left shaft
+            ctx.beginPath();
+            ctx.moveTo(-offset, -outerRadius);
+            ctx.lineTo(-offset, -innerRadius);
+            ctx.stroke();
+
+            // Right shaft
+            ctx.beginPath();
+            ctx.moveTo(offset, -outerRadius);
+            ctx.lineTo(offset, -innerRadius);
+            ctx.stroke();
+
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(0, -outerRadius - 5);
+            ctx.lineTo(-8, -outerRadius + 8);
+            ctx.lineTo(8, -outerRadius + 8);
+            ctx.closePath();
+            ctx.fill();
+
+            // Tail
+            ctx.beginPath();
+            ctx.moveTo(-offset, innerRadius);
+            ctx.lineTo(-offset, outerRadius - 10);
+            ctx.moveTo(offset, innerRadius);
+            ctx.lineTo(offset, outerRadius - 10);
+            ctx.stroke();
+        }
+
+        // Label
+        ctx.font = 'bold 9px Consolas, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, 0, -innerRadius + 15);
 
         ctx.restore();
     }
