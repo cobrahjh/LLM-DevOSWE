@@ -111,8 +111,8 @@ class GTNSoftKeys {
             { label: 'VIEW', action: 'terrain-view' },
             { label: '360\u00B0', action: 'terrain-360' },
             { label: 'ARC', action: 'terrain-arc' },
-            { label: 'INHIB', action: 'taws-inhibit' },
-            { label: '', action: null },
+            { label: 'RANGE', action: 'terrain-range' },
+            { label: 'INHIB', action: 'taws-inhibit', toggle: true },
             { label: 'BACK', action: 'back' }
         ]);
 

@@ -517,6 +517,9 @@ class GTN750Widget {
             case 'terrain-arc':
                 this.setTerrainView('arc');
                 break;
+            case 'terrain-range':
+                this.cycleTerrainRange();
+                break;
 
             // Procedures
             case 'proc-departure':
@@ -680,6 +683,8 @@ class GTN750Widget {
             // Terrain
             terrainCanvas: document.getElementById('terrain-canvas'),
             tawsStatus: document.getElementById('taws-status'),
+            terrainMode: document.getElementById('terrain-mode'),
+            terrainRange: document.getElementById('terrain-range'),
             terrainClearance: document.getElementById('terrain-clearance'),
             // Traffic
             trafficCanvas: document.getElementById('traffic-canvas'),
@@ -971,6 +976,14 @@ class GTN750Widget {
         // Update clearance display
         if (this.elements.terrainClearance) {
             this.elements.terrainClearance.textContent = minClearance > 0 ? minClearance : '---';
+        }
+
+        // Update mode and range displays
+        if (this.elements.terrainMode) {
+            this.elements.terrainMode.textContent = this.terrainOverlay.getViewMode().toUpperCase();
+        }
+        if (this.elements.terrainRange) {
+            this.elements.terrainRange.textContent = this.terrainOverlay.getRange();
         }
     }
 
@@ -1733,16 +1746,28 @@ class GTN750Widget {
     }
 
     cycleTerrainView() {
-        const views = ['360', 'arc', 'forward'];
-        const current = this.terrainView || '360';
-        const idx = views.indexOf(current);
-        this.terrainView = views[(idx + 1) % views.length];
-        console.log(`[GTN750] Terrain view: ${this.terrainView}`);
+        if (this.terrainOverlay) {
+            const newMode = this.terrainOverlay.toggleViewMode();
+            console.log(`[GTN750] Terrain view: ${newMode}`);
+        }
     }
 
     setTerrainView(view) {
-        this.terrainView = view;
-        console.log(`[GTN750] Terrain view set to: ${view}`);
+        if (this.terrainOverlay) {
+            this.terrainOverlay.setViewMode(view);
+            console.log(`[GTN750] Terrain view set to: ${view}`);
+        }
+    }
+
+    cycleTerrainRange() {
+        if (this.terrainOverlay) {
+            const ranges = [2, 5, 10, 20, 50];
+            const current = this.terrainOverlay.getRange();
+            const idx = ranges.indexOf(current);
+            const newRange = ranges[(idx + 1) % ranges.length];
+            this.terrainOverlay.setRange(newRange);
+            console.log(`[GTN750] Terrain range: ${newRange} NM`);
+        }
     }
 
     // ===== WEBSOCKET =====
