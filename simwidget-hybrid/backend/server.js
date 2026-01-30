@@ -2970,6 +2970,9 @@ function startMockData() {
             aileron: 0,
             elevator: 0,
             rudder: 0,
+            // Position data (mock - somewhere over Kansas flying west)
+            latitude: 40.6413 + (Math.random() - 0.5) * 0.01,
+            longitude: -95.5 + (Math.random() - 0.5) * 0.01,
             // Additional flight data (mock)
             groundSpeed: mockSpd * 1.1 + (Math.random() - 0.5) * 10,
             windDirection: 270 + (Math.random() - 0.5) * 20,
