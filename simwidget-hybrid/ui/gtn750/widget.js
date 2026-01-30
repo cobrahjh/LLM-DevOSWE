@@ -103,6 +103,7 @@ class GTN750Widget {
         this.startClock();
         this.fetchFlightPlan();
         this.startMapRender();
+        this.startTrafficPolling();
     }
 
     initOverlays() {
@@ -2040,6 +2041,32 @@ class GTN750Widget {
         };
 
         this.ws.onerror = () => {};
+    }
+
+    // Traffic data polling
+    startTrafficPolling() {
+        // Fetch traffic data every 2 seconds when traffic is enabled
+        this.trafficPollingInterval = setInterval(() => {
+            if (this.map.showTraffic || this.pageManager?.getCurrentPageId() === 'traffic') {
+                this.fetchTrafficData();
+            }
+        }, 2000);
+        // Initial fetch
+        this.fetchTrafficData();
+    }
+
+    async fetchTrafficData() {
+        try {
+            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/traffic`);
+            if (response.ok) {
+                const data = await response.json();
+                if (this.trafficOverlay && data.traffic) {
+                    this.trafficOverlay.updateTargets(data.traffic);
+                }
+            }
+        } catch (e) {
+            // Silently fail - traffic overlay will show test data or empty
+        }
     }
 
     updateFromSim(d) {

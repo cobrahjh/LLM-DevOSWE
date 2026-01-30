@@ -1603,18 +1603,94 @@ app.get('/api/radios', (req, res) => {
     });
 });
 
-// Traffic data for Traffic Radar widget (simulated for now)
+// Traffic data for Traffic Radar widget (simulated for demo)
 let trafficData = [];
+let lastTrafficUpdate = 0;
+
+// Generate simulated traffic around current position
+function generateSimulatedTraffic(ownLat, ownLon, ownAlt) {
+    // Only regenerate every 5 seconds for consistency
+    if (Date.now() - lastTrafficUpdate < 5000 && trafficData.length > 0) {
+        // Update positions based on heading
+        trafficData.forEach(t => {
+            // Move targets by their groundspeed
+            const nmPerSec = t.groundSpeed / 3600;
+            const distNm = nmPerSec * 5; // 5 second movement
+            const hdgRad = t.heading * Math.PI / 180;
+            t.lat += distNm * Math.cos(hdgRad) / 60;
+            t.lon += distNm * Math.sin(hdgRad) / (60 * Math.cos(t.lat * Math.PI / 180));
+            // Update relative altitude and distance
+            t.altitude = (t.absAlt || ownAlt + t.altitude) - ownAlt;
+            t.distance = Math.sqrt(
+                Math.pow((t.lat - ownLat) * 60, 2) +
+                Math.pow((t.lon - ownLon) * 60 * Math.cos(ownLat * Math.PI / 180), 2)
+            );
+        });
+        // Remove targets that moved too far
+        trafficData = trafficData.filter(t => t.distance <= 15);
+        return trafficData;
+    }
+
+    lastTrafficUpdate = Date.now();
+    const callsigns = ['AAL', 'DAL', 'UAL', 'SWA', 'JBU', 'FFT', 'SKW', 'RPA', 'ASA', 'VRD'];
+    const count = 3 + Math.floor(Math.random() * 4); // 3-6 targets
+    const targets = [];
+
+    for (let i = 0; i < count; i++) {
+        const bearing = Math.random() * 360;
+        const distance = 1 + Math.random() * 9; // 1-10nm
+        const bearingRad = bearing * Math.PI / 180;
+
+        // Calculate position
+        const lat = ownLat + (distance * Math.cos(bearingRad)) / 60;
+        const lon = ownLon + (distance * Math.sin(bearingRad)) / (60 * Math.cos(ownLat * Math.PI / 180));
+
+        // Random altitude offset (-2000 to +2000 ft relative)
+        const altOffset = Math.round((Math.random() * 4000 - 2000) / 100) * 100;
+        const absAlt = ownAlt + altOffset;
+
+        // Random heading and speed
+        const heading = Math.floor(Math.random() * 36) * 10;
+        const groundSpeed = 150 + Math.floor(Math.random() * 300); // 150-450 kts
+
+        // Random vertical speed
+        const verticalSpeed = Math.random() < 0.6 ? 0 :
+            (Math.random() < 0.5 ? 500 + Math.random() * 1500 : -500 - Math.random() * 1500);
+
+        targets.push({
+            id: `${callsigns[Math.floor(Math.random() * callsigns.length)]}${100 + Math.floor(Math.random() * 900)}`,
+            lat,
+            lon,
+            absAlt, // Store absolute altitude for updates
+            altitude: altOffset, // Relative altitude
+            distance,
+            relBearing: bearing,
+            heading,
+            groundSpeed,
+            verticalSpeed: Math.round(verticalSpeed)
+        });
+    }
+
+    trafficData = targets;
+    return targets;
+}
+
 app.get('/api/traffic', (req, res) => {
-    // In production, this would come from SimConnect AI traffic or multiplayer
-    // For now, return empty or mock data based on own position
+    // Generate simulated traffic based on own position
+    const ownLat = flightData.latitude || 40.6413;
+    const ownLon = flightData.longitude || -73.7781;
+    const ownAlt = flightData.altitude || 5000;
+
+    const traffic = generateSimulatedTraffic(ownLat, ownLon, ownAlt);
+
     res.json({
-        traffic: trafficData,
+        traffic,
+        count: traffic.length,
         ownPosition: {
-            latitude: flightData.latitude,
-            longitude: flightData.longitude,
-            altitude: flightData.altitude,
-            heading: flightData.heading
+            latitude: ownLat,
+            longitude: ownLon,
+            altitude: ownAlt,
+            heading: flightData.heading || 0
         }
     });
 });
