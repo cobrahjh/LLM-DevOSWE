@@ -137,6 +137,19 @@
                     <div class="field-option" data-type="off">OFF - No Display</div>
                 </div>
 
+                <!-- Direct-To Modal -->
+                <div class="dto-modal" id="dto-modal" style="display: none;">
+                    <div class="dto-header">DIRECT TO</div>
+                    <div class="dto-content">
+                        <input type="text" id="dto-input" class="dto-input" placeholder="WAYPOINT" maxlength="5" autocomplete="off">
+                        <div class="dto-info" id="dto-info"></div>
+                        <div class="dto-buttons">
+                            <button class="dto-btn dto-activate" id="dto-activate">ACTIVATE</button>
+                            <button class="dto-btn dto-cancel" id="dto-cancel">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Position Display -->
                 <div class="position-display">
                     <span class="pos-value" id="lat">N 00° 00.00'</span>

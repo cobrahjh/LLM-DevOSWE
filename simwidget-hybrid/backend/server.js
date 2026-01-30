@@ -920,6 +920,78 @@ function calculateBearing(lat1, lon1, lat2, lon2) {
     return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
 }
 
+// Waypoint lookup API
+app.get('/api/waypoint/:ident', async (req, res) => {
+    const ident = req.params.ident.toUpperCase();
+
+    if (!/^[A-Z0-9]{2,5}$/.test(ident)) {
+        return res.status(400).json({ error: 'Invalid waypoint identifier' });
+    }
+
+    // Check cache
+    const cached = weatherCache.get(`waypoint_${ident}`);
+    if (cached && Date.now() - cached.timestamp < 86400000) { // 24 hour cache
+        return res.json(cached.data);
+    }
+
+    try {
+        // Try aviationAPI for airports (3-4 letter codes)
+        if (ident.length >= 3 && ident.length <= 4) {
+            const apiUrl = `https://api.aviationapi.com/v1/airports?apt=${ident}`;
+            const response = await fetch(apiUrl, { signal: AbortSignal.timeout(5000) });
+
+            if (response.ok) {
+                const data = await response.json();
+                const airports = Array.isArray(data) ? data : Object.values(data).flat();
+                const apt = airports.find(a => (a.icao || a.ident)?.toUpperCase() === ident);
+
+                if (apt) {
+                    const result = {
+                        ident: ident,
+                        name: apt.name || apt.facility_name,
+                        type: 'AIRPORT',
+                        lat: parseFloat(apt.latitude || apt.lat),
+                        lon: parseFloat(apt.longitude || apt.lon),
+                        elevation: apt.elevation,
+                        source: 'aviationapi'
+                    };
+                    weatherCache.set(`waypoint_${ident}`, { data: result, timestamp: Date.now() });
+                    return res.json(result);
+                }
+            }
+        }
+    } catch (e) {
+        console.log(`[Waypoint] API lookup failed for ${ident}: ${e.message}`);
+    }
+
+    // Generate sample waypoint for demo (VOR/NDB/FIX simulation)
+    // In production, would use a nav database
+    const sampleWaypoints = {
+        'JFK': { name: 'Kennedy VOR', type: 'VOR', lat: 40.6413, lon: -73.7781 },
+        'LGA': { name: 'LaGuardia VOR', type: 'VOR', lat: 40.7769, lon: -73.8740 },
+        'EWR': { name: 'Newark VOR', type: 'VOR', lat: 40.6895, lon: -74.1745 },
+        'BOS': { name: 'Boston VOR', type: 'VOR', lat: 42.3656, lon: -71.0096 },
+        'ORD': { name: 'OHare VOR', type: 'VOR', lat: 41.9742, lon: -87.9073 },
+        'LAX': { name: 'Los Angeles VOR', type: 'VOR', lat: 33.9425, lon: -118.4081 },
+        'DEN': { name: 'Denver VOR', type: 'VOR', lat: 39.8561, lon: -104.6737 }
+    };
+
+    if (sampleWaypoints[ident]) {
+        const sample = sampleWaypoints[ident];
+        return res.json({
+            ident,
+            name: sample.name,
+            type: sample.type,
+            lat: sample.lat,
+            lon: sample.lon,
+            source: 'sample'
+        });
+    }
+
+    // Not found
+    res.status(404).json({ error: 'Waypoint not found', ident });
+});
+
 // Charts API - fetch available charts for an airport
 app.get('/api/charts/:icao', async (req, res) => {
     const icao = req.params.icao.toUpperCase();

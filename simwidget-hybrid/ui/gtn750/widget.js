@@ -1491,13 +1491,162 @@ class GTN750Widget {
     }
 
     // ===== DIRECT-TO =====
-    showDirectTo() {
-        const ident = prompt('Enter waypoint identifier:');
-        if (ident && ident.trim()) {
-            this.syncChannel.postMessage({
-                type: 'direct-to',
-                data: { ident: ident.trim().toUpperCase() }
-            });
+    showDirectTo(prefilledIdent = null) {
+        const modal = document.getElementById('dto-modal');
+        const input = document.getElementById('dto-input');
+        const info = document.getElementById('dto-info');
+        const activateBtn = document.getElementById('dto-activate');
+
+        if (!modal) return;
+
+        // Reset and show modal
+        modal.style.display = 'block';
+        input.value = prefilledIdent || '';
+        info.innerHTML = '<span class="dto-name">Enter waypoint identifier</span>';
+        activateBtn.disabled = true;
+        this.dtoTarget = null;
+
+        // Focus input
+        setTimeout(() => input.focus(), 50);
+
+        // Setup event handlers
+        input.oninput = () => {
+            const ident = input.value.toUpperCase().trim();
+            if (ident.length >= 2) {
+                this.lookupDirectToWaypoint(ident);
+            } else {
+                info.innerHTML = '<span class="dto-name">Enter waypoint identifier</span>';
+                activateBtn.disabled = true;
+                this.dtoTarget = null;
+            }
+        };
+
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter' && this.dtoTarget) {
+                this.activateDirectTo();
+            } else if (e.key === 'Escape') {
+                this.hideDirectTo();
+            }
+        };
+
+        // Button handlers
+        activateBtn.onclick = () => this.activateDirectTo();
+        document.getElementById('dto-cancel').onclick = () => this.hideDirectTo();
+    }
+
+    hideDirectTo() {
+        const modal = document.getElementById('dto-modal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    async lookupDirectToWaypoint(ident) {
+        const info = document.getElementById('dto-info');
+        const activateBtn = document.getElementById('dto-activate');
+
+        try {
+            // Try waypoint search API
+            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/waypoint/${ident}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data && (data.lat || data.latitude)) {
+                    this.dtoTarget = {
+                        ident: ident,
+                        name: data.name || data.facility_name || ident,
+                        lat: data.lat || data.latitude,
+                        lon: data.lon || data.longitude,
+                        type: data.type || 'WAYPOINT'
+                    };
+
+                    // Calculate distance and bearing from current position
+                    const dist = this.core.calculateDistance(
+                        this.data.latitude, this.data.longitude,
+                        this.dtoTarget.lat, this.dtoTarget.lon
+                    );
+                    const brg = this.core.calculateBearing(
+                        this.data.latitude, this.data.longitude,
+                        this.dtoTarget.lat, this.dtoTarget.lon
+                    );
+
+                    info.innerHTML = `
+                        <div class="dto-name">${this.dtoTarget.name}</div>
+                        <div class="dto-coords">${this.dtoTarget.type} - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
+                    `;
+                    activateBtn.disabled = false;
+                    return;
+                }
+            }
+        } catch (e) {
+            // Fallback: create waypoint from nearest page item or manual entry
+        }
+
+        // Check if it matches a NRST item
+        if (this.nearestPage) {
+            const item = this.nearestPage.items?.find(i =>
+                (i.icao || i.id)?.toUpperCase() === ident
+            );
+            if (item) {
+                this.dtoTarget = {
+                    ident: item.icao || item.id,
+                    name: item.name || ident,
+                    lat: item.lat,
+                    lon: item.lon,
+                    type: item.type || 'AIRPORT'
+                };
+                info.innerHTML = `
+                    <div class="dto-name">${this.dtoTarget.name}</div>
+                    <div class="dto-coords">${item.distance}nm @ ${item.bearing}°</div>
+                `;
+                activateBtn.disabled = false;
+                return;
+            }
+        }
+
+        // Not found
+        info.innerHTML = '<span class="dto-name" style="color: var(--gtn-yellow);">Waypoint not found</span>';
+        activateBtn.disabled = true;
+        this.dtoTarget = null;
+    }
+
+    activateDirectTo() {
+        if (!this.dtoTarget) return;
+
+        console.log(`[GTN750] Direct-To activated: ${this.dtoTarget.ident}`);
+
+        // Set as active waypoint
+        this.activeWaypoint = this.dtoTarget;
+
+        // Update waypoint display
+        if (this.elements.wptId) this.elements.wptId.textContent = this.dtoTarget.ident;
+        if (this.elements.wptType) this.elements.wptType.textContent = 'D→';
+
+        // Broadcast to other widgets
+        this.syncChannel.postMessage({
+            type: 'direct-to',
+            data: this.dtoTarget
+        });
+
+        // Hide modal
+        this.hideDirectTo();
+
+        // Switch to map page
+        if (this.pageManager) {
+            this.pageManager.switchPage('map');
+        }
+    }
+
+    directTo(item) {
+        // Called from NRST or other pages with a pre-selected item
+        if (item) {
+            this.dtoTarget = {
+                ident: item.icao || item.id,
+                name: item.name || item.icao || item.id,
+                lat: item.lat,
+                lon: item.lon,
+                type: item.type || 'WAYPOINT'
+            };
+            this.activateDirectTo();
+        } else {
+            this.showDirectTo();
         }
     }
 

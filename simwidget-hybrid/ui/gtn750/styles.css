@@ -373,6 +373,115 @@ body {
     font-weight: bold;
 }
 
+/* Direct-To Modal */
+.dto-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 10, 20, 0.98);
+    border: 2px solid var(--gtn-magenta);
+    border-radius: 8px;
+    padding: 0;
+    z-index: 200;
+    min-width: 220px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+}
+
+.dto-header {
+    background: var(--gtn-magenta);
+    color: white;
+    padding: 10px 16px;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    border-radius: 6px 6px 0 0;
+}
+
+.dto-content {
+    padding: 16px;
+}
+
+.dto-input {
+    width: 100%;
+    padding: 12px;
+    font-size: 18px;
+    font-family: var(--gtn-mono);
+    background: var(--gtn-bg-light);
+    border: 2px solid var(--gtn-border);
+    color: var(--gtn-green);
+    text-align: center;
+    text-transform: uppercase;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.dto-input:focus {
+    outline: none;
+    border-color: var(--gtn-cyan);
+}
+
+.dto-info {
+    margin-top: 12px;
+    padding: 10px;
+    background: var(--gtn-dark);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--gtn-text);
+    min-height: 40px;
+}
+
+.dto-info .dto-name {
+    color: var(--gtn-cyan);
+    font-weight: bold;
+}
+
+.dto-info .dto-coords {
+    color: var(--gtn-gray);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.dto-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.dto-btn {
+    flex: 1;
+    padding: 10px;
+    font-weight: bold;
+    font-size: 13px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dto-activate {
+    background: var(--gtn-magenta);
+    color: white;
+}
+
+.dto-activate:hover {
+    background: #d020a0;
+}
+
+.dto-activate:disabled {
+    background: var(--gtn-gray);
+    cursor: not-allowed;
+}
+
+.dto-cancel {
+    background: var(--gtn-bg-light);
+    color: var(--gtn-text);
+    border: 1px solid var(--gtn-border);
+}
+
+.dto-cancel:hover {
+    background: var(--gtn-accent);
+}
+
 /* Make corner fields look tappable */
 .corner-field {
     cursor: pointer;
