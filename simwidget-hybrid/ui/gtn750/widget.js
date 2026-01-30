@@ -1029,8 +1029,65 @@ class GTN750Widget {
             this.renderBearingPointers(ctx, w / 2, h / 2, Math.min(w, h) / 2 - 30);
         }
 
+        // Map orientation indicator (top-right)
+        this.renderOrientationIndicator(ctx, w - 45, 45);
+
         // Update datafields
         this.updateDatafields();
+    }
+
+    renderOrientationIndicator(ctx, x, y) {
+        ctx.save();
+
+        // Background
+        ctx.beginPath();
+        ctx.arc(x, y, 22, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 10, 20, 0.85)';
+        ctx.fill();
+        ctx.strokeStyle = '#1a3040';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // North arrow
+        ctx.translate(x, y);
+        const rotation = this.getMapRotation() * Math.PI / 180;
+        ctx.rotate(-rotation);
+
+        // Arrow pointing north
+        ctx.fillStyle = '#ff3333';
+        ctx.beginPath();
+        ctx.moveTo(0, -16);
+        ctx.lineTo(-5, -6);
+        ctx.lineTo(0, -9);
+        ctx.lineTo(5, -6);
+        ctx.closePath();
+        ctx.fill();
+
+        // South half (white)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(0, 16);
+        ctx.lineTo(-5, 6);
+        ctx.lineTo(0, 9);
+        ctx.lineTo(5, 6);
+        ctx.closePath();
+        ctx.fill();
+
+        // N label
+        ctx.rotate(rotation); // Undo rotation for text
+        ctx.font = 'bold 9px Consolas, monospace';
+        ctx.fillStyle = '#ff3333';
+        ctx.textAlign = 'center';
+        ctx.fillText('N', 0, -16 + Math.cos(rotation) * 20);
+
+        ctx.restore();
+
+        // Mode label below
+        const modeLabels = { north: 'NORTH', track: 'TRK', heading: 'HDG' };
+        ctx.font = '8px Consolas, monospace';
+        ctx.fillStyle = '#00ccff';
+        ctx.textAlign = 'center';
+        ctx.fillText(modeLabels[this.map.orientation] || 'TRK', x, y + 34);
     }
 
     renderWindVector(ctx, x, y) {
