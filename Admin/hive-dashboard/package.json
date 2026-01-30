@@ -1,0 +1,12 @@
+{
+  "name": "hive-dashboard",
+  "version": "1.0.0",
+  "description": "Hive Command Center Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "beautiful-mermaid": "github:lukilabs/beautiful-mermaid"
+  }
+}

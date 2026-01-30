@@ -86,10 +86,26 @@
           {
             "type": "command",
             "command": "node C:/LLM-DevOSWE/Admin/relay/hooks/file-state-hook.js"
+          },
+          {
+            "type": "command",
+            "command": "python C:/LLM-DevOSWE/Admin/hooks/log-to-relay.py"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/LLM-DevOSWE/Admin/claude-plugins/notification-tools/notify.js"
           }
         ]
       }
     ]
   },
+  "statusline": "bash C:/LLM-DevOSWE/Admin/claude-plugins/statusline-tools/statusline.sh",
   "outputStyle": "default"
 }

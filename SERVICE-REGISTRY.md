@@ -42,12 +42,21 @@
 
 ### Oracle (Port 3002)
 - **Location:** `C:\LLM-Oracle\oracle.js`
-- **Purpose:** LLM backend, project file access, sandbox operations, tinyAI API
+- **Purpose:** LLM backend, project file access, sandbox operations, tinyAI API, weather data
 - **Endpoints:**
   - `POST /api/ask` - Ask LLM a question
   - `GET /api/sandbox` - List sandbox files
   - `POST /api/sandbox/write` - Write to sandbox
   - `GET /api/projects` - List registered projects
+  - `GET /api/weather?lat=X&lon=Y` - Weather by coordinates (Open-Meteo)
+  - `GET /api/weather/airport/:icao` - Weather by ICAO code (EGLL, KJFK, etc.)
+  - `GET /api/weather/aviation/:icao` - Aviation-specific weather (VFR/IFR category, winds in kts)
+  - `GET /api/weather/airports` - List of 26 known airports
+  - `GET /api/intel/claude-performance` - Claude Code SWE-Bench performance (MarginLab tracker)
+  - `GET /api/intel/curated` - Daily curated intel (filter: pending, approved, recommended)
+  - `POST /api/intel/curated/collect` - Trigger fresh intel collection
+  - `POST /api/intel/curated/:id/approve` - Approve intel item
+  - `POST /api/intel/curated/:id/reject` - Reject intel item
 - **Database:** `C:\LLM-Oracle\oracle-data\memory.json`
 
 ### Relay (Port 8600)
@@ -282,9 +291,14 @@
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-dashboard\server.js`
 - **Purpose:** Command Center overview dashboard
 - **UI:** `http://localhost:8899`
-- **Panels:** Daily Briefing, Services, Intel Feed (HN/GitHub/Discoveries/Web Search), Health Trends, Anomalies, Models, MCP Servers, Alerts
+- **Panels:** Daily Briefing, Services, Intel Feed (HN/GitHub/Discoveries/Web Search), Health Trends, Aviation Weather, Service Topology, Anomalies, Models, MCP Servers, Alerts
 - **Auto-refresh:** 30 seconds with last-updated indicator
-- **Features:** Anomaly deduplication, stale briefing auto-regeneration
+- **Features:** Anomaly deduplication, stale briefing auto-regeneration, Mermaid diagram rendering
+- **Endpoints:**
+  - `GET /api/health` - Service health
+  - `GET /api/system` - System stats (CPU, RAM, uptime)
+  - `GET /api/topology` - Service topology SVG (Mermaid)
+  - `POST /api/mermaid` - Render custom Mermaid diagrams (body: `{diagram, format: 'svg'|'ascii'}`)
 
 ---
 

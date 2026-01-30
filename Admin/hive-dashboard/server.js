@@ -12,6 +12,17 @@ const os = require('os');
 const PORT = 8899;
 const PUBLIC_DIR = __dirname;
 
+// Lazy-load beautiful-mermaid (ESM module)
+let renderMermaid = null;
+let renderMermaidAscii = null;
+async function loadMermaid() {
+    if (!renderMermaid) {
+        const mod = await import('beautiful-mermaid');
+        renderMermaid = mod.renderMermaid;
+        renderMermaidAscii = mod.renderMermaidAscii;
+    }
+}
+
 const MIME_TYPES = {
     '.html': 'text/html',
     '.css': 'text/css',
@@ -44,6 +55,80 @@ const server = http.createServer((req, res) => {
             port: PORT,
             uptime: process.uptime()
         }));
+        return;
+    }
+
+    // Mermaid diagram rendering endpoint
+    if (req.url === '/api/mermaid' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+            try {
+                const { diagram, format = 'svg', theme } = JSON.parse(body);
+                if (!diagram) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'diagram is required' }));
+                    return;
+                }
+                await loadMermaid();
+                if (format === 'ascii') {
+                    const ascii = renderMermaidAscii(diagram);
+                    res.writeHead(200, { 'Content-Type': 'text/plain' });
+                    res.end(ascii);
+                } else {
+                    const options = theme ? { theme } : {};
+                    const svg = await renderMermaid(diagram, options);
+                    res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+                    res.end(svg);
+                }
+            } catch (e) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message }));
+            }
+        });
+        return;
+    }
+
+    // Hive topology diagram (pre-rendered)
+    if (req.url === '/api/topology') {
+        (async () => {
+            try {
+                await loadMermaid();
+                const diagram = `graph TD
+    subgraph Core
+        O[Orchestrator :8500]
+        R[Relay :8600]
+        D[Dashboard :8899]
+    end
+    subgraph Services
+        Oracle[Oracle :3002]
+        KB[KittBox :8585]
+        SW[SimWidget :8080]
+        MCP[MCP Bridge :8860]
+    end
+    subgraph LLMs
+        Ollama[Ollama :11434]
+        LMS[LM Studio :1234]
+    end
+    O --> R
+    O --> D
+    O --> Oracle
+    O --> KB
+    O --> SW
+    O --> MCP
+    Oracle --> Ollama
+    Oracle --> LMS
+    R --> KB`;
+                const svg = await renderMermaid(diagram, {
+                    theme: { background: '#0a0a0f', foreground: '#e0e0e0' }
+                });
+                res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+                res.end(svg);
+            } catch (e) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message }));
+            }
+        })();
         return;
     }
 

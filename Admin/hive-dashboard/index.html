@@ -623,6 +623,46 @@
             <div id="incidentTimeline" style="margin-top:12px;"></div>
         </div>
 
+        <!-- Claude Performance Card -->
+        <div class="card claude-perf-card">
+            <div class="card-header">
+                <h2>Claude Code</h2>
+                <button class="btn small secondary" onclick="loadClaudePerf(true)" title="Refresh from MarginLab">Refresh</button>
+            </div>
+            <div id="claudePerfContent" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="loading">Loading</div>
+            </div>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="card weather-card">
+            <div class="card-header">
+                <h2>Aviation Weather</h2>
+                <select id="weatherAirport" onchange="loadWeather()" style="background:#0f0f1a;border:1px solid #333;border-radius:6px;padding:4px 8px;color:#e0e0e0;font-size:11px;">
+                    <option value="EGLL">EGLL - Heathrow</option>
+                    <option value="KJFK">KJFK - New York</option>
+                    <option value="KLAX">KLAX - Los Angeles</option>
+                    <option value="LFPG">LFPG - Paris CDG</option>
+                    <option value="EDDF">EDDF - Frankfurt</option>
+                    <option value="OMDB">OMDB - Dubai</option>
+                </select>
+            </div>
+            <div id="weatherContent" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                <div class="loading">Loading weather</div>
+            </div>
+        </div>
+
+        <!-- Topology Card -->
+        <div class="card topology-card" style="grid-column: span 3;">
+            <div class="card-header">
+                <h2>Service Topology</h2>
+                <button class="btn small secondary" onclick="loadTopology()" title="Refresh topology diagram">Refresh</button>
+            </div>
+            <div id="topologyDiagram" style="display:flex;justify-content:center;align-items:center;min-height:200px;background:#0a0a0f;border-radius:8px;padding:10px;overflow:auto;">
+                <div class="loading">Loading topology</div>
+            </div>
+        </div>
+
         <!-- Bottom Section with Collapsibles -->
         <div class="bottom-section">
             <!-- Anomalies -->
@@ -669,6 +709,32 @@
                 <div class="collapsible-content" id="mcp-content">
                     <div class="collapsible-list" id="mcpList">
                         <div class="loading">Loading</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Curated Intel -->
+            <div class="card collapsible-card" style="grid-column: span 2;">
+                <div class="collapsible-header" onclick="toggleSection('intel-curated')">
+                    <h3>
+                        <span>Daily Intel Report</span>
+                        <span class="count" id="intelCuratedCount">0</span>
+                    </h3>
+                    <span class="collapsible-toggle" id="intel-curated-toggle">▼</span>
+                </div>
+                <div class="collapsible-content" id="intel-curated-content">
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                        <select id="intelFilter" onchange="loadCuratedIntel()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:4px 8px;font-size:11px;">
+                            <option value="pending">Pending Review</option>
+                            <option value="recommended">Recommended</option>
+                            <option value="approved">Approved</option>
+                            <option value="all">All</option>
+                        </select>
+                        <button class="btn small secondary" onclick="collectIntel()" title="Fetch fresh intel from all sources">Collect New</button>
+                        <span id="intelLastFetch" style="color:#666;font-size:10px;margin-left:auto;"></span>
+                    </div>
+                    <div id="intelCuratedList" style="max-height:400px;overflow-y:auto;">
+                        <div class="loading">Loading intel</div>
                     </div>
                 </div>
             </div>
@@ -814,7 +880,9 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3002';
+        // Dynamic host detection for remote access
+        const HOST = location.hostname || 'localhost';
+        const API_BASE = `http://${HOST}:3002`;
 
         // Utility services not managed by the Orchestrator
         const UTILITY_SERVICES = [
@@ -829,7 +897,7 @@
 
         async function populateServicesFromOrchestrator() {
             try {
-                const res = await fetchWithTimeout('http://localhost:8500/api/services', 3000);
+                const res = await fetchWithTimeout('http://${HOST}:8500/api/services', 3000);
                 const registry = await res.json();
                 const hiveServices = Object.entries(registry)
                     .filter(([id, svc]) => svc.port && svc.healthEndpoint)
@@ -1052,7 +1120,7 @@
             if (!svcKey) return;
             if (btn) { btn.classList.add('spinning'); btn.disabled = true; }
             try {
-                const res = await fetch('http://localhost:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
+                const res = await fetch('http://${HOST}:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
                 if (res.ok) {
                     if (btn) btn.style.color = '#00ff88';
                     setTimeout(() => { loadServices(); }, 4000);
@@ -1086,7 +1154,7 @@
             const results = await Promise.all(SERVICES.map(async (svc) => {
                 const t0 = Date.now();
                 try {
-                    const url = 'http://localhost:' + svc.port + svc.endpoint;
+                    const url = `http://${HOST}:` + svc.port + svc.endpoint;
                     const res = await fetchWithTimeout(url, 5000);
                     const latency = Date.now() - t0;
                     // Some endpoints return non-200 but are still "alive"
@@ -1126,7 +1194,7 @@
                         offlineStreakCount[s.name] = (offlineStreakCount[s.name] || 0) + 1;
                         if (offlineStreakCount[s.name] === 3 && SERVICE_KEY_MAP[s.name]) {
                             console.log('[AutoRestart] ' + s.name + ' offline for 3 checks, restarting...');
-                            fetch('http://localhost:8500/api/services/' + SERVICE_KEY_MAP[s.name] + '/restart', { method: 'POST' }).catch(() => {});
+                            fetch('http://${HOST}:8500/api/services/' + SERVICE_KEY_MAP[s.name] + '/restart', { method: 'POST' }).catch(() => {});
                             if (Notification.permission === 'granted') {
                                 new Notification('Hive: Auto-restarting ' + s.name, { body: 'Offline for 3+ checks', tag: 'hive-autorestart-' + s.name });
                             }
@@ -1211,7 +1279,7 @@
 
         // Open service in new tab
         function openService(name, port) {
-            window.open(`http://localhost:${port}`, '_blank');
+            window.open(`http://${HOST}:${port}`, '_blank');
         }
 
         // Open service detail modal
@@ -1237,8 +1305,8 @@
                 <div class="detail-row">
                     <span class="detail-label">URL</span>
                     <span class="detail-value">
-                        <a href="http://localhost:${port}" target="_blank" style="color:#ff6b35">
-                            http://localhost:${port}
+                        <a href="http://${HOST}:${port}" target="_blank" style="color:#ff6b35">
+                            http://${HOST}:${port}
                         </a>
                     </span>
                 </div>
@@ -1271,7 +1339,7 @@
                 findings.push({ label: 'Connectivity Test', status: 'checking' });
 
                 const startTime = Date.now();
-                const res = await fetchWithTimeout('http://localhost:' + port + (svc?.endpoint || '/'), 5000);
+                const res = await fetchWithTimeout(`http://${HOST}:` + port + (svc?.endpoint || '/'), 5000);
                 const responseTime = Date.now() - startTime;
 
                 if (res.ok) {
@@ -1311,7 +1379,7 @@
 
             // 4. Check Master-O for service info
             try {
-                const masterRes = await fetchWithTimeout('http://localhost:8500/api/status', 2000);
+                const masterRes = await fetchWithTimeout('http://${HOST}:8500/api/status', 2000);
                 if (masterRes.ok) {
                     const masterData = await masterRes.json();
                     const svcKey = name.toLowerCase().replace('-', '');
@@ -1353,7 +1421,7 @@
                         }
                     };
 
-                    const taskRes = await fetch('http://localhost:8600/api/messages', {
+                    const taskRes = await fetch('http://${HOST}:8600/api/messages', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(taskPayload)
@@ -1407,7 +1475,7 @@
             try {
                 const svcKey = SERVICE_KEY_MAP[name] || name.toLowerCase();
 
-                const res = await fetch('http://localhost:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
+                const res = await fetch('http://${HOST}:8500/api/services/' + svcKey + '/restart', { method: 'POST' });
 
                 if (res.ok) {
                     resultsEl.innerHTML = '<div style="background:#1a3a2e;border:1px solid #00ff88;border-radius:8px;padding:15px;margin-top:10px;">' +
@@ -1700,7 +1768,7 @@
         // Load MCP Servers
         async function loadMCP() {
             try {
-                const res = await fetchWithTimeout('http://localhost:8860/api/status', 5000);
+                const res = await fetchWithTimeout('http://${HOST}:8860/api/status', 5000);
                 const data = await res.json();
                 const servers = data.servers || [];
 
@@ -1727,7 +1795,7 @@
         let lastAlertIds = new Set();
         async function loadAlerts() {
             try {
-                const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=30&unacked=true', 5000);
+                const res = await fetchWithTimeout('http://${HOST}:8600/api/alerts?limit=30&unacked=true', 5000);
                 const data = await res.json();
                 let alerts = data.alerts || [];
 
@@ -1780,18 +1848,18 @@
 
         async function ackAlert(id) {
             try {
-                await fetch(`http://localhost:8600/api/alerts/${id}/ack`, { method: 'POST' });
+                await fetch(`http://${HOST}:8600/api/alerts/${id}/ack`, { method: 'POST' });
                 loadAlerts();
             } catch (e) { /* ignore */ }
         }
 
         async function ackAllAlerts() {
             try {
-                const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=50&unacked=true', 5000);
+                const res = await fetchWithTimeout('http://${HOST}:8600/api/alerts?limit=50&unacked=true', 5000);
                 const data = await res.json();
                 const alerts = data.alerts || [];
                 await Promise.all(alerts.map(a =>
-                    fetch('http://localhost:8600/api/alerts/' + a.id + '/ack', { method: 'POST' }).catch(() => {})
+                    fetch('http://${HOST}:8600/api/alerts/' + a.id + '/ack', { method: 'POST' }).catch(() => {})
                 ));
                 loadAlerts();
             } catch (e) {}
@@ -1805,7 +1873,7 @@
                 { port: 8860, name: 'MCP Bridge' },
                 { port: 8800, name: 'Hive Voice' }
             ];
-            uis.forEach((ui, i) => setTimeout(() => window.open('http://localhost:' + ui.port, '_blank'), i * 300));
+            uis.forEach((ui, i) => setTimeout(() => window.open(`http://${HOST}:` + ui.port, '_blank'), i * 300));
         }
 
         // Service Logs
@@ -1816,11 +1884,11 @@
                 let lines = [];
 
                 if (source === 'orchestrator') {
-                    const res = await fetchWithTimeout('http://localhost:8500/api/log?lines=200', 5000);
+                    const res = await fetchWithTimeout('http://${HOST}:8500/api/log?lines=200', 5000);
                     const data = await res.json();
                     lines = (data.log || 'No log data').split('\n');
                 } else if (source === 'alerts') {
-                    const res = await fetchWithTimeout('http://localhost:8600/api/alerts?limit=100', 5000);
+                    const res = await fetchWithTimeout('http://${HOST}:8600/api/alerts?limit=100', 5000);
                     const data = await res.json();
                     const alerts = data.alerts || [];
                     lines = alerts.map(function(a) {
@@ -1831,7 +1899,7 @@
                     });
                     if (lines.length === 0) lines = ['No alerts in the last 24h'];
                 } else if (source === 'services') {
-                    const res = await fetchWithTimeout('http://localhost:8500/api/status', 5000);
+                    const res = await fetchWithTimeout('http://${HOST}:8500/api/status', 5000);
                     const data = await res.json();
                     lines = ['=== Service Status Snapshot — ' + new Date().toLocaleString() + ' ===', ''];
                     Object.entries(data.services || {}).forEach(function(entry) {
@@ -1902,7 +1970,7 @@
 
         async function restartAllOffline() {
             try {
-                const res = await fetchWithTimeout('http://localhost:8500/api/status', 5000);
+                const res = await fetchWithTimeout('http://${HOST}:8500/api/status', 5000);
                 const data = await res.json();
                 const offline = Object.entries(data.services).filter(([k, v]) => !v.healthy && v.port);
                 if (offline.length === 0) { alert('All services are healthy!'); return; }
@@ -1911,7 +1979,7 @@
                 let restarted = 0;
                 for (const [id] of offline) {
                     try {
-                        await fetch('http://localhost:8500/api/services/' + id + '/restart', { method: 'POST' });
+                        await fetch('http://${HOST}:8500/api/services/' + id + '/restart', { method: 'POST' });
                         restarted++;
                     } catch (e) {}
                 }
@@ -1938,7 +2006,7 @@
             resultsEl.innerHTML = '<div class="loading">Searching...</div>';
 
             try {
-                const res = await fetchWithTimeout(`http://localhost:8860/api/quick/search?q=${encodeURIComponent(query)}&count=10`, 15000);
+                const res = await fetchWithTimeout(`http://${HOST}:8860/api/quick/search?q=${encodeURIComponent(query)}&count=10`, 15000);
                 const data = await res.json();
 
                 if (data.error) {
@@ -1990,7 +2058,7 @@
         // Load system resources from dashboard server
         async function loadSystem() {
             try {
-                const res = await fetchWithTimeout('http://localhost:8899/api/system', 3000);
+                const res = await fetchWithTimeout('http://${HOST}:8899/api/system', 3000);
                 const d = await res.json();
                 document.getElementById('sysCpu').textContent = d.cpu.usage;
                 document.getElementById('sysCpuBar').style.width = d.cpu.usage + '%';
@@ -2004,6 +2072,212 @@
             } catch (e) {
                 document.getElementById('sysCpu').textContent = '?';
                 document.getElementById('sysRam').textContent = '?';
+            }
+        }
+
+        // Load Curated Intel
+        async function loadCuratedIntel() {
+            const container = document.getElementById('intelCuratedList');
+            const filter = document.getElementById('intelFilter')?.value || 'pending';
+            try {
+                const res = await fetchWithTimeout('http://${HOST}:3002/api/intel/curated?filter=' + filter, 10000);
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('intelCuratedCount').textContent = data.stats?.pending || 0;
+                    document.getElementById('intelLastFetch').textContent = data.lastFetch ?
+                        'Last: ' + new Date(data.lastFetch).toLocaleString() : '';
+
+                    if (!data.items || data.items.length === 0) {
+                        container.innerHTML = '<div style="color:#666;text-align:center;padding:30px;">No intel items. Click "Collect New" to fetch.</div>';
+                        return;
+                    }
+
+                    container.innerHTML = data.items.map(item => {
+                        const thumb = item.recommend ? '👍' : '👎';
+                        const thumbColor = item.recommend ? '#00ff88' : '#ff6b35';
+                        const statusBadge = item.status === 'approved' ? '<span style="background:#00ff8833;color:#00ff88;padding:2px 6px;border-radius:4px;font-size:9px;margin-left:6px;">APPROVED</span>' :
+                                           item.status === 'rejected' ? '<span style="background:#ff444433;color:#ff4444;padding:2px 6px;border-radius:4px;font-size:9px;margin-left:6px;">REJECTED</span>' : '';
+                        return `
+                            <div style="background:#0f0f1a;border-radius:8px;padding:12px;margin-bottom:8px;border-left:3px solid ${thumbColor};">
+                                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                                            <span style="font-size:18px;">${thumb}</span>
+                                            <span style="color:#888;font-size:10px;background:#1a1a2e;padding:2px 6px;border-radius:4px;">${item.sourceIcon || '📰'} ${item.source}</span>
+                                            <span style="color:#666;font-size:10px;">${item.relevance}/100</span>
+                                            ${statusBadge}
+                                        </div>
+                                        <a href="${item.url}" target="_blank" style="color:#fff;font-weight:500;font-size:13px;text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.title}">
+                                            ${item.title}
+                                        </a>
+                                        <div style="color:#aaa;font-size:11px;margin-top:4px;">${item.summary || ''}</div>
+                                        <div style="color:#ff9f1c;font-size:11px;margin-top:6px;font-style:italic;">💭 ${item.thoughts || 'No analysis'}</div>
+                                    </div>
+                                    ${item.status === 'pending' ? `
+                                    <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+                                        <button onclick="approveIntel('${item.id}')" style="background:#00ff8822;color:#00ff88;border:1px solid #00ff88;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;">✓ Use</button>
+                                        <button onclick="rejectIntel('${item.id}')" style="background:#ff444422;color:#ff4444;border:1px solid #ff4444;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;">✗ Skip</button>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div style="color:#ff4444;">Failed to load intel</div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="color:#666;">Intel service offline</div>';
+            }
+        }
+
+        async function collectIntel() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Collecting...';
+            try {
+                const res = await fetch('http://${HOST}:3002/api/intel/curated/collect', { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    btn.textContent = `Done (${data.itemCount})`;
+                    setTimeout(() => { btn.textContent = 'Collect New'; btn.disabled = false; }, 2000);
+                    loadCuratedIntel();
+                } else {
+                    btn.textContent = 'Failed';
+                    setTimeout(() => { btn.textContent = 'Collect New'; btn.disabled = false; }, 2000);
+                }
+            } catch (e) {
+                btn.textContent = 'Error';
+                setTimeout(() => { btn.textContent = 'Collect New'; btn.disabled = false; }, 2000);
+            }
+        }
+
+        async function approveIntel(id) {
+            try {
+                const res = await fetch('http://${HOST}:3002/api/intel/curated/' + id + '/approve', { method: 'POST' });
+                if (res.ok) loadCuratedIntel();
+            } catch (e) {
+                console.error('Approve failed:', e);
+            }
+        }
+
+        async function rejectIntel(id) {
+            try {
+                const res = await fetch('http://${HOST}:3002/api/intel/curated/' + id + '/reject', { method: 'POST' });
+                if (res.ok) loadCuratedIntel();
+            } catch (e) {
+                console.error('Reject failed:', e);
+            }
+        }
+
+        // Load Claude Code performance data
+        async function loadClaudePerf(refresh = false) {
+            const container = document.getElementById('claudePerfContent');
+            try {
+                const url = 'http://${HOST}:3002/api/intel/claude-performance' + (refresh ? '?refresh=true' : '');
+                const res = await fetchWithTimeout(url, refresh ? 30000 : 5000);
+                if (res.ok) {
+                    const d = await res.json();
+                    const current = refresh ? d.metrics : d.current;
+                    const passRate = current?.daily || current?.weekly || '--';
+                    const baseline = current?.baseline || 58;
+                    const delta = passRate !== '--' ? (passRate - baseline).toFixed(0) : '--';
+                    const deltaColor = delta > 0 ? '#00ff88' : delta < -5 ? '#ff4444' : delta < 0 ? '#ffaa00' : '#888';
+                    const statusColor = passRate >= 55 ? '#00ff88' : passRate >= 50 ? '#ffaa00' : '#ff4444';
+
+                    container.innerHTML = `
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;">Pass Rate</div>
+                            <div style="font-size:28px;font-weight:700;color:${statusColor}">${passRate}%</div>
+                            <div style="font-size:11px;color:${deltaColor};margin-top:4px;">${delta > 0 ? '+' : ''}${delta}% vs baseline</div>
+                        </div>
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;">
+                            <div style="font-size:11px;color:#666;margin-bottom:8px;">SWE-Bench Pro</div>
+                            <div style="font-size:12px;color:#aaa;line-height:1.6;">
+                                <div>7-day: <span style="color:#fff">${current?.weekly || '--'}%</span></div>
+                                <div>30-day: <span style="color:#fff">${current?.monthly || '--'}%</span></div>
+                                <div>Baseline: <span style="color:#888">${baseline}%</span></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div style="color:#666;grid-column:span 2;text-align:center;padding:20px;">Performance data unavailable</div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="color:#666;grid-column:span 2;text-align:center;padding:20px;">Tracker offline</div>';
+            }
+        }
+
+        // Load weather data
+        async function loadWeather() {
+            const container = document.getElementById('weatherContent');
+            const icao = document.getElementById('weatherAirport')?.value || 'EGLL';
+            try {
+                const res = await fetchWithTimeout('http://${HOST}:3002/api/weather/aviation/' + icao, 8000);
+                if (res.ok) {
+                    const w = await res.json();
+                    const catColor = w.category === 'VFR' ? '#00ff88' : w.category === 'MVFR' ? '#ffaa00' : '#ff4444';
+                    container.innerHTML = `
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;">
+                            <div style="font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;">Category</div>
+                            <div style="font-size:20px;font-weight:700;color:${catColor}">${w.category}</div>
+                            <div style="font-size:11px;color:#888;margin-top:4px;">${w.conditions}</div>
+                        </div>
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;">
+                            <div style="font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;">Temperature</div>
+                            <div style="font-size:20px;font-weight:700;color:#fff">${w.temperature.celsius}°C</div>
+                            <div style="font-size:11px;color:#888;margin-top:4px;">${w.temperature.fahrenheit}°F</div>
+                        </div>
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;">
+                            <div style="font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;">Wind</div>
+                            <div style="font-size:20px;font-weight:700;color:#00d9ff">${w.wind.speed_kts} kts</div>
+                            <div style="font-size:11px;color:#888;margin-top:4px;">${w.wind.direction}° ${w.wind.assessment}</div>
+                        </div>
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;">
+                            <div style="font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;">Visibility</div>
+                            <div style="font-size:20px;font-weight:700;color:#fff">${w.visibility.statute_miles} SM</div>
+                            <div style="font-size:11px;color:#888;margin-top:4px;">${Math.round(w.visibility.meters/1000)} km</div>
+                        </div>
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;">
+                            <div style="font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;">Pressure</div>
+                            <div style="font-size:20px;font-weight:700;color:#fff">${w.pressure.inhg}</div>
+                            <div style="font-size:11px;color:#888;margin-top:4px;">${w.pressure.hpa} hPa</div>
+                        </div>
+                        <div style="background:#0f0f1a;padding:12px;border-radius:8px;">
+                            <div style="font-size:11px;color:#666;text-transform:uppercase;margin-bottom:4px;">Cloud Cover</div>
+                            <div style="font-size:20px;font-weight:700;color:#fff">${w.cloud_cover}%</div>
+                            <div style="font-size:11px;color:#888;margin-top:4px;">Humidity ${w.humidity}%</div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div style="color:#ff4444;grid-column:span 3;">Weather unavailable</div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="color:#666;grid-column:span 3;">Weather service offline</div>';
+            }
+        }
+
+        // Load topology diagram
+        async function loadTopology() {
+            const container = document.getElementById('topologyDiagram');
+            try {
+                const res = await fetchWithTimeout('http://${HOST}:8899/api/topology', 10000);
+                if (res.ok) {
+                    const svg = await res.text();
+                    // Apply dark theme CSS variables
+                    const themed = svg.replace('style="--bg:#FFFFFF;--fg:#27272A', 'style="--bg:#0a0a0f;--fg:#e0e0e0');
+                    container.innerHTML = themed;
+                    // Make SVG responsive
+                    const svgEl = container.querySelector('svg');
+                    if (svgEl) {
+                        svgEl.style.maxWidth = '100%';
+                        svgEl.style.height = 'auto';
+                    }
+                } else {
+                    container.innerHTML = '<div style="color:#ff4444;">Failed to load topology</div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="color:#666;">Topology unavailable</div>';
             }
         }
 
@@ -2123,10 +2397,10 @@
                 { label: 'Export Status', desc: 'Copy system status to clipboard', icon: '📤', action: () => { closeCmdPalette(); exportStatus(); } },
                 { label: 'Toggle Logs', desc: 'Show/hide the service logs panel', icon: '📜', action: () => { closeCmdPalette(); toggleSection('logs'); } },
                 { label: 'Settings', desc: 'Open dashboard settings', icon: '⚙', action: () => { closeCmdPalette(); openSettings(); } },
-                { label: 'Open KittBox', desc: 'Command Center :8585', icon: '🤖', action: () => { closeCmdPalette(); window.open('http://localhost:8585', '_blank'); } },
-                { label: 'Open VoiceAccess', desc: 'Voice management :8875', icon: '🎤', action: () => { closeCmdPalette(); window.open('http://localhost:8875', '_blank'); } },
-                { label: 'Open Personas', desc: 'AI personas :8770', icon: '👤', action: () => { closeCmdPalette(); window.open('http://localhost:8770', '_blank'); } },
-                { label: 'Open MCP Bridge', desc: 'MCP servers :8860', icon: '🔌', action: () => { closeCmdPalette(); window.open('http://localhost:8860', '_blank'); } },
+                { label: 'Open KittBox', desc: 'Command Center :8585', icon: '🤖', action: () => { closeCmdPalette(); window.open('http://${HOST}:8585', '_blank'); } },
+                { label: 'Open VoiceAccess', desc: 'Voice management :8875', icon: '🎤', action: () => { closeCmdPalette(); window.open('http://${HOST}:8875', '_blank'); } },
+                { label: 'Open Personas', desc: 'AI personas :8770', icon: '👤', action: () => { closeCmdPalette(); window.open('http://${HOST}:8770', '_blank'); } },
+                { label: 'Open MCP Bridge', desc: 'MCP servers :8860', icon: '🔌', action: () => { closeCmdPalette(); window.open('http://${HOST}:8860', '_blank'); } },
                 { label: 'Open All UIs', desc: 'Open all service dashboards', icon: '🖥️', action: () => { closeCmdPalette(); openAllUIs(); } },
                 { label: 'Clear All Alerts', desc: 'Acknowledge all alerts', icon: '🔕', action: () => { closeCmdPalette(); ackAllAlerts(); } },
                 { label: 'System Health Check', desc: 'Check all services now', icon: '💚', action: () => { closeCmdPalette(); loadServices(); } },
@@ -2136,7 +2410,7 @@
                 if (SERVICE_KEY_MAP[s.name]) {
                     cmds.push({ label: 'Restart ' + s.name, desc: ':' + s.port + ' — ' + s.status, icon: '↻', action: () => { closeCmdPalette(); restartServiceQuick(s.name, null); } });
                 }
-                cmds.push({ label: 'Open ' + s.name, desc: 'Open :' + s.port + ' in browser', icon: '🔗', action: () => { closeCmdPalette(); window.open('http://localhost:' + s.port, '_blank'); } });
+                cmds.push({ label: 'Open ' + s.name, desc: 'Open :' + s.port + ' in browser', icon: '🔗', action: () => { closeCmdPalette(); window.open(`http://${HOST}:` + s.port, '_blank'); } });
             });
             return cmds;
         }
@@ -2226,6 +2500,10 @@
             }
             await populateServicesFromOrchestrator();
             refreshAll();
+            loadTopology();
+            loadWeather();
+            loadClaudePerf();
+            loadCuratedIntel();
             refreshIntervalId = setInterval(refreshAll, dashSettings.refreshInterval * 1000);
         })();
     </script>
