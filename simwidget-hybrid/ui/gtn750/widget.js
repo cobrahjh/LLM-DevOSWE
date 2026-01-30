@@ -1011,8 +1011,84 @@ class GTN750Widget {
         // Compass rose
         this.renderCompass(ctx, w / 2, h / 2, Math.min(w, h) / 2 - 25);
 
+        // Wind vector indicator (top-left corner)
+        this.renderWindVector(ctx, 50, 50);
+
         // Update datafields
         this.updateDatafields();
+    }
+
+    renderWindVector(ctx, x, y) {
+        const windDir = this.data.windDirection || 0;
+        const windSpd = this.data.windSpeed || 0;
+
+        if (windSpd < 1) return; // Don't show if no wind
+
+        ctx.save();
+
+        // Background circle
+        ctx.beginPath();
+        ctx.arc(x, y, 28, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 10, 20, 0.85)';
+        ctx.fill();
+        ctx.strokeStyle = '#1a3040';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Wind arrow (points in direction wind is coming FROM)
+        ctx.translate(x, y);
+
+        // Rotate arrow to show wind direction relative to map
+        const mapRotation = this.getMapRotation();
+        const arrowAngle = (windDir - mapRotation) * Math.PI / 180;
+
+        ctx.rotate(arrowAngle);
+
+        // Arrow shaft
+        ctx.strokeStyle = '#00ccff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(0, 12);
+        ctx.stroke();
+
+        // Arrow head (points down - wind coming from)
+        ctx.fillStyle = '#00ccff';
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(-6, -10);
+        ctx.lineTo(6, -10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Wind barbs based on speed (simplified)
+        if (windSpd >= 5) {
+            ctx.beginPath();
+            ctx.moveTo(0, 8);
+            ctx.lineTo(8, 4);
+            ctx.stroke();
+        }
+        if (windSpd >= 10) {
+            ctx.beginPath();
+            ctx.moveTo(0, 2);
+            ctx.lineTo(10, -2);
+            ctx.stroke();
+        }
+        if (windSpd >= 15) {
+            ctx.beginPath();
+            ctx.moveTo(0, -4);
+            ctx.lineTo(10, -8);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+
+        // Wind text below
+        ctx.font = 'bold 10px Consolas, monospace';
+        ctx.fillStyle = '#00ccff';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.round(windDir)}°`, x, y + 42);
+        ctx.fillText(`${Math.round(windSpd)}kt`, x, y + 54);
     }
 
     renderTerrainPage() {
