@@ -1,0 +1,308 @@
+/**
+ * Autopilot Widget Styles
+ * Type: control | Category: flight
+ * Path: ui/autopilot/styles.css
+ *
+ * Aviation-style autopilot control panel
+ * Uses B612 font for cockpit authenticity
+ */
+
+.widget-container {
+    max-width: 320px;
+    margin: 0 auto;
+    padding: 16px;
+    font-family: var(--font-ui, 'B612', sans-serif);
+}
+
+/* Header */
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.widget-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-primary, #fff);
+}
+
+.ap-master {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--color-danger, #ff4444);
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.ap-master.engaged {
+    background: var(--color-success, #00cc00);
+    animation: ap-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ap-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Master Controls Row */
+.master-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.ap-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 8px;
+    border: 2px solid var(--border-color, #444);
+    border-radius: 6px;
+    background: var(--bg-tertiary, rgba(255,255,255,0.05));
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ap-btn:hover {
+    border-color: var(--accent-color, #4a9eff);
+    background: var(--bg-hover, rgba(255,255,255,0.1));
+}
+
+.ap-btn.active {
+    border-color: var(--color-success, #00cc00);
+    background: rgba(0, 204, 0, 0.2);
+}
+
+.ap-btn.master.active {
+    border-color: var(--color-success, #00cc00);
+    background: rgba(0, 204, 0, 0.3);
+    box-shadow: 0 0 10px rgba(0, 204, 0, 0.4);
+}
+
+.ap-btn .btn-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+    letter-spacing: 1px;
+}
+
+.ap-btn .btn-status {
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    margin-top: 2px;
+}
+
+.ap-btn.active .btn-status {
+    color: var(--color-success, #00cc00);
+}
+
+/* Control Sections */
+.control-section {
+    background: var(--bg-secondary, rgba(255,255,255,0.03));
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted, #888);
+    letter-spacing: 1px;
+}
+
+.mode-btn {
+    padding: 4px 12px;
+    border: 1px solid var(--border-color, #444);
+    border-radius: 4px;
+    background: var(--bg-tertiary, rgba(255,255,255,0.05));
+    color: var(--text-muted, #888);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mode-btn:hover {
+    border-color: var(--accent-color, #4a9eff);
+    color: var(--text-primary, #fff);
+}
+
+.mode-btn.active {
+    background: var(--color-success, #00cc00);
+    border-color: var(--color-success, #00cc00);
+    color: #000;
+}
+
+/* Value Control */
+.value-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.adjust-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color, #444);
+    border-radius: 6px;
+    background: var(--bg-tertiary, rgba(255,255,255,0.05));
+    color: var(--text-primary, #fff);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.adjust-btn:hover {
+    background: var(--accent-color, #4a9eff);
+    border-color: var(--accent-color, #4a9eff);
+}
+
+.adjust-btn:active {
+    transform: scale(0.95);
+}
+
+.value-display {
+    min-width: 100px;
+    text-align: center;
+}
+
+.value-main {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-info, #00d4ff);
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+.value-main.vs-value.positive {
+    color: var(--color-success, #00ff00);
+}
+
+.value-main.vs-value.negative {
+    color: var(--color-warning, #ffcc00);
+}
+
+.value-unit {
+    font-size: 12px;
+    color: var(--text-muted, #888);
+    margin-left: 2px;
+}
+
+.current-value {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 11px;
+}
+
+.current-label {
+    color: var(--text-muted, #666);
+}
+
+.current-val {
+    color: var(--text-muted, #888);
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+/* Navigation Modes */
+.nav-modes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.nav-btn {
+    padding: 10px 8px;
+    border: 1px solid var(--border-color, #444);
+    border-radius: 6px;
+    background: var(--bg-tertiary, rgba(255,255,255,0.05));
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.nav-btn:hover {
+    border-color: var(--accent-color, #4a9eff);
+    background: var(--bg-hover, rgba(255,255,255,0.1));
+}
+
+.nav-btn.active {
+    background: var(--color-info, #00d4ff);
+    border-color: var(--color-info, #00d4ff);
+}
+
+.nav-btn.active .nav-label {
+    color: #000;
+}
+
+.nav-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted, #888);
+    letter-spacing: 1px;
+}
+
+.nav-btn:hover .nav-label {
+    color: var(--text-primary, #fff);
+}
+
+/* Footer */
+.widget-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: var(--text-muted, #666);
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color, #222);
+}
+
+.nav-source {
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+/* Responsive */
+@media (max-width: 360px) {
+    .widget-container {
+        padding: 12px;
+    }
+
+    .value-main {
+        font-size: 24px;
+    }
+
+    .adjust-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .control-section {
+        padding: 10px;
+    }
+
+    .nav-modes {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -1,0 +1,364 @@
+/**
+ * Engine Monitor Widget Styles
+ * Type: data | Category: flight
+ * Path: ui/engine-monitor/styles.css
+ *
+ * Aviation-style engine instrumentation display
+ * Uses B612 font for cockpit authenticity
+ */
+
+.widget-container {
+    max-width: 340px;
+    margin: 0 auto;
+    padding: 16px;
+    font-family: var(--font-ui, 'B612', sans-serif);
+}
+
+/* Header */
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.widget-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-primary, #fff);
+}
+
+.engine-status {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--color-danger, #ff4444);
+    color: #fff;
+    margin-right: 8px;
+}
+
+.engine-status.running {
+    background: var(--color-success, #00cc00);
+}
+
+/* RPM Gauge Section */
+.rpm-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.rpm-gauge {
+    position: relative;
+    width: 200px;
+    height: 120px;
+}
+
+#rpm-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.rpm-value {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.rpm-value span:first-child {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    font-family: var(--font-data, 'B612 Mono', monospace);
+    color: var(--color-success, #00ff00);
+    line-height: 1;
+}
+
+.rpm-unit {
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    letter-spacing: 1px;
+}
+
+/* Data Grid */
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.data-grid.primary .data-item {
+    background: var(--bg-secondary, rgba(255,255,255,0.05));
+}
+
+.data-item {
+    background: var(--bg-tertiary, rgba(255,255,255,0.03));
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+}
+
+.data-label {
+    display: block;
+    font-size: 9px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.data-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    font-family: var(--font-data, 'B612 Mono', monospace);
+    line-height: 1.2;
+}
+
+.data-unit {
+    display: block;
+    font-size: 9px;
+    color: var(--text-muted, #666);
+}
+
+.data-value.warning { color: var(--color-warning, #ffcc00); }
+.data-value.critical { color: var(--color-danger, #ff4444); }
+.data-value.good { color: var(--color-success, #00ff00); }
+
+/* Section Title */
+.section-title {
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+/* Temperature Bars */
+.temp-bars {
+    margin-bottom: 16px;
+}
+
+.temp-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.temp-label {
+    width: 32px;
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+}
+
+.temp-bar-container {
+    flex: 1;
+    height: 12px;
+    background: var(--bg-tertiary, #0a1520);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Gradient zones for temp bars */
+.temp-bar-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg,
+        var(--color-info, #00d4ff) 0%,
+        var(--color-success, #00ff00) 30%,
+        var(--color-success, #00ff00) 60%,
+        var(--color-warning, #ffcc00) 80%,
+        var(--color-danger, #ff4444) 100%
+    );
+    opacity: 0.2;
+}
+
+.temp-bar {
+    height: 100%;
+    background: linear-gradient(90deg,
+        var(--color-info, #00d4ff) 0%,
+        var(--color-success, #00ff00) 50%,
+        var(--color-warning, #ffcc00) 80%,
+        var(--color-danger, #ff4444) 100%
+    );
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.temp-value {
+    width: 50px;
+    font-size: 12px;
+    font-family: var(--font-data, 'B612 Mono', monospace);
+    color: var(--text-primary, #fff);
+    text-align: right;
+}
+
+/* Control Bars (Throttle, Mixture, Prop) */
+.controls-section {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.control-item {
+    flex: 1;
+    text-align: center;
+}
+
+.control-label {
+    display: block;
+    font-size: 9px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.control-bar-container {
+    height: 60px;
+    width: 24px;
+    margin: 0 auto;
+    background: var(--bg-tertiary, #0a1520);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.control-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 3px;
+    transition: height 0.2s ease;
+}
+
+.control-bar.throttle {
+    background: linear-gradient(180deg, var(--color-success, #00ff00), #006600);
+}
+
+.control-bar.mixture {
+    background: linear-gradient(180deg, var(--color-danger, #ff4444), #660000);
+}
+
+.control-bar.prop {
+    background: linear-gradient(180deg, var(--color-info, #00d4ff), #006688);
+}
+
+.control-value {
+    display: block;
+    font-size: 11px;
+    font-family: var(--font-data, 'B612 Mono', monospace);
+    color: var(--text-primary, #fff);
+    margin-top: 4px;
+}
+
+/* Actions Row */
+.actions-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.btn {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-secondary {
+    background: var(--bg-secondary, rgba(255,255,255,0.1));
+    color: var(--text-primary, #e0e0e0);
+    border: 1px solid var(--border-color, #444);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.15));
+    border-color: var(--accent-color, #4a9eff);
+}
+
+.btn-danger {
+    background: rgba(255, 68, 68, 0.2);
+    color: var(--color-danger, #ff4444);
+    border: 1px solid var(--color-danger, #ff4444);
+}
+
+.btn-danger:hover {
+    background: var(--color-danger, #ff4444);
+    color: #fff;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Footer */
+.widget-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: var(--text-muted, #666);
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color, #222);
+}
+
+.hobbs {
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+/* Responsive */
+@media (max-width: 380px) {
+    .widget-container {
+        padding: 12px;
+    }
+
+    .rpm-gauge {
+        width: 160px;
+        height: 100px;
+    }
+
+    .rpm-value span:first-child {
+        font-size: 24px;
+    }
+
+    .data-grid {
+        gap: 6px;
+    }
+
+    .data-value {
+        font-size: 16px;
+    }
+
+    .control-bar-container {
+        height: 50px;
+        width: 20px;
+    }
+}

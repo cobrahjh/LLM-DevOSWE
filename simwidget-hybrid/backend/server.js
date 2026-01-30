@@ -270,6 +270,9 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/flight-data-widget/">📊 Flight Data</a></li>
                 <li><a href="/ui/flight-recorder/">🎬 Flight Recorder</a></li>
                 <li><a href="/ui/fuel-widget/">⛽ Fuel Widget</a></li>
+                <li><a href="/ui/fuel-monitor/">⛽ Fuel Monitor</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/engine-monitor/">🔧 Engine Monitor</a> <span class="new-badge">NEW</span></li>
+                <li><a href="/ui/autopilot/">🎛️ Autopilot</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/panel-launcher/">🎛️ Panel Launcher</a></li>
                 <li><a href="/ui/interaction-wheel/">⚙️ Interaction Wheel</a></li>
                 <li><a href="/ui/otto-search/">🔍 Otto Search</a></li>

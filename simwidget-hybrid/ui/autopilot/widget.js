@@ -1,0 +1,370 @@
+/**
+ * Autopilot Widget
+ * Type: control | Category: flight
+ * Path: ui/autopilot/widget.js
+ *
+ * Full autopilot control panel with heading, altitude, VS, speed modes
+ * Extends SimWidgetBase for WebSocket connection
+ */
+
+class AutopilotWidget extends SimWidgetBase {
+    constructor() {
+        super({
+            widgetName: 'autopilot',
+            widgetVersion: '1.0.0',
+            autoConnect: true
+        });
+
+        // Autopilot state
+        this.ap = {
+            master: false,
+            flightDirector: false,
+            yawDamper: false,
+            headingHold: false,
+            altitudeHold: false,
+            vsHold: false,
+            speedHold: false,
+            navHold: false,
+            aprHold: false,
+            bcHold: false,
+            vnavHold: false
+        };
+
+        // Set values (what AP is targeting)
+        this.setValues = {
+            heading: 0,
+            altitude: 10000,
+            vs: 0,
+            speed: 200
+        };
+
+        // Current values (actual aircraft state)
+        this.current = {
+            heading: 0,
+            altitude: 0,
+            vs: 0,
+            speed: 0,
+            navSource: '---'
+        };
+
+        // SimConnect variable mappings
+        this.simVars = {
+            // AP states
+            'AUTOPILOT MASTER': 'apMaster',
+            'AUTOPILOT FLIGHT DIRECTOR ACTIVE': 'apFD',
+            'AUTOPILOT YAW DAMPER': 'apYD',
+            'AUTOPILOT HEADING LOCK': 'apHDG',
+            'AUTOPILOT ALTITUDE LOCK': 'apALT',
+            'AUTOPILOT VERTICAL HOLD': 'apVS',
+            'AUTOPILOT AIRSPEED HOLD': 'apSPD',
+            'AUTOPILOT NAV1 LOCK': 'apNAV',
+            'AUTOPILOT APPROACH HOLD': 'apAPR',
+            'AUTOPILOT BACKCOURSE HOLD': 'apBC',
+
+            // Set values
+            'AUTOPILOT HEADING LOCK DIR': 'hdgSet',
+            'AUTOPILOT ALTITUDE LOCK VAR': 'altSet',
+            'AUTOPILOT VERTICAL HOLD VAR': 'vsSet',
+            'AUTOPILOT AIRSPEED HOLD VAR': 'spdSet',
+
+            // Current values
+            'HEADING INDICATOR': 'hdgCurrent',
+            'PLANE HEADING DEGREES MAGNETIC': 'hdgCurrent',
+            'INDICATED ALTITUDE': 'altCurrent',
+            'VERTICAL SPEED': 'vsCurrent',
+            'AIRSPEED INDICATED': 'spdCurrent',
+
+            // Mock data mappings
+            'heading': 'hdgCurrent',
+            'altitude': 'altCurrent',
+            'verticalSpeed': 'vsCurrent',
+            'groundSpeed': 'spdCurrent'
+        };
+
+        // Cache DOM elements
+        this.elements = {};
+        this.cacheElements();
+
+        // Bind event handlers
+        this.setupEventListeners();
+
+        // Initial render
+        this.render();
+    }
+
+    cacheElements() {
+        // Status indicators
+        this.elements.apMasterStatus = document.getElementById('ap-master-status');
+        this.elements.apStatus = document.getElementById('ap-status');
+        this.elements.fdStatus = document.getElementById('fd-status');
+        this.elements.ydStatus = document.getElementById('yd-status');
+
+        // Buttons
+        this.elements.btnAp = document.getElementById('btn-ap');
+        this.elements.btnFd = document.getElementById('btn-fd');
+        this.elements.btnYd = document.getElementById('btn-yd');
+        this.elements.btnHdg = document.getElementById('btn-hdg');
+        this.elements.btnAlt = document.getElementById('btn-alt');
+        this.elements.btnVs = document.getElementById('btn-vs');
+        this.elements.btnSpd = document.getElementById('btn-spd');
+        this.elements.btnNav = document.getElementById('btn-nav');
+        this.elements.btnApr = document.getElementById('btn-apr');
+        this.elements.btnBc = document.getElementById('btn-bc');
+        this.elements.btnVnav = document.getElementById('btn-vnav');
+
+        // Value displays
+        this.elements.hdgValue = document.getElementById('hdg-value');
+        this.elements.altValue = document.getElementById('alt-value');
+        this.elements.vsValue = document.getElementById('vs-value');
+        this.elements.spdValue = document.getElementById('spd-value');
+
+        // Current value displays
+        this.elements.hdgCurrent = document.getElementById('hdg-current');
+        this.elements.altCurrent = document.getElementById('alt-current');
+        this.elements.vsCurrent = document.getElementById('vs-current');
+        this.elements.spdCurrent = document.getElementById('spd-current');
+
+        // Footer
+        this.elements.navSource = document.getElementById('nav-source');
+    }
+
+    setupEventListeners() {
+        // All buttons with data-cmd attribute
+        document.querySelectorAll('[data-cmd]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const cmd = e.currentTarget.dataset.cmd;
+                this.sendCommand(cmd);
+            });
+
+            // Handle repeat for +/- buttons
+            if (btn.dataset.repeat === 'true') {
+                let repeatInterval;
+                btn.addEventListener('mousedown', () => {
+                    repeatInterval = setInterval(() => {
+                        this.sendCommand(btn.dataset.cmd);
+                    }, 150);
+                });
+                btn.addEventListener('mouseup', () => clearInterval(repeatInterval));
+                btn.addEventListener('mouseleave', () => clearInterval(repeatInterval));
+            }
+        });
+    }
+
+    sendCommand(cmd) {
+        // Send command to backend
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({
+                type: 'command',
+                command: cmd
+            }));
+        }
+
+        // For demo/mock mode, toggle states locally
+        this.handleLocalCommand(cmd);
+    }
+
+    handleLocalCommand(cmd) {
+        switch (cmd) {
+            case 'AP_MASTER':
+                this.ap.master = !this.ap.master;
+                break;
+            case 'FLIGHT_DIRECTOR':
+                this.ap.flightDirector = !this.ap.flightDirector;
+                break;
+            case 'YAW_DAMPER':
+                this.ap.yawDamper = !this.ap.yawDamper;
+                break;
+            case 'AP_HDG_HOLD':
+                this.ap.headingHold = !this.ap.headingHold;
+                break;
+            case 'AP_ALT_HOLD':
+                this.ap.altitudeHold = !this.ap.altitudeHold;
+                break;
+            case 'AP_VS_HOLD':
+                this.ap.vsHold = !this.ap.vsHold;
+                break;
+            case 'AP_AIRSPEED_HOLD':
+                this.ap.speedHold = !this.ap.speedHold;
+                break;
+            case 'AP_NAV1_HOLD':
+                this.ap.navHold = !this.ap.navHold;
+                break;
+            case 'AP_APR_HOLD':
+                this.ap.aprHold = !this.ap.aprHold;
+                break;
+            case 'AP_BC_HOLD':
+                this.ap.bcHold = !this.ap.bcHold;
+                break;
+            case 'AP_VNAV':
+                this.ap.vnavHold = !this.ap.vnavHold;
+                break;
+
+            // Adjust values
+            case 'HEADING_BUG_INC':
+                this.setValues.heading = (this.setValues.heading + 1) % 360;
+                break;
+            case 'HEADING_BUG_DEC':
+                this.setValues.heading = (this.setValues.heading - 1 + 360) % 360;
+                break;
+            case 'AP_ALT_VAR_INC':
+                this.setValues.altitude = Math.min(this.setValues.altitude + 100, 50000);
+                break;
+            case 'AP_ALT_VAR_DEC':
+                this.setValues.altitude = Math.max(this.setValues.altitude - 100, 0);
+                break;
+            case 'AP_VS_VAR_INC':
+                this.setValues.vs = Math.min(this.setValues.vs + 100, 6000);
+                break;
+            case 'AP_VS_VAR_DEC':
+                this.setValues.vs = Math.max(this.setValues.vs - 100, -6000);
+                break;
+            case 'AP_SPD_VAR_INC':
+                this.setValues.speed = Math.min(this.setValues.speed + 1, 500);
+                break;
+            case 'AP_SPD_VAR_DEC':
+                this.setValues.speed = Math.max(this.setValues.speed - 1, 50);
+                break;
+        }
+
+        this.render();
+    }
+
+    onSimData(data) {
+        // Update current values from sim data
+        if (data.heading !== undefined) {
+            this.current.heading = Math.round(data.heading);
+        }
+        if (data.altitude !== undefined) {
+            this.current.altitude = Math.round(data.altitude);
+        }
+        if (data.verticalSpeed !== undefined) {
+            this.current.vs = Math.round(data.verticalSpeed);
+        }
+        if (data.groundSpeed !== undefined) {
+            this.current.speed = Math.round(data.groundSpeed);
+        }
+        if (data.airspeed !== undefined) {
+            this.current.speed = Math.round(data.airspeed);
+        }
+
+        // Update AP states if provided
+        if (data.apMaster !== undefined) this.ap.master = data.apMaster;
+        if (data.apFD !== undefined) this.ap.flightDirector = data.apFD;
+        if (data.apYD !== undefined) this.ap.yawDamper = data.apYD;
+        if (data.apHDG !== undefined) this.ap.headingHold = data.apHDG;
+        if (data.apALT !== undefined) this.ap.altitudeHold = data.apALT;
+        if (data.apVS !== undefined) this.ap.vsHold = data.apVS;
+        if (data.apSPD !== undefined) this.ap.speedHold = data.apSPD;
+        if (data.apNAV !== undefined) this.ap.navHold = data.apNAV;
+        if (data.apAPR !== undefined) this.ap.aprHold = data.apAPR;
+
+        // Update set values if provided
+        if (data.hdgSet !== undefined) this.setValues.heading = Math.round(data.hdgSet);
+        if (data.altSet !== undefined) this.setValues.altitude = Math.round(data.altSet);
+        if (data.vsSet !== undefined) this.setValues.vs = Math.round(data.vsSet);
+        if (data.spdSet !== undefined) this.setValues.speed = Math.round(data.spdSet);
+
+        this.render();
+    }
+
+    render() {
+        this.updateMasterStatus();
+        this.updateModeButtons();
+        this.updateValues();
+        this.updateCurrentValues();
+    }
+
+    updateMasterStatus() {
+        // AP Master status badge
+        if (this.elements.apMasterStatus) {
+            this.elements.apMasterStatus.textContent = this.ap.master ? 'AP ON' : 'AP OFF';
+            this.elements.apMasterStatus.classList.toggle('engaged', this.ap.master);
+        }
+
+        // AP button status
+        if (this.elements.apStatus) {
+            this.elements.apStatus.textContent = this.ap.master ? 'ON' : 'OFF';
+        }
+        if (this.elements.fdStatus) {
+            this.elements.fdStatus.textContent = this.ap.flightDirector ? 'ON' : 'OFF';
+        }
+        if (this.elements.ydStatus) {
+            this.elements.ydStatus.textContent = this.ap.yawDamper ? 'ON' : 'OFF';
+        }
+
+        // Button active states
+        this.elements.btnAp?.classList.toggle('active', this.ap.master);
+        this.elements.btnFd?.classList.toggle('active', this.ap.flightDirector);
+        this.elements.btnYd?.classList.toggle('active', this.ap.yawDamper);
+    }
+
+    updateModeButtons() {
+        this.elements.btnHdg?.classList.toggle('active', this.ap.headingHold);
+        this.elements.btnAlt?.classList.toggle('active', this.ap.altitudeHold);
+        this.elements.btnVs?.classList.toggle('active', this.ap.vsHold);
+        this.elements.btnSpd?.classList.toggle('active', this.ap.speedHold);
+        this.elements.btnNav?.classList.toggle('active', this.ap.navHold);
+        this.elements.btnApr?.classList.toggle('active', this.ap.aprHold);
+        this.elements.btnBc?.classList.toggle('active', this.ap.bcHold);
+        this.elements.btnVnav?.classList.toggle('active', this.ap.vnavHold);
+    }
+
+    updateValues() {
+        // Heading
+        if (this.elements.hdgValue) {
+            this.elements.hdgValue.textContent = String(this.setValues.heading).padStart(3, '0');
+        }
+
+        // Altitude
+        if (this.elements.altValue) {
+            this.elements.altValue.textContent = this.setValues.altitude.toLocaleString();
+        }
+
+        // VS
+        if (this.elements.vsValue) {
+            const vs = this.setValues.vs;
+            this.elements.vsValue.textContent = vs >= 0 ? `+${vs}` : vs;
+            this.elements.vsValue.classList.remove('positive', 'negative');
+            if (vs > 0) this.elements.vsValue.classList.add('positive');
+            if (vs < 0) this.elements.vsValue.classList.add('negative');
+        }
+
+        // Speed
+        if (this.elements.spdValue) {
+            this.elements.spdValue.textContent = this.setValues.speed;
+        }
+    }
+
+    updateCurrentValues() {
+        // Heading
+        if (this.elements.hdgCurrent) {
+            this.elements.hdgCurrent.textContent = `${String(this.current.heading).padStart(3, '0')}\u00B0`;
+        }
+
+        // Altitude
+        if (this.elements.altCurrent) {
+            this.elements.altCurrent.textContent = `${this.current.altitude.toLocaleString()} ft`;
+        }
+
+        // VS
+        if (this.elements.vsCurrent) {
+            const vs = this.current.vs;
+            this.elements.vsCurrent.textContent = `${vs >= 0 ? '+' : ''}${vs} fpm`;
+        }
+
+        // Speed
+        if (this.elements.spdCurrent) {
+            this.elements.spdCurrent.textContent = `${this.current.speed} kt`;
+        }
+
+        // Nav source
+        if (this.elements.navSource) {
+            this.elements.navSource.textContent = this.current.navSource;
+        }
+    }
+}
+
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AutopilotWidget;
+}

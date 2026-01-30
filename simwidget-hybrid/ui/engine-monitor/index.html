@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Engine Monitor - SimWidget</title>
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/themes.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <!-- Widget Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Settings Button -->
+    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+
+    <div class="widget-container" id="widget-root">
+        <!-- Header -->
+        <div class="widget-header">
+            <span class="widget-title">ENGINE</span>
+            <div class="header-controls">
+                <span class="engine-status" id="engine-status">OFF</span>
+                <span class="connection-status" id="conn-status" title="Connection status"></span>
+            </div>
+        </div>
+
+        <!-- RPM Gauge -->
+        <div class="rpm-section">
+            <div class="rpm-gauge">
+                <canvas id="rpm-canvas" width="200" height="120"></canvas>
+                <div class="rpm-value">
+                    <span id="rpm-val">0</span>
+                    <span class="rpm-unit">RPM</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Primary Engine Data -->
+        <div class="data-grid primary">
+            <div class="data-item">
+                <span class="data-label">MAN PRESS</span>
+                <span class="data-value" id="eng-map">--</span>
+                <span class="data-unit">inHg</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">FUEL FLOW</span>
+                <span class="data-value" id="eng-ff">--</span>
+                <span class="data-unit">GPH</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">OIL TEMP</span>
+                <span class="data-value" id="eng-oilt">--</span>
+                <span class="data-unit">°F</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">OIL PRESS</span>
+                <span class="data-value" id="eng-oilp">--</span>
+                <span class="data-unit">PSI</span>
+            </div>
+        </div>
+
+        <!-- Temperature Section -->
+        <div class="section-title">TEMPERATURES</div>
+        <div class="temp-bars">
+            <div class="temp-row">
+                <span class="temp-label">EGT</span>
+                <div class="temp-bar-container">
+                    <div class="temp-bar" id="egt-bar"></div>
+                </div>
+                <span class="temp-value" id="eng-egt">--°F</span>
+            </div>
+            <div class="temp-row">
+                <span class="temp-label">CHT</span>
+                <div class="temp-bar-container">
+                    <div class="temp-bar" id="cht-bar"></div>
+                </div>
+                <span class="temp-value" id="eng-cht">--°F</span>
+            </div>
+        </div>
+
+        <!-- Controls Position -->
+        <div class="section-title">CONTROLS</div>
+        <div class="controls-section">
+            <div class="control-item">
+                <span class="control-label">THR</span>
+                <div class="control-bar-container">
+                    <div class="control-bar throttle" id="ctrl-throttle"></div>
+                </div>
+                <span class="control-value" id="ctrl-thr-val">0%</span>
+            </div>
+            <div class="control-item">
+                <span class="control-label">MIX</span>
+                <div class="control-bar-container">
+                    <div class="control-bar mixture" id="ctrl-mixture"></div>
+                </div>
+                <span class="control-value" id="ctrl-mix-val">0%</span>
+            </div>
+            <div class="control-item">
+                <span class="control-label">PROP</span>
+                <div class="control-bar-container">
+                    <div class="control-bar prop" id="ctrl-prop"></div>
+                </div>
+                <span class="control-value" id="ctrl-prop-val">0%</span>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions-row">
+            <button class="btn btn-secondary" id="btn-starter" data-cmd="ENGINE_START">
+                START
+            </button>
+            <button class="btn btn-secondary" id="btn-magneto" data-cmd="MAGNETO">
+                MAG
+            </button>
+            <button class="btn btn-danger" id="btn-cutoff" data-cmd="MIXTURE_CUTOFF">
+                CUTOFF
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="widget-footer">
+            <span class="widget-version">v1.0.0</span>
+            <span class="hobbs">HOBBS: <span id="hobbs-time">0.0</span></span>
+        </div>
+    </div>
+
+    <!-- Shared Scripts -->
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="/ui/shared/widget-base.js"></script>
+    <!-- Widget Script -->
+    <script src="widget.js"></script>
+    <script>
+        // Initialize widget
+        window.widget = new EngineMonitorWidget();
+
+        // Settings panel
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        const customizer = new WidgetCustomizer({ widgetId: 'engine-monitor', settingsPanel: settings });
+        document.getElementById('settings-btn')?.addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>

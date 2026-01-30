@@ -46,7 +46,10 @@ class WidgetSearch {
             { id: 'kneeboard-widget', name: 'Kneeboard', icon: '📒', tags: ['notes', 'reference', 'info'] },
             { id: 'flight-instructor', name: 'Flight Instructor', icon: '👨‍🏫', tags: ['coaching', 'tips', 'learn'] },
             { id: 'charts-widget', name: 'Charts', icon: '📊', tags: ['approach', 'sid', 'star'] },
-            { id: 'navigraph-widget', name: 'Navigraph', icon: '🗺️', tags: ['charts', 'plates', 'approach'] }
+            { id: 'navigraph-widget', name: 'Navigraph', icon: '🗺️', tags: ['charts', 'plates', 'approach'] },
+            { id: 'autopilot', name: 'Autopilot', icon: '🎛️', tags: ['ap', 'heading', 'altitude', 'vs', 'speed', 'nav'] },
+            { id: 'engine-monitor', name: 'Engine Monitor', icon: '🔧', tags: ['rpm', 'engine', 'oil', 'egt', 'cht', 'throttle'] },
+            { id: 'fuel-monitor', name: 'Fuel Monitor', icon: '⛽', tags: ['fuel', 'tanks', 'endurance', 'range', 'flow'] }
         ];
     }
 

@@ -1,0 +1,346 @@
+/**
+ * Fuel Monitor Widget Styles
+ * Type: data | Category: flight
+ * Path: ui/fuel-monitor/styles.css
+ *
+ * Uses B612 (Airbus cockpit font) for aviation authenticity
+ */
+
+/* Widget-specific styles - extends widget-common.css */
+
+.widget-container {
+    max-width: 360px;
+    margin: 0 auto;
+    padding: 16px;
+    font-family: var(--font-ui, 'B612', sans-serif);
+}
+
+/* Total Fuel Display */
+.fuel-total {
+    background: var(--bg-secondary, rgba(255,255,255,0.05));
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.total-label {
+    font-size: 11px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.total-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--color-success, #00ff00);
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+.total-value .unit {
+    font-size: 14px;
+    color: var(--text-muted, #888);
+    margin-left: 4px;
+}
+
+.total-value .secondary {
+    display: block;
+    font-size: 14px;
+    color: var(--text-muted, #666);
+    font-weight: 400;
+}
+
+.total-bar {
+    height: 8px;
+    background: var(--bg-tertiary, #1a1a2e);
+    border-radius: 4px;
+    margin-top: 12px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-success, #00ff00), var(--color-info, #00d4ff));
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.bar-fill.warning {
+    background: linear-gradient(90deg, var(--color-warning, #ffcc00), var(--color-warning, #ff9900));
+}
+
+.bar-fill.critical {
+    background: linear-gradient(90deg, var(--color-danger, #ff4444), var(--color-danger, #ff0000));
+    animation: pulse-critical 1s ease-in-out infinite;
+}
+
+@keyframes pulse-critical {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Tank Gauges */
+.tanks-section {
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 11px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.tanks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.tank-item {
+    text-align: center;
+}
+
+.tank-label {
+    font-size: 11px;
+    color: var(--text-muted, #888);
+    margin-bottom: 8px;
+}
+
+.tank-gauge {
+    position: relative;
+    height: 80px;
+    width: 60px;
+    margin: 0 auto;
+    background: var(--bg-tertiary, #0a1520);
+    border: 2px solid var(--border-color, #333);
+    border-radius: 4px 4px 8px 8px;
+    overflow: hidden;
+}
+
+.gauge-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, var(--color-info, #00d4ff), var(--color-success, #00aa00));
+    transition: height 0.5s ease;
+    height: 0%;
+}
+
+.gauge-fill.warning {
+    background: linear-gradient(180deg, var(--color-warning, #ffcc00), var(--color-warning, #cc9900));
+}
+
+.gauge-fill.critical {
+    background: linear-gradient(180deg, var(--color-danger, #ff4444), var(--color-danger, #cc0000));
+}
+
+.gauge-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+/* Data Grid */
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.data-item {
+    background: var(--bg-secondary, rgba(255,255,255,0.05));
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+}
+
+.data-item.highlight {
+    background: var(--bg-tertiary, rgba(0,100,150,0.2));
+    border: 1px solid var(--color-info, rgba(0,212,255,0.3));
+}
+
+.data-label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.data-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+.data-unit {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted, #666);
+}
+
+.data-value.warning { color: var(--color-warning, #ffcc00); }
+.data-value.critical { color: var(--color-danger, #ff4444); }
+
+/* Status Section */
+.status-section {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    background: var(--bg-secondary, rgba(255,255,255,0.03));
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.status-item {
+    text-align: center;
+}
+
+.status-label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.status-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-info, #00d4ff);
+}
+
+.status-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--bg-tertiary, #333);
+    color: var(--text-muted, #888);
+}
+
+.status-indicator.on {
+    background: var(--color-success, #00aa00);
+    color: #fff;
+}
+
+/* Actions Row */
+.actions-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--accent-color, #4a9eff);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover, #3a8eef);
+}
+
+.btn-secondary {
+    background: var(--bg-secondary, rgba(255,255,255,0.1));
+    color: var(--text-primary, #e0e0e0);
+    border: 1px solid var(--border-color, #444);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.15));
+    border-color: var(--accent-color, #4a9eff);
+}
+
+.btn-secondary.active {
+    background: var(--color-success, #00aa00);
+    border-color: var(--color-success, #00aa00);
+}
+
+.btn-led {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #444;
+}
+
+.btn-led.on {
+    background: var(--color-success, #00ff00);
+    box-shadow: 0 0 6px var(--color-success, #00ff00);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Footer */
+.widget-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted, #666);
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color, #222);
+}
+
+.ground-speed {
+    font-family: var(--font-data, 'B612 Mono', monospace);
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+    .widget-container {
+        padding: 12px;
+    }
+
+    .total-value {
+        font-size: 28px;
+    }
+
+    .tank-gauge {
+        height: 60px;
+        width: 50px;
+    }
+
+    .data-grid {
+        gap: 6px;
+    }
+
+    .data-value {
+        font-size: 16px;
+    }
+}

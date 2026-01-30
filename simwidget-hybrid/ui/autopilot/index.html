@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Autopilot - SimWidget</title>
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/themes.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <!-- Widget Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Settings Button -->
+    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+
+    <div class="widget-container" id="widget-root">
+        <!-- Header -->
+        <div class="widget-header">
+            <span class="widget-title">AUTOPILOT</span>
+            <div class="header-controls">
+                <span class="ap-master" id="ap-master-status">AP OFF</span>
+                <span class="connection-status" id="conn-status" title="Connection status"></span>
+            </div>
+        </div>
+
+        <!-- Master Controls Row -->
+        <div class="master-controls">
+            <button class="ap-btn master" id="btn-ap" data-cmd="AP_MASTER">
+                <span class="btn-label">AP</span>
+                <span class="btn-status" id="ap-status">OFF</span>
+            </button>
+            <button class="ap-btn" id="btn-fd" data-cmd="FLIGHT_DIRECTOR">
+                <span class="btn-label">FD</span>
+                <span class="btn-status" id="fd-status">OFF</span>
+            </button>
+            <button class="ap-btn" id="btn-yd" data-cmd="YAW_DAMPER">
+                <span class="btn-label">YD</span>
+                <span class="btn-status" id="yd-status">OFF</span>
+            </button>
+        </div>
+
+        <!-- Heading Section -->
+        <div class="control-section">
+            <div class="section-header">
+                <span class="section-label">HEADING</span>
+                <button class="mode-btn" id="btn-hdg" data-cmd="AP_HDG_HOLD">HDG</button>
+            </div>
+            <div class="value-control">
+                <button class="adjust-btn" data-cmd="HEADING_BUG_DEC" data-repeat="true">-</button>
+                <div class="value-display">
+                    <span class="value-main" id="hdg-value">000</span>
+                    <span class="value-unit">&deg;</span>
+                </div>
+                <button class="adjust-btn" data-cmd="HEADING_BUG_INC" data-repeat="true">+</button>
+            </div>
+            <div class="current-value">
+                <span class="current-label">Current:</span>
+                <span class="current-val" id="hdg-current">000&deg;</span>
+            </div>
+        </div>
+
+        <!-- Altitude Section -->
+        <div class="control-section">
+            <div class="section-header">
+                <span class="section-label">ALTITUDE</span>
+                <button class="mode-btn" id="btn-alt" data-cmd="AP_ALT_HOLD">ALT</button>
+            </div>
+            <div class="value-control">
+                <button class="adjust-btn" data-cmd="AP_ALT_VAR_DEC">-</button>
+                <div class="value-display">
+                    <span class="value-main" id="alt-value">10000</span>
+                    <span class="value-unit">ft</span>
+                </div>
+                <button class="adjust-btn" data-cmd="AP_ALT_VAR_INC">+</button>
+            </div>
+            <div class="current-value">
+                <span class="current-label">Current:</span>
+                <span class="current-val" id="alt-current">0 ft</span>
+            </div>
+        </div>
+
+        <!-- Vertical Speed Section -->
+        <div class="control-section">
+            <div class="section-header">
+                <span class="section-label">V/S</span>
+                <button class="mode-btn" id="btn-vs" data-cmd="AP_VS_HOLD">VS</button>
+            </div>
+            <div class="value-control">
+                <button class="adjust-btn" data-cmd="AP_VS_VAR_DEC">-</button>
+                <div class="value-display">
+                    <span class="value-main vs-value" id="vs-value">0</span>
+                    <span class="value-unit">fpm</span>
+                </div>
+                <button class="adjust-btn" data-cmd="AP_VS_VAR_INC">+</button>
+            </div>
+            <div class="current-value">
+                <span class="current-label">Current:</span>
+                <span class="current-val" id="vs-current">0 fpm</span>
+            </div>
+        </div>
+
+        <!-- Speed Section -->
+        <div class="control-section">
+            <div class="section-header">
+                <span class="section-label">SPEED</span>
+                <button class="mode-btn" id="btn-spd" data-cmd="AP_AIRSPEED_HOLD">IAS</button>
+            </div>
+            <div class="value-control">
+                <button class="adjust-btn" data-cmd="AP_SPD_VAR_DEC">-</button>
+                <div class="value-display">
+                    <span class="value-main" id="spd-value">200</span>
+                    <span class="value-unit">kt</span>
+                </div>
+                <button class="adjust-btn" data-cmd="AP_SPD_VAR_INC">+</button>
+            </div>
+            <div class="current-value">
+                <span class="current-label">Current:</span>
+                <span class="current-val" id="spd-current">0 kt</span>
+            </div>
+        </div>
+
+        <!-- Navigation Modes -->
+        <div class="nav-modes">
+            <button class="nav-btn" id="btn-nav" data-cmd="AP_NAV1_HOLD">
+                <span class="nav-label">NAV</span>
+            </button>
+            <button class="nav-btn" id="btn-apr" data-cmd="AP_APR_HOLD">
+                <span class="nav-label">APR</span>
+            </button>
+            <button class="nav-btn" id="btn-bc" data-cmd="AP_BC_HOLD">
+                <span class="nav-label">BC</span>
+            </button>
+            <button class="nav-btn" id="btn-vnav" data-cmd="AP_VNAV">
+                <span class="nav-label">VNAV</span>
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="widget-footer">
+            <span class="widget-version">v1.0.0</span>
+            <span class="nav-source">NAV1: <span id="nav-source">---</span></span>
+        </div>
+    </div>
+
+    <!-- Shared Scripts -->
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="/ui/shared/widget-base.js"></script>
+    <!-- Widget Script -->
+    <script src="widget.js"></script>
+    <script>
+        // Initialize widget
+        window.widget = new AutopilotWidget();
+
+        // Settings panel
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        const customizer = new WidgetCustomizer({ widgetId: 'autopilot', settingsPanel: settings });
+        document.getElementById('settings-btn')?.addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>
