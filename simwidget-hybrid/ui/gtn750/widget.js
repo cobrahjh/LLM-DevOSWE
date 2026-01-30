@@ -1403,37 +1403,113 @@ class GTN750Widget {
         const pixelsPerNm = Math.min(w, h) / 2 / this.map.range;
         const waypoints = this.flightPlan.waypoints;
         const rotation = this.getMapRotation();
+        const activeIdx = this.activeWaypointIndex || 0;
 
-        ctx.strokeStyle = '#ff00ff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-
-        let firstPoint = true;
-        waypoints.forEach((wp, index) => {
-            if (!wp.lat || !wp.lng) return;
-
-            const pos = this.core.latLonToCanvas(
+        // Get all waypoint positions first
+        const positions = waypoints.map(wp => {
+            if (!wp.lat || !wp.lng) return null;
+            return this.core.latLonToCanvas(
                 wp.lat, wp.lng,
                 this.data.latitude, this.data.longitude,
                 rotation, this.map.range,
                 w, h, this.map.orientation === 'north'
             );
-
-            if (firstPoint) {
-                ctx.moveTo(pos.x, pos.y);
-                firstPoint = false;
-            } else {
-                ctx.lineTo(pos.x, pos.y);
-            }
-
-            this.renderWaypoint(ctx, pos.x, pos.y, wp.ident, index === this.activeWaypointIndex);
         });
 
-        ctx.stroke();
+        // Draw completed legs (dimmed)
+        if (activeIdx > 0) {
+            ctx.strokeStyle = 'rgba(128, 0, 128, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            let started = false;
+            for (let i = 0; i < activeIdx; i++) {
+                if (!positions[i]) continue;
+                if (!started) {
+                    ctx.moveTo(positions[i].x, positions[i].y);
+                    started = true;
+                } else {
+                    ctx.lineTo(positions[i].x, positions[i].y);
+                }
+            }
+            if (positions[activeIdx]) {
+                ctx.lineTo(positions[activeIdx].x, positions[activeIdx].y);
+            }
+            ctx.stroke();
+        }
+
+        // Draw future legs
+        if (activeIdx < waypoints.length - 1) {
+            ctx.strokeStyle = '#ff00ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            let started = false;
+            for (let i = activeIdx; i < waypoints.length; i++) {
+                if (!positions[i]) continue;
+                if (!started) {
+                    ctx.moveTo(positions[i].x, positions[i].y);
+                    started = true;
+                } else {
+                    ctx.lineTo(positions[i].x, positions[i].y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        // Draw active leg with glow effect
+        if (activeIdx > 0 && positions[activeIdx - 1] && positions[activeIdx]) {
+            // Glow
+            ctx.strokeStyle = 'rgba(255, 0, 255, 0.3)';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(positions[activeIdx - 1].x, positions[activeIdx - 1].y);
+            ctx.lineTo(positions[activeIdx].x, positions[activeIdx].y);
+            ctx.stroke();
+
+            // Bright line
+            ctx.strokeStyle = '#ff00ff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(positions[activeIdx - 1].x, positions[activeIdx - 1].y);
+            ctx.lineTo(positions[activeIdx].x, positions[activeIdx].y);
+            ctx.stroke();
+        }
+
+        // Draw course line from aircraft to active waypoint (DTK line)
+        if (positions[activeIdx] && this.gps?.dtk) {
+            const dtkAngle = (this.gps.dtk - rotation) * Math.PI / 180;
+            const lineLength = Math.min(w, h) * 0.8;
+
+            ctx.strokeStyle = 'rgba(255, 0, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.sin(dtkAngle) * lineLength, cy - Math.cos(dtkAngle) * lineLength);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Draw waypoints
+        waypoints.forEach((wp, index) => {
+            if (!positions[index]) return;
+            const isActive = index === activeIdx;
+            const isCompleted = index < activeIdx;
+            this.renderWaypoint(ctx, positions[index].x, positions[index].y, wp.ident, isActive, isCompleted);
+        });
     }
 
-    renderWaypoint(ctx, x, y, ident, isActive) {
-        ctx.fillStyle = isActive ? '#ff00ff' : '#00aaff';
+    renderWaypoint(ctx, x, y, ident, isActive, isCompleted = false) {
+        // Determine color based on state
+        let color;
+        if (isActive) {
+            color = '#ff00ff'; // Magenta for active
+        } else if (isCompleted) {
+            color = 'rgba(128, 128, 128, 0.5)'; // Dim gray for completed
+        } else {
+            color = '#00aaff'; // Cyan for future
+        }
+
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.moveTo(x, y - 6);
         ctx.lineTo(x + 5, y);
@@ -1442,9 +1518,19 @@ class GTN750Widget {
         ctx.closePath();
         ctx.fill();
 
-        if (ident) {
-            ctx.fillStyle = '#00ff00';
-            ctx.font = '10px Consolas, monospace';
+        // Active waypoint gets a ring
+        if (isActive) {
+            ctx.strokeStyle = '#ff00ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Show label (skip for completed waypoints in declutter mode)
+        if (ident && (!isCompleted || this.declutterLevel < 2)) {
+            ctx.fillStyle = isActive ? '#ff00ff' : (isCompleted ? '#888888' : '#00ff00');
+            ctx.font = isActive ? 'bold 11px Consolas, monospace' : '10px Consolas, monospace';
             ctx.fillText(ident, x + 8, y + 4);
         }
     }
