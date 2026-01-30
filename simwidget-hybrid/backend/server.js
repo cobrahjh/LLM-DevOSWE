@@ -148,6 +148,19 @@ let flightData = {
     // Engine controls
     propeller: 0,
     mixture: 0,
+    // Engine instruments (for engine-monitor)
+    engineRpm: 0,
+    manifoldPressure: 0,
+    oilTemp: 0,
+    oilPressure: 0,
+    egt: 0,
+    cht: 0,
+    // Additional autopilot modes
+    apFlightDirector: false,
+    apYawDamper: false,
+    apNavLock: false,
+    apAprLock: false,
+    apBcLock: false,
     // Flight controls
     aileron: 0,
     elevator: 0,
@@ -2350,6 +2363,11 @@ async function initSimConnect() {
             'AP_ALT_HOLD',
             'AP_VS_HOLD',
             'AP_PANEL_SPEED_HOLD',
+            'TOGGLE_FLIGHT_DIRECTOR',
+            'YAW_DAMPER_TOGGLE',
+            'AP_NAV1_HOLD',
+            'AP_APR_HOLD',
+            'AP_BC_HOLD',
             'HEADING_BUG_INC',
             'HEADING_BUG_DEC',
             'AP_ALT_VAR_INC',
@@ -2480,6 +2498,19 @@ async function initSimConnect() {
         // Engine control data
         handle.addToDataDefinition(0, 'GENERAL ENG PROPELLER LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GENERAL ENG MIXTURE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
+        // Engine instrument data (for engine-monitor widget)
+        handle.addToDataDefinition(0, 'GENERAL ENG RPM:1', 'rpm', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RECIP ENG MANIFOLD PRESSURE:1', 'inHg', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GENERAL ENG OIL TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GENERAL ENG OIL PRESSURE:1', 'psi', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RECIP ENG EXHAUST GAS TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RECIP ENG CYLINDER HEAD TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
+        // Additional autopilot modes (for autopilot widget)
+        handle.addToDataDefinition(0, 'AUTOPILOT FLIGHT DIRECTOR ACTIVE', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT YAW DAMPER', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT NAV1 LOCK', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT APPROACH HOLD', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT BACKCOURSE HOLD', 'Bool', SimConnectDataType.INT32, 0);
         // Flight control data
         handle.addToDataDefinition(0, 'AILERON POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'ELEVATOR POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
@@ -2667,6 +2698,19 @@ async function initSimConnect() {
                         // Engine controls
                         propeller: d.readFloat64(),
                         mixture: d.readFloat64(),
+                        // Engine instruments (for engine-monitor)
+                        engineRpm: d.readFloat64(),
+                        manifoldPressure: d.readFloat64(),
+                        oilTemp: d.readFloat64(),
+                        oilPressure: d.readFloat64(),
+                        egt: d.readFloat64(),
+                        cht: d.readFloat64(),
+                        // Additional autopilot modes (for autopilot widget)
+                        apFlightDirector: d.readInt32() !== 0,
+                        apYawDamper: d.readInt32() !== 0,
+                        apNavLock: d.readInt32() !== 0,
+                        apAprLock: d.readInt32() !== 0,
+                        apBcLock: d.readInt32() !== 0,
                         // Flight controls (-1 to 1 range, convert to -100 to 100)
                         aileron: d.readFloat64() * 100,
                         elevator: d.readFloat64() * 100,
