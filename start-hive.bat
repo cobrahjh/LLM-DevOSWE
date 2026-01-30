@@ -15,7 +15,7 @@ if "%ERRORLEVEL%"=="0" (
     echo        Already running
 ) else (
     echo        Starting Ollama...
-    start "" "ollama" serve
+    powershell -Command "Start-Process 'ollama' -ArgumentList 'serve' -WindowStyle Hidden"
     timeout /t 3 /nobreak >nul
 )
 
@@ -25,7 +25,7 @@ curl -s http://localhost:8600/api/health >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo        Already running
 ) else (
-    start "Relay [8600]" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\relay && node relay-service.js"
+    powershell -Command "Start-Process 'node' -ArgumentList 'relay-service.js' -WorkingDirectory 'C:\LLM-DevOSWE\Admin\relay' -WindowStyle Hidden"
     call :waitfor 8600 "Relay" /api/health
 )
 
@@ -35,7 +35,7 @@ curl -s http://localhost:3002/api/health >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo        Already running
 ) else (
-    start "Oracle [3002]" /min cmd /c "cd /d C:\LLM-Oracle && node oracle.js"
+    powershell -Command "Start-Process 'node' -ArgumentList 'oracle.js' -WorkingDirectory 'C:\LLM-Oracle' -WindowStyle Hidden"
     call :waitfor 3002 "Oracle" /api/health
 )
 
@@ -45,7 +45,7 @@ curl -s http://localhost:8500/api/health >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo        Already running
 ) else (
-    start "Master-O [8500]" /min cmd /c "cd /d C:\LLM-DevOSWE\Admin\orchestrator && node orchestrator.js"
+    powershell -Command "Start-Process 'node' -ArgumentList 'orchestrator.js' -WorkingDirectory 'C:\LLM-DevOSWE\Admin\orchestrator' -WindowStyle Hidden"
     call :waitfor 8500 "Master-O" /api/health
 )
 
@@ -84,6 +84,7 @@ curl -s http://localhost:8820/api/health >nul 2>&1 && (echo   [OK] Master-Mind  
 curl -s http://localhost:8850/api/health >nul 2>&1 && (echo   [OK] Hive Oracle   :8850) || (echo   [!!] Hive Oracle   :8850 OFFLINE)
 curl -s http://localhost:8860/api/health >nul 2>&1 && (echo   [OK] MCP Bridge    :8860) || (echo   [!!] MCP Bridge    :8860 OFFLINE)
 curl -s http://localhost:8899/api/health >nul 2>&1 && (echo   [OK] Dashboard     :8899) || (echo   [!!] Dashboard     :8899 OFFLINE)
+curl -s http://localhost:8875/api/health >nul 2>&1 && (echo   [OK] VoiceAccess   :8875) || (echo   [!!] VoiceAccess   :8875 OFFLINE)
 curl -s http://localhost:11434/api/tags >nul 2>&1  && (echo   [OK] Ollama        :11434) || (echo   [--] Ollama        :11434)
 curl -s http://localhost:1234/v1/models >nul 2>&1  && (echo   [OK] LM Studio     :1234) || (echo   [--] LM Studio     :1234)
 
@@ -95,6 +96,10 @@ echo.
 echo  Dashboard:   http://localhost:8899
 echo  KittBox:     http://localhost:8585
 echo  Master-O:    http://localhost:8500
+echo.
+echo  All services running in background (no windows)
+echo  Use 'hive status' to check health
+echo  Use 'hive stop' to stop all services
 echo.
 echo  Press any key to close this window...
 pause >nul

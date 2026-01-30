@@ -1,9 +1,9 @@
-# Relay Service
+# Relay Service + HiveStore
 
-**Entry:** `relay-service.js` | **Port:** 8600 | **DB:** `tasks.db` (SQLite)
+**Entry:** `relay-service.js` | **Port:** 8600 | **DB:** `relay.db` (SQLite/WAL)
 
 ## What This Is
-Message queue, task persistence, WebSocket event bus, and alert system for the entire Hive.
+Message queue, task persistence, WebSocket event bus, and alert system for the entire Hive. Houses **HiveStore** - the unified SQLite persistence layer (18 tables, better-sqlite3 + WAL mode).
 
 ## Key Rules
 - NEVER change the port (8600) — everything depends on it

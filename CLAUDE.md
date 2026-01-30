@@ -27,13 +27,27 @@ Flow Pro replacement for MSFS 2024 - modular plugin-based widget overlay system.
 | 3002 | Oracle | LLM backend, project API |
 | 8500 | Orchestrator | 16-service watchdog, auto-restart |
 | 8585 | KittBox | Command Center UI |
-| 8600 | Relay | Message queue, alerts, persistence |
+| 8600 | Relay + HiveStore | Message queue, alerts, SQLite persistence |
 | 8860 | MCP Bridge | 7 MCP servers, tool proxy |
 | 8899 | Dashboard | Hive overview |
 | 11434 | Ollama | Local LLM |
 | 1234 | LM Studio | Local LLM |
 
 **Full service details:** See [SERVICE-REGISTRY.md](SERVICE-REGISTRY.md)
+
+### HiveStore (Persistence Layer)
+
+Unified SQLite backend for all Hive data. Uses `better-sqlite3` with WAL mode.
+
+| Database | Location | Purpose |
+|----------|----------|---------|
+| relay.db | `Admin/relay/` | Tasks, alerts, conversations, knowledge, sessions |
+| oracle.db | `C:/LLM-Oracle/` | Project data, intel cache |
+| colony.db | `Admin/hive-brain/` | LLM node discovery |
+
+**18 tables** including: tasks, alerts, conversations, knowledge, tool_logs, sessions, file_state, team_tasks, prompt_library, benchmarks, training_examples, training_metrics.
+
+**Pattern:** All services use HiveStore via Relay API or direct SQLite. No localStorage for persistent data.
 
 ---
 

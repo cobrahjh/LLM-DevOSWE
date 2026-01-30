@@ -2739,11 +2739,13 @@ POST /api/memory/save
 GET /api/memory/search?tags=auth
 ```
 
-## 🗄️ Database Standards
+## 🗄️ HiveStore - Database Standards
 
 ### SQLite as Default Backend
 
-**Rule:** All services, webpages, and components requiring data persistence MUST use SQLite.
+**HiveStore** is the unified persistence layer for all Hive services. Uses `better-sqlite3` with WAL mode.
+
+**Rule:** All services, webpages, and components requiring data persistence MUST use HiveStore (SQLite).
 
 **Why SQLite:**
 - Zero configuration - no server setup required

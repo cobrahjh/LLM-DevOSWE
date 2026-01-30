@@ -481,7 +481,7 @@ async function startViaSpawn(svc, state) {
             detached: true,
             stdio: 'ignore',
             shell: true,
-            windowsHide: false
+            windowsHide: true
         });
         
         child.unref();
