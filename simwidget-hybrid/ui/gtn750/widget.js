@@ -23,6 +23,8 @@ class GTN750Widget {
             verticalSpeed: 0,
             com1Active: 118.00,
             com1Standby: 118.00,
+            com2Active: 118.00,
+            com2Standby: 118.00,
             nav1Active: 108.00,
             nav1Standby: 108.00,
             transponder: 1200,
@@ -178,6 +180,9 @@ class GTN750Widget {
                 break;
             case 'showWeather':
                 this.map.showWeather = value;
+                break;
+            case 'nightMode':
+                document.body.classList.toggle('night-mode', value);
                 break;
         }
     }
@@ -710,9 +715,12 @@ class GTN750Widget {
             // Frequencies
             com1: document.getElementById('com1'),
             com1Stby: document.getElementById('com1-stby'),
+            com2: document.getElementById('com2'),
+            com2Stby: document.getElementById('com2-stby'),
             nav1: document.getElementById('nav1'),
             nav1Stby: document.getElementById('nav1-stby'),
             swapCom1: document.getElementById('swap-com1'),
+            swapCom2: document.getElementById('swap-com2'),
             swapNav1: document.getElementById('swap-nav1'),
             xpdr: document.getElementById('xpdr'),
             utcTime: document.getElementById('utc-time'),
@@ -776,6 +784,7 @@ class GTN750Widget {
 
         // Frequency swaps
         this.elements.swapCom1?.addEventListener('click', () => this.swapFrequency('COM1'));
+        this.elements.swapCom2?.addEventListener('click', () => this.swapFrequency('COM2'));
         this.elements.swapNav1?.addEventListener('click', () => this.swapFrequency('NAV1'));
 
         // Zoom controls
@@ -1216,8 +1225,26 @@ class GTN750Widget {
     }
 
     cycleDeclutter() {
-        // Cycle through declutter levels
-        console.log('[GTN750] Declutter cycle');
+        // Cycle through declutter levels (0-3)
+        // 0: All labels, 1: Hide waypoint labels, 2: Hide range rings, 3: Minimal
+        this.declutterLevel = ((this.declutterLevel || 0) + 1) % 4;
+
+        // Apply declutter settings
+        const level = this.declutterLevel;
+        this.mapSettings = {
+            ...this.mapSettings,
+            showWaypointLabels: level < 1,
+            showRangeRings: level < 2,
+            showCompass: level < 3,
+            showDataFields: level < 3
+        };
+
+        // Update corner field visibility
+        document.querySelectorAll('.corner-field').forEach(el => {
+            el.style.opacity = level < 3 ? '1' : '0.3';
+        });
+
+        console.log(`[GTN750] Declutter level: ${level}`);
     }
 
     // ===== FREQUENCY SWAP =====
@@ -1813,6 +1840,8 @@ class GTN750Widget {
         if (d.verticalSpeed !== undefined) this.data.verticalSpeed = d.verticalSpeed;
         if (d.com1Active !== undefined) this.data.com1Active = d.com1Active;
         if (d.com1Standby !== undefined) this.data.com1Standby = d.com1Standby;
+        if (d.com2Active !== undefined) this.data.com2Active = d.com2Active;
+        if (d.com2Standby !== undefined) this.data.com2Standby = d.com2Standby;
         if (d.nav1Active !== undefined) this.data.nav1Active = d.nav1Active;
         if (d.nav1Standby !== undefined) this.data.nav1Standby = d.nav1Standby;
         if (d.transponder !== undefined) this.data.transponder = d.transponder;
@@ -1866,6 +1895,8 @@ class GTN750Widget {
         // Frequencies
         if (this.elements.com1) this.elements.com1.textContent = this.data.com1Active.toFixed(2);
         if (this.elements.com1Stby) this.elements.com1Stby.textContent = this.data.com1Standby.toFixed(2);
+        if (this.elements.com2) this.elements.com2.textContent = this.data.com2Active.toFixed(2);
+        if (this.elements.com2Stby) this.elements.com2Stby.textContent = this.data.com2Standby.toFixed(2);
         if (this.elements.nav1) this.elements.nav1.textContent = this.data.nav1Active.toFixed(2);
         if (this.elements.nav1Stby) this.elements.nav1Stby.textContent = this.data.nav1Standby.toFixed(2);
         if (this.elements.xpdr) this.elements.xpdr.textContent = this.data.transponder.toString().padStart(4, '0');

@@ -1191,3 +1191,38 @@ body {
         flex: 1 1 24%;
     }
 }
+
+/* ===== NIGHT MODE ===== */
+.night-mode {
+    --gtn-green: #006600;
+    --gtn-cyan: #005555;
+    --gtn-magenta: #550055;
+    --gtn-blue: #003366;
+    --gtn-yellow: #554400;
+    --gtn-white: #444444;
+    --gtn-amber: #553300;
+    --gtn-red: #550000;
+    --gtn-bg: #020304;
+    --gtn-bg-light: #030508;
+    --gtn-bg-panel: #050810;
+    --gtn-accent: #002244;
+    --gtn-border: #111111;
+}
+
+.night-mode .gtn750 {
+    filter: brightness(0.6);
+}
+
+.night-mode .freq-active,
+.night-mode .corner-value,
+.night-mode .wpt-value {
+    color: #004400;
+}
+
+.night-mode .taws-alert {
+    filter: brightness(0.7);
+}
+
+.night-mode .map-canvas {
+    filter: brightness(0.5);
+}
