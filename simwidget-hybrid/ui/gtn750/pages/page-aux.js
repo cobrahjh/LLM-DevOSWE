@@ -52,9 +52,9 @@ class AuxPage {
             auxTime: document.getElementById('aux-time'),
             auxEta: document.getElementById('aux-eta'),
             auxFuel: document.getElementById('aux-fuel'),
-            // Timer elements (if present in future UI expansion)
+            // Timer elements
             timerDisplay: document.getElementById('timer-display'),
-            timerStartStop: document.getElementById('timer-start-stop'),
+            timerStartStop: document.getElementById('timer-toggle'),
             timerReset: document.getElementById('timer-reset')
         };
     }
@@ -113,6 +113,11 @@ class AuxPage {
             }
             this.updateTimerDisplay();
         }, 1000);
+
+        // Update button text
+        if (this.elements.timerStartStop) {
+            this.elements.timerStartStop.textContent = 'STOP';
+        }
     }
 
     /**
@@ -123,6 +128,11 @@ class AuxPage {
         if (this.timer.interval) {
             clearInterval(this.timer.interval);
             this.timer.interval = null;
+        }
+
+        // Update button text
+        if (this.elements.timerStartStop) {
+            this.elements.timerStartStop.textContent = 'START';
         }
     }
 
