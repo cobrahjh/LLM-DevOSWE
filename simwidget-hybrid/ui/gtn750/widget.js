@@ -958,6 +958,11 @@ class GTN750Widget {
             this.terrainOverlay.setEnabled(false);
         }
 
+        // Fuel range ring (show maximum range with current fuel)
+        if (this.map.showFuelRange !== false && this.data.fuelTotal && this.data.fuelFlow && this.data.groundSpeed) {
+            this.renderFuelRangeRing(ctx, cx, cy, w, h);
+        }
+
         // Weather overlay (render before other elements)
         if (this.map.showWeather && this.weatherOverlay) {
             this.weatherOverlay.setEnabled(true);
@@ -1089,6 +1094,58 @@ class GTN750Widget {
         ctx.textAlign = 'center';
         ctx.fillText(`${Math.round(windDir)}°`, x, y + 42);
         ctx.fillText(`${Math.round(windSpd)}kt`, x, y + 54);
+    }
+
+    renderFuelRangeRing(ctx, cx, cy, w, h) {
+        // Calculate fuel range in nautical miles
+        const fuelTotal = this.data.fuelTotal || 0;
+        const fuelFlow = this.data.fuelFlow || 1;
+        const groundSpeed = this.data.groundSpeed || 100;
+
+        // Endurance in hours, then range in nm
+        const enduranceHours = fuelTotal / fuelFlow;
+        const rangeNm = enduranceHours * groundSpeed;
+
+        // Only show if range fits on map (within 2x map range)
+        if (rangeNm > this.map.range * 2) return;
+        if (rangeNm < 5) return; // Don't show tiny rings
+
+        // Calculate pixel radius
+        const pixelsPerNm = Math.min(w, h) / 2 / this.map.range;
+        const ringRadius = rangeNm * pixelsPerNm;
+
+        ctx.save();
+
+        // Draw fuel range ring
+        ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)'; // Orange
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+
+        // Label the ring
+        const labelAngle = -Math.PI / 4; // Top-right
+        const labelX = cx + Math.cos(labelAngle) * ringRadius;
+        const labelY = cy + Math.sin(labelAngle) * ringRadius;
+
+        ctx.font = 'bold 10px Consolas, monospace';
+        ctx.fillStyle = 'rgba(255, 165, 0, 0.9)';
+        ctx.textAlign = 'left';
+
+        // Background for label
+        const labelText = `FUEL ${Math.round(rangeNm)}nm`;
+        const textWidth = ctx.measureText(labelText).width;
+        ctx.fillStyle = 'rgba(0, 10, 20, 0.8)';
+        ctx.fillRect(labelX + 4, labelY - 10, textWidth + 6, 14);
+
+        ctx.fillStyle = '#ffa500';
+        ctx.fillText(labelText, labelX + 7, labelY);
+
+        ctx.restore();
     }
 
     renderTerrainPage() {
@@ -2300,6 +2357,12 @@ class GTN750Widget {
         }
 
         this.data.track = d.track || this.data.heading;
+
+        // Fuel data
+        if (d.fuelTotal !== undefined) this.data.fuelTotal = d.fuelTotal;
+        if (d.fuelFlow !== undefined) this.data.fuelFlow = d.fuelFlow;
+        if (d.fuelCapacity !== undefined) this.data.fuelCapacity = d.fuelCapacity;
+
         this.updateUI();
         this.updateWaypointDisplay();
         this.updateCdiFromSource();
