@@ -92,6 +92,48 @@
   .empty { color: #484f58; font-style: italic; padding: 12px 0; text-align: center; }
   .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #30363d; border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Copy button */
+  .copy-btn { position: absolute; top: 6px; right: 6px; background: #30363d; border: none; color: #7d8590; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+  .copy-btn:hover { background: #484f58; color: #e6edf3; }
+  .copy-btn.copied { background: #0d3520; color: #3fb950; }
+  .result-wrap { position: relative; }
+
+  /* Batch executor */
+  .batch-item { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px; margin-bottom: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .batch-item select, .batch-item input { flex: 1; min-width: 100px; }
+  .batch-item .remove-btn { background: #3d1418; color: #f85149; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+  .batch-results { max-height: 300px; overflow: auto; }
+  .batch-result-item { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 6px; margin-bottom: 4px; font-size: 0.78rem; }
+  .batch-result-item.success { border-left: 3px solid #3fb950; }
+  .batch-result-item.error { border-left: 3px solid #f85149; }
+  .batch-result-item .tool-name { color: #a78bfa; font-weight: bold; }
+
+  /* History */
+  .history-item { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 6px 8px; margin-bottom: 4px; cursor: pointer; font-size: 0.78rem; }
+  .history-item:hover { border-color: #a78bfa; }
+  .history-item .time { color: #484f58; font-size: 0.7rem; }
+  .history-item .tool { color: #a78bfa; }
+  .history-item.success { border-left: 3px solid #3fb950; }
+  .history-item.error { border-left: 3px solid #f85149; }
+
+  /* Toggle switch */
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #7d8590; }
+  .toggle input { display: none; }
+  .toggle-slider { width: 32px; height: 18px; background: #30363d; border-radius: 9px; position: relative; cursor: pointer; transition: 0.2s; }
+  .toggle-slider::after { content: ''; position: absolute; width: 14px; height: 14px; background: #7d8590; border-radius: 50%; top: 2px; left: 2px; transition: 0.2s; }
+  .toggle input:checked + .toggle-slider { background: #0d3520; }
+  .toggle input:checked + .toggle-slider::after { left: 16px; background: #3fb950; }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .header { flex-direction: column; gap: 8px; text-align: center; }
+    .header-right { justify-content: center; flex-wrap: wrap; }
+    .quick-grid { grid-template-columns: 1fr; }
+    .explorer-row { flex-direction: column; }
+    .explorer-row select, .explorer-row button { width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -103,6 +145,11 @@
   <div class="header-right">
     <span id="healthStatus"><span class="status-dot red"></span> Connecting...</span>
     <span id="uptime" style="color:#7d8590;font-size:0.8rem"></span>
+    <label class="toggle" title="Auto-refresh every 30s">
+      <input type="checkbox" id="autoRefresh" checked onchange="toggleAutoRefresh()">
+      <span class="toggle-slider"></span>
+      Auto
+    </label>
     <button class="btn btn-secondary btn-sm" onclick="refreshAll()">Refresh</button>
   </div>
 </div>
@@ -137,7 +184,10 @@
     </div>
     <div id="toolSchemaHint" style="color:#7d8590;font-size:0.78rem;margin-bottom:6px"></div>
     <textarea id="explorerArgs" placeholder='{"key": "value"}'></textarea>
-    <div class="result-box" id="explorerResult"></div>
+    <div class="result-wrap">
+      <div class="result-box" id="explorerResult"></div>
+      <button class="copy-btn" id="copyResult" onclick="copyResult()" style="display:none">Copy</button>
+    </div>
   </div>
 
   <div class="grid">
@@ -182,6 +232,24 @@
       </div>
     </div>
 
+    <!-- Batch Executor -->
+    <div class="card">
+      <h2>Batch Executor <span class="count" id="batchCount">0</span></h2>
+      <div id="batchItems"></div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn btn-secondary btn-sm" onclick="addBatchItem()">+ Add Tool</button>
+        <button class="btn btn-primary btn-sm" onclick="executeBatch()">Execute All</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearBatch()">Clear</button>
+      </div>
+      <div class="batch-results" id="batchResults" style="margin-top:10px"></div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <h2>Recent Executions <button class="btn btn-secondary btn-sm" onclick="clearHistory()">Clear</button></h2>
+      <div id="historyList"><div class="empty">No recent executions</div></div>
+    </div>
+
     <!-- Memory Graph -->
     <div class="card full-width">
       <h2>Memory Graph <button class="btn btn-secondary btn-sm" onclick="loadMemoryGraph()">Load Graph</button></h2>
@@ -194,6 +262,9 @@
 const API = `${location.protocol}//${location.host}`;
 let allServers = [];
 let allToolDefs = {};
+let batchItems = [];
+let executionHistory = JSON.parse(localStorage.getItem('mcpHistory') || '[]').slice(0, 20);
+let autoRefreshInterval = null;
 
 async function api(path) { return (await fetch(`${API}${path}`)).json(); }
 async function apiPost(path, body) {
@@ -348,6 +419,7 @@ async function executeTool() {
     resultEl.className = 'result-box visible';
     resultEl.textContent = 'Executing...';
     resultEl.style.color = '#7d8590';
+    showCopyBtn(false);
 
     try {
         const res = await fetch(`${API}/api/servers/${server}/tools/${tool}`, {
@@ -359,10 +431,14 @@ async function executeTool() {
         resultEl.className = 'result-box visible ' + (data.success ? 'success' : 'error');
         resultEl.style.color = data.success ? '#3fb950' : '#f85149';
         resultEl.textContent = JSON.stringify(data.result || data, null, 2);
+        showCopyBtn(true);
+        addToHistory(server, tool, data.success);
     } catch (e) {
         resultEl.className = 'result-box visible error';
         resultEl.style.color = '#f85149';
         resultEl.textContent = 'Error: ' + e.message;
+        showCopyBtn(true);
+        addToHistory(server, tool, false);
     }
 }
 
@@ -370,6 +446,7 @@ function clearExplorer() {
     document.getElementById('explorerArgs').value = '';
     document.getElementById('explorerResult').className = 'result-box';
     document.getElementById('toolSchemaHint').textContent = '';
+    showCopyBtn(false);
 }
 
 function selectServer(name) {
@@ -493,9 +570,159 @@ async function loadMemoryGraph() {
 
 function refreshAll() { loadStatus(); }
 
+// Auto-refresh toggle
+function toggleAutoRefresh() {
+    const enabled = document.getElementById('autoRefresh').checked;
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+    if (enabled) {
+        autoRefreshInterval = setInterval(loadStatus, 30000);
+    }
+}
+
+// Copy result
+function copyResult() {
+    const text = document.getElementById('explorerResult').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copyResult');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+    });
+}
+
+// Show copy button when result is visible
+function showCopyBtn(show) {
+    document.getElementById('copyResult').style.display = show ? 'block' : 'none';
+}
+
+// Batch executor
+function addBatchItem() {
+    const id = Date.now();
+    batchItems.push({ id, server: '', tool: '', args: '{}' });
+    renderBatchItems();
+}
+
+function removeBatchItem(id) {
+    batchItems = batchItems.filter(b => b.id !== id);
+    renderBatchItems();
+}
+
+function renderBatchItems() {
+    const el = document.getElementById('batchItems');
+    document.getElementById('batchCount').textContent = batchItems.length;
+    if (!batchItems.length) { el.innerHTML = '<div class="empty">Click "+ Add Tool" to add batch items</div>'; return; }
+
+    const onlineServers = allServers.filter(s => s.status === 'online');
+    el.innerHTML = batchItems.map(item => `
+        <div class="batch-item" data-id="${item.id}">
+            <select onchange="updateBatchServer(${item.id}, this.value)">
+                <option value="">Server</option>
+                ${onlineServers.map(s => `<option value="${escHtml(s.name)}" ${s.name === item.server ? 'selected' : ''}>${escHtml(s.name)}</option>`).join('')}
+            </select>
+            <select onchange="updateBatchTool(${item.id}, this.value)" id="batchTool${item.id}">
+                <option value="">Tool</option>
+                ${(allToolDefs[item.server] || []).map(t => `<option value="${escHtml(t.name)}" ${t.name === item.tool ? 'selected' : ''}>${escHtml(t.name)}</option>`).join('')}
+            </select>
+            <input type="text" placeholder='{"args"}' value='${escHtml(item.args)}' onchange="updateBatchArgs(${item.id}, this.value)" style="flex:2">
+            <button class="remove-btn" onclick="removeBatchItem(${item.id})">×</button>
+        </div>
+    `).join('');
+}
+
+async function updateBatchServer(id, server) {
+    const item = batchItems.find(b => b.id === id);
+    if (item) { item.server = server; item.tool = ''; }
+    if (server && !allToolDefs[server]) {
+        const data = await api(`/api/servers/${server}/tools`);
+        allToolDefs[server] = data.tools || [];
+    }
+    renderBatchItems();
+}
+
+function updateBatchTool(id, tool) {
+    const item = batchItems.find(b => b.id === id);
+    if (item) item.tool = tool;
+}
+
+function updateBatchArgs(id, args) {
+    const item = batchItems.find(b => b.id === id);
+    if (item) item.args = args;
+}
+
+async function executeBatch() {
+    const results = document.getElementById('batchResults');
+    const valid = batchItems.filter(b => b.server && b.tool);
+    if (!valid.length) { alert('No valid batch items'); return; }
+
+    results.innerHTML = '<div class="empty"><span class="spinner"></span> Executing batch...</div>';
+
+    const outputs = [];
+    for (const item of valid) {
+        let args = {};
+        try { args = JSON.parse(item.args || '{}'); } catch {}
+        try {
+            const res = await fetch(`${API}/api/servers/${item.server}/tools/${item.tool}`, {
+                method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(args)
+            });
+            const data = await res.json();
+            outputs.push({ server: item.server, tool: item.tool, success: data.success, result: data.result || data.error });
+            addToHistory(item.server, item.tool, data.success);
+        } catch (e) {
+            outputs.push({ server: item.server, tool: item.tool, success: false, result: e.message });
+            addToHistory(item.server, item.tool, false);
+        }
+    }
+
+    results.innerHTML = outputs.map(o => `
+        <div class="batch-result-item ${o.success ? 'success' : 'error'}">
+            <span class="tool-name">${escHtml(o.server)}/${escHtml(o.tool)}</span>
+            <pre style="margin:4px 0 0;color:${o.success ? '#3fb950' : '#f85149'};white-space:pre-wrap;word-break:break-word">${escHtml(typeof o.result === 'string' ? o.result : JSON.stringify(o.result, null, 2))}</pre>
+        </div>
+    `).join('');
+}
+
+function clearBatch() {
+    batchItems = [];
+    renderBatchItems();
+    document.getElementById('batchResults').innerHTML = '';
+}
+
+// History
+function addToHistory(server, tool, success) {
+    executionHistory.unshift({ server, tool, success, time: Date.now() });
+    executionHistory = executionHistory.slice(0, 20);
+    localStorage.setItem('mcpHistory', JSON.stringify(executionHistory));
+    renderHistory();
+}
+
+function renderHistory() {
+    const el = document.getElementById('historyList');
+    if (!executionHistory.length) { el.innerHTML = '<div class="empty">No recent executions</div>'; return; }
+
+    el.innerHTML = executionHistory.map(h => {
+        const ago = Math.floor((Date.now() - h.time) / 1000);
+        const timeStr = ago < 60 ? ago + 's' : (ago < 3600 ? Math.floor(ago/60) + 'm' : Math.floor(ago/3600) + 'h') + ' ago';
+        return `<div class="history-item ${h.success ? 'success' : 'error'}" onclick="selectTool('${escHtml(h.server)}','${escHtml(h.tool)}')">
+            <span class="tool">${escHtml(h.server)}/${escHtml(h.tool)}</span>
+            <span class="time">${timeStr}</span>
+        </div>`;
+    }).join('');
+}
+
+function clearHistory() {
+    executionHistory = [];
+    localStorage.removeItem('mcpHistory');
+    renderHistory();
+}
+
 // Init
 loadStatus();
-setInterval(loadStatus, 30000);
+renderHistory();
+renderBatchItems();
+autoRefreshInterval = setInterval(loadStatus, 30000);
 </script>
 </body>
 </html>
