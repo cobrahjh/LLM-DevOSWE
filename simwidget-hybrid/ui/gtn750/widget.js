@@ -297,6 +297,10 @@ class GTN750Widget {
     }
 
     initSoftKeys() {
+        if (typeof GTNSoftKeys === 'undefined') {
+            console.warn('[GTN750] GTNSoftKeys not loaded yet');
+            return;
+        }
         this.softKeys = new GTNSoftKeys({
             container: document.getElementById('gtn-softkeys')
         });
@@ -324,7 +328,9 @@ class GTN750Widget {
         }
 
         // Update soft keys context
-        this.softKeys.setContext(pageId);
+        if (this.softKeys) {
+            this.softKeys.setContext(pageId);
+        }
 
         // Update tabs
         document.querySelectorAll('.gtn-tab').forEach(tab => {
