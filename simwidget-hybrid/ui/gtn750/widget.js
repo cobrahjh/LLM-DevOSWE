@@ -964,7 +964,6 @@ class GTN750Widget {
         this.weatherRange = 50;
         this.elements.wxZoomIn?.addEventListener('click', () => this.changeWeatherRange(-1));
         this.elements.wxZoomOut?.addEventListener('click', () => this.changeWeatherRange(1));
-        });
 
         // System reset
         document.getElementById('sys-reset')?.addEventListener('click', () => {
