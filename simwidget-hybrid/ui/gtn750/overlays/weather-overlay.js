@@ -11,11 +11,25 @@ class WeatherOverlay {
         // Layer states
         this.layers = {
             nexrad: false,
+            simRadar: false,  // Sim weather radar visualization
             metar: false,
             taf: false,
             winds: false,
             lightning: false
         };
+
+        // Sim weather data (updated from widget)
+        this.simWeather = {
+            precipState: 0,
+            visibility: 10000,
+            windDirection: 0,
+            windSpeed: 0,
+            ambientTemp: 15
+        };
+
+        // Radar sweep animation
+        this.radarSweepAngle = 0;
+        this.lastSweepTime = 0;
 
         // Radar data
         this.radarTiles = [];
@@ -106,6 +120,10 @@ class WeatherOverlay {
         const { range, orientation, width, height } = mapSettings;
 
         // Render each enabled layer
+        if (this.layers.simRadar) {
+            this.renderSimWeatherRadar(ctx, latitude, longitude, mapSettings);
+        }
+
         if (this.layers.nexrad) {
             this.renderNexrad(ctx, latitude, longitude, mapSettings);
         }
@@ -121,6 +139,159 @@ class WeatherOverlay {
         if (this.layers.lightning) {
             this.renderLightning(ctx, latitude, longitude, mapSettings);
         }
+    }
+
+    /**
+     * Update sim weather data from widget
+     */
+    updateSimWeather(data) {
+        if (data.precipState !== undefined) this.simWeather.precipState = data.precipState;
+        if (data.visibility !== undefined) this.simWeather.visibility = data.visibility;
+        if (data.windDirection !== undefined) this.simWeather.windDirection = data.windDirection;
+        if (data.windSpeed !== undefined) this.simWeather.windSpeed = data.windSpeed;
+        if (data.ambientTemp !== undefined) this.simWeather.ambientTemp = data.ambientTemp;
+    }
+
+    /**
+     * Render sim weather as radar visualization
+     * Shows precipitation, visibility reduction as radar returns
+     */
+    renderSimWeatherRadar(ctx, lat, lon, mapSettings) {
+        const { range, width, height, heading } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+        const maxRadius = Math.min(width, height) / 2;
+
+        const precip = this.simWeather.precipState || 0;
+        const vis = this.simWeather.visibility || 10000;
+        const wind = this.simWeather.windSpeed || 0;
+
+        // Update sweep animation
+        const now = Date.now();
+        if (now - this.lastSweepTime > 50) {
+            this.radarSweepAngle = (this.radarSweepAngle + 3) % 360;
+            this.lastSweepTime = now;
+        }
+
+        ctx.save();
+
+        // Determine weather intensity
+        let intensity = 0;
+        let weatherType = 'none';
+
+        if (precip & 4) {
+            weatherType = 'snow';
+            intensity = 30 + (wind > 15 ? 15 : 0);
+        } else if (precip & 2) {
+            weatherType = 'rain';
+            intensity = wind > 25 ? 50 : (wind > 15 ? 40 : 25);
+        }
+
+        // Add intensity based on low visibility
+        if (vis < 1000) intensity = Math.max(intensity, 20);
+        else if (vis < 3000) intensity = Math.max(intensity, 10);
+
+        // Only render if there's weather
+        if (intensity > 0) {
+            // Calculate coverage based on visibility and precip
+            const coverage = Math.max(0.3, Math.min(1.0, (10000 - vis) / 8000));
+            const weatherRadius = maxRadius * coverage;
+
+            // Generate weather cells based on wind direction
+            const windRad = (this.simWeather.windDirection || 0) * Math.PI / 180;
+            const numCells = Math.floor(20 + intensity);
+
+            ctx.globalAlpha = 0.6;
+
+            for (let i = 0; i < numCells; i++) {
+                // Cells concentrated in wind direction with spread
+                const spread = (Math.random() - 0.5) * Math.PI;
+                const angle = windRad + spread;
+                const dist = Math.random() * weatherRadius * 0.9;
+
+                const x = cx + Math.sin(angle) * dist;
+                const y = cy - Math.cos(angle) * dist;
+
+                // Cell size varies
+                const cellSize = (3 + Math.random() * 8) * (intensity / 30);
+
+                // Color based on intensity
+                const cellIntensity = intensity * (0.5 + Math.random() * 0.5);
+                ctx.fillStyle = this.getRadarColor(cellIntensity);
+
+                // Draw cell with slight blur effect
+                ctx.beginPath();
+                ctx.arc(x, y, cellSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw additional scattered cells for realism
+            for (let i = 0; i < numCells / 2; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.random() * weatherRadius;
+                const x = cx + Math.sin(angle) * dist;
+                const y = cy - Math.cos(angle) * dist;
+                const cellSize = 2 + Math.random() * 4;
+                const cellIntensity = intensity * 0.3 * Math.random();
+
+                ctx.fillStyle = this.getRadarColor(cellIntensity);
+                ctx.beginPath();
+                ctx.arc(x, y, cellSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.globalAlpha = 1.0;
+        }
+
+        // Draw radar sweep line
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.4;
+        const sweepRad = this.radarSweepAngle * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.sin(sweepRad) * maxRadius, cy - Math.cos(sweepRad) * maxRadius);
+        ctx.stroke();
+
+        // Draw sweep fade trail
+        ctx.globalAlpha = 0.15;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, maxRadius, -Math.PI/2 + sweepRad - 0.5, -Math.PI/2 + sweepRad);
+        ctx.lineTo(cx, cy);
+        ctx.fillStyle = '#00ff00';
+        ctx.fill();
+
+        ctx.globalAlpha = 1.0;
+
+        // Draw range rings
+        ctx.strokeStyle = '#1a3a1a';
+        ctx.lineWidth = 1;
+        [0.25, 0.5, 0.75, 1].forEach(frac => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, maxRadius * frac, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+
+        // Draw weather type label
+        if (intensity > 0) {
+            ctx.font = '10px Consolas, monospace';
+            ctx.fillStyle = this.getRadarColor(intensity);
+            ctx.textAlign = 'left';
+            ctx.fillText(weatherType.toUpperCase(), 10, 20);
+            ctx.fillStyle = '#888';
+            ctx.fillText('SIM WX', 10, 32);
+        } else {
+            ctx.font = '10px Consolas, monospace';
+            ctx.fillStyle = '#00aa00';
+            ctx.textAlign = 'left';
+            ctx.fillText('CLEAR', 10, 20);
+            ctx.fillStyle = '#888';
+            ctx.fillText('SIM WX', 10, 32);
+        }
+
+        ctx.restore();
     }
 
     /**
@@ -418,37 +589,62 @@ class WeatherOverlay {
      * Render wind barbs
      */
     renderWinds(ctx, lat, lon, mapSettings) {
-        const { range, width, height } = mapSettings;
+        const { range, width, height, orientation, heading } = mapSettings;
         const cx = width / 2;
         const cy = height / 2;
         const pixelsPerNm = Math.min(width, height) / 2 / range;
+        const rotation = orientation === 'north' ? 0 : heading;
 
-        // Simulated wind data points
+        // Draw aircraft position wind barb from sim weather (if available)
+        if (this.simWeather.windSpeed > 0) {
+            this.drawWindBarb(ctx, cx, cy, this.simWeather.windDirection - rotation, this.simWeather.windSpeed, true);
+        }
+
+        // Grid wind data points
         const windPoints = this.generateSimulatedWinds(lat, lon, range);
 
         windPoints.forEach(point => {
-            const x = cx + point.offsetX * pixelsPerNm;
-            const y = cy - point.offsetY * pixelsPerNm;
+            // Skip center point (aircraft position already drawn)
+            if (point.offsetX === 0 && point.offsetY === 0) return;
 
-            this.drawWindBarb(ctx, x, y, point.direction, point.speed);
+            // Apply map rotation to position
+            const rotRad = this.core.toRad(rotation);
+            const rotX = point.offsetX * Math.cos(rotRad) - point.offsetY * Math.sin(rotRad);
+            const rotY = point.offsetX * Math.sin(rotRad) + point.offsetY * Math.cos(rotRad);
+
+            const x = cx + rotX * pixelsPerNm;
+            const y = cy - rotY * pixelsPerNm;
+
+            // Rotate wind direction for heading-up display
+            this.drawWindBarb(ctx, x, y, point.direction - rotation, point.speed, false);
         });
     }
 
     /**
-     * Generate simulated wind data
+     * Generate wind data grid
+     * Uses actual sim weather as base with slight variations for surrounding points
      */
     generateSimulatedWinds(centerLat, centerLon, range) {
         const winds = [];
         const step = range / 2;
+
+        // Base wind from sim weather (or default)
+        const baseDir = this.simWeather.windDirection || 270;
+        const baseSpeed = this.simWeather.windSpeed || 10;
 
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
                 const offsetX = i * step;
                 const offsetY = j * step;
 
-                // Pseudo-random wind
-                const direction = (Math.abs(Math.sin(centerLat * 10 + i) * 360) + i * 30) % 360;
-                const speed = 5 + Math.abs(Math.cos(centerLon * 10 + j) * 25);
+                // Add slight variations based on position (simulates wind field)
+                // Direction varies +/- 15 degrees, speed varies +/- 20%
+                const seed = Math.sin(centerLat * 10 + i * 7) * Math.cos(centerLon * 10 + j * 11);
+                const dirVariation = seed * 15;
+                const speedVariation = seed * 0.2;
+
+                const direction = (baseDir + dirVariation + 360) % 360;
+                const speed = Math.max(0, baseSpeed * (1 + speedVariation));
 
                 winds.push({
                     offsetX,
@@ -464,35 +660,66 @@ class WeatherOverlay {
 
     /**
      * Draw wind barb at position
+     * Standard meteorological wind barb: staff points toward wind source,
+     * barbs on LEFT side when looking from base to tip
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} direction - Wind direction (where wind is FROM, in degrees)
+     * @param {number} speed - Wind speed in knots
+     * @param {boolean} isAircraft - If true, draw larger/highlighted for aircraft position
      */
-    drawWindBarb(ctx, x, y, direction, speed) {
+    drawWindBarb(ctx, x, y, direction, speed, isAircraft = false) {
         ctx.save();
         ctx.translate(x, y);
-        ctx.rotate((direction + 180) * Math.PI / 180);
 
-        ctx.strokeStyle = '#00aaff';
-        ctx.lineWidth = 1;
+        // Wind barb points in direction wind is FROM
+        // Canvas: 0° = up, rotation is clockwise
+        // Wind direction 0° = from north, so barb should point up
+        ctx.rotate(direction * Math.PI / 180);
 
-        // Draw staff
+        const staffLen = isAircraft ? 25 : 18;
+        const barbLen = isAircraft ? 10 : 7;
+        const shortBarbLen = isAircraft ? 5 : 4;
+        const barbSpacing = isAircraft ? 4 : 3;
+        const pennantWidth = isAircraft ? 5 : 4;
+
+        // Colors
+        const color = isAircraft ? '#00ffff' : '#00aaff';
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = isAircraft ? 2 : 1.5;
+        ctx.lineCap = 'round';
+
+        // Draw staff (pointing toward wind source, i.e., "up" in rotated frame)
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(0, -15);
+        ctx.lineTo(0, -staffLen);
         ctx.stroke();
 
-        // Draw barbs based on speed
-        let remaining = speed;
-        let barbY = -15;
+        // Calm wind (< 3 kt): draw circle only
+        if (speed < 3) {
+            ctx.beginPath();
+            ctx.arc(0, 0, isAircraft ? 5 : 3, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+            return;
+        }
 
-        // Pennants (50 kt)
+        // Draw barbs from tip of staff downward
+        // Barbs on LEFT side (-x direction in rotated frame)
+        let remaining = Math.round(speed);
+        let barbY = -staffLen;
+
+        // Pennants (50 kt) - filled triangles
         while (remaining >= 50) {
             ctx.beginPath();
             ctx.moveTo(0, barbY);
-            ctx.lineTo(5, barbY + 3);
-            ctx.lineTo(0, barbY + 6);
+            ctx.lineTo(-barbLen, barbY + pennantWidth / 2);
+            ctx.lineTo(0, barbY + pennantWidth);
             ctx.closePath();
-            ctx.fillStyle = '#00aaff';
             ctx.fill();
-            barbY += 6;
+            barbY += pennantWidth + 1;
             remaining -= 50;
         }
 
@@ -500,18 +727,34 @@ class WeatherOverlay {
         while (remaining >= 10) {
             ctx.beginPath();
             ctx.moveTo(0, barbY);
-            ctx.lineTo(8, barbY + 3);
+            ctx.lineTo(-barbLen, barbY - barbSpacing);
             ctx.stroke();
-            barbY += 3;
+            barbY += barbSpacing;
             remaining -= 10;
         }
 
-        // Short barbs (5 kt)
+        // Short barb (5 kt)
         if (remaining >= 5) {
+            // If this is the only barb, offset it from the tip
+            if (barbY === -staffLen) {
+                barbY += barbSpacing;
+            }
             ctx.beginPath();
             ctx.moveTo(0, barbY);
-            ctx.lineTo(4, barbY + 2);
+            ctx.lineTo(-shortBarbLen, barbY - barbSpacing / 2);
             ctx.stroke();
+        }
+
+        // Draw speed text for aircraft wind
+        if (isAircraft && speed >= 3) {
+            ctx.restore();
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.font = 'bold 10px Consolas, monospace';
+            ctx.fillStyle = '#00ffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(`${Math.round(speed)}kt`, 0, staffLen / 2 + 2);
         }
 
         ctx.restore();
@@ -596,14 +839,29 @@ class WeatherOverlay {
         ctx.closePath();
         ctx.fill();
 
-        // Render weather layers
-        this.render(ctx, aircraft, {
+        // Render weather layers (always render on weather page, regardless of enabled state)
+        const mapSettings = {
             range,
             orientation: 'north',
             width,
             height,
             heading: aircraft.heading
-        });
+        };
+
+        // Render sim radar if enabled
+        if (this.layers.simRadar) {
+            this.renderSimWeatherRadar(ctx, aircraft.latitude, aircraft.longitude, mapSettings);
+        }
+
+        // Render NEXRAD if enabled
+        if (this.layers.nexrad) {
+            this.renderNexrad(ctx, aircraft.latitude, aircraft.longitude, mapSettings);
+        }
+
+        // Render METAR dots if enabled
+        if (this.layers.metar) {
+            this.renderMetarDotsReal(ctx, aircraft.latitude, aircraft.longitude, mapSettings);
+        }
 
         // Draw legend
         this.drawLegend(ctx, width, height);
