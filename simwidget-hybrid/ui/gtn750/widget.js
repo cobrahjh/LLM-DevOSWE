@@ -861,9 +861,12 @@ class GTN750Widget {
         this.elements.btnHome?.addEventListener('click', () => this.pageManager.goHome());
 
         // Home page buttons (Map, Traffic, Terrain, WX, etc.)
-        document.querySelectorAll('.home-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        const homeButtons = document.querySelectorAll('.home-btn');
+        console.log('[GTN750] Found home buttons:', homeButtons.length);
+        homeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
                 const pageId = btn.dataset.page;
+                console.log('[GTN750] Home button clicked:', pageId);
                 if (pageId) {
                     // Update active state
                     document.querySelectorAll('.home-btn').forEach(b => b.classList.remove('active'));
@@ -3128,5 +3131,16 @@ class GTN750Widget {
 
 // Initialize and expose globally
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[GTN750] DOMContentLoaded - initializing widget');
     window.gtn750 = new GTN750Widget();
+    console.log('[GTN750] Widget initialized:', !!window.gtn750);
 });
+
+// Fallback if DOMContentLoaded already fired
+if (document.readyState !== 'loading') {
+    console.log('[GTN750] DOM already ready - initializing widget');
+    if (!window.gtn750) {
+        window.gtn750 = new GTN750Widget();
+        console.log('[GTN750] Widget initialized via fallback:', !!window.gtn750);
+    }
+}
