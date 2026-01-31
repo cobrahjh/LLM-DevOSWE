@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Documentation Hub</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #21262d;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 {
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-box {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            width: 300px;
+            font-size: 14px;
+        }
+        .search-box:focus { outline: none; border-color: var(--accent); }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            background: var(--surface2);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .btn:hover { background: var(--border); }
+        .btn-primary { background: var(--accent); color: #fff; }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+        }
+        .sidebar {
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+        .sidebar h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-section {
+            margin-bottom: 20px;
+        }
+        .nav-item {
+            display: block;
+            padding: 8px 12px;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .nav-item:hover { background: var(--surface2); }
+        .nav-item.active { background: var(--accent); color: #fff; }
+        .nav-item .icon { margin-right: 8px; }
+
+        .main {
+            min-height: calc(100vh - 150px);
+        }
+        .category {
+            margin-bottom: 32px;
+        }
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .category-header h2 {
+            font-size: 18px;
+        }
+        .category-header .icon {
+            font-size: 24px;
+        }
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .doc-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .doc-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .doc-card h4 {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: var(--accent);
+        }
+        .doc-card p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .doc-card .path {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doc-card .tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--surface2);
+            color: var(--text-muted);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: var(--surface);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { font-size: 16px; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-body pre {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .modal-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Stats bar */
+        .stats {
+            display: flex;
+            gap: 24px;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>📚</span> Hive Documentation Hub</h1>
+        <div class="header-actions">
+            <input type="text" class="search-box" id="searchBox" placeholder="Search documentation..." onkeyup="filterDocs()">
+            <button class="btn" onclick="refreshDocs()">Refresh</button>
+            <a href="/" class="btn">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="totalDocs">0</div>
+                <div class="stat-label">Total Documents</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="totalCategories">0</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="lastUpdated">-</div>
+                <div class="stat-label">Last Scan</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="sidebar">
+                <div class="nav-section">
+                    <h3>Categories</h3>
+                    <div id="navCategories"></div>
+                </div>
+            </div>
+
+            <div class="main" id="mainContent"></div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal" onclick="if(event.target===this)closePreview()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="previewTitle">Document</h3>
+                <button class="modal-close" onclick="closePreview()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <pre id="previewContent"></pre>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="copyPath()">Copy Path</button>
+                <button class="btn btn-primary" onclick="openInEditor()">Open in Editor</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+const HOST = location.hostname;
+let currentDoc = null;
+
+// Documentation registry - organized by category
+const docs = {
+    "Infrastructure": {
+        icon: "🏗️",
+        items: [
+            { name: "Hivemind Overview", path: "C:/DevClaude/Hivemind/README.md", desc: "Main Hivemind documentation" },
+            { name: "Hive Architecture", path: "C:/DevClaude/HIVE-ARCHITECTURE.md", desc: "System architecture overview" },
+            { name: "Windows Services", path: "C:/DevClaude/Hivemind/scripts/README.md", desc: "Service installation scripts" },
+            { name: "Service Registry", path: "C:/LLM-DevOSWE/SERVICE-REGISTRY.md", desc: "All registered services" },
+            { name: "Service Standards", path: "C:/LLM-DevOSWE/Admin/SERVICE-STANDARDS.md", desc: "Service development standards" },
+            { name: "Hive Status", path: "C:/DevClaude/HIVE-STATUS.md", desc: "Current hive status" },
+            { name: "Context", path: "C:/DevClaude/Hivemind/CONTEXT.md", desc: "Shared context file" }
+        ]
+    },
+    "AI / LLM": {
+        icon: "🤖",
+        items: [
+            { name: "Oracle (LLM Backend)", path: "C:/DevClaude/Hivemind/hive/oracle/README.md", desc: "LLM backend service" },
+            { name: "Hive Oracle", path: "C:/LLM-DevOSWE/Admin/hive-oracle/CLAUDE.md", desc: "Hive Oracle configuration" },
+            { name: "Personas", path: "C:/DevClaude/Hivemind/personas/PERSONAS.md", desc: "AI persona definitions" },
+            { name: "Personas Guide", path: "C:/LLM-DevOSWE/docs/PERSONAS.md", desc: "Persona usage guide" },
+            { name: "Claude Code Guide", path: "C:/LLM-DevOSWE/docs/CLAUDE-CODE-GUIDE.md", desc: "Claude Code integration" },
+            { name: "Claude Sessions", path: "C:/LLM-DevOSWE/docs/CLAUDE-SESSIONS.md", desc: "Session management" },
+            { name: "MCP Bridge", path: "C:/LLM-DevOSWE/Admin/mcp-bridge/CLAUDE.md", desc: "MCP server bridge" }
+        ]
+    },
+    "Voice & Input": {
+        icon: "🎤",
+        items: [
+            { name: "VoiceAccess", path: "C:/LLM-DevOSWE/Admin/voiceaccess/CLAUDE.md", desc: "Voice control service" },
+            { name: "Dictation Relay", path: "C:/DevClaude/Hivemind/voice/dictation-relay/README.md", desc: "Voice relay terminal" },
+            { name: "Terminal Hub", path: "C:/LLM-DevOSWE/Admin/terminal-hub/README.md", desc: "Terminal management" }
+        ]
+    },
+    "SimWidget / MSFS": {
+        icon: "✈️",
+        items: [
+            { name: "SimWidget Overview", path: "C:/LLM-DevOSWE/simwidget-hybrid/README.md", desc: "Main SimWidget documentation" },
+            { name: "Widget Catalog", path: "C:/LLM-DevOSWE/simwidget-hybrid/WIDGET-CATALOG.md", desc: "Available widgets" },
+            { name: "Widget Creation Guide", path: "C:/LLM-DevOSWE/docs/WIDGET-CREATION-GUIDE.md", desc: "How to create widgets" },
+            { name: "Widget Inventory", path: "C:/LLM-DevOSWE/docs/WIDGET-INVENTORY.md", desc: "Widget inventory list" },
+            { name: "MSFS 2024 Reference", path: "C:/LLM-DevOSWE/simwidget-hybrid/MSFS2024-REFERENCE.md", desc: "MSFS 2024 specifics" },
+            { name: "SimConnect Guide", path: "C:/LLM-DevOSWE/docs/SIMCONNECT_SIMVAR_WRITE_GUIDE.md", desc: "SimConnect variables" },
+            { name: "SimVars Reference", path: "C:/LLM-DevOSWE/docs/SIMVARS-REFERENCE.md", desc: "Simulation variables" },
+            { name: "Telemetry Setup", path: "C:/LLM-DevOSWE/docs/TELEMETRY-SETUP.md", desc: "Telemetry configuration" },
+            { name: "Camera Troubleshooting", path: "C:/LLM-DevOSWE/docs/CAMERA-TROUBLESHOOTING.md", desc: "Camera issues" }
+        ]
+    },
+    "KittBox / Agent": {
+        icon: "🐱",
+        items: [
+            { name: "KittBox Overview", path: "C:/DevClaude/Kittbox/README.md", desc: "KittBox command center" },
+            { name: "Agent Server", path: "C:/DevClaude/Hivemind/hive/agent/README.md", desc: "Agent server docs" },
+            { name: "KITT Insights", path: "C:/DevClaude/Hivemind/hive/agent/KITT-INSIGHTS-README.md", desc: "KITT AI insights" },
+            { name: "Troubleshooting", path: "C:/DevClaude/Hivemind/hive/agent/TROUBLESHOOTING.md", desc: "Common issues" },
+            { name: "Remote Dev Setup", path: "C:/DevClaude/Hivemind/hive/agent/REMOTE-DEV-SETUP.md", desc: "Remote development" }
+        ]
+    },
+    "Relay & Messaging": {
+        icon: "📡",
+        items: [
+            { name: "Relay Service", path: "C:/DevClaude/Hivemind/hive/relay/README.md", desc: "Message relay service" },
+            { name: "Relay API", path: "C:/LLM-DevOSWE/docs/API-RELAY.md", desc: "Relay API reference" },
+            { name: "Oracle API", path: "C:/LLM-DevOSWE/docs/API-ORACLE.md", desc: "Oracle API reference" },
+            { name: "Orchestrator", path: "C:/LLM-DevOSWE/Admin/orchestrator/README.md", desc: "Task orchestration" }
+        ]
+    },
+    "Development": {
+        icon: "🔧",
+        items: [
+            { name: "Project CLAUDE.md", path: "C:/LLM-DevOSWE/CLAUDE.md", desc: "Main project instructions" },
+            { name: "Standards", path: "C:/LLM-DevOSWE/STANDARDS.md", desc: "Coding standards" },
+            { name: "Architecture", path: "C:/LLM-DevOSWE/ARCHITECTURE.md", desc: "System architecture" },
+            { name: "Tech Stack", path: "C:/LLM-DevOSWE/TECH-STACK.md", desc: "Technology stack" },
+            { name: "Getting Started", path: "C:/LLM-DevOSWE/GETTING-STARTED.md", desc: "Quick start guide" },
+            { name: "Quickstart", path: "C:/LLM-DevOSWE/docs/QUICKSTART.md", desc: "Quickstart guide" },
+            { name: "Directory Structure", path: "C:/LLM-DevOSWE/DIRECTORY-STRUCTURE.md", desc: "Folder organization" },
+            { name: "Component Architecture", path: "C:/LLM-DevOSWE/docs/COMPONENT-ARCHITECTURE.md", desc: "Component design" },
+            { name: "Plugin Development", path: "C:/LLM-DevOSWE/docs/PLUGIN-DEVELOPMENT.md", desc: "Creating plugins" }
+        ]
+    },
+    "Hive Concepts": {
+        icon: "🧠",
+        items: [
+            { name: "Consciousness", path: "C:/DevClaude/Hivemind/CONSCIOUSNESS.md", desc: "Hive consciousness model" },
+            { name: "Philosophy", path: "C:/DevClaude/Hivemind/PHILOSOPHY.md", desc: "Design philosophy" },
+            { name: "Unity", path: "C:/DevClaude/Hivemind/UNITY.md", desc: "Unity principles" },
+            { name: "Genesis", path: "C:/DevClaude/Hivemind/genesis/GENESIS.md", desc: "Origin story" },
+            { name: "Master", path: "C:/DevClaude/Hivemind/MASTER.md", desc: "Master control" },
+            { name: "Nervous System", path: "C:/DevClaude/Hivemind/NERVOUS-SYSTEM.md", desc: "Communication model" },
+            { name: "Pulse", path: "C:/DevClaude/Hivemind/pulse/PULSE.md", desc: "Heartbeat system" },
+            { name: "Nerve", path: "C:/DevClaude/Hivemind/nerve/NERVE.md", desc: "Nerve connections" }
+        ]
+    },
+    "Operations": {
+        icon: "📋",
+        items: [
+            { name: "Hive Protocols", path: "C:/LLM-DevOSWE/docs/HIVE-PROTOCOLS.md", desc: "Communication protocols" },
+            { name: "Service Audit", path: "C:/LLM-DevOSWE/HIVE-SERVICE-AUDIT.md", desc: "Service audit report" },
+            { name: "Deployment", path: "C:/LLM-DevOSWE/DEPLOYMENT.md", desc: "Deployment guide" },
+            { name: "Project Tracker", path: "C:/LLM-DevOSWE/docs/PROJECT-TRACKER.md", desc: "Project tracking" },
+            { name: "Commands", path: "C:/LLM-DevOSWE/docs/COMMANDS.md", desc: "Available commands" },
+            { name: "TODO", path: "C:/LLM-DevOSWE/TODO.md", desc: "Pending tasks" }
+        ]
+    },
+    "Skills & Shortcuts": {
+        icon: "⚡",
+        items: [
+            { name: "Hive Plugin", path: "C:/LLM-DevOSWE/Admin/hive-plugin/README.md", desc: "Hive plugin overview" },
+            { name: "Memory Sync", path: "C:/LLM-DevOSWE/Admin/hive-plugin/skills/syncmem.md", desc: "Memory sync skill" },
+            { name: "Screenshots", path: "C:/LLM-DevOSWE/Admin/hive-plugin/skills/ss.md", desc: "Screenshot skill" },
+            { name: "Messages", path: "C:/LLM-DevOSWE/Admin/hive-plugin/skills/msg.md", desc: "Message skill" },
+            { name: "Memory", path: "C:/LLM-DevOSWE/Admin/hive-plugin/skills/mem.md", desc: "Memory skill" },
+            { name: "Hive Aware", path: "C:/LLM-DevOSWE/Admin/hive-plugin/skills/hive-aware.md", desc: "Hive awareness" }
+        ]
+    }
+};
+
+function init() {
+    renderNav();
+    renderDocs();
+    updateStats();
+}
+
+function renderNav() {
+    const nav = document.getElementById('navCategories');
+    nav.innerHTML = Object.entries(docs).map(([cat, data]) => `
+        <a class="nav-item" onclick="scrollToCategory('${cat}')">
+            <span class="icon">${data.icon}</span>${cat}
+        </a>
+    `).join('');
+}
+
+function renderDocs() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = Object.entries(docs).map(([cat, data]) => `
+        <div class="category" id="cat-${cat.replace(/[^a-zA-Z]/g, '')}">
+            <div class="category-header">
+                <span class="icon">${data.icon}</span>
+                <h2>${cat}</h2>
+            </div>
+            <div class="doc-grid">
+                ${data.items.map(doc => `
+                    <div class="doc-card" onclick="openDoc('${doc.path.replace(/\\/g, '/')}', '${doc.name}')">
+                        <h4>${doc.name}</h4>
+                        <p>${doc.desc}</p>
+                        <div class="path">${doc.path.split('/').slice(-2).join('/')}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateStats() {
+    let total = 0;
+    Object.values(docs).forEach(cat => total += cat.items.length);
+    document.getElementById('totalDocs').textContent = total;
+    document.getElementById('totalCategories').textContent = Object.keys(docs).length;
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+}
+
+function scrollToCategory(cat) {
+    const id = 'cat-' + cat.replace(/[^a-zA-Z]/g, '');
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function filterDocs() {
+    const query = document.getElementById('searchBox').value.toLowerCase();
+    document.querySelectorAll('.doc-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.classList.toggle('hidden', !text.includes(query));
+    });
+    document.querySelectorAll('.category').forEach(cat => {
+        const visible = cat.querySelectorAll('.doc-card:not(.hidden)').length;
+        cat.classList.toggle('hidden', visible === 0);
+    });
+}
+
+async function openDoc(path, name) {
+    currentDoc = { path, name };
+    document.getElementById('previewTitle').textContent = name;
+    document.getElementById('previewContent').textContent = 'Loading...';
+    document.getElementById('previewModal').classList.add('open');
+
+    try {
+        // Try to fetch via file API or local server
+        const res = await fetch('/api/file?path=' + encodeURIComponent(path));
+        if (res.ok) {
+            const text = await res.text();
+            document.getElementById('previewContent').textContent = text;
+        } else {
+            document.getElementById('previewContent').textContent =
+                `Could not load file.\n\nPath: ${path}\n\nClick "Open in Editor" to view in your default editor.`;
+        }
+    } catch (e) {
+        document.getElementById('previewContent').textContent =
+            `Could not load file.\n\nPath: ${path}\n\nClick "Open in Editor" to view in your default editor.`;
+    }
+}
+
+function closePreview() {
+    document.getElementById('previewModal').classList.remove('open');
+}
+
+function copyPath() {
+    if (currentDoc) {
+        navigator.clipboard.writeText(currentDoc.path);
+        alert('Path copied to clipboard');
+    }
+}
+
+function openInEditor() {
+    if (currentDoc) {
+        // Try to open via local API
+        fetch('/api/open?path=' + encodeURIComponent(currentDoc.path));
+        closePreview();
+    }
+}
+
+function refreshDocs() {
+    location.reload();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePreview();
+    if (e.key === '/' && !e.target.matches('input')) {
+        e.preventDefault();
+        document.getElementById('searchBox').focus();
+    }
+});
+
+init();
+</script>
+</body>
+</html>
