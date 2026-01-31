@@ -835,9 +835,17 @@ class GTN750Widget {
         const canvas = this.elements.wxCanvas;
         if (canvas) {
             this.wxCtx = canvas.getContext('2d');
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            // Defer to next frame to ensure page is visible and has dimensions
+            requestAnimationFrame(() => {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width || 400;
+                canvas.height = rect.height || 300;
+                // Trigger initial fetch
+                if (this.weatherOverlay) {
+                    this.weatherOverlay.fetchRadarData();
+                    this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
+                }
+            });
         }
     }
 
@@ -849,8 +857,22 @@ class GTN750Widget {
     }
 
     bindEvents() {
-        // Home button
+        // Home button (back to map)
         this.elements.btnHome?.addEventListener('click', () => this.pageManager.goHome());
+
+        // Home page buttons (Map, Traffic, Terrain, WX, etc.)
+        document.querySelectorAll('.home-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const pageId = btn.dataset.page;
+                if (pageId) {
+                    // Update active state
+                    document.querySelectorAll('.home-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    // Switch page
+                    this.pageManager.switchPage(pageId);
+                }
+            });
+        });
 
         // Direct-To button
         this.elements.btnDirect?.addEventListener('click', () => this.showDirectTo());
