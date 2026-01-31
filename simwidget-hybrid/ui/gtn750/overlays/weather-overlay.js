@@ -24,6 +24,9 @@ class WeatherOverlay {
         this.radarAnimating = false;
         this.radarFrames = [];
         this.currentFrame = 0;
+        this.radarHost = '';
+        this.radarTileCache = new Map(); // path -> Image
+        this.radarTileSize = 256;
 
         // METAR data
         this.metarData = new Map(); // icao -> metar
@@ -122,16 +125,12 @@ class WeatherOverlay {
 
     /**
      * Render NEXRAD radar overlay
-     * Uses simulated radar data for demonstration
+     * Uses RainViewer tiles when available, falls back to simulated data
      */
     renderNexrad(ctx, lat, lon, mapSettings) {
         const { range, width, height, orientation } = mapSettings;
         const cx = width / 2;
         const cy = height / 2;
-        const pixelsPerNm = Math.min(width, height) / 2 / range;
-
-        // Generate simulated radar cells
-        const radarCells = this.generateSimulatedRadar(lat, lon, range);
 
         ctx.save();
 
@@ -142,7 +141,150 @@ class WeatherOverlay {
             ctx.translate(-cx, -cy);
         }
 
-        // Render radar cells with transparency
+        // Use real radar tiles if available
+        if (this.radarHost && this.radarFrames.length > 0) {
+            this.renderRadarTiles(ctx, lat, lon, mapSettings);
+        } else {
+            // Fallback to simulated radar
+            this.renderSimulatedRadar(ctx, lat, lon, mapSettings);
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Render real radar tiles from RainViewer
+     */
+    renderRadarTiles(ctx, lat, lon, mapSettings) {
+        const { range, width, height } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+
+        // Calculate zoom level based on range (nm to degrees approx)
+        const degRange = range / 60; // rough nm to degrees
+        const zoom = Math.max(3, Math.min(10, Math.floor(8 - Math.log2(degRange))));
+
+        // Get current radar frame
+        const frame = this.radarFrames[this.currentFrame] || this.radarFrames[this.radarFrames.length - 1];
+        if (!frame) return;
+
+        // Calculate tile coordinates for center
+        const centerTile = this.latLonToTile(lat, lon, zoom);
+
+        // How many tiles we need to cover the view (typically 3x3 or 5x5)
+        const tilesNeeded = Math.ceil(range / 30) + 1; // More tiles for larger ranges
+
+        // Calculate pixels per tile at this zoom/range
+        const nmPerTile = 360 / Math.pow(2, zoom) * 60 * Math.cos(lat * Math.PI / 180);
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+        const tilePixelSize = nmPerTile * pixelsPerNm;
+
+        ctx.globalAlpha = 0.6;
+
+        // Render tiles in a grid around center
+        for (let dx = -tilesNeeded; dx <= tilesNeeded; dx++) {
+            for (let dy = -tilesNeeded; dy <= tilesNeeded; dy++) {
+                const tileX = centerTile.x + dx;
+                const tileY = centerTile.y + dy;
+
+                // Get tile position relative to aircraft
+                const tileLat = this.tileToLat(tileY, zoom);
+                const tileLon = this.tileToLon(tileX, zoom);
+                const tileLat2 = this.tileToLat(tileY + 1, zoom);
+                const tileLon2 = this.tileToLon(tileX + 1, zoom);
+
+                // Calculate distance from aircraft to tile center
+                const tileCenterLat = (tileLat + tileLat2) / 2;
+                const tileCenterLon = (tileLon + tileLon2) / 2;
+
+                const dist = this.core.calculateDistance(lat, lon, tileCenterLat, tileCenterLon);
+                if (dist > range * 1.5) continue; // Skip tiles too far away
+
+                // Calculate screen position
+                const brg = this.core.calculateBearing(lat, lon, tileCenterLat, tileCenterLon);
+                const angle = this.core.toRad(brg);
+                const screenX = cx + Math.sin(angle) * dist * pixelsPerNm;
+                const screenY = cy - Math.cos(angle) * dist * pixelsPerNm;
+
+                // Load and draw tile
+                const tilePath = `${frame.path}/${this.radarTileSize}/${zoom}/${tileX}/${tileY}/2/1_1.png`;
+                const tileUrl = `${this.radarHost}${tilePath}`;
+
+                this.loadAndDrawTile(ctx, tileUrl, screenX - tilePixelSize / 2, screenY - tilePixelSize / 2, tilePixelSize);
+            }
+        }
+
+        ctx.globalAlpha = 1.0;
+    }
+
+    /**
+     * Load radar tile and draw when ready
+     */
+    loadAndDrawTile(ctx, url, x, y, size) {
+        // Check cache
+        let img = this.radarTileCache.get(url);
+
+        if (!img) {
+            // Create and cache new image
+            img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = url;
+            this.radarTileCache.set(url, img);
+
+            // Clean old cache entries (keep last 100)
+            if (this.radarTileCache.size > 100) {
+                const firstKey = this.radarTileCache.keys().next().value;
+                this.radarTileCache.delete(firstKey);
+            }
+        }
+
+        // Draw if loaded
+        if (img.complete && img.naturalWidth > 0) {
+            try {
+                ctx.drawImage(img, x, y, size, size);
+            } catch (e) {
+                // Tile may have failed to load
+            }
+        }
+    }
+
+    /**
+     * Convert lat/lon to tile coordinates
+     */
+    latLonToTile(lat, lon, zoom) {
+        const n = Math.pow(2, zoom);
+        const x = Math.floor((lon + 180) / 360 * n);
+        const latRad = lat * Math.PI / 180;
+        const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+        return { x, y };
+    }
+
+    /**
+     * Convert tile Y to latitude
+     */
+    tileToLat(y, zoom) {
+        const n = Math.PI - 2 * Math.PI * y / Math.pow(2, zoom);
+        return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+    }
+
+    /**
+     * Convert tile X to longitude
+     */
+    tileToLon(x, zoom) {
+        return x / Math.pow(2, zoom) * 360 - 180;
+    }
+
+    /**
+     * Render simulated radar (fallback)
+     */
+    renderSimulatedRadar(ctx, lat, lon, mapSettings) {
+        const { range, width, height } = mapSettings;
+        const cx = width / 2;
+        const cy = height / 2;
+        const pixelsPerNm = Math.min(width, height) / 2 / range;
+
+        const radarCells = this.generateSimulatedRadar(lat, lon, range);
+
         ctx.globalAlpha = 0.5;
 
         radarCells.forEach(cell => {
@@ -155,7 +297,6 @@ class WeatherOverlay {
         });
 
         ctx.globalAlpha = 1.0;
-        ctx.restore();
     }
 
     /**
@@ -644,6 +785,62 @@ class WeatherOverlay {
         this.metarRefreshInterval = setInterval(() => {
             this.fetchNearbyMetars(lat, lon);
         }, 300000);
+    }
+
+    /**
+     * Start radar animation loop
+     */
+    startRadarAnimation() {
+        if (this.radarAnimating) return;
+        this.radarAnimating = true;
+
+        this.radarAnimationInterval = setInterval(() => {
+            if (this.radarFrames.length > 0) {
+                this.currentFrame = (this.currentFrame + 1) % this.radarFrames.length;
+            }
+        }, 500); // 500ms per frame
+    }
+
+    /**
+     * Stop radar animation
+     */
+    stopRadarAnimation() {
+        this.radarAnimating = false;
+        if (this.radarAnimationInterval) {
+            clearInterval(this.radarAnimationInterval);
+            this.radarAnimationInterval = null;
+        }
+        // Reset to latest frame
+        this.currentFrame = this.radarFrames.length - 1;
+    }
+
+    /**
+     * Toggle radar animation
+     */
+    toggleRadarAnimation() {
+        if (this.radarAnimating) {
+            this.stopRadarAnimation();
+        } else {
+            this.startRadarAnimation();
+        }
+        return this.radarAnimating;
+    }
+
+    /**
+     * Get current radar frame time
+     */
+    getCurrentFrameTime() {
+        if (this.radarFrames.length === 0) return null;
+        const frame = this.radarFrames[this.currentFrame];
+        if (!frame) return null;
+        return new Date(frame.time * 1000);
+    }
+
+    /**
+     * Check if radar data is available
+     */
+    hasRadarData() {
+        return this.radarHost && this.radarFrames.length > 0;
     }
 
     /**

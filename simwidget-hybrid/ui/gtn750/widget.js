@@ -771,6 +771,8 @@ class GTN750Widget {
             wxNexrad: document.getElementById('wx-nexrad'),
             wxMetar: document.getElementById('wx-metar'),
             wxMetarText: document.getElementById('wx-metar-text'),
+            wxAnimate: document.getElementById('wx-animate'),
+            wxRadarTime: document.getElementById('wx-radar-time'),
             // Charts
             chartApt: document.getElementById('chart-apt'),
             chartSearch: document.getElementById('chart-search'),
@@ -914,6 +916,15 @@ class GTN750Widget {
         });
         document.getElementById('chart-fox')?.addEventListener('click', () => {
             if (this.chartsPage) this.chartsPage.openChartFox();
+        });
+
+        // Weather animation button
+        this.elements.wxAnimate?.addEventListener('click', () => {
+            if (this.weatherOverlay) {
+                const animating = this.weatherOverlay.toggleRadarAnimation();
+                this.elements.wxAnimate.textContent = animating ? '⏸' : '▶';
+                this.elements.wxAnimate.classList.toggle('active', animating);
+            }
         });
 
         // System reset
@@ -1599,6 +1610,20 @@ class GTN750Widget {
                 }
             } else {
                 this.elements.wxMetarText.textContent = 'Fetching weather...';
+            }
+        }
+
+        // Update radar timestamp display
+        if (this.elements.wxRadarTime) {
+            const frameTime = this.weatherOverlay.getCurrentFrameTime();
+            if (frameTime) {
+                const age = Math.round((Date.now() - frameTime.getTime()) / 60000);
+                const timeStr = frameTime.toUTCString().slice(17, 22);
+                this.elements.wxRadarTime.textContent = `Radar: ${timeStr}Z (${age}m ago)`;
+            } else if (this.weatherOverlay.hasRadarData()) {
+                this.elements.wxRadarTime.textContent = 'Radar: Loading...';
+            } else {
+                this.elements.wxRadarTime.textContent = 'Radar: Simulated';
             }
         }
     }

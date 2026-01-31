@@ -1139,6 +1139,38 @@ body {
     cursor: pointer;
 }
 
+.wx-anim-btn {
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: var(--gtn-bg-light);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-white);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.wx-anim-btn:hover {
+    background: var(--gtn-primary);
+}
+
+.wx-anim-btn.active {
+    background: var(--gtn-warning);
+    color: #000;
+}
+
+.wx-radar-time {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--gtn-cyan);
+    font-family: 'Consolas', monospace;
+}
+
 .gtn-wx-info {
     padding: 8px 12px;
     background: var(--gtn-bg-light);
