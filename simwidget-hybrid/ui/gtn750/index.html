@@ -300,7 +300,14 @@
                     <div class="wx-radar-time" id="wx-radar-time"></div>
                 </div>
                 <div class="gtn-wx-info">
-                    <div class="wx-metar" id="wx-metar-text">No weather data</div>
+                    <div class="wx-sim-weather">
+                        <span class="wx-item"><b>Wind:</b> <span id="wx-wind">---°/--kt</span></span>
+                        <span class="wx-item"><b>Temp:</b> <span id="wx-temp">--°C</span></span>
+                        <span class="wx-item"><b>Baro:</b> <span id="wx-baro">--.--"</span></span>
+                        <span class="wx-item"><b>Vis:</b> <span id="wx-vis">--SM</span></span>
+                        <span class="wx-item" id="wx-precip-item" style="display:none"><b>Precip:</b> <span id="wx-precip">None</span></span>
+                    </div>
+                    <div class="wx-metar" id="wx-metar-text">External METAR data</div>
                 </div>
             </div>
 

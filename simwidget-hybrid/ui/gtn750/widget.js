@@ -30,7 +30,14 @@ class GTN750Widget {
             transponder: 1200,
             zuluTime: 0,
             // Navigation source
-            navSource: 'GPS'
+            navSource: 'GPS',
+            // Sim weather
+            windDirection: 0,
+            windSpeed: 0,
+            ambientTemp: 15,
+            ambientPressure: 29.92,
+            visibility: 10000,
+            precipState: 0
         };
 
         // NAV radio data
@@ -776,6 +783,12 @@ class GTN750Widget {
             wxRange: document.getElementById('wx-range'),
             wxZoomIn: document.getElementById('wx-zoom-in'),
             wxZoomOut: document.getElementById('wx-zoom-out'),
+            wxWind: document.getElementById('wx-wind'),
+            wxTemp: document.getElementById('wx-temp'),
+            wxBaro: document.getElementById('wx-baro'),
+            wxVis: document.getElementById('wx-vis'),
+            wxPrecip: document.getElementById('wx-precip'),
+            wxPrecipItem: document.getElementById('wx-precip-item'),
             // Charts
             chartApt: document.getElementById('chart-apt'),
             chartSearch: document.getElementById('chart-search'),
@@ -1672,6 +1685,58 @@ class GTN750Widget {
                 this.elements.wxRadarTime.textContent = 'Radar: Loading...';
             } else {
                 this.elements.wxRadarTime.textContent = 'Radar: Simulated';
+            }
+        }
+
+        // Update sim weather display
+        this.updateSimWeatherDisplay();
+    }
+
+    updateSimWeatherDisplay() {
+        // Wind
+        if (this.elements.wxWind) {
+            const dir = Math.round(this.data.windDirection || 0);
+            const spd = Math.round(this.data.windSpeed || 0);
+            this.elements.wxWind.textContent = `${dir.toString().padStart(3, '0')}°/${spd}kt`;
+        }
+
+        // Temperature
+        if (this.elements.wxTemp) {
+            const temp = Math.round(this.data.ambientTemp || 15);
+            this.elements.wxTemp.textContent = `${temp}°C`;
+        }
+
+        // Barometer
+        if (this.elements.wxBaro) {
+            const baro = (this.data.ambientPressure || 29.92).toFixed(2);
+            this.elements.wxBaro.textContent = `${baro}"`;
+        }
+
+        // Visibility (convert meters to statute miles)
+        if (this.elements.wxVis) {
+            const visMt = this.data.visibility || 10000;
+            const visSM = visMt / 1609.34;
+            if (visSM >= 10) {
+                this.elements.wxVis.textContent = '10+SM';
+            } else {
+                this.elements.wxVis.textContent = `${visSM.toFixed(1)}SM`;
+            }
+        }
+
+        // Precipitation
+        if (this.elements.wxPrecip && this.elements.wxPrecipItem) {
+            const precip = this.data.precipState || 0;
+            if (precip === 0) {
+                this.elements.wxPrecipItem.style.display = 'none';
+            } else {
+                this.elements.wxPrecipItem.style.display = '';
+                if (precip & 4) {
+                    this.elements.wxPrecip.textContent = 'Snow';
+                } else if (precip & 2) {
+                    this.elements.wxPrecip.textContent = 'Rain';
+                } else {
+                    this.elements.wxPrecip.textContent = 'Yes';
+                }
             }
         }
     }

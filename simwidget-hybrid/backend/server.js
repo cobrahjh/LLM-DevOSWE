@@ -94,6 +94,12 @@ let flightData = {
     groundSpeed: 0,        // Added for flight-data-widget
     windDirection: 0,      // Added for flight-data-widget
     windSpeed: 0,          // Added for flight-data-widget
+    // Sim weather
+    ambientTemp: 15,       // Celsius
+    ambientPressure: 29.92, // inHg
+    visibility: 10000,     // meters
+    precipState: 0,        // 0=none, 2=rain, 4=snow
+    barometerMb: 1013.25,  // millibars
     parkingBrake: false,
     gearDown: true,
     flapsIndex: 0,
@@ -3129,6 +3135,12 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'GROUND VELOCITY', 'knots', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AMBIENT WIND DIRECTION', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AMBIENT WIND VELOCITY', 'knots', SimConnectDataType.FLOAT64, 0);
+        // Weather data from sim
+        handle.addToDataDefinition(0, 'AMBIENT TEMPERATURE', 'celsius', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT PRESSURE', 'inHg', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT VISIBILITY', 'meters', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT PRECIP STATE', 'mask', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'BAROMETER PRESSURE', 'millibars', SimConnectDataType.FLOAT64, 0);
         // Position data (for flight recorder playback)
         handle.addToDataDefinition(0, 'PLANE LATITUDE', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'PLANE LONGITUDE', 'degrees', SimConnectDataType.FLOAT64, 0);
@@ -3329,6 +3341,12 @@ async function initSimConnect() {
                         groundSpeed: d.readFloat64(),
                         windDirection: d.readFloat64(),
                         windSpeed: d.readFloat64(),
+                        // Sim weather data
+                        ambientTemp: d.readFloat64(),
+                        ambientPressure: d.readFloat64(),
+                        visibility: d.readFloat64(),
+                        precipState: d.readInt32(),
+                        barometerMb: d.readFloat64(),
                         // Position data (for flight recorder)
                         latitude: d.readFloat64(),
                         longitude: d.readFloat64(),

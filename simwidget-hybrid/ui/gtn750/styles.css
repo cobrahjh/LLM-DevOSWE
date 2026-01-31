@@ -1228,6 +1228,28 @@ body {
     border-top: 1px solid var(--gtn-border);
 }
 
+.wx-sim-weather {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.wx-sim-weather .wx-item {
+    color: var(--gtn-white);
+}
+
+.wx-sim-weather .wx-item b {
+    color: var(--gtn-text-dim);
+    font-weight: normal;
+}
+
+.wx-sim-weather .wx-item span {
+    color: var(--gtn-cyan);
+    font-weight: bold;
+}
+
 .wx-metar {
     font-family: var(--gtn-mono);
     font-size: 11px;
