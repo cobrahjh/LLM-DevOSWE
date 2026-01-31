@@ -623,6 +623,7 @@ class GTN750Widget {
                 break;
 
             // Weather overlays
+            case 'wx-simRadar':
             case 'wx-nexrad':
             case 'wx-metar':
             case 'wx-taf':
@@ -781,6 +782,7 @@ class GTN750Widget {
             trafficCount: document.getElementById('traffic-count'),
             // Weather
             wxCanvas: document.getElementById('wx-canvas'),
+            wxSimRadar: document.getElementById('wx-sim-radar'),
             wxNexrad: document.getElementById('wx-nexrad'),
             wxMetar: document.getElementById('wx-metar'),
             wxMetarText: document.getElementById('wx-metar-text'),
@@ -983,6 +985,23 @@ class GTN750Widget {
         this.weatherRange = 50;
         this.elements.wxZoomIn?.addEventListener('click', () => this.changeWeatherRange(-1));
         this.elements.wxZoomOut?.addEventListener('click', () => this.changeWeatherRange(1));
+
+        // Weather layer toggles
+        this.elements.wxSimRadar?.addEventListener('change', (e) => {
+            if (this.weatherOverlay) {
+                this.weatherOverlay.setLayer('simRadar', e.target.checked);
+            }
+        });
+        this.elements.wxNexrad?.addEventListener('change', (e) => {
+            if (this.weatherOverlay) {
+                this.weatherOverlay.setLayer('nexrad', e.target.checked);
+            }
+        });
+        document.getElementById('wx-metar')?.addEventListener('change', (e) => {
+            if (this.weatherOverlay) {
+                this.weatherOverlay.setLayer('metar', e.target.checked);
+            }
+        });
 
         // System reset
         document.getElementById('sys-reset')?.addEventListener('click', () => {
@@ -1756,6 +1775,17 @@ class GTN750Widget {
 
         // Update weather condition display
         this.updateWeatherConditionDisplay();
+
+        // Update weather overlay with sim data for radar display
+        if (this.weatherOverlay) {
+            this.weatherOverlay.updateSimWeather({
+                precipState: this.data.precipState,
+                visibility: this.data.visibility,
+                windDirection: this.data.windDirection,
+                windSpeed: this.data.windSpeed,
+                ambientTemp: this.data.ambientTemp
+            });
+        }
     }
 
     updateWeatherConditionDisplay() {
