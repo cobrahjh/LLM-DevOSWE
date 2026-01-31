@@ -567,8 +567,7 @@ class WeatherOverlay {
     /**
      * Render weather page with full display
      */
-    renderWeatherPage(ctx, aircraft, width, height) {
-        const range = 50; // 50nm range for weather page
+    renderWeatherPage(ctx, aircraft, width, height, range = 50) {
 
         // Clear
         ctx.fillStyle = '#0a1520';

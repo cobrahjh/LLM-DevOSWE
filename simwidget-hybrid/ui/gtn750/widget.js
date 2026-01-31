@@ -773,6 +773,9 @@ class GTN750Widget {
             wxMetarText: document.getElementById('wx-metar-text'),
             wxAnimate: document.getElementById('wx-animate'),
             wxRadarTime: document.getElementById('wx-radar-time'),
+            wxRange: document.getElementById('wx-range'),
+            wxZoomIn: document.getElementById('wx-zoom-in'),
+            wxZoomOut: document.getElementById('wx-zoom-out'),
             // Charts
             chartApt: document.getElementById('chart-apt'),
             chartSearch: document.getElementById('chart-search'),
@@ -833,19 +836,25 @@ class GTN750Widget {
 
     setupWeatherCanvas() {
         const canvas = this.elements.wxCanvas;
-        if (canvas) {
-            this.wxCtx = canvas.getContext('2d');
-            // Defer to next frame to ensure page is visible and has dimensions
-            requestAnimationFrame(() => {
-                const rect = canvas.parentElement.getBoundingClientRect();
-                canvas.width = rect.width || 400;
-                canvas.height = rect.height || 300;
-                // Trigger initial fetch
-                if (this.weatherOverlay) {
-                    this.weatherOverlay.fetchRadarData();
-                    this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
-                }
-            });
+        if (!canvas) return;
+
+        this.wxCtx = canvas.getContext('2d');
+
+        // Set canvas size immediately using parent or fallback
+        const container = canvas.parentElement;
+        const rect = container.getBoundingClientRect();
+        canvas.width = rect.width > 0 ? rect.width : 400;
+        canvas.height = rect.height > 0 ? rect.height : 280;
+
+        // Initialize weather range if not set
+        if (!this.weatherRange) {
+            this.weatherRange = 50; // Default 50nm
+        }
+
+        // Trigger initial fetch
+        if (this.weatherOverlay) {
+            this.weatherOverlay.fetchRadarData();
+            this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
         }
     }
 
@@ -948,6 +957,13 @@ class GTN750Widget {
                 this.elements.wxAnimate.textContent = animating ? '⏸' : '▶';
                 this.elements.wxAnimate.classList.toggle('active', animating);
             }
+        });
+
+        // Weather range controls
+        this.weatherRanges = [10, 25, 50, 100, 200];
+        this.weatherRange = 50;
+        this.elements.wxZoomIn?.addEventListener('click', () => this.changeWeatherRange(-1));
+        this.elements.wxZoomOut?.addEventListener('click', () => this.changeWeatherRange(1));
         });
 
         // System reset
@@ -1594,10 +1610,19 @@ class GTN750Widget {
         if (!this.wxCtx || !this.weatherOverlay) return;
 
         const canvas = this.elements.wxCanvas;
+        if (!canvas) return;
+
+        // Ensure canvas has dimensions
+        if (canvas.width === 0 || canvas.height === 0) {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width || 400;
+            canvas.height = rect.height || 280;
+        }
+
         const w = canvas.width;
         const h = canvas.height;
 
-        // Render weather view
+        // Render weather view with current range
         this.weatherOverlay.renderWeatherPage(
             this.wxCtx,
             {
@@ -1606,7 +1631,8 @@ class GTN750Widget {
                 altitude: this.data.altitude,
                 heading: this.data.heading
             },
-            w, h
+            w, h,
+            this.weatherRange || 50
         );
 
         // Update METAR display - show nearest METAR if available
@@ -2054,6 +2080,16 @@ class GTN750Widget {
         this.map.range = this.map.ranges[newIdx];
         if (this.elements.dfRange) {
             this.elements.dfRange.textContent = this.map.range;
+        }
+    }
+
+    changeWeatherRange(delta) {
+        const ranges = this.weatherRanges || [10, 25, 50, 100, 200];
+        const idx = ranges.indexOf(this.weatherRange);
+        const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
+        this.weatherRange = ranges[newIdx];
+        if (this.elements.wxRange) {
+            this.elements.wxRange.textContent = this.weatherRange;
         }
     }
 

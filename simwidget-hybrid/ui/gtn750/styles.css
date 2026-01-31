@@ -1180,6 +1180,48 @@ body {
     font-family: 'Consolas', monospace;
 }
 
+.wx-range-selector {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--gtn-white);
+}
+
+.wx-range-selector .range-btn {
+    width: 24px;
+    height: 24px;
+    background: var(--gtn-bg-light);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-white);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.wx-range-selector .range-btn:hover {
+    background: var(--gtn-primary);
+}
+
+.wx-range-selector .range-value {
+    min-width: 30px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--gtn-cyan);
+}
+
+.wx-range-selector .range-unit {
+    color: var(--gtn-text-dim);
+    font-size: 10px;
+}
+
 .gtn-wx-info {
     padding: 8px 12px;
     background: var(--gtn-bg-light);
