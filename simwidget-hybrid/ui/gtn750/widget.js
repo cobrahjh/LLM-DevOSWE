@@ -102,8 +102,8 @@ class GTN750Widget {
         this.cacheElements();
         this.setupCanvas();
         this.initOverlays();
+        this.initSoftKeys();      // Must be before initPageManager (onPageChange uses softKeys)
         this.initPageManager();
-        this.initSoftKeys();
         this.bindEvents();
         this.bindTawsAlerts();
         this.loadDataFieldConfig();
@@ -860,22 +860,27 @@ class GTN750Widget {
         // Home button (back to map)
         this.elements.btnHome?.addEventListener('click', () => this.pageManager.goHome());
 
-        // Home page buttons (Map, Traffic, Terrain, WX, etc.)
-        const homeButtons = document.querySelectorAll('.home-btn');
-        console.log('[GTN750] Found home buttons:', homeButtons.length);
-        homeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        // Home page buttons (Map, Traffic, Terrain, WX, etc.) - use event delegation
+        const homeButtonsContainer = document.getElementById('home-buttons');
+        if (homeButtonsContainer) {
+            homeButtonsContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.home-btn');
+                if (!btn) return;
+
                 const pageId = btn.dataset.page;
                 console.log('[GTN750] Home button clicked:', pageId);
                 if (pageId) {
                     // Update active state
-                    document.querySelectorAll('.home-btn').forEach(b => b.classList.remove('active'));
+                    homeButtonsContainer.querySelectorAll('.home-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     // Switch page
                     this.pageManager.switchPage(pageId);
                 }
             });
-        });
+            console.log('[GTN750] Home buttons container bound');
+        } else {
+            console.error('[GTN750] Home buttons container not found!');
+        }
 
         // Direct-To button
         this.elements.btnDirect?.addEventListener('click', () => this.showDirectTo());
@@ -3130,17 +3135,18 @@ class GTN750Widget {
 }
 
 // Initialize and expose globally
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('[GTN750] DOMContentLoaded - initializing widget');
-    window.gtn750 = new GTN750Widget();
-    console.log('[GTN750] Widget initialized:', !!window.gtn750);
-});
-
-// Fallback if DOMContentLoaded already fired
-if (document.readyState !== 'loading') {
-    console.log('[GTN750] DOM already ready - initializing widget');
-    if (!window.gtn750) {
+function initGTN750() {
+    try {
+        console.log('[GTN750] Initializing widget...');
         window.gtn750 = new GTN750Widget();
-        console.log('[GTN750] Widget initialized via fallback:', !!window.gtn750);
+        console.log('[GTN750] Widget initialized successfully');
+    } catch (e) {
+        console.error('[GTN750] Failed to initialize:', e);
     }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGTN750);
+} else {
+    initGTN750();
 }

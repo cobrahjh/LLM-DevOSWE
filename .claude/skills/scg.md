@@ -2,7 +2,7 @@
 
 Check Google Drive screenshots folder for new images.
 
-Location: `G:\My Drive\AI Development\Screenshots`
+Location: `G:\My Drive\__AI Development\Screenshots`
 
 ## Steps
 

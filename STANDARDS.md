@@ -928,6 +928,30 @@ vJoy integration causes input conflicts with ChasePlane. ChasePlane WebSocket (p
 - PowerShell fallback: ~700ms latency
 - Always try TCP first, fallback to PowerShell
 
+### GTN750 Widget Initialization Order
+`initSoftKeys()` MUST be called before `initPageManager()`. The page manager calls `switchPage('map')` during init, which triggers `onPageChange()`, which calls `softKeys.setContext()`. If softKeys isn't initialized yet, you get: `TypeError: Cannot read properties of undefined (reading 'setContext')`.
+
+### Event Delegation vs Direct Binding
+Use event delegation on containers instead of binding to individual buttons:
+```javascript
+// BAD - buttons might not exist yet, or may be recreated
+document.querySelectorAll('.btn').forEach(btn => btn.addEventListener('click', ...));
+
+// GOOD - delegation handles dynamic content
+container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    // handle click
+});
+```
+
+### Dictation Relay Status Sync
+The dictation client must check host status:
+1. When mesh WebSocket connects
+2. When browser WebSocket connects
+
+Without this, the UI status indicator goes stale after service restarts.
+
 ## 📝 Documentation Standards
 
 ### File Headers
