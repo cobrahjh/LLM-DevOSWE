@@ -1016,6 +1016,14 @@ class GTN750Widget {
             this.closeFieldSelector();
         });
 
+        // Weather preset buttons
+        document.querySelectorAll(".wx-preset-btn").forEach(btn => {
+            btn.addEventListener("click", () => this.setWeatherPreset(btn.dataset.preset));
+        });
+
+        // Live weather button
+        document.getElementById("wx-live-btn")?.addEventListener("click", () => this.setLiveWeather());
+
         // Note: wheel/touch events now handled by MapControls
     }
 
@@ -1744,6 +1752,94 @@ class GTN750Widget {
                     this.elements.wxPrecip.textContent = 'Yes';
                 }
             }
+        }
+
+        // Update weather condition display
+        this.updateWeatherConditionDisplay();
+    }
+
+    updateWeatherConditionDisplay() {
+        const iconEl = document.getElementById('wx-condition-icon');
+        const textEl = document.getElementById('wx-condition-text');
+        if (!iconEl || !textEl) return;
+
+        const precip = this.data.precipState || 0;
+        const vis = this.data.visibility || 10000;
+        const wind = this.data.windSpeed || 0;
+
+        let icon = '☀️';
+        let text = 'Clear';
+
+        // Determine condition based on sim weather
+        if (precip & 4) {
+            icon = '🌨️';
+            text = 'Snow';
+        } else if (precip & 2) {
+            if (wind > 25) {
+                icon = '⛈️';
+                text = 'Storm';
+            } else {
+                icon = '🌧️';
+                text = 'Rain';
+            }
+        } else if (vis < 1000) {
+            icon = '🌫️';
+            text = 'Fog';
+        } else if (vis < 5000) {
+            icon = '🌁';
+            text = 'Mist';
+        } else if (wind > 30) {
+            icon = '💨';
+            text = 'Windy';
+        } else if (wind > 15) {
+            icon = '🌤️';
+            text = 'Breezy';
+        }
+
+        iconEl.textContent = icon;
+        textEl.textContent = text;
+    }
+
+    // ===== WEATHER CONTROL =====
+    async setWeatherPreset(preset) {
+        console.log('[GTN750] Setting weather preset:', preset);
+        try {
+            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/preset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ preset })
+            });
+            const data = await response.json();
+            if (data.success) {
+                console.log('[GTN750] Weather set:', data.metar);
+                document.querySelectorAll('.wx-preset-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.preset === preset);
+                });
+                document.getElementById('wx-live-btn')?.classList.remove('active');
+            } else {
+                console.warn('[GTN750] Weather failed:', data.error);
+            }
+        } catch (e) {
+            console.error('[GTN750] Weather error:', e);
+        }
+    }
+
+    async setLiveWeather() {
+        console.log('[GTN750] Switching to live weather');
+        try {
+            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: 'live' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                console.log('[GTN750] Live weather enabled');
+                document.querySelectorAll('.wx-preset-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('wx-live-btn')?.classList.add('active');
+            }
+        } catch (e) {
+            console.error('[GTN750] Live weather error:', e);
         }
     }
 

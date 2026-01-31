@@ -42,6 +42,7 @@ const cameraSystem = require('./camera-system');
 const { HotReloadManager } = require('./hot-reload');
 const PluginLoader = require('./plugin-system/plugin-loader');
 const PluginAPI = require('./plugin-system/plugin-api');
+const { setupWeatherRoutes } = require('./weather-api');
 
 // Hot reload manager (development only)
 const hotReloadManager = new HotReloadManager();
@@ -3661,6 +3662,9 @@ async function sendSimConnectEvent(event, value = 0) {
 }
 
 // Start server with TroubleshootEngine
+// Setup Weather Control API
+setupWeatherRoutes(app, () => simConnectConnection);
+
 const troubleshoot = new TroubleshootEngine('SimWidget');
 
 troubleshoot.startServer(server, PORT, '0.0.0.0', async () => {

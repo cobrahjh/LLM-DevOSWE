@@ -1518,3 +1518,122 @@ body {
 .night-mode .map-canvas {
     filter: brightness(0.5);
 }
+
+/* ===== WEATHER CONTROL SECTION ===== */
+.wx-control-section {
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--gtn-bg-panel);
+    border-radius: 4px;
+    border: 1px solid var(--gtn-border);
+}
+
+.wx-control-label {
+    font-size: 10px;
+    color: var(--gtn-gray);
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.wx-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.wx-preset-btn {
+    padding: 6px 4px;
+    font-size: 10px;
+    font-family: var(--gtn-mono);
+    background: var(--gtn-bg-light);
+    color: var(--gtn-cyan);
+    border: 1px solid var(--gtn-border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.wx-preset-btn:hover {
+    background: var(--gtn-accent);
+    border-color: var(--gtn-cyan);
+}
+
+.wx-preset-btn:active,
+.wx-preset-btn.active {
+    background: var(--gtn-accent-hover);
+    color: var(--gtn-white);
+}
+
+.wx-live-btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 11px;
+    font-family: var(--gtn-mono);
+    font-weight: bold;
+    background: linear-gradient(180deg, #004400 0%, #002200 100%);
+    color: var(--gtn-green);
+    border: 1px solid var(--gtn-green);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.wx-live-btn:hover {
+    background: linear-gradient(180deg, #006600 0%, #003300 100%);
+}
+
+.wx-live-btn.active {
+    background: linear-gradient(180deg, #00aa00 0%, #006600 100%);
+    color: var(--gtn-white);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+}
+
+/* Weather condition banner */
+.wx-condition-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 12px;
+    margin-bottom: 6px;
+    background: var(--gtn-bg-panel);
+    border-radius: 4px;
+    border: 1px solid var(--gtn-border);
+}
+
+.wx-condition-icon {
+    font-size: 18px;
+}
+
+.wx-condition-text {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--gtn-white);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Rain effect overlay */
+.wx-rain-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background: linear-gradient(transparent 0%, rgba(100, 150, 200, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.wx-rain-overlay.active {
+    opacity: 1;
+    animation: rain-fall 0.5s linear infinite;
+}
+
+@keyframes rain-fall {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 20px; }
+}
