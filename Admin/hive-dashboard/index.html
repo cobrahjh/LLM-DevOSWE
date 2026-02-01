@@ -364,12 +364,16 @@
             transform: translateX(3px);
         }
         .anomaly-item.medium { border-left-color: #ffaa00; }
+        .anomaly-item.investigated { opacity: 0.6; border-left-color: #00d9ff; }
+        .anomaly-item.fixed { opacity: 0.4; border-left-color: #00ff88; }
         .anomaly-icon { font-size: 18px; }
-        .anomaly-info { flex: 1; }
+        .anomaly-info { flex: 1; cursor: pointer; }
         .anomaly-services { font-size: 13px; color: #fff; }
         .anomaly-time { font-size: 11px; color: #666; }
-        .anomaly-drill { font-size: 10px; color: #666; }
-        .anomaly-item:hover .anomaly-drill { color: #ff6b35; }
+        .anomaly-actions { display: none; gap: 4px; }
+        .anomaly-item:hover .anomaly-actions { display: flex; }
+        .anomaly-btn { background: #1a1a2e; border: 1px solid #333; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+        .anomaly-btn:hover { background: #ff6b35; border-color: #ff6b35; }
 
         /* Model Items */
         .model-item {
@@ -733,6 +737,10 @@
                     <span class="collapsible-toggle" id="anomalies-toggle">▼</span>
                 </div>
                 <div class="collapsible-content" id="anomalies-content">
+                    <div style="display:flex;gap:6px;margin-bottom:8px;">
+                        <button class="btn small secondary" onclick="markAllAnomalies('investigated')" title="Mark all as investigated">✓ All Investigated</button>
+                        <button class="btn small secondary" onclick="markAllAnomalies('fixed')" title="Mark all as fixed and clear">✕ Clear Fixed</button>
+                    </div>
                     <div class="collapsible-list" id="anomalyList">
                         <div style="color:#00ff88;text-align:center;padding:20px;">All systems nominal</div>
                     </div>
@@ -1662,13 +1670,16 @@
                 document.getElementById('anomalyCount').textContent = anomalies.length;
                 document.getElementById('anomalyList').innerHTML = deduped.length ?
                     deduped.slice(0, 15).map(a => `
-                        <div class="anomaly-item ${a.severity}" onclick="showAnomalyDetail(${a.origIndex})">
+                        <div class="anomaly-item ${a.severity} ${a.status || ''}" data-index="${a.origIndex}">
                             <span class="anomaly-icon">${a.severity === 'high' ? '🔴' : '🟡'}</span>
-                            <div class="anomaly-info">
+                            <div class="anomaly-info" onclick="showAnomalyDetail(${a.origIndex})">
                                 <div class="anomaly-services">${a.services.join(', ')} offline</div>
-                                <div class="anomaly-time">${timeAgo(a.timestamp)}${a.count > 1 ? ` (×${a.count})` : ''}</div>
+                                <div class="anomaly-time">${timeAgo(a.timestamp)}${a.count > 1 ? ` (×${a.count})` : ''}${a.status ? ` [${a.status}]` : ''}</div>
                             </div>
-                            <div class="anomaly-drill">Details →</div>
+                            <div class="anomaly-actions">
+                                <button onclick="event.stopPropagation();markAnomaly(${a.origIndex},'investigated')" title="Mark investigated" class="anomaly-btn">🔍</button>
+                                <button onclick="event.stopPropagation();markAnomaly(${a.origIndex},'fixed')" title="Mark fixed" class="anomaly-btn">✓</button>
+                            </div>
                         </div>
                     `).join('') :
                     '<div style="color:#00ff88;text-align:center;padding:20px;">All systems nominal</div>';
@@ -1731,10 +1742,40 @@
                 </div>
 
                 <div style="margin-top:20px;display:flex;gap:10px;">
+                    <button class="btn" onclick="markAnomaly(${index},'investigated');closeModal()">🔍 Mark Investigated</button>
+                    <button class="btn" style="background:linear-gradient(135deg,#00aa66,#00ff88);" onclick="markAnomaly(${index},'fixed');closeModal()">✓ Mark Fixed</button>
                     <button class="btn secondary" onclick="closeModal()">Close</button>
                 </div>
             `;
             document.getElementById('anomalyModal').classList.add('active');
+        }
+
+        // Mark single anomaly
+        async function markAnomaly(index, status) {
+            try {
+                await fetch(\`\${API_BASE}/api/intel/anomaly/\${index}/status\`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                loadHealth();
+            } catch (e) {
+                console.error('Failed to mark anomaly:', e);
+            }
+        }
+
+        // Mark all anomalies
+        async function markAllAnomalies(status) {
+            try {
+                await fetch(\`\${API_BASE}/api/intel/anomalies/status\`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                loadHealth();
+            } catch (e) {
+                console.error('Failed to mark anomalies:', e);
+            }
         }
 
         function closeModal() {
