@@ -3736,7 +3736,20 @@ class GTN750Widget {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.gtn750 = new GTN750Widget();
+        handleUrlHash();
     });
 } else {
     window.gtn750 = new GTN750Widget();
+    handleUrlHash();
+}
+
+// URL hash navigation support
+function handleUrlHash() {
+    const hash = window.location.hash.slice(1);
+    if (hash && window.gtn750?.pageManager) {
+        const validPages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system'];
+        if (validPages.includes(hash)) {
+            setTimeout(() => window.gtn750.pageManager.switchPage(hash), 100);
+        }
+    }
 }
