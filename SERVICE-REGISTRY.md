@@ -1,5 +1,5 @@
 # Service Registry
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-01-31
 **Single source of truth for all services, ports, and endpoints**
 
 ## HiveStore (Persistence Layer)
@@ -17,6 +17,50 @@ hive start      # Start all services (hidden windows)
 hive stop       # Stop all services
 hive status     # Health check
 ```
+
+## Windows Services (NSSM)
+
+Core Hive services run as Windows Services via NSSM for auto-start and reliability.
+
+| Service Name | Port | Script Location |
+|--------------|------|-----------------|
+| HiveOracle | 3002 | `C:\LLM-Oracle\oracle.js` |
+| HiveRelay | 8600 | `Admin\relay\relay-service.js` |
+| HiveMindMonitor | 8701 | `Admin\hive-mind\hive-mind-server.js` |
+| HiveMesh | 8750 | `C:\DevClaude\Hivemind\mesh\mesh.js` |
+| HivePersonas | 8770 | `C:\DevClaude\Hivemind\personas\personas.js` |
+| HiveTerminalHub | 8771 | `Admin\terminal-hub\terminal-hub-server.js` |
+| HiveBrain | 8810 | `Admin\hive-brain\hive-brain.js` |
+| HiveMasterMind | 8820 | `Admin\master-mind\master-mind.js` |
+| HiveVoice | 8870 | `Admin\hive-voice\voice-server.js` |
+| HiveDashboard | 8899 | `Admin\hive-dashboard\server.js` |
+| HiveAgent | 8585 | `C:\DevClaude\Hivemind\hive\agent\agent-server.js` |
+| Kinship | 8766 | `C:\kinship\server.js` |
+
+**Management:**
+```powershell
+# View all Hive services
+Get-Service Hive*
+
+# Restart a service
+Restart-Service HiveOracle
+
+# Restart all
+Get-Service Hive* | Restart-Service
+
+# Stop/Start all
+Get-Service Hive* | Stop-Service
+Get-Service Hive* | Start-Service
+```
+
+**Logs:** `C:\DevClaude\logs\services\{ServiceName}\`
+- `stdout.log` - Standard output
+- `stderr.log` - Error output
+
+**Scripts:** `C:\DevClaude\Hivemind\scripts\`
+- `install-windows-services.ps1` - Install/uninstall services
+- `check-service-status.ps1` - Quick status check
+- `hive-manager.ps1` - Interactive management menu
 
 ---
 
@@ -51,6 +95,7 @@ hive status     # Health check
 | 8875 | VoiceAccess | Core | `node C:\LLM-DevOSWE\Admin\voiceaccess\server.js` |
 | 8766 | Kinship | Optional | `node C:\kinship\server.js` |
 | 8899 | Hive Dashboard | Core | `node C:\LLM-DevOSWE\Admin\hive-dashboard\server.js` |
+| 8900 | silverstream | Optional | `node C:/Projects/silverstream\server.js` |
 
 ---
 
@@ -58,6 +103,7 @@ hive status     # Health check
 
 ### Oracle (Port 3002)
 - **Location:** `C:\LLM-Oracle\oracle.js`
+- **NSSM Service:** HiveOracle
 - **Purpose:** LLM backend, project file access, sandbox operations, tinyAI API, weather data
 - **Endpoints:**
   - `POST /api/ask` - Ask LLM a question
@@ -77,6 +123,7 @@ hive status     # Health check
 
 ### Relay (Port 8600)
 - **Location:** `C:\LLM-DevOSWE\Admin\relay\relay-service.js`
+- **NSSM Service:** HiveRelay
 - **Purpose:** Message relay, task queue, WebSocket events, alert system
 - **Endpoints:**
   - `GET /api/messages/pending` - Get pending messages
@@ -91,7 +138,8 @@ hive status     # Health check
 - **Alert System:** Orchestrator sends service health alerts, Slack webhook support via SLACK_WEBHOOK_URL env var
 
 ### Agent/KittBox (Port 8585)
-- **Location:** `C:\LLM-DevOSWE\Admin\agent\agent-server.js`
+- **Location:** `C:\DevClaude\Hivemind\hive\agent\agent-server.js`
+- **NSSM Service:** HiveAgent
 - **Purpose:** Command Center web UI, Claude API integration, task execution
 - **UI:** `http://localhost:8585` (Command Center)
 - **Endpoints:**
@@ -131,6 +179,7 @@ hive status     # Health check
 
 ### Hive-Mind (Port 8701)
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-mind\hive-mind-server.js`
+- **NSSM Service:** HiveMindMonitor
 - **Purpose:** Real-time activity monitor, service health dashboard
 - **UI:** `http://localhost:8701`
 - **WebSocket:** Real-time activity feed
@@ -141,6 +190,7 @@ hive status     # Health check
 
 ### Terminal Hub (Port 8771)
 - **Location:** `C:\LLM-DevOSWE\Admin\terminal-hub\terminal-hub-server.js`
+- **NSSM Service:** HiveTerminalHub
 - **Purpose:** Web-based terminal manager, multi-shell support, process monitoring
 - **UI:** `http://localhost:8771`
 - **HTTPS:** `https://192.168.1.192:8443/terminal/` (via Caddy)
@@ -242,13 +292,15 @@ hive status     # Health check
 
 ### Hive-Mesh (Port 8750)
 - **Location:** `C:\DevClaude\Hivemind\mesh\mesh.js`
+- **NSSM Service:** HiveMesh
 - **Purpose:** Inter-service mesh networking for Hive communication
 - **Endpoints:**
-  - `GET /health` - Health check
+  - `GET /health` or `GET /api/health` - Health check
 - **Managed by:** Orchestrator (priority 13)
 
 ### Hive Personas (Port 8770)
 - **Location:** `C:\DevClaude\Hivemind\personas\personas.js`
+- **NSSM Service:** HivePersonas
 - **Purpose:** AI persona registry — identity, voice, personality for all Hive agents
 - **UI:** `http://localhost:8770`
 - **Features:**
@@ -257,7 +309,7 @@ hive status     # Health check
   - New agents get "newborn" voice so Harold knows
   - Web Speech API voice testing
 - **Endpoints:**
-  - `GET /health` - Health check
+  - `GET /health` or `GET /api/health` - Health check
   - `GET /api/agents` - List all personas
   - `GET /api/agents/:id` - Get specific persona
   - `POST /api/agents` - Create new persona (id, name, role, capability)
@@ -305,6 +357,7 @@ hive status     # Health check
 
 ### Hive Dashboard (Port 8899)
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-dashboard\server.js`
+- **NSSM Service:** HiveDashboard
 - **Purpose:** Command Center overview dashboard
 - **UI:** `http://localhost:8899`
 - **Panels:** Daily Briefing, Services, Intel Feed (HN/GitHub/Discoveries/Web Search), Health Trends, Aviation Weather, Service Topology, Anomalies, Models, MCP Servers, Alerts
@@ -368,6 +421,7 @@ hive status     # Health check
 
 ### Kinship (Port 8766)
 - **Location:** `C:\kinship\server.js`
+- **NSSM Service:** Kinship
 - **Purpose:** AI Memory Companion - voice-first personal journaling
 - **UI:** `http://localhost:8766`
 - **Caddy:** `https://hive.local/kinship`

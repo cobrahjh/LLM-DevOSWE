@@ -279,7 +279,7 @@ async function runDiscovery() {
 // ============================================
 
 // Health check
-app.get('/api/health', (req, res) => {
+function healthResponse(req, res) {
     res.json({
         status: 'ok',
         service: 'Hive Brain',
@@ -292,7 +292,9 @@ app.get('/api/health', (req, res) => {
         },
         enrollmentPending: enrollmentQueue.filter(e => e.status === 'pending').length
     });
-});
+}
+app.get('/health', healthResponse);
+app.get('/api/health', healthResponse);
 
 // Trigger discovery scan
 app.post('/api/discover', async (req, res) => {

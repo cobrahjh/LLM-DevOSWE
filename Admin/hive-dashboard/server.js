@@ -8,6 +8,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { exec } = require('child_process');
 
 const PORT = 8899;
 const PUBLIC_DIR = __dirname;
@@ -129,6 +130,56 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ error: e.message }));
             }
         })();
+        return;
+    }
+
+    // File read endpoint for docs.html
+    if (req.url.startsWith('/api/file?')) {
+        const urlParams = new URL(req.url, 'http://localhost').searchParams;
+        const filePath = urlParams.get('path');
+        if (!filePath) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'path parameter required' }));
+            return;
+        }
+        // Security: only allow reading from known safe directories
+        const safePaths = ['C:/DevClaude', 'C:/LLM-DevOSWE', 'C:/kinship', 'C:/LLM-Oracle', 'C:/PMS50-Prototype'];
+        const normalizedPath = filePath.replace(/\\/g, '/');
+        const isSafe = safePaths.some(safe => normalizedPath.startsWith(safe));
+        if (!isSafe) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Access denied' }));
+            return;
+        }
+        fs.readFile(filePath, 'utf8', (err, content) => {
+            if (err) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'File not found' }));
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+            res.end(content);
+        });
+        return;
+    }
+
+    // Open file in editor endpoint
+    if (req.url.startsWith('/api/open?')) {
+        const urlParams = new URL(req.url, 'http://localhost').searchParams;
+        const filePath = urlParams.get('path');
+        if (!filePath) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'path parameter required' }));
+            return;
+        }
+        // Use 'code' to open in VS Code, or 'start' as fallback
+        exec(`code "${filePath}"`, (err) => {
+            if (err) {
+                exec(`start "" "${filePath}"`);
+            }
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, path: filePath }));
         return;
     }
 

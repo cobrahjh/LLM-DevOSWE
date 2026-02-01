@@ -62,8 +62,8 @@
   "macros": [],
   "history": [
     {
-      "id": "mkxefvk1si1c",
-      "text": "status",
+      "id": "ml2l1stogfle",
+      "text": "Status",
       "parsed": {
         "type": "intent",
         "action": "status",
@@ -75,145 +75,25 @@
         "response": "Could not reach Orchestrator."
       },
       "persona": "heather",
-      "source": "test",
-      "timestamp": "2026-01-28T02:21:36.001Z"
+      "source": "admin",
+      "timestamp": "2026-01-31T17:25:27.468Z"
     },
     {
-      "id": "mkxeg8o6kcfj",
-      "text": "say hello from VoiceAccess",
+      "id": "ml2l1vgkh0gx",
+      "text": "Status",
       "parsed": {
         "type": "intent",
-        "action": "speak",
-        "target": "tts",
+        "action": "status",
+        "target": "orchestrator",
         "tier": 0
       },
       "result": {
-        "success": true,
-        "response": "Speaking: \"hello from VoiceAccess\""
+        "success": false,
+        "response": "Could not reach Orchestrator."
       },
       "persona": "heather",
-      "source": "test",
-      "timestamp": "2026-01-28T02:21:52.998Z"
-    },
-    {
-      "id": "mkxetewgclva",
-      "text": "what do you want? i suck like shit at programming. i aint no matha fucking mack daddy wiggada wiggida neeeega!",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"what do you want? i suck like shit at programming. i aint no matha fucking mack daddy wiggada wiggida neeeega!\""
-      },
-      "persona": "shiZhenXiang",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T02:32:07.600Z"
-    },
-    {
-      "id": "mkxetqudlpbp",
-      "text": "hello",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"hello\""
-      },
-      "persona": "shiZhenXiang",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T02:32:23.077Z"
-    },
-    {
-      "id": "mkxeygovp660",
-      "text": "booo",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"booo\""
-      },
-      "persona": "heather",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T02:36:03.199Z"
-    },
-    {
-      "id": "mkxf06yfi5v1",
-      "text": "booo",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"booo\""
-      },
-      "persona": "heather",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T02:37:23.895Z"
-    },
-    {
-      "id": "mkxgefryhsbz",
-      "text": "boo",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"boo\""
-      },
-      "persona": "heather",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T03:16:28.126Z"
-    },
-    {
-      "id": "mkxgk72femf8",
-      "text": "pooop",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"pooop\""
-      },
-      "persona": "heather",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T03:20:56.775Z"
-    },
-    {
-      "id": "mkxiaqr798ss",
-      "text": "kl;",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"kl;\""
-      },
-      "persona": "heather",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T04:09:34.963Z"
-    },
-    {
-      "id": "mkxihk78tk4q",
-      "text": "I tapped the wrong thing, you see.",
-      "parsed": {
-        "type": "passthrough",
-        "target": "claude"
-      },
-      "result": {
-        "success": true,
-        "response": "Sent to claude: \"I tapped the wrong thing, you see.\""
-      },
-      "persona": "heather",
-      "source": "dashboard",
-      "timestamp": "2026-01-28T04:14:53.060Z"
+      "source": "admin",
+      "timestamp": "2026-01-31T17:25:30.884Z"
     }
   ]
 }
