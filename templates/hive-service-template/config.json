@@ -1,0 +1,5 @@
+{
+  "name": "hive-service-template",
+  "port": 8900,
+  "description": "Hive-compatible service template"
+}
