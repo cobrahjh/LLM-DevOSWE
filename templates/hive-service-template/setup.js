@@ -241,6 +241,25 @@ async function main() {
         }
     }
 
+    // Create Claude Code launcher
+    const createLauncher = await prompt('\nCreate Claude Code launcher shortcut? (y/n)', 'y');
+    if (createLauncher.toLowerCase() === 'y') {
+        const launcherPath = path.join(projectDir, `claude-${projectName}.bat`);
+        const launcherContent = `@echo off
+:: Claude Code launcher for ${projectName}
+:: Double-click to open project in Claude Code
+cd /d "${projectDir}"
+claude
+`;
+        fs.writeFileSync(launcherPath, launcherContent);
+        console.log(`  ✓ Created: claude-${projectName}.bat`);
+
+        // Also create desktop shortcut
+        const desktopPath = path.join(process.env.USERPROFILE, 'Desktop', `Claude - ${projectName}.bat`);
+        fs.writeFileSync(desktopPath, launcherContent);
+        console.log(`  ✓ Created desktop shortcut: Claude - ${projectName}.bat`);
+    }
+
     const addToRegistry = await prompt('\nAdd to SERVICE-REGISTRY.md? (y/n)', 'y');
     if (addToRegistry.toLowerCase() === 'y') {
         const registryPath = 'C:\\LLM-DevOSWE\\SERVICE-REGISTRY.md';
