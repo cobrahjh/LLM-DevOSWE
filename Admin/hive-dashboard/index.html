@@ -894,8 +894,7 @@
         const UTILITY_SERVICES = [
             { name: 'Master-O', port: 8500, endpoint: '/api/health', path: '/', desc: 'Service Watchdog', hive: false },
             { name: 'Ollama', port: 11434, endpoint: '/api/tags', path: '/', desc: 'Local LLM (qwen)', hive: false },
-            { name: 'LM-Studio', port: 1234, endpoint: '/v1/models', path: '/', desc: 'Local LLM (Nova)', hive: false },
-            { name: 'PMS50', port: 8830, endpoint: '/api/health', path: '/', desc: 'GTN750 Avionics', hive: false }
+            { name: 'LM-Studio', port: 1234, endpoint: '/v1/models', path: '/', desc: 'Local LLM (Nova) - Desktop app', hive: false }
         ];
 
         // Services list — populated from Orchestrator on first load
@@ -1232,7 +1231,7 @@
                 'Infrastructure': ['Oracle', 'Relay Service', 'Hive Dashboard', 'Master-O', 'Terminal Hub'],
                 'AI / LLM': ['Master-Mind', 'Hive Oracle (LLM)', 'Hive Brain Admin', 'Hive-Brain Discovery', 'MCP-Bridge', 'Ollama', 'LM-Studio'],
                 'Network': ['Hive-Mind Monitor', 'Hive-Mesh', 'Claude Bridge', 'Remote Support'],
-                'Applications': ['SimWidget Main Server', 'Agent (Kitt)', 'PMS50']
+                'Applications': ['SimWidget Main Server', 'Agent (Kitt)']
             };
             const categorized = new Set();
             let servicesHtml = '';
