@@ -1002,6 +1002,16 @@ class GTN750Widget {
                 this.weatherOverlay.setLayer('metar', e.target.checked);
             }
         });
+        document.getElementById('wx-winds')?.addEventListener('change', (e) => {
+            if (this.weatherOverlay) {
+                this.weatherOverlay.setLayer('winds', e.target.checked);
+            }
+        });
+        document.getElementById('wx-lightning')?.addEventListener('change', (e) => {
+            if (this.weatherOverlay) {
+                this.weatherOverlay.setLayer('lightning', e.target.checked);
+            }
+        });
 
         // System reset
         document.getElementById('sys-reset')?.addEventListener('click', () => {

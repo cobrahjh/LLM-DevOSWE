@@ -81,6 +81,263 @@ class WeatherOverlay {
             IFR: '#ff0000',
             LIFR: '#ff00ff'
         };
+
+        // Weather phenomena icons
+        this.wxPhenomena = {
+            'RA': { icon: '🌧', desc: 'Rain' },
+            'SN': { icon: '❄', desc: 'Snow' },
+            'TS': { icon: '⛈', desc: 'Thunderstorm' },
+            'FG': { icon: '🌫', desc: 'Fog' },
+            'BR': { icon: '🌁', desc: 'Mist' },
+            'HZ': { icon: '🌫', desc: 'Haze' },
+            'DZ': { icon: '🌦', desc: 'Drizzle' },
+            'SH': { icon: '🌦', desc: 'Showers' },
+            'GR': { icon: '🌨', desc: 'Hail' },
+            'FZ': { icon: '🥶', desc: 'Freezing' }
+        };
+    }
+
+    /**
+     * Parse raw METAR text into structured data
+     * @param {string} raw - Raw METAR string
+     * @returns {object} Parsed METAR data
+     */
+    parseMetar(raw) {
+        if (!raw) return null;
+
+        const result = {
+            raw,
+            station: null,
+            time: null,
+            wind: { direction: null, speed: null, gust: null, variable: null },
+            visibility: null,
+            weather: [],
+            clouds: [],
+            temp: null,
+            dewpoint: null,
+            altimeter: null,
+            remarks: null
+        };
+
+        try {
+            const parts = raw.trim().split(/\s+/);
+            let i = 0;
+
+            // Station identifier (4 letters)
+            if (/^[A-Z]{4}$/.test(parts[i])) {
+                result.station = parts[i++];
+            }
+
+            // Time (DDHHMMz)
+            if (/^\d{6}Z$/i.test(parts[i])) {
+                result.time = parts[i++];
+            }
+
+            // Wind (dddssKT or dddssGssKT or VRB)
+            if (/^\d{3}\d{2}(G\d{2,3})?(KT|MPS)$/.test(parts[i]) || /^VRB\d{2}(KT|MPS)$/.test(parts[i])) {
+                const wind = parts[i++];
+                if (wind.startsWith('VRB')) {
+                    result.wind.variable = true;
+                    result.wind.speed = parseInt(wind.slice(3, 5));
+                } else {
+                    result.wind.direction = parseInt(wind.slice(0, 3));
+                    result.wind.speed = parseInt(wind.slice(3, 5));
+                    const gustMatch = wind.match(/G(\d{2,3})/);
+                    if (gustMatch) {
+                        result.wind.gust = parseInt(gustMatch[1]);
+                    }
+                }
+
+                // Variable wind direction (dddVddd)
+                if (/^\d{3}V\d{3}$/.test(parts[i])) {
+                    result.wind.variableFrom = parseInt(parts[i].slice(0, 3));
+                    result.wind.variableTo = parseInt(parts[i].slice(4, 7));
+                    i++;
+                }
+            }
+
+            // Visibility
+            while (i < parts.length) {
+                // Statute miles (e.g., 10SM, 1/2SM, 1 1/2SM, P6SM)
+                if (/^P?\d+SM$/.test(parts[i]) || /^\d\/\d+SM$/.test(parts[i])) {
+                    result.visibility = parts[i++].replace('SM', '');
+                    break;
+                }
+                // Meters (4 digits)
+                if (/^\d{4}$/.test(parts[i]) && parseInt(parts[i]) <= 9999) {
+                    result.visibility = parseInt(parts[i++]) + 'm';
+                    break;
+                }
+                // Fractional visibility (1 1/2SM)
+                if (/^\d$/.test(parts[i]) && /^\d\/\d+SM$/.test(parts[i + 1])) {
+                    result.visibility = parts[i] + ' ' + parts[i + 1].replace('SM', '');
+                    i += 2;
+                    break;
+                }
+                break;
+            }
+
+            // Weather phenomena and clouds
+            while (i < parts.length) {
+                const part = parts[i];
+
+                // Weather phenomena (-RA, +SN, TSRA, etc.)
+                if (/^[-+]?(VC)?(MI|PR|BC|DR|BL|SH|TS|FZ)?(DZ|RA|SN|SG|IC|PL|GR|GS|UP)?(BR|FG|FU|VA|DU|SA|HZ|PY)?(PO|SQ|FC|SS|DS)?$/.test(part) && part.length >= 2) {
+                    const wx = {
+                        raw: part,
+                        intensity: part.startsWith('+') ? 'heavy' : part.startsWith('-') ? 'light' : 'moderate'
+                    };
+                    result.weather.push(wx);
+                    i++;
+                    continue;
+                }
+
+                // Cloud layers (FEW020, SCT040, BKN080, OVC100, CLR, SKC, VV004)
+                if (/^(FEW|SCT|BKN|OVC|VV)\d{3}(CB|TCU)?$/.test(part) || /^(CLR|SKC|NSC|NCD)$/.test(part)) {
+                    if (part === 'CLR' || part === 'SKC' || part === 'NSC' || part === 'NCD') {
+                        result.clouds.push({ type: part, altitude: null });
+                    } else {
+                        result.clouds.push({
+                            type: part.slice(0, 3),
+                            altitude: parseInt(part.slice(3, 6)) * 100,
+                            modifier: part.slice(6) || null
+                        });
+                    }
+                    i++;
+                    continue;
+                }
+
+                // Temperature/Dewpoint (TT/DD or M01/M05)
+                if (/^M?\d{2}\/M?\d{2}$/.test(part)) {
+                    const [temp, dew] = part.split('/');
+                    result.temp = temp.startsWith('M') ? -parseInt(temp.slice(1)) : parseInt(temp);
+                    result.dewpoint = dew.startsWith('M') ? -parseInt(dew.slice(1)) : parseInt(dew);
+                    i++;
+                    continue;
+                }
+
+                // Altimeter (A2992 or Q1013)
+                if (/^A\d{4}$/.test(part)) {
+                    result.altimeter = (parseInt(part.slice(1)) / 100).toFixed(2);
+                    i++;
+                    continue;
+                }
+                if (/^Q\d{4}$/.test(part)) {
+                    result.altimeter = parseInt(part.slice(1)) + ' hPa';
+                    i++;
+                    continue;
+                }
+
+                // Remarks
+                if (part === 'RMK') {
+                    result.remarks = parts.slice(i + 1).join(' ');
+                    break;
+                }
+
+                i++;
+            }
+
+            // Determine flight category
+            result.category = this.determineFlightCategory(result);
+
+        } catch (e) {
+            console.warn('[GTN750] METAR parse error:', e);
+        }
+
+        return result;
+    }
+
+    /**
+     * Determine flight category from parsed METAR
+     */
+    determineFlightCategory(metar) {
+        // Get ceiling (lowest BKN or OVC layer)
+        let ceiling = Infinity;
+        for (const cloud of metar.clouds || []) {
+            if ((cloud.type === 'BKN' || cloud.type === 'OVC' || cloud.type === 'VV') && cloud.altitude) {
+                ceiling = Math.min(ceiling, cloud.altitude);
+            }
+        }
+
+        // Parse visibility to statute miles
+        let visMiles = 10;
+        if (metar.visibility) {
+            const vis = metar.visibility.toString();
+            if (vis.includes('m')) {
+                visMiles = parseInt(vis) / 1609; // meters to miles
+            } else if (vis.includes('/')) {
+                const [num, den] = vis.replace('P', '').split('/').map(Number);
+                visMiles = num / den;
+            } else if (vis.startsWith('P')) {
+                visMiles = parseInt(vis.slice(1));
+            } else {
+                visMiles = parseFloat(vis.split(' ').reduce((a, b) => {
+                    if (b.includes('/')) {
+                        const [n, d] = b.split('/').map(Number);
+                        return a + n / d;
+                    }
+                    return a + parseFloat(b);
+                }, 0));
+            }
+        }
+
+        // LIFR: Ceiling < 500 ft or Visibility < 1 SM
+        if (ceiling < 500 || visMiles < 1) return 'LIFR';
+        // IFR: Ceiling 500-999 ft or Visibility 1-3 SM
+        if (ceiling < 1000 || visMiles < 3) return 'IFR';
+        // MVFR: Ceiling 1000-3000 ft or Visibility 3-5 SM
+        if (ceiling <= 3000 || visMiles <= 5) return 'MVFR';
+        // VFR
+        return 'VFR';
+    }
+
+    /**
+     * Format parsed METAR for display
+     */
+    formatMetarDisplay(parsed) {
+        if (!parsed) return 'No data';
+
+        const lines = [];
+
+        // Wind
+        if (parsed.wind.speed !== null) {
+            let windStr = parsed.wind.variable ? 'VRB' : String(parsed.wind.direction).padStart(3, '0') + '°';
+            windStr += ` ${parsed.wind.speed}kt`;
+            if (parsed.wind.gust) windStr += ` G${parsed.wind.gust}`;
+            lines.push(`Wind: ${windStr}`);
+        }
+
+        // Visibility
+        if (parsed.visibility) {
+            lines.push(`Vis: ${parsed.visibility} SM`);
+        }
+
+        // Weather
+        if (parsed.weather.length > 0) {
+            const wxStr = parsed.weather.map(w => w.raw).join(', ');
+            lines.push(`Wx: ${wxStr}`);
+        }
+
+        // Clouds
+        if (parsed.clouds.length > 0) {
+            const cloudStr = parsed.clouds.map(c => {
+                if (!c.altitude) return c.type;
+                return `${c.type} ${c.altitude}ft${c.modifier ? ' ' + c.modifier : ''}`;
+            }).join(', ');
+            lines.push(`Sky: ${cloudStr}`);
+        }
+
+        // Temp/Dew
+        if (parsed.temp !== null) {
+            lines.push(`Temp: ${parsed.temp}°C / Dew: ${parsed.dewpoint}°C`);
+        }
+
+        // Altimeter
+        if (parsed.altimeter) {
+            lines.push(`Altim: ${parsed.altimeter}`);
+        }
+
+        return lines.join('\n');
     }
 
     /**
@@ -762,6 +1019,7 @@ class WeatherOverlay {
 
     /**
      * Render lightning strikes
+     * Only shows when there's storm activity (heavy precip + wind)
      */
     renderLightning(ctx, lat, lon, mapSettings) {
         const { range, width, height, orientation, heading } = mapSettings;
@@ -770,37 +1028,128 @@ class WeatherOverlay {
         const pixelsPerNm = Math.min(width, height) / 2 / range;
         const rotation = orientation === 'north' ? 0 : heading;
 
-        // Simulated lightning
-        const strikes = this.generateSimulatedLightning(lat, lon, range);
+        // Only generate lightning if there's storm activity
+        const hasStorm = this.hasStormActivity();
+        const strikes = hasStorm
+            ? this.generateSimulatedLightning(lat, lon, range)
+            : [];
 
         strikes.forEach(strike => {
             const angle = this.core.toRad(strike.bearing - rotation);
             const x = cx + Math.sin(angle) * strike.distance * pixelsPerNm;
             const y = cy - Math.cos(angle) * strike.distance * pixelsPerNm;
 
-            // Draw lightning symbol
-            ctx.fillStyle = strike.age < 5 ? '#ffff00' : '#ff8800';
-            ctx.font = '12px Arial';
-            ctx.fillText('⚡', x - 5, y + 4);
+            this.drawLightningBolt(ctx, x, y, strike.age);
         });
+
+        // Draw legend if there are strikes
+        if (strikes.length > 0) {
+            ctx.font = '9px Consolas, monospace';
+            ctx.fillStyle = '#ffff00';
+            ctx.textAlign = 'left';
+            ctx.fillText('⚡ LIGHTNING', 10, height - 10);
+        }
     }
 
     /**
-     * Generate simulated lightning
+     * Check if there's storm activity based on sim weather
+     */
+    hasStormActivity() {
+        const precip = this.simWeather.precipState || 0;
+        const wind = this.simWeather.windSpeed || 0;
+        const vis = this.simWeather.visibility || 10000;
+
+        // Storm conditions: rain + high winds, or very low visibility with precip
+        const hasRain = (precip & 2) !== 0;
+        const hasSnow = (precip & 4) !== 0;
+        const highWind = wind > 20;
+        const lowVis = vis < 3000;
+
+        return (hasRain && highWind) || (hasRain && lowVis) || (hasSnow && highWind);
+    }
+
+    /**
+     * Draw a lightning bolt symbol using canvas
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} x - Center X
+     * @param {number} y - Center Y
+     * @param {number} age - Minutes since strike (affects color)
+     */
+    drawLightningBolt(ctx, x, y, age) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        // Color based on age (recent = bright yellow, older = orange/red)
+        let color;
+        if (age < 2) {
+            color = '#ffff00'; // Bright yellow - very recent
+            ctx.shadowColor = '#ffff00';
+            ctx.shadowBlur = 8;
+        } else if (age < 5) {
+            color = '#ffcc00'; // Gold - recent
+            ctx.shadowColor = '#ffcc00';
+            ctx.shadowBlur = 4;
+        } else if (age < 10) {
+            color = '#ff8800'; // Orange - older
+        } else {
+            color = '#ff4400'; // Red-orange - old
+        }
+
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Draw lightning bolt shape
+        const size = age < 2 ? 10 : 8; // Larger for recent strikes
+        ctx.beginPath();
+        ctx.moveTo(0, -size);           // Top
+        ctx.lineTo(-size * 0.3, -size * 0.2);  // Upper left
+        ctx.lineTo(size * 0.2, -size * 0.1);   // Upper right indent
+        ctx.lineTo(-size * 0.2, size * 0.4);   // Lower left
+        ctx.lineTo(size * 0.4, size * 0.1);    // Lower right indent
+        ctx.lineTo(0, size);            // Bottom point
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    /**
+     * Generate lightning strikes based on weather conditions
      */
     generateSimulatedLightning(lat, lon, range) {
         const strikes = [];
         const time = Date.now() / 1000;
+        const wind = this.simWeather.windSpeed || 0;
+        const precip = this.simWeather.precipState || 0;
 
-        // Create moving lightning based on time
-        for (let i = 0; i < 5; i++) {
-            const angle = ((time * 10 + i * 72) % 360);
-            const distance = (range * 0.3) + ((time + i * 17) % (range * 0.5));
+        // More strikes with worse weather
+        const intensity = Math.min(10, Math.floor(wind / 5) + ((precip & 2) ? 3 : 0));
+        const numStrikes = Math.max(3, intensity);
+
+        // Concentrate lightning in wind direction (storm movement)
+        const windDir = this.simWeather.windDirection || 0;
+
+        for (let i = 0; i < numStrikes; i++) {
+            // Spread around wind direction (+/- 60 degrees)
+            const spread = (Math.random() - 0.5) * 120;
+            const angle = (windDir + spread + 360) % 360;
+
+            // Distance varies - closer with worse conditions
+            const minDist = range * 0.2;
+            const maxDist = range * 0.8;
+            const distance = minDist + Math.random() * (maxDist - minDist);
+
+            // Age cycles based on time for animation effect
+            const age = ((time + i * 7) % 15);
 
             strikes.push({
                 bearing: angle,
                 distance,
-                age: i * 3 // minutes ago
+                age
             });
         }
 
@@ -937,21 +1286,30 @@ class WeatherOverlay {
             if (data.metars && data.metars.length > 0) {
                 this.metarData.clear();
                 data.metars.forEach(m => {
+                    // Parse raw METAR if available
+                    const parsed = m.raw ? this.parseMetar(m.raw) : null;
+
                     this.metarData.set(m.icao, {
                         icao: m.icao,
                         lat: m.lat,
                         lon: m.lon,
-                        category: m.flight_rules || 'VFR',
+                        category: parsed?.category || m.flight_rules || 'VFR',
                         raw: m.raw,
-                        temp: m.temp,
-                        dewp: m.dewp,
-                        wdir: m.wdir,
-                        wspd: m.wspd,
-                        visib: m.visib
+                        parsed: parsed,
+                        // Use parsed data or API data
+                        temp: parsed?.temp ?? m.temp,
+                        dewp: parsed?.dewpoint ?? m.dewp,
+                        wdir: parsed?.wind?.direction ?? m.wdir,
+                        wspd: parsed?.wind?.speed ?? m.wspd,
+                        gust: parsed?.wind?.gust,
+                        visib: parsed?.visibility ?? m.visib,
+                        clouds: parsed?.clouds || [],
+                        weather: parsed?.weather || [],
+                        altimeter: parsed?.altimeter
                     });
                 });
                 this.lastMetarFetch = Date.now();
-                console.log(`[GTN750] Loaded ${data.metars.length} METARs`);
+                console.log(`[GTN750] Loaded ${data.metars.length} METARs (parsed)`);
             }
         } catch (e) {
             console.warn('[GTN750] Failed to fetch nearby METARs:', e);
@@ -1011,17 +1369,48 @@ class WeatherOverlay {
             const x = cx + Math.sin(angle) * dist * pixelsPerNm;
             const y = cy - Math.cos(angle) * dist * pixelsPerNm;
 
-            // Draw METAR dot
+            const color = this.metarColors[station.category] || '#888888';
+
+            // Draw METAR dot with category color
             ctx.beginPath();
-            ctx.arc(x, y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = this.metarColors[station.category] || '#888888';
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.fillStyle = color;
             ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw wind barb at station if we have wind data
+            if (station.wdir !== null && station.wdir !== undefined && station.wspd) {
+                const windDir = station.wdir - rotation; // Adjust for map rotation
+                this.drawWindBarb(ctx, x, y - 12, windDir, station.wspd, false);
+            }
 
             // Draw station ID
             ctx.font = '8px Consolas, monospace';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
-            ctx.fillText(station.icao, x, y - 8);
+            ctx.fillText(station.icao, x, y + 14);
+
+            // Draw weather phenomena icon if present
+            if (station.weather && station.weather.length > 0) {
+                const wxCode = station.weather[0].raw.replace(/[-+]/, '').slice(0, 2);
+                const wxInfo = this.wxPhenomena[wxCode];
+                if (wxInfo) {
+                    ctx.font = '10px Arial';
+                    ctx.fillText(wxInfo.icon, x + 12, y + 4);
+                }
+            }
+
+            // Draw visibility if low (< 5 SM)
+            if (station.visib) {
+                const visNum = parseFloat(station.visib);
+                if (!isNaN(visNum) && visNum < 5) {
+                    ctx.font = '7px Consolas, monospace';
+                    ctx.fillStyle = visNum < 1 ? '#ff00ff' : visNum < 3 ? '#ff0000' : '#ffff00';
+                    ctx.fillText(`${station.visib}SM`, x, y + 22);
+                }
+            }
         });
     }
 
