@@ -1,0 +1,9 @@
+{
+  "name": "hive-remote-agent",
+  "version": "1.0.0",
+  "description": "Remote agent for cross-PC communication in the Hive",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
