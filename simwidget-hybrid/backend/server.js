@@ -89,6 +89,8 @@ const PORT = 8080;
 // Flight data state
 let flightData = {
     altitude: 0,
+    altitudeAGL: 0,
+    groundAltitude: 0,
     speed: 0,
     heading: 0,
     magvar: 0,             // Magnetic variation at current position
@@ -3063,8 +3065,10 @@ async function initSimConnect() {
         // Reduced to avoid buffer overflow issues with MSFS 2024
         console.log('[SimConnect] Using MSFS 2024 minimal data mode');
 
-        // Core flight data (14 vars)
+        // Core flight data (16 vars)
         handle.addToDataDefinition(0, 'PLANE ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PLANE ALT ABOVE GROUND', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GROUND ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AIRSPEED INDICATED', 'knots', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'PLANE HEADING DEGREES MAGNETIC', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'VERTICAL SPEED', 'feet per minute', SimConnectDataType.FLOAT64, 0);
@@ -3251,8 +3255,10 @@ async function initSimConnect() {
                 // MSFS 2024 MINIMAL DATA READ - matches reduced data definition
                 const d = data.data;
                 try {
-                    // Core flight data (14 vars)
+                    // Core flight data (16 vars)
                     const altitude = d.readFloat64();
+                    const altitudeAGL = d.readFloat64();
+                    const groundAltitude = d.readFloat64();
                     const speed = d.readFloat64();
                     const heading = d.readFloat64();
                     const verticalSpeed = d.readFloat64();
@@ -3384,7 +3390,7 @@ async function initSimConnect() {
                     const fuelTankExternal2Cap = d.readFloat64();
 
                     flightData = {
-                        altitude, speed, heading, verticalSpeed, groundSpeed,
+                        altitude, altitudeAGL, groundAltitude, speed, heading, verticalSpeed, groundSpeed,
                         latitude, longitude, pitch, bank, magvar,
                         windDirection, windSpeed, localTime, zuluTime,
                         apMaster, apHdgLock, apAltLock, apVsLock, apSpdLock,
@@ -3471,8 +3477,14 @@ function startMockData() {
         mockHdg = (mockHdg + 0.5) % 360;
         mockSpd += (Math.random() - 0.5) * 5;
         
+        // Simulate terrain elevation (Kansas area ~1500ft MSL with some variation)
+        const mockGroundAlt = 1500 + Math.sin(mockHdg * Math.PI / 180) * 300;
+        const mockAGL = Math.max(0, mockAlt) - mockGroundAlt;
+
         flightData = {
             altitude: Math.max(0, mockAlt),
+            altitudeAGL: Math.max(0, mockAGL),
+            groundAltitude: mockGroundAlt,
             speed: Math.max(0, mockSpd),
             heading: mockHdg,
             magvar: -5.2,  // Mock: typical value for central US
