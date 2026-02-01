@@ -3,7 +3,7 @@ const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 8590;
+const PORT = 8591;
 const API_KEY = 'hive-remote-2024'; // Simple shared key
 
 const server = http.createServer((req, res) => {
@@ -75,7 +75,15 @@ const server = http.createServer((req, res) => {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
-            const { repo = 'C:\\LLM-DevOSWE' } = body ? JSON.parse(body) : {};
+            let repo = 'C:\\LLM-DevOSWE';
+            try {
+                if (body && body.trim()) {
+                    const parsed = JSON.parse(body);
+                    repo = parsed.repo || repo;
+                }
+            } catch (e) {
+                // Use default repo
+            }
             console.log(`[Git Pull] ${repo}`);
 
             exec('git pull', { cwd: repo }, (error, stdout, stderr) => {

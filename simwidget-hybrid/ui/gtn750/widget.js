@@ -1845,13 +1845,17 @@ class GTN750Widget {
         this.terrainCtx.fillStyle = '#0a1520';
         this.terrainCtx.fillRect(0, 0, w, h);
 
-        // Render terrain view
+        // Get real AGL from sim data (use altitude if AGL not available)
+        const realAGL = this.data.altitudeAGL || this.data.altitude;
+
+        // Render terrain view with real AGL
         const minClearance = this.terrainOverlay.renderTerrainPage(
             this.terrainCtx,
             {
                 latitude: this.data.latitude,
                 longitude: this.data.longitude,
                 altitude: this.data.altitude,
+                altitudeAGL: realAGL,
                 heading: this.data.heading,
                 verticalSpeed: this.data.verticalSpeed,
                 groundSpeed: this.data.groundSpeed
@@ -1859,9 +1863,10 @@ class GTN750Widget {
             w, h
         );
 
-        // Update clearance display
+        // Update clearance display with REAL AGL from MSFS
         if (this.elements.terrainClearance) {
-            this.elements.terrainClearance.textContent = minClearance > 0 ? minClearance : '---';
+            const agl = Math.round(realAGL);
+            this.elements.terrainClearance.textContent = agl > 0 ? agl : '---';
         }
 
         // Update mode and range displays

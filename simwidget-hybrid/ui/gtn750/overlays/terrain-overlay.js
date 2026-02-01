@@ -10,7 +10,7 @@ class TerrainOverlay {
         this.terrainData = null;
         this.lastFetchPos = null;
         this.fetchRadius = 50; // NM
-        this.gridSize = 32; // Terrain grid resolution
+        this.gridSize = 64; // Terrain grid resolution (higher = smoother)
         this.cache = new Map();
         this.cacheTimeout = 60000; // 1 minute cache
 
@@ -144,18 +144,27 @@ class TerrainOverlay {
 
     /**
      * Get terrain grid for current position
+     * Grid regenerates as aircraft moves for smooth terrain scrolling
      */
     getTerrainGrid(lat, lon, range) {
-        const cacheKey = `${Math.round(lat * 10)}_${Math.round(lon * 10)}_${range}`;
+        // More granular cache key - regenerate every ~1nm of movement
+        const cacheKey = `${Math.round(lat * 60)}_${Math.round(lon * 60)}_${range}`;
         const cached = this.cache.get(cacheKey);
 
-        if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+        // Shorter cache timeout for smoother updates (5 seconds)
+        if (cached && Date.now() - cached.timestamp < 5000) {
             return cached.grid;
         }
 
         // Generate simulated terrain grid
         // In production, this would fetch from Open-Elevation API or local terrain DB
         const grid = this.generateSimulatedTerrain(lat, lon, range);
+
+        // Clear old cache entries to prevent memory growth
+        if (this.cache.size > 20) {
+            const oldestKey = this.cache.keys().next().value;
+            this.cache.delete(oldestKey);
+        }
 
         this.cache.set(cacheKey, {
             grid,
@@ -206,27 +215,42 @@ class TerrainOverlay {
 
     /**
      * Simulated elevation function
-     * Creates varied terrain based on coordinates
+     * Creates varied terrain with hills, ridges, and valleys
      */
     getSimulatedElevation(lat, lon) {
-        // Use sine waves at different frequencies for terrain variation
-        const scale1 = Math.sin(lat * 2.5) * Math.cos(lon * 2.5) * 2000;
-        const scale2 = Math.sin(lat * 7) * Math.cos(lon * 5) * 800;
-        const scale3 = Math.sin(lat * 15 + lon * 10) * 400;
+        // Multiple frequency noise for natural-looking terrain
+        // Large scale features (mountains, valleys)
+        const large1 = Math.sin(lat * 1.5) * Math.cos(lon * 1.8) * 1500;
+        const large2 = Math.sin(lat * 2.2 + lon * 0.5) * 1200;
 
-        // Base elevation varies by latitude (mountains in certain areas)
-        const baseElevation = Math.abs(Math.sin(lat * 0.5)) * 3000;
+        // Medium scale features (hills, ridges)
+        const med1 = Math.sin(lat * 5) * Math.cos(lon * 4) * 600;
+        const med2 = Math.sin(lat * 7 + lon * 6) * Math.cos(lon * 8) * 400;
+        const med3 = Math.sin(lat * 9) * Math.sin(lon * 11) * 300;
 
-        // Combine for final elevation (minimum 0 = sea level)
-        const elevation = Math.max(0, baseElevation + scale1 + scale2 + scale3);
+        // Small scale features (local variation)
+        const small1 = Math.sin(lat * 20 + lon * 15) * 150;
+        const small2 = Math.cos(lat * 25 - lon * 20) * 100;
+        const small3 = Math.sin(lat * 40 + lon * 35) * 50;
 
-        return Math.round(elevation);
+        // Ridge lines (creates linear features)
+        const ridge = Math.abs(Math.sin(lat * 3 + lon * 2)) * 800;
+
+        // Base elevation with regional variation
+        const baseElevation = Math.abs(Math.sin(lat * 0.3) * Math.cos(lon * 0.4)) * 2000;
+
+        // Combine all features
+        const elevation = baseElevation + large1 + large2 + med1 + med2 + med3 + small1 + small2 + small3 + ridge;
+
+        // Ensure minimum 0 (sea level)
+        return Math.round(Math.max(0, elevation));
     }
 
     /**
      * Render terrain grid on canvas
+     * Uses real ground elevation from MSFS to calculate terrain variation
      */
-    renderTerrainGrid(ctx, grid, aircraft, mapSettings) {
+    renderTerrainGrid(ctx, grid, aircraft, mapSettings, groundElevation = 0, realAGL = null) {
         const { latitude, longitude, altitude, heading } = aircraft;
         const { range, orientation, width, height } = mapSettings;
 
@@ -238,6 +262,9 @@ class TerrainOverlay {
         const cellsPerSide = grid.length;
         const cellPixelSize = (range * 2 * pixelsPerNm) / cellsPerSide;
 
+        // Use real AGL if available, otherwise fall back to calculated clearance
+        const useRealAGL = realAGL !== null && realAGL > 0;
+
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(-rotation * Math.PI / 180);
@@ -246,14 +273,30 @@ class TerrainOverlay {
         for (let row = 0; row < cellsPerSide; row++) {
             for (let col = 0; col < cellsPerSide; col++) {
                 const cell = grid[row][col];
-                const clearance = altitude - cell.elevation;
+
+                // Calculate terrain clearance:
+                // If we have real AGL, use ground elevation + simulated terrain variation
+                // This creates terrain that matches real-world elevation at aircraft position
+                let clearance;
+                if (useRealAGL) {
+                    // Use real ground elevation as base, add simulated variation
+                    const simVariation = cell.elevation - this.getSimulatedElevation(latitude, longitude);
+                    const terrainElev = groundElevation + simVariation;
+                    clearance = altitude - terrainElev;
+                } else {
+                    clearance = altitude - cell.elevation;
+                }
+
                 const color = this.getClearanceColor(clearance, cell.elevation);
+
+                // Skip transparent cells (terrain well below aircraft)
+                if (color === 'transparent') continue;
 
                 const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
                 const y = cy - cell.nmY * pixelsPerNm - cellPixelSize / 2;
 
                 ctx.fillStyle = color;
-                ctx.globalAlpha = 0.7;
+                ctx.globalAlpha = 0.75;
                 ctx.fillRect(x, y, cellPixelSize + 1, cellPixelSize + 1);
             }
         }
@@ -264,9 +307,10 @@ class TerrainOverlay {
 
     /**
      * Render terrain grid with Arc view (forward 120 degree only)
+     * Uses real ground elevation from MSFS when available
      */
-    renderTerrainGridArc(ctx, grid, aircraft, width, height) {
-        const { altitude } = aircraft;
+    renderTerrainGridArc(ctx, grid, aircraft, width, height, groundElevation = 0, realAGL = null) {
+        const { altitude, latitude, longitude } = aircraft;
         const range = this.range;
         const cx = width / 2;
         const cy = height * 0.85;
@@ -274,6 +318,9 @@ class TerrainOverlay {
         const cellsPerSide = grid.length;
         const cellPixelSize = (range * 2 * pixelsPerNm) / cellsPerSide;
         const halfArc = (this.arcAngle / 2) * Math.PI / 180;
+
+        // Use real AGL if available
+        const useRealAGL = realAGL !== null && realAGL > 0;
 
         ctx.save();
         ctx.beginPath();
@@ -289,12 +336,24 @@ class TerrainOverlay {
                 if (Math.abs(angle) > halfArc) continue;
                 const distance = Math.sqrt(cell.nmX * cell.nmX + cell.nmY * cell.nmY);
                 if (distance > range) continue;
-                const clearance = altitude - cell.elevation;
+
+                // Calculate clearance using real ground elevation if available
+                let clearance;
+                if (useRealAGL) {
+                    const simVariation = cell.elevation - this.getSimulatedElevation(latitude, longitude);
+                    const terrainElev = groundElevation + simVariation;
+                    clearance = altitude - terrainElev;
+                } else {
+                    clearance = altitude - cell.elevation;
+                }
+
                 const color = this.getClearanceColor(clearance, cell.elevation);
+                // Skip transparent cells
+                if (color === 'transparent') continue;
                 const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
                 const y = cy + cell.nmY * pixelsPerNm - cellPixelSize / 2;
                 ctx.fillStyle = color;
-                ctx.globalAlpha = 0.7;
+                ctx.globalAlpha = 0.75;
                 ctx.fillRect(x, y, cellPixelSize + 1, cellPixelSize + 1);
             }
         }
@@ -323,26 +382,27 @@ class TerrainOverlay {
     }
 
     /**
-     * Get color based on terrain clearance and elevation
-     * Shows terrain with TAWS danger colors + elevation-based coloring
+     * Get color based on terrain clearance (relative to aircraft altitude)
+     * Matches real GTN 750 TAWS display colors
      */
     getClearanceColor(clearance, elevation = 0) {
-        // Danger zones - TAWS colors (always take priority)
-        if (clearance < this.thresholds.pullUp) return '#ff0000';   // Red
-        if (clearance < this.thresholds.warning) return '#ff6600';  // Orange
-        if (clearance < this.thresholds.caution) return '#ffcc00';  // Yellow
-        if (clearance < this.thresholds.safe) return '#00cc00';     // Bright green
+        // Real GTN 750 terrain colors (relative to aircraft):
+        // Red = terrain within 500ft of aircraft or ABOVE
+        // Yellow = terrain 500-1000ft below
+        // Green = terrain 1000-1500ft below
+        // No color = terrain more than 1500ft below
 
-        // Show terrain based on ELEVATION (not clearance) for visual variety
-        // Higher terrain = warmer colors (yellow/orange tint)
-        // Lower terrain = cooler colors (darker green/blue tint)
-        if (elevation > 4000) return '#ccaa00';    // High terrain - yellow-brown
-        if (elevation > 3000) return '#88aa00';    // Medium-high - yellow-green
-        if (elevation > 2000) return '#44aa00';    // Medium - green
-        if (elevation > 1000) return '#008844';    // Low-medium - teal-green
-        if (elevation > 500) return '#006655';     // Low - blue-green
-        if (elevation > 100) return '#004466';     // Very low - blue
-        return '#003344';                           // Sea level - dark blue
+        if (clearance <= 0) return '#ff0000';           // Above aircraft - solid red
+        if (clearance < 100) return '#ff0000';          // Within 100ft - red (PULL UP)
+        if (clearance < 300) return '#ff4400';          // Within 300ft - red-orange
+        if (clearance < 500) return '#ff6600';          // Within 500ft - orange
+        if (clearance < 750) return '#ffaa00';          // 500-750ft - yellow-orange
+        if (clearance < 1000) return '#ffcc00';         // 750-1000ft - yellow
+        if (clearance < 1250) return '#88cc00';         // 1000-1250ft - yellow-green
+        if (clearance < 1500) return '#44aa00';         // 1250-1500ft - green
+
+        // Below 1500ft clearance - no terrain color (black/transparent)
+        return 'transparent';
     }
 
     /**
@@ -436,9 +496,14 @@ class TerrainOverlay {
 
     /**
      * Render dedicated terrain page view with 360/Arc mode support
+     * Uses real AGL from MSFS when available for accurate terrain coloring
      */
     renderTerrainPage(ctx, aircraft, width, height) {
         const terrainGrid = this.getTerrainGrid(aircraft.latitude, aircraft.longitude, this.range);
+
+        // Use real AGL from MSFS if available
+        const realAGL = aircraft.altitudeAGL || aircraft.altitude;
+        const groundElevation = aircraft.altitude - realAGL;
 
         // Clear background
         ctx.fillStyle = '#0a1520';
@@ -446,7 +511,7 @@ class TerrainOverlay {
 
         if (this.viewMode === 'arc') {
             // Arc view - forward 120 only, aircraft at bottom
-            this.renderTerrainGridArc(ctx, terrainGrid, aircraft, width, height);
+            this.renderTerrainGridArc(ctx, terrainGrid, aircraft, width, height, groundElevation, realAGL);
 
             // Draw aircraft at bottom center
             const cx = width / 2;
@@ -472,7 +537,7 @@ class TerrainOverlay {
                 orientation: 'track',
                 width,
                 height
-            });
+            }, groundElevation, realAGL);
 
             // Draw aircraft symbol at center
             const cx = width / 2;
