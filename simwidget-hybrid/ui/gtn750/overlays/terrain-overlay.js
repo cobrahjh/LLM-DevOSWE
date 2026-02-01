@@ -28,7 +28,7 @@ class TerrainOverlay {
             lastAlert: null
         };
 
-        // Alert thresholds (feet)
+        // Alert thresholds (feet) - for TAWS warnings
         this.thresholds = {
             pullUp: 100,
             warning: 300,
@@ -43,8 +43,11 @@ class TerrainOverlay {
             warning: '#ff6600',     // Orange - close terrain
             caution: '#ffcc00',     // Yellow - terrain awareness
             safe: '#00aa00',        // Green - adequate clearance
-            clear: 'transparent'    // No coloring needed
+            clear: '#004400'        // Dark green - terrain below (always show)
         };
+
+        // Always show terrain mode (shows terrain colors relative to altitude)
+        this.alwaysShowTerrain = true;
     }
 
     /**
@@ -325,13 +328,25 @@ class TerrainOverlay {
 
     /**
      * Get color based on terrain clearance
+     * Shows terrain relative to aircraft altitude with color gradient
      */
-    getClearanceColor(clearance) {
+    getClearanceColor(clearance, elevation = 0) {
+        // Danger zones - TAWS colors
         if (clearance < this.thresholds.pullUp) return this.colors.pullUp;
         if (clearance < this.thresholds.warning) return this.colors.warning;
         if (clearance < this.thresholds.caution) return this.colors.caution;
         if (clearance < this.thresholds.safe) return this.colors.safe;
-        return this.colors.clear;
+
+        // Always show terrain with relative coloring
+        if (this.alwaysShowTerrain) {
+            // Color based on elevation - higher terrain = brighter
+            if (clearance < 2000) return '#006600';      // Close terrain - bright green
+            if (clearance < 3000) return '#005500';      // Medium clearance
+            if (clearance < 5000) return '#004400';      // Good clearance
+            return '#003300';                             // Far below - dark green
+        }
+
+        return 'transparent';
     }
 
     /**
