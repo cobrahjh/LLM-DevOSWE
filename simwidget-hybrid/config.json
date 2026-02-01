@@ -11,7 +11,7 @@
   "autoStart": true,
   "port": 8080,
   "simconnect": {
-    "remoteHost": "100.123.94.50",
+    "remoteHost": null,
     "remotePort": 500
   }
 }
