@@ -3169,7 +3169,33 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'GENERAL ENG PROPELLER LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GENERAL ENG MIXTURE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
 
-        console.log('[SimConnect] Registered 84 SimVars for MSFS 2024');
+        // Individual Fuel Tank Quantities (11 vars)
+        handle.addToDataDefinition(0, 'FUEL TANK LEFT MAIN QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK RIGHT MAIN QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK LEFT AUX QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK RIGHT AUX QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK CENTER QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK CENTER2 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK CENTER3 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK LEFT TIP QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK RIGHT TIP QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL1 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL2 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+
+        // Individual Fuel Tank Capacities (11 vars)
+        handle.addToDataDefinition(0, 'FUEL TANK LEFT MAIN CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK RIGHT MAIN CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK LEFT AUX CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK RIGHT AUX CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK CENTER CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK CENTER2 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK CENTER3 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK LEFT TIP CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK RIGHT TIP CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL1 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL2 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+
+        console.log('[SimConnect] Registered 106 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3331,6 +3357,32 @@ async function initSimConnect() {
                     const propeller = d.readFloat64();
                     const mixture = d.readFloat64();
 
+                    // Individual Fuel Tank Quantities (11 vars)
+                    const fuelTankLeftMain = d.readFloat64();
+                    const fuelTankRightMain = d.readFloat64();
+                    const fuelTankLeftAux = d.readFloat64();
+                    const fuelTankRightAux = d.readFloat64();
+                    const fuelTankCenter = d.readFloat64();
+                    const fuelTankCenter2 = d.readFloat64();
+                    const fuelTankCenter3 = d.readFloat64();
+                    const fuelTankLeftTip = d.readFloat64();
+                    const fuelTankRightTip = d.readFloat64();
+                    const fuelTankExternal1 = d.readFloat64();
+                    const fuelTankExternal2 = d.readFloat64();
+
+                    // Individual Fuel Tank Capacities (11 vars)
+                    const fuelTankLeftMainCap = d.readFloat64();
+                    const fuelTankRightMainCap = d.readFloat64();
+                    const fuelTankLeftAuxCap = d.readFloat64();
+                    const fuelTankRightAuxCap = d.readFloat64();
+                    const fuelTankCenterCap = d.readFloat64();
+                    const fuelTankCenter2Cap = d.readFloat64();
+                    const fuelTankCenter3Cap = d.readFloat64();
+                    const fuelTankLeftTipCap = d.readFloat64();
+                    const fuelTankRightTipCap = d.readFloat64();
+                    const fuelTankExternal1Cap = d.readFloat64();
+                    const fuelTankExternal2Cap = d.readFloat64();
+
                     flightData = {
                         altitude, speed, heading, verticalSpeed, groundSpeed,
                         latitude, longitude, pitch, bank, magvar,
@@ -3360,6 +3412,14 @@ async function initSimConnect() {
                         // Engine Instruments
                         engineRpm, manifoldPressure, oilTemp, oilPressure,
                         egt, cht, propeller, mixture,
+                        // Individual Fuel Tank Quantities
+                        fuelTankLeftMain, fuelTankRightMain, fuelTankLeftAux, fuelTankRightAux,
+                        fuelTankCenter, fuelTankCenter2, fuelTankCenter3,
+                        fuelTankLeftTip, fuelTankRightTip, fuelTankExternal1, fuelTankExternal2,
+                        // Individual Fuel Tank Capacities
+                        fuelTankLeftMainCap, fuelTankRightMainCap, fuelTankLeftAuxCap, fuelTankRightAuxCap,
+                        fuelTankCenterCap, fuelTankCenter2Cap, fuelTankCenter3Cap,
+                        fuelTankLeftTipCap, fuelTankRightTipCap, fuelTankExternal1Cap, fuelTankExternal2Cap,
                         // Defaults for missing data
                         groundTrack: heading, altitudeMSL: altitude,
                         connected: true
