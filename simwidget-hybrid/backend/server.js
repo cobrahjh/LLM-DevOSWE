@@ -91,6 +91,8 @@ let flightData = {
     altitude: 0,
     speed: 0,
     heading: 0,
+    magvar: 0,             // Magnetic variation at current position
+    groundTrack: 0,        // GPS ground true track
     verticalSpeed: 0,
     groundSpeed: 0,        // Added for flight-data-widget
     windDirection: 0,      // Added for flight-data-widget
@@ -3061,6 +3063,8 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'PLANE ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AIRSPEED INDICATED', 'knots', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'PLANE HEADING DEGREES MAGNETIC', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'MAGVAR', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS GROUND TRUE TRACK', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'VERTICAL SPEED', 'feet per minute', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'BRAKE PARKING POSITION', 'Bool', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'GEAR HANDLE POSITION', 'Bool', SimConnectDataType.INT32, 0);
@@ -3267,6 +3271,8 @@ async function initSimConnect() {
                         altitude: d.readFloat64(),
                         speed: d.readFloat64(),
                         heading: d.readFloat64(),
+                        magvar: d.readFloat64(),
+                        groundTrack: d.readFloat64(),
                         verticalSpeed: d.readFloat64(),
                         parkingBrake: d.readInt32() !== 0,
                         gearDown: d.readInt32() !== 0,
@@ -3462,6 +3468,8 @@ function startMockData() {
             altitude: Math.max(0, mockAlt),
             speed: Math.max(0, mockSpd),
             heading: mockHdg,
+            magvar: -5.2,  // Mock: typical value for central US
+            groundTrack: (mockHdg + (Math.random() - 0.5) * 5 + 360) % 360,
             verticalSpeed: (Math.random() - 0.5) * 500,
             parkingBrake: false,
             gearDown: mockAlt < 2000,

@@ -355,6 +355,48 @@ class ProceduresPage {
     }
 
     /**
+     * Open ChartFox for the selected airport
+     */
+    openChartFox() {
+        if (this.selectedAirport) {
+            window.open(`https://chartfox.org/${this.selectedAirport}`, '_blank');
+        }
+    }
+
+    /**
+     * Get approach minimums description
+     */
+    getApproachMinimumsInfo(proc) {
+        if (!proc || proc.type === 'VISUAL') return null;
+
+        const minimums = {
+            'ILS': { da: '200 AGL', vis: '1/2 SM', note: 'Decision Altitude' },
+            'RNAV': { da: '250 AGL', vis: '3/4 SM', note: 'LPV/LNAV' },
+            'VOR': { mda: '500 AGL', vis: '1 SM', note: 'Circling available' },
+            'LOC': { mda: '400 AGL', vis: '3/4 SM', note: 'Localizer only' },
+            'NDB': { mda: '600 AGL', vis: '1 SM', note: 'Non-precision' }
+        };
+
+        return minimums[proc.type] || null;
+    }
+
+    /**
+     * Get procedure summary for display
+     */
+    getProcedureSummary() {
+        if (!this.selectedProcedure) return null;
+
+        const proc = this.selectedProcedure;
+        return {
+            name: proc.name,
+            type: proc.type,
+            runway: proc.runway,
+            hasChart: !!proc.chartUrl,
+            minimums: this.getApproachMinimumsInfo(proc)
+        };
+    }
+
+    /**
      * Check if selected procedure has a chart
      */
     hasChart() {

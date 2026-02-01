@@ -132,6 +132,50 @@ body {
     transition: width 0.2s;
 }
 
+/* NAV Tuning Info Display */
+.nav-group {
+    flex-wrap: wrap;
+    max-width: 180px;
+}
+
+.nav-info {
+    display: flex;
+    width: 100%;
+    gap: 6px;
+    margin-top: 2px;
+    font-family: var(--gtn-mono);
+    font-size: 9px;
+}
+
+.nav-ident {
+    color: var(--gtn-cyan);
+    font-weight: 600;
+    min-width: 24px;
+}
+
+.nav-ident.no-signal {
+    color: var(--gtn-gray);
+}
+
+.nav-radial {
+    color: var(--gtn-magenta);
+}
+
+.nav-dme {
+    color: var(--gtn-yellow);
+}
+
+.nav-dme::after {
+    content: 'nm';
+    font-size: 7px;
+    color: var(--gtn-gray);
+    margin-left: 1px;
+}
+
+.nav-dme.no-dme::after {
+    content: '';
+}
+
 .xpdr-group {
     flex: 0 0 auto;
     min-width: 85px;

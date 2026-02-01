@@ -41,6 +41,49 @@ class GTNCore {
         return angle;
     }
 
+    /**
+     * Normalize heading to 0-360 range
+     */
+    normalizeHeading(hdg) {
+        return ((hdg % 360) + 360) % 360;
+    }
+
+    // ===== MAGNETIC VARIATION =====
+
+    /**
+     * Convert true bearing/heading to magnetic
+     * @param {number} trueBearing - True bearing in degrees
+     * @param {number} magvar - Magnetic variation (positive = east, negative = west)
+     * @returns {number} Magnetic bearing
+     */
+    trueToMagnetic(trueBearing, magvar) {
+        return this.normalizeHeading(trueBearing - magvar);
+    }
+
+    /**
+     * Convert magnetic bearing/heading to true
+     * @param {number} magBearing - Magnetic bearing in degrees
+     * @param {number} magvar - Magnetic variation (positive = east, negative = west)
+     * @returns {number} True bearing
+     */
+    magneticToTrue(magBearing, magvar) {
+        return this.normalizeHeading(magBearing + magvar);
+    }
+
+    /**
+     * Calculate magnetic bearing between two points
+     * @param {number} lat1 - Start latitude
+     * @param {number} lon1 - Start longitude
+     * @param {number} lat2 - End latitude
+     * @param {number} lon2 - End longitude
+     * @param {number} magvar - Magnetic variation at current position
+     * @returns {number} Magnetic bearing
+     */
+    calculateMagneticBearing(lat1, lon1, lat2, lon2, magvar) {
+        const trueBearing = this.calculateBearing(lat1, lon1, lat2, lon2);
+        return this.trueToMagnetic(trueBearing, magvar);
+    }
+
     // ===== COORDINATE CONVERSION =====
 
     nmToPixels(nm, range, canvasSize) {

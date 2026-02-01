@@ -20,6 +20,7 @@ class GTN750Widget {
             groundSpeed: 0,
             heading: 0,
             track: 0,
+            magvar: 0,           // Magnetic variation at current position
             verticalSpeed: 0,
             com1Active: 118.00,
             com1Standby: 118.00,
@@ -41,9 +42,12 @@ class GTN750Widget {
         };
 
         // NAV radio data
-        this.nav1 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true, hasLoc: false, hasGs: false };
-        this.nav2 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true };
+        this.nav1 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true, hasLoc: false, hasGs: false, dme: 0 };
+        this.nav2 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true, dme: 0 };
         this.gps = { cdi: 0, xtrk: 0, dtk: 0, obs: 0, vertError: 0, approachMode: false };
+
+        // Navaid cache for frequency lookup
+        this.navaidCache = [];
 
         // Map settings
         this.map = {
@@ -85,7 +89,14 @@ class GTN750Widget {
         this.obs = {
             active: false,    // OBS mode enabled
             course: 0,        // Selected OBS course (0-359)
-            suspended: false  // Waypoint sequencing suspended
+            suspended: false, // Waypoint sequencing suspended
+            // Holding pattern properties
+            holdingPattern: false,  // Show holding pattern visualization
+            legTime: 60,           // Leg time in seconds (1 minute standard)
+            turnDirection: 'R',    // 'R' = right turns (standard), 'L' = left turns
+            entryType: null,       // 'direct', 'parallel', 'teardrop'
+            currentLeg: 'inbound', // 'inbound' or 'outbound'
+            outboundTimer: 0       // Timer for outbound leg
         };
 
         // TAWS
@@ -685,6 +696,18 @@ class GTN750Widget {
                 this.adjustObsCourse(-10);
                 break;
 
+            // Holding pattern controls
+            case 'hold-toggle':
+                this.toggleHoldingPattern();
+                break;
+            case 'hold-direction':
+                this.toggleHoldingDirection();
+                break;
+            case 'hold-time':
+                const newTime = prompt('Enter holding leg time (30-240 seconds):', this.obs.legTime);
+                if (newTime) this.setHoldingLegTime(parseInt(newTime));
+                break;
+
             default:
                 console.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
@@ -696,6 +719,22 @@ class GTN750Widget {
             if (type === 'route-update' && data.waypoints) {
                 this.flightPlan = data;
                 this.renderFlightPlan();
+            }
+            // SimBrief flight plan with additional data
+            if (type === 'simbrief-plan' && data.waypoints) {
+                this.flightPlan = {
+                    departure: data.departure,
+                    arrival: data.arrival,
+                    waypoints: data.waypoints,
+                    totalDistance: data.totalDistance,
+                    route: data.route,
+                    cruiseAltitude: data.altitude,
+                    source: 'simbrief'
+                };
+                this.activeWaypointIndex = 0;
+                this.renderFlightPlan();
+                this.updateWaypointDisplay();
+                console.log(`[GTN750] SimBrief flight plan loaded: ${data.departure} -> ${data.arrival} (${data.waypoints.length} waypoints)`);
             }
             if (type === 'waypoint-select') {
                 this.selectWaypoint(data.index);
@@ -816,6 +855,9 @@ class GTN750Widget {
             com2Stby: document.getElementById('com2-stby'),
             nav1: document.getElementById('nav1'),
             nav1Stby: document.getElementById('nav1-stby'),
+            nav1Ident: document.getElementById('nav1-ident'),
+            nav1Radial: document.getElementById('nav1-radial'),
+            nav1Dme: document.getElementById('nav1-dme'),
             swapCom1: document.getElementById('swap-com1'),
             swapCom2: document.getElementById('swap-com2'),
             swapNav1: document.getElementById('swap-nav1'),
@@ -1306,7 +1348,174 @@ class GTN750Widget {
         ctx.textAlign = 'center';
         ctx.fillText(`OBS ${this.obs.course.toString().padStart(3, '0')}°`, cx, 25);
 
+        // Render holding pattern if enabled
+        if (this.obs.holdingPattern) {
+            this.renderHoldingPattern(ctx, wpPos, w, h);
+        }
+
         ctx.restore();
+    }
+
+    /**
+     * Render holding pattern racetrack shape
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {Object} wpPos - Waypoint position on screen {x, y}
+     * @param {number} w - Canvas width
+     * @param {number} h - Canvas height
+     */
+    renderHoldingPattern(ctx, wpPos, w, h) {
+        // Calculate leg length in pixels based on leg time and typical holding speed
+        // Assume ~180kt holding speed: 1 minute = 3nm
+        const legNm = (this.obs.legTime / 60) * 3;
+        const legPixels = this.core.nmToPixels(legNm, this.map.range, Math.min(w, h));
+        const turnRadius = legPixels * 0.3; // Turn radius proportional to leg length
+
+        const courseRad = (this.obs.course - this.getMapRotation()) * Math.PI / 180;
+        const isRightTurn = this.obs.turnDirection === 'R';
+
+        ctx.save();
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 3]);
+
+        // Calculate holding pattern corners
+        // Inbound leg: from fix toward inbound course
+        // Outbound leg: parallel to inbound, offset by turn diameter
+
+        // Perpendicular offset direction (left or right of inbound course)
+        const perpAngle = isRightTurn ? courseRad - Math.PI / 2 : courseRad + Math.PI / 2;
+        const offsetX = Math.sin(perpAngle) * turnRadius * 2;
+        const offsetY = -Math.cos(perpAngle) * turnRadius * 2;
+
+        // Inbound leg end (at fix)
+        const inboundEnd = { x: wpPos.x, y: wpPos.y };
+
+        // Inbound leg start (one leg length before fix)
+        const inboundStart = {
+            x: wpPos.x + Math.sin(courseRad) * legPixels,
+            y: wpPos.y - Math.cos(courseRad) * legPixels
+        };
+
+        // Outbound leg (offset from inbound)
+        const outboundStart = {
+            x: inboundEnd.x + offsetX,
+            y: inboundEnd.y + offsetY
+        };
+        const outboundEnd = {
+            x: inboundStart.x + offsetX,
+            y: inboundStart.y + offsetY
+        };
+
+        ctx.beginPath();
+
+        // Draw inbound leg
+        ctx.moveTo(inboundStart.x, inboundStart.y);
+        ctx.lineTo(inboundEnd.x, inboundEnd.y);
+
+        // Draw turn at fix (inbound to outbound)
+        const turn1CenterX = (inboundEnd.x + outboundStart.x) / 2;
+        const turn1CenterY = (inboundEnd.y + outboundStart.y) / 2;
+        const turn1StartAngle = isRightTurn ? courseRad - Math.PI : courseRad;
+        const turn1EndAngle = isRightTurn ? courseRad : courseRad + Math.PI;
+
+        ctx.arc(turn1CenterX, turn1CenterY, turnRadius,
+            turn1StartAngle - Math.PI / 2,
+            turn1EndAngle - Math.PI / 2,
+            !isRightTurn
+        );
+
+        // Draw outbound leg
+        ctx.lineTo(outboundEnd.x, outboundEnd.y);
+
+        // Draw turn at outbound end (outbound to inbound)
+        const turn2CenterX = (outboundEnd.x + inboundStart.x) / 2;
+        const turn2CenterY = (outboundEnd.y + inboundStart.y) / 2;
+
+        ctx.arc(turn2CenterX, turn2CenterY, turnRadius,
+            turn1EndAngle - Math.PI / 2,
+            turn1StartAngle - Math.PI / 2,
+            !isRightTurn
+        );
+
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw holding pattern label
+        ctx.font = '9px Consolas, monospace';
+        ctx.fillStyle = '#ff00ff';
+        ctx.textAlign = 'center';
+        const labelX = (inboundStart.x + outboundEnd.x) / 2;
+        const labelY = (inboundStart.y + outboundEnd.y) / 2;
+        ctx.fillText(`HOLD ${this.obs.turnDirection}`, labelX, labelY);
+
+        ctx.restore();
+    }
+
+    /**
+     * Calculate holding pattern entry type based on aircraft heading
+     * @returns {string} 'direct', 'parallel', or 'teardrop'
+     */
+    calculateHoldingEntry() {
+        if (!this.obs.active) return null;
+
+        const track = this.data.track || this.data.heading;
+        const inboundCourse = this.obs.course;
+        const isRightTurn = this.obs.turnDirection === 'R';
+
+        // Relative bearing to the inbound course
+        let relativeBearing = this.core.normalizeAngle(track - inboundCourse);
+
+        // Adjust for left turns
+        if (!isRightTurn) {
+            relativeBearing = -relativeBearing;
+        }
+
+        // Entry determination based on relative bearing
+        // Direct: 0° to 110° (right of inbound)
+        // Teardrop: 110° to 180° (behind on hold side)
+        // Parallel: 180° to 360° (left of inbound, opposite to hold)
+        if (relativeBearing >= 0 && relativeBearing < 110) {
+            return 'direct';
+        } else if (relativeBearing >= 110 && relativeBearing < 180) {
+            return 'teardrop';
+        } else {
+            return 'parallel';
+        }
+    }
+
+    /**
+     * Toggle holding pattern display
+     */
+    toggleHoldingPattern() {
+        this.obs.holdingPattern = !this.obs.holdingPattern;
+
+        if (this.obs.holdingPattern) {
+            // Activate OBS mode if not already active
+            if (!this.obs.active) {
+                this.toggleObs();
+            }
+            this.obs.entryType = this.calculateHoldingEntry();
+            console.log(`[GTN750] Holding pattern ON - Entry: ${this.obs.entryType}, Turn: ${this.obs.turnDirection}`);
+        } else {
+            console.log('[GTN750] Holding pattern OFF');
+        }
+    }
+
+    /**
+     * Set holding pattern leg time
+     * @param {number} seconds - Leg time in seconds
+     */
+    setHoldingLegTime(seconds) {
+        this.obs.legTime = Math.max(30, Math.min(240, seconds)); // 30s to 4min
+    }
+
+    /**
+     * Toggle holding pattern turn direction
+     */
+    toggleHoldingDirection() {
+        this.obs.turnDirection = this.obs.turnDirection === 'R' ? 'L' : 'R';
+        this.obs.entryType = this.calculateHoldingEntry();
     }
 
     renderWindVector(ctx, x, y) {
@@ -2141,15 +2350,17 @@ class GTN750Widget {
      */
     getFieldData(type) {
         const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
-        let dist = 0, brg = 0, ete = 0;
+        let dist = 0, trueBrg = 0, ete = 0;
 
         if (wp && this.data.latitude && wp.lat && wp.lng) {
             dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
-            brg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
+            trueBrg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
             if (this.data.groundSpeed > 0) {
                 ete = (dist / this.data.groundSpeed) * 60;
             }
         }
+        // Convert true bearing to magnetic for display
+        const magBrg = this.core.trueToMagnetic(trueBrg, this.data.magvar || 0);
 
         switch (type) {
             case 'trk':
@@ -2167,7 +2378,7 @@ class GTN750Widget {
             case 'ete':
                 return { label: 'ETE', value: ete > 0 ? this.core.formatEte(ete) : '--:--' };
             case 'brg':
-                return { label: 'BRG', value: brg > 0 ? Math.round(brg) + '°' : '---°' };
+                return { label: 'BRG', value: magBrg > 0 ? Math.round(magBrg) + '°' : '---°' };
             case 'dtk':
                 return { label: 'DTK', value: this.cdi.dtk ? Math.round(this.cdi.dtk) + '°' : '---°' };
             case 'xtk':
@@ -2625,17 +2836,19 @@ class GTN750Widget {
 
         if (this.data.latitude && wp.lat && wp.lng) {
             const dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
-            const brg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
+            const trueBrg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
+            // Convert true bearing to magnetic for display
+            const magBrg = this.core.trueToMagnetic(trueBrg, this.data.magvar || 0);
 
             if (this.elements.wptDis) this.elements.wptDis.textContent = dist.toFixed(1);
-            if (this.elements.wptBrg) this.elements.wptBrg.textContent = Math.round(brg).toString().padStart(3, '0');
+            if (this.elements.wptBrg) this.elements.wptBrg.textContent = Math.round(magBrg).toString().padStart(3, '0');
 
             if (this.data.groundSpeed > 0 && this.elements.wptEte) {
                 const eteMin = (dist / this.data.groundSpeed) * 60;
                 this.elements.wptEte.textContent = this.core.formatEte(eteMin);
             }
 
-            this.updateCDI(brg, dist);
+            this.updateCDI(magBrg, dist);
         }
     }
 
@@ -3252,6 +3465,8 @@ class GTN750Widget {
         if (d.altitudeMSL !== undefined) this.data.altitude = d.altitudeMSL;
         if (d.groundSpeed !== undefined) this.data.groundSpeed = d.groundSpeed;
         if (d.heading !== undefined) this.data.heading = d.heading;
+        if (d.magvar !== undefined) this.data.magvar = d.magvar;
+        if (d.groundTrack !== undefined) this.data.track = d.groundTrack;
         if (d.verticalSpeed !== undefined) this.data.verticalSpeed = d.verticalSpeed;
         if (d.com1Active !== undefined) this.data.com1Active = d.com1Active;
         if (d.com1Standby !== undefined) this.data.com1Standby = d.com1Standby;
@@ -3273,7 +3488,9 @@ class GTN750Widget {
                 gsi: d.nav1Gsi || 0,
                 gsFlag: d.nav1GsFlag ?? true,
                 hasLoc: d.nav1HasLoc ?? false,
-                hasGs: d.nav1HasGs ?? false
+                hasGs: d.nav1HasGs ?? false,
+                dme: d.dme1Distance || d.nav1Dme || 0,
+                ident: d.nav1Ident || null
             };
         }
         // NAV2 CDI/OBS data
@@ -3285,7 +3502,9 @@ class GTN750Widget {
                 toFrom: d.nav2ToFrom ?? 2,
                 signal: d.nav2Signal || 0,
                 gsi: d.nav2Gsi || 0,
-                gsFlag: d.nav2GsFlag ?? true
+                gsFlag: d.nav2GsFlag ?? true,
+                dme: d.dme2Distance || d.nav2Dme || 0,
+                ident: d.nav2Ident || null
             };
         }
         // GPS CDI data
@@ -3323,6 +3542,9 @@ class GTN750Widget {
         if (this.elements.nav1Stby) this.elements.nav1Stby.textContent = this.data.nav1Standby.toFixed(2);
         if (this.elements.xpdr) this.elements.xpdr.textContent = this.data.transponder.toString().padStart(4, '0');
 
+        // NAV1 tuning info display
+        this.updateNavTuningInfo();
+
         // Time
         if (this.elements.utcTime && this.data.zuluTime) {
             this.elements.utcTime.textContent = this.core.formatTime(this.data.zuluTime);
@@ -3354,6 +3576,75 @@ class GTN750Widget {
                 this.elements.auxEta.textContent = this.core.formatTime(etaHrs);
             }
         }
+    }
+
+    /**
+     * Update NAV1/NAV2 tuning info display (VOR/NDB station identification)
+     */
+    updateNavTuningInfo() {
+        const hasSignal = this.nav1 && this.nav1.signal > 10;
+
+        // Update station identifier
+        if (this.elements.nav1Ident) {
+            if (hasSignal) {
+                // Use ident from SimConnect if available, otherwise look up by frequency
+                let ident = this.nav1.ident;
+                if (!ident) {
+                    ident = this.lookupNavaidByFreq(this.data.nav1Active);
+                }
+                this.elements.nav1Ident.textContent = ident || 'VOR';
+                this.elements.nav1Ident.classList.remove('no-signal');
+            } else {
+                this.elements.nav1Ident.textContent = '---';
+                this.elements.nav1Ident.classList.add('no-signal');
+            }
+        }
+
+        // Update radial (FROM the VOR)
+        if (this.elements.nav1Radial) {
+            if (hasSignal && this.nav1.radial !== undefined) {
+                const radial = Math.round(this.nav1.radial);
+                this.elements.nav1Radial.textContent = `R${radial.toString().padStart(3, '0')}°`;
+            } else {
+                this.elements.nav1Radial.textContent = 'R---°';
+            }
+        }
+
+        // Update DME distance
+        if (this.elements.nav1Dme) {
+            if (hasSignal && this.nav1.dme !== undefined && this.nav1.dme > 0) {
+                this.elements.nav1Dme.textContent = this.nav1.dme.toFixed(1);
+                this.elements.nav1Dme.classList.remove('no-dme');
+            } else {
+                this.elements.nav1Dme.textContent = '--.-';
+                this.elements.nav1Dme.classList.add('no-dme');
+            }
+        }
+    }
+
+    /**
+     * Look up navaid identifier by frequency from nearby navaids
+     * @param {number} freq - NAV frequency (108.00 - 117.95)
+     * @returns {string|null} - Station identifier or null
+     */
+    lookupNavaidByFreq(freq) {
+        // Check cached nearby VORs from NearestPage
+        if (this.nearestPage?.items && this.nearestPage.activeType === 'vor') {
+            const match = this.nearestPage.items.find(v =>
+                Math.abs(parseFloat(v.freq) - freq) < 0.01
+            );
+            if (match) return match.id;
+        }
+
+        // Check local navaid cache
+        if (this.navaidCache) {
+            const match = this.navaidCache.find(n =>
+                Math.abs(parseFloat(n.freq) - freq) < 0.01
+            );
+            if (match) return match.id;
+        }
+
+        return null;
     }
 
     startClock() {

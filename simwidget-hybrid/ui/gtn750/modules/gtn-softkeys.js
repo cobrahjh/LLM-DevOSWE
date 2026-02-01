@@ -61,8 +61,18 @@ class GTNSoftKeys {
             { label: 'GPS', action: 'cdi-source-gps' },
             { label: 'NAV1', action: 'cdi-source-nav1' },
             { label: 'NAV2', action: 'cdi-source-nav2' },
+            { label: 'OBS', action: 'obs-toggle', toggle: true },
+            { label: 'HOLD', action: 'hold-menu' },
+            { label: 'BACK', action: 'back-menu' }
+        ]);
+
+        // Holding pattern menu
+        this.registerContext('hold-menu', [
+            { label: 'HOLD', action: 'hold-toggle', toggle: true },
             { label: 'OBS+', action: 'obs-inc' },
             { label: 'OBS-', action: 'obs-dec' },
+            { label: 'R/L', action: 'hold-direction' },
+            { label: 'TIME', action: 'hold-time' },
             { label: 'BACK', action: 'back-menu' }
         ]);
 
