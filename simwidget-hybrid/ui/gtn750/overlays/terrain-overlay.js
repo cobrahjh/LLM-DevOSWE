@@ -289,8 +289,7 @@ class TerrainOverlay {
 
                 const color = this.getClearanceColor(clearance, cell.elevation);
 
-                // Skip transparent cells (terrain well below aircraft)
-                if (color === 'transparent') continue;
+                // All cells rendered (black for terrain well below aircraft)
 
                 const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
                 const y = cy - cell.nmY * pixelsPerNm - cellPixelSize / 2;
@@ -348,8 +347,7 @@ class TerrainOverlay {
                 }
 
                 const color = this.getClearanceColor(clearance, cell.elevation);
-                // Skip transparent cells
-                if (color === 'transparent') continue;
+                // All cells rendered (black for terrain well below)
                 const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
                 const y = cy + cell.nmY * pixelsPerNm - cellPixelSize / 2;
                 ctx.fillStyle = color;
@@ -386,23 +384,19 @@ class TerrainOverlay {
      * Matches real GTN 750 TAWS display colors
      */
     getClearanceColor(clearance, elevation = 0) {
-        // Real GTN 750 terrain colors (relative to aircraft):
-        // Red = terrain within 500ft of aircraft or ABOVE
-        // Yellow = terrain 500-1000ft below
-        // Green = terrain 1000-1500ft below
-        // No color = terrain more than 1500ft below
+        // GTN 750 terrain colors (relative to aircraft):
+        // Red = 0-500ft clearance (danger)
+        // Yellow = 500-1000ft clearance (caution)
+        // Green = 1000-1500ft clearance (safe)
+        // Black = 1500ft+ clearance (terrain well below)
 
-        if (clearance <= 0) return '#ff0000';           // Above aircraft - solid red
-        if (clearance < 100) return '#ff0000';          // Within 100ft - red (PULL UP)
-        if (clearance < 300) return '#ff4400';          // Within 300ft - red-orange
-        if (clearance < 500) return '#ff6600';          // Within 500ft - orange
-        if (clearance < 750) return '#ffaa00';          // 500-750ft - yellow-orange
-        if (clearance < 1000) return '#ffcc00';         // 750-1000ft - yellow
-        if (clearance < 1250) return '#88cc00';         // 1000-1250ft - yellow-green
-        if (clearance < 1500) return '#44aa00';         // 1250-1500ft - green
+        if (clearance <= 0) return '#ff0000';           // Above aircraft - red
+        if (clearance < 500) return '#ff0000';          // 0-500ft - red (danger)
+        if (clearance < 1000) return '#ffcc00';         // 500-1000ft - yellow (caution)
+        if (clearance < 1500) return '#00cc00';         // 1000-1500ft - green (safe)
 
-        // Below 1500ft clearance - no terrain color (black/transparent)
-        return 'transparent';
+        // 1500ft+ clearance - black (terrain well below)
+        return '#0a1520';
     }
 
     /**
