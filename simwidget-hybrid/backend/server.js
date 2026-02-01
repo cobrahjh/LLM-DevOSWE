@@ -3128,7 +3128,20 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'GPS VERTICAL ANGLE ERROR', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS APPROACH MODE', 'Bool', SimConnectDataType.INT32, 0);
 
-        console.log('[SimConnect] Registered 53 SimVars for MSFS 2024 (with NAV/CDI)');
+        // Radio frequencies (11 vars)
+        handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'COM STANDBY FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'COM STANDBY FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV ACTIVE FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV STANDBY FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV ACTIVE FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV STANDBY FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ADF ACTIVE FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ADF STANDBY FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TRANSPONDER CODE:1', 'BCO16', SimConnectDataType.INT32, 0);
+
+        console.log('[SimConnect] Registered 64 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3249,6 +3262,19 @@ async function initSimConnect() {
                     const gpsVerticalError = d.readFloat64();
                     const gpsApproachMode = d.readInt32() !== 0;
 
+                    // Radio frequencies (11 vars)
+                    const com1Active = d.readFloat64();
+                    const com1Standby = d.readFloat64();
+                    const com2Active = d.readFloat64();
+                    const com2Standby = d.readFloat64();
+                    const nav1Active = d.readFloat64();
+                    const nav1Standby = d.readFloat64();
+                    const nav2Active = d.readFloat64();
+                    const nav2Standby = d.readFloat64();
+                    const adfActive = d.readFloat64();
+                    const adfStandby = d.readFloat64();
+                    const transponder = d.readInt32();
+
                     flightData = {
                         altitude, speed, heading, verticalSpeed, groundSpeed,
                         latitude, longitude, pitch, bank, magvar,
@@ -3265,6 +3291,10 @@ async function initSimConnect() {
                         // GPS CDI data
                         gpsCdiNeedle, gpsCrossTrackError, gpsDesiredTrack,
                         gpsObsValue, gpsVerticalError, gpsApproachMode,
+                        // Radio frequencies
+                        com1Active, com1Standby, com2Active, com2Standby,
+                        nav1Active, nav1Standby, nav2Active, nav2Standby,
+                        adfActive, adfStandby, transponder,
                         // Defaults for missing data
                         groundTrack: heading, altitudeMSL: altitude,
                         parkingBrake: false, gearDown: true, flapsIndex: 0,
