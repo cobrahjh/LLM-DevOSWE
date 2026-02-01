@@ -586,8 +586,8 @@ class TerrainOverlay {
         ctx.textAlign = 'right';
         ctx.fillText(this.range + ' NM', width - 10, 20);
 
-        // Return minimum clearance
-        return this.getMinClearance(terrainGrid, aircraft.altitude);
+        // Return real AGL as clearance (actual terrain clearance at aircraft position)
+        return Math.round(realAGL);
     }
 
     /**
