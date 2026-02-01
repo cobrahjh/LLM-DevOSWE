@@ -3154,7 +3154,12 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'LIGHT LANDING', 'Bool', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'LIGHT TAXI', 'Bool', SimConnectDataType.INT32, 0);
 
-        console.log('[SimConnect] Registered 73 SimVars for MSFS 2024');
+        // Gear and Flaps (3 vars)
+        handle.addToDataDefinition(0, 'GEAR HANDLE POSITION', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'FLAPS HANDLE INDEX', 'Number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'BRAKE PARKING POSITION', 'Bool', SimConnectDataType.INT32, 0);
+
+        console.log('[SimConnect] Registered 76 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3301,6 +3306,11 @@ async function initSimConnect() {
                     const landingLight = d.readInt32() !== 0;
                     const taxiLight = d.readInt32() !== 0;
 
+                    // Gear and Flaps (3 vars)
+                    const gearDown = d.readInt32() !== 0;
+                    const flapsIndex = d.readInt32();
+                    const parkingBrake = d.readInt32() !== 0;
+
                     flightData = {
                         altitude, speed, heading, verticalSpeed, groundSpeed,
                         latitude, longitude, pitch, bank, magvar,
@@ -3325,9 +3335,10 @@ async function initSimConnect() {
                         dme1Distance, dme2Distance, dme1Speed, dme2Speed,
                         // Lights
                         navLight, beaconLight, strobeLight, landingLight, taxiLight,
+                        // Gear and Flaps
+                        gearDown, flapsIndex, parkingBrake,
                         // Defaults for missing data
                         groundTrack: heading, altitudeMSL: altitude,
-                        parkingBrake: false, gearDown: true, flapsIndex: 0,
                         connected: true
                     };
                     broadcastFlightData();
