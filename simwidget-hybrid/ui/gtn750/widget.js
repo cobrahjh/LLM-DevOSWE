@@ -309,9 +309,11 @@ class GTN750Widget {
 
     initSoftKeys() {
         if (typeof GTNSoftKeys === 'undefined') {
-            console.warn('[GTN750] GTNSoftKeys not loaded yet');
+            console.warn('[GTN750] GTNSoftKeys not loaded yet, retrying...');
+            setTimeout(() => this.initSoftKeys(), 100);
             return;
         }
+        if (this.softKeys) return; // Already initialized
         this.softKeys = new GTNSoftKeys({
             container: document.getElementById('gtn-softkeys')
         });
@@ -338,9 +340,15 @@ class GTN750Widget {
             title.textContent = titles[pageId] || pageId.toUpperCase();
         }
 
-        // Update soft keys context
+        // Update soft keys context (with retry if not initialized)
         if (this.softKeys) {
             this.softKeys.setContext(pageId);
+        } else {
+            // Soft keys not ready yet, retry after short delay
+            setTimeout(() => {
+                if (!this.softKeys) this.initSoftKeys();
+                this.softKeys?.setContext(pageId);
+            }, 100);
         }
 
         // Update tabs
