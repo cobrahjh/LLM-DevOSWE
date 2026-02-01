@@ -3532,6 +3532,9 @@ class GTN750Widget {
         if (d.latitude !== undefined) this.data.latitude = d.latitude;
         if (d.longitude !== undefined) this.data.longitude = d.longitude;
         if (d.altitudeMSL !== undefined) this.data.altitude = d.altitudeMSL;
+        if (d.altitude !== undefined) this.data.altitude = d.altitude;
+        if (d.altitudeAGL !== undefined) this.data.altitudeAGL = d.altitudeAGL;
+        if (d.groundAltitude !== undefined) this.data.groundAltitude = d.groundAltitude;
         if (d.groundSpeed !== undefined) this.data.groundSpeed = d.groundSpeed;
         if (d.heading !== undefined) this.data.heading = d.heading;
         if (d.magvar !== undefined) this.data.magvar = d.magvar;
