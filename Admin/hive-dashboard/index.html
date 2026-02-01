@@ -595,6 +595,58 @@
             </div>
         </div>
 
+        <!-- Daily Intel Report -->
+        <div class="card collapsible-card" style="grid-column: span 2;">
+            <div class="collapsible-header" onclick="toggleSection('intel-curated')">
+                <h3>
+                    <span>Daily Intel Report</span>
+                    <span class="count" id="intelCuratedCount">0</span>
+                </h3>
+                <span class="collapsible-toggle" id="intel-curated-toggle">▼</span>
+            </div>
+            <div class="collapsible-content" id="intel-curated-content">
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                    <select id="intelFilter" onchange="loadCuratedIntel()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:4px 8px;font-size:11px;">
+                        <option value="pending">Pending Review</option>
+                        <option value="recommended" selected>Recommended</option>
+                        <option value="approved">Approved</option>
+                        <option value="all">All</option>
+                    </select>
+                    <button class="btn small secondary" onclick="collectIntel()" title="Fetch fresh intel from all sources">Collect New</button>
+                    <span id="intelLastFetch" style="color:#666;font-size:10px;margin-left:auto;"></span>
+                </div>
+                <div id="intelCuratedList" style="max-height:400px;overflow-y:auto;">
+                    <div class="loading">Loading intel</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="card collapsible-card">
+            <div class="collapsible-header" onclick="toggleSection('alerts')">
+                <h3>
+                    <span>Alerts</span>
+                    <span class="count" id="alertCount">0</span>
+                </h3>
+                <span class="collapsible-toggle" id="alerts-toggle">▼</span>
+            </div>
+            <div class="collapsible-content" id="alerts-content">
+                <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+                    <select id="alertSeverityFilter" onchange="loadAlerts()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:3px 6px;font-size:10px;">
+                        <option value="all">All</option>
+                        <option value="critical">Critical</option>
+                        <option value="error">Error</option>
+                        <option value="warning">Warning</option>
+                        <option value="info">Info</option>
+                    </select>
+                    <button class="btn small secondary" onclick="ackAllAlerts()" style="font-size:10px;padding:3px 8px;">Clear All</button>
+                </div>
+                <div class="collapsible-list" id="alertList">
+                    <div style="color:#00ff88;text-align:center;padding:20px;">No alerts</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Intel Feed Card -->
         <div class="card intel-card">
             <div class="card-header">
@@ -715,58 +767,6 @@
                 <div class="collapsible-content" id="mcp-content">
                     <div class="collapsible-list" id="mcpList">
                         <div class="loading">Loading</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Curated Intel -->
-            <div class="card collapsible-card" style="grid-column: span 2;">
-                <div class="collapsible-header" onclick="toggleSection('intel-curated')">
-                    <h3>
-                        <span>Daily Intel Report</span>
-                        <span class="count" id="intelCuratedCount">0</span>
-                    </h3>
-                    <span class="collapsible-toggle" id="intel-curated-toggle">▼</span>
-                </div>
-                <div class="collapsible-content" id="intel-curated-content">
-                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-                        <select id="intelFilter" onchange="loadCuratedIntel()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:4px 8px;font-size:11px;">
-                            <option value="pending">Pending Review</option>
-                            <option value="recommended" selected>Recommended</option>
-                            <option value="approved">Approved</option>
-                            <option value="all">All</option>
-                        </select>
-                        <button class="btn small secondary" onclick="collectIntel()" title="Fetch fresh intel from all sources">Collect New</button>
-                        <span id="intelLastFetch" style="color:#666;font-size:10px;margin-left:auto;"></span>
-                    </div>
-                    <div id="intelCuratedList" style="max-height:400px;overflow-y:auto;">
-                        <div class="loading">Loading intel</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Alerts -->
-            <div class="card collapsible-card">
-                <div class="collapsible-header" onclick="toggleSection('alerts')">
-                    <h3>
-                        <span>Alerts</span>
-                        <span class="count" id="alertCount">0</span>
-                    </h3>
-                    <span class="collapsible-toggle" id="alerts-toggle">▼</span>
-                </div>
-                <div class="collapsible-content" id="alerts-content">
-                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-                        <select id="alertSeverityFilter" onchange="loadAlerts()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:3px 6px;font-size:10px;">
-                            <option value="all">All</option>
-                            <option value="critical">Critical</option>
-                            <option value="error">Error</option>
-                            <option value="warning">Warning</option>
-                            <option value="info">Info</option>
-                        </select>
-                        <button class="btn small secondary" onclick="ackAllAlerts()" style="font-size:10px;padding:3px 8px;">Clear All</button>
-                    </div>
-                    <div class="collapsible-list" id="alertList">
-                        <div style="color:#00ff88;text-align:center;padding:20px;">No alerts</div>
                     </div>
                 </div>
             </div>
