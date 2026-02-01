@@ -732,7 +732,7 @@
                     <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
                         <select id="intelFilter" onchange="loadCuratedIntel()" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #333;border-radius:4px;padding:4px 8px;font-size:11px;">
                             <option value="pending">Pending Review</option>
-                            <option value="recommended">Recommended</option>
+                            <option value="recommended" selected>Recommended</option>
                             <option value="approved">Approved</option>
                             <option value="all">All</option>
                         </select>
@@ -1244,9 +1244,9 @@
                 const color = groupOnline === group.length ? '#00ff88' : groupOnline > 0 ? '#ffaa00' : '#ff4444';
                 servicesHtml += '<div class="svc-group-header" onclick="toggleServiceGroup(this)" style="color:#888;font-size:10px;text-transform:uppercase;margin:8px 0 4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;">';
                 servicesHtml += '<span>' + cat + '</span>';
-                servicesHtml += '<span style="color:' + color + ';font-size:9px;">' + groupOnline + '/' + group.length + ' ▼</span>';
+                servicesHtml += '<span style="color:' + color + ';font-size:9px;">' + groupOnline + '/' + group.length + ' ▶</span>';
                 servicesHtml += '</div>';
-                servicesHtml += '<div class="svc-group">';
+                servicesHtml += '<div class="svc-group" style="display:none;">';
                 servicesHtml += group.map(s => renderServiceItem(s)).join('');
                 servicesHtml += '</div>';
             }
@@ -2083,7 +2083,7 @@
         // Load Curated Intel
         async function loadCuratedIntel() {
             const container = document.getElementById('intelCuratedList');
-            const filter = document.getElementById('intelFilter')?.value || 'pending';
+            const filter = document.getElementById('intelFilter')?.value || 'recommended';
             try {
                 const res = await fetchWithTimeout(`http://${HOST}:3002/api/intel/curated?filter=${filter}`, 10000);
                 if (res.ok) {
