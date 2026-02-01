@@ -247,16 +247,14 @@ class TerrainOverlay {
             for (let col = 0; col < cellsPerSide; col++) {
                 const cell = grid[row][col];
                 const clearance = altitude - cell.elevation;
-                const color = this.getClearanceColor(clearance);
+                const color = this.getClearanceColor(clearance, cell.elevation);
 
-                if (color !== 'transparent') {
-                    const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
-                    const y = cy - cell.nmY * pixelsPerNm - cellPixelSize / 2;
+                const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
+                const y = cy - cell.nmY * pixelsPerNm - cellPixelSize / 2;
 
-                    ctx.fillStyle = color;
-                    ctx.globalAlpha = 0.6;
-                    ctx.fillRect(x, y, cellPixelSize + 1, cellPixelSize + 1);
-                }
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(x, y, cellPixelSize + 1, cellPixelSize + 1);
             }
         }
 
@@ -292,14 +290,12 @@ class TerrainOverlay {
                 const distance = Math.sqrt(cell.nmX * cell.nmX + cell.nmY * cell.nmY);
                 if (distance > range) continue;
                 const clearance = altitude - cell.elevation;
-                const color = this.getClearanceColor(clearance);
-                if (color !== 'transparent') {
-                    const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
-                    const y = cy + cell.nmY * pixelsPerNm - cellPixelSize / 2;
-                    ctx.fillStyle = color;
-                    ctx.globalAlpha = 0.6;
-                    ctx.fillRect(x, y, cellPixelSize + 1, cellPixelSize + 1);
-                }
+                const color = this.getClearanceColor(clearance, cell.elevation);
+                const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
+                const y = cy + cell.nmY * pixelsPerNm - cellPixelSize / 2;
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(x, y, cellPixelSize + 1, cellPixelSize + 1);
             }
         }
         ctx.globalAlpha = 1.0;
@@ -327,26 +323,26 @@ class TerrainOverlay {
     }
 
     /**
-     * Get color based on terrain clearance
-     * Shows terrain relative to aircraft altitude with color gradient
+     * Get color based on terrain clearance and elevation
+     * Shows terrain with TAWS danger colors + elevation-based coloring
      */
     getClearanceColor(clearance, elevation = 0) {
-        // Danger zones - TAWS colors
-        if (clearance < this.thresholds.pullUp) return this.colors.pullUp;
-        if (clearance < this.thresholds.warning) return this.colors.warning;
-        if (clearance < this.thresholds.caution) return this.colors.caution;
-        if (clearance < this.thresholds.safe) return this.colors.safe;
+        // Danger zones - TAWS colors (always take priority)
+        if (clearance < this.thresholds.pullUp) return '#ff0000';   // Red
+        if (clearance < this.thresholds.warning) return '#ff6600';  // Orange
+        if (clearance < this.thresholds.caution) return '#ffcc00';  // Yellow
+        if (clearance < this.thresholds.safe) return '#00cc00';     // Bright green
 
-        // Always show terrain with relative coloring
-        if (this.alwaysShowTerrain) {
-            // Color based on elevation - higher terrain = brighter
-            if (clearance < 2000) return '#006600';      // Close terrain - bright green
-            if (clearance < 3000) return '#005500';      // Medium clearance
-            if (clearance < 5000) return '#004400';      // Good clearance
-            return '#003300';                             // Far below - dark green
-        }
-
-        return 'transparent';
+        // Show terrain based on ELEVATION (not clearance) for visual variety
+        // Higher terrain = warmer colors (yellow/orange tint)
+        // Lower terrain = cooler colors (darker green/blue tint)
+        if (elevation > 4000) return '#ccaa00';    // High terrain - yellow-brown
+        if (elevation > 3000) return '#88aa00';    // Medium-high - yellow-green
+        if (elevation > 2000) return '#44aa00';    // Medium - green
+        if (elevation > 1000) return '#008844';    // Low-medium - teal-green
+        if (elevation > 500) return '#006655';     // Low - blue-green
+        if (elevation > 100) return '#004466';     // Very low - blue
+        return '#003344';                           // Sea level - dark blue
     }
 
     /**
