@@ -3059,26 +3059,27 @@ async function initSimConnect() {
         });
         console.log('Mapped', events.length, 'client events');
         
-        // Define data request using proper data types
+        // MSFS 2024 MINIMAL DATA REQUEST - Essential flight data only
+        // Reduced to avoid buffer overflow issues with MSFS 2024
+        console.log('[SimConnect] Using MSFS 2024 minimal data mode');
+
+        // Core flight data (14 vars)
         handle.addToDataDefinition(0, 'PLANE ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AIRSPEED INDICATED', 'knots', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'PLANE HEADING DEGREES MAGNETIC', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'MAGVAR', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS GROUND TRUE TRACK', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'VERTICAL SPEED', 'feet per minute', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'BRAKE PARKING POSITION', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'GEAR HANDLE POSITION', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'FLAPS HANDLE INDEX', 'Number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'LIGHT NAV', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'LIGHT BEACON', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'LIGHT STROBE', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'LIGHT LANDING', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'LIGHT TAXI', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'ENG COMBUSTION:1', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'GENERAL ENG THROTTLE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GROUND VELOCITY', 'knots', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PLANE LATITUDE', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PLANE LONGITUDE', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PLANE PITCH DEGREES', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PLANE BANK DEGREES', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'MAGVAR', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT WIND DIRECTION', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT WIND VELOCITY', 'knots', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'LOCAL TIME', 'Hours', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'ZULU TIME', 'Hours', SimConnectDataType.FLOAT64, 0);
-        // Autopilot data
+
+        // Autopilot (9 vars)
         handle.addToDataDefinition(0, 'AUTOPILOT MASTER', 'Bool', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'AUTOPILOT HEADING LOCK', 'Bool', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'AUTOPILOT ALTITUDE LOCK', 'Bool', SimConnectDataType.INT32, 0);
@@ -3088,130 +3089,27 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'AUTOPILOT ALTITUDE LOCK VAR', 'feet', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AUTOPILOT VERTICAL HOLD VAR', 'feet per minute', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AUTOPILOT AIRSPEED HOLD VAR', 'knots', SimConnectDataType.FLOAT64, 0);
-        // Fuel data - Total and flow
-        handle.addToDataDefinition(0, 'FUEL TOTAL QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TOTAL CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'ENG FUEL FLOW GPH:1', 'gallons per hour', SimConnectDataType.FLOAT64, 0);
-        // Individual tank quantities (11 tanks)
-        handle.addToDataDefinition(0, 'FUEL TANK LEFT MAIN QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK RIGHT MAIN QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK LEFT AUX QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK RIGHT AUX QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK CENTER QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK CENTER2 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK CENTER3 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK LEFT TIP QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK RIGHT TIP QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL1 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL2 QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        // Individual tank capacities (11 tanks)
-        handle.addToDataDefinition(0, 'FUEL TANK LEFT MAIN CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK RIGHT MAIN CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK LEFT AUX CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK RIGHT AUX CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK CENTER CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK CENTER2 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK CENTER3 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK LEFT TIP CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK RIGHT TIP CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL1 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL2 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
-        // Engine control data
-        handle.addToDataDefinition(0, 'GENERAL ENG PROPELLER LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GENERAL ENG MIXTURE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
-        // Engine instrument data (for engine-monitor widget)
-        handle.addToDataDefinition(0, 'GENERAL ENG RPM:1', 'rpm', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'RECIP ENG MANIFOLD PRESSURE:1', 'inHg', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GENERAL ENG OIL TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GENERAL ENG OIL PRESSURE:1', 'psi', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'RECIP ENG EXHAUST GAS TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'RECIP ENG CYLINDER HEAD TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
-        // Additional autopilot modes (for autopilot widget)
-        handle.addToDataDefinition(0, 'AUTOPILOT FLIGHT DIRECTOR ACTIVE', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'AUTOPILOT YAW DAMPER', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'AUTOPILOT NAV1 LOCK', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'AUTOPILOT APPROACH HOLD', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'AUTOPILOT BACKCOURSE HOLD', 'Bool', SimConnectDataType.INT32, 0);
-        // Flight control data
-        handle.addToDataDefinition(0, 'AILERON POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'ELEVATOR POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'RUDDER POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
-        // Additional flight data (for flight-data-widget)
-        handle.addToDataDefinition(0, 'GROUND VELOCITY', 'knots', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'AMBIENT WIND DIRECTION', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'AMBIENT WIND VELOCITY', 'knots', SimConnectDataType.FLOAT64, 0);
-        // Weather data from sim
-        handle.addToDataDefinition(0, 'AMBIENT TEMPERATURE', 'celsius', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'AMBIENT PRESSURE', 'inHg', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'AMBIENT VISIBILITY', 'meters', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'AMBIENT PRECIP STATE', 'mask', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'BAROMETER PRESSURE', 'millibars', SimConnectDataType.FLOAT64, 0);
-        // Position data (for flight recorder playback)
-        handle.addToDataDefinition(0, 'PLANE LATITUDE', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'PLANE LONGITUDE', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'PLANE ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'PLANE PITCH DEGREES', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'PLANE BANK DEGREES', 'degrees', SimConnectDataType.FLOAT64, 0);
-        // Radio frequencies
-        handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'COM STANDBY FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'COM STANDBY FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV ACTIVE FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV STANDBY FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV ACTIVE FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV STANDBY FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'ADF ACTIVE FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'ADF STANDBY FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'TRANSPONDER CODE:1', 'BCO16', SimConnectDataType.INT32, 0);
-        // DME data
-        handle.addToDataDefinition(0, 'NAV DME:1', 'nautical miles', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV DME:2', 'nautical miles', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV DMESPEED:1', 'knots', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV DMESPEED:2', 'knots', SimConnectDataType.FLOAT64, 0);
-        // GPS Flight Plan data
+
+        // GPS (8 vars)
         handle.addToDataDefinition(0, 'GPS FLIGHT PLAN WP COUNT', 'number', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'GPS FLIGHT PLAN WP INDEX', 'number', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'GPS WP DISTANCE', 'nautical miles', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS WP ETE', 'seconds', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS WP BEARING', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS WP NEXT LAT', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS WP NEXT LON', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS WP NEXT ALT', 'feet', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS WP PREV LAT', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS WP PREV LON', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS ETE', 'seconds', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS POSITION LAT', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS POSITION LON', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS ETE', 'seconds', SimConnectDataType.FLOAT64, 0);
 
-        // NAV1 CDI/OBS/Glideslope data
-        handle.addToDataDefinition(0, 'NAV CDI:1', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV OBS:1', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV RADIAL:1', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV TOFROM:1', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV SIGNAL:1', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV GSI:1', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV GS FLAG:1', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV HAS LOCALIZER:1', 'Bool', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV HAS GLIDE SLOPE:1', 'Bool', SimConnectDataType.INT32, 0);
-        // NAV2 CDI/OBS data
-        handle.addToDataDefinition(0, 'NAV CDI:2', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV OBS:2', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV RADIAL:2', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'NAV TOFROM:2', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV SIGNAL:2', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV GSI:2', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'NAV GS FLAG:2', 'Bool', SimConnectDataType.INT32, 0);
-        // GPS CDI data
-        handle.addToDataDefinition(0, 'GPS CDI NEEDLE', 'number', SimConnectDataType.INT32, 0);
-        handle.addToDataDefinition(0, 'GPS WP CROSS TRK', 'nautical miles', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS WP DESIRED TRACK', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS OBS VALUE', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS VERTICAL ANGLE ERROR', 'degrees', SimConnectDataType.FLOAT64, 0);
-        handle.addToDataDefinition(0, 'GPS APPROACH MODE', 'Bool', SimConnectDataType.INT32, 0);
-        // Navigation source
-        handle.addToDataDefinition(0, 'AUTOPILOT NAV SELECTED', 'number', SimConnectDataType.INT32, 0);
-        console.log('[Nav] Registered CDI/OBS/Glideslope SimVars');
+        // Fuel basics (3 vars)
+        handle.addToDataDefinition(0, 'FUEL TOTAL QUANTITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'FUEL TOTAL CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ENG FUEL FLOW GPH:1', 'gallons per hour', SimConnectDataType.FLOAT64, 0);
+
+        // Engine (2 vars)
+        handle.addToDataDefinition(0, 'ENG COMBUSTION:1', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'GENERAL ENG THROTTLE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
+
+        console.log('[SimConnect] Registered 36 essential SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3264,165 +3162,78 @@ async function initSimConnect() {
         // Handle incoming data
         handle.on('simObjectData', (data) => {
             if (data.requestID === 0) {
-                // Read data in order using buffer methods
+                // MSFS 2024 MINIMAL DATA READ - matches reduced data definition
                 const d = data.data;
                 try {
+                    // Core flight data (14 vars)
+                    const altitude = d.readFloat64();
+                    const speed = d.readFloat64();
+                    const heading = d.readFloat64();
+                    const verticalSpeed = d.readFloat64();
+                    const groundSpeed = d.readFloat64();
+                    const latitude = d.readFloat64();
+                    const longitude = d.readFloat64();
+                    const pitch = d.readFloat64();
+                    const bank = d.readFloat64();
+                    const magvar = d.readFloat64();
+                    const windDirection = d.readFloat64();
+                    const windSpeed = d.readFloat64();
+                    const localTime = d.readFloat64();
+                    const zuluTime = d.readFloat64();
+
+                    // Autopilot (9 vars)
+                    const apMaster = d.readInt32() !== 0;
+                    const apHdgLock = d.readInt32() !== 0;
+                    const apAltLock = d.readInt32() !== 0;
+                    const apVsLock = d.readInt32() !== 0;
+                    const apSpdLock = d.readInt32() !== 0;
+                    const apHdgSet = d.readFloat64();
+                    const apAltSet = d.readFloat64();
+                    const apVsSet = d.readFloat64();
+                    const apSpdSet = d.readFloat64();
+
+                    // GPS (8 vars)
+                    const gpsWpCount = d.readInt32();
+                    const gpsWpIndex = d.readInt32();
+                    const gpsWpDistance = d.readFloat64();
+                    const gpsWpEte = d.readFloat64();
+                    const gpsWpBearing = d.readFloat64();
+                    const gpsLat = d.readFloat64();
+                    const gpsLon = d.readFloat64();
+                    const gpsEte = d.readFloat64();
+
+                    // Fuel (3 vars)
+                    const fuelTotal = d.readFloat64();
+                    const fuelCapacity = d.readFloat64();
+                    const fuelFlow = d.readFloat64();
+
+                    // Engine (2 vars)
+                    const engineRunning = d.readInt32() !== 0;
+                    const throttle = d.readFloat64();
+
                     flightData = {
-                        altitude: d.readFloat64(),
-                        speed: d.readFloat64(),
-                        heading: d.readFloat64(),
-                        magvar: d.readFloat64(),
-                        groundTrack: d.readFloat64(),
-                        verticalSpeed: d.readFloat64(),
-                        parkingBrake: d.readInt32() !== 0,
-                        gearDown: d.readInt32() !== 0,
-                        flapsIndex: d.readInt32(),
-                        navLight: d.readInt32() !== 0,
-                        beaconLight: d.readInt32() !== 0,
-                        strobeLight: d.readInt32() !== 0,
-                        landingLight: d.readInt32() !== 0,
-                        taxiLight: d.readInt32() !== 0,
-                        engineRunning: d.readInt32() !== 0,
-                        throttle: d.readFloat64(),
-                        localTime: d.readFloat64(),
-                        zuluTime: d.readFloat64(),
-                        // Autopilot
-                        apMaster: d.readInt32() !== 0,
-                        apHdgLock: d.readInt32() !== 0,
-                        apAltLock: d.readInt32() !== 0,
-                        apVsLock: d.readInt32() !== 0,
-                        apSpdLock: d.readInt32() !== 0,
-                        apHdgSet: d.readFloat64(),
-                        apAltSet: d.readFloat64(),
-                        apVsSet: d.readFloat64(),
-                        apSpdSet: d.readFloat64(),
-                        // Fuel totals
-                        fuelTotal: d.readFloat64(),
-                        fuelCapacity: d.readFloat64(),
-                        fuelFlow: d.readFloat64(),
-                        // Individual tank quantities (read in order)
-                        fuelTankLeftMain: d.readFloat64(),
-                        fuelTankRightMain: d.readFloat64(),
-                        fuelTankLeftAux: d.readFloat64(),
-                        fuelTankRightAux: d.readFloat64(),
-                        fuelTankCenter: d.readFloat64(),
-                        fuelTankCenter2: d.readFloat64(),
-                        fuelTankCenter3: d.readFloat64(),
-                        fuelTankLeftTip: d.readFloat64(),
-                        fuelTankRightTip: d.readFloat64(),
-                        fuelTankExternal1: d.readFloat64(),
-                        fuelTankExternal2: d.readFloat64(),
-                        // Individual tank capacities
-                        fuelTankLeftMainCap: d.readFloat64(),
-                        fuelTankRightMainCap: d.readFloat64(),
-                        fuelTankLeftAuxCap: d.readFloat64(),
-                        fuelTankRightAuxCap: d.readFloat64(),
-                        fuelTankCenterCap: d.readFloat64(),
-                        fuelTankCenter2Cap: d.readFloat64(),
-                        fuelTankCenter3Cap: d.readFloat64(),
-                        fuelTankLeftTipCap: d.readFloat64(),
-                        fuelTankRightTipCap: d.readFloat64(),
-                        fuelTankExternal1Cap: d.readFloat64(),
-                        fuelTankExternal2Cap: d.readFloat64(),
-                        // Engine controls
-                        propeller: d.readFloat64(),
-                        mixture: d.readFloat64(),
-                        // Engine instruments (for engine-monitor)
-                        engineRpm: d.readFloat64(),
-                        manifoldPressure: d.readFloat64(),
-                        oilTemp: d.readFloat64(),
-                        oilPressure: d.readFloat64(),
-                        egt: d.readFloat64(),
-                        cht: d.readFloat64(),
-                        // Additional autopilot modes (for autopilot widget)
-                        apFlightDirector: d.readInt32() !== 0,
-                        apYawDamper: d.readInt32() !== 0,
-                        apNavLock: d.readInt32() !== 0,
-                        apAprLock: d.readInt32() !== 0,
-                        apBcLock: d.readInt32() !== 0,
-                        // Flight controls (-1 to 1 range, convert to -100 to 100)
-                        aileron: d.readFloat64() * 100,
-                        elevator: d.readFloat64() * 100,
-                        rudder: d.readFloat64() * 100,
-                        // Additional flight data
-                        groundSpeed: d.readFloat64(),
-                        windDirection: d.readFloat64(),
-                        windSpeed: d.readFloat64(),
-                        // Sim weather data
-                        ambientTemp: d.readFloat64(),
-                        ambientPressure: d.readFloat64(),
-                        visibility: d.readFloat64(),
-                        precipState: d.readInt32(),
-                        barometerMb: d.readFloat64(),
-                        // Position data (for flight recorder)
-                        latitude: d.readFloat64(),
-                        longitude: d.readFloat64(),
-                        altitudeMSL: d.readFloat64(),
-                        pitch: d.readFloat64(),
-                        bank: d.readFloat64(),
-                        // Radio frequencies (MHz for COM/NAV, KHz for ADF)
-                        com1Active: d.readFloat64(),
-                        com1Standby: d.readFloat64(),
-                        com2Active: d.readFloat64(),
-                        com2Standby: d.readFloat64(),
-                        nav1Active: d.readFloat64(),
-                        nav1Standby: d.readFloat64(),
-                        nav2Active: d.readFloat64(),
-                        nav2Standby: d.readFloat64(),
-                        adfActive: d.readFloat64(),
-                        adfStandby: d.readFloat64(),
-                        transponder: d.readInt32(),
-                        // DME
-                        dme1Distance: d.readFloat64(),
-                        dme2Distance: d.readFloat64(),
-                        dme1Speed: d.readFloat64(),
-                        dme2Speed: d.readFloat64(),
-                        // GPS Flight Plan
-                        gpsWpCount: d.readInt32(),
-                        gpsWpIndex: d.readInt32(),
-                        gpsWpDistance: d.readFloat64(),
-                        gpsWpEte: d.readFloat64(),
-                        gpsWpBearing: d.readFloat64(),
-                        gpsWpNextLat: d.readFloat64(),
-                        gpsWpNextLon: d.readFloat64(),
-                        gpsWpNextAlt: d.readFloat64(),
-                        gpsWpPrevLat: d.readFloat64(),
-                        gpsWpPrevLon: d.readFloat64(),
-                        gpsEte: d.readFloat64(),
-                        gpsLat: d.readFloat64(),
-                        gpsLon: d.readFloat64(),
-                        // NAV1 CDI/OBS/Glideslope
-                        nav1Cdi: d.readInt32(),
-                        nav1Obs: d.readFloat64(),
-                        nav1Radial: d.readFloat64(),
-                        nav1ToFrom: d.readInt32(),
-                        nav1Signal: d.readInt32(),
-                        nav1Gsi: d.readInt32(),
-                        nav1GsFlag: d.readInt32() !== 0,
-                        nav1HasLoc: d.readInt32() !== 0,
-                        nav1HasGs: d.readInt32() !== 0,
-                        // NAV2 CDI/OBS
-                        nav2Cdi: d.readInt32(),
-                        nav2Obs: d.readFloat64(),
-                        nav2Radial: d.readFloat64(),
-                        nav2ToFrom: d.readInt32(),
-                        nav2Signal: d.readInt32(),
-                        nav2Gsi: d.readInt32(),
-                        nav2GsFlag: d.readInt32() !== 0,
-                        // GPS CDI
-                        gpsCdiNeedle: d.readInt32(),
-                        gpsCrossTrackError: d.readFloat64(),
-                        gpsDesiredTrack: d.readFloat64(),
-                        gpsObsValue: d.readFloat64(),
-                        gpsVerticalError: d.readFloat64(),
-                        gpsApproachMode: d.readInt32() !== 0,
-                        // Navigation source
-                        apNavSelected: d.readInt32(),
+                        altitude, speed, heading, verticalSpeed, groundSpeed,
+                        latitude, longitude, pitch, bank, magvar,
+                        windDirection, windSpeed, localTime, zuluTime,
+                        apMaster, apHdgLock, apAltLock, apVsLock, apSpdLock,
+                        apHdgSet, apAltSet, apVsSet, apSpdSet,
+                        gpsWpCount, gpsWpIndex, gpsWpDistance, gpsWpEte, gpsWpBearing,
+                        gpsLat, gpsLon, gpsEte,
+                        fuelTotal, fuelCapacity, fuelFlow,
+                        engineRunning, throttle,
+                        // Defaults for missing data
+                        groundTrack: heading, altitudeMSL: altitude,
+                        parkingBrake: false, gearDown: true, flapsIndex: 0,
+                        navLight: false, beaconLight: false, strobeLight: false,
+                        landingLight: false, taxiLight: false,
                         connected: true
                     };
                     broadcastFlightData();
                 } catch (e) {
-                    console.error('Data read error:', e.message);
+                    if (!this._loggedReadError) {
+                        console.error('Data read error:', e.message);
+                        this._loggedReadError = true;
+                    }
                 }
             }
         });
