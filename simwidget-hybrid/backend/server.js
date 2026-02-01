@@ -3141,7 +3141,20 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'ADF STANDBY FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'TRANSPONDER CODE:1', 'BCO16', SimConnectDataType.INT32, 0);
 
-        console.log('[SimConnect] Registered 64 SimVars for MSFS 2024');
+        // DME (4 vars)
+        handle.addToDataDefinition(0, 'NAV DME:1', 'nautical miles', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV DME:2', 'nautical miles', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV DMESPEED:1', 'knots', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV DMESPEED:2', 'knots', SimConnectDataType.FLOAT64, 0);
+
+        // Lights (5 vars)
+        handle.addToDataDefinition(0, 'LIGHT NAV', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'LIGHT BEACON', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'LIGHT STROBE', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'LIGHT LANDING', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'LIGHT TAXI', 'Bool', SimConnectDataType.INT32, 0);
+
+        console.log('[SimConnect] Registered 73 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3275,6 +3288,19 @@ async function initSimConnect() {
                     const adfStandby = d.readFloat64();
                     const transponder = d.readInt32();
 
+                    // DME (4 vars)
+                    const dme1Distance = d.readFloat64();
+                    const dme2Distance = d.readFloat64();
+                    const dme1Speed = d.readFloat64();
+                    const dme2Speed = d.readFloat64();
+
+                    // Lights (5 vars)
+                    const navLight = d.readInt32() !== 0;
+                    const beaconLight = d.readInt32() !== 0;
+                    const strobeLight = d.readInt32() !== 0;
+                    const landingLight = d.readInt32() !== 0;
+                    const taxiLight = d.readInt32() !== 0;
+
                     flightData = {
                         altitude, speed, heading, verticalSpeed, groundSpeed,
                         latitude, longitude, pitch, bank, magvar,
@@ -3295,11 +3321,13 @@ async function initSimConnect() {
                         com1Active, com1Standby, com2Active, com2Standby,
                         nav1Active, nav1Standby, nav2Active, nav2Standby,
                         adfActive, adfStandby, transponder,
+                        // DME
+                        dme1Distance, dme2Distance, dme1Speed, dme2Speed,
+                        // Lights
+                        navLight, beaconLight, strobeLight, landingLight, taxiLight,
                         // Defaults for missing data
                         groundTrack: heading, altitudeMSL: altitude,
                         parkingBrake: false, gearDown: true, flapsIndex: 0,
-                        navLight: false, beaconLight: false, strobeLight: false,
-                        landingLight: false, taxiLight: false,
                         connected: true
                     };
                     broadcastFlightData();
