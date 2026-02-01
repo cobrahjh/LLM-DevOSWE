@@ -3159,7 +3159,17 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'FLAPS HANDLE INDEX', 'Number', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'BRAKE PARKING POSITION', 'Bool', SimConnectDataType.INT32, 0);
 
-        console.log('[SimConnect] Registered 76 SimVars for MSFS 2024');
+        // Engine Instruments (8 vars)
+        handle.addToDataDefinition(0, 'GENERAL ENG RPM:1', 'rpm', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RECIP ENG MANIFOLD PRESSURE:1', 'inHg', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GENERAL ENG OIL TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GENERAL ENG OIL PRESSURE:1', 'psi', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RECIP ENG EXHAUST GAS TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RECIP ENG CYLINDER HEAD TEMPERATURE:1', 'Fahrenheit', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GENERAL ENG PROPELLER LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GENERAL ENG MIXTURE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
+
+        console.log('[SimConnect] Registered 84 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3311,6 +3321,16 @@ async function initSimConnect() {
                     const flapsIndex = d.readInt32();
                     const parkingBrake = d.readInt32() !== 0;
 
+                    // Engine Instruments (8 vars)
+                    const engineRpm = d.readFloat64();
+                    const manifoldPressure = d.readFloat64();
+                    const oilTemp = d.readFloat64();
+                    const oilPressure = d.readFloat64();
+                    const egt = d.readFloat64();
+                    const cht = d.readFloat64();
+                    const propeller = d.readFloat64();
+                    const mixture = d.readFloat64();
+
                     flightData = {
                         altitude, speed, heading, verticalSpeed, groundSpeed,
                         latitude, longitude, pitch, bank, magvar,
@@ -3337,6 +3357,9 @@ async function initSimConnect() {
                         navLight, beaconLight, strobeLight, landingLight, taxiLight,
                         // Gear and Flaps
                         gearDown, flapsIndex, parkingBrake,
+                        // Engine Instruments
+                        engineRpm, manifoldPressure, oilTemp, oilPressure,
+                        egt, cht, propeller, mixture,
                         // Defaults for missing data
                         groundTrack: heading, altitudeMSL: altitude,
                         connected: true
