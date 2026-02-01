@@ -196,7 +196,7 @@ async function main() {
     }
 
     // Files to copy and transform
-    const files = ['server.js', 'package.json', 'config.json', 'CLAUDE.md'];
+    const files = ['server.js', 'package.json', 'config.json', 'CLAUDE.md', 'remove.js'];
 
     files.forEach(file => {
         const sourcePath = path.join(templateDir, file);
@@ -225,6 +225,14 @@ async function main() {
 .DS_Store
 `);
     console.log('  ✓ Created: .gitignore');
+
+    // Create remove launcher
+    const removeLauncherPath = path.join(projectDir, `remove-${projectName}.bat`);
+    fs.writeFileSync(removeLauncherPath, `@echo off
+:: Remove ${projectName} and all associated files
+node "%~dp0remove.js" ${projectName}
+`);
+    console.log(`  ✓ Created: remove-${projectName}.bat`);
 
     // Ask about additional setup
     console.log('');
