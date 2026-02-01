@@ -309,6 +309,18 @@
             <div class="gtn-page" id="page-terrain" style="display:none;">
                 <div class="gtn-terrain-container">
                     <canvas id="terrain-canvas"></canvas>
+                    <!-- Terrain Range Selector -->
+                    <div class="terrain-range-selector">
+                        <button class="range-btn" id="terrain-zoom-out">-</button>
+                        <span class="range-value" id="terrain-range-value">10</span>
+                        <span class="range-unit">nm</span>
+                        <button class="range-btn" id="terrain-zoom-in">+</button>
+                    </div>
+                    <!-- View Mode Toggle -->
+                    <div class="terrain-view-toggle">
+                        <button class="view-btn" id="terrain-view-360">360°</button>
+                        <button class="view-btn active" id="terrain-view-arc">ARC</button>
+                    </div>
                     <div class="terrain-page-legend">
                         <div class="terrain-legend-title">TERRAIN</div>
                         <div class="terrain-legend-scale">

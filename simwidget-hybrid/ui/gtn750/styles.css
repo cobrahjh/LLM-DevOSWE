@@ -1392,6 +1392,89 @@ body {
     color: var(--gtn-green);
 }
 
+/* Terrain Page Controls */
+.terrain-range-selector {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    z-index: 20;
+}
+
+.terrain-range-selector .range-btn {
+    width: 22px;
+    height: 22px;
+    border: 1px solid #555;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    color: var(--gtn-cyan);
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.terrain-range-selector .range-btn:hover {
+    background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+}
+
+.terrain-range-selector .range-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gtn-cyan);
+    font-family: var(--gtn-mono);
+    min-width: 24px;
+    text-align: center;
+}
+
+.terrain-range-selector .range-unit {
+    font-size: 10px;
+    color: var(--gtn-gray);
+}
+
+.terrain-view-toggle {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 3px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    z-index: 20;
+}
+
+.terrain-view-toggle .view-btn {
+    padding: 4px 12px;
+    border: 1px solid #555;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    color: #888;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.terrain-view-toggle .view-btn:hover {
+    background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+}
+
+.terrain-view-toggle .view-btn.active {
+    background: linear-gradient(180deg, #0a4a0a 0%, #083808 100%);
+    color: var(--gtn-green);
+    border-color: #0a0;
+}
+
 /* Terrain Page Legend (Enhanced) */
 .terrain-page-legend {
     position: absolute;

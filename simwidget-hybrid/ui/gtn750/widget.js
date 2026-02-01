@@ -822,7 +822,12 @@ class GTN750Widget {
             tawsStatus: document.getElementById('taws-status'),
             terrainMode: document.getElementById('terrain-mode'),
             terrainRange: document.getElementById('terrain-range'),
+            terrainRangeValue: document.getElementById('terrain-range-value'),
             terrainClearance: document.getElementById('terrain-clearance'),
+            terrainZoomIn: document.getElementById('terrain-zoom-in'),
+            terrainZoomOut: document.getElementById('terrain-zoom-out'),
+            terrainView360: document.getElementById('terrain-view-360'),
+            terrainViewArc: document.getElementById('terrain-view-arc'),
             // Traffic
             trafficCanvas: document.getElementById('traffic-canvas'),
             trafficMode: document.getElementById('traffic-mode'),
@@ -889,9 +894,12 @@ class GTN750Widget {
         const canvas = this.elements.terrainCanvas;
         if (canvas) {
             this.terrainCtx = canvas.getContext('2d');
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            // Use fallback dimensions if page is hidden
+            canvas.width = rect.width > 0 ? rect.width : 480;
+            canvas.height = rect.height > 0 ? rect.height : 280;
+            console.log('[GTN750] Terrain canvas setup:', canvas.width, 'x', canvas.height);
         }
     }
 
@@ -1060,6 +1068,25 @@ class GTN750Widget {
         document.getElementById('wx-lightning')?.addEventListener('change', (e) => {
             if (this.weatherOverlay) {
                 this.weatherOverlay.setLayer('lightning', e.target.checked);
+            }
+        });
+
+        // Terrain range controls
+        this.terrainRanges = [2, 5, 10, 20, 50];
+        this.elements.terrainZoomIn?.addEventListener('click', () => this.changeTerrainRange(-1));
+        this.elements.terrainZoomOut?.addEventListener('click', () => this.changeTerrainRange(1));
+
+        // Terrain view mode controls
+        this.elements.terrainView360?.addEventListener('click', () => {
+            if (this.terrainOverlay) {
+                this.terrainOverlay.setViewMode('360');
+                this.updateTerrainViewButtons('360');
+            }
+        });
+        this.elements.terrainViewArc?.addEventListener('click', () => {
+            if (this.terrainOverlay) {
+                this.terrainOverlay.setViewMode('arc');
+                this.updateTerrainViewButtons('arc');
             }
         });
 
@@ -2515,6 +2542,35 @@ class GTN750Widget {
         this.weatherRange = ranges[newIdx];
         if (this.elements.wxRange) {
             this.elements.wxRange.textContent = this.weatherRange;
+        }
+    }
+
+    changeTerrainRange(delta) {
+        if (!this.terrainOverlay) return;
+        const ranges = this.terrainRanges || [2, 5, 10, 20, 50];
+        const currentRange = this.terrainOverlay.getRange();
+        const idx = ranges.indexOf(currentRange);
+        const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
+        const newRange = ranges[newIdx];
+        this.terrainOverlay.setRange(newRange);
+        // Update display
+        if (this.elements.terrainRangeValue) {
+            this.elements.terrainRangeValue.textContent = newRange;
+        }
+        if (this.elements.terrainRange) {
+            this.elements.terrainRange.textContent = newRange;
+        }
+    }
+
+    updateTerrainViewButtons(mode) {
+        if (this.elements.terrainView360) {
+            this.elements.terrainView360.classList.toggle('active', mode === '360');
+        }
+        if (this.elements.terrainViewArc) {
+            this.elements.terrainViewArc.classList.toggle('active', mode === 'arc');
+        }
+        if (this.elements.terrainMode) {
+            this.elements.terrainMode.textContent = mode.toUpperCase();
         }
     }
 
