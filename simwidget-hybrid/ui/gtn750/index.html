@@ -309,11 +309,29 @@
             <div class="gtn-page" id="page-terrain" style="display:none;">
                 <div class="gtn-terrain-container">
                     <canvas id="terrain-canvas"></canvas>
-                    <div class="terrain-legend">
-                        <div class="legend-item"><span class="color" style="background:#ff0000"></span>PULL UP</div>
-                        <div class="legend-item"><span class="color" style="background:#ff6600"></span>WARNING</div>
-                        <div class="legend-item"><span class="color" style="background:#ffcc00"></span>CAUTION</div>
-                        <div class="legend-item"><span class="color" style="background:#00aa00"></span>CLEAR</div>
+                    <div class="terrain-page-legend">
+                        <div class="terrain-legend-title">TERRAIN</div>
+                        <div class="terrain-legend-scale">
+                            <div class="terrain-legend-bar">
+                                <div class="tl-segment tl-red"></div>
+                                <div class="tl-segment tl-orange"></div>
+                                <div class="tl-segment tl-yellow"></div>
+                                <div class="tl-segment tl-green"></div>
+                                <div class="tl-segment tl-darkgreen"></div>
+                            </div>
+                            <div class="terrain-legend-labels">
+                                <span>+500ft</span>
+                                <span>+100ft</span>
+                                <span>0ft</span>
+                                <span>-500ft</span>
+                                <span>-1000ft</span>
+                            </div>
+                        </div>
+                        <div class="terrain-legend-alerts">
+                            <div class="tl-alert"><span class="tl-dot tl-red"></span>PULL UP</div>
+                            <div class="tl-alert"><span class="tl-dot tl-orange"></span>TERRAIN</div>
+                            <div class="tl-alert"><span class="tl-dot tl-yellow"></span>CAUTION</div>
+                        </div>
                     </div>
                 </div>
                 <div class="gtn-terrain-status">
