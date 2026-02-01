@@ -55,81 +55,227 @@ body {
         inset 0 0 50px rgba(0, 0, 0, 0.5);
 }
 
-/* ===== FREQUENCY BAR (TOP) ===== */
+/* ===== FREQUENCY BAR (TOP) - GTN 750 STYLE ===== */
 .freq-bar {
     display: flex;
     justify-content: space-between;
-    background: linear-gradient(180deg, #1a1a2a 0%, #0a0a15 100%);
-    padding: 6px 8px;
-    border-bottom: 2px solid var(--gtn-border);
-    gap: 4px;
+    background: #0a0a12;
+    padding: 4px 6px;
+    border-bottom: 2px solid #333;
+    gap: 3px;
+    min-height: 52px;
 }
 
-.freq-group {
+.freq-section {
     display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--gtn-dark);
-    padding: 4px 6px;
-    border-radius: 3px;
-    border: 1px solid #222;
-    flex: 1;
+    flex-direction: column;
+    background: linear-gradient(180deg, #1a1a2a 0%, #0d0d18 100%);
+    border: 1px solid #333;
+    border-radius: 2px;
+    padding: 3px 6px;
 }
 
 .freq-label {
-    font-size: 8px;
-    color: var(--gtn-blue);
-    font-weight: 600;
-    min-width: 28px;
+    font-size: 9px;
+    color: #888;
+    font-weight: 500;
+    text-align: center;
 }
 
-.freq-active {
-    font-size: 13px;
+.freq-sub {
+    font-size: 7px;
+    color: #666;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.freq-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 2px;
+}
+
+.freq-main {
+    font-size: 16px;
     font-weight: 700;
-    color: var(--gtn-green);
+    color: #00ff00;
     font-family: var(--gtn-mono);
+    text-align: center;
 }
 
-.freq-swap {
-    font-size: 10px;
-    color: var(--gtn-gray);
-    padding: 2px 4px;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.15s;
-    background: none;
-    border: none;
+.freq-stby-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
 }
 
-.freq-swap:hover {
-    color: var(--gtn-cyan);
-    background: rgba(0, 255, 255, 0.1);
+.freq-stby-label {
+    font-size: 7px;
+    color: #666;
 }
 
-.freq-swap:active {
-    transform: scale(0.9);
-}
-
-.freq-standby {
+.freq-stby {
     font-size: 11px;
-    color: var(--gtn-gray);
+    color: #00ff00;
     font-family: var(--gtn-mono);
 }
 
-.vol-bar {
-    width: 20px;
-    height: 6px;
-    background: #222;
-    border-radius: 2px;
-    overflow: hidden;
-    margin-left: 4px;
+/* COM Section */
+.com-section {
+    min-width: 80px;
 }
 
-.vol-fill {
-    height: 100%;
-    background: var(--gtn-green);
-    width: 70%;
-    transition: width 0.2s;
+/* Audio Panel */
+.audio-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+}
+
+.audio-btn {
+    font-size: 9px;
+    color: #fff;
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 4px 8px;
+    text-align: center;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.audio-btn:hover {
+    background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+}
+
+.audio-indicator {
+    font-size: 8px;
+    color: #00ffff;
+    margin-top: 2px;
+}
+
+/* MIC/MON Selectors */
+.mic-section, .mon-section {
+    align-items: center;
+    min-width: 45px;
+}
+
+.selector-box {
+    display: flex;
+    gap: 2px;
+    margin: 2px 0;
+}
+
+.selector-btn {
+    width: 18px;
+    height: 18px;
+    background: #1a1a2a;
+    border: 1px solid #444;
+    border-radius: 2px;
+    color: #888;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.selector-btn.active {
+    background: #00aa00;
+    color: #000;
+    border-color: #00ff00;
+}
+
+.selector-btn:hover:not(.active) {
+    background: #2a2a3a;
+}
+
+/* XPDR Section */
+.xpdr-section {
+    min-width: 75px;
+}
+
+.xpdr-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.xpdr-code {
+    font-size: 16px;
+    font-weight: 700;
+    color: #00ff00;
+    font-family: var(--gtn-mono);
+}
+
+.xpdr-ident {
+    font-size: 8px;
+    background: linear-gradient(180deg, #2a4a2a 0%, #1a3a1a 100%);
+    border: 1px solid #4a4;
+    border-radius: 2px;
+    color: #0f0;
+    padding: 2px 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.xpdr-ident:hover {
+    background: linear-gradient(180deg, #3a5a3a 0%, #2a4a2a 100%);
+}
+
+.xpdr-ident:active, .xpdr-ident.active {
+    background: #00ff00;
+    color: #000;
+}
+
+.xpdr-mode-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.xpdr-mode {
+    font-size: 10px;
+    color: #00ff00;
+    background: #1a2a1a;
+    padding: 1px 6px;
+    border-radius: 2px;
+}
+
+.xpdr-mode-indicator {
+    font-size: 9px;
+    color: #00ff00;
+}
+
+/* NAV Section */
+.nav-section {
+    min-width: 100px;
+}
+
+.nav-main-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-freq {
+    font-size: 16px;
+}
+
+.nav-ils-indicator {
+    font-size: 8px;
+    color: #00ffff;
+    background: #0a1a2a;
+    padding: 2px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
 }
 
 /* NAV Tuning Info Display */

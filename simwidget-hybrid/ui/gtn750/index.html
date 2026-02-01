@@ -16,37 +16,71 @@
     <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
 
     <div class="gtn750" id="gtn750">
-        <!-- Frequency Bar (Top) -->
+        <!-- Frequency Bar (Top) - GTN 750 Style -->
         <div class="freq-bar">
-            <div class="freq-group">
-                <div class="freq-label">COM1</div>
-                <div class="freq-active" id="com1">118.00</div>
-                <div class="freq-swap" id="swap-com1">&#x21C5;</div>
-                <div class="freq-standby" id="com1-stby">118.00</div>
-                <div class="vol-bar"><div class="vol-fill" id="com1-vol"></div></div>
-            </div>
-            <div class="freq-group">
-                <div class="freq-label">COM2</div>
-                <div class="freq-active" id="com2">118.00</div>
-                <div class="freq-swap" id="swap-com2">&#x21C5;</div>
-                <div class="freq-standby" id="com2-stby">118.00</div>
-                <div class="vol-bar"><div class="vol-fill" id="com2-vol"></div></div>
-            </div>
-            <div class="freq-group nav-group">
-                <div class="freq-label">NAV1</div>
-                <div class="freq-active" id="nav1">108.00</div>
-                <div class="freq-swap" id="swap-nav1">&#x21C5;</div>
-                <div class="freq-standby" id="nav1-stby">108.00</div>
-                <div class="nav-info" id="nav1-info">
-                    <span class="nav-ident" id="nav1-ident">---</span>
-                    <span class="nav-radial" id="nav1-radial">R---°</span>
-                    <span class="nav-dme" id="nav1-dme">--.-</span>
+            <!-- COM Section -->
+            <div class="freq-section com-section">
+                <div class="freq-header">
+                    <span class="freq-label">COM</span>
+                    <span class="freq-sub">Vol</span>
+                    <span class="freq-sub">Psh<br>Sq</span>
+                </div>
+                <div class="freq-main" id="com1">118.650</div>
+                <div class="freq-stby-row">
+                    <span class="freq-stby-label">STBY</span>
+                    <span class="freq-stby" id="com1-stby">124.850</span>
                 </div>
             </div>
-            <div class="freq-group xpdr-group">
+
+            <!-- Audio Panel -->
+            <div class="freq-section audio-section">
+                <div class="audio-btn" id="audio-panel">Audio<br>Panel</div>
+                <div class="audio-indicator">↓</div>
+            </div>
+
+            <!-- MIC Selector -->
+            <div class="freq-section mic-section">
+                <div class="freq-label">MIC</div>
+                <div class="selector-box">
+                    <div class="selector-btn active" id="mic-1">1</div>
+                    <div class="selector-btn" id="mic-2">2</div>
+                </div>
+                <div class="freq-label">Intercom</div>
+            </div>
+
+            <!-- MON Selector -->
+            <div class="freq-section mon-section">
+                <div class="freq-label">MON</div>
+                <div class="selector-box">
+                    <div class="selector-btn" id="mon-1">1</div>
+                    <div class="selector-btn" id="mon-2">2</div>
+                </div>
+            </div>
+
+            <!-- XPDR Section -->
+            <div class="freq-section xpdr-section">
                 <div class="freq-label">XPDR</div>
-                <div class="freq-active" id="xpdr">1200</div>
-                <div class="xpdr-mode" id="xpdr-mode">ALT</div>
+                <div class="xpdr-row">
+                    <span class="xpdr-code" id="xpdr">1200</span>
+                    <button class="xpdr-ident" id="xpdr-ident">IDENT</button>
+                </div>
+                <div class="xpdr-mode-row">
+                    <span class="xpdr-mode" id="xpdr-mode">ON</span>
+                    <span class="xpdr-mode-indicator">R</span>
+                </div>
+            </div>
+
+            <!-- NAV Section -->
+            <div class="freq-section nav-section">
+                <div class="freq-label">NAV</div>
+                <div class="nav-main-row">
+                    <span class="freq-main nav-freq" id="nav1">110.50</span>
+                    <span class="nav-ils-indicator" id="nav-ils">ILS/GS RW25</span>
+                </div>
+                <div class="freq-stby-row">
+                    <span class="freq-stby-label">STBY</span>
+                    <span class="freq-stby" id="nav1-stby">113.90</span>
+                </div>
             </div>
         </div>
 
