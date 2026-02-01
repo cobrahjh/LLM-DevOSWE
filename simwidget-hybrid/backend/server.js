@@ -3109,7 +3109,26 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'ENG COMBUSTION:1', 'Bool', SimConnectDataType.INT32, 0);
         handle.addToDataDefinition(0, 'GENERAL ENG THROTTLE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
 
-        console.log('[SimConnect] Registered 36 essential SimVars for MSFS 2024');
+        // NAV1 CDI/OBS/Glideslope (9 vars)
+        handle.addToDataDefinition(0, 'NAV CDI:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV OBS:1', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV RADIAL:1', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV TOFROM:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV SIGNAL:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV GSI:1', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV GS FLAG:1', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV HAS LOCALIZER:1', 'Bool', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'NAV HAS GLIDE SLOPE:1', 'Bool', SimConnectDataType.INT32, 0);
+
+        // GPS CDI (6 vars)
+        handle.addToDataDefinition(0, 'GPS CDI NEEDLE', 'number', SimConnectDataType.INT32, 0);
+        handle.addToDataDefinition(0, 'GPS WP CROSS TRK', 'nautical miles', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS WP DESIRED TRACK', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS OBS VALUE', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS VERTICAL ANGLE ERROR', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GPS APPROACH MODE', 'Bool', SimConnectDataType.INT32, 0);
+
+        console.log('[SimConnect] Registered 53 SimVars for MSFS 2024 (with NAV/CDI)');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3211,6 +3230,25 @@ async function initSimConnect() {
                     const engineRunning = d.readInt32() !== 0;
                     const throttle = d.readFloat64();
 
+                    // NAV1 CDI/OBS/Glideslope (9 vars)
+                    const nav1Cdi = d.readInt32();
+                    const nav1Obs = d.readFloat64();
+                    const nav1Radial = d.readFloat64();
+                    const nav1ToFrom = d.readInt32();
+                    const nav1Signal = d.readInt32();
+                    const nav1Gsi = d.readInt32();
+                    const nav1GsFlag = d.readInt32() !== 0;
+                    const nav1HasLoc = d.readInt32() !== 0;
+                    const nav1HasGs = d.readInt32() !== 0;
+
+                    // GPS CDI (6 vars)
+                    const gpsCdiNeedle = d.readInt32();
+                    const gpsCrossTrackError = d.readFloat64();
+                    const gpsDesiredTrack = d.readFloat64();
+                    const gpsObsValue = d.readFloat64();
+                    const gpsVerticalError = d.readFloat64();
+                    const gpsApproachMode = d.readInt32() !== 0;
+
                     flightData = {
                         altitude, speed, heading, verticalSpeed, groundSpeed,
                         latitude, longitude, pitch, bank, magvar,
@@ -3221,6 +3259,12 @@ async function initSimConnect() {
                         gpsLat, gpsLon, gpsEte,
                         fuelTotal, fuelCapacity, fuelFlow,
                         engineRunning, throttle,
+                        // NAV1 CDI data
+                        nav1Cdi, nav1Obs, nav1Radial, nav1ToFrom, nav1Signal,
+                        nav1Gsi, nav1GsFlag, nav1HasLoc, nav1HasGs,
+                        // GPS CDI data
+                        gpsCdiNeedle, gpsCrossTrackError, gpsDesiredTrack,
+                        gpsObsValue, gpsVerticalError, gpsApproachMode,
                         // Defaults for missing data
                         groundTrack: heading, altitudeMSL: altitude,
                         parkingBrake: false, gearDown: true, flapsIndex: 0,
