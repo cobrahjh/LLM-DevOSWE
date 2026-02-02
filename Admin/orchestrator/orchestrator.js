@@ -160,10 +160,10 @@ const SERVICES = {
         id: 'hivemind',
         name: 'Hive-Mind Monitor',
         port: 8701,
-        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-mind'),
+        dir: 'C:\\DevClaude\\Hivemind\\hive\\hive-mind',
         start: 'node hive-mind-server.js',
-        winService: null,  // No Windows Service yet
-        healthEndpoint: '/api/health',
+        winService: 'HiveMindMonitor',
+        healthEndpoint: '/api/uptime',
         priority: 7,
         autoRestart: true
     },
