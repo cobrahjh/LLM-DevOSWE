@@ -114,7 +114,7 @@ const ClaudeController = {
         }
 
         // Use full path to claude executable
-        const claudePath = process.env.CLAUDE_PATH || 'C:\\Users\\hjhar\\.local\\bin\\claude.exe';
+        const claudePath = process.env.CLAUDE_PATH || 'C:\\Users\\Stone-PC\\AppData\\Roaming\\npm\\claude.cmd';
 
         const claudeProcess = spawn(claudePath, args, {
             cwd,

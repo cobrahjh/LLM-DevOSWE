@@ -29,8 +29,7 @@ echo.
 echo   === $Name ===
 echo   [$colorLabel]
 echo.
-claude --model opus --resume --dangerously-skip-permissions %*
-pause
+cmd /k "C:\LLM-DevOSWE\mclaude.bat" --model opus %*
 "@
 
 $batPath = Join-Path $Path "claude-here.bat"
