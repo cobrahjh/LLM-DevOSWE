@@ -37,6 +37,7 @@
 
 const express = require('express');
 const http = require('http');
+const net = require('net');
 const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -96,7 +97,7 @@ const SERVICES = {
         dir: path.join(PROJECT_ROOT, 'simwidget-hybrid', 'backend'),
         start: 'node server.js',
         winService: 'simwidgetmainserver.exe',  // Windows Service ID
-        healthEndpoint: '/api/status',
+        healthEndpoint: '/api/health',
         priority: 1,
         autoRestart: true
     },
@@ -354,13 +355,13 @@ async function checkServiceHealth(serviceId) {
         });
     }
 
-    // HTTP-based health check for Node.js services
+    // HTTP-based health check for Node.js services (2s timeout for speed)
     return new Promise((resolve) => {
         const req = http.get({
             hostname: 'localhost',
             port: svc.port,
             path: svc.healthEndpoint,
-            timeout: 5000
+            timeout: 2000
         }, (res) => {
             res.resume(); // Drain response body to free connection
             resolve({ healthy: res.statusCode === 200, statusCode: res.statusCode });
@@ -379,10 +380,21 @@ async function checkServiceHealth(serviceId) {
 
 async function checkPortInUse(port) {
     return new Promise((resolve) => {
-        exec(`powershell -Command "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Where-Object {$_.State -eq 'Listen'}"`,
-            (error, stdout) => {
-                resolve(stdout.trim().length > 0);
-            });
+        const socket = new net.Socket();
+        socket.setTimeout(500);
+        socket.on('connect', () => {
+            socket.destroy();
+            resolve(true);
+        });
+        socket.on('timeout', () => {
+            socket.destroy();
+            resolve(false);
+        });
+        socket.on('error', () => {
+            socket.destroy();
+            resolve(false);
+        });
+        socket.connect(port, 'localhost');
     });
 }
 
@@ -687,27 +699,61 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', service: 'master', version: '1.0.0' });
 });
 
-// Status (no auth)
+// Status (no auth) - parallel health checks with 10s total timeout
 app.get('/api/status', async (req, res) => {
-    const status = {};
-    for (const [id, svc] of Object.entries(SERVICES)) {
-        const health = await checkServiceHealth(id);
-        const portInUse = await checkPortInUse(svc.port);
-        const state = serviceStates[id];
-        status[id] = {
-            name: svc.name,
-            port: svc.port,
-            running: portInUse,
-            healthy: health.healthy,
-            startMethod: state.startMethod || 'unknown',
-            restartCount: state.restartCount,
-            error: state.error
-        };
+    const entries = Object.entries(SERVICES);
+
+    // Timeout wrapper for entire operation
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Status check timeout')), 10000)
+    );
+
+    try {
+        // Run all health checks in parallel (skip port check if healthy)
+        const statusPromise = Promise.all(
+            entries.map(async ([id, svc]) => {
+                const health = await checkServiceHealth(id);
+                const running = health.healthy ? true : await checkPortInUse(svc.port);
+                const state = serviceStates[id];
+                return [id, {
+                    name: svc.name,
+                    port: svc.port,
+                    running,
+                    healthy: health.healthy,
+                    startMethod: state.startMethod || 'unknown',
+                    restartCount: state.restartCount,
+                    error: state.error
+                }];
+            })
+        );
+
+        const results = await Promise.race([statusPromise, timeoutPromise]);
+        const status = Object.fromEntries(results);
+        res.json({
+            master: { status: 'running', watchdog: watchdogEnabled },
+            services: status
+        });
+    } catch (err) {
+        // Return partial status on timeout
+        const partialStatus = {};
+        for (const [id, svc] of entries) {
+            const state = serviceStates[id];
+            partialStatus[id] = {
+                name: svc.name,
+                port: svc.port,
+                running: state.running || false,
+                healthy: state.lastCheck ? (Date.now() - new Date(state.lastCheck).getTime() < 60000) : false,
+                startMethod: state.startMethod || 'unknown',
+                restartCount: state.restartCount,
+                error: err.message
+            };
+        }
+        res.json({
+            master: { status: 'running', watchdog: watchdogEnabled },
+            services: partialStatus,
+            timeout: true
+        });
     }
-    res.json({ 
-        master: { status: 'running', watchdog: watchdogEnabled },
-        services: status 
-    });
 });
 
 // Log endpoint (no auth)
