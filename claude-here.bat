@@ -5,5 +5,4 @@ cd /d C:\LLM-DevOSWE
 echo.
 echo   [LLM-DevOSWE] BLUE
 echo.
-claude --model opus --resume --dangerously-skip-permissions %*
-pause
+cmd /k "C:\LLM-DevOSWE\mclaude.bat" --model opus --resume %*
