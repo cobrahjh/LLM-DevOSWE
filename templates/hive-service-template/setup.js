@@ -257,7 +257,7 @@ node "%~dp0remove.js" ${projectName}
 :: Claude Code launcher for ${projectName}
 :: Double-click to open project in Claude Code
 cd /d "${projectDir}"
-mclaude --dangerously-skip-permissions --continue
+cmd /k "C:\\LLM-DevOSWE\\mclaude.bat"
 `;
         fs.writeFileSync(launcherPath, launcherContent);
         console.log(`  ✓ Created: claude-${projectName}.bat`);
