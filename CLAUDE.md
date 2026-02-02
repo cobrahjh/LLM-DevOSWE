@@ -82,7 +82,7 @@ Unified SQLite backend for all Hive data. Uses `better-sqlite3` with WAL mode.
 5. **No code in responses** - make changes silently, describe in plain English
 6. **Go with recommendations** - when presenting options, always give a recommendation and proceed with it unless user says otherwise
 7. **Be decisive** - don't ask open-ended questions, make decisions and report what was done
-8. **Use mclaude --resume** - all scripts/batch files must use `mclaude --resume` (C:\LLM-DevOSWE\mclaude.bat), never `claude` directly
+8. **Use mclaude** - all scripts/batch files must use `mclaude` (C:\LLM-DevOSWE\mclaude.bat), never `claude` directly. mclaude includes --dangerously-skip-permissions and --continue by default
 
 ### Before Any Work
 
@@ -292,4 +292,4 @@ C:\ProgramData\ssh\sshd_config
 | Use existing infra | Don't recreate |
 | Security over convenience | Principle of least privilege |
 | Cost warning required | No silent charges |
-| Use mclaude --resume | Scripts need --dangerously-skip-permissions + session resume |
+| Use mclaude | Includes --dangerously-skip-permissions + --continue |
