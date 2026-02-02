@@ -498,6 +498,31 @@
         .alert-ack { font-size: 10px; color: #666; cursor: pointer; padding: 2px 6px; border-radius: 4px; background: #2a2a3e; border: none; }
         .alert-ack:hover { color: #00ff88; background: #1a3a2e; }
 
+        /* Dev Tracker Items */
+        .devtracker-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border-left: 3px solid #ff6b35;
+            font-size: 12px;
+        }
+        .devtracker-item.completed { border-left-color: #00ff88; }
+        .devtracker-item.in_progress { border-left-color: #ffaa00; }
+        .dt-icon { font-size: 14px; }
+        .dt-info { flex: 1; }
+        .dt-title { color: #fff; font-size: 12px; }
+        .dt-meta { color: #666; font-size: 10px; }
+        .dt-status { font-size: 12px; color: #666; }
+        .dt-status.completed { color: #00ff88; }
+        .dt-status.in_progress { color: #ffaa00; }
+        .metric-box { background: #0f0f1a; border-radius: 6px; padding: 8px; text-align: center; }
+        .metric-value { font-size: 18px; font-weight: 600; color: #ff6b35; }
+        .metric-label { font-size: 10px; color: #666; text-transform: uppercase; }
+
         /* Loading & Scrollbar */
         .loading {
             text-align: center;
@@ -647,6 +672,27 @@
                 </div>
                 <div class="collapsible-list" id="alertList">
                     <div style="color:#00ff88;text-align:center;padding:20px;">No alerts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dev Tracker Card -->
+        <div class="card collapsible-card">
+            <div class="collapsible-header" onclick="toggleSection('devtracker')">
+                <h3>
+                    <span>Dev Tracker</span>
+                    <span class="count" id="devTrackerCount">0</span>
+                </h3>
+                <span class="collapsible-toggle" id="devtracker-toggle">▼</span>
+            </div>
+            <div class="collapsible-content" id="devtracker-content">
+                <div id="devTrackerMetrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+                    <div class="metric-box"><div class="metric-value" id="dtTasks">--</div><div class="metric-label">Tasks</div></div>
+                    <div class="metric-box"><div class="metric-value" id="dtLines">--</div><div class="metric-label">Lines</div></div>
+                    <div class="metric-box"><div class="metric-value" id="dtFiles">--</div><div class="metric-label">Files</div></div>
+                </div>
+                <div class="collapsible-list" id="devTrackerList" style="max-height:200px;">
+                    <div style="color:#666;text-align:center;padding:20px;">Loading...</div>
                 </div>
             </div>
         </div>
@@ -1922,6 +1968,47 @@
             uis.forEach((ui, i) => setTimeout(() => window.open(`http://${HOST}:` + ui.port, '_blank'), i * 300));
         }
 
+        // Load Dev Tracker
+        async function loadDevTracker() {
+            try {
+                const [todayRes, metricsRes] = await Promise.all([
+                    fetchWithTimeout(`http://${HOST}:8585/api/dev-tracker/today`, 5000),
+                    fetchWithTimeout(`http://${HOST}:8585/api/dev-tracker/metrics`, 5000)
+                ]);
+                const today = await todayRes.json();
+                const metrics = await metricsRes.json();
+
+                // Update metrics
+                document.getElementById('dtTasks').textContent = metrics.totalTasks || 0;
+                document.getElementById('dtLines').textContent = `+${metrics.totalLinesAdded || 0}`;
+                document.getElementById('dtFiles').textContent = metrics.totalFilesChanged || 0;
+
+                const tasks = today.tasks || [];
+                document.getElementById('devTrackerCount').textContent = tasks.length;
+
+                if (tasks.length === 0) {
+                    document.getElementById('devTrackerList').innerHTML =
+                        '<div style="color:#666;text-align:center;padding:20px;">No tasks today</div>';
+                    return;
+                }
+
+                const catIcons = { feature: '✨', bugfix: '🐛', refactor: '♻️', docs: '📝' };
+                document.getElementById('devTrackerList').innerHTML = tasks.slice().reverse().map(t => `
+                    <div class="devtracker-item ${t.status}">
+                        <span class="dt-icon">${catIcons[t.category] || '📋'}</span>
+                        <div class="dt-info">
+                            <div class="dt-title">${t.title}</div>
+                            <div class="dt-meta">${t.time} · ${t.metrics ? `+${t.metrics.totalLinesAdded || 0}/-${t.metrics.totalLinesRemoved || 0}` : t.files?.length + ' files' || ''}</div>
+                        </div>
+                        <span class="dt-status ${t.status}">${t.status === 'completed' ? '✓' : '⏳'}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('devTrackerList').innerHTML =
+                    '<div style="color:#666;text-align:center;padding:20px;">Dev Tracker unavailable</div>';
+            }
+        }
+
         // Service Logs
         async function loadLogs() {
             const logEl = document.getElementById('logContent');
@@ -2004,6 +2091,7 @@
             loadModels();
             loadMCP();
             loadAlerts();
+            loadDevTracker();
             loadSystem();
         }
 
