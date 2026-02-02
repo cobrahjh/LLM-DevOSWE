@@ -96,6 +96,7 @@ Get-Service Hive* | Start-Service
 | 8766 | Kinship | Optional | `node C:\kinship\server.js` |
 | 8899 | Hive Dashboard | Core | `node C:\LLM-DevOSWE\Admin\hive-dashboard\server.js` |
 | 8900 | silverstream | Optional | `node C:/Projects/silverstream\server.js` |
+| 8900 | bible-summary | Optional | `node C:/Projects/bible-summary\server.js` |
 
 ---
 

@@ -204,7 +204,10 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    let filePath = req.url === '/' ? '/index.html' : req.url;
+    // Route shortcuts
+    let filePath = req.url === '/' ? '/index.html'
+        : req.url === '/lite' ? '/lite.html'
+        : req.url;
     filePath = path.join(PUBLIC_DIR, filePath);
 
     const ext = path.extname(filePath);

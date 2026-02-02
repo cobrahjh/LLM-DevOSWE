@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive Command Center</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a12;
+            color: #e0e0e0;
+            padding: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #2a2a3e;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #ff6b35, #ff9f1c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .clock {
+            color: #666;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .last-refresh {
+            color: #444;
+            font-size: 10px;
+        }
+
+        /* System Bar */
+        .system-bar {
+            display: flex;
+            gap: 24px;
+            padding: 12px 16px;
+            background: #0f0f1a;
+            border: 1px solid #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .metric {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .metric-label { color: #888; }
+        .metric-value { color: #fff; font-weight: 500; }
+        .metric-bar {
+            width: 80px;
+            height: 6px;
+            background: #2a2a3e;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .metric-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .metric-fill.cpu { background: linear-gradient(90deg, #ff6b35, #ff9f1c); }
+        .metric-fill.ram { background: linear-gradient(90deg, #00d9ff, #00ff88); }
+
+        /* Section */
+        .section {
+            background: #12121f;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 10px 16px;
+            background: #1a1a2e;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header .count {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+        .section-header .count.good { color: #00ff88; }
+        .section-header .count.bad { color: #ff4444; }
+        .section-body { padding: 12px 16px; }
+
+        /* Service Row */
+        .service-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        .service-row:last-child { border-bottom: none; }
+        .service-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .service-indicator.online { background: #00ff88; box-shadow: 0 0 6px #00ff8866; }
+        .service-indicator.offline { background: #ff4444; animation: pulse 1.5s ease-in-out infinite; }
+        .service-indicator.unknown { background: #666; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px #ff444466; }
+            50% { opacity: 0.5; box-shadow: 0 0 12px #ff444499; }
+        }
+        .service-name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .service-port {
+            color: #666;
+            font-family: monospace;
+            font-size: 11px;
+            margin-right: 12px;
+            min-width: 50px;
+        }
+        .service-status {
+            font-size: 10px;
+            text-transform: uppercase;
+            width: 55px;
+            text-align: center;
+            margin-right: 8px;
+        }
+        .service-status.online { color: #00ff88; }
+        .service-status.offline { color: #ff4444; }
+        .service-status.unknown { color: #666; }
+
+        /* Buttons */
+        .btn {
+            background: #2a2a3e;
+            border: none;
+            color: #e0e0e0;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #3a3a4e; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn.primary {
+            background: linear-gradient(135deg, #ff6b35, #ff9f1c);
+            color: #fff;
+        }
+        .btn.primary:hover { box-shadow: 0 2px 8px rgba(255,107,53,0.3); }
+        .btn.danger { background: #ff4444; color: #fff; }
+        .btn.danger:hover { background: #ff5555; }
+        .btn.small { padding: 4px 8px; font-size: 10px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Alert Row */
+        .alert-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: #0f0f1a;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 3px solid;
+        }
+        .alert-row:last-child { margin-bottom: 0; }
+        .alert-row.critical { border-color: #ff0066; background: #1a0f15; }
+        .alert-row.error { border-color: #ff4444; background: #1a0f0f; }
+        .alert-row.warning { border-color: #ffaa00; background: #1a1a0f; }
+        .alert-row.info { border-color: #00d9ff; background: #0f1a1a; }
+        .alert-icon {
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .alert-content { flex: 1; }
+        .alert-title { font-size: 12px; color: #fff; font-weight: 500; }
+        .alert-meta { font-size: 10px; color: #666; margin-top: 2px; }
+
+        /* Model List */
+        .model-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .model-item {
+            background: #0f0f1a;
+            padding: 5px 12px;
+            border-radius: 14px;
+            font-size: 11px;
+            border: 1px solid #2a2a3e;
+        }
+        .model-item .source {
+            color: #666;
+            font-size: 9px;
+            margin-left: 4px;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Empty/Loading States */
+        .empty {
+            color: #00ff88;
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+        }
+        .loading {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+        }
+        .error {
+            color: #ff4444;
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        /* Daily Report */
+        .report-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .report-stat {
+            background: #0f0f1a;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .report-stat .value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .report-stat .value.good { color: #00ff88; }
+        .report-stat .value.warn { color: #ffaa00; }
+        .report-stat .value.bad { color: #ff4444; }
+        .report-stat .label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .report-summary {
+            background: #0f0f1a;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #aaa;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .report-summary strong { color: #00d9ff; }
+        .report-summary .improving { color: #00ff88; }
+        .report-summary .degrading { color: #ff4444; }
+        .report-summary .stable { color: #ffaa00; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .system-bar { gap: 16px; }
+            .metric-bar { width: 60px; }
+            .service-port { display: none; }
+            .quick-actions { flex-direction: column; }
+            .quick-actions .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hive Command Center</h1>
+        <div class="header-right">
+            <span class="clock" id="clock">--:--:--</span>
+            <span class="last-refresh" id="lastRefresh"></span>
+            <button class="btn primary" onclick="refreshAll()">Refresh</button>
+        </div>
+    </div>
+
+    <div class="system-bar">
+        <div class="metric">
+            <span class="metric-label">CPU</span>
+            <span class="metric-value" id="cpu">--</span>%
+            <div class="metric-bar"><div class="metric-fill cpu" id="cpuBar" style="width:0%"></div></div>
+        </div>
+        <div class="metric">
+            <span class="metric-label">RAM</span>
+            <span class="metric-value" id="ram">--</span>%
+            <div class="metric-bar"><div class="metric-fill ram" id="ramBar" style="width:0%"></div></div>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Host</span>
+            <span class="metric-value" id="hostname">--</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Uptime</span>
+            <span class="metric-value" id="uptime">--</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <span>Daily Intel Report</span>
+            <span class="count" id="reportDate">--</span>
+        </div>
+        <div class="section-body" id="reportContent">
+            <div class="loading">Loading intel report...</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <span>Services</span>
+            <span class="count" id="serviceCount">--</span>
+        </div>
+        <div class="section-body" id="serviceList">
+            <div class="loading">Loading services...</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <span>Active Alerts</span>
+            <span class="count" id="alertCount">0</span>
+        </div>
+        <div class="section-body" id="alertList">
+            <div class="empty">No active alerts</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <span>LLM Models</span>
+            <span class="count" id="modelCount">0</span>
+        </div>
+        <div class="section-body" id="modelList">
+            <div class="loading">Loading models...</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">Quick Actions</div>
+        <div class="section-body">
+            <div class="quick-actions">
+                <button class="btn danger" onclick="restartAllOffline()" id="btnRestartOffline">Restart All Offline</button>
+                <button class="btn" onclick="ackAllAlerts()" id="btnAckAll">Acknowledge All Alerts</button>
+                <button class="btn" onclick="exportStatus()">Export Status</button>
+                <button class="btn" onclick="openFullDashboard()">Full Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const HOST = location.hostname || 'localhost';
+        let refreshInterval = null;
+
+        // Clock
+        function updateClock() {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Fetch with timeout
+        async function fetchAPI(url, timeout = 3000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(id);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (e) {
+                clearTimeout(id);
+                console.log(`[API] ${url} failed:`, e.message);
+                return null;
+            }
+        }
+
+        // Format uptime
+        function formatUptime(seconds) {
+            if (!seconds || seconds < 0) return '--';
+            const d = Math.floor(seconds / 86400);
+            const h = Math.floor((seconds % 86400) / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            if (d > 0) return `${d}d ${h}h`;
+            if (h > 0) return `${h}h ${m}m`;
+            return `${m}m`;
+        }
+
+        // Load Services from Orchestrator
+        async function loadServices() {
+            const container = document.getElementById('serviceList');
+            const countEl = document.getElementById('serviceCount');
+
+            const data = await fetchAPI(`http://${HOST}:8500/api/status`);
+
+            if (!data || !data.services) {
+                container.innerHTML = '<div class="error">Orchestrator unavailable - check :8500</div>';
+                countEl.textContent = '--';
+                countEl.className = 'count';
+                return;
+            }
+
+            const services = Object.entries(data.services).sort((a, b) => {
+                // Sort offline first, then by name
+                if (a[1].status !== b[1].status) {
+                    return a[1].status === 'online' ? 1 : -1;
+                }
+                return (a[1].name || a[0]).localeCompare(b[1].name || b[0]);
+            });
+
+            let online = 0, total = services.length;
+
+            container.innerHTML = services.map(([id, svc]) => {
+                const isOnline = svc.status === 'online';
+                if (isOnline) online++;
+                const statusClass = isOnline ? 'online' : 'offline';
+                return `
+                    <div class="service-row">
+                        <div class="service-indicator ${statusClass}"></div>
+                        <span class="service-name">${svc.name || id}</span>
+                        <span class="service-port">:${svc.port || '--'}</span>
+                        <span class="service-status ${statusClass}">${isOnline ? 'online' : 'offline'}</span>
+                        <button class="btn small" onclick="restartService('${id}', this)">Restart</button>
+                    </div>
+                `;
+            }).join('');
+
+            countEl.textContent = `${online}/${total}`;
+            countEl.className = 'count ' + (online === total ? 'good' : 'bad');
+
+            // Update restart button state
+            const offlineCount = total - online;
+            document.getElementById('btnRestartOffline').disabled = offlineCount === 0;
+        }
+
+        // Load Alerts from Relay
+        async function loadAlerts() {
+            const container = document.getElementById('alertList');
+            const countEl = document.getElementById('alertCount');
+
+            const data = await fetchAPI(`http://${HOST}:8600/api/alerts?unacked=1&limit=20`);
+
+            if (!data) {
+                container.innerHTML = '<div class="error">Relay unavailable - check :8600</div>';
+                countEl.textContent = '--';
+                return;
+            }
+
+            const alerts = data.alerts || [];
+            countEl.textContent = alerts.length;
+            countEl.className = 'count ' + (alerts.length === 0 ? 'good' : 'bad');
+
+            // Update ACK all button state
+            document.getElementById('btnAckAll').disabled = alerts.length === 0;
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<div class="empty">No active alerts</div>';
+                return;
+            }
+
+            const icons = { critical: '🔴', error: '🟠', warning: '🟡', info: '🔵' };
+
+            container.innerHTML = alerts.map(a => `
+                <div class="alert-row ${a.severity || 'info'}">
+                    <span class="alert-icon">${icons[a.severity] || icons.info}</span>
+                    <div class="alert-content">
+                        <div class="alert-title">${escapeHtml(a.title || a.message || 'Alert')}</div>
+                        <div class="alert-meta">${a.service || a.source || 'system'} &bull; ${timeAgo(a.created_at)}</div>
+                    </div>
+                    <button class="btn small" onclick="ackAlert('${a.id}', this)">ACK</button>
+                </div>
+            `).join('');
+        }
+
+        // Load System Resources
+        async function loadSystem() {
+            const data = await fetchAPI(`http://${HOST}:8899/api/system`);
+            if (data) {
+                const cpu = Math.round(data.cpu || 0);
+                const ram = Math.round(data.memory || 0);
+                document.getElementById('cpu').textContent = cpu;
+                document.getElementById('cpuBar').style.width = cpu + '%';
+                document.getElementById('ram').textContent = ram;
+                document.getElementById('ramBar').style.width = ram + '%';
+                document.getElementById('hostname').textContent = data.hostname || '--';
+                document.getElementById('uptime').textContent = formatUptime(data.uptime);
+            }
+        }
+
+        // Load LLM Models
+        async function loadModels() {
+            const container = document.getElementById('modelList');
+            const countEl = document.getElementById('modelCount');
+            let models = [];
+
+            // Ollama
+            const ollama = await fetchAPI(`http://${HOST}:11434/api/tags`, 2000);
+            if (ollama && ollama.models) {
+                models = models.concat(ollama.models.map(m => ({
+                    name: m.name.split(':')[0],
+                    source: 'Ollama'
+                })));
+            }
+
+            // LM Studio
+            const lmstudio = await fetchAPI(`http://${HOST}:1234/v1/models`, 2000);
+            if (lmstudio && lmstudio.data) {
+                models = models.concat(lmstudio.data.map(m => ({
+                    name: m.id,
+                    source: 'LM Studio'
+                })));
+            }
+
+            countEl.textContent = models.length;
+            countEl.className = 'count ' + (models.length > 0 ? 'good' : '');
+
+            if (models.length === 0) {
+                container.innerHTML = '<div class="loading">No LLM models available</div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="model-list">' + models.map(m =>
+                `<span class="model-item">${escapeHtml(m.name)}<span class="source">${m.source}</span></span>`
+            ).join('') + '</div>';
+        }
+
+        // Load Daily Intel Report from Oracle
+        async function loadBriefing() {
+            const container = document.getElementById('reportContent');
+            const dateEl = document.getElementById('reportDate');
+
+            const data = await fetchAPI(`http://${HOST}:3002/api/intel/briefing`, 5000);
+
+            if (!data) {
+                container.innerHTML = '<div class="error">Oracle unavailable - check :3002</div>';
+                dateEl.textContent = '--';
+                return;
+            }
+
+            // Show report date
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            dateEl.textContent = today;
+
+            // Build stats section
+            const stats = data.stats || {};
+            const summary = data.summary || data.briefing || 'No intel summary available.';
+
+            const getStatusClass = (value, goodThreshold, badThreshold) => {
+                if (value >= goodThreshold) return 'good';
+                if (value <= badThreshold) return 'bad';
+                return 'warn';
+            };
+
+            const servicesOnline = stats.services_online || 0;
+            const servicesTotal = stats.services_total || 0;
+            const alertCount = stats.active_alerts || 0;
+            const modelCount = stats.models_available || 0;
+            const uptimeHours = stats.uptime_hours || 0;
+
+            container.innerHTML = `
+                <div class="report-stats">
+                    <div class="report-stat">
+                        <div class="value ${getStatusClass(servicesOnline, servicesTotal, 1)}">${servicesOnline}/${servicesTotal}</div>
+                        <div class="label">Services</div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="value ${alertCount === 0 ? 'good' : 'bad'}">${alertCount}</div>
+                        <div class="label">Alerts</div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="value ${modelCount > 0 ? 'good' : 'warn'}">${modelCount}</div>
+                        <div class="label">Models</div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="value">${uptimeHours}h</div>
+                        <div class="label">Uptime</div>
+                    </div>
+                </div>
+                <div class="report-summary">${formatBriefing(summary)}</div>
+            `;
+        }
+
+        // Format briefing text with basic markdown-like styling
+        function formatBriefing(text) {
+            if (!text) return '';
+            return escapeHtml(text)
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Actions
+        async function restartService(id, btn) {
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '...';
+            }
+
+            try {
+                const res = await fetch(`http://${HOST}:8500/api/services/${id}/restart`, { method: 'POST' });
+                if (res.ok) {
+                    setTimeout(loadServices, 2000);
+                }
+            } catch (e) {
+                console.error('Restart failed:', e);
+            }
+
+            if (btn) {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Restart';
+                }, 2000);
+            }
+        }
+
+        async function ackAlert(id, btn) {
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '...';
+            }
+
+            try {
+                await fetch(`http://${HOST}:8600/api/alerts/${id}/ack`, { method: 'POST' });
+                loadAlerts();
+            } catch (e) {
+                console.error('ACK failed:', e);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'ACK';
+                }
+            }
+        }
+
+        async function restartAllOffline() {
+            const btn = document.getElementById('btnRestartOffline');
+            btn.disabled = true;
+            btn.textContent = 'Restarting...';
+
+            const data = await fetchAPI(`http://${HOST}:8500/api/status`);
+            if (data && data.services) {
+                for (const [id, svc] of Object.entries(data.services)) {
+                    if (svc.status !== 'online') {
+                        await fetch(`http://${HOST}:8500/api/services/${id}/restart`, { method: 'POST' });
+                        await new Promise(r => setTimeout(r, 500)); // Stagger restarts
+                    }
+                }
+            }
+
+            setTimeout(() => {
+                btn.textContent = 'Restart All Offline';
+                loadServices();
+            }, 3000);
+        }
+
+        async function ackAllAlerts() {
+            const btn = document.getElementById('btnAckAll');
+            btn.disabled = true;
+            btn.textContent = 'Acknowledging...';
+
+            const data = await fetchAPI(`http://${HOST}:8600/api/alerts?unacked=1`);
+            if (data && data.alerts) {
+                for (const alert of data.alerts) {
+                    await fetch(`http://${HOST}:8600/api/alerts/${alert.id}/ack`, { method: 'POST' });
+                }
+            }
+
+            btn.textContent = 'Acknowledge All Alerts';
+            loadAlerts();
+        }
+
+        function exportStatus() {
+            const status = {
+                timestamp: new Date().toISOString(),
+                system: {
+                    cpu: document.getElementById('cpu').textContent + '%',
+                    ram: document.getElementById('ram').textContent + '%',
+                    host: document.getElementById('hostname').textContent,
+                    uptime: document.getElementById('uptime').textContent
+                },
+                services: document.getElementById('serviceCount').textContent,
+                alerts: document.getElementById('alertCount').textContent,
+                models: document.getElementById('modelCount').textContent
+            };
+            navigator.clipboard.writeText(JSON.stringify(status, null, 2));
+
+            // Visual feedback
+            const btn = event.target;
+            const original = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = original, 1500);
+        }
+
+        function openFullDashboard() {
+            window.open(`http://${HOST}:8899/`, '_blank');
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function timeAgo(dateStr) {
+            if (!dateStr) return '';
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'just now';
+            if (mins < 60) return `${mins}m ago`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return `${hours}h ago`;
+            return `${Math.floor(hours / 24)}d ago`;
+        }
+
+        // Refresh All
+        function refreshAll() {
+            document.getElementById('lastRefresh').textContent = 'refreshing...';
+
+            Promise.all([
+                loadServices(),
+                loadAlerts(),
+                loadSystem(),
+                loadModels(),
+                loadBriefing()
+            ]).then(() => {
+                document.getElementById('lastRefresh').textContent = 'updated ' + new Date().toLocaleTimeString();
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT') {
+                refreshAll();
+            }
+        });
+
+        // Initialize
+        refreshAll();
+        refreshInterval = setInterval(refreshAll, 30000); // Auto-refresh every 30s
+    </script>
+</body>
+</html>

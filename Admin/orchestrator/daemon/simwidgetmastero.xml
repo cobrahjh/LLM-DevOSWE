@@ -1,10 +1,9 @@
 <service>
 	<id>simwidgetmastero.exe</id>
 	<name>SimWidget Master O</name>
-	<description>SimWidget Master Orchestrator</description>
+	<description>SimWidget Engine Master Orchestrator - Service supervisor and watchdog</description>
 	<executable>C:\Program Files\nodejs\node.exe</executable>
-	<argument>--harmony</argument>
-	<argument>C:\LLM-DevOSWE\Admin\agent\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>C:\LLM-DevOSWE\Admin\orchestrator\node_modules\node-windows\lib\wrapper.js</argument>
 	<argument>--file</argument>
 	<argument>C:\LLM-DevOSWE\Admin\orchestrator\orchestrator.js</argument>
 	<argument>--scriptoptions=</argument>
@@ -23,9 +22,10 @@
 	<logmode>rotate</logmode>
 	<stoptimeout>30sec</stoptimeout>
 	<serviceaccount>
-		<domain>HAROLD-PC</domain>
+		<domain>ROCK-PC</domain>
 		<user>LocalSystem</user>
 		<password></password>
+		<allowservicelogon>true</allowservicelogon>
 	</serviceaccount>
 	<workingdirectory>C:\LLM-DevOSWE\Admin\orchestrator</workingdirectory>
 </service>
