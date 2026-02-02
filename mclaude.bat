@@ -1,3 +1,3 @@
 @echo off
-:: mclaude - Claude with permissions bypass
-"C:\Users\Stone-PC\AppData\Roaming\npm\claude.cmd" --dangerously-skip-permissions %*
+:: mclaude - mclaude with permissions bypass
+"C:\Users\Stone-PC\AppData\Roaming\npm\mclaude.cmd" --dangerously-skip-permissions %*

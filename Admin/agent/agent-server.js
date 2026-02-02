@@ -45,6 +45,7 @@ const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
 const { exec, spawn } = require('child_process');
+const DevTrackerEnhanced = require('./lib/dev-tracker-enhanced');
 
 // SSL Configuration
 const SSL_CONFIG = {
@@ -768,6 +769,16 @@ let dailyTokenUsage = { date: new Date().toISOString().split('T')[0], tokens: 0 
 if (!fs.existsSync(LOGS_DIR)) {
     fs.mkdirSync(LOGS_DIR, { recursive: true });
 }
+
+// Initialize Enhanced Dev Tracker
+const devTracker = new DevTrackerEnhanced({
+    dataFile: path.join(LOGS_DIR, 'dev-tracker.json'),
+    enableHiveDrop: true,
+    debounceMs: 500
+});
+
+// Watch the main project repo
+devTracker.watchRepo('C:\\LLM-DevOSWE');
 
 // Log API usage
 function logUsage(sessionId, inputTokens, outputTokens) {
@@ -1890,10 +1901,9 @@ app.post('/api/notes', (req, res) => {
     }
 });
 
-// Dev Tracker API
-const DEV_TRACKER_FILE = path.join(LOGS_DIR, 'dev-tracker.json');
+// ==================== ENHANCED DEV TRACKER API ====================
 
-// Auto-log completed tasks from Kitt's responses
+// Auto-log completed tasks from Kitt's responses (uses enhanced tracker)
 function autoLogTask(userMessage, kittResponse) {
     try {
         // Detect task completion patterns in response
@@ -1913,7 +1923,7 @@ function autoLogTask(userMessage, kittResponse) {
         const isTaskComplete = completionPatterns.some(p => p.test(kittResponse));
         console.log(`[DevTracker] Checking response - matches pattern: ${isTaskComplete}`);
         if (!isTaskComplete) return;
-        
+
         // Extract task info from response
         const categoryPatterns = {
             feature: /(?:added|created|implemented|new feature)/i,
@@ -1921,124 +1931,143 @@ function autoLogTask(userMessage, kittResponse) {
             refactor: /(?:refactor|renamed|reorganized|updated|changed)/i,
             docs: /(?:documentation|docs|readme|standard)/i
         };
-        
+
         let category = 'feature';
         for (const [cat, pattern] of Object.entries(categoryPatterns)) {
             if (pattern.test(kittResponse)) { category = cat; break; }
         }
-        
+
         // Extract title from first line or bold text
         let title = userMessage.slice(0, 50);
         const boldMatch = kittResponse.match(/\*\*([^*]+)\*\*/);
         if (boldMatch) title = boldMatch[1].slice(0, 50);
-        
-        // Extract files from response
-        const files = [];
-        const fileMatches = kittResponse.matchAll(/`([^`]+\.(js|html|md|json|css))`/g);
-        for (const m of fileMatches) files.push(m[1]);
-        
-        // Load and update tracker
-        const data = fs.existsSync(DEV_TRACKER_FILE)
-            ? JSON.parse(fs.readFileSync(DEV_TRACKER_FILE, 'utf8'))
-            : { version: '1.1.0', days: {} };
-        
-        const today = new Date().toISOString().split('T')[0];
-        if (!data.days[today]) data.days[today] = { date: today, tasks: [], summary: {} };
-        
-        const task = {
-            id: `task-${Date.now()}`,
-            time: new Date().toTimeString().slice(0, 5),
+
+        // Use enhanced tracker for auto-logging
+        devTracker.autoLogTask(title, {
             category,
-            title,
             description: userMessage.slice(0, 100),
-            files: files.slice(0, 5),
-            duration: 10, // Default estimate
-            autoLogged: true
-        };
-        
-        data.days[today].tasks.push(task);
-        
-        // Update summary
-        const tasks = data.days[today].tasks;
-        data.days[today].summary = {
-            totalTasks: tasks.length,
-            features: tasks.filter(t => t.category === 'feature').length,
-            bugfixes: tasks.filter(t => t.category === 'bugfix').length,
-            refactors: tasks.filter(t => t.category === 'refactor').length,
-            docs: tasks.filter(t => t.category === 'docs').length,
-            totalDuration: tasks.reduce((sum, t) => sum + (t.duration || 0), 0)
-        };
-        
-        fs.writeFileSync(DEV_TRACKER_FILE, JSON.stringify(data, null, 2));
+            duration: 10
+        });
+
         console.log(`[DevTracker] Auto-logged task: ${title}`);
     } catch (err) {
         console.error('[DevTracker] Auto-log error:', err.message);
     }
 }
 
+// Get all tracker data
 app.get('/api/dev-tracker', (req, res) => {
     try {
-        const data = fs.existsSync(DEV_TRACKER_FILE) 
-            ? JSON.parse(fs.readFileSync(DEV_TRACKER_FILE, 'utf8'))
-            : { version: '1.0.0', days: {} };
-        res.json(data);
+        res.json(devTracker.getData());
     } catch (err) {
         res.json({ error: err.message, days: {} });
     }
 });
 
-app.post('/api/dev-tracker/task', (req, res) => {
+// Get today's tasks
+app.get('/api/dev-tracker/today', (req, res) => {
     try {
-        const data = fs.existsSync(DEV_TRACKER_FILE)
-            ? JSON.parse(fs.readFileSync(DEV_TRACKER_FILE, 'utf8'))
-            : { version: '1.0.0', days: {} };
-        
-        const today = new Date().toISOString().split('T')[0];
-        if (!data.days[today]) {
-            data.days[today] = { date: today, tasks: [], summary: {} };
-        }
-        
-        const task = {
-            id: `task-${Date.now()}`,
-            time: new Date().toTimeString().slice(0, 5),
-            category: req.body.category || 'feature',
-            title: req.body.title,
-            description: req.body.description || '',
-            files: req.body.files || [],
-            tokens: req.body.tokens || 0,
-            duration: req.body.duration || 0
-        };
-        
-        data.days[today].tasks.push(task);
-        
-        // Update summary
-        const tasks = data.days[today].tasks;
-        data.days[today].summary = {
-            totalTasks: tasks.length,
-            features: tasks.filter(t => t.category === 'feature').length,
-            bugfixes: tasks.filter(t => t.category === 'bugfix').length,
-            refactors: tasks.filter(t => t.category === 'refactor').length,
-            docs: tasks.filter(t => t.category === 'docs').length,
-            totalDuration: tasks.reduce((sum, t) => sum + (t.duration || 0), 0),
-            tokensUsed: tasks.reduce((sum, t) => sum + (t.tokens || 0), 0)
-        };
-        
-        fs.writeFileSync(DEV_TRACKER_FILE, JSON.stringify(data, null, 2));
+        res.json(devTracker.getToday());
+    } catch (err) {
+        res.json({ error: err.message, tasks: [] });
+    }
+});
+
+// Start a new task
+app.post('/api/dev-tracker/task/start', (req, res) => {
+    try {
+        const task = devTracker.startTask(req.body.title, {
+            description: req.body.description,
+            category: req.body.category || 'feature'
+        });
         res.json({ success: true, task });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-app.get('/api/dev-tracker/today', (req, res) => {
+// Complete the active task
+app.post('/api/dev-tracker/task/complete', (req, res) => {
     try {
-        const data = fs.existsSync(DEV_TRACKER_FILE)
-            ? JSON.parse(fs.readFileSync(DEV_TRACKER_FILE, 'utf8'))
-            : { days: {} };
-        const today = new Date().toISOString().split('T')[0];
-        res.json(data.days[today] || { date: today, tasks: [], summary: {} });
+        const task = devTracker.completeTask({
+            duration: req.body.duration
+        });
+        if (!task) {
+            return res.status(400).json({ error: 'No active task to complete' });
+        }
+        res.json({ success: true, task });
     } catch (err) {
-        res.json({ error: err.message, tasks: [] });
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Legacy: Add task (backward compatibility)
+app.post('/api/dev-tracker/task', (req, res) => {
+    try {
+        const task = devTracker.autoLogTask(req.body.title, {
+            category: req.body.category || 'feature',
+            description: req.body.description || '',
+            duration: req.body.duration || 10
+        });
+        res.json({ success: true, task });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get aggregate metrics
+app.get('/api/dev-tracker/metrics', (req, res) => {
+    try {
+        res.json(devTracker.getAggregateMetrics());
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get recent commits
+app.get('/api/dev-tracker/commits', (req, res) => {
+    try {
+        const count = parseInt(req.query.count) || 20;
+        res.json(devTracker.getRecentCommits(count));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get tracker status
+app.get('/api/dev-tracker/status', (req, res) => {
+    try {
+        res.json(devTracker.getStatus());
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Start watching a directory
+app.post('/api/dev-tracker/watch/start', (req, res) => {
+    try {
+        const repoPath = req.body.path;
+        if (!repoPath) {
+            return res.status(400).json({ error: 'Path required' });
+        }
+        const success = devTracker.watchRepo(repoPath);
+        res.json({ success, path: repoPath });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Stop watching a directory
+app.post('/api/dev-tracker/watch/stop', async (req, res) => {
+    try {
+        const repoPath = req.body.path;
+        if (!repoPath) {
+            return res.status(400).json({ error: 'Path required' });
+        }
+        await devTracker.unwatchRepo(repoPath);
+        res.json({ success: true, path: repoPath });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -3131,4 +3160,17 @@ troubleshoot.startServer(httpServer, PORT, '0.0.0.0', () => {
     hot.start();
     httpServer.hotEngine = hot;
     if (httpsServer) httpsServer.hotEngine = hot;
+
+    // Graceful shutdown handler for Dev Tracker
+    process.on('SIGINT', async () => {
+        console.log('\n[Agent] Shutting down...');
+        await devTracker.shutdown();
+        process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+        console.log('[Agent] Received SIGTERM, shutting down...');
+        await devTracker.shutdown();
+        process.exit(0);
+    });
 });
