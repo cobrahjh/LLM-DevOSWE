@@ -1,0 +1,5 @@
+#!/bin/bash
+# mclaude - Claude with permissions bypass (bash version)
+# Use this from Git Bash or WSL
+
+claude --dangerously-skip-permissions "$@"
