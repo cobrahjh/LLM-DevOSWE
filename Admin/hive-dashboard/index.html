@@ -1799,7 +1799,7 @@
         // Mark single anomaly
         async function markAnomaly(index, status) {
             try {
-                await fetch(\`\${API_BASE}/api/intel/anomaly/\${index}/status\`, {
+                await fetch(`${API_BASE}/api/intel/anomaly/${index}/status`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
@@ -1813,7 +1813,7 @@
         // Mark all anomalies
         async function markAllAnomalies(status) {
             try {
-                await fetch(\`\${API_BASE}/api/intel/anomalies/status\`, {
+                await fetch(`${API_BASE}/api/intel/anomalies/status`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status })
