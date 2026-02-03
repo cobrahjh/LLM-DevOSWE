@@ -3165,3 +3165,75 @@ nssm stop HiveRelay
 nssm remove HiveRelay confirm
 curl -X POST http://localhost:8500/api/services/relay/restart
 ```
+
+---
+
+## 🤖 Claude CLI & mclaude
+
+### Configuration (2026-02-02)
+
+**Claude CLI Version:** 2.1.29
+
+#### mclaude - Permissions Bypass Wrapper
+
+Two versions for cross-shell compatibility:
+
+| File | Shell | Location |
+|------|-------|----------|
+| `mclaude.bat` | Windows CMD/PowerShell | `C:\LLM-DevOSWE\mclaude.bat` |
+| `mclaude` | Git Bash/WSL | `C:\LLM-DevOSWE\mclaude` |
+
+Both wrap `claude --dangerously-skip-permissions` for auto-approved tool execution.
+
+#### Usage
+
+```bash
+# Git Bash
+./mclaude -p "your task"
+C:/LLM-DevOSWE/mclaude -p "check service health"
+
+# Windows CMD/PowerShell
+mclaude -p "your task"
+```
+
+#### Key Flags
+
+| Flag | Purpose |
+|------|---------|
+| `--dangerously-skip-permissions` | Bypass all permission prompts (required for `-p` with tools) |
+| `-p, --print` | Non-interactive output mode |
+| `--model <model>` | Select model: `sonnet`, `opus`, `haiku` |
+| `--allowedTools <tools>` | Restrict to specific tools |
+| `-c, --continue` | Resume last conversation |
+| `-r, --resume <id>` | Resume by session ID |
+
+#### Performance Benchmarks
+
+| Task | Time | Notes |
+|------|------|-------|
+| Simple math | ~4-5s | No tool calls |
+| File read | ~18s | Read tool |
+| Curl + parse | ~11s | Bash tool |
+| Git operations | ~11s | Bash tool |
+
+#### Critical: Permission Mode for Scripts
+
+**Problem:** Without `--dangerously-skip-permissions`, `-p` mode hangs waiting for interactive permission approval.
+
+```bash
+# This will timeout/hang in scripts:
+claude -p "curl localhost:8600/api/health"
+
+# This works:
+claude --dangerously-skip-permissions -p "curl localhost:8600/api/health"
+```
+
+**Rule:** Always use `mclaude` or `--dangerously-skip-permissions` for automated/scripted tasks.
+
+#### Interactive vs Print Mode
+
+| Mode | Use Case | Permission Handling |
+|------|----------|---------------------|
+| Interactive (default) | Development, exploration | Prompts for approval |
+| `-p` (print) | Scripts, automation | Requires `--dangerously-skip-permissions` |
+| mclaude | Both | Always bypasses permissions |
