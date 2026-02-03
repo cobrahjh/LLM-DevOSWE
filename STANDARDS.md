@@ -3092,3 +3092,76 @@ Rules without `paths` frontmatter apply to all files.
 - Standards/patterns: `STANDARDS.md` in project root
 - Import both in CLAUDE.md for full context
 - Use `syncmem` shortcut to backup to database
+
+---
+
+## 🌐 CORS & Cross-Origin Access
+
+### Lessons Learned (2026-02-02)
+
+**Problem:** HCC dashboard panels show infinite loading spinners when accessed via IP address instead of localhost.
+
+**Root Cause:** Services accessed from different origins (e.g., `http://192.168.1.192:8899` calling `http://192.168.1.192:8600`) require CORS headers.
+
+#### CORS Headers Required
+
+All Hive services must include these headers for cross-origin dashboard access:
+
+```javascript
+// For Express.js services
+const cors = require('cors');
+app.use(cors({ origin: true, credentials: true }));
+
+// For raw Node.js http.createServer
+const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+};
+
+// Handle OPTIONS preflight
+if (req.method === 'OPTIONS') {
+    res.writeHead(204, CORS_HEADERS);
+    res.end();
+    return;
+}
+
+// Include in all responses
+res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+```
+
+#### Services Fixed (2026-02-02)
+
+| Service | Port | Location |
+|---------|------|----------|
+| Relay | 8600 | `Admin/relay/relay-service.js` (had CORS, was running old code) |
+| Hive-Mind | 8701 | `DevClaude/Hivemind/hive/hive-mind/hive-mind-server.js` |
+| Dictation Host | 8753 | `DevClaude/Hivemind/voice/dictation-relay/terminal-host.js` |
+| Dictation Client | 8760 | `DevClaude/Hivemind/voice/dictation-relay/terminal-client.js` |
+
+#### Third-Party Services (Cannot Add CORS)
+
+| Service | Port | Workaround |
+|---------|------|------------|
+| Ollama | 11434 | Set env `OLLAMA_ORIGINS=*` and restart |
+| LM Studio | 1234 | Access via localhost only, or use proxy |
+
+#### Debugging CORS Issues
+
+1. Open browser DevTools (F12) → Console
+2. Look for: `Access to fetch at ... has been blocked by CORS policy`
+3. Check response headers: `curl -I http://host:port/endpoint`
+4. Verify `Access-Control-Allow-Origin` header is present
+
+#### NSSM Service Pitfall
+
+**Issue:** NSSM services may run old code from a different directory.
+
+**Example:** `HiveRelay` NSSM service was running from `C:\DevClaude\Hivemind\hive\relay` instead of `C:\LLM-DevOSWE\Admin\relay`.
+
+**Fix:** Remove stale NSSM service, let Orchestrator manage it:
+```bash
+nssm stop HiveRelay
+nssm remove HiveRelay confirm
+curl -X POST http://localhost:8500/api/services/relay/restart
+```
