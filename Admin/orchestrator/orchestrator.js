@@ -420,7 +420,8 @@ async function watchdogCheck() {
     for (const [id, svc] of Object.entries(SERVICES)) {
         const state = serviceStates[id];
         const health = await checkServiceHealth(id);
-        const portInUse = await checkPortInUse(svc.port);
+        // Skip port check for services without ports (native services)
+        const portInUse = svc.port ? await checkPortInUse(svc.port) : health.healthy;
         const wasHealthy = previousHealthState[id] !== false;
 
         state.running = portInUse;
@@ -709,11 +710,12 @@ app.get('/api/status', async (req, res) => {
     );
 
     try {
-        // Run all health checks in parallel (skip port check if healthy)
+        // Run all health checks in parallel (skip port check if healthy or no port)
         const statusPromise = Promise.all(
             entries.map(async ([id, svc]) => {
                 const health = await checkServiceHealth(id);
-                const running = health.healthy ? true : await checkPortInUse(svc.port);
+                // Skip port check for services without ports (native services)
+                const running = health.healthy ? true : (svc.port ? await checkPortInUse(svc.port) : health.healthy);
                 const state = serviceStates[id];
                 return [id, {
                     name: svc.name,
@@ -745,7 +747,7 @@ app.get('/api/status', async (req, res) => {
                 healthy: state.lastCheck ? (Date.now() - new Date(state.lastCheck).getTime() < 60000) : false,
                 startMethod: state.startMethod || 'unknown',
                 restartCount: state.restartCount,
-                error: err.message
+                error: state.error || null
             };
         }
         res.json({
@@ -775,14 +777,15 @@ app.get('/api/services', (req, res) => {
 app.get('/api/services/:id', async (req, res) => {
     const svc = SERVICES[req.params.id];
     if (!svc) return res.status(404).json({ error: 'Service not found' });
-    
+
     const health = await checkServiceHealth(req.params.id);
-    const portInUse = await checkPortInUse(svc.port);
+    // Skip port check for services without ports (native services)
+    const portInUse = svc.port ? await checkPortInUse(svc.port) : health.healthy;
     const state = serviceStates[req.params.id];
-    
+
     // Check if Windows Service exists
     const winServiceExists = svc.winService ? await checkWinServiceExists(svc.winService) : false;
-    
+
     res.json({
         ...svc,
         running: portInUse,
