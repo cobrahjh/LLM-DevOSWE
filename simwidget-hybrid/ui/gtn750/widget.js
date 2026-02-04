@@ -12,6 +12,10 @@ class GTN750Widget {
         // Initialize core utilities
         this.core = new GTNCore();
 
+        // Render loop control (for cleanup)
+        this._renderFrameId = null;
+        this._boundRenderLoop = this._renderLoop.bind(this);
+
         // Aircraft data
         this.data = {
             latitude: 0,
@@ -1135,8 +1139,19 @@ class GTN750Widget {
 
     // ===== MAP RENDERING =====
     startMapRender() {
+        this._renderFrameId = requestAnimationFrame(this._boundRenderLoop);
+    }
+
+    _renderLoop() {
         this.renderMap();
-        requestAnimationFrame(() => this.startMapRender());
+        this._renderFrameId = requestAnimationFrame(this._boundRenderLoop);
+    }
+
+    stopMapRender() {
+        if (this._renderFrameId) {
+            cancelAnimationFrame(this._renderFrameId);
+            this._renderFrameId = null;
+        }
     }
 
     renderMap() {
@@ -2147,18 +2162,7 @@ class GTN750Widget {
         }
     }
 
-    renderRangeRings(ctx, cx, cy, w, h) {
-        const pixelsPerNm = Math.min(w, h) / 2 / this.map.range;
-        ctx.strokeStyle = '#1a3040';
-        ctx.lineWidth = 1;
-
-        [0.25, 0.5, 0.75, 1].forEach(fraction => {
-            const radius = this.map.range * fraction * pixelsPerNm;
-            ctx.beginPath();
-            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-            ctx.stroke();
-        });
-    }
+    // Note: renderRangeRings is defined earlier with full features (declutter, cardinal lines)
 
     renderRoute(ctx, cx, cy, w, h) {
         const pixelsPerNm = Math.min(w, h) / 2 / this.map.range;
@@ -2506,7 +2510,9 @@ class GTN750Widget {
         // Save to localStorage
         try {
             localStorage.setItem('gtn750-datafields', JSON.stringify(this.dataFields));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[GTN750] Failed to save datafields:', e.message);
+        }
 
         // Update immediately
         this.updateDatafields();
@@ -2522,7 +2528,9 @@ class GTN750Widget {
             if (saved) {
                 this.dataFields = { ...this.dataFields, ...JSON.parse(saved) };
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[GTN750] Failed to load datafields:', e.message);
+        }
     }
 
     updateMapOrientation() {
@@ -3488,7 +3496,9 @@ class GTN750Widget {
                 if (msg.type === 'flightData') {
                     this.updateFromSim(msg.data);
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[GTN750] WebSocket message error:', e.message);
+            }
         };
 
         this.ws.onclose = () => {
@@ -3499,7 +3509,9 @@ class GTN750Widget {
             setTimeout(() => this.connect(), this.reconnectDelay);
         };
 
-        this.ws.onerror = () => {};
+        this.ws.onerror = (e) => {
+            console.warn('[GTN750] WebSocket error:', e.message || 'Connection error');
+        };
     }
 
     // Traffic data polling
