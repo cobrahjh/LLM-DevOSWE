@@ -583,16 +583,348 @@
         "docs": 1,
         "totalDuration": 255
       }
+    },
+    "2026-02-02": {
+      "date": "2026-02-02",
+      "tasks": [
+        {
+          "id": "task-1770065226185",
+          "time": "15:47",
+          "title": "Test Enhanced Dev Tracker",
+          "description": "Testing the new tracker",
+          "category": "feature",
+          "status": "completed",
+          "startedAt": "2026-02-02T20:47:06.185Z",
+          "files": [],
+          "metrics": {
+            "totalLinesAdded": 0,
+            "totalLinesRemoved": 0,
+            "filesCreated": 0,
+            "filesModified": 0,
+            "filesDeleted": 0,
+            "totalFiles": 0
+          },
+          "commit": null,
+          "completedAt": "2026-02-02T20:47:15.045Z",
+          "duration": 0
+        },
+        {
+          "id": "task-1770065658993",
+          "time": "15:54",
+          "title": "Enhanced Dev Tracker Implementation",
+          "description": "Full file intelligence with git tracking and HiveDrop",
+          "category": "feature",
+          "status": "completed",
+          "startedAt": "2026-02-02T20:54:18.993Z",
+          "files": [
+            {
+              "path": "C:\\LLM-DevOSWE\\Admin\\agent\\logs\\dev-tracker.json",
+              "filename": "dev-tracker.json",
+              "ext": ".json",
+              "operation": "modify",
+              "size": 17910,
+              "linesAdded": 50,
+              "linesRemoved": 0,
+              "status": "modified"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\dmin\\agent\\agent-server.js",
+              "filename": "agent-server.js",
+              "ext": ".js",
+              "operation": "unchanged",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "unchanged"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\Admin\\agent\\package-lock.json",
+              "filename": "package-lock.json",
+              "ext": ".json",
+              "operation": "modified",
+              "linesAdded": 187,
+              "linesRemoved": 0,
+              "status": "modified"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\Admin\\agent\\package.json",
+              "filename": "package.json",
+              "ext": ".json",
+              "operation": "modified",
+              "linesAdded": 1,
+              "linesRemoved": 0,
+              "status": "modified"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\mclaude.bat",
+              "filename": "mclaude.bat",
+              "ext": ".bat",
+              "operation": "modified",
+              "linesAdded": 2,
+              "linesRemoved": 2,
+              "status": "modified"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\Admin\\agent\\lib\\",
+              "filename": "lib",
+              "ext": "",
+              "operation": "untracked",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "untracked"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\simwidget-hybrid.lnk",
+              "filename": "simwidget-hybrid.lnk",
+              "ext": ".lnk",
+              "operation": "untracked",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "untracked"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\simwidget-hybrid\\ui\\va.html",
+              "filename": "va.html",
+              "ext": ".html",
+              "operation": "untracked",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "untracked"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\simwidget-hybrid\\ui\\va2.html",
+              "filename": "va2.html",
+              "ext": ".html",
+              "operation": "untracked",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "untracked"
+            }
+          ],
+          "metrics": {
+            "totalLinesAdded": 240,
+            "totalLinesRemoved": 2,
+            "filesCreated": 0,
+            "filesModified": 4,
+            "filesDeleted": 0,
+            "totalFiles": 9
+          },
+          "commit": null,
+          "completedAt": "2026-02-02T20:54:30.052Z",
+          "duration": 0
+        },
+        {
+          "id": "task-1770066482855",
+          "time": "16:08",
+          "title": "Document Enhanced Dev Tracker",
+          "description": "Added architecture docs to CLAUDE.md and HCC dashboard panel",
+          "category": "docs",
+          "status": "completed",
+          "startedAt": "2026-02-02T21:08:02.856Z",
+          "files": [
+            {
+              "path": "C:\\LLM-DevOSWE\\Admin\\agent\\logs\\dev-tracker.json",
+              "filename": "dev-tracker.json",
+              "ext": ".json",
+              "operation": "modify",
+              "size": 21419,
+              "linesAdded": 154,
+              "linesRemoved": 0,
+              "status": "modified"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\dmin\\agent\\logs\\dev-tracker.json",
+              "filename": "dev-tracker.json",
+              "ext": ".json",
+              "operation": "unchanged",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "unchanged"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\simwidget-hybrid.lnk",
+              "filename": "simwidget-hybrid.lnk",
+              "ext": ".lnk",
+              "operation": "untracked",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "untracked"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\simwidget-hybrid\\ui\\va.html",
+              "filename": "va.html",
+              "ext": ".html",
+              "operation": "untracked",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "untracked"
+            },
+            {
+              "path": "C:\\LLM-DevOSWE\\simwidget-hybrid\\ui\\va2.html",
+              "filename": "va2.html",
+              "ext": ".html",
+              "operation": "untracked",
+              "linesAdded": 0,
+              "linesRemoved": 0,
+              "status": "untracked"
+            }
+          ],
+          "metrics": {
+            "totalLinesAdded": 154,
+            "totalLinesRemoved": 0,
+            "filesCreated": 0,
+            "filesModified": 1,
+            "filesDeleted": 0,
+            "totalFiles": 5
+          },
+          "commit": {
+            "hash": "d9f7003",
+            "message": "docs: Add Enhanced Dev Tracker documentation and HCC panel",
+            "author": "cobrahjh",
+            "timestamp": "2026-02-02T16:06:23-05:00"
+          },
+          "completedAt": "2026-02-02T21:08:13.705Z",
+          "duration": 15
+        }
+      ],
+      "summary": {
+        "totalTasks": 3,
+        "completedTasks": 3,
+        "features": 2,
+        "bugfixes": 0,
+        "refactors": 0,
+        "docs": 1,
+        "totalDuration": 15,
+        "totalLinesAdded": 394,
+        "totalLinesRemoved": 2,
+        "totalFilesChanged": 14
+      }
+    }
+  },
+  "2026-02-06": {
+      "date": "2026-02-06",
+      "sessions": [
+        {
+          "time": "00:00",
+          "name": "BridgeMCP v1.2.0 Release"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "task-0206-001",
+          "time": "00:00",
+          "category": "feature",
+          "title": "Badge status indicator",
+          "description": "Added extension icon badge showing ON/OFF/... connection status with colored backgrounds",
+          "files": [
+            "C:/BridgeMCP/extension/background.js"
+          ],
+          "duration": 20
+        },
+        {
+          "id": "task-0206-002",
+          "time": "00:20",
+          "category": "feature",
+          "title": "Connection notifications",
+          "description": "Added browser notifications for connect/disconnect events with proper lifecycle - start offline, notify once on events, check every minute",
+          "files": [
+            "C:/BridgeMCP/extension/background.js"
+          ],
+          "duration": 45
+        },
+        {
+          "id": "task-0206-003",
+          "time": "01:05",
+          "category": "feature",
+          "title": "Better error messages",
+          "description": "Added formatError() with contextual error messages for common issues like missing tabs, blocked pages, element not found",
+          "files": [
+            "C:/BridgeMCP/extension/background.js"
+          ],
+          "duration": 15
+        },
+        {
+          "id": "task-0206-004",
+          "time": "01:20",
+          "category": "bugfix",
+          "title": "TabId auto-fill fix",
+          "description": "Fixed 'Missing required property tabId' error - added sendWithActiveTab() helper that auto-fetches active tab ID for commands like click, key, snapshot",
+          "files": [
+            "C:/BridgeMCP/src/index.js"
+          ],
+          "duration": 30
+        },
+        {
+          "id": "task-0206-005",
+          "time": "01:50",
+          "category": "docs",
+          "title": "CLI documentation",
+          "description": "Added CLI Mode section to docs.html with curl examples and authentication info",
+          "files": [
+            "C:/BridgeMCP/docs/docs.html"
+          ],
+          "duration": 20
+        },
+        {
+          "id": "task-0206-006",
+          "time": "02:10",
+          "category": "bugfix",
+          "title": "Docs color fix",
+          "description": "Fixed dark blue text on dark background - changed --primary from #4F46E5 to #A5B4FC for better readability",
+          "files": [
+            "C:/BridgeMCP/docs/docs.html"
+          ],
+          "duration": 10
+        },
+        {
+          "id": "task-0206-007",
+          "time": "02:20",
+          "category": "docs",
+          "title": "Test suite creation",
+          "description": "Created comprehensive test cases in test-bridgemcp.md covering API, CLI, auth, and extension tests",
+          "files": [
+            "C:/BridgeMCP/tests/test-bridgemcp.md"
+          ],
+          "duration": 25
+        },
+        {
+          "id": "task-0206-008",
+          "time": "02:45",
+          "category": "feature",
+          "title": "Popup UI improvements",
+          "description": "Separated Port and Token inputs into clean sections with eye toggle for token visibility",
+          "files": [
+            "C:/BridgeMCP/extension/popup.html"
+          ],
+          "duration": 15
+        },
+        {
+          "id": "task-0206-009",
+          "time": "03:00",
+          "category": "refactor",
+          "title": "ai-pc sync and service setup",
+          "description": "Synced all changes to ai-pc via WinRM and git pull, reinstalled NSSM service",
+          "files": [],
+          "duration": 20
+        }
+      ],
+      "summary": {
+        "totalTasks": 9,
+        "features": 4,
+        "bugfixes": 2,
+        "refactors": 1,
+        "docs": 2,
+        "totalDuration": 200
+      }
     }
   },
   "totals": {
-    "totalTasks": 44,
-    "totalFeatures": 31,
-    "totalBugfixes": 8,
-    "totalRefactors": 3,
-    "totalDocs": 2,
-    "totalDuration": 885,
-    "totalSessions": 9,
-    "activeDays": 3
+    "totalTasks": 53,
+    "totalFeatures": 35,
+    "totalBugfixes": 10,
+    "totalRefactors": 4,
+    "totalDocs": 4,
+    "totalDuration": 1085,
+    "totalSessions": 10,
+    "activeDays": 4
   }
 }
