@@ -3,10 +3,14 @@
  * SimGlass Engine v2.0.0 - Phase 5: Environment Controls
  */
 
-class EnvironmentWidget {
+class EnvironmentWidget extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
-        this.ws = null;
+        super({
+            widgetName: 'environment',
+            widgetVersion: '2.1.0',
+            autoConnect: true
+        });
+
         this.data = {
             localTime: 720, // Minutes from midnight (12:00)
             zuluTime: 720,
@@ -34,7 +38,6 @@ class EnvironmentWidget {
     init() {
         this.cacheElements();
         this.setupEvents();
-        this.connect();
         this.updateUI();
     }
 
@@ -196,31 +199,19 @@ class EnvironmentWidget {
         this.updateUI();
     }
 
-    connect() {
-        if (this._destroyed) return;
+    // SimGlassBase lifecycle hooks
+    onConnect() {
+        this.elements.conn?.classList.add('connected');
+    }
 
-        const host = window.location.hostname || 'localhost';
-        this.ws = new WebSocket(`ws://${host}:8080`);
+    onDisconnect() {
+        this.elements.conn?.classList.remove('connected');
+    }
 
-        this.ws.onopen = () => {
-            this.elements.conn?.classList.add('connected');
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'flightData') {
-                    this.updateFromSim(msg.data);
-                }
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            this.elements.conn?.classList.remove('connected');
-            if (!this._destroyed) {
-                setTimeout(() => this.connect(), 3000);
-            }
-        };
+    onMessage(msg) {
+        if (msg.type === 'flightData') {
+            this.updateFromSim(msg.data);
+        }
     }
 
     sendCommand(command, value = 0) {
@@ -316,12 +307,8 @@ class EnvironmentWidget {
     }
 
     destroy() {
-        this._destroyed = true;
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
-        }
+        // Call parent's destroy() for WebSocket cleanup
+        super.destroy();
     }
 }
 
