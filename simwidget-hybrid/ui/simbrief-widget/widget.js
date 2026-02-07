@@ -505,7 +505,15 @@ class SimBriefWidget {
             localStorage.setItem('simbrief-widget-state', JSON.stringify({
                 pilotId: this.pilotId
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveState',
+                    widget: 'simbrief-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadState() {
@@ -518,7 +526,15 @@ class SimBriefWidget {
                     this.pilotInput.value = state.pilotId;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadState',
+                    widget: 'simbrief-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 }
 

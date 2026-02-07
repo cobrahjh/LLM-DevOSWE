@@ -122,12 +122,19 @@ function connectWebSocket() {
             const data = JSON.parse(event.data);
             latestFlightData = data;
             updateCurrentData(data);
-            
+
             // Record data point if recording
             if (isRecording && !isPaused && currentSession) {
                 recordDataPoint(data);
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'websocketMessage',
+                    widget: 'flight-recorder'
+                });
+            }
+        }
     };
     
     ws.onclose = () => {
@@ -545,6 +552,13 @@ function loadSessions() {
             savedSessions = JSON.parse(saved);
         }
     } catch (e) {
+        if (window.telemetry) {
+            telemetry.captureError(e, {
+                operation: 'loadSessions',
+                widget: 'flight-recorder',
+                storage: 'localStorage'
+            });
+        }
         savedSessions = [];
     }
     renderSessions();
@@ -727,8 +741,16 @@ function loadSettings() {
         if (saved) {
             settings = { ...settings, ...JSON.parse(saved) };
         }
-    } catch (e) {}
-    
+    } catch (e) {
+        if (window.telemetry) {
+            telemetry.captureError(e, {
+                operation: 'loadSettings',
+                widget: 'flight-recorder',
+                storage: 'localStorage'
+            });
+        }
+    }
+
     // Apply to UI
     document.getElementById('setting-interval').value = settings.interval;
     document.getElementById('setting-autostop').value = settings.autostop;

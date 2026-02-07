@@ -79,7 +79,15 @@ class FlightLog {
                 }
                 this.flightData.wasOnGround = onGround;
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'updateFromSim',
+                    widget: 'flight-log',
+                    dataType: typeof data
+                });
+            }
+        }
     }
 
     haversine(lat1, lon1, lat2, lon2) {

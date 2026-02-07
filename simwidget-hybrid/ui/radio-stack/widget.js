@@ -60,7 +60,15 @@ class RadioStack {
                     document.getElementById('com1-active').textContent = this.radios.com1.active;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'updateFromSim',
+                    widget: 'radio-stack',
+                    dataType: typeof data
+                });
+            }
+        }
     }
 
     destroy() {
