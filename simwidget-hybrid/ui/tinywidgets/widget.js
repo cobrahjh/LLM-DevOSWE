@@ -3,11 +3,15 @@
  * Loads mini toggle/button widgets from manifest and renders as a compact grid
  * Each tiny widget is defined in its own ES module file (lights/, autopilot/, camera/)
  */
-class TinyWidgetsContainer {
+class TinyWidgetsContainer extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
-        this.ws = null;
-        this.connected = false;
+        super({
+            widgetName: 'tinywidgets',
+            widgetVersion: '1.1.0',
+            statusElementId: 'status-dot',
+            autoConnect: false  // Connect after loading widgets
+        });
+
         this.flightData = {};
         this.widgets = [];
         this.widgetStates = {};
@@ -22,7 +26,7 @@ class TinyWidgetsContainer {
         await this.loadManifest();
         await this.loadWidgets();
         this.render();
-        this.connectWebSocket();
+        this.connect();  // Use parent's connect()
     }
 
     async loadManifest() {
@@ -133,38 +137,18 @@ class TinyWidgetsContainer {
         }
     }
 
-    connectWebSocket() {
-        if (this._destroyed) return;
+    // SimGlassBase lifecycle hooks
+    onConnect() {
+        this.statusDot.classList.add('connected');
+    }
 
-        const host = location.hostname || '127.0.0.1';
-        const port = location.port || '8080';
-        this.ws = new WebSocket('ws://' + host + ':' + port);
+    onDisconnect() {
+        this.statusDot.classList.remove('connected');
+    }
 
-        this.ws.onopen = () => {
-            this.connected = true;
-            this.statusDot.classList.add('connected');
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                this.flightData = data;
-                this.updateWidgets(data);
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            this.connected = false;
-            this.statusDot.classList.remove('connected');
-            if (!this._destroyed) {
-                setTimeout(() => this.connectWebSocket(), 3000);
-            }
-        };
-
-        this.ws.onerror = () => {
-            this.connected = false;
-            this.statusDot.classList.remove('connected');
-        };
+    onMessage(data) {
+        this.flightData = data;
+        this.updateWidgets(data);
     }
 
     updateWidgets(flightData) {
@@ -189,18 +173,10 @@ class TinyWidgetsContainer {
         }
     }
 
-    destroy() {
-        this._destroyed = true;
-
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
-        }
-    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.tinyWidgets = new TinyWidgetsContainer();
+    // SimGlassBase provides destroy() - wire to beforeunload
     window.addEventListener('beforeunload', () => window.tinyWidgets?.destroy());
 });
