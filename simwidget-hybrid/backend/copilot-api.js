@@ -130,7 +130,7 @@ function mapProviderError(status, provider) {
     return `${provider} error (${status})`;
 }
 
-async function proxyToOpenAI(apiKey, model, messages, res, abortSignal) {
+async function proxyToOpenAI(apiKey, model, messages, req, res, abortController) {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -143,7 +143,7 @@ async function proxyToOpenAI(apiKey, model, messages, res, abortSignal) {
             stream: true,
             max_tokens: 1024
         }),
-        signal: abortSignal
+        signal: abortController.signal
     });
 
     if (!response.ok) {
@@ -156,38 +156,46 @@ async function proxyToOpenAI(apiKey, model, messages, res, abortSignal) {
         'Connection': 'keep-alive'
     });
 
+    // Now that headers are sent, abort on real client disconnect
+    res.on('close', () => abortController.abort());
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
 
-        for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-                res.write('data: {"done":true}\n\n');
-                continue;
-            }
-            try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) {
-                    res.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const data = line.slice(6);
+                if (data === '[DONE]') {
+                    res.write('data: {"done":true}\n\n');
+                    continue;
                 }
-            } catch (e) { /* skip malformed chunks */ }
+                try {
+                    const parsed = JSON.parse(data);
+                    const content = parsed.choices?.[0]?.delta?.content;
+                    if (content) {
+                        res.write(`data: ${JSON.stringify({ chunk: content })}\n\n`);
+                    }
+                } catch (e) { /* skip malformed chunks */ }
+            }
         }
+    } catch (e) {
+        if (abortController.signal.aborted) return; // client disconnected mid-stream
+        throw e;
     }
     res.end();
 }
 
-async function proxyToAnthropic(apiKey, model, messages, res, abortSignal) {
+async function proxyToAnthropic(apiKey, model, messages, req, res, abortController) {
     // Convert OpenAI-style messages to Anthropic format
     const systemMsg = messages.find(m => m.role === 'system');
     const chatMessages = messages.filter(m => m.role !== 'system').map(m => ({
@@ -209,7 +217,7 @@ async function proxyToAnthropic(apiKey, model, messages, res, abortSignal) {
             stream: true,
             max_tokens: 1024
         }),
-        signal: abortSignal
+        signal: abortController.signal
     });
 
     if (!response.ok) {
@@ -222,30 +230,38 @@ async function proxyToAnthropic(apiKey, model, messages, res, abortSignal) {
         'Connection': 'keep-alive'
     });
 
+    // Now that headers are sent, abort on real client disconnect
+    res.on('close', () => abortController.abort());
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
 
-        for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6);
-            try {
-                const parsed = JSON.parse(data);
-                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                    res.write(`data: ${JSON.stringify({ chunk: parsed.delta.text })}\n\n`);
-                } else if (parsed.type === 'message_stop') {
-                    res.write('data: {"done":true}\n\n');
-                }
-            } catch (e) { /* skip malformed chunks */ }
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const data = line.slice(6);
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                        res.write(`data: ${JSON.stringify({ chunk: parsed.delta.text })}\n\n`);
+                    } else if (parsed.type === 'message_stop') {
+                        res.write('data: {"done":true}\n\n');
+                    }
+                } catch (e) { /* skip malformed chunks */ }
+            }
         }
+    } catch (e) {
+        if (abortController.signal.aborted) return; // client disconnected mid-stream
+        throw e;
     }
     res.end();
 }
@@ -344,19 +360,21 @@ function setupCopilotRoutes(app, getFlightData) {
         const provider = cfg.provider || 'openai';
         const model = cfg.model || (provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20250929');
 
-        // Abort on client disconnect
+        // Abort controller — client disconnect listener is attached inside proxy
+        // functions AFTER headers are sent (req 'close' fires early in Express
+        // when the request body finishes, not when the client actually disconnects)
         const abortController = new AbortController();
-        req.on('close', () => abortController.abort());
 
-        // 30s timeout
-        const timeoutId = setTimeout(() => abortController.abort(), 30000);
+        // 60s timeout for initial response from upstream LLM
+        const timeoutId = setTimeout(() => abortController.abort(), 60000);
 
         try {
             if (provider === 'anthropic') {
-                await proxyToAnthropic(apiKey, model, messages, res, abortController.signal);
+                await proxyToAnthropic(apiKey, model, messages, req, res, abortController);
             } else {
-                await proxyToOpenAI(apiKey, model, messages, res, abortController.signal);
+                await proxyToOpenAI(apiKey, model, messages, req, res, abortController);
             }
+            clearTimeout(timeoutId);
         } catch (err) {
             clearTimeout(timeoutId);
             if (abortController.signal.aborted) {
@@ -372,8 +390,6 @@ function setupCopilotRoutes(app, getFlightData) {
                 res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
                 res.end();
             }
-        } finally {
-            clearTimeout(timeoutId);
         }
     });
 }
