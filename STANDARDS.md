@@ -3168,32 +3168,20 @@ curl -X POST http://localhost:8500/api/services/relay/restart
 
 ---
 
-## 🤖 Claude CLI & mclaude
+## 🤖 Claude CLI
 
 ### Configuration (2026-02-02)
 
 **Claude CLI Version:** 2.1.29
 
-#### mclaude - Permissions Bypass Wrapper
-
-Two versions for cross-shell compatibility:
-
-| File | Shell | Location |
-|------|-------|----------|
-| `mclaude.bat` | Windows CMD/PowerShell | `C:\LLM-DevOSWE\mclaude.bat` |
-| `mclaude` | Git Bash/WSL | `C:\LLM-DevOSWE\mclaude` |
-
-Both wrap `claude --dangerously-skip-permissions` for auto-approved tool execution.
-
 #### Usage
 
 ```bash
-# Git Bash
-./mclaude -p "your task"
-C:/LLM-DevOSWE/mclaude -p "check service health"
+# Interactive
+claude
 
-# Windows CMD/PowerShell
-mclaude -p "your task"
+# Scripted / automation (bypasses permission prompts)
+claude --dangerously-skip-permissions -p "your task"
 ```
 
 #### Key Flags
@@ -3228,7 +3216,7 @@ claude -p "curl localhost:8600/api/health"
 claude --dangerously-skip-permissions -p "curl localhost:8600/api/health"
 ```
 
-**Rule:** Always use `mclaude` or `--dangerously-skip-permissions` for automated/scripted tasks.
+**Rule:** Always use `--dangerously-skip-permissions` for automated/scripted tasks.
 
 #### Interactive vs Print Mode
 
@@ -3236,4 +3224,3 @@ claude --dangerously-skip-permissions -p "curl localhost:8600/api/health"
 |------|----------|---------------------|
 | Interactive (default) | Development, exploration | Prompts for approval |
 | `-p` (print) | Scripts, automation | Requires `--dangerously-skip-permissions` |
-| mclaude | Both | Always bypasses permissions |
