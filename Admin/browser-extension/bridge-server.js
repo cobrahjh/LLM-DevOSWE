@@ -1,26 +1,46 @@
 /**
- * Kitt Browser Bridge Server v1.1.0
+ * Kitt Browser Bridge Server v2.0.0
  * HTTP API that communicates with browser extension via WebSocket
+ * BrowserMCP-compatible feature set
  *
  * Port: 8620
  *
- * Endpoints:
+ * Navigation:
  *   GET  /status          - Check connection status
  *   GET  /tabs            - List all tabs
+ *   GET  /active          - Get active tab
  *   POST /navigate        - Navigate to URL
- *   POST /click           - Click element
- *   POST /type            - Type text
- *   POST /read            - Read page content
- *   POST /execute         - Execute JavaScript
- *   POST /screenshot      - Capture tab
+ *   POST /back            - Go back in history
+ *   POST /forward         - Go forward in history
+ *   POST /newtab          - Open new tab
+ *   POST /close           - Close tab
+ *   POST /focus           - Focus tab
  *
- * Tab Grouping (v1.1.0):
+ * Interaction:
+ *   POST /click           - Click element {tabId, selector | x,y, element?}
+ *   POST /type            - Type text {tabId, selector?, text, submit?}
+ *   POST /hover           - Hover over element {tabId, selector | x,y, element?}
+ *   POST /drag            - Drag and drop {tabId, from, to}
+ *   POST /key             - Press keyboard key {tabId, key}
+ *   POST /select          - Select dropdown option {tabId, selector, values[]}
+ *
+ * Data & Inspection:
+ *   POST /snapshot        - Accessibility snapshot {tabId?}
+ *   POST /screenshot      - Visual screenshot {tabId?}
+ *   POST /read            - Read page content {tabId, selector?}
+ *   GET  /console         - Get console logs {tabId}
+ *   POST /execute         - Execute JavaScript {tabId, code}
+ *
+ * Timing:
+ *   POST /wait            - Wait for seconds {time}
+ *
+ * Tab Grouping:
  *   GET  /groups          - List all tab groups
- *   POST /group           - Create group from tabs {tabIds[], title?, color?}
- *   POST /group/add       - Add tabs to group {groupId, tabIds[]}
- *   POST /opengroup       - Open URLs in new group {urls[], title?, color?}
- *   POST /ungroup         - Remove tabs from group {tabIds[]}
- *   POST /group/collapse  - Collapse/expand group {groupId, collapsed?}
+ *   POST /group           - Create group {tabIds[], title?, color?}
+ *   POST /group/add       - Add to group {groupId, tabIds[]}
+ *   POST /opengroup       - Open URLs in group {urls[], title?, color?}
+ *   POST /ungroup         - Remove from group {tabIds[]}
+ *   POST /group/collapse  - Collapse/expand {groupId, collapsed?}
  */
 
 const http = require('http');
@@ -53,15 +73,24 @@ const ACTION_NAMES = {
     getTabs: 'Listing tabs',
     getActiveTab: 'Getting active tab',
     navigate: 'Navigating',
+    goBack: 'Going back',
+    goForward: 'Going forward',
     newTab: 'Opening new tab',
     closeTab: 'Closing tab',
     focusTab: 'Focusing tab',
     click: 'Clicking element',
     type: 'Typing text',
+    hover: 'Hovering element',
+    dragDrop: 'Dragging element',
+    pressKey: 'Pressing key',
+    selectOption: 'Selecting option',
     setInputValue: 'Setting input',
     readPage: 'Reading page',
+    snapshot: 'Taking snapshot',
     executeScript: 'Running script',
     screenshot: 'Taking screenshot',
+    getConsoleLogs: 'Getting console',
+    wait: 'Waiting',
     createGroup: 'Creating tab group',
     addToGroup: 'Adding to group',
     openUrlsInGroup: 'Opening URLs in group',
@@ -190,6 +219,14 @@ const server = http.createServer(async (req, res) => {
                 result = await sendToExtension('navigate', params);
                 break;
 
+            case '/back':
+                result = await sendToExtension('goBack', params);
+                break;
+
+            case '/forward':
+                result = await sendToExtension('goForward', params);
+                break;
+
             case '/newtab':
                 result = await sendToExtension('newTab', params);
                 break;
@@ -210,6 +247,22 @@ const server = http.createServer(async (req, res) => {
                 result = await sendToExtension('type', params);
                 break;
 
+            case '/hover':
+                result = await sendToExtension('hover', params);
+                break;
+
+            case '/drag':
+                result = await sendToExtension('dragDrop', params);
+                break;
+
+            case '/key':
+                result = await sendToExtension('pressKey', params);
+                break;
+
+            case '/select':
+                result = await sendToExtension('selectOption', params);
+                break;
+
             case '/input':
                 result = await sendToExtension('setInputValue', params);
                 break;
@@ -218,12 +271,27 @@ const server = http.createServer(async (req, res) => {
                 result = await sendToExtension('readPage', params);
                 break;
 
+            case '/snapshot':
+                result = await sendToExtension('snapshot', params);
+                break;
+
             case '/execute':
                 result = await sendToExtension('executeScript', params);
                 break;
 
             case '/screenshot':
                 result = await sendToExtension('screenshot', params);
+                break;
+
+            case '/console':
+                result = await sendToExtension('getConsoleLogs', params);
+                break;
+
+            case '/wait':
+                // Wait is handled server-side
+                const waitTime = (params.time || 1) * 1000;
+                await new Promise(r => setTimeout(r, waitTime));
+                result = { waited: params.time || 1 };
                 break;
 
             // Tab grouping endpoints
@@ -275,25 +343,42 @@ server.on('upgrade', (request, socket, head) => {
 
 server.listen(PORT, () => {
     console.log('='.repeat(50));
-    console.log('Kitt Browser Bridge Server v1.0.0');
+    console.log('Kitt Browser Bridge Server v2.0.0');
+    console.log('BrowserMCP-compatible feature set');
     console.log(`HTTP API: http://localhost:${PORT}`);
     console.log(`WebSocket: ws://localhost:${PORT}`);
     console.log('='.repeat(50));
     console.log('');
     console.log('Waiting for extension to connect...');
     console.log('');
-    console.log('API Endpoints:');
+    console.log('Navigation:');
     console.log('  GET  /status     - Connection status');
     console.log('  GET  /tabs       - List tabs');
     console.log('  GET  /active     - Get active tab');
     console.log('  POST /navigate   - {tabId?, url}');
+    console.log('  POST /back       - {tabId?} Go back');
+    console.log('  POST /forward    - {tabId?} Go forward');
     console.log('  POST /newtab     - {url?}');
-    console.log('  POST /click      - {tabId, selector | x,y}');
-    console.log('  POST /type       - {tabId, selector?, text}');
-    console.log('  POST /input      - {tabId, selector, value}');
+    console.log('  POST /close      - {tabId}');
+    console.log('  POST /focus      - {tabId}');
+    console.log('');
+    console.log('Interaction:');
+    console.log('  POST /click      - {tabId, selector | x,y, element?}');
+    console.log('  POST /type       - {tabId, selector?, text, submit?}');
+    console.log('  POST /hover      - {tabId, selector | x,y, element?}');
+    console.log('  POST /drag       - {tabId, from, to}');
+    console.log('  POST /key        - {tabId, key}');
+    console.log('  POST /select     - {tabId, selector, values[]}');
+    console.log('');
+    console.log('Data & Inspection:');
+    console.log('  POST /snapshot   - {tabId?} Accessibility tree');
+    console.log('  POST /screenshot - {tabId?} Visual capture');
     console.log('  POST /read       - {tabId, selector?}');
+    console.log('  GET  /console    - {tabId} Console logs');
     console.log('  POST /execute    - {tabId, code}');
-    console.log('  POST /screenshot - {tabId?}');
+    console.log('');
+    console.log('Timing:');
+    console.log('  POST /wait       - {time} seconds');
     console.log('');
     console.log('Tab Grouping:');
     console.log('  GET  /groups        - List all groups');

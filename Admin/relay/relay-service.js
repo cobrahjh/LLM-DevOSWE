@@ -4031,4 +4031,14 @@ server.listen(PORT, '0.0.0.0', () => {
     log(`WebSocket: ws://localhost:${PORT}`);
     log(`Database: ${DB_FILE}`);
     log(`File lock: ${fileLock.heldBy ? `held by ${fileLock.heldBy}` : 'available'}`);
+
+    // Debug: List registered routes
+    const routes = [];
+    app._router.stack.forEach((middleware) => {
+        if (middleware.route) {
+            routes.push(`${Object.keys(middleware.route.methods).join(',').toUpperCase()} ${middleware.route.path}`);
+        }
+    });
+    log(`Registered routes: ${routes.length}`);
+    routes.filter(r => r.includes('/api/alert') || r.includes('/api/session')).forEach(r => log(`  ${r}`));
 });

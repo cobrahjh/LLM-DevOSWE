@@ -1,5 +1,6 @@
 /**
- * Kitt Browser Bridge - Background Service Worker
+ * Kitt Browser Bridge v2.0.0 - Background Service Worker
+ * BrowserMCP-compatible browser automation
  * Connects to local relay server and executes browser commands
  */
 
@@ -149,6 +150,12 @@ async function handleCommand(msg) {
         case 'navigate':
             return await navigateTab(params.tabId, params.url);
 
+        case 'goBack':
+            return await goBack(params.tabId);
+
+        case 'goForward':
+            return await goForward(params.tabId);
+
         case 'newTab':
             return await chrome.tabs.create({ url: params.url || 'about:blank' });
 
@@ -163,7 +170,25 @@ async function handleCommand(msg) {
             return await clickInTab(params.tabId, params.selector, params.x, params.y);
 
         case 'type':
-            return await typeInTab(params.tabId, params.selector, params.text);
+            return await typeInTab(params.tabId, params.selector, params.text, params.submit);
+
+        case 'hover':
+            return await hoverInTab(params.tabId, params.selector, params.x, params.y);
+
+        case 'dragDrop':
+            return await dragDropInTab(params.tabId, params.from, params.to);
+
+        case 'pressKey':
+            return await pressKeyInTab(params.tabId, params.key);
+
+        case 'selectOption':
+            return await selectOptionInTab(params.tabId, params.selector, params.values);
+
+        case 'snapshot':
+            return await getAccessibilitySnapshot(params.tabId);
+
+        case 'getConsoleLogs':
+            return await getConsoleLogs(params.tabId);
 
         case 'readPage':
             return await readPageContent(params.tabId, params.selector);
@@ -213,6 +238,22 @@ async function navigateTab(tabId, url) {
     }
 }
 
+// Go back in browser history
+async function goBack(tabId) {
+    const targetTabId = tabId || (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+    if (!targetTabId) throw new Error('No tab to go back');
+    await chrome.tabs.goBack(targetTabId);
+    return { back: true, tabId: targetTabId };
+}
+
+// Go forward in browser history
+async function goForward(tabId) {
+    const targetTabId = tabId || (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+    if (!targetTabId) throw new Error('No tab to go forward');
+    await chrome.tabs.goForward(targetTabId);
+    return { forward: true, tabId: targetTabId };
+}
+
 // Execute script in tab
 async function executeInTab(tabId, code) {
     // Wrap code to return result if not already returning
@@ -257,11 +298,11 @@ async function clickInTab(tabId, selector, x, y) {
     throw new Error('Must provide selector or x,y coordinates');
 }
 
-// Type text in tab
-async function typeInTab(tabId, selector, text) {
+// Type text in tab (with optional submit/Enter)
+async function typeInTab(tabId, selector, text, submit = false) {
     return await chrome.scripting.executeScript({
         target: { tabId },
-        func: (sel, txt) => {
+        func: (sel, txt, shouldSubmit) => {
             const el = sel ? document.querySelector(sel) : document.activeElement;
             if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) {
                 el.focus();
@@ -274,12 +315,346 @@ async function typeInTab(tabId, selector, text) {
                     el.dispatchEvent(new Event('input', { bubbles: true }));
                     el.dispatchEvent(new Event('change', { bubbles: true }));
                 }
-                return { typed: true, selector: sel };
+
+                // Submit if requested (press Enter)
+                if (shouldSubmit) {
+                    const enterEvent = new KeyboardEvent('keydown', {
+                        key: 'Enter',
+                        code: 'Enter',
+                        keyCode: 13,
+                        which: 13,
+                        bubbles: true
+                    });
+                    el.dispatchEvent(enterEvent);
+
+                    // Also try form submit
+                    const form = el.closest('form');
+                    if (form) form.submit();
+                }
+
+                return { typed: true, selector: sel, submitted: shouldSubmit };
             }
             return { typed: false, error: 'No editable element found' };
         },
-        args: [selector, text]
+        args: [selector, text, submit]
     }).then(r => r[0]?.result);
+}
+
+// Hover over element in tab
+async function hoverInTab(tabId, selector, x, y) {
+    return await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (sel, px, py) => {
+            let el;
+            if (sel) {
+                el = document.querySelector(sel);
+            } else if (px !== undefined && py !== undefined) {
+                el = document.elementFromPoint(px, py);
+            }
+
+            if (el) {
+                const rect = el.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                // Dispatch mouse events
+                el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: centerX, clientY: centerY }));
+                el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, clientX: centerX, clientY: centerY }));
+                el.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: centerX, clientY: centerY }));
+
+                return { hovered: true, selector: sel, element: el.tagName };
+            }
+            return { hovered: false, error: 'Element not found' };
+        },
+        args: [selector, x, y]
+    }).then(r => r[0]?.result);
+}
+
+// Drag and drop in tab
+async function dragDropInTab(tabId, from, to) {
+    return await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (fromSel, toSel) => {
+            const fromEl = document.querySelector(fromSel);
+            const toEl = document.querySelector(toSel);
+
+            if (!fromEl) return { dragged: false, error: 'Source element not found' };
+            if (!toEl) return { dragged: false, error: 'Target element not found' };
+
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+
+            const dataTransfer = new DataTransfer();
+
+            // Drag start
+            fromEl.dispatchEvent(new DragEvent('dragstart', {
+                bubbles: true,
+                dataTransfer,
+                clientX: fromRect.left + fromRect.width / 2,
+                clientY: fromRect.top + fromRect.height / 2
+            }));
+
+            // Drag over target
+            toEl.dispatchEvent(new DragEvent('dragover', {
+                bubbles: true,
+                dataTransfer,
+                clientX: toRect.left + toRect.width / 2,
+                clientY: toRect.top + toRect.height / 2
+            }));
+
+            // Drop
+            toEl.dispatchEvent(new DragEvent('drop', {
+                bubbles: true,
+                dataTransfer,
+                clientX: toRect.left + toRect.width / 2,
+                clientY: toRect.top + toRect.height / 2
+            }));
+
+            // Drag end
+            fromEl.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer }));
+
+            return { dragged: true, from: fromSel, to: toSel };
+        },
+        args: [from, to]
+    }).then(r => r[0]?.result);
+}
+
+// Press keyboard key in tab
+async function pressKeyInTab(tabId, key) {
+    return await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (keyName) => {
+            const el = document.activeElement || document.body;
+
+            // Map special keys
+            const keyMap = {
+                'Enter': { key: 'Enter', code: 'Enter', keyCode: 13 },
+                'Tab': { key: 'Tab', code: 'Tab', keyCode: 9 },
+                'Escape': { key: 'Escape', code: 'Escape', keyCode: 27 },
+                'Backspace': { key: 'Backspace', code: 'Backspace', keyCode: 8 },
+                'Delete': { key: 'Delete', code: 'Delete', keyCode: 46 },
+                'ArrowUp': { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
+                'ArrowDown': { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
+                'ArrowLeft': { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
+                'ArrowRight': { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 },
+                'Home': { key: 'Home', code: 'Home', keyCode: 36 },
+                'End': { key: 'End', code: 'End', keyCode: 35 },
+                'PageUp': { key: 'PageUp', code: 'PageUp', keyCode: 33 },
+                'PageDown': { key: 'PageDown', code: 'PageDown', keyCode: 34 },
+                'Space': { key: ' ', code: 'Space', keyCode: 32 },
+            };
+
+            const keyInfo = keyMap[keyName] || {
+                key: keyName,
+                code: keyName.length === 1 ? `Key${keyName.toUpperCase()}` : keyName,
+                keyCode: keyName.charCodeAt(0)
+            };
+
+            const eventInit = {
+                key: keyInfo.key,
+                code: keyInfo.code,
+                keyCode: keyInfo.keyCode,
+                which: keyInfo.keyCode,
+                bubbles: true,
+                cancelable: true
+            };
+
+            el.dispatchEvent(new KeyboardEvent('keydown', eventInit));
+            el.dispatchEvent(new KeyboardEvent('keypress', eventInit));
+            el.dispatchEvent(new KeyboardEvent('keyup', eventInit));
+
+            return { pressed: true, key: keyName };
+        },
+        args: [key]
+    }).then(r => r[0]?.result);
+}
+
+// Select option in dropdown
+async function selectOptionInTab(tabId, selector, values) {
+    return await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (sel, vals) => {
+            const select = document.querySelector(sel);
+            if (!select || select.tagName !== 'SELECT') {
+                return { selected: false, error: 'Select element not found' };
+            }
+
+            // Clear previous selections for multi-select
+            if (select.multiple) {
+                Array.from(select.options).forEach(opt => opt.selected = false);
+            }
+
+            // Select the values
+            const selectedValues = [];
+            Array.from(select.options).forEach(option => {
+                if (vals.includes(option.value) || vals.includes(option.text)) {
+                    option.selected = true;
+                    selectedValues.push(option.value);
+                }
+            });
+
+            // Dispatch change event
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+
+            return { selected: true, selector: sel, values: selectedValues };
+        },
+        args: [selector, values]
+    }).then(r => r[0]?.result);
+}
+
+// Get accessibility snapshot of page
+async function getAccessibilitySnapshot(tabId) {
+    const targetTabId = tabId || (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+    if (!targetTabId) throw new Error('No tab for snapshot');
+
+    return await chrome.scripting.executeScript({
+        target: { tabId: targetTabId },
+        func: () => {
+            function getAccessibleName(el) {
+                return el.getAttribute('aria-label') ||
+                       el.getAttribute('alt') ||
+                       el.getAttribute('title') ||
+                       el.getAttribute('placeholder') ||
+                       (el.labels && el.labels[0]?.textContent) ||
+                       el.textContent?.trim().substring(0, 100) ||
+                       '';
+            }
+
+            function getRole(el) {
+                const explicit = el.getAttribute('role');
+                if (explicit) return explicit;
+
+                const tagRoles = {
+                    'A': 'link',
+                    'BUTTON': 'button',
+                    'INPUT': el.type === 'checkbox' ? 'checkbox' :
+                             el.type === 'radio' ? 'radio' :
+                             el.type === 'submit' ? 'button' : 'textbox',
+                    'SELECT': 'combobox',
+                    'TEXTAREA': 'textbox',
+                    'IMG': 'img',
+                    'H1': 'heading',
+                    'H2': 'heading',
+                    'H3': 'heading',
+                    'H4': 'heading',
+                    'H5': 'heading',
+                    'H6': 'heading',
+                    'NAV': 'navigation',
+                    'MAIN': 'main',
+                    'HEADER': 'banner',
+                    'FOOTER': 'contentinfo',
+                    'ASIDE': 'complementary',
+                    'FORM': 'form',
+                    'TABLE': 'table',
+                    'UL': 'list',
+                    'OL': 'list',
+                    'LI': 'listitem',
+                };
+                return tagRoles[el.tagName] || 'generic';
+            }
+
+            function buildTree(el, depth = 0, refCounter = { count: 0 }) {
+                if (depth > 10 || !el || el.nodeType !== 1) return null;
+
+                const style = window.getComputedStyle(el);
+                if (style.display === 'none' || style.visibility === 'hidden') return null;
+
+                const role = getRole(el);
+                const name = getAccessibleName(el);
+                const ref = `e${refCounter.count++}`;
+
+                const node = {
+                    ref,
+                    role,
+                    name: name || undefined
+                };
+
+                // Add state info
+                if (el.disabled) node.disabled = true;
+                if (el.checked) node.checked = true;
+                if (el.getAttribute('aria-expanded')) node.expanded = el.getAttribute('aria-expanded') === 'true';
+                if (el.getAttribute('aria-selected')) node.selected = el.getAttribute('aria-selected') === 'true';
+                if (el.value && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+                    node.value = el.value.substring(0, 100);
+                }
+
+                // Build children
+                const children = [];
+                for (const child of el.children) {
+                    const childNode = buildTree(child, depth + 1, refCounter);
+                    if (childNode) children.push(childNode);
+                }
+
+                if (children.length > 0) {
+                    node.children = children;
+                }
+
+                return node;
+            }
+
+            return {
+                url: location.href,
+                title: document.title,
+                snapshot: buildTree(document.body)
+            };
+        }
+    }).then(r => r[0]?.result);
+}
+
+// Console log storage (per tab)
+const consoleLogs = new Map();
+
+// Get console logs for a tab
+async function getConsoleLogs(tabId) {
+    const targetTabId = tabId || (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+    if (!targetTabId) throw new Error('No tab for console logs');
+
+    // Inject console capture if not already done
+    await chrome.scripting.executeScript({
+        target: { tabId: targetTabId },
+        func: () => {
+            if (window.__kittConsoleCapture) return;
+            window.__kittConsoleCapture = true;
+            window.__kittConsoleLogs = window.__kittConsoleLogs || [];
+
+            const methods = ['log', 'warn', 'error', 'info', 'debug'];
+            methods.forEach(method => {
+                const original = console[method];
+                console[method] = function(...args) {
+                    window.__kittConsoleLogs.push({
+                        type: method,
+                        timestamp: Date.now(),
+                        message: args.map(a => {
+                            try {
+                                return typeof a === 'object' ? JSON.stringify(a) : String(a);
+                            } catch {
+                                return String(a);
+                            }
+                        }).join(' ')
+                    });
+                    // Keep only last 100 logs
+                    if (window.__kittConsoleLogs.length > 100) {
+                        window.__kittConsoleLogs.shift();
+                    }
+                    original.apply(console, args);
+                };
+            });
+        },
+        world: 'MAIN'
+    });
+
+    // Retrieve logs
+    const result = await chrome.scripting.executeScript({
+        target: { tabId: targetTabId },
+        func: () => {
+            const logs = window.__kittConsoleLogs || [];
+            window.__kittConsoleLogs = []; // Clear after reading
+            return logs;
+        },
+        world: 'MAIN'
+    });
+
+    return { logs: result[0]?.result || [] };
 }
 
 // Set input value

@@ -17,6 +17,12 @@ const { spawn, exec } = require('child_process');
 
 const PORT = 8771;
 
+// Default command timeout (30 seconds)
+const DEFAULT_TIMEOUT = 30000;
+
+// Track running commands per terminal
+const runningCommands = new Map(); // termId -> { command, startTime, timeoutId }
+
 // Get running processes (filtered for interesting ones)
 async function getRunningProcesses() {
     return new Promise((resolve, reject) => {
@@ -82,6 +88,7 @@ const server = http.createServer((req, res) => {
         // List all terminals
         const list = [];
         terminals.forEach((term, id) => {
+            const cmdInfo = runningCommands.get(id);
             list.push({
                 id,
                 title: term.title || `Terminal ${id}`,
@@ -90,11 +97,15 @@ const server = http.createServer((req, res) => {
                 clients: term.clients.size,
                 bufferSize: term.buffer.length,
                 isWT: term.isWT || false,
-                isMonitor: term.isMonitor || false
+                isMonitor: term.isMonitor || false,
+                runningCommand: cmdInfo ? {
+                    command: cmdInfo.command,
+                    elapsed: Date.now() - cmdInfo.startTime
+                } : null
             });
         });
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(list));
+        res.end(JSON.stringify({ terminals: list, runningCount: runningCommands.size }));
     } else if (url.pathname === '/api/terminals' && req.method === 'POST') {
         // Create new terminal
         let body = '';
@@ -136,6 +147,59 @@ const server = http.createServer((req, res) => {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Terminal not found' }));
         }
+    } else if (url.pathname.match(/^\/api\/terminals\/\d+\/interrupt$/) && req.method === 'POST') {
+        // Send Ctrl+C to interrupt running command
+        const id = parseInt(url.pathname.split('/')[3]);
+        if (terminals.has(id)) {
+            const term = terminals.get(id);
+            const result = interruptTerminal(id, term);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(result));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Terminal not found' }));
+        }
+    } else if (url.pathname.match(/^\/api\/terminals\/\d+\/exec$/) && req.method === 'POST') {
+        // Execute command with timeout
+        const id = parseInt(url.pathname.split('/')[3]);
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+            if (!terminals.has(id)) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Terminal not found' }));
+                return;
+            }
+            try {
+                const { command, timeout = DEFAULT_TIMEOUT } = JSON.parse(body);
+                const result = await executeWithTimeout(id, command, timeout);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(result));
+            } catch (e) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message }));
+            }
+        });
+    } else if (url.pathname.match(/^\/api\/terminals\/\d+\/cancel$/) && req.method === 'POST') {
+        // Cancel running command
+        const id = parseInt(url.pathname.split('/')[3]);
+        if (terminals.has(id)) {
+            const result = cancelCommand(id);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(result));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Terminal not found' }));
+        }
+    } else if (url.pathname === '/api/terminals/cancel-all' && req.method === 'POST') {
+        // Cancel all running commands
+        const cancelled = [];
+        for (const id of runningCommands.keys()) {
+            cancelCommand(id);
+            cancelled.push(id);
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, cancelled, count: cancelled.length }));
     } else if (url.pathname === '/api/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -271,6 +335,22 @@ wss.on('connection', (ws, req) => {
                 } else {
                     ws.send(JSON.stringify({ type: 'output', data: '[Terminal has no input stream]\r\n' }));
                 }
+            } else if (data.type === 'interrupt') {
+                // Send Ctrl+C
+                interruptTerminal(termId, term);
+            } else if (data.type === 'cancel') {
+                // Cancel running command
+                cancelCommand(termId);
+            } else if (data.type === 'exec') {
+                // Execute command with timeout
+                const timeout = data.timeout || DEFAULT_TIMEOUT;
+                executeWithTimeout(termId, data.command, timeout)
+                    .then(result => {
+                        ws.send(JSON.stringify({ type: 'exec-result', ...result }));
+                    })
+                    .catch(err => {
+                        ws.send(JSON.stringify({ type: 'exec-result', success: false, error: err.message }));
+                    });
             } else if (data.type === 'resize' && data.cols && data.rows) {
                 // Resize not supported with basic spawn, would need node-pty
             }
@@ -283,6 +363,152 @@ wss.on('connection', (ws, req) => {
         term.clients.delete(ws);
     });
 });
+
+// Interrupt terminal (send Ctrl+C)
+function interruptTerminal(id, term) {
+    if (!term.process || term.process.killed) {
+        return { success: false, error: 'Terminal process not running' };
+    }
+
+    try {
+        // Send Ctrl+C (ETX character)
+        term.process.stdin.write('\x03');
+        console.log(`[Terminal ${id}] Sent interrupt (Ctrl+C)`);
+
+        // Cancel any tracked running command
+        if (runningCommands.has(id)) {
+            const cmd = runningCommands.get(id);
+            if (cmd.timeoutId) clearTimeout(cmd.timeoutId);
+            runningCommands.delete(id);
+        }
+
+        // Broadcast interrupt to clients
+        const msg = JSON.stringify({ type: 'interrupt' });
+        term.clients.forEach(ws => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(msg);
+            }
+        });
+
+        return { success: true, message: 'Interrupt signal sent' };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+}
+
+// Execute command with timeout
+function executeWithTimeout(id, command, timeout) {
+    return new Promise((resolve, reject) => {
+        const term = terminals.get(id);
+        if (!term || !term.process || term.process.killed) {
+            reject(new Error('Terminal not available'));
+            return;
+        }
+
+        // Check if command already running
+        if (runningCommands.has(id)) {
+            reject(new Error('Command already running. Cancel it first.'));
+            return;
+        }
+
+        const startTime = Date.now();
+        const bufferStart = term.buffer.length;
+        let resolved = false;
+
+        // Track this command
+        const cmdInfo = {
+            command,
+            startTime,
+            timeoutId: null
+        };
+        runningCommands.set(id, cmdInfo);
+
+        // Set up timeout
+        cmdInfo.timeoutId = setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                runningCommands.delete(id);
+                // Send Ctrl+C to stop the command
+                try {
+                    term.process.stdin.write('\x03');
+                } catch (e) { /* ignore */ }
+                resolve({
+                    success: false,
+                    error: `Command timed out after ${timeout}ms`,
+                    timedOut: true,
+                    output: term.buffer.slice(bufferStart),
+                    executionTime: Date.now() - startTime
+                });
+            }
+        }, timeout);
+
+        // Listen for output to detect command completion
+        const outputHandler = (data) => {
+            // Simple heuristic: if we see a prompt pattern, command might be done
+            const text = data.toString();
+            // Common prompt patterns: PS C:\>, >, $, #
+            if (text.match(/(\r\n|\n)(PS [^>]+>|\$|#|>)\s*$/)) {
+                if (!resolved) {
+                    resolved = true;
+                    clearTimeout(cmdInfo.timeoutId);
+                    runningCommands.delete(id);
+                    term.process.stdout.removeListener('data', outputHandler);
+                    resolve({
+                        success: true,
+                        output: term.buffer.slice(bufferStart),
+                        executionTime: Date.now() - startTime
+                    });
+                }
+            }
+        };
+
+        term.process.stdout.on('data', outputHandler);
+
+        // Send the command
+        console.log(`[Terminal ${id}] Executing with ${timeout}ms timeout: ${command}`);
+        term.process.stdin.write(command + '\r\n');
+    });
+}
+
+// Cancel running command
+function cancelCommand(id) {
+    const term = terminals.get(id);
+    const cmdInfo = runningCommands.get(id);
+
+    if (!cmdInfo) {
+        return { success: false, error: 'No command running' };
+    }
+
+    console.log(`[Terminal ${id}] Cancelling command: ${cmdInfo.command}`);
+
+    // Clear timeout
+    if (cmdInfo.timeoutId) clearTimeout(cmdInfo.timeoutId);
+    runningCommands.delete(id);
+
+    // Send Ctrl+C
+    if (term && term.process && !term.process.killed) {
+        try {
+            term.process.stdin.write('\x03');
+        } catch (e) { /* ignore */ }
+    }
+
+    // Broadcast cancel to clients
+    if (term) {
+        const msg = JSON.stringify({ type: 'cancelled', command: cmdInfo.command });
+        term.clients.forEach(ws => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(msg);
+            }
+        });
+    }
+
+    return {
+        success: true,
+        message: 'Command cancelled',
+        command: cmdInfo.command,
+        elapsed: Date.now() - cmdInfo.startTime
+    };
+}
 
 // Shell configurations
 const SHELLS = {
@@ -611,11 +837,21 @@ server.listen(PORT, '0.0.0.0', () => {
 ╚══════════════════════════════════════╝
 
 Endpoints:
-  GET  /                    - Web UI
-  GET  /api/terminals       - List terminals
-  POST /api/terminals       - Create terminal
-  DELETE /api/terminals/:id - Kill terminal
-  WS   /?id=N              - Connect to terminal
+  GET  /                         - Web UI
+  GET  /api/terminals            - List terminals
+  POST /api/terminals            - Create terminal
+  DELETE /api/terminals/:id      - Kill terminal
+  POST /api/terminals/:id/exec   - Execute with timeout
+  POST /api/terminals/:id/interrupt - Send Ctrl+C
+  POST /api/terminals/:id/cancel - Cancel running command
+  POST /api/terminals/cancel-all - Cancel all commands
+  WS   /?id=N                    - Connect to terminal
+
+WebSocket messages:
+  { type: 'input', data: '...' }     - Send input
+  { type: 'interrupt' }              - Send Ctrl+C
+  { type: 'cancel' }                 - Cancel command
+  { type: 'exec', command, timeout } - Execute with timeout
 
 Local:  http://localhost:${PORT}
 LAN:    http://192.168.1.192:${PORT}

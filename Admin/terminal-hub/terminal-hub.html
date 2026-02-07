@@ -736,6 +736,7 @@
             </div>
             <div class="terminal-input-area">
                 <button class="btn" onclick="clearOutput()" title="Clear screen">CLR</button>
+                <button class="btn btn-kill" id="btnInterrupt" onclick="sendInterrupt()" title="Send Ctrl+C" style="display:none">⏹ STOP</button>
                 <input type="text" id="terminalInput" placeholder="Type command and press Enter..." onkeydown="handleInput(event)" autocomplete="off" autocapitalize="off" spellcheck="false">
                 <button class="btn btn-send" onclick="sendCommand()">Send</button>
             </div>
@@ -922,6 +923,29 @@
             // Send with newline (Enter)
             ws.send(JSON.stringify({ type: 'input', data: cmd + '\r\n' }));
             input.value = '';
+
+            // Show interrupt button when command is sent
+            document.getElementById('btnInterrupt').style.display = '';
+        }
+
+        // Send interrupt (Ctrl+C)
+        function sendInterrupt() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            ws.send(JSON.stringify({ type: 'interrupt' }));
+            document.getElementById('btnInterrupt').style.display = 'none';
+        }
+
+        // Cancel via API (for external use)
+        async function cancelCommand() {
+            if (!activeTerminal) return;
+            try {
+                await fetch(`${API_BASE}/api/terminals/${activeTerminal}/cancel`, { method: 'POST' });
+                document.getElementById('btnInterrupt').style.display = 'none';
+            } catch (e) {
+                console.error('Failed to cancel:', e);
+            }
         }
 
         // New terminal modal
