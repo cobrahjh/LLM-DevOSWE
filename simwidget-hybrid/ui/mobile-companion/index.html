@@ -7,131 +7,83 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1a1a2e">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: system-ui; background: #0f0f1a; color: #fff; min-height: 100vh; }
-        .mobile-header { background: linear-gradient(135deg, #667eea, #764ba2); padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .mobile-header h1 { font-size: 18px; margin-bottom: 4px; }
-        .mobile-header .status { font-size: 11px; opacity: 0.8; }
-        .status-connected { color: #4ade80; }
-        .quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
-        .quick-btn { background: #16213e; border: none; color: #fff; padding: 16px 8px; border-radius: 12px; font-size: 24px; cursor: pointer; }
-        .quick-btn span { display: block; font-size: 10px; margin-top: 4px; }
-        .quick-btn:active { transform: scale(0.95); background: #667eea; }
-        .flight-data { padding: 12px; }
-        .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .data-card { background: #16213e; border-radius: 12px; padding: 16px; text-align: center; }
-        .data-label { font-size: 10px; color: #888; text-transform: uppercase; }
-        .data-value { font-size: 28px; font-weight: 700; font-family: monospace; color: #667eea; }
-        .data-unit { font-size: 12px; color: #888; }
-        .widget-tabs { display: flex; gap: 4px; padding: 12px; overflow-x: auto; }
-        .widget-tab { background: #16213e; border: none; color: #888; padding: 10px 16px; border-radius: 20px; font-size: 12px; white-space: nowrap; cursor: pointer; }
-        .widget-tab.active { background: #667eea; color: #fff; }
-        .widget-frame { padding: 12px; }
-        .widget-frame iframe { width: 100%; height: 400px; border: none; border-radius: 12px; background: #16213e; }
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a2e; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1); }
-        .nav-btn { background: none; border: none; color: #888; font-size: 24px; cursor: pointer; padding: 8px; }
-        .nav-btn.active { color: #667eea; }
-        .nav-btn span { display: block; font-size: 9px; margin-top: 2px; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="mobile-header">
-        <h1>✈️ SimWidget Mobile</h1>
+        <h1>SimWidget Mobile</h1>
         <div class="status" id="status">Connecting...</div>
     </div>
 
-    <div class="quick-actions">
-        <button class="quick-btn" onclick="sendCmd('camera/cockpit')">🎥<span>Cockpit</span></button>
-        <button class="quick-btn" onclick="sendCmd('camera/external')">🌍<span>External</span></button>
-        <button class="quick-btn" onclick="sendCmd('camera/drone')">🚁<span>Drone</span></button>
-        <button class="quick-btn" onclick="sendCmd('pause')">⏸️<span>Pause</span></button>
-    </div>
+    <!-- Home Section -->
+    <div class="section active" id="section-home">
+        <div class="quick-actions">
+            <button class="quick-btn" data-cmd="camera/cockpit">&#127909;<span>Cockpit</span></button>
+            <button class="quick-btn" data-cmd="camera/external">&#127758;<span>External</span></button>
+            <button class="quick-btn" data-cmd="camera/drone">&#128641;<span>Drone</span></button>
+            <button class="quick-btn" data-cmd="PAUSE_TOGGLE">&#9199;<span>Pause</span></button>
+        </div>
 
-    <div class="flight-data">
-        <div class="data-grid">
-            <div class="data-card">
-                <div class="data-label">Altitude</div>
-                <div class="data-value" id="altitude">---</div>
-                <div class="data-unit">ft</div>
+        <div class="flight-data">
+            <div class="data-grid">
+                <div class="data-card">
+                    <div class="data-label">Altitude</div>
+                    <div class="data-value" id="altitude">---</div>
+                    <div class="data-unit">ft</div>
+                </div>
+                <div class="data-card">
+                    <div class="data-label">Speed</div>
+                    <div class="data-value" id="speed">---</div>
+                    <div class="data-unit">kt</div>
+                </div>
+                <div class="data-card">
+                    <div class="data-label">Heading</div>
+                    <div class="data-value" id="heading">---</div>
+                    <div class="data-unit">deg</div>
+                </div>
+                <div class="data-card">
+                    <div class="data-label">V/S</div>
+                    <div class="data-value" id="vs">---</div>
+                    <div class="data-unit">fpm</div>
+                </div>
             </div>
-            <div class="data-card">
-                <div class="data-label">Speed</div>
-                <div class="data-value" id="speed">---</div>
-                <div class="data-unit">kt</div>
-            </div>
-            <div class="data-card">
-                <div class="data-label">Heading</div>
-                <div class="data-value" id="heading">---</div>
-                <div class="data-unit">deg</div>
-            </div>
-            <div class="data-card">
-                <div class="data-label">V/S</div>
-                <div class="data-value" id="vs">---</div>
-                <div class="data-unit">fpm</div>
-            </div>
+        </div>
+
+        <div class="widget-tabs">
+            <button class="widget-tab active" data-widget="weather">Weather</button>
+            <button class="widget-tab" data-widget="map">Map</button>
+            <button class="widget-tab" data-widget="checklist">Checklist</button>
+            <button class="widget-tab" data-widget="radio">Radio</button>
+            <button class="widget-tab" data-widget="fuel">Fuel</button>
+        </div>
+
+        <div class="widget-frame">
+            <iframe id="widget-iframe" src="/ui/weather-widget/"></iframe>
         </div>
     </div>
 
-    <div class="widget-tabs">
-        <button class="widget-tab active" data-widget="weather">🌦️ Weather</button>
-        <button class="widget-tab" data-widget="map">🗺️ Map</button>
-        <button class="widget-tab" data-widget="checklist">✅ Checklist</button>
-        <button class="widget-tab" data-widget="radio">📻 Radio</button>
-        <button class="widget-tab" data-widget="fuel">⛽ Fuel</button>
+    <!-- Camera Section -->
+    <div class="section" id="section-camera">
+        <iframe class="section-frame" src="/ui/camera-widget/"></iframe>
     </div>
 
-    <div class="widget-frame">
-        <iframe id="widget-iframe" src="/ui/weather-widget/"></iframe>
+    <!-- Radio Section -->
+    <div class="section" id="section-radio">
+        <iframe class="section-frame" src="/ui/radio-stack/"></iframe>
+    </div>
+
+    <!-- Map Section -->
+    <div class="section" id="section-map">
+        <iframe class="section-frame" src="/ui/map-widget/"></iframe>
     </div>
 
     <nav class="nav-bar">
-        <button class="nav-btn active" onclick="showSection('home')">🏠<span>Home</span></button>
-        <button class="nav-btn" onclick="showSection('camera')">📷<span>Camera</span></button>
-        <button class="nav-btn" onclick="showSection('radio')">📻<span>Radio</span></button>
-        <button class="nav-btn" onclick="showSection('map')">🗺️<span>Map</span></button>
+        <button class="nav-btn active" data-section="home">&#127968;<span>Home</span></button>
+        <button class="nav-btn" data-section="camera">&#128247;<span>Camera</span></button>
+        <button class="nav-btn" data-section="radio">&#128251;<span>Radio</span></button>
+        <button class="nav-btn" data-section="map">&#128506;<span>Map</span></button>
     </nav>
 
-    <script>
-        const BASE = location.origin;
-        
-        async function sendCmd(cmd) {
-            try { await fetch(BASE + '/api/' + cmd, { method: 'POST' }); } catch(e) {}
-        }
-
-        async function updateData() {
-            try {
-                const res = await fetch(BASE + '/api/simvars');
-                if (res.ok) {
-                    const d = await res.json();
-                    document.getElementById('altitude').textContent = Math.round(d.PLANE_ALTITUDE || 0);
-                    document.getElementById('speed').textContent = Math.round(d.AIRSPEED_INDICATED || 0);
-                    document.getElementById('heading').textContent = Math.round(d.PLANE_HEADING_DEGREES_TRUE || 0);
-                    document.getElementById('vs').textContent = Math.round(d.VERTICAL_SPEED || 0);
-                    document.getElementById('status').textContent = '🟢 Connected';
-                    document.getElementById('status').classList.add('status-connected');
-                }
-            } catch(e) {
-                document.getElementById('status').textContent = '🔴 Disconnected';
-            }
-        }
-
-        document.querySelectorAll('.widget-tab').forEach(tab => {
-            tab.onclick = () => {
-                document.querySelectorAll('.widget-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                const widget = tab.dataset.widget;
-                document.getElementById('widget-iframe').src = '/ui/' + widget + '-widget/';
-            };
-        });
-
-        function showSection(section) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            event.target.closest('.nav-btn').classList.add('active');
-        }
-
-        setInterval(updateData, 1000);
-        updateData();
-    </script>
+    <script src="widget.js"></script>
 </body>
 </html>
