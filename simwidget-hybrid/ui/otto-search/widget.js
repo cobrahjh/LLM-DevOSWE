@@ -1,17 +1,7 @@
 /**
- * Otto Search Bar - SimGlass Phase 6
+ * Otto Search Bar - SimGlass v2.0.0
  * Command palette for quick action search
  */
-
-const WS_URL = `ws://${window.location.host}`;
-const API_URL = `http://${window.location.host}`;
-
-let ws = null;
-let isConnected = false;
-let selectedIndex = 0;
-let filteredCommands = [];
-let currentCategory = 'all';
-let _destroyed = false;
 
 // Command database
 const COMMANDS = [
@@ -72,173 +62,189 @@ const COMMANDS = [
     { name: 'Sim Rate Down', desc: 'Slow down sim', command: 'SIM_RATE_DECR', category: 'environment', icon: '\u23EA', keywords: ['sim', 'rate', 'slow'] }
 ];
 
-function connect() {
-    if (_destroyed) return;
+class OttoSearch extends SimGlassBase {
+    constructor() {
+        super({
+            widgetName: 'otto-search',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
 
-    ws = new WebSocket(WS_URL);
-    ws.onopen = () => { isConnected = true; updateStatus(true, 'Connected'); };
-    ws.onclose = () => {
-        isConnected = false;
-        updateStatus(false, 'Disconnected');
-        if (!_destroyed) {
-            setTimeout(connect, 3000);
+        this.apiUrl = 'http://' + window.location.host;
+        this.selectedIndex = 0;
+        this.filteredCommands = [];
+        this.currentCategory = 'all';
+
+        this.initUI();
+    }
+
+    // SimGlassBase lifecycle hooks
+    onConnect() {
+        this.updateStatus(true, 'Connected');
+    }
+
+    onDisconnect() {
+        this.updateStatus(false, 'Disconnected');
+    }
+
+    initUI() {
+        const searchInput = document.getElementById('searchInput');
+        const categoryBar = document.getElementById('categoryBar');
+
+        this.renderResults(this.filterCommands(''), '');
+
+        searchInput.addEventListener('input', (e) => {
+            this.renderResults(this.filterCommands(e.target.value), e.target.value);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') { e.preventDefault(); this.updateSelection(this.selectedIndex + 1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); this.updateSelection(this.selectedIndex - 1); }
+            else if (e.key === 'Enter') { e.preventDefault(); this.executeCommand(this.selectedIndex); }
+            else if (e.key === 'Escape') { searchInput.value = ''; this.renderResults(this.filterCommands(''), ''); }
+        });
+
+        categoryBar.addEventListener('click', (e) => {
+            if (e.target.classList.contains('category-btn')) {
+                categoryBar.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                this.currentCategory = e.target.dataset.category;
+                this.renderResults(this.filterCommands(searchInput.value), searchInput.value);
+            }
+        });
+    }
+
+    updateStatus(connected, text) {
+        const dot = document.getElementById('status');
+        const txt = document.getElementById('statusText');
+        if (dot) dot.classList.toggle('connected', connected);
+        if (txt) txt.textContent = text;
+    }
+
+    async sendCommand(command) {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/command`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command, value: 0 })
+            });
+            return await response.json();
+        } catch (err) {
+            if (window.telemetry) {
+                telemetry.captureError(err, {
+                    operation: 'sendCommand',
+                    widget: 'otto-search',
+                    command
+                });
+            }
+            return { success: false };
         }
-    };
-    ws.onerror = () => updateStatus(false, 'Error');
-}
+    }
 
-function updateStatus(connected, text) {
-    const dot = document.getElementById('status');
-    const txt = document.getElementById('statusText');
-    if (dot) dot.classList.toggle('connected', connected);
-    if (txt) txt.textContent = text;
-}
+    filterCommands(query) {
+        const q = query.toLowerCase().trim();
+        let results = COMMANDS;
+        if (this.currentCategory !== 'all') {
+            results = results.filter(cmd => cmd.category === this.currentCategory);
+        }
+        if (q) {
+            results = results.filter(cmd => {
+                return cmd.name.toLowerCase().includes(q) ||
+                       cmd.desc.toLowerCase().includes(q) ||
+                       cmd.keywords.some(kw => kw.includes(q));
+            });
+        }
+        return results;
+    }
 
-async function sendCommand(command) {
-    try {
-        const response = await fetch(`${API_URL}/api/command`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command, value: 0 })
+    renderResults(commands, query) {
+        const container = document.getElementById('results');
+        const countEl = document.getElementById('resultCount');
+        this.filteredCommands = commands;
+        this.selectedIndex = 0;
+
+        if (countEl) countEl.textContent = commands.length + ' commands';
+        container.textContent = '';
+
+        if (commands.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'no-results';
+            const icon = document.createElement('div');
+            icon.className = 'no-results-icon';
+            icon.textContent = '\u{1F50D}';
+            const text = document.createElement('div');
+            text.textContent = query ? 'No commands matching "' + query + '"' : 'No commands';
+            noResults.appendChild(icon);
+            noResults.appendChild(text);
+            container.appendChild(noResults);
+            return;
+        }
+
+        commands.forEach((cmd, index) => {
+            const item = document.createElement('div');
+            item.className = 'result-item' + (index === 0 ? ' selected' : '');
+            item.dataset.category = cmd.category;
+            item.dataset.index = index;
+
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'result-icon';
+            iconDiv.textContent = cmd.icon;
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'result-info';
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'result-name';
+            nameDiv.textContent = cmd.name;
+
+            const descDiv = document.createElement('div');
+            descDiv.className = 'result-desc';
+            descDiv.textContent = cmd.desc;
+
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(descDiv);
+
+            const catSpan = document.createElement('span');
+            catSpan.className = 'result-category';
+            catSpan.textContent = cmd.category;
+
+            item.appendChild(iconDiv);
+            item.appendChild(infoDiv);
+            item.appendChild(catSpan);
+            item.addEventListener('click', () => this.executeCommand(index));
+            container.appendChild(item);
         });
-        return await response.json();
-    } catch (err) {
-        return { success: false };
-    }
-}
-
-function filterCommands(query) {
-    const q = query.toLowerCase().trim();
-    let results = COMMANDS;
-    if (currentCategory !== 'all') {
-        results = results.filter(cmd => cmd.category === currentCategory);
-    }
-    if (q) {
-        results = results.filter(cmd => {
-            return cmd.name.toLowerCase().includes(q) ||
-                   cmd.desc.toLowerCase().includes(q) ||
-                   cmd.keywords.some(kw => kw.includes(q));
-        });
-    }
-    return results;
-}
-
-function renderResults(commands, query) {
-    const container = document.getElementById('results');
-    const countEl = document.getElementById('resultCount');
-    filteredCommands = commands;
-    selectedIndex = 0;
-
-    if (countEl) countEl.textContent = commands.length + ' commands';
-    container.textContent = '';
-
-    if (commands.length === 0) {
-        const noResults = document.createElement('div');
-        noResults.className = 'no-results';
-        const icon = document.createElement('div');
-        icon.className = 'no-results-icon';
-        icon.textContent = '\u{1F50D}';
-        const text = document.createElement('div');
-        text.textContent = query ? 'No commands matching "' + query + '"' : 'No commands';
-        noResults.appendChild(icon);
-        noResults.appendChild(text);
-        container.appendChild(noResults);
-        return;
     }
 
-    commands.forEach((cmd, index) => {
-        const item = document.createElement('div');
-        item.className = 'result-item' + (index === 0 ? ' selected' : '');
-        item.dataset.category = cmd.category;
-        item.dataset.index = index;
-
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'result-icon';
-        iconDiv.textContent = cmd.icon;
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'result-info';
-
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'result-name';
-        nameDiv.textContent = cmd.name;
-
-        const descDiv = document.createElement('div');
-        descDiv.className = 'result-desc';
-        descDiv.textContent = cmd.desc;
-
-        infoDiv.appendChild(nameDiv);
-        infoDiv.appendChild(descDiv);
-
-        const catSpan = document.createElement('span');
-        catSpan.className = 'result-category';
-        catSpan.textContent = cmd.category;
-
-        item.appendChild(iconDiv);
-        item.appendChild(infoDiv);
-        item.appendChild(catSpan);
-        item.addEventListener('click', () => executeCommand(index));
-        container.appendChild(item);
-    });
-}
-
-async function executeCommand(index) {
-    const cmd = filteredCommands[index];
-    if (!cmd) return;
-    const items = document.querySelectorAll('.result-item');
-    if (items[index]) {
-        items[index].style.background = 'rgba(0, 255, 136, 0.2)';
-        setTimeout(() => { items[index].style.background = ''; }, 300);
+    async executeCommand(index) {
+        const cmd = this.filteredCommands[index];
+        if (!cmd) return;
+        const items = document.querySelectorAll('.result-item');
+        if (items[index]) {
+            items[index].style.background = 'rgba(0, 255, 136, 0.2)';
+            setTimeout(() => { items[index].style.background = ''; }, 300);
+        }
+        await this.sendCommand(cmd.command);
     }
-    await sendCommand(cmd.command);
-}
 
-function updateSelection(newIndex) {
-    const items = document.querySelectorAll('.result-item');
-    if (items.length === 0) return;
-    newIndex = Math.max(0, Math.min(newIndex, items.length - 1));
-    items.forEach(item => item.classList.remove('selected'));
-    items[newIndex].classList.add('selected');
-    items[newIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    selectedIndex = newIndex;
+    updateSelection(newIndex) {
+        const items = document.querySelectorAll('.result-item');
+        if (items.length === 0) return;
+        newIndex = Math.max(0, Math.min(newIndex, items.length - 1));
+        items.forEach(item => item.classList.remove('selected'));
+        items[newIndex].classList.add('selected');
+        items[newIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        this.selectedIndex = newIndex;
+    }
+
+    // Cleanup - extends SimGlassBase.destroy()
+    destroy() {
+        // Call parent destroy for WebSocket cleanup
+        super.destroy();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('searchInput');
-    const categoryBar = document.getElementById('categoryBar');
-
-    renderResults(filterCommands(''), '');
-
-    searchInput.addEventListener('input', (e) => {
-        renderResults(filterCommands(e.target.value), e.target.value);
-    });
-
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowDown') { e.preventDefault(); updateSelection(selectedIndex + 1); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); updateSelection(selectedIndex - 1); }
-        else if (e.key === 'Enter') { e.preventDefault(); executeCommand(selectedIndex); }
-        else if (e.key === 'Escape') { searchInput.value = ''; renderResults(filterCommands(''), ''); }
-    });
-
-    categoryBar.addEventListener('click', (e) => {
-        if (e.target.classList.contains('category-btn')) {
-            categoryBar.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-            currentCategory = e.target.dataset.category;
-            renderResults(filterCommands(searchInput.value), searchInput.value);
-        }
-    });
-
-    connect();
+    window.ottoSearch = new OttoSearch();
+    window.addEventListener('beforeunload', () => window.ottoSearch?.destroy());
 });
-
-function destroy() {
-    _destroyed = true;
-    if (ws) {
-        ws.onclose = null;
-        ws.close();
-        ws = null;
-    }
-}
-
-window.addEventListener('beforeunload', destroy);

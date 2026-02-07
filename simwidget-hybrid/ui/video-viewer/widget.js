@@ -1,11 +1,16 @@
 /**
- * Video Viewer Widget - SimGlass
+ * Video Viewer Widget - SimGlass v2.0.0
  * MSFS screen capture with HTTP polling or WebSocket streaming
  */
 
-class VideoViewer {
+class VideoViewer extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
+        super({
+            widgetName: 'video-viewer',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // Manual WS connection for video streaming
+        });
+
         this.streaming = false;
         this.recording = false;
         this.recordedFrames = [];
@@ -17,11 +22,11 @@ class VideoViewer {
         this.frameCount = 0;
         this.lastFpsUpdate = Date.now();
         this.frameInterval = null;
-        this.ws = null;
+        this.videoWs = null;  // Separate WS for video streaming on port 9997
         this.pendingHeader = null;
 
         this.apiUrl = 'http://' + window.location.host;
-        this.wsUrl = 'ws://localhost:9997';
+        this.videoWsUrl = 'ws://localhost:9997';
 
         this.initElements();
         this.initControls();
@@ -144,8 +149,8 @@ class VideoViewer {
             this.frameInterval = null;
         }
 
-        if (this.ws) {
-            this.ws.send(JSON.stringify({ type: 'stop' }));
+        if (this.videoWs) {
+            this.videoWs.send(JSON.stringify({ type: 'stop' }));
         }
     }
 
@@ -192,43 +197,52 @@ class VideoViewer {
         }
     }
 
-    // WebSocket Mode
+    // WebSocket Mode (separate video stream on port 9997)
     startWebSocket() {
-        this.ws = new WebSocket(this.wsUrl);
-        this.ws.binaryType = 'arraybuffer';
+        this.videoWs = new WebSocket(this.videoWsUrl);
+        this.videoWs.binaryType = 'arraybuffer';
 
-        this.ws.onopen = () => {
-            this.ws.send(JSON.stringify({ type: 'start' }));
+        this.videoWs.onopen = () => {
+            this.videoWs.send(JSON.stringify({ type: 'start' }));
             this.statusDot.classList.remove('connecting');
             this.statusDot.classList.add('live');
             this.statusText.textContent = 'Live (WS)';
         };
 
-        this.ws.onmessage = (e) => {
+        this.videoWs.onmessage = (e) => {
             if (typeof e.data === 'string') {
-                const msg = JSON.parse(e.data);
-                if (msg.type === 'disconnected') {
-                    this.statusText.textContent = 'Capture disconnected';
-                    this.statusDot.classList.remove('live');
-                    this.statusDot.classList.add('error');
+                try {
+                    const msg = JSON.parse(e.data);
+                    if (msg.type === 'disconnected') {
+                        this.statusText.textContent = 'Capture disconnected';
+                        this.statusDot.classList.remove('live');
+                        this.statusDot.classList.add('error');
+                    }
+                } catch (err) {
+                    if (window.telemetry) {
+                        telemetry.captureError(err, {
+                            operation: 'videoWsMessage',
+                            widget: 'video-viewer'
+                        });
+                    }
                 }
             } else {
                 this.handleWsFrame(e.data);
             }
         };
 
-        this.ws.onclose = () => {
-            if (this.streaming) {
+        this.videoWs.onclose = () => {
+            if (this.streaming && !this._destroyed) {
                 this.statusText.textContent = 'Reconnecting...';
                 this.statusDot.classList.remove('live');
                 this.statusDot.classList.add('connecting');
                 setTimeout(() => {
-                    if (this.streaming) this.startWebSocket();
+                    if (this.streaming && !this._destroyed) this.startWebSocket();
                 }, 2000);
             }
         };
 
-        this.ws.onerror = () => {
+        this.videoWs.onerror = () => {
             this.statusText.textContent = 'WebSocket error';
             this.statusDot.classList.add('error');
         };
@@ -408,20 +422,21 @@ class VideoViewer {
     }
 
     destroy() {
-        this._destroyed = true;
-
         if (this.frameInterval) {
             clearInterval(this.frameInterval);
             this.frameInterval = null;
         }
 
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
+        if (this.videoWs) {
+            this.videoWs.onclose = null;
+            this.videoWs.close();
+            this.videoWs = null;
         }
 
         this.streaming = false;
+
+        // Call parent destroy for main WebSocket cleanup
+        super.destroy();
     }
 }
 
