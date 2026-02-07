@@ -127,6 +127,7 @@
     <script>
         // Initialize widget
         window.widget = new FuelMonitorWidget();
+        window.addEventListener('beforeunload', () => window.widget?.destroy());
 
         // Settings panel
         const settings = new SettingsPanel();

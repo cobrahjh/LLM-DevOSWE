@@ -447,9 +447,17 @@ class MetarWidget {
         const rh = 100 * Math.exp(alpha - beta);
         return Math.round(rh);
     }
+
+    destroy() {
+        if (this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval);
+            this.autoRefreshInterval = null;
+        }
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.metarWidget = new MetarWidget();
+    window.addEventListener('beforeunload', () => window.metarWidget?.destroy());
 });

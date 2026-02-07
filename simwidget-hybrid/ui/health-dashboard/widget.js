@@ -27,6 +27,7 @@ let isConnected = false;
 let refreshInterval = null;
 let errors = [];
 const MAX_ERRORS = 5;
+let _destroyed = false;
 
 // DOM Elements
 const elements = {
@@ -130,6 +131,8 @@ function initWidgetsGrid() {
 
 // WebSocket connection
 function connectWebSocket() {
+    if (_destroyed) return;
+
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
@@ -142,7 +145,9 @@ function connectWebSocket() {
         console.log('[Health Dashboard] WebSocket disconnected');
         isConnected = false;
         updateWsStatus(false);
-        setTimeout(connectWebSocket, 3000);
+        if (!_destroyed) {
+            setTimeout(connectWebSocket, 3000);
+        }
     };
 
     ws.onerror = () => {
