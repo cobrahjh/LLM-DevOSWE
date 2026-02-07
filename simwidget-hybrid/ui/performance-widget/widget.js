@@ -93,7 +93,15 @@ class PerformanceWidget extends SimGlassBase {
                 const data = await response.json();
                 this.updateServerStats(data);
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'fetchPerformance',
+                    widget: 'performance-widget',
+                    url: '/api/health'
+                });
+            }
+        }
     }
 
     updateFPS(fps) {

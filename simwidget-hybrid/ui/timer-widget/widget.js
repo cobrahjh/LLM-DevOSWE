@@ -287,7 +287,15 @@ class TimerWidget {
                 soundEnabled: this.soundEnabled,
                 countdownTarget: this.countdownTarget
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveState',
+                    widget: 'timer-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadState() {
@@ -301,7 +309,15 @@ class TimerWidget {
                 this.soundBtn.classList.toggle('active', this.soundEnabled);
                 this.setCountdownTime(this.countdownTarget);
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadState',
+                    widget: 'timer-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     destroy() {

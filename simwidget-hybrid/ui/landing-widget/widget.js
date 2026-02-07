@@ -177,7 +177,15 @@ class LandingWidget extends SimGlassBase {
     saveHistory() {
         try {
             localStorage.setItem('landing-widget-history', JSON.stringify(this.history));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveHistory',
+                    widget: 'landing-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadHistory() {
@@ -187,7 +195,15 @@ class LandingWidget extends SimGlassBase {
                 this.history = JSON.parse(saved);
                 this.renderHistory();
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadHistory',
+                    widget: 'landing-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
 }

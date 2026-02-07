@@ -240,7 +240,15 @@ class NotepadWidget {
                 notes: this.notesArea.value,
                 savedItems: this.savedItems
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveState',
+                    widget: 'notepad-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadState() {
@@ -256,7 +264,15 @@ class NotepadWidget {
                     }
                 }, 0);
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadState',
+                    widget: 'notepad-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 }
 

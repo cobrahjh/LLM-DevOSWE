@@ -366,7 +366,15 @@ Category: ${category}`;
             localStorage.setItem('weather-widget-state', JSON.stringify({
                 recentAirports: this.recentAirports
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveState',
+                    widget: 'weather-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadState() {
@@ -376,7 +384,15 @@ Category: ${category}`;
                 const state = JSON.parse(saved);
                 this.recentAirports = state.recentAirports || [];
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadState',
+                    widget: 'weather-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 }
 
