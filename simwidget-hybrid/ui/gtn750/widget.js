@@ -1,5 +1,5 @@
 /**
- * GTN750 GPS Widget - Full Garmin Feature Set
+ * GTN750 GPS Widget v2.0.0 - Full Garmin Feature Set
  * Modular architecture with page manager and soft keys
  *
  * Orchestrator: creates and wires together all module instances.
@@ -12,8 +12,14 @@
  *   - GTNDataFields (corner data fields)
  */
 
-class GTN750Widget {
+class GTN750Widget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'gtn750',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // Uses GTNDataHandler for WebSocket management
+        });
+
         this.serverPort = 8080;
 
         // Initialize core utilities
@@ -1237,6 +1243,9 @@ class GTN750Widget {
         this.trafficPageRenderActive = false;
         this.weatherPageRenderActive = false;
         if (this.syncChannel) this.syncChannel.close();
+
+        // Call parent destroy
+        super.destroy();
     }
 }
 
@@ -1245,10 +1254,12 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.gtn750 = new GTN750Widget();
         handleUrlHash();
+        window.addEventListener('beforeunload', () => window.gtn750?.destroy());
     });
 } else {
     window.gtn750 = new GTN750Widget();
     handleUrlHash();
+    window.addEventListener('beforeunload', () => window.gtn750?.destroy());
 }
 
 function handleUrlHash() {
