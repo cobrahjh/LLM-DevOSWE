@@ -6,6 +6,8 @@
 const API_BASE = window.location.origin;
 
 // State
+let _destroyed = false;
+let _camPollInterval = null;
 let currentState = {
     state: 2,  // Cockpit
     flybyActive: false,
@@ -33,10 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initPresets();
     initPlatformIndicator();
     updateStatus();
-    
+
     // Poll status every 2s
-    const _camPollInterval = setInterval(updateStatus, 2000);
-    window.addEventListener('beforeunload', () => clearInterval(_camPollInterval));
+    _camPollInterval = setInterval(updateStatus, 2000);
 });
 
 // Initialize platform indicator section
@@ -312,3 +313,15 @@ function updateUI() {
         btn.classList.toggle('active', isActive);
     });
 }
+
+// Cleanup
+function destroy() {
+    _destroyed = true;
+
+    if (_camPollInterval) {
+        clearInterval(_camPollInterval);
+        _camPollInterval = null;
+    }
+}
+
+window.addEventListener('beforeunload', destroy);
