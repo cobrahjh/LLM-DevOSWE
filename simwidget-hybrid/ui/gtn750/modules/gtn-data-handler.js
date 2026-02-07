@@ -18,6 +18,11 @@ class GTNDataHandler {
 
         // Traffic polling
         this.trafficPollingInterval = null;
+
+        // Timer handles for cleanup
+        this._clockInterval = null;
+        this._reconnectTimer = null;
+        this._destroyed = false;
     }
 
     // ===== WEBSOCKET =====
@@ -53,7 +58,9 @@ class GTNDataHandler {
             if (this.elements.sysGpsStatus) {
                 this.elements.sysGpsStatus.textContent = 'NO GPS';
             }
-            setTimeout(() => this.connect(), this.reconnectDelay);
+            if (!this._destroyed) {
+                this._reconnectTimer = setTimeout(() => this.connect(), this.reconnectDelay);
+            }
         };
 
         this.ws.onerror = (e) => {
@@ -181,7 +188,7 @@ class GTNDataHandler {
     // ===== CLOCK =====
 
     startClock() {
-        setInterval(() => {
+        this._clockInterval = setInterval(() => {
             if (this.elements.utcTime && !this._hasSimTime) {
                 const now = new Date();
                 const h = now.getUTCHours().toString().padStart(2, '0');
@@ -200,6 +207,19 @@ class GTNDataHandler {
     }
 
     // ===== FREQUENCY SWAP =====
+
+    // ===== CLEANUP =====
+
+    destroy() {
+        this._destroyed = true;
+        if (this._reconnectTimer) clearTimeout(this._reconnectTimer);
+        if (this._clockInterval) clearInterval(this._clockInterval);
+        if (this.trafficPollingInterval) clearInterval(this.trafficPollingInterval);
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+        }
+    }
 
     async swapFrequency(radio) {
         try {

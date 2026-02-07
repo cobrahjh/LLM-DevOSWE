@@ -25,6 +25,9 @@ class GTNFlightPlan {
         // Callbacks for external notifications
         this.onWaypointChanged = options.onWaypointChanged || null;
         this.onDirectToActivated = options.onDirectToActivated || null;
+
+        // Timer handle for cleanup
+        this._fetchTimer = null;
     }
 
     // ===== FLIGHT PLAN FETCH =====
@@ -43,7 +46,7 @@ class GTNFlightPlan {
         } catch (e) {
             console.log('[GTN750] No flight plan');
         }
-        setTimeout(() => this.fetchFlightPlan(), 30000);
+        this._fetchTimer = setTimeout(() => this.fetchFlightPlan(), 30000);
     }
 
     updateFplHeader() {
@@ -514,6 +517,13 @@ class GTNFlightPlan {
             this.activeWaypointIndex = data.activeIndex;
             this.renderFlightPlan();
             if (this.onWaypointChanged) this.onWaypointChanged();
+        }
+    }
+
+    destroy() {
+        if (this._fetchTimer) clearTimeout(this._fetchTimer);
+        if (this.audioContext) {
+            this.audioContext.close().catch(() => {});
         }
     }
 }

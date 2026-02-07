@@ -1225,6 +1225,16 @@ class GTN750Widget {
             this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
         }
     }
+
+    destroy() {
+        this.mapRenderer.stop();
+        this.dataHandler.destroy();
+        this.flightPlanManager.destroy();
+        this.terrainPageRenderActive = false;
+        this.trafficPageRenderActive = false;
+        this.weatherPageRenderActive = false;
+        if (this.syncChannel) this.syncChannel.close();
+    }
 }
 
 // Initialize and expose globally
