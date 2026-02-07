@@ -311,21 +311,76 @@ async function testWidgets() {
         'tinywidgets'
     ];
 
+    let totalLoadTime = 0;
+    let slowestWidget = { name: '', time: 0 };
+
     for (const widget of widgets) {
         try {
+            const startTime = Date.now();
             const res = await fetch(`${API_BASE}/ui/${widget}/`);
-            assert(res.ok, `Widget /${widget}/ accessible`);
+            const loadTime = Date.now() - startTime;
+            totalLoadTime += loadTime;
+
+            if (loadTime > slowestWidget.time) {
+                slowestWidget = { name: widget, time: loadTime };
+            }
+
+            assert(res.ok, `Widget /${widget}/ accessible (${loadTime}ms)`);
+
+            // Validate HTML content
+            if (res.ok) {
+                const html = await res.text();
+
+                // Check for essential widget elements
+                const hasWidgetContainer = html.includes('widget-container') ||
+                                          html.includes('class="container"');
+                const hasWidgetJS = html.includes('widget.js') ||
+                                   html.includes('.js');
+                const hasTitle = html.includes('<title>') &&
+                                html.includes('SimGlass');
+
+                if (!hasWidgetContainer) {
+                    log(`    ⚠ ${widget}: Missing widget-container class`, 'yellow');
+                }
+                if (!hasWidgetJS) {
+                    log(`    ⚠ ${widget}: No widget.js script found`, 'yellow');
+                }
+                if (!hasTitle) {
+                    log(`    ⚠ ${widget}: Missing or invalid <title>`, 'yellow');
+                }
+            }
         } catch (e) {
             assert(false, `Widget ${widget} - ${e.message}`);
         }
     }
 
+    // Summary statistics
+    const avgLoadTime = Math.round(totalLoadTime / widgets.length);
+    log(`\n  📊 Widget Statistics:`, 'cyan');
+    log(`     Average load time: ${avgLoadTime}ms`);
+    log(`     Slowest widget: ${slowestWidget.name} (${slowestWidget.time}ms)`);
+    log(`     Total widgets: ${widgets.length}`);
+
     // Shared resources
-    try {
-        const res = await fetch(`${API_BASE}/ui/shared/`);
-        assert(res.ok, 'Shared resources accessible');
-    } catch (e) {
-        assert(false, `Shared resources - ${e.message}`);
+    log(`\n  🔧 Testing Shared Resources:`, 'cyan');
+    const sharedResources = [
+        'widget-base.js',
+        'widget-common.css',
+        'telemetry.js',
+        'platform-utils.js',
+        'themes.js',
+        'settings-panel.js'
+    ];
+
+    for (const resource of sharedResources) {
+        try {
+            const res = await fetch(`${API_BASE}/ui/shared/${resource}`);
+            const body = await res.text();
+            const size = Buffer.byteLength(body, 'utf8');
+            assert(res.ok, `Shared: ${resource} (${(size / 1024).toFixed(1)}KB)`);
+        } catch (e) {
+            assert(false, `Shared ${resource} - ${e.message}`);
+        }
     }
 }
 
