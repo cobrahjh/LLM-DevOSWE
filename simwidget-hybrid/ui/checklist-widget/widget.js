@@ -1794,8 +1794,14 @@ const AIRCRAFT_CHECKLISTS = {
     }
 };
 
-class ChecklistWidget {
+class ChecklistWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'checklist-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // Local checklist display, no WebSocket
+        });
+
         this.currentAircraft = 'generic';
         this.currentChecklist = 'preflight';
         this.checkedItems = {};
@@ -2202,9 +2208,15 @@ class ChecklistWidget {
                 break;
         }
     }
+
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.checklistWidget = new ChecklistWidget();
     window.checklistWidget.initVoiceControl();
+    window.addEventListener('beforeunload', () => window.checklistWidget?.destroy());
 });

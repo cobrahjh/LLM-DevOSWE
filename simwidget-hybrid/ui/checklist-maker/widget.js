@@ -1,10 +1,16 @@
 /**
- * Checklist Maker - SimGlass
+ * Checklist Maker - SimGlass v2.0.0
  * Create and edit custom aircraft checklists
  */
 
-class ChecklistMaker {
+class ChecklistMaker extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'checklist-maker',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // Local checklist editing, no WebSocket
+        });
+
         this.customChecklists = {};
         this.selectedAircraft = null;
         this.selectedPhase = null;
@@ -747,9 +753,15 @@ class ChecklistMaker {
     closeModal() {
         document.getElementById('modal-overlay').classList.remove('active');
     }
+
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.checklistMaker = new ChecklistMaker();
+    window.addEventListener('beforeunload', () => window.checklistMaker?.destroy());
 });
