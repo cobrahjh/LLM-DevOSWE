@@ -1,5 +1,11 @@
-class FlightLog {
+class FlightLog extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'flight-log',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // HTTP polling for flight data
+        });
+
         this._destroyed = false;
         this.recording = false;
         this.startTime = null;
@@ -133,6 +139,9 @@ class FlightLog {
             clearInterval(this._updateInterval);
             this._updateInterval = null;
         }
+
+        // Call parent destroy
+        super.destroy();
     }
 }
 

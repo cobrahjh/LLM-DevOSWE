@@ -1,10 +1,16 @@
 /**
- * Voice Stress Analyzer Widget
+ * Voice Stress Analyzer Widget v2.0.0
  * Real-time acoustic analysis: F0 (pitch), Jitter, Shimmer, HNR
  * Uses personal baseline calibration to detect physiological stress markers
  */
-class VoiceStressWidget {
+class VoiceStressWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'voice-stress',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // Uses HTTP to port 8771
+        });
+
         this.audioContext = null;
         this.analyser = null;
         this.mediaStream = null;
@@ -570,6 +576,9 @@ class VoiceStressWidget {
                 }
             }
         }
+
+        // Call parent destroy
+        super.destroy();
     }
 
     // --- Server Integration ---

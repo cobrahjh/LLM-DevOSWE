@@ -7,8 +7,14 @@ const PRESETS = [
     { name: 'CENTER', freq: '132.450' }
 ];
 
-class RadioStack {
+class RadioStack extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'radio-stack',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // HTTP polling for radio data
+        });
+
         this.radios = {
             com1: { active: '118.000', standby: '121.500' },
             com2: { active: '121.500', standby: '122.800' },
@@ -76,6 +82,9 @@ class RadioStack {
             clearInterval(this._syncInterval);
             this._syncInterval = null;
         }
+
+        // Call parent destroy
+        super.destroy();
     }
 }
 
