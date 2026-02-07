@@ -1,106 +1,43 @@
 /**
  * GTN750 GPS Widget - Full Garmin Feature Set
  * Modular architecture with page manager and soft keys
+ *
+ * Orchestrator: creates and wires together all module instances.
+ * Actual logic lives in:
+ *   - GTNMapRenderer (map canvas rendering)
+ *   - GTNCdi (CDI, OBS, nav source)
+ *   - GTNFlightPlan (FPL, Direct-To, sequencing)
+ *   - GTNDataHandler (WebSocket, traffic, frequencies)
+ *   - GTNDataFields (corner data fields)
  */
 
 class GTN750Widget {
     constructor() {
-        this.ws = null;
-        this.reconnectDelay = 3000;
         this.serverPort = 8080;
 
         // Initialize core utilities
         this.core = new GTNCore();
 
-        // Render loop control (for cleanup)
-        this._renderFrameId = null;
-        this._boundRenderLoop = this._renderLoop.bind(this);
-
         // Aircraft data
         this.data = {
-            latitude: 0,
-            longitude: 0,
-            altitude: 0,
-            groundSpeed: 0,
-            heading: 0,
-            track: 0,
-            magvar: 0,           // Magnetic variation at current position
-            verticalSpeed: 0,
-            com1Active: 118.00,
-            com1Standby: 118.00,
-            com2Active: 118.00,
-            com2Standby: 118.00,
-            nav1Active: 108.00,
-            nav1Standby: 108.00,
-            transponder: 1200,
-            zuluTime: 0,
-            // Navigation source
+            latitude: 0, longitude: 0, altitude: 0,
+            groundSpeed: 0, heading: 0, track: 0, magvar: 0, verticalSpeed: 0,
+            com1Active: 118.00, com1Standby: 118.00,
+            com2Active: 118.00, com2Standby: 118.00,
+            nav1Active: 108.00, nav1Standby: 108.00,
+            transponder: 1200, zuluTime: 0,
             navSource: 'GPS',
-            // Sim weather
-            windDirection: 0,
-            windSpeed: 0,
-            ambientTemp: 15,
-            ambientPressure: 29.92,
-            visibility: 10000,
-            precipState: 0
+            windDirection: 0, windSpeed: 0,
+            ambientTemp: 15, ambientPressure: 29.92,
+            visibility: 10000, precipState: 0
         };
-
-        // NAV radio data
-        this.nav1 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true, hasLoc: false, hasGs: false, dme: 0 };
-        this.nav2 = { cdi: 0, obs: 0, radial: 0, toFrom: 2, signal: 0, gsi: 0, gsFlag: true, dme: 0 };
-        this.gps = { cdi: 0, xtrk: 0, dtk: 0, obs: 0, vertError: 0, approachMode: false };
-
-        // Navaid cache for frequency lookup
-        this.navaidCache = [];
 
         // Map settings
         this.map = {
             range: 10,
             ranges: [2, 5, 10, 20, 50, 100, 200],
-            orientation: 'track', // 'north', 'track', 'heading'
-            showTerrain: false,
-            showTraffic: false,
-            showWeather: false
-        };
-
-        // Data field configuration (corner fields on map)
-        this.dataFields = {
-            'top-left': 'trk',
-            'top-right': 'gs',
-            'bottom-left': 'alt',
-            'bottom-right': 'ete'
-        };
-        this.activeFieldPosition = null; // Currently selected field for editing
-
-        // Flight plan
-        this.flightPlan = null;
-        this.activeWaypointIndex = 0;
-        this.lastSequenceTime = 0; // Throttle for auto-sequencing
-
-        // CDI (extended for GPS/NAV source switching)
-        this.cdi = {
-            source: 'GPS',
-            needle: 0,        // -127 to +127 deflection
-            dtk: 0,           // Desired track
-            xtrk: 0,          // Cross track error in NM
-            toFrom: 2,        // 0=From, 1=To, 2=None
-            gsNeedle: 0,      // Glideslope deflection -119 to +119
-            gsValid: false,   // Glideslope signal valid
-            signalValid: true // NAV signal valid
-        };
-
-        // OBS (Omni-Bearing Selector) mode for holding patterns
-        this.obs = {
-            active: false,    // OBS mode enabled
-            course: 0,        // Selected OBS course (0-359)
-            suspended: false, // Waypoint sequencing suspended
-            // Holding pattern properties
-            holdingPattern: false,  // Show holding pattern visualization
-            legTime: 60,           // Leg time in seconds (1 minute standard)
-            turnDirection: 'R',    // 'R' = right turns (standard), 'L' = left turns
-            entryType: null,       // 'direct', 'parallel', 'teardrop'
-            currentLeg: 'inbound', // 'inbound' or 'outbound'
-            outboundTimer: 0       // Timer for outbound leg
+            orientation: 'track',
+            showTerrain: false, showTraffic: false, showWeather: false
         };
 
         // TAWS
@@ -113,3434 +50,155 @@ class GTN750Widget {
         // Pan offset for map
         this.panOffset = { x: 0, y: 0 };
 
+        // Declutter
+        this.declutterLevel = 0;
+
         // Cross-widget sync
         this.syncChannel = new BroadcastChannel('simwidget-sync');
-        this.initSyncListener();
 
+        // Create module instances
+        this.dataFieldsManager = new GTNDataFields({ core: this.core });
+        this.cdiManager = new GTNCdi({ core: this.core, elements: {}, serverPort: this.serverPort });
+        this.flightPlanManager = new GTNFlightPlan({
+            core: this.core,
+            elements: {},
+            serverPort: this.serverPort,
+            syncChannel: this.syncChannel,
+            onWaypointChanged: () => this.flightPlanManager.updateWaypointDisplay(this.data, this.cdiManager),
+            onDirectToActivated: () => {
+                if (this.pageManager) this.pageManager.switchPage('map');
+            }
+        });
+        this.mapRenderer = new GTNMapRenderer({
+            core: this.core,
+            getState: () => this.getRendererState()
+        });
+        this.dataHandler = new GTNDataHandler({
+            serverPort: this.serverPort,
+            elements: {},
+            onDataUpdate: (d) => this.handleSimData(d)
+        });
+
+        this.initSyncListener();
         this.init();
     }
 
     init() {
         this.cacheElements();
+        this.wireModuleElements();
         this.setupCanvas();
         this.initOverlays();
-        this.initSoftKeys();      // Must be before initPageManager (onPageChange uses softKeys)
+        this.initSoftKeys();
         this.initPageManager();
         this.bindEvents();
         this.bindTawsAlerts();
-        this.loadDataFieldConfig();
-        this.connect();
-        this.startClock();
-        this.fetchFlightPlan();
-        this.startMapRender();
-        this.startTrafficPolling();
-    }
-
-    initOverlays() {
-        // Initialize terrain overlay
-        this.terrainOverlay = new TerrainOverlay({
-            core: this.core
-        });
-
-        // Initialize traffic overlay
-        this.trafficOverlay = new TrafficOverlay({
-            core: this.core
-        });
-
-        // Initialize weather overlay
-        this.weatherOverlay = new WeatherOverlay({
-            core: this.core
-        });
-
-        // Initialize map controls with touch/gesture support
-        if (this.canvas) {
-            this.mapControls = new MapControls({
-                canvas: this.canvas,
-                onRangeChange: (range, delta) => {
-                    this.map.range = range;
-                    if (this.elements.dfRange) {
-                        this.elements.dfRange.textContent = range;
-                    }
-                },
-                onPan: (offset) => {
-                    this.panOffset = offset;
-                },
-                onDataFieldTap: (position, type) => {
-                    console.log(`[GTN750] Data field ${position} changed to ${type.type}`);
-                }
-            });
-            this.mapControls.setRange(this.map.range);
-        }
-
-        // Initialize procedures page
-        this.proceduresPage = new ProceduresPage({
-            core: this.core,
-            serverPort: this.serverPort,
-            onProcedureSelect: (proc, type, waypoints) => {
-                this.handleProcedureSelect(proc, type, waypoints);
-            },
-            onProcedureLoad: (proc, type, waypoints) => {
-                this.handleProcedureLoad(proc, type, waypoints);
-            }
-        });
-
-        // Initialize AUX page utilities
-        this.auxPage = new AuxPage({
-            core: this.core
-        });
-
-        // Initialize Charts page
-        this.chartsPage = new ChartsPage({
-            core: this.core,
-            serverPort: this.serverPort,
-            onChartSelect: (chart) => {
-                console.log(`[GTN750] Chart selected: ${chart.name}`);
-            }
-        });
-
-        // Initialize Nearest page
-        this.nearestPage = new NearestPage({
-            core: this.core,
-            serverPort: this.serverPort,
-            onItemSelect: (item, type) => {
-                console.log(`[GTN750] Nearest ${type} selected: ${item.icao || item.id}`);
-            },
-            onDirectTo: (item) => {
-                this.directTo(item);
-            }
-        });
-
-        // Initialize System page
-        this.systemPage = new SystemPage({
-            core: this.core,
-            onSettingChange: (key, value) => {
-                this.handleSettingChange(key, value);
-            }
-        });
-    }
-
-    handleSettingChange(key, value) {
-        // Apply settings changes
-        switch (key) {
-            case 'mapOrientation':
-                this.map.orientation = value;
-                break;
-            case 'showTerrain':
-                this.map.showTerrain = value;
-                break;
-            case 'showTraffic':
-                this.map.showTraffic = value;
-                break;
-            case 'showWeather':
-                this.map.showWeather = value;
-                break;
-            case 'nightMode':
-                document.body.classList.toggle('night-mode', value);
-                break;
-        }
-    }
-
-    handleProcedureSelect(proc, type, waypoints) {
-        // Store preview waypoints for map overlay
-        this.procedurePreview = {
-            procedure: proc,
-            type: type,
-            waypoints: waypoints
-        };
-        console.log(`[GTN750] Procedure selected: ${proc.name}`);
-    }
-
-    handleProcedureLoad(proc, type, waypoints) {
-        // Add procedure to flight plan
-        console.log(`[GTN750] Loading procedure: ${proc.name}`);
-        this.syncChannel.postMessage({
-            type: 'procedure-load',
-            data: {
-                procedure: proc,
-                procedureType: type,
-                waypoints: waypoints
-            }
-        });
-    }
-
-    bindTawsAlerts() {
-        window.addEventListener('gtn:taws-alert', (e) => {
-            this.handleTawsAlert(e.detail);
-        });
-    }
-
-    handleTawsAlert(alert) {
-        const alertEl = this.elements.tawsAlert;
-        const textEl = this.elements.tawsText;
-        if (!alertEl || !textEl) return;
-
-        if (alert.level !== 'CLEAR' && alert.color) {
-            alertEl.style.display = 'flex';
-            alertEl.style.backgroundColor = alert.color;
-            textEl.textContent = alert.message || alert.level.replace('_', ' ');
-        } else {
-            alertEl.style.display = 'none';
-        }
-
-        // Update terrain page status
-        if (this.elements.tawsStatus) {
-            this.elements.tawsStatus.textContent = this.taws.inhibited ? 'INHIBITED' : 'ACTIVE';
-            this.elements.tawsStatus.style.color = this.taws.inhibited ? '#ffcc00' : '#00ff00';
-        }
-    }
-
-    initPageManager() {
-        this.pageManager = new GTNPageManager({
-            onPageChange: (pageId, page) => {
-                this.onPageChange(pageId);
-            }
-        });
-
-        // Register page instances (basic registration for now)
-        const pages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system'];
-        pages.forEach(id => {
-            this.pageManager.registerPage(id, {
-                id,
-                onActivate: () => this.onPageActivate(id),
-                onDeactivate: () => this.onPageDeactivate(id),
-                updateData: (data) => this.updatePageData(id, data)
-            });
-        });
-
-        // Start on MAP page
-        this.pageManager.switchPage('map', false);
-    }
-
-    initSoftKeys() {
-        if (typeof GTNSoftKeys === 'undefined') {
-            console.warn('[GTN750] GTNSoftKeys not loaded yet, retrying...');
-            setTimeout(() => this.initSoftKeys(), 100);
-            return;
-        }
-        if (this.softKeys) return; // Already initialized
-        this.softKeys = new GTNSoftKeys({
-            container: document.getElementById('gtn-softkeys')
-        });
-
-        // Set initial context
-        this.softKeys.setContext('map');
-
-        // Listen for soft key actions
-        window.addEventListener('gtn:softkey', (e) => {
-            this.handleSoftKeyAction(e.detail.action, e.detail);
-        });
-    }
-
-    onPageChange(pageId) {
-        // Update page title
-        const title = document.getElementById('page-title');
-        if (title) {
-            const titles = {
-                map: 'MAP', fpl: 'FLIGHT PLAN', wpt: 'WAYPOINT',
-                nrst: 'NEAREST', proc: 'PROCEDURES', terrain: 'TERRAIN',
-                traffic: 'TRAFFIC', wx: 'WEATHER', charts: 'CHARTS',
-                aux: 'AUX', system: 'SYSTEM'
-            };
-            title.textContent = titles[pageId] || pageId.toUpperCase();
-        }
-
-        // Update soft keys context (with retry if not initialized)
-        if (this.softKeys) {
-            this.softKeys.setContext(pageId);
-        } else {
-            // Soft keys not ready yet, retry after short delay
-            setTimeout(() => {
-                if (!this.softKeys) this.initSoftKeys();
-                this.softKeys?.setContext(pageId);
-            }, 100);
-        }
-
-        // Update tabs
-        document.querySelectorAll('.gtn-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.page === pageId);
-        });
-    }
-
-    onPageActivate(pageId) {
-        if (pageId === 'nrst') {
-            this.fetchNearestAirports();
-        }
-        if (pageId === 'proc') {
-            if (this.proceduresPage) {
-                this.proceduresPage.init();
-                // If we have a destination airport, pre-load it
-                if (this.flightPlan?.waypoints?.length > 0) {
-                    const dest = this.flightPlan.waypoints[this.flightPlan.waypoints.length - 1];
-                    if (dest.ident?.length === 4) {
-                        this.proceduresPage.setAirport(dest.ident);
-                    }
-                }
-            }
-        }
-        if (pageId === 'terrain') {
-            this.setupTerrainCanvas();
-            this.startTerrainPageRender();
-        }
-        if (pageId === 'traffic') {
-            this.setupTrafficCanvas();
-            this.startTrafficPageRender();
-        }
-        if (pageId === 'wx') {
-            this.setupWeatherCanvas();
-            this.startWeatherPageRender();
-        }
-        if (pageId === 'aux') {
-            if (this.auxPage) {
-                this.auxPage.init();
-            }
-            this.updateAuxPageData();
-        }
-        if (pageId === 'charts') {
-            if (this.chartsPage) {
-                this.chartsPage.init();
-                // Pre-load destination airport if available
-                if (this.flightPlan?.waypoints?.length > 0) {
-                    const dest = this.flightPlan.waypoints[this.flightPlan.waypoints.length - 1];
-                    if (dest.ident?.length === 4) {
-                        this.chartsPage.setAirport(dest.ident);
-                    }
-                }
-            }
-        }
-        if (pageId === 'nrst') {
-            if (this.nearestPage) {
-                this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
-                this.nearestPage.init();
-            }
-        }
-        if (pageId === 'system') {
-            if (this.systemPage) {
-                this.systemPage.init();
-            }
-        }
-    }
-
-    updateAuxPageData() {
-        if (!this.auxPage) return;
-
-        const tripData = this.auxPage.updateTripData(
-            { waypoints: this.flightPlan?.waypoints, activeWaypointIndex: this.activeWaypointIndex },
-            this.data
+        this.dataFieldsManager.loadConfig();
+        this.dataHandler.connect();
+        this.dataHandler.startClock();
+        this.flightPlanManager.fetchFlightPlan();
+        this.mapRenderer.start();
+        this.dataHandler.startTrafficPolling(
+            () => this.map.showTraffic || this.pageManager?.getCurrentPageId() === 'traffic',
+            this.trafficOverlay
         );
-
-        if (tripData) {
-            if (this.elements.auxDist) this.elements.auxDist.textContent = `${tripData.remainingDist} NM`;
-            if (this.elements.auxTime) this.elements.auxTime.textContent = tripData.timeRemaining;
-            if (this.elements.auxEta) this.elements.auxEta.textContent = tripData.eta;
-            if (this.elements.auxFuel) this.elements.auxFuel.textContent = `${tripData.fuelRequired} GAL`;
-        }
-    }
-
-    onPageDeactivate(pageId) {
-        // Stop page rendering when leaving
-        if (pageId === 'terrain') {
-            this.terrainPageRenderActive = false;
-        }
-        if (pageId === 'traffic') {
-            this.trafficPageRenderActive = false;
-        }
-        if (pageId === 'wx') {
-            this.weatherPageRenderActive = false;
-        }
-    }
-
-    startTerrainPageRender() {
-        this.terrainPageRenderActive = true;
-        const renderLoop = () => {
-            if (!this.terrainPageRenderActive) return;
-            this.renderTerrainPage();
-            requestAnimationFrame(renderLoop);
-        };
-        renderLoop();
-    }
-
-    startTrafficPageRender() {
-        this.trafficPageRenderActive = true;
-        // Enable test mode if no real traffic data
-        if (this.trafficOverlay) {
-            this.trafficOverlay.setEnabled(true);
-        }
-        const renderLoop = () => {
-            if (!this.trafficPageRenderActive) return;
-            this.renderTrafficPage();
-            requestAnimationFrame(renderLoop);
-        };
-        renderLoop();
-    }
-
-    startWeatherPageRender() {
-        this.weatherPageRenderActive = true;
-        // Enable all weather layers for weather page
-        if (this.weatherOverlay) {
-            this.weatherOverlay.setEnabled(true);
-            this.weatherOverlay.setLayer('nexrad', true);
-            this.weatherOverlay.setLayer('metar', true);
-        }
-        const renderLoop = () => {
-            if (!this.weatherPageRenderActive) return;
-            this.renderWeatherPage();
-            requestAnimationFrame(renderLoop);
-        };
-        renderLoop();
-    }
-
-    updatePageData(pageId, data) {
-        // Update page-specific data
-    }
-
-    handleSoftKeyAction(action, detail) {
-        switch (action) {
-            // Navigation
-            case 'go-back':
-                if (!this.pageManager.goBack()) {
-                    this.pageManager.goHome();
-                }
-                break;
-
-            // Map toggles
-            case 'toggle-terrain':
-                this.map.showTerrain = detail.active;
-                break;
-            case 'toggle-traffic':
-                this.map.showTraffic = detail.active;
-                break;
-            case 'toggle-weather':
-                this.map.showWeather = detail.active;
-                if (detail.active && this.weatherOverlay) {
-                    this.weatherOverlay.startAutoRefresh(this.data.latitude, this.data.longitude);
-                } else if (this.weatherOverlay) {
-                    this.weatherOverlay.stopAutoRefresh();
-                }
-                break;
-            case 'declutter':
-                this.cycleDeclutter();
-                break;
-
-            // CDI source selection
-            case 'cdi-menu':
-                this.softKeys?.setContext('cdi-menu');
-                break;
-            case 'cdi-source-gps':
-                this.setNavSource('GPS');
-                this.softKeys?.setContext('map');
-                break;
-            case 'cdi-source-nav1':
-                this.setNavSource('NAV1');
-                this.softKeys?.setContext('map');
-                break;
-            case 'cdi-source-nav2':
-                this.setNavSource('NAV2');
-                this.softKeys?.setContext('map');
-                break;
-            case 'obs-inc':
-                this.adjustObs(1);
-                break;
-            case 'obs-dec':
-                this.adjustObs(-1);
-                break;
-            case 'back-menu':
-                this.softKeys?.setContext('map');
-                break;
-
-            // Map orientation
-            case 'map-north-up':
-                this.map.orientation = 'north';
-                this.updateMapOrientation();
-                break;
-            case 'map-track-up':
-                this.map.orientation = 'track';
-                this.updateMapOrientation();
-                break;
-            case 'map-heading-up':
-                this.map.orientation = 'heading';
-                this.updateMapOrientation();
-                break;
-
-            // FPL actions
-            case 'activate-leg':
-                this.activateLeg();
-                break;
-            case 'invert-plan':
-                this.invertFlightPlan();
-                break;
-
-            // Direct-To
-            case 'direct-to':
-                this.showDirectTo();
-                break;
-
-            // NRST type selection
-            case 'nrst-apt':
-            case 'nrst-vor':
-            case 'nrst-ndb':
-            case 'nrst-fix':
-                this.switchNearestType(action.split('-')[1]);
-                break;
-
-            // TAWS / Terrain
-            case 'taws-inhibit':
-                this.taws.inhibited = !this.taws.inhibited;
-                if (this.terrainOverlay) {
-                    this.terrainOverlay.setInhibited(this.taws.inhibited);
-                }
-                this.updateTawsStatus();
-                break;
-            case 'terrain-view':
-                // Cycle terrain view modes
-                this.cycleTerrainView();
-                break;
-            case 'terrain-360':
-                this.setTerrainView('360');
-                break;
-            case 'terrain-arc':
-                this.setTerrainView('arc');
-                break;
-            case 'terrain-range':
-                this.cycleTerrainRange();
-                break;
-
-            // Procedures
-            case 'proc-departure':
-                if (this.proceduresPage) this.proceduresPage.switchType('dep');
-                break;
-            case 'proc-arrival':
-                if (this.proceduresPage) this.proceduresPage.switchType('arr');
-                break;
-            case 'proc-approach':
-                if (this.proceduresPage) this.proceduresPage.switchType('apr');
-                break;
-            case 'load-proc':
-                if (this.proceduresPage) this.proceduresPage.loadProcedure();
-                break;
-            case 'preview-proc':
-                this.previewProcedure();
-                break;
-            case 'view-proc-chart':
-                if (this.proceduresPage) this.proceduresPage.viewChart();
-                break;
-
-            // AUX page
-            case 'aux-trip':
-                this.showAuxSubpage('trip');
-                break;
-            case 'aux-util':
-                this.showAuxSubpage('util');
-                break;
-            case 'aux-timer':
-                this.toggleAuxTimer();
-                break;
-            case 'aux-calc':
-                this.showAuxSubpage('calc');
-                break;
-
-            // Traffic
-            case 'traffic-operate':
-            case 'traffic-standby':
-            case 'traffic-test':
-                this.setTrafficMode(action.split('-')[1]);
-                break;
-
-            // Weather overlays
-            case 'wx-simRadar':
-            case 'wx-nexrad':
-            case 'wx-metar':
-            case 'wx-taf':
-            case 'wx-winds':
-            case 'wx-lightning':
-                this.toggleWeatherLayer(action.split('-')[1]);
-                break;
-
-            // Charts actions
-            case 'view-chart':
-                if (this.chartsPage) this.chartsPage.viewChart();
-                break;
-            case 'open-chartfox':
-                if (this.chartsPage) this.chartsPage.openChartFox();
-                break;
-            case 'chart-apt':
-            case 'chart-iap':
-            case 'chart-dp':
-            case 'chart-star':
-                if (this.chartsPage) {
-                    const type = action.split('-')[1].toUpperCase();
-                    this.chartsPage.filterByType(type === 'APT' ? 'APD' : type);
-                }
-                break;
-
-            // System actions
-            case 'sys-reset':
-                if (this.systemPage) this.systemPage.resetToDefaults();
-                break;
-            case 'sys-north-up':
-                this.map.orientation = 'north';
-                if (this.systemPage) this.systemPage.setSetting('mapOrientation', 'north');
-                break;
-            case 'sys-track-up':
-                this.map.orientation = 'track';
-                if (this.systemPage) this.systemPage.setSetting('mapOrientation', 'track');
-                break;
-            case 'sys-night-mode':
-                if (this.systemPage) {
-                    const current = this.systemPage.getSetting('nightMode');
-                    this.systemPage.setSetting('nightMode', !current);
-                }
-                break;
-
-            // OBS mode controls
-            case 'obs-toggle':
-                this.toggleObs();
-                break;
-            case 'obs-crs-up':
-                this.adjustObsCourse(1);
-                break;
-            case 'obs-crs-down':
-                this.adjustObsCourse(-1);
-                break;
-            case 'obs-crs-up-10':
-                this.adjustObsCourse(10);
-                break;
-            case 'obs-crs-down-10':
-                this.adjustObsCourse(-10);
-                break;
-
-            // Holding pattern controls
-            case 'hold-toggle':
-                this.toggleHoldingPattern();
-                break;
-            case 'hold-direction':
-                this.toggleHoldingDirection();
-                break;
-            case 'hold-time':
-                const newTime = prompt('Enter holding leg time (30-240 seconds):', this.obs.legTime);
-                if (newTime) this.setHoldingLegTime(parseInt(newTime));
-                break;
-
-            default:
-                console.log(`[GTN750] Unhandled soft key action: ${action}`);
-        }
-    }
-
-    initSyncListener() {
-        this.syncChannel.onmessage = (event) => {
-            const { type, data } = event.data;
-            if (type === 'route-update' && data.waypoints) {
-                this.flightPlan = data;
-                this.renderFlightPlan();
-            }
-            // SimBrief flight plan with additional data
-            if (type === 'simbrief-plan' && data.waypoints) {
-                this.flightPlan = {
-                    departure: data.departure,
-                    arrival: data.arrival,
-                    waypoints: data.waypoints,
-                    totalDistance: data.totalDistance,
-                    route: data.route,
-                    cruiseAltitude: data.altitude,
-                    source: 'simbrief'
-                };
-                this.activeWaypointIndex = 0;
-                this.renderFlightPlan();
-                this.updateWaypointDisplay();
-                console.log(`[GTN750] SimBrief flight plan loaded: ${data.departure} -> ${data.arrival} (${data.waypoints.length} waypoints)`);
-            }
-            if (type === 'waypoint-select') {
-                this.selectWaypoint(data.index);
-            }
-            if (type === 'waypoint-sequence') {
-                // Another widget sequenced - sync our state
-                if (this.flightPlan?.waypoints?.[data.passedIndex]) {
-                    this.flightPlan.waypoints[data.passedIndex].passed = true;
-                }
-                this.activeWaypointIndex = data.activeIndex;
-                this.renderFlightPlan();
-                this.updateWaypointDisplay();
-            }
-        };
-    }
-
-    cacheElements() {
-        this.elements = {
-            // Header
-            pageTitle: document.getElementById('page-title'),
-            btnHome: document.getElementById('btn-home'),
-            btnDirect: document.getElementById('btn-direct'),
-            // Connection status
-            conn: document.getElementById('conn'),
-            // Map elements
-            mapCanvas: document.getElementById('map-canvas'),
-            zoomIn: document.getElementById('zoom-in'),
-            zoomOut: document.getElementById('zoom-out'),
-            tawsAlert: document.getElementById('taws-alert'),
-            tawsText: document.getElementById('taws-text'),
-            // Datafields
-            dfGs: document.getElementById('df-gs'),
-            dfTrk: document.getElementById('df-trk'),
-            dfAlt: document.getElementById('df-alt'),
-            dfRange: document.getElementById('df-range'),
-            // Waypoint strip
-            wptId: document.getElementById('wpt-id'),
-            wptDis: document.getElementById('wpt-dis'),
-            wptBrg: document.getElementById('wpt-brg'),
-            wptEte: document.getElementById('wpt-ete'),
-            // CDI (extended)
-            cdiNeedle: document.getElementById('cdi-needle'),
-            cdiDtk: document.getElementById('cdi-dtk'),
-            cdiXtrk: document.getElementById('cdi-xtrk'),
-            cdiSource: document.getElementById('cdi-source'),
-            cdiToFrom: document.getElementById('cdi-tofrom'),
-            cdiGsNeedle: document.getElementById('cdi-gs-needle'),
-            cdiGsBar: document.getElementById('cdi-gs-bar'),
-            cdiFlag: document.getElementById('cdi-flag'),
-            // OBS Control
-            obsValue: document.getElementById('obs-value'),
-            obsInc: document.getElementById('obs-inc'),
-            obsDec: document.getElementById('obs-dec'),
-            obsControls: document.getElementById('obs-controls'),
-            // Nav Source Selector
-            navSourceGps: document.getElementById('nav-source-gps'),
-            navSourceNav1: document.getElementById('nav-source-nav1'),
-            navSourceNav2: document.getElementById('nav-source-nav2'),
-            // FPL
-            fplDep: document.getElementById('fpl-dep'),
-            fplArr: document.getElementById('fpl-arr'),
-            fplDist: document.getElementById('fpl-dist'),
-            fplEte: document.getElementById('fpl-ete'),
-            fplList: document.getElementById('fpl-list'),
-            fplProgress: document.getElementById('fpl-progress'),
-            // WPT
-            wptSearch: document.getElementById('wpt-search'),
-            wptGo: document.getElementById('wpt-go'),
-            wptInfo: document.getElementById('wpt-info'),
-            // NRST
-            nrstList: document.getElementById('nrst-list'),
-            // PROC
-            procApt: document.getElementById('proc-apt'),
-            procList: document.getElementById('proc-list'),
-            // Terrain
-            terrainCanvas: document.getElementById('terrain-canvas'),
-            tawsStatus: document.getElementById('taws-status'),
-            terrainMode: document.getElementById('terrain-mode'),
-            terrainRange: document.getElementById('terrain-range'),
-            terrainRangeValue: document.getElementById('terrain-range-value'),
-            terrainClearance: document.getElementById('terrain-clearance'),
-            terrainZoomIn: document.getElementById('terrain-zoom-in'),
-            terrainZoomOut: document.getElementById('terrain-zoom-out'),
-            terrainView360: document.getElementById('terrain-view-360'),
-            terrainViewArc: document.getElementById('terrain-view-arc'),
-            // Traffic
-            trafficCanvas: document.getElementById('traffic-canvas'),
-            trafficMode: document.getElementById('traffic-mode'),
-            trafficCount: document.getElementById('traffic-count'),
-            // Weather
-            wxCanvas: document.getElementById('wx-canvas'),
-            wxSimRadar: document.getElementById('wx-sim-radar'),
-            wxNexrad: document.getElementById('wx-nexrad'),
-            wxMetar: document.getElementById('wx-metar'),
-            wxMetarText: document.getElementById('wx-metar-text'),
-            wxAnimate: document.getElementById('wx-animate'),
-            wxRadarTime: document.getElementById('wx-radar-time'),
-            wxRange: document.getElementById('wx-range'),
-            wxZoomIn: document.getElementById('wx-zoom-in'),
-            wxZoomOut: document.getElementById('wx-zoom-out'),
-            wxWind: document.getElementById('wx-wind'),
-            wxTemp: document.getElementById('wx-temp'),
-            wxBaro: document.getElementById('wx-baro'),
-            wxVis: document.getElementById('wx-vis'),
-            wxPrecip: document.getElementById('wx-precip'),
-            wxPrecipItem: document.getElementById('wx-precip-item'),
-            // Charts
-            chartApt: document.getElementById('chart-apt'),
-            chartSearch: document.getElementById('chart-search'),
-            chartList: document.getElementById('chart-list'),
-            // AUX
-            auxDist: document.getElementById('aux-dist'),
-            auxTime: document.getElementById('aux-time'),
-            auxEta: document.getElementById('aux-eta'),
-            auxFuel: document.getElementById('aux-fuel'),
-            // System
-            sysMapOrient: document.getElementById('sys-map-orient'),
-            sysGpsStatus: document.getElementById('sys-gps-status'),
-            // Frequencies
-            com1: document.getElementById('com1'),
-            com1Stby: document.getElementById('com1-stby'),
-            com2: document.getElementById('com2'),
-            com2Stby: document.getElementById('com2-stby'),
-            nav1: document.getElementById('nav1'),
-            nav1Stby: document.getElementById('nav1-stby'),
-            nav1Ident: document.getElementById('nav1-ident'),
-            nav1Radial: document.getElementById('nav1-radial'),
-            nav1Dme: document.getElementById('nav1-dme'),
-            swapCom1: document.getElementById('swap-com1'),
-            swapCom2: document.getElementById('swap-com2'),
-            swapNav1: document.getElementById('swap-nav1'),
-            xpdr: document.getElementById('xpdr'),
-            utcTime: document.getElementById('utc-time'),
-            // Tabs
-            tabs: document.querySelectorAll('.gtn-tab')
-        };
-    }
-
-    setupCanvas() {
-        this.canvas = this.elements.mapCanvas;
-        if (this.canvas) {
-            this.ctx = this.canvas.getContext('2d');
-            this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
-        }
-    }
-
-    setupTerrainCanvas() {
-        const canvas = this.elements.terrainCanvas;
-        if (canvas) {
-            this.terrainCtx = canvas.getContext('2d');
-            const container = canvas.parentElement;
-            const rect = container.getBoundingClientRect();
-            // Use fallback dimensions if page is hidden
-            canvas.width = rect.width > 0 ? rect.width : 480;
-            canvas.height = rect.height > 0 ? rect.height : 280;
-            console.log('[GTN750] Terrain canvas setup:', canvas.width, 'x', canvas.height);
-        }
-    }
-
-    setupTrafficCanvas() {
-        const canvas = this.elements.trafficCanvas;
-        if (canvas) {
-            this.trafficCtx = canvas.getContext('2d');
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-        }
-    }
-
-    setupWeatherCanvas() {
-        const canvas = this.elements.wxCanvas;
-        if (!canvas) return;
-
-        this.wxCtx = canvas.getContext('2d');
-
-        // Set canvas size immediately using parent or fallback
-        const container = canvas.parentElement;
-        const rect = container.getBoundingClientRect();
-        canvas.width = rect.width > 0 ? rect.width : 400;
-        canvas.height = rect.height > 0 ? rect.height : 280;
-
-        // Initialize weather range if not set
-        if (!this.weatherRange) {
-            this.weatherRange = 50; // Default 50nm
-        }
-
-        // Trigger initial fetch
-        if (this.weatherOverlay) {
-            this.weatherOverlay.fetchRadarData();
-            this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
-        }
-    }
-
-    resizeCanvas() {
-        if (!this.canvas) return;
-        const rect = this.canvas.parentElement.getBoundingClientRect();
-        this.canvas.width = rect.width;
-        this.canvas.height = rect.height;
-    }
-
-    bindEvents() {
-        // Home button (back to map)
-        this.elements.btnHome?.addEventListener('click', () => this.pageManager.goHome());
-
-        // Home page buttons (Map, Traffic, Terrain, WX, etc.) - use event delegation
-        const homeButtonsContainer = document.getElementById('home-buttons');
-        if (homeButtonsContainer) {
-            homeButtonsContainer.addEventListener('click', (e) => {
-                const btn = e.target.closest('.home-btn');
-                if (!btn) return;
-                const pageId = btn.dataset.page;
-                if (pageId) {
-                    homeButtonsContainer.querySelectorAll('.home-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    this.pageManager.switchPage(pageId);
-                }
-            });
-        }
-
-        // Direct-To button
-        this.elements.btnDirect?.addEventListener('click', () => this.showDirectTo());
-
-        // Frequency swaps
-        this.elements.swapCom1?.addEventListener('click', () => this.swapFrequency('COM1'));
-        this.elements.swapCom2?.addEventListener('click', () => this.swapFrequency('COM2'));
-        this.elements.swapNav1?.addEventListener('click', () => this.swapFrequency('NAV1'));
-
-        // Zoom controls
-        this.elements.zoomIn?.addEventListener('click', () => this.changeRange(-1));
-        this.elements.zoomOut?.addEventListener('click', () => this.changeRange(1));
-
-        // Nav source buttons
-        this.elements.navSourceGps?.addEventListener('click', () => this.setNavSource('GPS'));
-        this.elements.navSourceNav1?.addEventListener('click', () => this.setNavSource('NAV1'));
-        this.elements.navSourceNav2?.addEventListener('click', () => this.setNavSource('NAV2'));
-
-        // OBS controls
-        this.elements.obsInc?.addEventListener('click', () => this.adjustObs(1));
-        this.elements.obsDec?.addEventListener('click', () => this.adjustObs(-1));
-        this.elements.obsValue?.addEventListener('click', () => {
-            const currentObs = this.cdi.source === 'NAV1' ? this.nav1.obs : this.nav2.obs;
-            const newObs = prompt('Enter OBS course (0-359):', Math.round(currentObs));
-            if (newObs !== null && !isNaN(newObs)) {
-                this.setObs(parseInt(newObs) % 360);
-            }
-        });
-
-        // Tab navigation
-        this.elements.tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const pageId = tab.dataset.page;
-                if (pageId) this.pageManager.switchPage(pageId);
-            });
-        });
-
-        // WPT search
-        this.elements.wptGo?.addEventListener('click', () => this.searchWaypoint());
-        this.elements.wptSearch?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.searchWaypoint();
-        });
-
-        // NRST type tabs
-        document.querySelectorAll('.nrst-tab').forEach(tab => {
-            tab.addEventListener('click', () => this.switchNearestType(tab.dataset.type));
-        });
-
-        // PROC type tabs
-        document.querySelectorAll('.proc-tab').forEach(tab => {
-            tab.addEventListener('click', () => this.switchProcType(tab.dataset.type));
-        });
-
-        // Chart search
-        this.elements.chartSearch?.addEventListener('click', () => this.searchCharts());
-        this.elements.chartApt?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.searchCharts();
-        });
-
-        // Chart actions
-        document.getElementById('chart-view')?.addEventListener('click', () => {
-            if (this.chartsPage) this.chartsPage.viewChart();
-        });
-        document.getElementById('chart-fox')?.addEventListener('click', () => {
-            if (this.chartsPage) this.chartsPage.openChartFox();
-        });
-
-        // Weather animation button
-        this.elements.wxAnimate?.addEventListener('click', () => {
-            if (this.weatherOverlay) {
-                const animating = this.weatherOverlay.toggleRadarAnimation();
-                this.elements.wxAnimate.textContent = animating ? '⏸' : '▶';
-                this.elements.wxAnimate.classList.toggle('active', animating);
-            }
-        });
-
-        // Weather range controls
-        this.weatherRanges = [10, 25, 50, 100, 200];
-        this.weatherRange = 50;
-        this.elements.wxZoomIn?.addEventListener('click', () => this.changeWeatherRange(-1));
-        this.elements.wxZoomOut?.addEventListener('click', () => this.changeWeatherRange(1));
-
-        // Weather layer toggles
-        this.elements.wxSimRadar?.addEventListener('change', (e) => {
-            if (this.weatherOverlay) {
-                this.weatherOverlay.setLayer('simRadar', e.target.checked);
-            }
-        });
-        this.elements.wxNexrad?.addEventListener('change', (e) => {
-            if (this.weatherOverlay) {
-                this.weatherOverlay.setLayer('nexrad', e.target.checked);
-            }
-        });
-        document.getElementById('wx-metar')?.addEventListener('change', (e) => {
-            if (this.weatherOverlay) {
-                this.weatherOverlay.setLayer('metar', e.target.checked);
-            }
-        });
-        document.getElementById('wx-winds')?.addEventListener('change', (e) => {
-            if (this.weatherOverlay) {
-                this.weatherOverlay.setLayer('winds', e.target.checked);
-            }
-        });
-        document.getElementById('wx-lightning')?.addEventListener('change', (e) => {
-            if (this.weatherOverlay) {
-                this.weatherOverlay.setLayer('lightning', e.target.checked);
-            }
-        });
-
-        // Terrain range controls
-        this.terrainRanges = [2, 5, 10, 20, 50];
-        this.elements.terrainZoomIn?.addEventListener('click', () => this.changeTerrainRange(-1));
-        this.elements.terrainZoomOut?.addEventListener('click', () => this.changeTerrainRange(1));
-
-        // Terrain view mode controls
-        this.elements.terrainView360?.addEventListener('click', () => {
-            if (this.terrainOverlay) {
-                this.terrainOverlay.setViewMode('360');
-                this.updateTerrainViewButtons('360');
-            }
-        });
-        this.elements.terrainViewArc?.addEventListener('click', () => {
-            if (this.terrainOverlay) {
-                this.terrainOverlay.setViewMode('arc');
-                this.updateTerrainViewButtons('arc');
-            }
-        });
-
-        // System reset
-        document.getElementById('sys-reset')?.addEventListener('click', () => {
-            if (this.systemPage) this.systemPage.resetToDefaults();
-        });
-
-        // System map orientation
-        this.elements.sysMapOrient?.addEventListener('change', (e) => {
-            this.map.orientation = e.target.value;
-        });
-
-        // Data field customization - corner fields
-        document.querySelectorAll('.corner-field').forEach(field => {
-            field.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.openFieldSelector(field);
-            });
-        });
-
-        // Field selector options
-        document.querySelectorAll('.field-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const type = option.dataset.type;
-                this.selectFieldType(type);
-            });
-        });
-
-        // Close field selector on outside click
-        document.addEventListener('click', () => {
-            this.closeFieldSelector();
-        });
-
-        // Weather preset buttons
-        document.querySelectorAll(".wx-preset-btn").forEach(btn => {
-            btn.addEventListener("click", () => this.setWeatherPreset(btn.dataset.preset));
-        });
-
-        // Live weather button
-        document.getElementById("wx-live-btn")?.addEventListener("click", () => this.setLiveWeather());
-
-        // Note: wheel/touch events now handled by MapControls
-    }
-
-    // ===== MAP RENDERING =====
-    startMapRender() {
-        this._renderFrameId = requestAnimationFrame(this._boundRenderLoop);
-    }
-
-    _renderLoop() {
-        this.renderMap();
-        this._renderFrameId = requestAnimationFrame(this._boundRenderLoop);
-    }
-
-    stopMapRender() {
-        if (this._renderFrameId) {
-            cancelAnimationFrame(this._renderFrameId);
-            this._renderFrameId = null;
-        }
-    }
-
-    renderMap() {
-        if (!this.ctx) return;
-        const ctx = this.ctx;
-        const w = this.canvas.width;
-        const h = this.canvas.height;
-
-        // Apply pan offset
-        const cx = w / 2 + this.panOffset.x;
-        const cy = h / 2 + this.panOffset.y;
-
-        // Clear with background
-        ctx.fillStyle = '#0a1520';
-        ctx.fillRect(0, 0, w, h);
-
-        // Range rings (drawn first, behind everything)
-        if (this.declutterLevel < 2) {
-            this.renderRangeRings(ctx, cx, cy, w, h);
-        }
-
-        // Terrain overlay using TerrainOverlay class
-        if (this.map.showTerrain && this.terrainOverlay) {
-            this.terrainOverlay.setEnabled(true);
-            this.terrainOverlay.setInhibited(this.taws.inhibited);
-            this.terrainOverlay.render(ctx, {
-                latitude: this.data.latitude,
-                longitude: this.data.longitude,
-                altitude: this.data.altitude,
-                heading: this.data.heading,
-                verticalSpeed: this.data.verticalSpeed,
-                groundSpeed: this.data.groundSpeed
-            }, {
-                range: this.map.range,
-                orientation: this.map.orientation,
-                width: w,
-                height: h
-            });
-        } else if (this.terrainOverlay) {
-            this.terrainOverlay.setEnabled(false);
-        }
-
-        // Fuel range ring (show maximum range with current fuel)
-        if (this.map.showFuelRange !== false && this.data.fuelTotal && this.data.fuelFlow && this.data.groundSpeed) {
-            this.renderFuelRangeRing(ctx, cx, cy, w, h);
-        }
-
-        // Weather overlay (render before other elements)
-        if (this.map.showWeather && this.weatherOverlay) {
-            this.weatherOverlay.setEnabled(true);
-            this.weatherOverlay.render(ctx, {
-                latitude: this.data.latitude,
-                longitude: this.data.longitude,
-                altitude: this.data.altitude,
-                heading: this.data.heading
-            }, {
-                range: this.map.range,
-                orientation: this.map.orientation,
-                width: w,
-                height: h,
-                heading: this.data.heading
-            });
-        } else if (this.weatherOverlay) {
-            this.weatherOverlay.setEnabled(false);
-        }
-
-        // Range rings
-        this.renderRangeRings(ctx, cx, cy, w, h);
-
-        // Flight plan route
-        if (this.flightPlan?.waypoints) {
-            this.renderRoute(ctx, cx, cy, w, h);
-        }
-
-        // OBS course line (when OBS mode active)
-        if (this.obs.active) {
-            this.renderObsCourseLine(ctx, cx, cy, w, h);
-        }
-
-        // Traffic overlay (render after route, before aircraft)
-        if (this.map.showTraffic && this.trafficOverlay) {
-            this.trafficOverlay.setEnabled(true);
-            this.trafficOverlay.render(ctx, {
-                latitude: this.data.latitude,
-                longitude: this.data.longitude,
-                altitude: this.data.altitude,
-                heading: this.data.heading,
-                verticalSpeed: this.data.verticalSpeed,
-                groundSpeed: this.data.groundSpeed
-            }, {
-                range: this.map.range,
-                orientation: this.map.orientation,
-                width: w,
-                height: h
-            });
-        } else if (this.trafficOverlay) {
-            this.trafficOverlay.setEnabled(false);
-        }
-
-        // Aircraft symbol (always at center, unaffected by pan)
-        this.renderAircraft(ctx, w / 2, h / 2);
-
-        // Compass rose
-        this.renderCompass(ctx, w / 2, h / 2, Math.min(w, h) / 2 - 25);
-
-        // Wind vector indicator (top-left corner)
-        this.renderWindVector(ctx, 50, 50);
-
-        // Bearing pointers (BRG1/BRG2)
-        if (this.map.showBearingPointers !== false) {
-            this.renderBearingPointers(ctx, w / 2, h / 2, Math.min(w, h) / 2 - 30);
-        }
-
-        // Map orientation indicator (top-right)
-        this.renderOrientationIndicator(ctx, w - 45, 45);
-
-        // Update datafields
-        this.updateDatafields();
-    }
-
-    renderOrientationIndicator(ctx, x, y) {
-        ctx.save();
-
-        // Background
-        ctx.beginPath();
-        ctx.arc(x, y, 22, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 10, 20, 0.85)';
-        ctx.fill();
-        ctx.strokeStyle = '#1a3040';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // North arrow
-        ctx.translate(x, y);
-        const rotation = this.getMapRotation() * Math.PI / 180;
-        ctx.rotate(-rotation);
-
-        // Arrow pointing north
-        ctx.fillStyle = '#ff3333';
-        ctx.beginPath();
-        ctx.moveTo(0, -16);
-        ctx.lineTo(-5, -6);
-        ctx.lineTo(0, -9);
-        ctx.lineTo(5, -6);
-        ctx.closePath();
-        ctx.fill();
-
-        // South half (white)
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(0, 16);
-        ctx.lineTo(-5, 6);
-        ctx.lineTo(0, 9);
-        ctx.lineTo(5, 6);
-        ctx.closePath();
-        ctx.fill();
-
-        // N label
-        ctx.rotate(rotation); // Undo rotation for text
-        ctx.font = 'bold 9px Consolas, monospace';
-        ctx.fillStyle = '#ff3333';
-        ctx.textAlign = 'center';
-        ctx.fillText('N', 0, -16 + Math.cos(rotation) * 20);
-
-        ctx.restore();
-
-        // Mode label below
-        const modeLabels = { north: 'NORTH', track: 'TRK', heading: 'HDG' };
-        ctx.font = '8px Consolas, monospace';
-        ctx.fillStyle = '#00ccff';
-        ctx.textAlign = 'center';
-        ctx.fillText(modeLabels[this.map.orientation] || 'TRK', x, y + 34);
-    }
-
-    renderObsCourseLine(ctx, cx, cy, w, h) {
-        if (!this.obs.active) return;
-
-        const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
-        if (!wp || !wp.lat || !wp.lng) return;
-
-        ctx.save();
-
-        // Get waypoint position on screen
-        const wpPos = this.core.geoToScreen(
-            wp.lat, wp.lng,
-            this.data.latitude, this.data.longitude,
-            this.map.range, w, h,
-            this.getMapRotation()
-        );
-
-        // Draw OBS course line through waypoint
-        const courseRad = (this.obs.course - this.getMapRotation()) * Math.PI / 180;
-        const lineLength = Math.max(w, h) * 1.5;
-
-        // Line extends both TO and FROM the waypoint
-        const x1 = wpPos.x - Math.sin(courseRad) * lineLength;
-        const y1 = wpPos.y + Math.cos(courseRad) * lineLength;
-        const x2 = wpPos.x + Math.sin(courseRad) * lineLength;
-        const y2 = wpPos.y - Math.cos(courseRad) * lineLength;
-
-        // Draw dashed magenta line for OBS course
-        ctx.beginPath();
-        ctx.setLineDash([8, 4]);
-        ctx.strokeStyle = '#ff00ff';
-        ctx.lineWidth = 2;
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // OBS course indicator at waypoint
-        ctx.beginPath();
-        ctx.arc(wpPos.x, wpPos.y, 8, 0, Math.PI * 2);
-        ctx.strokeStyle = '#ff00ff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Arrow head indicating TO direction
-        const arrowDist = 40;
-        const arrowX = wpPos.x - Math.sin(courseRad) * arrowDist;
-        const arrowY = wpPos.y + Math.cos(courseRad) * arrowDist;
-
-        ctx.beginPath();
-        ctx.fillStyle = '#ff00ff';
-        const arrowSize = 8;
-        ctx.moveTo(
-            arrowX - Math.sin(courseRad) * arrowSize,
-            arrowY + Math.cos(courseRad) * arrowSize
-        );
-        ctx.lineTo(
-            arrowX + Math.cos(courseRad) * arrowSize / 2,
-            arrowY + Math.sin(courseRad) * arrowSize / 2
-        );
-        ctx.lineTo(
-            arrowX - Math.cos(courseRad) * arrowSize / 2,
-            arrowY - Math.sin(courseRad) * arrowSize / 2
-        );
-        ctx.closePath();
-        ctx.fill();
-
-        // OBS label with course
-        ctx.font = 'bold 11px Consolas, monospace';
-        ctx.fillStyle = '#ff00ff';
-        ctx.textAlign = 'center';
-        ctx.fillText(`OBS ${this.obs.course.toString().padStart(3, '0')}°`, cx, 25);
-
-        // Render holding pattern if enabled
-        if (this.obs.holdingPattern) {
-            this.renderHoldingPattern(ctx, wpPos, w, h);
-        }
-
-        ctx.restore();
     }
 
     /**
-     * Render holding pattern racetrack shape
-     * @param {CanvasRenderingContext2D} ctx - Canvas context
-     * @param {Object} wpPos - Waypoint position on screen {x, y}
-     * @param {number} w - Canvas width
-     * @param {number} h - Canvas height
+     * Share cached DOM elements with all modules
      */
-    renderHoldingPattern(ctx, wpPos, w, h) {
-        // Calculate leg length in pixels based on leg time and typical holding speed
-        // Assume ~180kt holding speed: 1 minute = 3nm
-        const legNm = (this.obs.legTime / 60) * 3;
-        const legPixels = this.core.nmToPixels(legNm, this.map.range, Math.min(w, h));
-        const turnRadius = legPixels * 0.3; // Turn radius proportional to leg length
-
-        const courseRad = (this.obs.course - this.getMapRotation()) * Math.PI / 180;
-        const isRightTurn = this.obs.turnDirection === 'R';
-
-        ctx.save();
-        ctx.strokeStyle = '#ff00ff';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 3]);
-
-        // Calculate holding pattern corners
-        // Inbound leg: from fix toward inbound course
-        // Outbound leg: parallel to inbound, offset by turn diameter
-
-        // Perpendicular offset direction (left or right of inbound course)
-        const perpAngle = isRightTurn ? courseRad - Math.PI / 2 : courseRad + Math.PI / 2;
-        const offsetX = Math.sin(perpAngle) * turnRadius * 2;
-        const offsetY = -Math.cos(perpAngle) * turnRadius * 2;
-
-        // Inbound leg end (at fix)
-        const inboundEnd = { x: wpPos.x, y: wpPos.y };
-
-        // Inbound leg start (one leg length before fix)
-        const inboundStart = {
-            x: wpPos.x + Math.sin(courseRad) * legPixels,
-            y: wpPos.y - Math.cos(courseRad) * legPixels
+    wireModuleElements() {
+        // CDI elements
+        this.cdiManager.elements = {
+            cdiNeedle: this.elements.cdiNeedle,
+            cdiDtk: this.elements.cdiDtk,
+            cdiXtrk: this.elements.cdiXtrk,
+            cdiSource: this.elements.cdiSource,
+            cdiToFrom: this.elements.cdiToFrom,
+            cdiGsNeedle: this.elements.cdiGsNeedle,
+            cdiGsBar: this.elements.cdiGsBar,
+            cdiFlag: this.elements.cdiFlag,
+            obsValue: this.elements.obsValue,
+            obsControls: this.elements.obsControls,
+            navSourceGps: this.elements.navSourceGps,
+            navSourceNav1: this.elements.navSourceNav1,
+            navSourceNav2: this.elements.navSourceNav2,
+            obsIndicator: document.getElementById('obs-indicator'),
+            obsCourse: document.getElementById('obs-course')
         };
 
-        // Outbound leg (offset from inbound)
-        const outboundStart = {
-            x: inboundEnd.x + offsetX,
-            y: inboundEnd.y + offsetY
+        // Flight plan elements
+        this.flightPlanManager.elements = {
+            fplDep: this.elements.fplDep,
+            fplArr: this.elements.fplArr,
+            fplDist: this.elements.fplDist,
+            fplEte: this.elements.fplEte,
+            fplList: this.elements.fplList,
+            fplProgress: this.elements.fplProgress,
+            wptId: this.elements.wptId,
+            wptDis: this.elements.wptDis,
+            wptBrg: this.elements.wptBrg,
+            wptEte: this.elements.wptEte,
+            wptDtk: document.getElementById('wpt-dtk'),
+            wptType: document.getElementById('wpt-type')
         };
-        const outboundEnd = {
-            x: inboundStart.x + offsetX,
-            y: inboundStart.y + offsetY
+
+        // Data handler elements
+        this.dataHandler.elements = {
+            conn: this.elements.conn,
+            sysGpsStatus: this.elements.sysGpsStatus,
+            com1: this.elements.com1,
+            com1Stby: this.elements.com1Stby,
+            com2: this.elements.com2,
+            com2Stby: this.elements.com2Stby,
+            nav1: this.elements.nav1,
+            nav1Stby: this.elements.nav1Stby,
+            nav1Ident: this.elements.nav1Ident,
+            nav1Radial: this.elements.nav1Radial,
+            nav1Dme: this.elements.nav1Dme,
+            xpdr: this.elements.xpdr,
+            utcTime: this.elements.utcTime
         };
-
-        ctx.beginPath();
-
-        // Draw inbound leg
-        ctx.moveTo(inboundStart.x, inboundStart.y);
-        ctx.lineTo(inboundEnd.x, inboundEnd.y);
-
-        // Draw turn at fix (inbound to outbound)
-        const turn1CenterX = (inboundEnd.x + outboundStart.x) / 2;
-        const turn1CenterY = (inboundEnd.y + outboundStart.y) / 2;
-        const turn1StartAngle = isRightTurn ? courseRad - Math.PI : courseRad;
-        const turn1EndAngle = isRightTurn ? courseRad : courseRad + Math.PI;
-
-        ctx.arc(turn1CenterX, turn1CenterY, turnRadius,
-            turn1StartAngle - Math.PI / 2,
-            turn1EndAngle - Math.PI / 2,
-            !isRightTurn
-        );
-
-        // Draw outbound leg
-        ctx.lineTo(outboundEnd.x, outboundEnd.y);
-
-        // Draw turn at outbound end (outbound to inbound)
-        const turn2CenterX = (outboundEnd.x + inboundStart.x) / 2;
-        const turn2CenterY = (outboundEnd.y + inboundStart.y) / 2;
-
-        ctx.arc(turn2CenterX, turn2CenterY, turnRadius,
-            turn1EndAngle - Math.PI / 2,
-            turn1StartAngle - Math.PI / 2,
-            !isRightTurn
-        );
-
-        ctx.closePath();
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Draw holding pattern label
-        ctx.font = '9px Consolas, monospace';
-        ctx.fillStyle = '#ff00ff';
-        ctx.textAlign = 'center';
-        const labelX = (inboundStart.x + outboundEnd.x) / 2;
-        const labelY = (inboundStart.y + outboundEnd.y) / 2;
-        ctx.fillText(`HOLD ${this.obs.turnDirection}`, labelX, labelY);
-
-        ctx.restore();
     }
 
     /**
-     * Calculate holding pattern entry type based on aircraft heading
-     * @returns {string} 'direct', 'parallel', or 'teardrop'
+     * Build state snapshot for the map renderer
      */
-    calculateHoldingEntry() {
-        if (!this.obs.active) return null;
-
-        const track = this.data.track || this.data.heading;
-        const inboundCourse = this.obs.course;
-        const isRightTurn = this.obs.turnDirection === 'R';
-
-        // Relative bearing to the inbound course
-        let relativeBearing = this.core.normalizeAngle(track - inboundCourse);
-
-        // Adjust for left turns
-        if (!isRightTurn) {
-            relativeBearing = -relativeBearing;
-        }
-
-        // Entry determination based on relative bearing
-        // Direct: 0° to 110° (right of inbound)
-        // Teardrop: 110° to 180° (behind on hold side)
-        // Parallel: 180° to 360° (left of inbound, opposite to hold)
-        if (relativeBearing >= 0 && relativeBearing < 110) {
-            return 'direct';
-        } else if (relativeBearing >= 110 && relativeBearing < 180) {
-            return 'teardrop';
-        } else {
-            return 'parallel';
-        }
-    }
-
-    /**
-     * Toggle holding pattern display
-     */
-    toggleHoldingPattern() {
-        this.obs.holdingPattern = !this.obs.holdingPattern;
-
-        if (this.obs.holdingPattern) {
-            // Activate OBS mode if not already active
-            if (!this.obs.active) {
-                this.toggleObs();
-            }
-            this.obs.entryType = this.calculateHoldingEntry();
-            console.log(`[GTN750] Holding pattern ON - Entry: ${this.obs.entryType}, Turn: ${this.obs.turnDirection}`);
-        } else {
-            console.log('[GTN750] Holding pattern OFF');
-        }
-    }
-
-    /**
-     * Set holding pattern leg time
-     * @param {number} seconds - Leg time in seconds
-     */
-    setHoldingLegTime(seconds) {
-        this.obs.legTime = Math.max(30, Math.min(240, seconds)); // 30s to 4min
-    }
-
-    /**
-     * Toggle holding pattern turn direction
-     */
-    toggleHoldingDirection() {
-        this.obs.turnDirection = this.obs.turnDirection === 'R' ? 'L' : 'R';
-        this.obs.entryType = this.calculateHoldingEntry();
-    }
-
-    renderWindVector(ctx, x, y) {
-        const windDir = this.data.windDirection || 0;
-        const windSpd = this.data.windSpeed || 0;
-
-        if (windSpd < 1) return; // Don't show if no wind
-
-        ctx.save();
-
-        // Background circle
-        ctx.beginPath();
-        ctx.arc(x, y, 28, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 10, 20, 0.85)';
-        ctx.fill();
-        ctx.strokeStyle = '#1a3040';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Wind arrow (points in direction wind is coming FROM)
-        ctx.translate(x, y);
-
-        // Rotate arrow to show wind direction relative to map
-        const mapRotation = this.getMapRotation();
-        const arrowAngle = (windDir - mapRotation) * Math.PI / 180;
-
-        ctx.rotate(arrowAngle);
-
-        // Arrow shaft
-        ctx.strokeStyle = '#00ccff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, -18);
-        ctx.lineTo(0, 12);
-        ctx.stroke();
-
-        // Arrow head (points down - wind coming from)
-        ctx.fillStyle = '#00ccff';
-        ctx.beginPath();
-        ctx.moveTo(0, -18);
-        ctx.lineTo(-6, -10);
-        ctx.lineTo(6, -10);
-        ctx.closePath();
-        ctx.fill();
-
-        // Wind barbs based on speed (simplified)
-        if (windSpd >= 5) {
-            ctx.beginPath();
-            ctx.moveTo(0, 8);
-            ctx.lineTo(8, 4);
-            ctx.stroke();
-        }
-        if (windSpd >= 10) {
-            ctx.beginPath();
-            ctx.moveTo(0, 2);
-            ctx.lineTo(10, -2);
-            ctx.stroke();
-        }
-        if (windSpd >= 15) {
-            ctx.beginPath();
-            ctx.moveTo(0, -4);
-            ctx.lineTo(10, -8);
-            ctx.stroke();
-        }
-
-        ctx.restore();
-
-        // Wind text below
-        ctx.font = 'bold 10px Consolas, monospace';
-        ctx.fillStyle = '#00ccff';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${Math.round(windDir)}°`, x, y + 42);
-        ctx.fillText(`${Math.round(windSpd)}kt`, x, y + 54);
-    }
-
-    renderFuelRangeRing(ctx, cx, cy, w, h) {
-        // Calculate fuel range in nautical miles
-        const fuelTotal = this.data.fuelTotal || 0;
-        const fuelFlow = this.data.fuelFlow || 1;
-        const groundSpeed = this.data.groundSpeed || 100;
-
-        // Endurance in hours, then range in nm
-        const enduranceHours = fuelTotal / fuelFlow;
-        const rangeNm = enduranceHours * groundSpeed;
-
-        // Only show if range fits on map (within 2x map range)
-        if (rangeNm > this.map.range * 2) return;
-        if (rangeNm < 5) return; // Don't show tiny rings
-
-        // Calculate pixel radius
-        const pixelsPerNm = Math.min(w, h) / 2 / this.map.range;
-        const ringRadius = rangeNm * pixelsPerNm;
-
-        ctx.save();
-
-        // Draw fuel range ring
-        ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)'; // Orange
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 4]);
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.setLineDash([]);
-
-        // Label the ring
-        const labelAngle = -Math.PI / 4; // Top-right
-        const labelX = cx + Math.cos(labelAngle) * ringRadius;
-        const labelY = cy + Math.sin(labelAngle) * ringRadius;
-
-        ctx.font = 'bold 10px Consolas, monospace';
-        ctx.fillStyle = 'rgba(255, 165, 0, 0.9)';
-        ctx.textAlign = 'left';
-
-        // Background for label
-        const labelText = `FUEL ${Math.round(rangeNm)}nm`;
-        const textWidth = ctx.measureText(labelText).width;
-        ctx.fillStyle = 'rgba(0, 10, 20, 0.8)';
-        ctx.fillRect(labelX + 4, labelY - 10, textWidth + 6, 14);
-
-        ctx.fillStyle = '#ffa500';
-        ctx.fillText(labelText, labelX + 7, labelY);
-
-        ctx.restore();
-    }
-
-    renderRangeRings(ctx, cx, cy, w, h) {
-        const range = this.map.range;
-        const pixelsPerNm = Math.min(w, h) / 2 / range;
-
-        ctx.strokeStyle = 'rgba(40, 80, 100, 0.6)';
-        ctx.lineWidth = 1;
-
-        // Calculate ring intervals based on range
-        let interval;
-        if (range <= 5) interval = 1;
-        else if (range <= 10) interval = 2;
-        else if (range <= 25) interval = 5;
-        else if (range <= 50) interval = 10;
-        else interval = 25;
-
-        // Draw rings at intervals
-        for (let r = interval; r <= range; r += interval) {
-            const radius = r * pixelsPerNm;
-
-            ctx.beginPath();
-            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Label the ring (right side)
-            if (this.declutterLevel < 1) {
-                ctx.font = '9px Consolas, monospace';
-                ctx.fillStyle = 'rgba(80, 160, 200, 0.8)';
-                ctx.textAlign = 'left';
-                ctx.fillText(`${r}`, cx + radius + 3, cy + 3);
-            }
-        }
-
-        // Draw cardinal direction lines (subtle)
-        if (this.declutterLevel < 1) {
-            ctx.strokeStyle = 'rgba(40, 80, 100, 0.3)';
-            ctx.setLineDash([4, 8]);
-
-            const rotation = this.getMapRotation() * Math.PI / 180;
-            const maxRadius = range * pixelsPerNm;
-
-            // North-South line
-            ctx.beginPath();
-            ctx.moveTo(cx + Math.sin(rotation) * maxRadius, cy - Math.cos(rotation) * maxRadius);
-            ctx.lineTo(cx - Math.sin(rotation) * maxRadius, cy + Math.cos(rotation) * maxRadius);
-            ctx.stroke();
-
-            // East-West line
-            ctx.beginPath();
-            ctx.moveTo(cx + Math.cos(rotation) * maxRadius, cy + Math.sin(rotation) * maxRadius);
-            ctx.lineTo(cx - Math.cos(rotation) * maxRadius, cy - Math.sin(rotation) * maxRadius);
-            ctx.stroke();
-
-            ctx.setLineDash([]);
-        }
-    }
-
-    renderBearingPointers(ctx, cx, cy, radius) {
-        const mapRotation = this.getMapRotation();
-
-        // BRG1 - Single needle pointer to NAV1 station (cyan)
-        if (this.nav1 && this.nav1.signal > 10) {
-            const bearing = this.nav1.radial + 180; // Radial is FROM, we want TO
-            this.drawBearingPointer(ctx, cx, cy, radius, bearing - mapRotation, '#00ffff', 'single', '1');
-        }
-
-        // BRG2 - Double needle pointer to NAV2 station (white)
-        if (this.nav2 && this.nav2.signal > 10) {
-            const bearing = this.nav2.radial + 180;
-            this.drawBearingPointer(ctx, cx, cy, radius, bearing - mapRotation, '#ffffff', 'double', '2');
-        }
-
-        // Active waypoint pointer (magenta) if no NAV signals
-        if ((!this.nav1?.signal || this.nav1.signal < 10) && this.activeWaypoint) {
-            const bearing = this.core.calculateBearing(
-                this.data.latitude, this.data.longitude,
-                this.activeWaypoint.lat, this.activeWaypoint.lon
-            );
-            this.drawBearingPointer(ctx, cx, cy, radius, bearing - mapRotation, '#ff00ff', 'single', 'W');
-        }
-    }
-
-    drawBearingPointer(ctx, cx, cy, radius, angle, color, style, label) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(angle * Math.PI / 180);
-
-        const innerRadius = radius - 20;
-        const outerRadius = radius + 5;
-
-        ctx.strokeStyle = color;
-        ctx.fillStyle = color;
-        ctx.lineWidth = 2;
-
-        if (style === 'single') {
-            // Single arrow pointer
-            // Head (pointing out)
-            ctx.beginPath();
-            ctx.moveTo(0, -outerRadius);
-            ctx.lineTo(-6, -outerRadius + 12);
-            ctx.lineTo(6, -outerRadius + 12);
-            ctx.closePath();
-            ctx.fill();
-
-            // Shaft
-            ctx.beginPath();
-            ctx.moveTo(0, -outerRadius + 12);
-            ctx.lineTo(0, -innerRadius);
-            ctx.stroke();
-
-            // Tail (opposite end)
-            ctx.beginPath();
-            ctx.moveTo(0, innerRadius);
-            ctx.lineTo(0, outerRadius - 10);
-            ctx.stroke();
-        } else {
-            // Double arrow pointer (two parallel lines)
-            const offset = 3;
-
-            // Left shaft
-            ctx.beginPath();
-            ctx.moveTo(-offset, -outerRadius);
-            ctx.lineTo(-offset, -innerRadius);
-            ctx.stroke();
-
-            // Right shaft
-            ctx.beginPath();
-            ctx.moveTo(offset, -outerRadius);
-            ctx.lineTo(offset, -innerRadius);
-            ctx.stroke();
-
-            // Arrow head
-            ctx.beginPath();
-            ctx.moveTo(0, -outerRadius - 5);
-            ctx.lineTo(-8, -outerRadius + 8);
-            ctx.lineTo(8, -outerRadius + 8);
-            ctx.closePath();
-            ctx.fill();
-
-            // Tail
-            ctx.beginPath();
-            ctx.moveTo(-offset, innerRadius);
-            ctx.lineTo(-offset, outerRadius - 10);
-            ctx.moveTo(offset, innerRadius);
-            ctx.lineTo(offset, outerRadius - 10);
-            ctx.stroke();
-        }
-
-        // Label
-        ctx.font = 'bold 9px Consolas, monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(label, 0, -innerRadius + 15);
-
-        ctx.restore();
-    }
-
-    renderTerrainPage() {
-        // Render dedicated terrain page with full TAWS view
-        if (!this.terrainCtx || !this.terrainOverlay) return;
-
-        const canvas = this.elements.terrainCanvas;
-        const w = canvas.width;
-        const h = canvas.height;
-
-        // Clear
-        this.terrainCtx.fillStyle = '#0a1520';
-        this.terrainCtx.fillRect(0, 0, w, h);
-
-        // Get real AGL from sim data (use altitude if AGL not available)
-        const realAGL = this.data.altitudeAGL || this.data.altitude;
-
-        // Render terrain view with real AGL
-        const minClearance = this.terrainOverlay.renderTerrainPage(
-            this.terrainCtx,
-            {
-                latitude: this.data.latitude,
-                longitude: this.data.longitude,
-                altitude: this.data.altitude,
-                altitudeAGL: realAGL,
-                heading: this.data.heading,
-                verticalSpeed: this.data.verticalSpeed,
-                groundSpeed: this.data.groundSpeed
-            },
-            w, h
-        );
-
-        // Update clearance display with REAL AGL from MSFS
-        if (this.elements.terrainClearance) {
-            const agl = Math.round(realAGL);
-            this.elements.terrainClearance.textContent = agl > 0 ? agl : '---';
-        }
-
-        // Update mode and range displays
-        if (this.elements.terrainMode) {
-            this.elements.terrainMode.textContent = this.terrainOverlay.getViewMode().toUpperCase();
-        }
-        if (this.elements.terrainRange) {
-            this.elements.terrainRange.textContent = this.terrainOverlay.getRange();
-        }
-    }
-
-    renderTrafficPage() {
-        // Render dedicated traffic page
-        if (!this.trafficCtx || !this.trafficOverlay) return;
-
-        const canvas = this.elements.trafficCanvas;
-        const w = canvas.width;
-        const h = canvas.height;
-
-        // Render traffic view and get count
-        const targetCount = this.trafficOverlay.renderTrafficPage(
-            this.trafficCtx,
-            {
-                latitude: this.data.latitude,
-                longitude: this.data.longitude,
-                altitude: this.data.altitude,
-                heading: this.data.heading,
-                verticalSpeed: this.data.verticalSpeed,
-                groundSpeed: this.data.groundSpeed
-            },
-            w, h
-        );
-
-        // Update display elements
-        if (this.elements.trafficCount) {
-            this.elements.trafficCount.textContent = targetCount;
-        }
-        if (this.elements.trafficMode) {
-            this.elements.trafficMode.textContent = this.trafficOverlay.getMode();
-        }
-    }
-
-    renderWeatherPage() {
-        // Render dedicated weather page
-        if (!this.wxCtx || !this.weatherOverlay) return;
-
-        const canvas = this.elements.wxCanvas;
-        if (!canvas) return;
-
-        // Ensure canvas has dimensions
-        if (canvas.width === 0 || canvas.height === 0) {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width || 400;
-            canvas.height = rect.height || 280;
-        }
-
-        const w = canvas.width;
-        const h = canvas.height;
-
-        // Render weather view with current range
-        this.weatherOverlay.renderWeatherPage(
-            this.wxCtx,
-            {
-                latitude: this.data.latitude,
-                longitude: this.data.longitude,
-                altitude: this.data.altitude,
-                heading: this.data.heading
-            },
-            w, h,
-            this.weatherRange || 50
-        );
-
-        // Update METAR display - show nearest METAR if available
-        if (this.elements.wxMetarText) {
-            const metarData = this.weatherOverlay.metarData;
-            if (metarData && metarData.size > 0) {
-                // Find nearest airport with METAR
-                let nearest = null;
-                let nearestDist = Infinity;
-                metarData.forEach(m => {
-                    const dist = this.core.calculateDistance(
-                        this.data.latitude, this.data.longitude,
-                        m.lat, m.lon
-                    );
-                    if (dist < nearestDist) {
-                        nearestDist = dist;
-                        nearest = m;
-                    }
+    getRendererState() {
+        return {
+            ctx: this.ctx,
+            canvas: this.canvas,
+            panOffset: this.panOffset,
+            declutterLevel: this.declutterLevel,
+            map: this.map,
+            data: this.data,
+            taws: this.taws,
+            terrainOverlay: this.terrainOverlay,
+            trafficOverlay: this.trafficOverlay,
+            weatherOverlay: this.weatherOverlay,
+            flightPlan: this.flightPlanManager.flightPlan,
+            activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
+            activeWaypoint: this.flightPlanManager.activeWaypoint,
+            obs: this.cdiManager.obs,
+            nav1: this.cdiManager.nav1,
+            nav2: this.cdiManager.nav2,
+            gps: this.cdiManager.gps,
+            onUpdateDatafields: () => {
+                this.dataFieldsManager.update(this.data, {
+                    flightPlan: this.flightPlanManager.flightPlan,
+                    activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
+                    cdi: this.cdiManager.cdi
                 });
-                if (nearest) {
-                    this.elements.wxMetarText.textContent = nearest.raw || `${nearest.icao}: ${nearest.category}`;
-                } else {
-                    this.elements.wxMetarText.textContent = 'No METAR data';
-                }
-            } else {
-                this.elements.wxMetarText.textContent = 'Fetching weather...';
+                // Range display
+                if (this.elements.dfRange) this.elements.dfRange.textContent = this.map.range;
             }
-        }
-
-        // Update radar timestamp display
-        if (this.elements.wxRadarTime) {
-            const frameTime = this.weatherOverlay.getCurrentFrameTime();
-            if (frameTime) {
-                const age = Math.round((Date.now() - frameTime.getTime()) / 60000);
-                const timeStr = frameTime.toUTCString().slice(17, 22);
-                this.elements.wxRadarTime.textContent = `Radar: ${timeStr}Z (${age}m ago)`;
-            } else if (this.weatherOverlay.hasRadarData()) {
-                this.elements.wxRadarTime.textContent = 'Radar: Loading...';
-            } else {
-                this.elements.wxRadarTime.textContent = 'Radar: Simulated';
-            }
-        }
-
-        // Update sim weather display
-        this.updateSimWeatherDisplay();
-    }
-
-    updateSimWeatherDisplay() {
-        // Wind
-        if (this.elements.wxWind) {
-            const dir = Math.round(this.data.windDirection || 0);
-            const spd = Math.round(this.data.windSpeed || 0);
-            this.elements.wxWind.textContent = `${dir.toString().padStart(3, '0')}°/${spd}kt`;
-        }
-
-        // Temperature
-        if (this.elements.wxTemp) {
-            const temp = Math.round(this.data.ambientTemp || 15);
-            this.elements.wxTemp.textContent = `${temp}°C`;
-        }
-
-        // Barometer
-        if (this.elements.wxBaro) {
-            const baro = (this.data.ambientPressure || 29.92).toFixed(2);
-            this.elements.wxBaro.textContent = `${baro}"`;
-        }
-
-        // Visibility (convert meters to statute miles)
-        if (this.elements.wxVis) {
-            const visMt = this.data.visibility || 10000;
-            const visSM = visMt / 1609.34;
-            if (visSM >= 10) {
-                this.elements.wxVis.textContent = '10+SM';
-            } else {
-                this.elements.wxVis.textContent = `${visSM.toFixed(1)}SM`;
-            }
-        }
-
-        // Precipitation
-        if (this.elements.wxPrecip && this.elements.wxPrecipItem) {
-            const precip = this.data.precipState || 0;
-            if (precip === 0) {
-                this.elements.wxPrecipItem.style.display = 'none';
-            } else {
-                this.elements.wxPrecipItem.style.display = '';
-                if (precip & 4) {
-                    this.elements.wxPrecip.textContent = 'Snow';
-                } else if (precip & 2) {
-                    this.elements.wxPrecip.textContent = 'Rain';
-                } else {
-                    this.elements.wxPrecip.textContent = 'Yes';
-                }
-            }
-        }
-
-        // Update weather condition display
-        this.updateWeatherConditionDisplay();
-
-        // Update weather overlay with sim data for radar display
-        if (this.weatherOverlay) {
-            this.weatherOverlay.updateSimWeather({
-                precipState: this.data.precipState,
-                visibility: this.data.visibility,
-                windDirection: this.data.windDirection,
-                windSpeed: this.data.windSpeed,
-                ambientTemp: this.data.ambientTemp
-            });
-        }
-    }
-
-    updateWeatherConditionDisplay() {
-        const iconEl = document.getElementById('wx-condition-icon');
-        const textEl = document.getElementById('wx-condition-text');
-        if (!iconEl || !textEl) return;
-
-        const precip = this.data.precipState || 0;
-        const vis = this.data.visibility || 10000;
-        const wind = this.data.windSpeed || 0;
-
-        let icon = '☀️';
-        let text = 'Clear';
-
-        // Determine condition based on sim weather
-        if (precip & 4) {
-            icon = '🌨️';
-            text = 'Snow';
-        } else if (precip & 2) {
-            if (wind > 25) {
-                icon = '⛈️';
-                text = 'Storm';
-            } else {
-                icon = '🌧️';
-                text = 'Rain';
-            }
-        } else if (vis < 1000) {
-            icon = '🌫️';
-            text = 'Fog';
-        } else if (vis < 5000) {
-            icon = '🌁';
-            text = 'Mist';
-        } else if (wind > 30) {
-            icon = '💨';
-            text = 'Windy';
-        } else if (wind > 15) {
-            icon = '🌤️';
-            text = 'Breezy';
-        }
-
-        iconEl.textContent = icon;
-        textEl.textContent = text;
-    }
-
-    // ===== WEATHER CONTROL =====
-    async setWeatherPreset(preset) {
-        console.log('[GTN750] Setting weather preset:', preset);
-        try {
-            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/preset', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ preset })
-            });
-            const data = await response.json();
-            if (data.success) {
-                console.log('[GTN750] Weather set:', data.metar);
-                document.querySelectorAll('.wx-preset-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.preset === preset);
-                });
-                document.getElementById('wx-live-btn')?.classList.remove('active');
-            } else {
-                console.warn('[GTN750] Weather failed:', data.error);
-            }
-        } catch (e) {
-            console.error('[GTN750] Weather error:', e);
-        }
-    }
-
-    async setLiveWeather() {
-        console.log('[GTN750] Switching to live weather');
-        try {
-            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/mode', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode: 'live' })
-            });
-            const data = await response.json();
-            if (data.success) {
-                console.log('[GTN750] Live weather enabled');
-                document.querySelectorAll('.wx-preset-btn').forEach(btn => btn.classList.remove('active'));
-                document.getElementById('wx-live-btn')?.classList.add('active');
-            }
-        } catch (e) {
-            console.error('[GTN750] Live weather error:', e);
-        }
-    }
-
-    // Legacy method kept for compatibility
-    showTawsAlert(alert) {
-        const alertEl = this.elements.tawsAlert;
-        const textEl = this.elements.tawsText;
-        if (!alertEl || !textEl) return;
-
-        if (alert.level !== 'CLEAR' && alert.color) {
-            alertEl.style.display = 'flex';
-            alertEl.style.backgroundColor = alert.color;
-            textEl.textContent = alert.level.replace('_', ' ');
-        } else {
-            alertEl.style.display = 'none';
-        }
-    }
-
-    // Note: renderRangeRings is defined earlier with full features (declutter, cardinal lines)
-
-    renderRoute(ctx, cx, cy, w, h) {
-        const pixelsPerNm = Math.min(w, h) / 2 / this.map.range;
-        const waypoints = this.flightPlan.waypoints;
-        const rotation = this.getMapRotation();
-        const activeIdx = this.activeWaypointIndex || 0;
-
-        // Get all waypoint positions first
-        const positions = waypoints.map(wp => {
-            if (!wp.lat || !wp.lng) return null;
-            return this.core.latLonToCanvas(
-                wp.lat, wp.lng,
-                this.data.latitude, this.data.longitude,
-                rotation, this.map.range,
-                w, h, this.map.orientation === 'north'
-            );
-        });
-
-        // Draw completed legs (dimmed)
-        if (activeIdx > 0) {
-            ctx.strokeStyle = 'rgba(128, 0, 128, 0.4)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            let started = false;
-            for (let i = 0; i < activeIdx; i++) {
-                if (!positions[i]) continue;
-                if (!started) {
-                    ctx.moveTo(positions[i].x, positions[i].y);
-                    started = true;
-                } else {
-                    ctx.lineTo(positions[i].x, positions[i].y);
-                }
-            }
-            if (positions[activeIdx]) {
-                ctx.lineTo(positions[activeIdx].x, positions[activeIdx].y);
-            }
-            ctx.stroke();
-        }
-
-        // Draw future legs
-        if (activeIdx < waypoints.length - 1) {
-            ctx.strokeStyle = '#ff00ff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            let started = false;
-            for (let i = activeIdx; i < waypoints.length; i++) {
-                if (!positions[i]) continue;
-                if (!started) {
-                    ctx.moveTo(positions[i].x, positions[i].y);
-                    started = true;
-                } else {
-                    ctx.lineTo(positions[i].x, positions[i].y);
-                }
-            }
-            ctx.stroke();
-        }
-
-        // Draw active leg with glow effect
-        if (activeIdx > 0 && positions[activeIdx - 1] && positions[activeIdx]) {
-            // Glow
-            ctx.strokeStyle = 'rgba(255, 0, 255, 0.3)';
-            ctx.lineWidth = 6;
-            ctx.beginPath();
-            ctx.moveTo(positions[activeIdx - 1].x, positions[activeIdx - 1].y);
-            ctx.lineTo(positions[activeIdx].x, positions[activeIdx].y);
-            ctx.stroke();
-
-            // Bright line
-            ctx.strokeStyle = '#ff00ff';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(positions[activeIdx - 1].x, positions[activeIdx - 1].y);
-            ctx.lineTo(positions[activeIdx].x, positions[activeIdx].y);
-            ctx.stroke();
-        }
-
-        // Draw course line from aircraft to active waypoint (DTK line)
-        if (positions[activeIdx] && this.gps?.dtk) {
-            const dtkAngle = (this.gps.dtk - rotation) * Math.PI / 180;
-            const lineLength = Math.min(w, h) * 0.8;
-
-            ctx.strokeStyle = 'rgba(255, 0, 255, 0.5)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(cx + Math.sin(dtkAngle) * lineLength, cy - Math.cos(dtkAngle) * lineLength);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        // Draw waypoints
-        waypoints.forEach((wp, index) => {
-            if (!positions[index]) return;
-            const isActive = index === activeIdx;
-            const isCompleted = index < activeIdx;
-            this.renderWaypoint(ctx, positions[index].x, positions[index].y, wp.ident, isActive, isCompleted);
-        });
-    }
-
-    renderWaypoint(ctx, x, y, ident, isActive, isCompleted = false) {
-        // Determine color based on state
-        let color;
-        if (isActive) {
-            color = '#ff00ff'; // Magenta for active
-        } else if (isCompleted) {
-            color = 'rgba(128, 128, 128, 0.5)'; // Dim gray for completed
-        } else {
-            color = '#00aaff'; // Cyan for future
-        }
-
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(x, y - 6);
-        ctx.lineTo(x + 5, y);
-        ctx.lineTo(x, y + 6);
-        ctx.lineTo(x - 5, y);
-        ctx.closePath();
-        ctx.fill();
-
-        // Active waypoint gets a ring
-        if (isActive) {
-            ctx.strokeStyle = '#ff00ff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(x, y, 10, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-
-        // Show label (skip for completed waypoints in declutter mode)
-        if (ident && (!isCompleted || this.declutterLevel < 2)) {
-            ctx.fillStyle = isActive ? '#ff00ff' : (isCompleted ? '#888888' : '#00ff00');
-            ctx.font = isActive ? 'bold 11px Consolas, monospace' : '10px Consolas, monospace';
-            ctx.fillText(ident, x + 8, y + 4);
-        }
-    }
-
-    renderAircraft(ctx, cx, cy) {
-        ctx.save();
-        ctx.translate(cx, cy);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(0, -12);
-        ctx.lineTo(-8, 10);
-        ctx.lineTo(0, 5);
-        ctx.lineTo(8, 10);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.strokeStyle = '#00ff00';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.restore();
-    }
-
-    renderCompass(ctx, cx, cy, radius) {
-        const rotation = this.getMapRotation();
-
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(-rotation * Math.PI / 180);
-
-        ctx.fillStyle = '#0099ff';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-
-        const dirs = [
-            { label: 'N', angle: 0 },
-            { label: 'E', angle: 90 },
-            { label: 'S', angle: 180 },
-            { label: 'W', angle: 270 }
-        ];
-
-        dirs.forEach(dir => {
-            const angle = dir.angle * Math.PI / 180;
-            const x = Math.sin(angle) * (radius - 5);
-            const y = -Math.cos(angle) * (radius - 5);
-            ctx.fillText(dir.label, x, y + 4);
-        });
-
-        ctx.strokeStyle = '#0066aa';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 360; i += 30) {
-            if (i % 90 === 0) continue;
-            const angle = i * Math.PI / 180;
-            const inner = radius - 15;
-            const outer = radius - 5;
-            ctx.beginPath();
-            ctx.moveTo(Math.sin(angle) * inner, -Math.cos(angle) * inner);
-            ctx.lineTo(Math.sin(angle) * outer, -Math.cos(angle) * outer);
-            ctx.stroke();
-        }
-
-        ctx.restore();
-    }
-
-    getMapRotation() {
-        switch (this.map.orientation) {
-            case 'north': return 0;
-            case 'track': return this.data.track || this.data.heading;
-            case 'heading': return this.data.heading;
-            default: return this.data.heading;
-        }
-    }
-
-    updateDatafields() {
-        // Update each corner field based on configuration
-        const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-        positions.forEach(pos => {
-            const field = document.querySelector(`.corner-field.${pos}`);
-            if (field) {
-                const type = this.dataFields[pos];
-                const { label, value } = this.getFieldData(type);
-                const labelEl = field.querySelector('.corner-label');
-                const valueEl = field.querySelector('.corner-value');
-                if (labelEl) labelEl.textContent = label;
-                if (valueEl) valueEl.textContent = value;
-            }
-        });
-
-        // Range is always shown in range selector
-        if (this.elements.dfRange) this.elements.dfRange.textContent = this.map.range;
+        };
     }
 
     /**
-     * Get data for a specific field type
+     * Handle incoming sim data from WebSocket
      */
-    getFieldData(type) {
-        const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
-        let dist = 0, trueBrg = 0, ete = 0;
-
-        if (wp && this.data.latitude && wp.lat && wp.lng) {
-            dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
-            trueBrg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
-            if (this.data.groundSpeed > 0) {
-                ete = (dist / this.data.groundSpeed) * 60;
-            }
-        }
-        // Convert true bearing to magnetic for display
-        const magBrg = this.core.trueToMagnetic(trueBrg, this.data.magvar || 0);
-
-        switch (type) {
-            case 'trk':
-                return { label: 'TRK', value: this.core.formatHeading(this.data.track || this.data.heading) };
-            case 'gs':
-                return { label: 'GS', value: Math.round(this.data.groundSpeed) + 'kt' };
-            case 'alt':
-                return { label: 'ALT', value: this.core.formatAltitude(this.data.altitude) };
-            case 'vs':
-                return { label: 'VS', value: Math.round(this.data.verticalSpeed) + 'fpm' };
-            case 'hdg':
-                return { label: 'HDG', value: this.core.formatHeading(this.data.heading) };
-            case 'dis':
-                return { label: 'DIS', value: dist > 0 ? dist.toFixed(1) + 'nm' : '--.-nm' };
-            case 'ete':
-                return { label: 'ETE', value: ete > 0 ? this.core.formatEte(ete) : '--:--' };
-            case 'brg':
-                return { label: 'BRG', value: magBrg > 0 ? Math.round(magBrg) + '°' : '---°' };
-            case 'dtk':
-                return { label: 'DTK', value: this.cdi.dtk ? Math.round(this.cdi.dtk) + '°' : '---°' };
-            case 'xtk':
-                return { label: 'XTK', value: this.cdi.xtrk ? this.cdi.xtrk.toFixed(1) + 'nm' : '0.0nm' };
-            case 'wind':
-                const windDir = this.data.windDirection || 0;
-                const windSpd = this.data.windSpeed || 0;
-                return { label: 'WIND', value: Math.round(windDir) + '°/' + Math.round(windSpd) + 'kt' };
-            case 'time':
-                return { label: 'TIME', value: this.core.formatTime(this.data.zuluTime) || '--:--Z' };
-            case 'off':
-                return { label: '', value: '' };
-            default:
-                return { label: type.toUpperCase(), value: '---' };
-        }
-    }
-
-    /**
-     * Open field selector popup near a corner field
-     */
-    openFieldSelector(field) {
-        const selector = document.getElementById('field-selector');
-        if (!selector) return;
-
-        // Determine position from field class
-        const classList = field.classList;
-        let position = null;
-        ['top-left', 'top-right', 'bottom-left', 'bottom-right'].forEach(pos => {
-            if (classList.contains(pos)) position = pos;
-        });
-
-        if (!position) return;
-
-        this.activeFieldPosition = position;
-
-        // Position selector near the field
-        const rect = field.getBoundingClientRect();
-        const parentRect = field.parentElement.getBoundingClientRect();
-
-        selector.style.display = 'block';
-
-        // Position based on which corner
-        if (position.includes('left')) {
-            selector.style.left = (rect.left - parentRect.left) + 'px';
-            selector.style.right = 'auto';
-        } else {
-            selector.style.right = (parentRect.right - rect.right) + 'px';
-            selector.style.left = 'auto';
-        }
-
-        if (position.includes('top')) {
-            selector.style.top = (rect.bottom - parentRect.top + 5) + 'px';
-            selector.style.bottom = 'auto';
-        } else {
-            selector.style.bottom = (parentRect.bottom - rect.top + 5) + 'px';
-            selector.style.top = 'auto';
-        }
-
-        // Highlight current selection
-        const currentType = this.dataFields[position];
-        document.querySelectorAll('.field-option').forEach(opt => {
-            opt.classList.toggle('selected', opt.dataset.type === currentType);
-        });
-    }
-
-    /**
-     * Close field selector popup
-     */
-    closeFieldSelector() {
-        const selector = document.getElementById('field-selector');
-        if (selector) {
-            selector.style.display = 'none';
-        }
-        this.activeFieldPosition = null;
-    }
-
-    /**
-     * Select a field type for the active position
-     */
-    selectFieldType(type) {
-        if (!this.activeFieldPosition) return;
-
-        this.dataFields[this.activeFieldPosition] = type;
-
-        // Save to localStorage
-        try {
-            localStorage.setItem('gtn750-datafields', JSON.stringify(this.dataFields));
-        } catch (e) {
-            console.warn('[GTN750] Failed to save datafields:', e.message);
-        }
-
-        // Update immediately
-        this.updateDatafields();
-        this.closeFieldSelector();
-    }
-
-    /**
-     * Load saved data field configuration
-     */
-    loadDataFieldConfig() {
-        try {
-            const saved = localStorage.getItem('gtn750-datafields');
-            if (saved) {
-                this.dataFields = { ...this.dataFields, ...JSON.parse(saved) };
-            }
-        } catch (e) {
-            console.warn('[GTN750] Failed to load datafields:', e.message);
-        }
-    }
-
-    updateMapOrientation() {
-        if (this.elements.sysMapOrient) {
-            this.elements.sysMapOrient.value = this.map.orientation;
-        }
-    }
-
-    changeRange(delta) {
-        const idx = this.map.ranges.indexOf(this.map.range);
-        const newIdx = Math.max(0, Math.min(this.map.ranges.length - 1, idx + delta));
-        this.map.range = this.map.ranges[newIdx];
-        if (this.elements.dfRange) {
-            this.elements.dfRange.textContent = this.map.range;
-        }
-    }
-
-    changeWeatherRange(delta) {
-        const ranges = this.weatherRanges || [10, 25, 50, 100, 200];
-        const idx = ranges.indexOf(this.weatherRange);
-        const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
-        this.weatherRange = ranges[newIdx];
-        if (this.elements.wxRange) {
-            this.elements.wxRange.textContent = this.weatherRange;
-        }
-    }
-
-    changeTerrainRange(delta) {
-        if (!this.terrainOverlay) return;
-        const ranges = this.terrainRanges || [2, 5, 10, 20, 50];
-        const currentRange = this.terrainOverlay.getRange();
-        const idx = ranges.indexOf(currentRange);
-        const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
-        const newRange = ranges[newIdx];
-        this.terrainOverlay.setRange(newRange);
-        // Update display
-        if (this.elements.terrainRangeValue) {
-            this.elements.terrainRangeValue.textContent = newRange;
-        }
-        if (this.elements.terrainRange) {
-            this.elements.terrainRange.textContent = newRange;
-        }
-    }
-
-    updateTerrainViewButtons(mode) {
-        if (this.elements.terrainView360) {
-            this.elements.terrainView360.classList.toggle('active', mode === '360');
-        }
-        if (this.elements.terrainViewArc) {
-            this.elements.terrainViewArc.classList.toggle('active', mode === 'arc');
-        }
-        if (this.elements.terrainMode) {
-            this.elements.terrainMode.textContent = mode.toUpperCase();
-        }
-    }
-
-    cycleDeclutter() {
-        // Cycle through declutter levels (0-3)
-        // 0: All labels, 1: Hide waypoint labels, 2: Hide range rings, 3: Minimal
-        this.declutterLevel = ((this.declutterLevel || 0) + 1) % 4;
-
-        // Apply declutter settings
-        const level = this.declutterLevel;
-        this.mapSettings = {
-            ...this.mapSettings,
-            showWaypointLabels: level < 1,
-            showRangeRings: level < 2,
-            showCompass: level < 3,
-            showDataFields: level < 3
-        };
-
-        // Update corner field visibility
-        document.querySelectorAll('.corner-field').forEach(el => {
-            el.style.opacity = level < 3 ? '1' : '0.3';
-        });
-
-        console.log(`[GTN750] Declutter level: ${level}`);
-    }
-
-    // ===== FREQUENCY SWAP =====
-    async swapFrequency(radio) {
-        try {
-            await fetch(`http://${location.hostname}:${this.serverPort}/api/simconnect/event`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ event: `${radio}_RADIO_SWAP` })
-            });
-        } catch (e) {
-            console.error(`[GTN750] Swap ${radio} failed:`, e);
-        }
-    }
-
-    // ===== DIRECT-TO =====
-    showDirectTo(prefilledIdent = null) {
-        const modal = document.getElementById('dto-modal');
-        const input = document.getElementById('dto-input');
-        const info = document.getElementById('dto-info');
-        const activateBtn = document.getElementById('dto-activate');
-
-        if (!modal) return;
-
-        // Reset and show modal
-        modal.style.display = 'block';
-        input.value = prefilledIdent || '';
-        info.innerHTML = '<span class="dto-name">Enter waypoint identifier</span>';
-        activateBtn.disabled = true;
-        this.dtoTarget = null;
-
-        // Focus input
-        setTimeout(() => input.focus(), 50);
-
-        // Setup event handlers
-        input.oninput = () => {
-            const ident = input.value.toUpperCase().trim();
-            if (ident.length >= 2) {
-                this.lookupDirectToWaypoint(ident);
-            } else {
-                info.innerHTML = '<span class="dto-name">Enter waypoint identifier</span>';
-                activateBtn.disabled = true;
-                this.dtoTarget = null;
-            }
-        };
-
-        input.onkeydown = (e) => {
-            if (e.key === 'Enter' && this.dtoTarget) {
-                this.activateDirectTo();
-            } else if (e.key === 'Escape') {
-                this.hideDirectTo();
-            }
-        };
-
-        // Button handlers
-        activateBtn.onclick = () => this.activateDirectTo();
-        document.getElementById('dto-cancel').onclick = () => this.hideDirectTo();
-    }
-
-    hideDirectTo() {
-        const modal = document.getElementById('dto-modal');
-        if (modal) modal.style.display = 'none';
-    }
-
-    async lookupDirectToWaypoint(ident) {
-        const info = document.getElementById('dto-info');
-        const activateBtn = document.getElementById('dto-activate');
-
-        try {
-            // Try waypoint search API
-            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/waypoint/${ident}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data && (data.lat || data.latitude)) {
-                    this.dtoTarget = {
-                        ident: ident,
-                        name: data.name || data.facility_name || ident,
-                        lat: data.lat || data.latitude,
-                        lon: data.lon || data.longitude,
-                        type: data.type || 'WAYPOINT'
-                    };
-
-                    // Calculate distance and bearing from current position
-                    const dist = this.core.calculateDistance(
-                        this.data.latitude, this.data.longitude,
-                        this.dtoTarget.lat, this.dtoTarget.lon
-                    );
-                    const brg = this.core.calculateBearing(
-                        this.data.latitude, this.data.longitude,
-                        this.dtoTarget.lat, this.dtoTarget.lon
-                    );
-
-                    info.innerHTML = `
-                        <div class="dto-name">${this.dtoTarget.name}</div>
-                        <div class="dto-coords">${this.dtoTarget.type} - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
-                    `;
-                    activateBtn.disabled = false;
-                    return;
-                }
-            }
-        } catch (e) {
-            // Fallback: create waypoint from nearest page item or manual entry
-        }
-
-        // Check if it matches a NRST item
-        if (this.nearestPage) {
-            const item = this.nearestPage.items?.find(i =>
-                (i.icao || i.id)?.toUpperCase() === ident
-            );
-            if (item) {
-                this.dtoTarget = {
-                    ident: item.icao || item.id,
-                    name: item.name || ident,
-                    lat: item.lat,
-                    lon: item.lon,
-                    type: item.type || 'AIRPORT'
-                };
-                info.innerHTML = `
-                    <div class="dto-name">${this.dtoTarget.name}</div>
-                    <div class="dto-coords">${item.distance}nm @ ${item.bearing}°</div>
-                `;
-                activateBtn.disabled = false;
-                return;
-            }
-        }
-
-        // Not found
-        info.innerHTML = '<span class="dto-name" style="color: var(--gtn-yellow);">Waypoint not found</span>';
-        activateBtn.disabled = true;
-        this.dtoTarget = null;
-    }
-
-    activateDirectTo() {
-        if (!this.dtoTarget) return;
-
-        console.log(`[GTN750] Direct-To activated: ${this.dtoTarget.ident}`);
-
-        // Set as active waypoint
-        this.activeWaypoint = this.dtoTarget;
-
-        // Update waypoint display
-        if (this.elements.wptId) this.elements.wptId.textContent = this.dtoTarget.ident;
-        if (this.elements.wptType) this.elements.wptType.textContent = 'D→';
-
-        // Broadcast to other widgets
-        this.syncChannel.postMessage({
-            type: 'direct-to',
-            data: this.dtoTarget
-        });
-
-        // Hide modal
-        this.hideDirectTo();
-
-        // Switch to map page
-        if (this.pageManager) {
-            this.pageManager.switchPage('map');
-        }
-    }
-
-    directTo(item) {
-        // Called from NRST or other pages with a pre-selected item
-        if (item) {
-            this.dtoTarget = {
-                ident: item.icao || item.id,
-                name: item.name || item.icao || item.id,
-                lat: item.lat,
-                lon: item.lon,
-                type: item.type || 'WAYPOINT'
-            };
-            this.activateDirectTo();
-        } else {
-            this.showDirectTo();
-        }
-    }
-
-    // ===== FLIGHT PLAN =====
-    async fetchFlightPlan() {
-        try {
-            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/flightplan`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data?.waypoints?.length > 0) {
-                    this.flightPlan = data;
-                    this.renderFlightPlan();
-                    this.updateFplHeader();
-                }
-            }
-        } catch (e) {
-            console.log('[GTN750] No flight plan');
-        }
-        setTimeout(() => this.fetchFlightPlan(), 30000);
-    }
-
-    updateFplHeader() {
-        if (!this.flightPlan) return;
-        const wps = this.flightPlan.waypoints;
-        if (wps.length > 0) {
-            if (this.elements.fplDep) this.elements.fplDep.textContent = wps[0].ident || '----';
-            if (this.elements.fplArr) this.elements.fplArr.textContent = wps[wps.length - 1].ident || '----';
-        }
-
-        // Calculate total distance
-        let totalDist = 0;
-        wps.forEach(wp => {
-            if (wp.distanceFromPrev) totalDist += wp.distanceFromPrev;
-        });
-        if (this.elements.fplDist) this.elements.fplDist.textContent = Math.round(totalDist);
-
-        // Calculate ETE
-        if (this.data.groundSpeed > 0 && this.elements.fplEte) {
-            const eteMin = (totalDist / this.data.groundSpeed) * 60;
-            this.elements.fplEte.textContent = this.core.formatEte(eteMin);
-        }
-    }
-
-    renderFlightPlan() {
-        if (!this.elements.fplList) return;
-        this.elements.fplList.textContent = '';
-
-        if (!this.flightPlan?.waypoints?.length) {
-            const empty = document.createElement('div');
-            empty.className = 'gtn-fpl-empty';
-            empty.textContent = 'No flight plan loaded';
-            this.elements.fplList.appendChild(empty);
-            return;
-        }
-
-        this.flightPlan.waypoints.forEach((wp, index) => {
-            const item = document.createElement('div');
-            item.className = 'gtn-fpl-item';
-            if (wp.passed) item.classList.add('passed');
-            if (index === this.activeWaypointIndex) item.classList.add('active');
-
-            const left = document.createElement('div');
-            const ident = document.createElement('div');
-            ident.className = 'gtn-fpl-ident';
-            ident.textContent = wp.ident || `WP${index + 1}`;
-            const type = document.createElement('div');
-            type.className = 'gtn-fpl-type';
-            type.textContent = wp.type || '';
-            left.appendChild(ident);
-            left.appendChild(type);
-
-            const right = document.createElement('div');
-            right.className = 'gtn-fpl-data';
-            const dist = document.createElement('span');
-            dist.textContent = wp.distanceFromPrev ? Math.round(wp.distanceFromPrev) + ' NM' : '';
-            right.appendChild(dist);
-
-            item.appendChild(left);
-            item.appendChild(right);
-            item.addEventListener('click', () => this.selectWaypoint(index));
-            this.elements.fplList.appendChild(item);
-        });
-
-        this.updateFplProgress();
-    }
-
-    updateFplProgress() {
-        if (!this.elements.fplProgress || !this.flightPlan?.waypoints) return;
-        const total = this.flightPlan.waypoints.length;
-        const passed = this.flightPlan.waypoints.filter(wp => wp.passed).length;
-        const progress = total > 0 ? (passed / total) * 100 : 0;
-        this.elements.fplProgress.style.width = progress + '%';
-    }
-
-    selectWaypoint(index) {
-        this.activeWaypointIndex = index;
-        if (this.flightPlan?.waypoints[index]) {
-            this.updateWaypointDisplay();
-            this.renderFlightPlan();
-            this.syncChannel.postMessage({
-                type: 'waypoint-select',
-                data: { index, ident: this.flightPlan.waypoints[index].ident }
-            });
-        }
-    }
-
-    activateLeg() {
-        if (this.activeWaypointIndex < this.flightPlan?.waypoints?.length) {
-            // Mark previous waypoints as passed
-            for (let i = 0; i < this.activeWaypointIndex; i++) {
-                this.flightPlan.waypoints[i].passed = true;
-            }
-            this.renderFlightPlan();
-        }
-    }
-
-    invertFlightPlan() {
-        if (this.flightPlan?.waypoints) {
-            this.flightPlan.waypoints.reverse();
-            this.activeWaypointIndex = 0;
-            this.renderFlightPlan();
-            this.updateFplHeader();
-        }
-    }
-
-    updateWaypointDisplay() {
-        const wp = this.flightPlan?.waypoints[this.activeWaypointIndex];
-        if (!wp) return;
-
-        if (this.elements.wptId) this.elements.wptId.textContent = wp.ident || '----';
-
-        if (this.data.latitude && wp.lat && wp.lng) {
-            const dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
-            const trueBrg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
-            // Convert true bearing to magnetic for display
-            const magBrg = this.core.trueToMagnetic(trueBrg, this.data.magvar || 0);
-
-            if (this.elements.wptDis) this.elements.wptDis.textContent = dist.toFixed(1);
-            if (this.elements.wptBrg) this.elements.wptBrg.textContent = Math.round(magBrg).toString().padStart(3, '0');
-
-            if (this.data.groundSpeed > 0 && this.elements.wptEte) {
-                const eteMin = (dist / this.data.groundSpeed) * 60;
-                this.elements.wptEte.textContent = this.core.formatEte(eteMin);
-            }
-
-            this.updateCDI(magBrg, dist);
-        }
-    }
-
-    updateCDI(bearing, distance) {
-        // Legacy GPS-calculated CDI (fallback when no SimConnect data)
-        if (this.data.navSource === 'GPS' && !this.gps.dtk) {
-            const trackError = this.core.normalizeAngle(bearing - this.data.heading);
-            const xtrk = Math.sin(this.core.toRad(trackError)) * distance;
-            this.cdi.dtk = Math.round(bearing);
-            this.cdi.xtrk = Math.abs(xtrk);
-            this.cdi.needle = Math.round(Math.max(-127, Math.min(127, xtrk / 2 * 127)));
-            this.renderCdi();
-        }
-    }
-
-    // ===== WAYPOINT AUTO-SEQUENCING =====
-    checkWaypointSequencing() {
-        // Throttle: minimum 3 seconds between sequences
-        const now = Date.now();
-        if (now - this.lastSequenceTime < 3000) return;
-
-        // Skip if OBS mode is active (sequencing suspended)
-        if (this.obs.suspended) return;
-
-        // Skip if no flight plan or no position data
-        if (!this.flightPlan?.waypoints?.length) return;
-        if (!this.data.latitude || !this.data.longitude) return;
-
-        // Skip if already at the last waypoint
-        if (this.activeWaypointIndex >= this.flightPlan.waypoints.length - 1) return;
-
-        // Get the active waypoint
-        const wp = this.flightPlan.waypoints[this.activeWaypointIndex];
-        if (!wp || !wp.lat || !wp.lng) return;
-
-        // Calculate distance to active waypoint
-        const dist = this.core.calculateDistance(
-            this.data.latitude, this.data.longitude,
-            wp.lat, wp.lng
-        );
-
-        // Sequencing threshold: 0.5nm or 2% of leg distance (whichever is smaller)
-        // For holding patterns or procedure turns, use larger threshold
-        const legDist = wp.distanceFromPrev || 5;
-        const threshold = Math.min(0.5, legDist * 0.1);
-
-        // Only sequence if:
-        // 1. Within threshold distance
-        // 2. Aircraft is moving (groundspeed > 15 knots)
-        // 3. Track is roughly aligned with course to waypoint (within 90°)
-        if (dist <= threshold && this.data.groundSpeed > 15) {
-            const brg = this.core.calculateBearing(
-                this.data.latitude, this.data.longitude,
-                wp.lat, wp.lng
-            );
-            const trackError = Math.abs(this.core.normalizeAngle(this.data.track - brg));
-
-            // If track is within 90° of waypoint bearing, we're heading toward it
-            // Allow wider margin (120°) since we might be crossing the waypoint
-            if (trackError < 120 || dist < 0.2) {
-                this.sequenceToNextWaypoint();
-            }
-        }
-    }
-
-    sequenceToNextWaypoint() {
-        // Update throttle timestamp
-        this.lastSequenceTime = Date.now();
-
-        // Mark current waypoint as passed
-        const passedWp = this.flightPlan.waypoints[this.activeWaypointIndex];
-        if (passedWp) {
-            passedWp.passed = true;
-            console.log(`[GTN750] Sequenced past ${passedWp.ident}, advancing to next waypoint`);
-        }
-
-        // Advance to next waypoint
-        this.activeWaypointIndex++;
-
-        // Update display
-        if (this.activeWaypointIndex < this.flightPlan.waypoints.length) {
-            const nextWp = this.flightPlan.waypoints[this.activeWaypointIndex];
-            console.log(`[GTN750] Active waypoint: ${nextWp?.ident}`);
-
-            // Update active waypoint reference
-            this.activeWaypoint = {
-                ident: nextWp.ident,
-                lat: nextWp.lat,
-                lon: nextWp.lng
-            };
-
-            // Broadcast to sync channel
-            if (this.syncChannel) {
-                this.syncChannel.postMessage({
-                    type: 'waypoint-sequence',
-                    data: {
-                        passedIndex: this.activeWaypointIndex - 1,
-                        activeIndex: this.activeWaypointIndex,
-                        passedIdent: passedWp?.ident,
-                        activeIdent: nextWp?.ident
-                    }
-                });
-            }
-
-            // Play audio cue if available
-            this.playSequenceChime();
-        } else {
-            // Reached final waypoint
-            console.log('[GTN750] Arrived at final waypoint');
-            this.activeWaypoint = null;
-        }
-
-        // Update UI
-        this.renderFlightPlan();
-        this.updateFplHeader();
-        this.updateWaypointDisplay();
-    }
-
-    playSequenceChime() {
-        // Play a brief tone to indicate waypoint sequence
-        if (!this.audioContext) {
-            try {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            } catch (e) {
-                return; // Audio not available
-            }
-        }
-
-        try {
-            const osc = this.audioContext.createOscillator();
-            const gain = this.audioContext.createGain();
-
-            osc.connect(gain);
-            gain.connect(this.audioContext.destination);
-
-            osc.type = 'sine';
-            osc.frequency.value = 880; // A5 note
-            gain.gain.value = 0.1;
-
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
-            osc.stop(this.audioContext.currentTime + 0.15);
-        } catch (e) {
-            // Ignore audio errors
-        }
-    }
-
-    // ===== CDI SOURCE SWITCHING =====
-    updateCdiFromSource() {
-        const source = this.data.navSource;
-
-        switch (source) {
-            case 'NAV1':
-                this.cdi = {
-                    source: 'NAV1',
-                    needle: this.nav1.cdi,
-                    dtk: this.nav1.obs,
-                    xtrk: Math.abs(this.nav1.cdi / 127 * 2),
-                    toFrom: this.nav1.toFrom,
-                    gsNeedle: this.nav1.gsi,
-                    gsValid: !this.nav1.gsFlag && this.nav1.hasGs,
-                    signalValid: this.nav1.signal > 10
-                };
-                break;
-            case 'NAV2':
-                this.cdi = {
-                    source: 'NAV2',
-                    needle: this.nav2.cdi,
-                    dtk: this.nav2.obs,
-                    xtrk: Math.abs(this.nav2.cdi / 127 * 2),
-                    toFrom: this.nav2.toFrom,
-                    gsNeedle: this.nav2.gsi,
-                    gsValid: !this.nav2.gsFlag,
-                    signalValid: this.nav2.signal > 10
-                };
-                break;
-            case 'GPS':
-            default:
-                if (this.obs.active) {
-                    // OBS mode - use selected course instead of direct track
-                    const obsCdi = this.calculateObsCdi();
-                    this.cdi = {
-                        source: 'OBS',
-                        needle: obsCdi.needle,
-                        dtk: this.obs.course,
-                        xtrk: obsCdi.xtrk,
-                        toFrom: obsCdi.toFrom,
-                        gsNeedle: Math.round(this.gps.vertError * 40),
-                        gsValid: this.gps.approachMode,
-                        signalValid: true
-                    };
-                } else {
-                    this.cdi = {
-                        source: 'GPS',
-                        needle: this.gps.cdi,
-                        dtk: this.gps.dtk || this.cdi.dtk,
-                        xtrk: Math.abs(this.gps.xtrk),
-                        toFrom: 1, // GPS always shows TO
-                        gsNeedle: Math.round(this.gps.vertError * 40),
-                        gsValid: this.gps.approachMode,
-                        signalValid: true
-                    };
-                }
-        }
-
-        this.renderCdi();
-    }
-
-    // ===== OBS MODE =====
-    toggleObs() {
-        this.obs.active = !this.obs.active;
-
-        if (this.obs.active) {
-            // When activating OBS, set course to current DTK or bearing to waypoint
-            const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
-            if (wp && this.data.latitude && this.data.longitude) {
-                const brg = this.core.calculateBearing(
-                    this.data.latitude, this.data.longitude,
-                    wp.lat, wp.lng
-                );
-                this.obs.course = Math.round(brg);
-            } else {
-                this.obs.course = this.cdi.dtk || this.data.heading || 0;
-            }
-            this.obs.suspended = true; // Suspend waypoint sequencing
-            console.log(`[GTN750] OBS mode ON - Course: ${this.obs.course}°`);
-        } else {
-            this.obs.suspended = false;
-            console.log('[GTN750] OBS mode OFF - Resuming leg mode');
-        }
-
-        this.updateCdiFromSource();
-        this.updateObsDisplay();
-    }
-
-    adjustObsCourse(delta) {
-        if (!this.obs.active) return;
-
-        this.obs.course = (this.obs.course + delta + 360) % 360;
-        console.log(`[GTN750] OBS course: ${this.obs.course}°`);
-        this.updateCdiFromSource();
-        this.updateObsDisplay();
-    }
-
-    setObsCourse(course) {
-        this.obs.course = ((course % 360) + 360) % 360;
-        if (this.obs.active) {
-            this.updateCdiFromSource();
-            this.updateObsDisplay();
-        }
-    }
-
-    calculateObsCdi() {
-        // Calculate CDI deflection based on OBS course
-        const wp = this.flightPlan?.waypoints?.[this.activeWaypointIndex];
-        if (!wp || !this.data.latitude || !this.data.longitude) {
-            return { needle: 0, xtrk: 0, toFrom: 2 };
-        }
-
-        // Calculate bearing and distance to waypoint
-        const brg = this.core.calculateBearing(
-            this.data.latitude, this.data.longitude,
-            wp.lat, wp.lng
-        );
-        const dist = this.core.calculateDistance(
-            this.data.latitude, this.data.longitude,
-            wp.lat, wp.lng
-        );
-
-        // Calculate cross-track error from OBS course
-        const courseDiff = this.core.normalizeAngle(brg - this.obs.course);
-        const xtrk = dist * Math.sin(this.core.toRad(courseDiff));
-
-        // CDI needle: full scale at 2nm (GPS), or 1nm (approach mode)
-        const fullScale = this.gps.approachMode ? 1.0 : 2.0;
-        const needle = Math.round(Math.max(-127, Math.min(127, (xtrk / fullScale) * 127)));
-
-        // TO/FROM: TO if within 90° of course, FROM otherwise
-        const toFrom = Math.abs(courseDiff) < 90 ? 1 : 0;
-
-        return { needle, xtrk: Math.abs(xtrk), toFrom };
-    }
-
-    updateObsDisplay() {
-        // Update OBS indicator elements if they exist
-        if (this.elements.obsIndicator) {
-            this.elements.obsIndicator.style.display = this.obs.active ? 'block' : 'none';
-        }
-        if (this.elements.obsCourse) {
-            this.elements.obsCourse.textContent = this.obs.course.toString().padStart(3, '0') + '°';
-        }
-    }
-
-    renderCdi() {
-        // Update source indicator
-        if (this.elements.cdiSource) {
-            this.elements.cdiSource.textContent = this.cdi.source;
-            this.elements.cdiSource.className = `cdi-source cdi-source-${this.cdi.source.toLowerCase()}`;
-        }
-
-        // Update CDI needle (horizontal deflection)
-        if (this.elements.cdiNeedle) {
-            const deflectionPercent = (this.cdi.needle / 127) * 40;
-            this.elements.cdiNeedle.style.left = `${50 + deflectionPercent}%`;
-        }
-
-        // Update TO/FROM indicator
-        if (this.elements.cdiToFrom) {
-            const toFromLabels = ['FROM', 'TO', '---'];
-            this.elements.cdiToFrom.textContent = toFromLabels[this.cdi.toFrom] || '---';
-            this.elements.cdiToFrom.className = `cdi-tofrom ${this.cdi.toFrom === 1 ? 'to' : this.cdi.toFrom === 0 ? 'from' : 'none'}`;
-        }
-
-        // Update glideslope
-        if (this.elements.cdiGsBar) {
-            this.elements.cdiGsBar.style.display = this.cdi.gsValid ? 'flex' : 'none';
-        }
-        if (this.elements.cdiGsNeedle && this.cdi.gsValid) {
-            const gsDeflectionPercent = (this.cdi.gsNeedle / 119) * 40;
-            this.elements.cdiGsNeedle.style.top = `${50 - gsDeflectionPercent}%`;
-        }
-
-        // Update flag (no signal indicator)
-        if (this.elements.cdiFlag) {
-            this.elements.cdiFlag.style.display = this.cdi.signalValid ? 'none' : 'block';
-        }
-
-        // Update DTK and XTK display
-        if (this.elements.cdiDtk) {
-            this.elements.cdiDtk.textContent = Math.round(this.cdi.dtk).toString().padStart(3, '0');
-        }
-        if (this.elements.cdiXtrk) {
-            this.elements.cdiXtrk.textContent = this.cdi.xtrk.toFixed(1);
-        }
-
-        // Update OBS value display
-        if (this.elements.obsValue && this.cdi.source !== 'GPS') {
-            const obs = this.cdi.source === 'NAV1' ? this.nav1.obs : this.nav2.obs;
-            this.elements.obsValue.textContent = Math.round(obs).toString().padStart(3, '0');
-        }
-    }
-
-    setNavSource(source) {
-        this.data.navSource = source;
-
-        // Update UI buttons
-        if (this.elements.navSourceGps) this.elements.navSourceGps.classList.toggle('active', source === 'GPS');
-        if (this.elements.navSourceNav1) this.elements.navSourceNav1.classList.toggle('active', source === 'NAV1');
-        if (this.elements.navSourceNav2) this.elements.navSourceNav2.classList.toggle('active', source === 'NAV2');
-
-        // Update OBS visibility (only show for VOR sources)
-        if (this.elements.obsControls) {
-            this.elements.obsControls.style.display = source === 'GPS' ? 'none' : 'flex';
-        }
-
-        this.updateCdiFromSource();
-    }
-
-    async setObs(value) {
-        const source = this.data.navSource;
-        if (source === 'GPS') return;
-
-        const event = source === 'NAV1' ? 'VOR1_SET' : 'VOR2_SET';
-        try {
-            await fetch(`http://${location.hostname}:${this.serverPort}/api/command`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: event, value: Math.round(value) })
-            });
-        } catch (e) {
-            console.error('[GTN750] OBS set failed:', e);
-        }
-    }
-
-    async adjustObs(delta) {
-        const source = this.data.navSource;
-        if (source === 'GPS') return;
-
-        const event = delta > 0
-            ? (source === 'NAV1' ? 'VOR1_OBI_INC' : 'VOR2_OBI_INC')
-            : (source === 'NAV1' ? 'VOR1_OBI_DEC' : 'VOR2_OBI_DEC');
-
-        try {
-            await fetch(`http://${location.hostname}:${this.serverPort}/api/command`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: event })
-            });
-        } catch (e) {
-            console.error('[GTN750] OBS adjust failed:', e);
-        }
-    }
-
-    // ===== WAYPOINT SEARCH =====
-    async searchWaypoint() {
-        const ident = this.elements.wptSearch?.value.toUpperCase().trim();
-        if (!ident || ident.length < 2) return;
-
-        try {
-            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/waypoint/${ident}`);
-            if (response.ok) {
-                const wpt = await response.json();
-                this.displayWaypointInfo(wpt);
-            } else {
-                this.displayWaypointInfo(null, ident);
-            }
-        } catch (e) {
-            this.displayWaypointInfo(null, ident);
-        }
-    }
-
-    displayWaypointInfo(wpt, searchedIdent) {
-        if (!this.elements.wptInfo) return;
-        this.elements.wptInfo.textContent = '';
-
-        if (!wpt) {
-            const empty = document.createElement('div');
-            empty.className = 'wpt-info-empty';
-            empty.textContent = searchedIdent ? `${searchedIdent} not found` : 'Enter waypoint identifier';
-            this.elements.wptInfo.appendChild(empty);
-            return;
-        }
-
-        const ident = document.createElement('div');
-        ident.className = 'wpt-info-ident';
-        ident.textContent = wpt.ident;
-        this.elements.wptInfo.appendChild(ident);
-
-        const type = document.createElement('div');
-        type.className = 'wpt-info-type';
-        type.textContent = wpt.type || 'WAYPOINT';
-        this.elements.wptInfo.appendChild(type);
-
-        if (wpt.lat && wpt.lng) {
-            const coords = document.createElement('div');
-            coords.className = 'wpt-info-coords';
-            coords.textContent = `${this.core.formatLat(wpt.lat)} ${this.core.formatLon(wpt.lng)}`;
-            this.elements.wptInfo.appendChild(coords);
-        }
-    }
-
-    // ===== NEAREST =====
-    switchNearestType(type) {
-        if (this.nearestPage) {
-            this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
-            this.nearestPage.switchType(type);
-        }
-    }
-
-    // ===== PROCEDURES =====
-    switchProcType(type) {
-        document.querySelectorAll('.proc-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.type === type);
-        });
-        // Would fetch procedures for the selected type
-    }
-
-    // ===== CHARTS =====
-    async searchCharts() {
-        const icao = this.elements.chartApt?.value.toUpperCase().trim();
-        if (!icao || icao.length < 3) return;
-
-        if (this.chartsPage) {
-            this.chartsPage.searchCharts(icao);
-        }
-    }
-
-    // ===== PROCEDURES =====
-    previewProcedure() {
-        if (this.procedurePreview?.waypoints) {
-            // Toggle procedure preview on map
-            this.showProcedurePreview = !this.showProcedurePreview;
-            console.log(`[GTN750] Procedure preview: ${this.showProcedurePreview ? 'ON' : 'OFF'}`);
-        } else {
-            console.log('[GTN750] No procedure selected for preview');
-        }
-    }
-
-    // ===== AUX PAGE =====
-    showAuxSubpage(subpage) {
-        console.log(`[GTN750] AUX subpage: ${subpage}`);
-        this.auxSubpage = subpage;
-        // Could show different content based on subpage selection
-    }
-
-    toggleAuxTimer() {
-        if (this.auxPage) {
-            this.auxPage.toggleTimer();
-            const state = this.auxPage.getTimerState();
-            console.log(`[GTN750] Timer ${state.running ? 'started' : 'stopped'}: ${state.formatted}`);
-        }
-    }
-
-    // ===== TRAFFIC =====
-    setTrafficMode(mode) {
-        if (this.trafficOverlay) {
-            this.trafficOverlay.setMode(mode);
-        }
-        if (this.elements.trafficMode) {
-            this.elements.trafficMode.textContent = mode.toUpperCase();
-        }
-    }
-
-    // ===== WEATHER =====
-    toggleWeatherLayer(layer) {
-        if (this.weatherOverlay) {
-            const enabled = this.weatherOverlay.toggleLayer(layer);
-            console.log(`[GTN750] Weather layer ${layer}: ${enabled ? 'ON' : 'OFF'}`);
-
-            // Update UI checkboxes if present
-            const checkbox = document.getElementById(`wx-${layer}`);
-            if (checkbox) {
-                checkbox.checked = enabled;
-            }
-        }
-    }
-
-    // ===== TAWS =====
-    updateTawsStatus() {
-        if (this.elements.tawsStatus) {
-            this.elements.tawsStatus.textContent = this.taws.inhibited ? 'INHIBITED' : 'ACTIVE';
-            this.elements.tawsStatus.style.color = this.taws.inhibited ? '#ffcc00' : '#00ff00';
-        }
-    }
-
-    cycleTerrainView() {
-        if (this.terrainOverlay) {
-            const newMode = this.terrainOverlay.toggleViewMode();
-            console.log(`[GTN750] Terrain view: ${newMode}`);
-        }
-    }
-
-    setTerrainView(view) {
-        if (this.terrainOverlay) {
-            this.terrainOverlay.setViewMode(view);
-            console.log(`[GTN750] Terrain view set to: ${view}`);
-        }
-    }
-
-    cycleTerrainRange() {
-        if (this.terrainOverlay) {
-            const ranges = [2, 5, 10, 20, 50];
-            const current = this.terrainOverlay.getRange();
-            const idx = ranges.indexOf(current);
-            const newRange = ranges[(idx + 1) % ranges.length];
-            this.terrainOverlay.setRange(newRange);
-            console.log(`[GTN750] Terrain range: ${newRange} NM`);
-        }
-    }
-
-    // ===== WEBSOCKET =====
-    connect() {
-        const host = window.location.hostname || 'localhost';
-        const wsUrl = `ws://${host}:${this.serverPort}`;
-        this.ws = new WebSocket(wsUrl);
-
-        this.ws.onopen = () => {
-            console.log('[GTN750] Connected');
-            this.elements.conn?.classList.add('connected');
-            if (this.elements.sysGpsStatus) {
-                this.elements.sysGpsStatus.textContent = '3D FIX';
-            }
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'flightData') {
-                    this.updateFromSim(msg.data);
-                }
-            } catch (e) {
-                console.warn('[GTN750] WebSocket message error:', e.message);
-            }
-        };
-
-        this.ws.onclose = () => {
-            this.elements.conn?.classList.remove('connected');
-            if (this.elements.sysGpsStatus) {
-                this.elements.sysGpsStatus.textContent = 'NO GPS';
-            }
-            setTimeout(() => this.connect(), this.reconnectDelay);
-        };
-
-        this.ws.onerror = (e) => {
-            console.warn('[GTN750] WebSocket error:', e.message || 'Connection error');
-        };
-    }
-
-    // Traffic data polling
-    startTrafficPolling() {
-        // Fetch traffic data every 2 seconds when traffic is enabled
-        this.trafficPollingInterval = setInterval(() => {
-            if (this.map.showTraffic || this.pageManager?.getCurrentPageId() === 'traffic') {
-                this.fetchTrafficData();
-            }
-        }, 2000);
-        // Initial fetch
-        this.fetchTrafficData();
-    }
-
-    async fetchTrafficData() {
-        try {
-            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/traffic`);
-            if (response.ok) {
-                const data = await response.json();
-                if (this.trafficOverlay && data.traffic) {
-                    this.trafficOverlay.updateTargets(data.traffic);
-                }
-            }
-        } catch (e) {
-            // Silently fail - traffic overlay will show test data or empty
-        }
-    }
-
-    updateFromSim(d) {
+    handleSimData(d) {
+        // Update local data store
         if (d.latitude !== undefined) this.data.latitude = d.latitude;
         if (d.longitude !== undefined) this.data.longitude = d.longitude;
         if (d.altitudeMSL !== undefined) this.data.altitude = d.altitudeMSL;
@@ -3560,101 +218,55 @@ class GTN750Widget {
         if (d.nav1Standby !== undefined) this.data.nav1Standby = d.nav1Standby;
         if (d.transponder !== undefined) this.data.transponder = d.transponder;
         if (d.zuluTime !== undefined) this.data.zuluTime = d.zuluTime;
-
-        // NAV1 CDI/OBS data
-        if (d.nav1Cdi !== undefined) {
-            this.nav1 = {
-                cdi: d.nav1Cdi,
-                obs: d.nav1Obs || 0,
-                radial: d.nav1Radial || 0,
-                toFrom: d.nav1ToFrom ?? 2,
-                signal: d.nav1Signal || 0,
-                gsi: d.nav1Gsi || 0,
-                gsFlag: d.nav1GsFlag ?? true,
-                hasLoc: d.nav1HasLoc ?? false,
-                hasGs: d.nav1HasGs ?? false,
-                dme: d.dme1Distance || d.nav1Dme || 0,
-                ident: d.nav1Ident || null
-            };
-        }
-        // NAV2 CDI/OBS data
-        if (d.nav2Cdi !== undefined) {
-            this.nav2 = {
-                cdi: d.nav2Cdi,
-                obs: d.nav2Obs || 0,
-                radial: d.nav2Radial || 0,
-                toFrom: d.nav2ToFrom ?? 2,
-                signal: d.nav2Signal || 0,
-                gsi: d.nav2Gsi || 0,
-                gsFlag: d.nav2GsFlag ?? true,
-                dme: d.dme2Distance || d.nav2Dme || 0,
-                ident: d.nav2Ident || null
-            };
-        }
-        // GPS CDI data
-        if (d.gpsCdiNeedle !== undefined) {
-            this.gps = {
-                cdi: d.gpsCdiNeedle,
-                xtrk: d.gpsCrossTrackError || 0,
-                dtk: d.gpsDesiredTrack || 0,
-                obs: d.gpsObsValue || 0,
-                vertError: d.gpsVerticalError || 0,
-                approachMode: d.gpsApproachMode ?? false
-            };
-        }
-
-        this.data.track = d.track || this.data.heading;
-
-        // Fuel data
+        // Weather
+        if (d.windDirection !== undefined) this.data.windDirection = d.windDirection;
+        if (d.windSpeed !== undefined) this.data.windSpeed = d.windSpeed;
+        if (d.ambientTemp !== undefined) this.data.ambientTemp = d.ambientTemp;
+        if (d.ambientPressure !== undefined) this.data.ambientPressure = d.ambientPressure;
+        if (d.visibility !== undefined) this.data.visibility = d.visibility;
+        if (d.precipState !== undefined) this.data.precipState = d.precipState;
+        if (d.track !== undefined) this.data.track = d.track;
+        // Fuel
         if (d.fuelTotal !== undefined) this.data.fuelTotal = d.fuelTotal;
         if (d.fuelFlow !== undefined) this.data.fuelFlow = d.fuelFlow;
         if (d.fuelCapacity !== undefined) this.data.fuelCapacity = d.fuelCapacity;
 
-        this.updateUI();
-        this.updateWaypointDisplay();
-        this.updateCdiFromSource();
-        this.checkWaypointSequencing();
-    }
+        // Update CDI nav data
+        this.cdiManager.updateNav1(d);
+        this.cdiManager.updateNav2(d);
+        this.cdiManager.updateGps(d);
 
-    updateUI() {
-        // Frequencies
-        if (this.elements.com1) this.elements.com1.textContent = this.data.com1Active.toFixed(2);
-        if (this.elements.com1Stby) this.elements.com1Stby.textContent = this.data.com1Standby.toFixed(2);
-        if (this.elements.com2) this.elements.com2.textContent = this.data.com2Active.toFixed(2);
-        if (this.elements.com2Stby) this.elements.com2Stby.textContent = this.data.com2Standby.toFixed(2);
-        if (this.elements.nav1) this.elements.nav1.textContent = this.data.nav1Active.toFixed(2);
-        if (this.elements.nav1Stby) this.elements.nav1Stby.textContent = this.data.nav1Standby.toFixed(2);
-        if (this.elements.xpdr) this.elements.xpdr.textContent = this.data.transponder.toString().padStart(4, '0');
+        // Mark sim time available
+        if (d.zuluTime) this.dataHandler.setHasSimTime(true);
 
-        // NAV1 tuning info display
-        this.updateNavTuningInfo();
-
-        // Time
-        if (this.elements.utcTime && this.data.zuluTime) {
-            this.elements.utcTime.textContent = this.core.formatTime(this.data.zuluTime);
-        }
-
-        // AUX page data
+        // Update UI through modules
+        this.dataHandler.updateUI(this.data, this.cdiManager.nav1);
+        this.flightPlanManager.setPosition(this.data.latitude, this.data.longitude);
+        this.flightPlanManager.setGroundSpeed(this.data.groundSpeed);
+        this.flightPlanManager.updateWaypointDisplay(this.data, this.cdiManager);
+        this.cdiManager.updateFromSource({
+            flightPlan: this.flightPlanManager.flightPlan,
+            activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
+            data: this.data
+        });
+        this.flightPlanManager.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.updateAuxData();
     }
 
     updateAuxData() {
-        if (!this.flightPlan?.waypoints) return;
+        if (!this.flightPlanManager.flightPlan?.waypoints) return;
 
-        // Remaining distance
         let remDist = 0;
-        for (let i = this.activeWaypointIndex; i < this.flightPlan.waypoints.length; i++) {
-            const wp = this.flightPlan.waypoints[i];
+        for (let i = this.flightPlanManager.activeWaypointIndex; i < this.flightPlanManager.flightPlan.waypoints.length; i++) {
+            const wp = this.flightPlanManager.flightPlan.waypoints[i];
             if (wp.distanceFromPrev) remDist += wp.distanceFromPrev;
         }
         if (this.elements.auxDist) this.elements.auxDist.textContent = Math.round(remDist) + ' NM';
 
-        // ETE
         if (this.data.groundSpeed > 0) {
             const eteMin = (remDist / this.data.groundSpeed) * 60;
             if (this.elements.auxTime) this.elements.auxTime.textContent = this.core.formatEte(eteMin);
 
-            // ETA
             if (this.elements.auxEta && this.data.zuluTime) {
                 const etaHrs = this.data.zuluTime + (eteMin / 60);
                 this.elements.auxEta.textContent = this.core.formatTime(etaHrs);
@@ -3662,85 +274,956 @@ class GTN750Widget {
         }
     }
 
-    /**
-     * Update NAV1/NAV2 tuning info display (VOR/NDB station identification)
-     */
-    updateNavTuningInfo() {
-        const hasSignal = this.nav1 && this.nav1.signal > 10;
+    // ===== OVERLAYS =====
 
-        // Update station identifier
-        if (this.elements.nav1Ident) {
-            if (hasSignal) {
-                // Use ident from SimConnect if available, otherwise look up by frequency
-                let ident = this.nav1.ident;
-                if (!ident) {
-                    ident = this.lookupNavaidByFreq(this.data.nav1Active);
+    initOverlays() {
+        this.terrainOverlay = new TerrainOverlay({ core: this.core });
+        this.trafficOverlay = new TrafficOverlay({ core: this.core });
+        this.weatherOverlay = new WeatherOverlay({ core: this.core });
+
+        if (this.canvas) {
+            this.mapControls = new MapControls({
+                canvas: this.canvas,
+                onRangeChange: (range) => {
+                    this.map.range = range;
+                    if (this.elements.dfRange) this.elements.dfRange.textContent = range;
+                },
+                onPan: (offset) => { this.panOffset = offset; },
+                onDataFieldTap: (position, type) => {
+                    console.log(`[GTN750] Data field ${position} changed to ${type.type}`);
                 }
-                this.elements.nav1Ident.textContent = ident || 'VOR';
-                this.elements.nav1Ident.classList.remove('no-signal');
-            } else {
-                this.elements.nav1Ident.textContent = '---';
-                this.elements.nav1Ident.classList.add('no-signal');
-            }
+            });
+            this.mapControls.setRange(this.map.range);
         }
 
-        // Update radial (FROM the VOR)
-        if (this.elements.nav1Radial) {
-            if (hasSignal && this.nav1.radial !== undefined) {
-                const radial = Math.round(this.nav1.radial);
-                this.elements.nav1Radial.textContent = `R${radial.toString().padStart(3, '0')}°`;
-            } else {
-                this.elements.nav1Radial.textContent = 'R---°';
-            }
-        }
+        this.proceduresPage = new ProceduresPage({
+            core: this.core, serverPort: this.serverPort,
+            onProcedureSelect: (proc, type, waypoints) => this.handleProcedureSelect(proc, type, waypoints),
+            onProcedureLoad: (proc, type, waypoints) => this.handleProcedureLoad(proc, type, waypoints)
+        });
+        this.auxPage = new AuxPage({ core: this.core });
+        this.chartsPage = new ChartsPage({
+            core: this.core, serverPort: this.serverPort,
+            onChartSelect: (chart) => console.log(`[GTN750] Chart selected: ${chart.name}`)
+        });
+        this.nearestPage = new NearestPage({
+            core: this.core, serverPort: this.serverPort,
+            onItemSelect: (item, type) => console.log(`[GTN750] Nearest ${type} selected: ${item.icao || item.id}`),
+            onDirectTo: (item) => this.flightPlanManager.directTo(item)
+        });
+        this.systemPage = new SystemPage({
+            core: this.core,
+            onSettingChange: (key, value) => this.handleSettingChange(key, value)
+        });
 
-        // Update DME distance
-        if (this.elements.nav1Dme) {
-            if (hasSignal && this.nav1.dme !== undefined && this.nav1.dme > 0) {
-                this.elements.nav1Dme.textContent = this.nav1.dme.toFixed(1);
-                this.elements.nav1Dme.classList.remove('no-dme');
-            } else {
-                this.elements.nav1Dme.textContent = '--.-';
-                this.elements.nav1Dme.classList.add('no-dme');
-            }
+        // Wire nearest page to flight plan for D→ lookups
+        this.flightPlanManager.setNearestPage(this.nearestPage);
+    }
+
+    handleSettingChange(key, value) {
+        switch (key) {
+            case 'mapOrientation': this.map.orientation = value; break;
+            case 'showTerrain': this.map.showTerrain = value; break;
+            case 'showTraffic': this.map.showTraffic = value; break;
+            case 'showWeather': this.map.showWeather = value; break;
+            case 'nightMode': document.body.classList.toggle('night-mode', value); break;
         }
     }
 
-    /**
-     * Look up navaid identifier by frequency from nearby navaids
-     * @param {number} freq - NAV frequency (108.00 - 117.95)
-     * @returns {string|null} - Station identifier or null
-     */
-    lookupNavaidByFreq(freq) {
-        // Check cached nearby VORs from NearestPage
-        if (this.nearestPage?.items && this.nearestPage.activeType === 'vor') {
-            const match = this.nearestPage.items.find(v =>
-                Math.abs(parseFloat(v.freq) - freq) < 0.01
-            );
-            if (match) return match.id;
-        }
-
-        // Check local navaid cache
-        if (this.navaidCache) {
-            const match = this.navaidCache.find(n =>
-                Math.abs(parseFloat(n.freq) - freq) < 0.01
-            );
-            if (match) return match.id;
-        }
-
-        return null;
+    handleProcedureSelect(proc, type, waypoints) {
+        this.procedurePreview = { procedure: proc, type, waypoints };
+        console.log(`[GTN750] Procedure selected: ${proc.name}`);
     }
 
-    startClock() {
-        setInterval(() => {
-            if (!this.data.zuluTime && this.elements.utcTime) {
-                const now = new Date();
-                const h = now.getUTCHours().toString().padStart(2, '0');
-                const m = now.getUTCMinutes().toString().padStart(2, '0');
-                const s = now.getUTCSeconds().toString().padStart(2, '0');
-                this.elements.utcTime.textContent = `${h}:${m}:${s}Z`;
+    handleProcedureLoad(proc, type, waypoints) {
+        console.log(`[GTN750] Loading procedure: ${proc.name}`);
+        this.syncChannel.postMessage({
+            type: 'procedure-load',
+            data: { procedure: proc, procedureType: type, waypoints }
+        });
+    }
+
+    // ===== PAGE MANAGEMENT =====
+
+    initPageManager() {
+        this.pageManager = new GTNPageManager({
+            onPageChange: (pageId) => this.onPageChange(pageId)
+        });
+
+        const pages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system'];
+        pages.forEach(id => {
+            this.pageManager.registerPage(id, {
+                id,
+                onActivate: () => this.onPageActivate(id),
+                onDeactivate: () => this.onPageDeactivate(id),
+                updateData: () => {}
+            });
+        });
+
+        this.pageManager.switchPage('map', false);
+    }
+
+    initSoftKeys() {
+        if (typeof GTNSoftKeys === 'undefined') {
+            setTimeout(() => this.initSoftKeys(), 100);
+            return;
+        }
+        if (this.softKeys) return;
+        this.softKeys = new GTNSoftKeys({ container: document.getElementById('gtn-softkeys') });
+        this.softKeys.setContext('map');
+
+        window.addEventListener('gtn:softkey', (e) => {
+            this.handleSoftKeyAction(e.detail.action, e.detail);
+        });
+    }
+
+    onPageChange(pageId) {
+        const title = document.getElementById('page-title');
+        if (title) {
+            const titles = {
+                map: 'MAP', fpl: 'FLIGHT PLAN', wpt: 'WAYPOINT',
+                nrst: 'NEAREST', proc: 'PROCEDURES', terrain: 'TERRAIN',
+                traffic: 'TRAFFIC', wx: 'WEATHER', charts: 'CHARTS',
+                aux: 'AUX', system: 'SYSTEM'
+            };
+            title.textContent = titles[pageId] || pageId.toUpperCase();
+        }
+
+        if (this.softKeys) {
+            this.softKeys.setContext(pageId);
+        } else {
+            setTimeout(() => {
+                if (!this.softKeys) this.initSoftKeys();
+                this.softKeys?.setContext(pageId);
+            }, 100);
+        }
+
+        document.querySelectorAll('.gtn-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.page === pageId);
+        });
+    }
+
+    onPageActivate(pageId) {
+        if (pageId === 'nrst') this.fetchNearestAirports();
+        if (pageId === 'proc') {
+            if (this.proceduresPage) {
+                this.proceduresPage.init();
+                if (this.flightPlanManager.flightPlan?.waypoints?.length > 0) {
+                    const dest = this.flightPlanManager.flightPlan.waypoints[this.flightPlanManager.flightPlan.waypoints.length - 1];
+                    if (dest.ident?.length === 4) this.proceduresPage.setAirport(dest.ident);
+                }
             }
-        }, 1000);
+        }
+        if (pageId === 'terrain') { this.setupTerrainCanvas(); this.startTerrainPageRender(); }
+        if (pageId === 'traffic') { this.setupTrafficCanvas(); this.startTrafficPageRender(); }
+        if (pageId === 'wx') { this.setupWeatherCanvas(); this.startWeatherPageRender(); }
+        if (pageId === 'aux') {
+            if (this.auxPage) this.auxPage.init();
+            this.updateAuxPageData();
+        }
+        if (pageId === 'charts') {
+            if (this.chartsPage) {
+                this.chartsPage.init();
+                if (this.flightPlanManager.flightPlan?.waypoints?.length > 0) {
+                    const dest = this.flightPlanManager.flightPlan.waypoints[this.flightPlanManager.flightPlan.waypoints.length - 1];
+                    if (dest.ident?.length === 4) this.chartsPage.setAirport(dest.ident);
+                }
+            }
+        }
+        if (pageId === 'nrst') {
+            if (this.nearestPage) {
+                this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
+                this.nearestPage.init();
+            }
+        }
+        if (pageId === 'system') {
+            if (this.systemPage) this.systemPage.init();
+        }
+    }
+
+    onPageDeactivate(pageId) {
+        if (pageId === 'terrain') this.terrainPageRenderActive = false;
+        if (pageId === 'traffic') this.trafficPageRenderActive = false;
+        if (pageId === 'wx') this.weatherPageRenderActive = false;
+    }
+
+    updateAuxPageData() {
+        if (!this.auxPage) return;
+        const tripData = this.auxPage.updateTripData(
+            { waypoints: this.flightPlanManager.flightPlan?.waypoints, activeWaypointIndex: this.flightPlanManager.activeWaypointIndex },
+            this.data
+        );
+        if (tripData) {
+            if (this.elements.auxDist) this.elements.auxDist.textContent = `${tripData.remainingDist} NM`;
+            if (this.elements.auxTime) this.elements.auxTime.textContent = tripData.timeRemaining;
+            if (this.elements.auxEta) this.elements.auxEta.textContent = tripData.eta;
+            if (this.elements.auxFuel) this.elements.auxFuel.textContent = `${tripData.fuelRequired} GAL`;
+        }
+    }
+
+    // ===== CANVAS SETUP =====
+
+    setupCanvas() {
+        this.canvas = this.elements.mapCanvas;
+        if (this.canvas) {
+            this.ctx = this.canvas.getContext('2d');
+            this.resizeCanvas();
+            window.addEventListener('resize', () => this.resizeCanvas());
+        }
+    }
+
+    setupTerrainCanvas() {
+        const canvas = this.elements.terrainCanvas;
+        if (canvas) {
+            this.terrainCtx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width > 0 ? rect.width : 480;
+            canvas.height = rect.height > 0 ? rect.height : 280;
+        }
+    }
+
+    setupTrafficCanvas() {
+        const canvas = this.elements.trafficCanvas;
+        if (canvas) {
+            this.trafficCtx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+    }
+
+    setupWeatherCanvas() {
+        const canvas = this.elements.wxCanvas;
+        if (!canvas) return;
+        this.wxCtx = canvas.getContext('2d');
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width > 0 ? rect.width : 400;
+        canvas.height = rect.height > 0 ? rect.height : 280;
+        if (!this.weatherRange) this.weatherRange = 50;
+        if (this.weatherOverlay) {
+            this.weatherOverlay.fetchRadarData();
+            this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
+        }
+    }
+
+    resizeCanvas() {
+        if (!this.canvas) return;
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+    }
+
+    // ===== PAGE RENDERING (terrain, traffic, weather) =====
+
+    startTerrainPageRender() {
+        this.terrainPageRenderActive = true;
+        const renderLoop = () => {
+            if (!this.terrainPageRenderActive) return;
+            this.renderTerrainPage();
+            requestAnimationFrame(renderLoop);
+        };
+        renderLoop();
+    }
+
+    startTrafficPageRender() {
+        this.trafficPageRenderActive = true;
+        if (this.trafficOverlay) this.trafficOverlay.setEnabled(true);
+        const renderLoop = () => {
+            if (!this.trafficPageRenderActive) return;
+            this.renderTrafficPage();
+            requestAnimationFrame(renderLoop);
+        };
+        renderLoop();
+    }
+
+    startWeatherPageRender() {
+        this.weatherPageRenderActive = true;
+        if (this.weatherOverlay) {
+            this.weatherOverlay.setEnabled(true);
+            this.weatherOverlay.setLayer('nexrad', true);
+            this.weatherOverlay.setLayer('metar', true);
+        }
+        const renderLoop = () => {
+            if (!this.weatherPageRenderActive) return;
+            this.renderWeatherPage();
+            requestAnimationFrame(renderLoop);
+        };
+        renderLoop();
+    }
+
+    renderTerrainPage() {
+        if (!this.terrainCtx || !this.terrainOverlay) return;
+        const canvas = this.elements.terrainCanvas;
+        const w = canvas.width, h = canvas.height;
+
+        this.terrainCtx.fillStyle = '#0a1520';
+        this.terrainCtx.fillRect(0, 0, w, h);
+
+        const realAGL = this.data.altitudeAGL || this.data.altitude;
+        this.terrainOverlay.renderTerrainPage(this.terrainCtx, {
+            latitude: this.data.latitude, longitude: this.data.longitude,
+            altitude: this.data.altitude, altitudeAGL: realAGL,
+            heading: this.data.heading, verticalSpeed: this.data.verticalSpeed,
+            groundSpeed: this.data.groundSpeed
+        }, w, h);
+
+        if (this.elements.terrainClearance) {
+            const agl = Math.round(realAGL);
+            this.elements.terrainClearance.textContent = agl > 0 ? agl : '---';
+        }
+        if (this.elements.terrainMode) this.elements.terrainMode.textContent = this.terrainOverlay.getViewMode().toUpperCase();
+        if (this.elements.terrainRange) this.elements.terrainRange.textContent = this.terrainOverlay.getRange();
+    }
+
+    renderTrafficPage() {
+        if (!this.trafficCtx || !this.trafficOverlay) return;
+        const canvas = this.elements.trafficCanvas;
+        const w = canvas.width, h = canvas.height;
+
+        const targetCount = this.trafficOverlay.renderTrafficPage(this.trafficCtx, {
+            latitude: this.data.latitude, longitude: this.data.longitude,
+            altitude: this.data.altitude, heading: this.data.heading,
+            verticalSpeed: this.data.verticalSpeed, groundSpeed: this.data.groundSpeed
+        }, w, h);
+
+        if (this.elements.trafficCount) this.elements.trafficCount.textContent = targetCount;
+        if (this.elements.trafficMode) this.elements.trafficMode.textContent = this.trafficOverlay.getMode();
+    }
+
+    renderWeatherPage() {
+        if (!this.wxCtx || !this.weatherOverlay) return;
+        const canvas = this.elements.wxCanvas;
+        if (!canvas) return;
+
+        if (canvas.width === 0 || canvas.height === 0) {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width || 400;
+            canvas.height = rect.height || 280;
+        }
+
+        const w = canvas.width, h = canvas.height;
+        this.weatherOverlay.renderWeatherPage(this.wxCtx, {
+            latitude: this.data.latitude, longitude: this.data.longitude,
+            altitude: this.data.altitude, heading: this.data.heading
+        }, w, h, this.weatherRange || 50);
+
+        // METAR display
+        if (this.elements.wxMetarText) {
+            const metarData = this.weatherOverlay.metarData;
+            if (metarData && metarData.size > 0) {
+                let nearest = null, nearestDist = Infinity;
+                metarData.forEach(m => {
+                    const dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, m.lat, m.lon);
+                    if (dist < nearestDist) { nearestDist = dist; nearest = m; }
+                });
+                this.elements.wxMetarText.textContent = nearest ? (nearest.raw || `${nearest.icao}: ${nearest.category}`) : 'No METAR data';
+            } else {
+                this.elements.wxMetarText.textContent = 'Fetching weather...';
+            }
+        }
+
+        // Radar timestamp
+        if (this.elements.wxRadarTime) {
+            const frameTime = this.weatherOverlay.getCurrentFrameTime();
+            if (frameTime) {
+                const age = Math.round((Date.now() - frameTime.getTime()) / 60000);
+                this.elements.wxRadarTime.textContent = `Radar: ${frameTime.toUTCString().slice(17, 22)}Z (${age}m ago)`;
+            } else if (this.weatherOverlay.hasRadarData()) {
+                this.elements.wxRadarTime.textContent = 'Radar: Loading...';
+            } else {
+                this.elements.wxRadarTime.textContent = 'Radar: Simulated';
+            }
+        }
+
+        this.updateSimWeatherDisplay();
+    }
+
+    // ===== WEATHER DISPLAY =====
+
+    updateSimWeatherDisplay() {
+        if (this.elements.wxWind) {
+            const dir = Math.round(this.data.windDirection || 0);
+            const spd = Math.round(this.data.windSpeed || 0);
+            this.elements.wxWind.textContent = `${dir.toString().padStart(3, '0')}°/${spd}kt`;
+        }
+        if (this.elements.wxTemp) this.elements.wxTemp.textContent = `${Math.round(this.data.ambientTemp || 15)}°C`;
+        if (this.elements.wxBaro) this.elements.wxBaro.textContent = `${(this.data.ambientPressure || 29.92).toFixed(2)}"`;
+        if (this.elements.wxVis) {
+            const visSM = (this.data.visibility || 10000) / 1609.34;
+            this.elements.wxVis.textContent = visSM >= 10 ? '10+SM' : `${visSM.toFixed(1)}SM`;
+        }
+        if (this.elements.wxPrecip && this.elements.wxPrecipItem) {
+            const precip = this.data.precipState || 0;
+            if (precip === 0) {
+                this.elements.wxPrecipItem.style.display = 'none';
+            } else {
+                this.elements.wxPrecipItem.style.display = '';
+                this.elements.wxPrecip.textContent = (precip & 4) ? 'Snow' : (precip & 2) ? 'Rain' : 'Yes';
+            }
+        }
+        this.updateWeatherConditionDisplay();
+        if (this.weatherOverlay) {
+            this.weatherOverlay.updateSimWeather({
+                precipState: this.data.precipState, visibility: this.data.visibility,
+                windDirection: this.data.windDirection, windSpeed: this.data.windSpeed,
+                ambientTemp: this.data.ambientTemp
+            });
+        }
+    }
+
+    updateWeatherConditionDisplay() {
+        const iconEl = document.getElementById('wx-condition-icon');
+        const textEl = document.getElementById('wx-condition-text');
+        if (!iconEl || !textEl) return;
+
+        const precip = this.data.precipState || 0;
+        const vis = this.data.visibility || 10000;
+        const wind = this.data.windSpeed || 0;
+        let icon = '☀️', text = 'Clear';
+
+        if (precip & 4) { icon = '🌨️'; text = 'Snow'; }
+        else if (precip & 2) { icon = wind > 25 ? '⛈️' : '🌧️'; text = wind > 25 ? 'Storm' : 'Rain'; }
+        else if (vis < 1000) { icon = '🌫️'; text = 'Fog'; }
+        else if (vis < 5000) { icon = '🌁'; text = 'Mist'; }
+        else if (wind > 30) { icon = '💨'; text = 'Windy'; }
+        else if (wind > 15) { icon = '🌤️'; text = 'Breezy'; }
+
+        iconEl.textContent = icon;
+        textEl.textContent = text;
+    }
+
+    async setWeatherPreset(preset) {
+        console.log('[GTN750] Setting weather preset:', preset);
+        try {
+            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/preset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ preset })
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.querySelectorAll('.wx-preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.preset === preset));
+                document.getElementById('wx-live-btn')?.classList.remove('active');
+            }
+        } catch (e) { console.error('[GTN750] Weather error:', e); }
+    }
+
+    async setLiveWeather() {
+        try {
+            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: 'live' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.querySelectorAll('.wx-preset-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('wx-live-btn')?.classList.add('active');
+            }
+        } catch (e) { console.error('[GTN750] Live weather error:', e); }
+    }
+
+    // ===== TAWS =====
+
+    bindTawsAlerts() {
+        window.addEventListener('gtn:taws-alert', (e) => this.handleTawsAlert(e.detail));
+    }
+
+    handleTawsAlert(alert) {
+        const alertEl = this.elements.tawsAlert;
+        const textEl = this.elements.tawsText;
+        if (!alertEl || !textEl) return;
+
+        if (alert.level !== 'CLEAR' && alert.color) {
+            alertEl.style.display = 'flex';
+            alertEl.style.backgroundColor = alert.color;
+            textEl.textContent = alert.message || alert.level.replace('_', ' ');
+        } else {
+            alertEl.style.display = 'none';
+        }
+
+        if (this.elements.tawsStatus) {
+            this.elements.tawsStatus.textContent = this.taws.inhibited ? 'INHIBITED' : 'ACTIVE';
+            this.elements.tawsStatus.style.color = this.taws.inhibited ? '#ffcc00' : '#00ff00';
+        }
+    }
+
+    updateTawsStatus() {
+        if (this.elements.tawsStatus) {
+            this.elements.tawsStatus.textContent = this.taws.inhibited ? 'INHIBITED' : 'ACTIVE';
+            this.elements.tawsStatus.style.color = this.taws.inhibited ? '#ffcc00' : '#00ff00';
+        }
+    }
+
+    // ===== SYNC =====
+
+    initSyncListener() {
+        this.syncChannel.onmessage = (event) => {
+            const { type, data } = event.data;
+            this.flightPlanManager.handleSyncMessage(type, data);
+        };
+    }
+
+    // ===== DOM CACHE =====
+
+    cacheElements() {
+        this.elements = {
+            pageTitle: document.getElementById('page-title'),
+            btnHome: document.getElementById('btn-home'),
+            btnDirect: document.getElementById('btn-direct'),
+            conn: document.getElementById('conn'),
+            mapCanvas: document.getElementById('map-canvas'),
+            zoomIn: document.getElementById('zoom-in'),
+            zoomOut: document.getElementById('zoom-out'),
+            tawsAlert: document.getElementById('taws-alert'),
+            tawsText: document.getElementById('taws-text'),
+            dfGs: document.getElementById('df-gs'),
+            dfTrk: document.getElementById('df-trk'),
+            dfAlt: document.getElementById('df-alt'),
+            dfRange: document.getElementById('df-range'),
+            wptId: document.getElementById('wpt-id'),
+            wptDis: document.getElementById('wpt-dis'),
+            wptBrg: document.getElementById('wpt-brg'),
+            wptEte: document.getElementById('wpt-ete'),
+            cdiNeedle: document.getElementById('cdi-needle'),
+            cdiDtk: document.getElementById('cdi-dtk'),
+            cdiXtrk: document.getElementById('cdi-xtrk'),
+            cdiSource: document.getElementById('cdi-source'),
+            cdiToFrom: document.getElementById('cdi-tofrom'),
+            cdiGsNeedle: document.getElementById('cdi-gs-needle'),
+            cdiGsBar: document.getElementById('cdi-gs-bar'),
+            cdiFlag: document.getElementById('cdi-flag'),
+            obsValue: document.getElementById('obs-value'),
+            obsInc: document.getElementById('obs-inc'),
+            obsDec: document.getElementById('obs-dec'),
+            obsControls: document.getElementById('obs-controls'),
+            navSourceGps: document.getElementById('nav-source-gps'),
+            navSourceNav1: document.getElementById('nav-source-nav1'),
+            navSourceNav2: document.getElementById('nav-source-nav2'),
+            fplDep: document.getElementById('fpl-dep'),
+            fplArr: document.getElementById('fpl-arr'),
+            fplDist: document.getElementById('fpl-dist'),
+            fplEte: document.getElementById('fpl-ete'),
+            fplList: document.getElementById('fpl-list'),
+            fplProgress: document.getElementById('fpl-progress'),
+            wptSearch: document.getElementById('wpt-search'),
+            wptGo: document.getElementById('wpt-go'),
+            wptInfo: document.getElementById('wpt-info'),
+            nrstList: document.getElementById('nrst-list'),
+            procApt: document.getElementById('proc-apt'),
+            procList: document.getElementById('proc-list'),
+            terrainCanvas: document.getElementById('terrain-canvas'),
+            tawsStatus: document.getElementById('taws-status'),
+            terrainMode: document.getElementById('terrain-mode'),
+            terrainRange: document.getElementById('terrain-range'),
+            terrainRangeValue: document.getElementById('terrain-range-value'),
+            terrainClearance: document.getElementById('terrain-clearance'),
+            terrainZoomIn: document.getElementById('terrain-zoom-in'),
+            terrainZoomOut: document.getElementById('terrain-zoom-out'),
+            terrainView360: document.getElementById('terrain-view-360'),
+            terrainViewArc: document.getElementById('terrain-view-arc'),
+            trafficCanvas: document.getElementById('traffic-canvas'),
+            trafficMode: document.getElementById('traffic-mode'),
+            trafficCount: document.getElementById('traffic-count'),
+            wxCanvas: document.getElementById('wx-canvas'),
+            wxSimRadar: document.getElementById('wx-sim-radar'),
+            wxNexrad: document.getElementById('wx-nexrad'),
+            wxMetar: document.getElementById('wx-metar'),
+            wxMetarText: document.getElementById('wx-metar-text'),
+            wxAnimate: document.getElementById('wx-animate'),
+            wxRadarTime: document.getElementById('wx-radar-time'),
+            wxRange: document.getElementById('wx-range'),
+            wxZoomIn: document.getElementById('wx-zoom-in'),
+            wxZoomOut: document.getElementById('wx-zoom-out'),
+            wxWind: document.getElementById('wx-wind'),
+            wxTemp: document.getElementById('wx-temp'),
+            wxBaro: document.getElementById('wx-baro'),
+            wxVis: document.getElementById('wx-vis'),
+            wxPrecip: document.getElementById('wx-precip'),
+            wxPrecipItem: document.getElementById('wx-precip-item'),
+            chartApt: document.getElementById('chart-apt'),
+            chartSearch: document.getElementById('chart-search'),
+            chartList: document.getElementById('chart-list'),
+            auxDist: document.getElementById('aux-dist'),
+            auxTime: document.getElementById('aux-time'),
+            auxEta: document.getElementById('aux-eta'),
+            auxFuel: document.getElementById('aux-fuel'),
+            sysMapOrient: document.getElementById('sys-map-orient'),
+            sysGpsStatus: document.getElementById('sys-gps-status'),
+            com1: document.getElementById('com1'),
+            com1Stby: document.getElementById('com1-stby'),
+            nav1: document.getElementById('nav1'),
+            nav1Stby: document.getElementById('nav1-stby'),
+            nav1Ident: document.getElementById('nav1-ident'),
+            nav1Radial: document.getElementById('nav1-radial'),
+            nav1Dme: document.getElementById('nav1-dme'),
+            swapCom1: document.getElementById('swap-com1'),
+            swapCom2: document.getElementById('swap-com2'),
+            swapNav1: document.getElementById('swap-nav1'),
+            xpdr: document.getElementById('xpdr'),
+            utcTime: document.getElementById('utc-time'),
+            tabs: document.querySelectorAll('.gtn-tab')
+        };
+    }
+
+    // ===== EVENT BINDING =====
+
+    bindEvents() {
+        this.elements.btnHome?.addEventListener('click', () => this.pageManager.goHome());
+
+        const homeButtonsContainer = document.getElementById('home-buttons');
+        if (homeButtonsContainer) {
+            homeButtonsContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.home-btn');
+                if (!btn) return;
+                const pageId = btn.dataset.page;
+                if (pageId) {
+                    homeButtonsContainer.querySelectorAll('.home-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.pageManager.switchPage(pageId);
+                }
+            });
+        }
+
+        this.elements.btnDirect?.addEventListener('click', () => this.flightPlanManager.showDirectTo());
+
+        // Frequency swaps
+        this.elements.swapCom1?.addEventListener('click', () => this.dataHandler.swapFrequency('COM1'));
+        this.elements.swapCom2?.addEventListener('click', () => this.dataHandler.swapFrequency('COM2'));
+        this.elements.swapNav1?.addEventListener('click', () => this.dataHandler.swapFrequency('NAV1'));
+
+        // Zoom
+        this.elements.zoomIn?.addEventListener('click', () => this.changeRange(-1));
+        this.elements.zoomOut?.addEventListener('click', () => this.changeRange(1));
+
+        // Nav source
+        this.elements.navSourceGps?.addEventListener('click', () => { this.cdiManager.setNavSource('GPS'); this.data.navSource = 'GPS'; this.cdiManager.updateFromSource(this._getCdiState()); });
+        this.elements.navSourceNav1?.addEventListener('click', () => { this.cdiManager.setNavSource('NAV1'); this.data.navSource = 'NAV1'; this.cdiManager.updateFromSource(this._getCdiState()); });
+        this.elements.navSourceNav2?.addEventListener('click', () => { this.cdiManager.setNavSource('NAV2'); this.data.navSource = 'NAV2'; this.cdiManager.updateFromSource(this._getCdiState()); });
+
+        // OBS
+        this.elements.obsInc?.addEventListener('click', () => this.cdiManager.adjustObs(1));
+        this.elements.obsDec?.addEventListener('click', () => this.cdiManager.adjustObs(-1));
+        this.elements.obsValue?.addEventListener('click', () => {
+            const currentObs = this.cdiManager.navSource === 'NAV1' ? this.cdiManager.nav1.obs : this.cdiManager.nav2.obs;
+            const newObs = prompt('Enter OBS course (0-359):', Math.round(currentObs));
+            if (newObs !== null && !isNaN(newObs)) this.cdiManager.setObs(parseInt(newObs) % 360);
+        });
+
+        // Tabs
+        this.elements.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const pageId = tab.dataset.page;
+                if (pageId) this.pageManager.switchPage(pageId);
+            });
+        });
+
+        // WPT search
+        this.elements.wptGo?.addEventListener('click', () => this.searchWaypoint());
+        this.elements.wptSearch?.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.searchWaypoint(); });
+
+        // NRST type tabs
+        document.querySelectorAll('.nrst-tab').forEach(tab => {
+            tab.addEventListener('click', () => this.switchNearestType(tab.dataset.type));
+        });
+
+        // PROC type tabs
+        document.querySelectorAll('.proc-tab').forEach(tab => {
+            tab.addEventListener('click', () => this.switchProcType(tab.dataset.type));
+        });
+
+        // Chart search
+        this.elements.chartSearch?.addEventListener('click', () => this.searchCharts());
+        this.elements.chartApt?.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.searchCharts(); });
+        document.getElementById('chart-view')?.addEventListener('click', () => { if (this.chartsPage) this.chartsPage.viewChart(); });
+        document.getElementById('chart-fox')?.addEventListener('click', () => { if (this.chartsPage) this.chartsPage.openChartFox(); });
+
+        // Weather animation
+        this.elements.wxAnimate?.addEventListener('click', () => {
+            if (this.weatherOverlay) {
+                const animating = this.weatherOverlay.toggleRadarAnimation();
+                this.elements.wxAnimate.textContent = animating ? '⏸' : '▶';
+                this.elements.wxAnimate.classList.toggle('active', animating);
+            }
+        });
+
+        // Weather range
+        this.weatherRanges = [10, 25, 50, 100, 200];
+        this.weatherRange = 50;
+        this.elements.wxZoomIn?.addEventListener('click', () => this.changeWeatherRange(-1));
+        this.elements.wxZoomOut?.addEventListener('click', () => this.changeWeatherRange(1));
+
+        // Weather layer toggles
+        this.elements.wxSimRadar?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('simRadar', e.target.checked); });
+        this.elements.wxNexrad?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('nexrad', e.target.checked); });
+        document.getElementById('wx-metar')?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('metar', e.target.checked); });
+        document.getElementById('wx-winds')?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('winds', e.target.checked); });
+        document.getElementById('wx-lightning')?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('lightning', e.target.checked); });
+
+        // Terrain range/view
+        this.terrainRanges = [2, 5, 10, 20, 50];
+        this.elements.terrainZoomIn?.addEventListener('click', () => this.changeTerrainRange(-1));
+        this.elements.terrainZoomOut?.addEventListener('click', () => this.changeTerrainRange(1));
+        this.elements.terrainView360?.addEventListener('click', () => { if (this.terrainOverlay) { this.terrainOverlay.setViewMode('360'); this.updateTerrainViewButtons('360'); } });
+        this.elements.terrainViewArc?.addEventListener('click', () => { if (this.terrainOverlay) { this.terrainOverlay.setViewMode('arc'); this.updateTerrainViewButtons('arc'); } });
+
+        // System
+        document.getElementById('sys-reset')?.addEventListener('click', () => { if (this.systemPage) this.systemPage.resetToDefaults(); });
+        this.elements.sysMapOrient?.addEventListener('change', (e) => { this.map.orientation = e.target.value; });
+
+        // Data field customization
+        document.querySelectorAll('.corner-field').forEach(field => {
+            field.addEventListener('click', (e) => { e.stopPropagation(); this.dataFieldsManager.openFieldSelector(field); });
+        });
+        document.querySelectorAll('.field-option').forEach(option => {
+            option.addEventListener('click', (e) => { e.stopPropagation(); this.dataFieldsManager.selectFieldType(option.dataset.type); });
+        });
+        document.addEventListener('click', () => this.dataFieldsManager.closeFieldSelector());
+
+        // Weather presets
+        document.querySelectorAll('.wx-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.setWeatherPreset(btn.dataset.preset));
+        });
+        document.getElementById('wx-live-btn')?.addEventListener('click', () => this.setLiveWeather());
+    }
+
+    _getCdiState() {
+        return {
+            flightPlan: this.flightPlanManager.flightPlan,
+            activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
+            data: this.data
+        };
+    }
+
+    // ===== SOFT KEY HANDLER =====
+
+    handleSoftKeyAction(action, detail) {
+        const cdiState = this._getCdiState();
+
+        switch (action) {
+            case 'go-back':
+                if (!this.pageManager.goBack()) this.pageManager.goHome();
+                break;
+            case 'toggle-terrain': this.map.showTerrain = detail.active; break;
+            case 'toggle-traffic': this.map.showTraffic = detail.active; break;
+            case 'toggle-weather':
+                this.map.showWeather = detail.active;
+                if (detail.active && this.weatherOverlay) this.weatherOverlay.startAutoRefresh(this.data.latitude, this.data.longitude);
+                else if (this.weatherOverlay) this.weatherOverlay.stopAutoRefresh();
+                break;
+            case 'declutter': this.cycleDeclutter(); break;
+            case 'cdi-menu': this.softKeys?.setContext('cdi-menu'); break;
+            case 'cdi-source-gps': this.cdiManager.setNavSource('GPS'); this.data.navSource = 'GPS'; this.cdiManager.updateFromSource(cdiState); this.softKeys?.setContext('map'); break;
+            case 'cdi-source-nav1': this.cdiManager.setNavSource('NAV1'); this.data.navSource = 'NAV1'; this.cdiManager.updateFromSource(cdiState); this.softKeys?.setContext('map'); break;
+            case 'cdi-source-nav2': this.cdiManager.setNavSource('NAV2'); this.data.navSource = 'NAV2'; this.cdiManager.updateFromSource(cdiState); this.softKeys?.setContext('map'); break;
+            case 'obs-inc': this.cdiManager.adjustObs(1); break;
+            case 'obs-dec': this.cdiManager.adjustObs(-1); break;
+            case 'back-menu': this.softKeys?.setContext('map'); break;
+            case 'map-north-up': this.map.orientation = 'north'; this.updateMapOrientation(); break;
+            case 'map-track-up': this.map.orientation = 'track'; this.updateMapOrientation(); break;
+            case 'map-heading-up': this.map.orientation = 'heading'; this.updateMapOrientation(); break;
+            case 'activate-leg': this.flightPlanManager.activateLeg(); break;
+            case 'invert-plan': this.flightPlanManager.invertFlightPlan(); break;
+            case 'direct-to': this.flightPlanManager.showDirectTo(); break;
+            case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
+                this.switchNearestType(action.split('-')[1]); break;
+            case 'taws-inhibit':
+                this.taws.inhibited = !this.taws.inhibited;
+                if (this.terrainOverlay) this.terrainOverlay.setInhibited(this.taws.inhibited);
+                this.updateTawsStatus();
+                break;
+            case 'terrain-view': this.cycleTerrainView(); break;
+            case 'terrain-360': this.setTerrainView('360'); break;
+            case 'terrain-arc': this.setTerrainView('arc'); break;
+            case 'terrain-range': this.cycleTerrainRange(); break;
+            case 'proc-departure': if (this.proceduresPage) this.proceduresPage.switchType('dep'); break;
+            case 'proc-arrival': if (this.proceduresPage) this.proceduresPage.switchType('arr'); break;
+            case 'proc-approach': if (this.proceduresPage) this.proceduresPage.switchType('apr'); break;
+            case 'load-proc': if (this.proceduresPage) this.proceduresPage.loadProcedure(); break;
+            case 'preview-proc': this.previewProcedure(); break;
+            case 'view-proc-chart': if (this.proceduresPage) this.proceduresPage.viewChart(); break;
+            case 'aux-trip': this.showAuxSubpage('trip'); break;
+            case 'aux-util': this.showAuxSubpage('util'); break;
+            case 'aux-timer': this.toggleAuxTimer(); break;
+            case 'aux-calc': this.showAuxSubpage('calc'); break;
+            case 'traffic-operate': case 'traffic-standby': case 'traffic-test':
+                this.setTrafficMode(action.split('-')[1]); break;
+            case 'wx-simRadar': case 'wx-nexrad': case 'wx-metar': case 'wx-taf': case 'wx-winds': case 'wx-lightning':
+                this.toggleWeatherLayer(action.split('-')[1]); break;
+            case 'view-chart': if (this.chartsPage) this.chartsPage.viewChart(); break;
+            case 'open-chartfox': if (this.chartsPage) this.chartsPage.openChartFox(); break;
+            case 'chart-apt': case 'chart-iap': case 'chart-dp': case 'chart-star':
+                if (this.chartsPage) { const type = action.split('-')[1].toUpperCase(); this.chartsPage.filterByType(type === 'APT' ? 'APD' : type); }
+                break;
+            case 'sys-reset': if (this.systemPage) this.systemPage.resetToDefaults(); break;
+            case 'sys-north-up': this.map.orientation = 'north'; if (this.systemPage) this.systemPage.setSetting('mapOrientation', 'north'); break;
+            case 'sys-track-up': this.map.orientation = 'track'; if (this.systemPage) this.systemPage.setSetting('mapOrientation', 'track'); break;
+            case 'sys-night-mode':
+                if (this.systemPage) { const current = this.systemPage.getSetting('nightMode'); this.systemPage.setSetting('nightMode', !current); }
+                break;
+            case 'obs-toggle': this.cdiManager.toggleObs(cdiState); break;
+            case 'obs-crs-up': this.cdiManager.adjustObsCourse(1, cdiState); break;
+            case 'obs-crs-down': this.cdiManager.adjustObsCourse(-1, cdiState); break;
+            case 'obs-crs-up-10': this.cdiManager.adjustObsCourse(10, cdiState); break;
+            case 'obs-crs-down-10': this.cdiManager.adjustObsCourse(-10, cdiState); break;
+            case 'hold-toggle': this.cdiManager.toggleHoldingPattern(cdiState); break;
+            case 'hold-direction': this.cdiManager.toggleHoldingDirection(this.data); break;
+            case 'hold-time':
+                const newTime = prompt('Enter holding leg time (30-240 seconds):', this.cdiManager.obs.legTime);
+                if (newTime) this.cdiManager.setHoldingLegTime(parseInt(newTime));
+                break;
+            default: console.log(`[GTN750] Unhandled soft key action: ${action}`);
+        }
+    }
+
+    // ===== RANGE / DECLUTTER HELPERS =====
+
+    changeRange(delta) {
+        const idx = this.map.ranges.indexOf(this.map.range);
+        const newIdx = Math.max(0, Math.min(this.map.ranges.length - 1, idx + delta));
+        this.map.range = this.map.ranges[newIdx];
+        if (this.elements.dfRange) this.elements.dfRange.textContent = this.map.range;
+    }
+
+    changeWeatherRange(delta) {
+        const ranges = this.weatherRanges || [10, 25, 50, 100, 200];
+        const idx = ranges.indexOf(this.weatherRange);
+        const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
+        this.weatherRange = ranges[newIdx];
+        if (this.elements.wxRange) this.elements.wxRange.textContent = this.weatherRange;
+    }
+
+    changeTerrainRange(delta) {
+        if (!this.terrainOverlay) return;
+        const ranges = this.terrainRanges || [2, 5, 10, 20, 50];
+        const currentRange = this.terrainOverlay.getRange();
+        const idx = ranges.indexOf(currentRange);
+        const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
+        const newRange = ranges[newIdx];
+        this.terrainOverlay.setRange(newRange);
+        if (this.elements.terrainRangeValue) this.elements.terrainRangeValue.textContent = newRange;
+        if (this.elements.terrainRange) this.elements.terrainRange.textContent = newRange;
+    }
+
+    updateTerrainViewButtons(mode) {
+        if (this.elements.terrainView360) this.elements.terrainView360.classList.toggle('active', mode === '360');
+        if (this.elements.terrainViewArc) this.elements.terrainViewArc.classList.toggle('active', mode === 'arc');
+        if (this.elements.terrainMode) this.elements.terrainMode.textContent = mode.toUpperCase();
+    }
+
+    updateMapOrientation() {
+        if (this.elements.sysMapOrient) this.elements.sysMapOrient.value = this.map.orientation;
+    }
+
+    cycleDeclutter() {
+        this.declutterLevel = ((this.declutterLevel || 0) + 1) % 4;
+        document.querySelectorAll('.corner-field').forEach(el => {
+            el.style.opacity = this.declutterLevel < 3 ? '1' : '0.3';
+        });
+    }
+
+    // ===== MISC PAGE HELPERS =====
+
+    async searchWaypoint() {
+        const ident = this.elements.wptSearch?.value.toUpperCase().trim();
+        if (!ident || ident.length < 2) return;
+        try {
+            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/waypoint/${ident}`);
+            if (response.ok) {
+                const wpt = await response.json();
+                this.displayWaypointInfo(wpt);
+            } else {
+                this.displayWaypointInfo(null, ident);
+            }
+        } catch (e) { this.displayWaypointInfo(null, ident); }
+    }
+
+    displayWaypointInfo(wpt, searchedIdent) {
+        if (!this.elements.wptInfo) return;
+        this.elements.wptInfo.textContent = '';
+        if (!wpt) {
+            const empty = document.createElement('div');
+            empty.className = 'wpt-info-empty';
+            empty.textContent = searchedIdent ? `${searchedIdent} not found` : 'Enter waypoint identifier';
+            this.elements.wptInfo.appendChild(empty);
+            return;
+        }
+        const ident = document.createElement('div');
+        ident.className = 'wpt-info-ident';
+        ident.textContent = wpt.ident;
+        this.elements.wptInfo.appendChild(ident);
+        const type = document.createElement('div');
+        type.className = 'wpt-info-type';
+        type.textContent = wpt.type || 'WAYPOINT';
+        this.elements.wptInfo.appendChild(type);
+        if (wpt.lat && wpt.lng) {
+            const coords = document.createElement('div');
+            coords.className = 'wpt-info-coords';
+            coords.textContent = `${this.core.formatLat(wpt.lat)} ${this.core.formatLon(wpt.lng)}`;
+            this.elements.wptInfo.appendChild(coords);
+        }
+    }
+
+    switchNearestType(type) {
+        if (this.nearestPage) {
+            this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
+            this.nearestPage.switchType(type);
+        }
+    }
+
+    switchProcType(type) {
+        document.querySelectorAll('.proc-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.type === type);
+        });
+    }
+
+    async searchCharts() {
+        const icao = this.elements.chartApt?.value.toUpperCase().trim();
+        if (!icao || icao.length < 3) return;
+        if (this.chartsPage) this.chartsPage.searchCharts(icao);
+    }
+
+    previewProcedure() {
+        if (this.procedurePreview?.waypoints) {
+            this.showProcedurePreview = !this.showProcedurePreview;
+        }
+    }
+
+    showAuxSubpage(subpage) { this.auxSubpage = subpage; }
+
+    toggleAuxTimer() {
+        if (this.auxPage) this.auxPage.toggleTimer();
+    }
+
+    setTrafficMode(mode) {
+        if (this.trafficOverlay) this.trafficOverlay.setMode(mode);
+        if (this.elements.trafficMode) this.elements.trafficMode.textContent = mode.toUpperCase();
+    }
+
+    toggleWeatherLayer(layer) {
+        if (this.weatherOverlay) {
+            const enabled = this.weatherOverlay.toggleLayer(layer);
+            const checkbox = document.getElementById(`wx-${layer}`);
+            if (checkbox) checkbox.checked = enabled;
+        }
+    }
+
+    cycleTerrainView() { if (this.terrainOverlay) this.terrainOverlay.toggleViewMode(); }
+    setTerrainView(view) { if (this.terrainOverlay) this.terrainOverlay.setViewMode(view); }
+
+    cycleTerrainRange() {
+        if (this.terrainOverlay) {
+            const ranges = [2, 5, 10, 20, 50];
+            const current = this.terrainOverlay.getRange();
+            const idx = ranges.indexOf(current);
+            this.terrainOverlay.setRange(ranges[(idx + 1) % ranges.length]);
+        }
+    }
+
+    fetchNearestAirports() {
+        if (this.nearestPage) {
+            this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
+        }
     }
 }
 
@@ -3755,7 +1238,6 @@ if (document.readyState === 'loading') {
     handleUrlHash();
 }
 
-// URL hash navigation support
 function handleUrlHash() {
     const hash = window.location.hash.slice(1);
     if (hash && window.gtn750?.pageManager) {
