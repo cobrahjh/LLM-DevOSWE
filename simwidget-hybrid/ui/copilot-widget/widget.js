@@ -1601,7 +1601,15 @@ class AICopilot extends SimGlassBase {
                 const data = await res.json();
                 this.updateFlightData(data);
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'pollFlightData',
+                    widget: 'copilot-widget',
+                    url: '/api/simvars'
+                });
+            }
+        }
 
         if (!this._destroyed) {
             this._pollTimeout = setTimeout(() => this.pollFlightData(), 2000);
@@ -1743,7 +1751,15 @@ class AICopilot extends SimGlassBase {
                 ttsVoice: this.ttsVoice,
                 useNaturalVoice: this.useNaturalVoice
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveSettings',
+                    widget: 'copilot-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadSettings() {
@@ -1772,7 +1788,15 @@ class AICopilot extends SimGlassBase {
                 document.getElementById('natural-voice-toggle').checked = this.useNaturalVoice;
                 if (this._syncVoiceUI) this._syncVoiceUI();
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadSettings',
+                    widget: 'copilot-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     sleep(ms) {

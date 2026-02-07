@@ -362,7 +362,15 @@ class MapWidget extends SimGlassBase {
                 const data = await response.json();
                 this.updatePosition(data);
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'pollPosition',
+                    widget: 'map-widget',
+                    url: '/api/simvars'
+                });
+            }
+        }
 
         // Poll every 2 seconds
         if (!this._destroyed) {

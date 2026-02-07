@@ -306,7 +306,15 @@ class FlightLogWidget extends SimGlassBase {
     saveFlights() {
         try {
             localStorage.setItem('flightlog-widget-flights', JSON.stringify(this.flights));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveFlights',
+                    widget: 'flightlog-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     destroy() {
@@ -322,7 +330,15 @@ class FlightLogWidget extends SimGlassBase {
                 this.flights = JSON.parse(saved);
                 this.renderFlights();
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadFlights',
+                    widget: 'flightlog-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 }
 
