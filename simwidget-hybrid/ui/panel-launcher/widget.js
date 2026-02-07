@@ -8,9 +8,12 @@ const API_URL = `http://${window.location.host}`;
 
 let ws = null;
 let isConnected = false;
+let _destroyed = false;
 
 // Connect to SimGlass WebSocket
 function connect() {
+    if (_destroyed) return;
+
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
@@ -24,7 +27,9 @@ function connect() {
         isConnected = false;
         updateStatus(false);
         // Reconnect after 3 seconds
-        setTimeout(connect, 3000);
+        if (!_destroyed) {
+            setTimeout(connect, 3000);
+        }
     };
 
     ws.onerror = (err) => {
@@ -111,9 +116,21 @@ function initButtons() {
     });
 }
 
+// Cleanup
+function destroy() {
+    _destroyed = true;
+    if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+    }
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Panel Launcher] Initializing...');
     initButtons();
     connect();
 });
+
+window.addEventListener('beforeunload', destroy);
