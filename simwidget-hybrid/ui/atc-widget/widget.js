@@ -3,10 +3,14 @@
  * Displays radio frequencies, transponder, and ATC callsign
  */
 
-class ATCWidget {
+class ATCWidget extends SimGlassBase {
     constructor() {
-        this.ws = null;
-        this.reconnectDelay = 2000;
+        super({
+            widgetName: 'atc-comms',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.data = {
             com1Active: 0,
             com1Standby: 0,
@@ -27,48 +31,25 @@ class ATCWidget {
     }
 
     init() {
-        this.connectWebSocket();
         this.bindEvents();
         this.startPolling();
     }
 
-    connectWebSocket() {
-        const wsUrl = `ws://${window.location.hostname}:3001/ws`;
-        this.ws = new WebSocket(wsUrl);
-
-        this.ws.onopen = () => {
-            console.log('[ATC] WebSocket connected');
-            this.updateConnectionStatus(true);
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'simData') {
-                    this.updateFromSimData(msg.data);
-                }
-            } catch (e) {
-                console.error('[ATC] Parse error:', e);
-            }
-        };
-
-        this.ws.onclose = () => {
-            console.log('[ATC] WebSocket closed');
-            this.updateConnectionStatus(false);
-            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
-        };
-
-        this.ws.onerror = (error) => {
-            console.error('[ATC] WebSocket error:', error);
-        };
+    // SimGlassBase override: handle incoming messages
+    onMessage(msg) {
+        if (msg.type === 'simData' || msg.type === 'flightData') {
+            this.updateFromSimData(msg.data);
+        }
     }
 
-    updateConnectionStatus(connected) {
-        const status = document.getElementById('conn-status');
-        if (status) {
-            status.classList.toggle('connected', connected);
-            status.title = connected ? 'Connected to SimConnect' : 'Disconnected';
-        }
+    // SimGlassBase override: called when connected
+    onConnect() {
+        console.log('[ATC] WebSocket connected');
+    }
+
+    // SimGlassBase override: called when disconnected
+    onDisconnect() {
+        console.log('[ATC] WebSocket disconnected');
     }
 
     updateFromSimData(data) {
@@ -214,8 +195,11 @@ class ATCWidget {
 
     destroy() {
         this._destroyed = true;
-        if (this._pollInterval) clearInterval(this._pollInterval);
-        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+        if (this._pollInterval) {
+            clearInterval(this._pollInterval);
+            this._pollInterval = null;
+        }
+        super.destroy();
     }
 
     async startPolling() {

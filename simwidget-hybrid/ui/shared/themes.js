@@ -154,6 +154,40 @@ function initChannel() {
 }
 
 /**
+ * Convert CSS variable theme format to legacy widget-customizer format
+ * @param {Object} theme - Theme definition with CSS variables
+ * @returns {Object} Legacy format with bg, bgSecondary, text, etc.
+ */
+function convertToLegacyFormat(theme) {
+    const vars = theme.variables;
+    return {
+        name: theme.name,
+        description: theme.description,
+        bg: vars['--widget-bg'],
+        bgSecondary: vars['--widget-bg-secondary'],
+        text: vars['--widget-text'],
+        textMuted: vars['--widget-text-muted'],
+        accent: vars['--widget-accent'],
+        border: vars['--widget-border'],
+        success: vars['--widget-success'],
+        warning: vars['--widget-warning'],
+        error: vars['--widget-error']
+    };
+}
+
+/**
+ * Get all themes in legacy widget-customizer format
+ * @returns {Object} Themes keyed by ID in legacy format
+ */
+function getThemesLegacy() {
+    const legacy = {};
+    Object.keys(THEMES).forEach(id => {
+        legacy[id] = convertToLegacyFormat(THEMES[id]);
+    });
+    return legacy;
+}
+
+/**
  * Get all available theme definitions
  * @returns {Object} Theme definitions keyed by theme ID
  */
@@ -386,6 +420,8 @@ if (typeof document !== 'undefined') {
 if (typeof window !== 'undefined') {
     window.SimGlassThemes = {
         getThemes,
+        getThemesLegacy,
+        convertToLegacyFormat,
         getThemeIds,
         getTheme,
         applyTheme,
@@ -402,6 +438,8 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         getThemes,
+        getThemesLegacy,
+        convertToLegacyFormat,
         getThemeIds,
         getTheme,
         applyTheme,

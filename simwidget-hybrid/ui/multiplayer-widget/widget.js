@@ -3,10 +3,14 @@
  * Shows nearby VATSIM/IVAO/MSFS multiplayer traffic
  */
 
-class MultiplayerWidget {
+class MultiplayerWidget extends SimGlassBase {
     constructor() {
-        this.ws = null;
-        this.wsConnected = false;
+        super({
+            widgetName: 'multiplayer',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.myPosition = { lat: 0, lon: 0, alt: 0, heading: 0 };
         this.traffic = [];
         this.searchRadius = 50;
@@ -15,7 +19,6 @@ class MultiplayerWidget {
 
         this.initElements();
         this.initEvents();
-        this.connectWebSocket();
         this.startRefresh();
     }
 
@@ -50,43 +53,30 @@ class MultiplayerWidget {
         this.refreshBtn.addEventListener('click', () => this.fetchTraffic());
     }
 
+    // SimGlassBase override: called when WebSocket connects
+    onConnect() {
+        this.setConnectionStatus(true);
+    }
+
+    // SimGlassBase override: called when WebSocket disconnects
+    onDisconnect() {
+        this.setConnectionStatus(false);
+    }
+
+    // SimGlassBase override: handle incoming messages
+    onMessage(msg) {
+        if (msg.type === 'flightData') {
+            this.updatePosition(msg.data);
+        }
+    }
+
     setConnectionStatus(connected) {
-        this.wsConnected = connected;
         if (this.connDot) {
             this.connDot.className = 'conn-dot ' + (connected ? 'connected' : 'disconnected');
         }
         if (this.connText) {
             this.connText.textContent = connected ? 'SimConnect' : 'Disconnected';
         }
-    }
-
-    connectWebSocket() {
-        const host = location.hostname || 'localhost';
-        const wsUrl = `ws://${host}:8080`;
-
-        this.ws = new WebSocket(wsUrl);
-
-        this.ws.onopen = () => {
-            this.setConnectionStatus(true);
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'flightData') {
-                    this.updatePosition(msg.data);
-                }
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            this.setConnectionStatus(false);
-            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
-        };
-
-        this.ws.onerror = () => {
-            this.setConnectionStatus(false);
-        };
     }
 
     updatePosition(data) {
@@ -111,7 +101,8 @@ class MultiplayerWidget {
         try {
             const vatsimTraffic = await this.fetchVATSIM();
             // MSFS AI traffic from SimConnect (when connected to sim)
-            const msfsTraffic = this.wsConnected && this.myPosition.lat
+            const isConnected = this.ws && this.ws.readyState === WebSocket.OPEN;
+            const msfsTraffic = isConnected && this.myPosition.lat
                 ? this.generateSimTraffic()
                 : [];
 
@@ -300,8 +291,11 @@ class MultiplayerWidget {
 
     destroy() {
         this._destroyed = true;
-        if (this.refreshInterval) clearInterval(this.refreshInterval);
-        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+        super.destroy();
     }
 
     bearingToCardinal(bearing) {

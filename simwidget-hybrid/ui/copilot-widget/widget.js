@@ -433,8 +433,14 @@ const EMERGENCY_PROCEDURES = {
     }
 };
 
-class AICopilot {
+class AICopilot extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'ai-copilot',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.currentMode = 'assist';
         this.voiceEnabled = true;
         this.isListening = false;
@@ -559,7 +565,7 @@ class AICopilot {
         this.initATISDecoder();
         this.initAdvisorMode();
         this.initVoice();
-        this.initWebSocket();
+        this.pollFlightData(); // Start polling fallback
         this.loadSettings();
         this.initCopilotStatus();
     }
@@ -1571,31 +1577,24 @@ class AICopilot {
     }
 
     // === Flight Data ===
-    initWebSocket() {
-        const wsUrl = 'ws://' + window.location.host;
+    // SimGlassBase override: handle incoming messages
+    onMessage(data) {
+        this.updateFlightData(data);
+    }
 
-        try {
-            this.ws = new WebSocket(wsUrl);
+    // SimGlassBase override: called when connected
+    onConnect() {
+        console.log('[Copilot] WebSocket connected');
+    }
 
-            this.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this.updateFlightData(data);
-                } catch (e) {}
-            };
-
-            this.ws.onclose = () => {
-                setTimeout(() => this.initWebSocket(), 3000);
-            };
-        } catch (e) {
-            setTimeout(() => this.initWebSocket(), 5000);
-        }
-
-        // Fallback polling
-        this.pollFlightData();
+    // SimGlassBase override: called when disconnected
+    onDisconnect() {
+        console.log('[Copilot] WebSocket disconnected');
     }
 
     async pollFlightData() {
+        if (this._destroyed) return;
+
         try {
             const res = await fetch('/api/simvars');
             if (res.ok) {
@@ -1604,7 +1603,25 @@ class AICopilot {
             }
         } catch (e) {}
 
-        setTimeout(() => this.pollFlightData(), 2000);
+        if (!this._destroyed) {
+            this._pollTimeout = setTimeout(() => this.pollFlightData(), 2000);
+        }
+    }
+
+    destroy() {
+        this._destroyed = true;
+        if (this._pollTimeout) {
+            clearTimeout(this._pollTimeout);
+            this._pollTimeout = null;
+        }
+        if (this._ttsAudio) {
+            this._ttsAudio.pause();
+            this._ttsAudio = null;
+        }
+        if (this.syncChannel) {
+            this.syncChannel.close();
+        }
+        super.destroy();
     }
 
     updateFlightData(data) {
@@ -1970,3 +1987,5 @@ class AICopilot {
 document.addEventListener('DOMContentLoaded', () => {
     window.copilot = new AICopilot();
 });
+
+window.addEventListener('beforeunload', () => window.copilot?.destroy());

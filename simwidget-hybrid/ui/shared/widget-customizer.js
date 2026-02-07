@@ -1,7 +1,9 @@
 /**
- * SimGlass Customizer v1.0.0
+ * SimGlass Customizer v2.0.0
+ * Last Updated: 2026-02-07
  *
  * Adds theme, layout, and profile customization to any widget.
+ * Requires: <script src="/ui/shared/themes.js"></script>
  * Include after settings-panel.js:
  *   <script src="/ui/shared/widget-customizer.js"></script>
  */
@@ -13,176 +15,10 @@ class WidgetCustomizer {
         this.onThemeChange = options.onThemeChange || (() => {});
         this.onLayoutChange = options.onLayoutChange || (() => {});
 
-        // Default themes
-        this.themes = {
-            // Dark themes
-            dark: {
-                name: 'Dark',
-                bg: '#1a1a2e',
-                bgSecondary: '#16213e',
-                text: '#ffffff',
-                textMuted: '#888888',
-                accent: '#667eea',
-                border: 'rgba(255,255,255,0.1)'
-            },
-            amoled: {
-                name: 'AMOLED',
-                bg: '#000000',
-                bgSecondary: '#0a0a0a',
-                text: '#ffffff',
-                textMuted: '#666666',
-                accent: '#00ff88',
-                border: 'rgba(255,255,255,0.05)'
-            },
-            midnight: {
-                name: 'Midnight',
-                bg: '#0f0f23',
-                bgSecondary: '#1a1a3e',
-                text: '#e0e0ff',
-                textMuted: '#7777aa',
-                accent: '#9966ff',
-                border: 'rgba(153,102,255,0.2)'
-            },
-            // Aviation themes
-            cockpit: {
-                name: 'Cockpit',
-                bg: '#0d1117',
-                bgSecondary: '#161b22',
-                text: '#c9d1d9',
-                textMuted: '#8b949e',
-                accent: '#ff6b35',
-                border: 'rgba(255,107,53,0.2)'
-            },
-            nightFlight: {
-                name: 'Night Flight',
-                bg: '#1a0a0a',
-                bgSecondary: '#2a1515',
-                text: '#ff9999',
-                textMuted: '#aa6666',
-                accent: '#ff3333',
-                border: 'rgba(255,50,50,0.2)'
-            },
-            garmin: {
-                name: 'Garmin',
-                bg: '#000000',
-                bgSecondary: '#1a1a1a',
-                text: '#00ff00',
-                textMuted: '#008800',
-                accent: '#00ffff',
-                border: 'rgba(0,255,0,0.2)'
-            },
-            boeing: {
-                name: 'Boeing',
-                bg: '#0a1628',
-                bgSecondary: '#142238',
-                text: '#7ec8e3',
-                textMuted: '#4a7c94',
-                accent: '#00aaff',
-                border: 'rgba(0,170,255,0.2)'
-            },
-            airbus: {
-                name: 'Airbus',
-                bg: '#1a1a2e',
-                bgSecondary: '#252545',
-                text: '#ffffff',
-                textMuted: '#8888aa',
-                accent: '#ffaa00',
-                border: 'rgba(255,170,0,0.2)'
-            },
-            // Nature themes
-            ocean: {
-                name: 'Ocean',
-                bg: '#0f2027',
-                bgSecondary: '#203a43',
-                text: '#ffffff',
-                textMuted: '#a0c4d4',
-                accent: '#00d4ff',
-                border: 'rgba(0,212,255,0.2)'
-            },
-            forest: {
-                name: 'Forest',
-                bg: '#0a1f0a',
-                bgSecondary: '#153015',
-                text: '#c8e6c8',
-                textMuted: '#7ab37a',
-                accent: '#4caf50',
-                border: 'rgba(76,175,80,0.2)'
-            },
-            sunset: {
-                name: 'Sunset',
-                bg: '#1a0f1a',
-                bgSecondary: '#2d1f2d',
-                text: '#ffccaa',
-                textMuted: '#cc9977',
-                accent: '#ff6600',
-                border: 'rgba(255,102,0,0.2)'
-            },
-            aurora: {
-                name: 'Aurora',
-                bg: '#0a0a1a',
-                bgSecondary: '#151530',
-                text: '#aaffaa',
-                textMuted: '#66aa88',
-                accent: '#00ffaa',
-                border: 'rgba(0,255,170,0.2)'
-            },
-            // Light themes
-            light: {
-                name: 'Light',
-                bg: '#f5f5f5',
-                bgSecondary: '#ffffff',
-                text: '#333333',
-                textMuted: '#666666',
-                accent: '#667eea',
-                border: 'rgba(0,0,0,0.1)'
-            },
-            paper: {
-                name: 'Paper',
-                bg: '#faf8f5',
-                bgSecondary: '#ffffff',
-                text: '#2c2c2c',
-                textMuted: '#6b6b6b',
-                accent: '#d4a574',
-                border: 'rgba(0,0,0,0.08)'
-            },
-            daylight: {
-                name: 'Daylight',
-                bg: '#e8f4fc',
-                bgSecondary: '#ffffff',
-                text: '#1a3a4a',
-                textMuted: '#5a7a8a',
-                accent: '#0088cc',
-                border: 'rgba(0,136,204,0.15)'
-            },
-            // Special themes
-            hacker: {
-                name: 'Hacker',
-                bg: '#0a0a0a',
-                bgSecondary: '#111111',
-                text: '#00ff00',
-                textMuted: '#006600',
-                accent: '#00ff00',
-                border: 'rgba(0,255,0,0.1)'
-            },
-            cyberpunk: {
-                name: 'Cyberpunk',
-                bg: '#0d0221',
-                bgSecondary: '#1a0a3e',
-                text: '#ff00ff',
-                textMuted: '#aa00aa',
-                accent: '#00ffff',
-                border: 'rgba(255,0,255,0.2)'
-            },
-            retro: {
-                name: 'Retro',
-                bg: '#2b1b17',
-                bgSecondary: '#3d2b27',
-                text: '#ffd700',
-                textMuted: '#cc9900',
-                accent: '#ff4500',
-                border: 'rgba(255,215,0,0.2)'
-            }
-        };
+        // Load themes from central themes.js (legacy format for backwards compatibility)
+        this.themes = typeof window.SimGlassThemes !== 'undefined'
+            ? window.SimGlassThemes.getThemesLegacy()
+            : this._getFallbackThemes();
 
         // Layout presets
         this.layouts = {
@@ -591,6 +427,52 @@ class WidgetCustomizer {
                 }
             });
         });
+    }
+
+    /**
+     * Fallback themes if themes.js is not loaded
+     * Returns minimal set matching themes.js core themes
+     */
+    _getFallbackThemes() {
+        console.warn('[WidgetCustomizer] themes.js not loaded, using fallback themes');
+        return {
+            dark: {
+                name: 'Dark',
+                bg: '#1a1a2e',
+                bgSecondary: '#16213e',
+                text: '#ffffff',
+                textMuted: '#888888',
+                accent: '#667eea',
+                border: 'rgba(255,255,255,0.1)'
+            },
+            light: {
+                name: 'Light',
+                bg: '#f5f5f5',
+                bgSecondary: '#ffffff',
+                text: '#333333',
+                textMuted: '#666666',
+                accent: '#667eea',
+                border: 'rgba(0,0,0,0.1)'
+            },
+            midnight: {
+                name: 'Midnight',
+                bg: '#0d1117',
+                bgSecondary: '#161b22',
+                text: '#c9d1d9',
+                textMuted: '#8b949e',
+                accent: '#58a6ff',
+                border: 'rgba(48,54,61,0.5)'
+            },
+            amoled: {
+                name: 'AMOLED',
+                bg: '#000000',
+                bgSecondary: '#0a0a0a',
+                text: '#ffffff',
+                textMuted: '#555555',
+                accent: '#00ff88',
+                border: 'rgba(255,255,255,0.05)'
+            }
+        };
     }
 }
 

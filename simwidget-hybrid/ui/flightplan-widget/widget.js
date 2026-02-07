@@ -12,12 +12,17 @@
  * - Auto-announce waypoint changes (optional)
  */
 
-class FlightPlanWidget {
+class FlightPlanWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'flight-plan',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.flightPlan = null;
         this.currentPosition = null;
         this.groundSpeed = 0;
-        this.ws = null;
         this.lastAnnouncedWaypoint = null;
 
         // Voice announcer
@@ -34,7 +39,6 @@ class FlightPlanWidget {
 
         this.initElements();
         this.initControls();
-        this.connectWebSocket();
         this.pollFlightPlan();
     }
 
@@ -155,33 +159,29 @@ WPTs: ${routeText}`;
         setTimeout(() => feedback.remove(), 1500);
     }
 
-    connectWebSocket() {
-        const wsUrl = 'ws://' + window.location.host;
-
-        try {
-            this.ws = new WebSocket(wsUrl);
-
-            this.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'simvar' || data.type === 'position') {
-                        this.updatePosition(data);
-                    }
-                    if (data.type === 'flightplan') {
-                        this.updateFlightPlan(data);
-                    }
-                } catch (e) {}
-            };
-
-            this.ws.onclose = () => {
-                if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
-            };
-        } catch (e) {
-            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 5000);
+    // SimGlassBase override: handle incoming messages
+    onMessage(data) {
+        if (data.type === 'simvar' || data.type === 'position' || data.type === 'flightData') {
+            this.updatePosition(data);
+        }
+        if (data.type === 'flightplan') {
+            this.updateFlightPlan(data);
         }
     }
 
+    // SimGlassBase override: called when connected
+    onConnect() {
+        console.log('[FlightPlan] WebSocket connected');
+    }
+
+    // SimGlassBase override: called when disconnected
+    onDisconnect() {
+        console.log('[FlightPlan] WebSocket disconnected');
+    }
+
     async pollFlightPlan() {
+        if (this._destroyed) return;
+
         try {
             // Try to get flight plan from API
             const response = await fetch('/api/flightplan');
@@ -205,7 +205,9 @@ WPTs: ${routeText}`;
         } catch (e) {}
 
         // Poll every 5 seconds
-        if (!this._destroyed) setTimeout(() => this.pollFlightPlan(), 5000);
+        if (!this._destroyed) {
+            this._pollTimeout = setTimeout(() => this.pollFlightPlan(), 5000);
+        }
     }
 
     updatePosition(data) {
@@ -494,8 +496,15 @@ WPTs: ${routeText}`;
 
     destroy() {
         this._destroyed = true;
-        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
-        if (this.syncChannel) { this.syncChannel.close(); this.syncChannel = null; }
+        if (this._pollTimeout) {
+            clearTimeout(this._pollTimeout);
+            this._pollTimeout = null;
+        }
+        if (this.syncChannel) {
+            this.syncChannel.close();
+            this.syncChannel = null;
+        }
+        super.destroy();
     }
 
     formatWaypointType(type) {

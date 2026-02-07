@@ -3,9 +3,14 @@
  * Auto-logs flights with stats and totals
  */
 
-class FlightLogWidget {
+class FlightLogWidget extends SimGlassBase {
     constructor() {
-        this.ws = null;
+        super({
+            widgetName: 'flight-log',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.flights = [];
         this.currentFlight = null;
         this.flightStartTime = null;
@@ -20,7 +25,6 @@ class FlightLogWidget {
         this.initEvents();
         this.loadFlights();
         this.updateTotals();
-        this.connectWebSocket();
     }
 
     initElements() {
@@ -47,24 +51,21 @@ class FlightLogWidget {
         this.clearBtn.addEventListener('click', () => this.clearAll());
     }
 
-    connectWebSocket() {
-        const host = location.hostname || 'localhost';
-        const wsUrl = `ws://${host}:8080`;
+    // SimGlassBase override: handle incoming messages
+    onMessage(msg) {
+        if (msg.type === 'flightData') {
+            this.processFlightData(msg.data);
+        }
+    }
 
-        this.ws = new WebSocket(wsUrl);
+    // SimGlassBase override: called when connected
+    onConnect() {
+        console.log('[FlightLog] WebSocket connected');
+    }
 
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'flightData') {
-                    this.processFlightData(msg.data);
-                }
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
-        };
+    // SimGlassBase override: called when disconnected
+    onDisconnect() {
+        console.log('[FlightLog] WebSocket disconnected');
     }
 
     processFlightData(data) {
@@ -311,7 +312,7 @@ class FlightLogWidget {
     destroy() {
         this._destroyed = true;
         this.stopTimer();
-        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+        super.destroy();
     }
 
     loadFlights() {

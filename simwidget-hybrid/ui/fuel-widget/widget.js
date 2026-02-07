@@ -1,7 +1,7 @@
 /**
- * Fuel Widget v2.3.1
- * Last Updated: 2026-01-11
- * 
+ * Fuel Widget v3.0.0
+ * Last Updated: 2026-02-07
+ *
  * Dynamic fuel management widget for SimGlass Engine
  * - Transparency toggle (persisted)
  * - Auto-detects aircraft fuel tanks from SimConnect
@@ -10,8 +10,9 @@
  * - Dynamic tank visualization
  * - Add/remove fuel controls (per selected tanks or all)
  * - Endurance calculation
- * 
+ *
  * Changelog:
+ * v3.0.0 - Migrated to SimGlassBase for standardized WebSocket handling
  * v2.3.1 - Fixed remote connection (use hostname instead of hardcoded localhost)
  * v2.3.0 - Transparency toggle with localStorage persistence
  * v2.2.0 - Multi-select tanks support
@@ -20,23 +21,24 @@
  * v1.0.0 - Initial widget with left/right tanks only
  */
 
-class FuelWidget {
+class FuelWidget extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
-        this.ws = null;
+        super({
+            widgetName: 'fuel-widget',
+            widgetVersion: '3.0.0',
+            autoConnect: true
+        });
+
         this.fuelData = {
             fuelTotal: 0,
             fuelCapacity: 56,
             fuelFlow: 0,
             tanks: []
         };
-        this.serverUrl = this.detectServerUrl();
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 10;
-        
+
         // Selected tanks (Set for multiple selection)
         this.selectedTanks = new Set();
-        
+
         // Tank definitions
         this.tankDefs = [
             { key: 'LeftMain', name: 'L Main', qtyField: 'fuelTankLeftMain', capField: 'fuelTankLeftMainCap' },
@@ -51,24 +53,14 @@ class FuelWidget {
             { key: 'External1', name: 'Ext 1', qtyField: 'fuelTankExternal1', capField: 'fuelTankExternal1Cap' },
             { key: 'External2', name: 'Ext 2', qtyField: 'fuelTankExternal2', capField: 'fuelTankExternal2Cap' }
         ];
-        
-        this.init();
-    }
 
-    detectServerUrl() {
-        // Use location.host for remote access, 127.0.0.1 for local
-        const host = location.hostname;
-        if (host === 'localhost' || host === '127.0.0.1') {
-            return 'ws://127.0.0.1:8080';
-        }
-        return `ws://${location.host}`;
+        this.init();
     }
 
     init() {
         this.cacheElements();
         this.bindEvents();
         this.loadTransparencyPreference();
-        this.connectWebSocket();
     }
 
     cacheElements() {
@@ -160,55 +152,20 @@ class FuelWidget {
         }
     }
 
-    connectWebSocket() {
-        if (this._destroyed) return;
-
-        this.setStatus('Connecting...', '');
-
-        try {
-            this.ws = new WebSocket(this.serverUrl);
-            
-            this.ws.onopen = () => {
-                this.reconnectAttempts = 0;
-                this.setStatus('Connected', 'connected');
-                this.log('Connected to SimGlass server', 'success');
-            };
-            
-            this.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this.handleData(data);
-                } catch (e) {
-                    console.error('Parse error:', e);
-                }
-            };
-            
-            this.ws.onclose = () => {
-                this.setStatus('Disconnected', 'disconnected');
-                if (!this._destroyed) {
-                    this.scheduleReconnect();
-                }
-            };
-            
-            this.ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                this.log('Connection error', 'error');
-            };
-        } catch (e) {
-            this.log('Failed to connect: ' + e.message, 'error');
-            this.scheduleReconnect();
-        }
+    // SimGlassBase lifecycle hook
+    onMessage(data) {
+        this.handleData(data);
     }
 
-    scheduleReconnect() {
-        if (this._destroyed) return;
+    // SimGlassBase lifecycle hook
+    onConnect() {
+        this.setStatus('Connected', 'connected');
+        this.log('Connected to SimGlass server', 'success');
+    }
 
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            const delay = Math.min(1000 * this.reconnectAttempts, 5000);
-            this.log(`Reconnecting in ${delay/1000}s...`);
-            this._reconnectTimeout = setTimeout(() => this.connectWebSocket(), delay);
-        }
+    // SimGlassBase lifecycle hook
+    onDisconnect() {
+        this.setStatus('Disconnected', 'disconnected');
     }
 
     handleData(data) {
@@ -418,17 +375,7 @@ class FuelWidget {
 
     destroy() {
         this._destroyed = true;
-
-        if (this._reconnectTimeout) {
-            clearTimeout(this._reconnectTimeout);
-            this._reconnectTimeout = null;
-        }
-
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
-        }
+        super.destroy();
     }
 }
 

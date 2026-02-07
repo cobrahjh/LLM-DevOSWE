@@ -1,5 +1,5 @@
 /**
- * Map Widget - SimGlass
+ * Map Widget - SimGlass v2.0.0
  * Live aircraft position map using Leaflet
  *
  * Widget Interconnection:
@@ -8,15 +8,19 @@
  * - Broadcasts position-update to other widgets
  */
 
-class MapWidget {
+class MapWidget extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
+        super({
+            widgetName: 'map-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.map = null;
         this.marker = null;
         this.trackLine = null;
         this.trackPoints = [];
         this.followMode = true;
-        this.ws = null;
         this.position = { lat: 47.4502, lng: -122.3088 }; // Default: Seattle
         this.heading = 0;
         this.altitude = 0;
@@ -38,6 +42,9 @@ class MapWidget {
         this.radarTileUrl = null;
         this.radarTimestamp = 0;
 
+        // Timeout tracking for cleanup
+        this._pollTimeout = null;
+
         // Cross-widget communication
         this.syncChannel = new BroadcastChannel('SimGlass-sync');
         this.initSyncListener();
@@ -45,7 +52,7 @@ class MapWidget {
         this.initMap();
         this.initControls();
         this.initRadarControls();
-        this.connectWebSocket();
+        this.pollPosition();
         this.loadFlightPlan();
     }
 
@@ -329,47 +336,21 @@ class MapWidget {
         });
     }
 
-    connectWebSocket() {
-        if (this._destroyed) return;
-
-        const wsUrl = 'ws://' + window.location.host;
-
-        try {
-            this.ws = new WebSocket(wsUrl);
-
-            this.ws.onopen = () => {
-                console.log('[Map] WebSocket connected');
-            };
-
-            this.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'simvar' || data.type === 'position') {
-                        this.updatePosition(data);
-                    }
-                } catch (e) {}
-            };
-
-            this.ws.onclose = () => {
-                if (!this._destroyed) {
-                    console.log('[Map] WebSocket closed, reconnecting...');
-                    setTimeout(() => this.connectWebSocket(), 3000);
-                }
-            };
-
-            this.ws.onerror = () => {
-                // Will reconnect on close
-            };
-
-        } catch (e) {
-            console.error('[Map] WebSocket error:', e);
-            if (!this._destroyed) {
-                setTimeout(() => this.connectWebSocket(), 5000);
-            }
+    // SimGlassBase lifecycle hook
+    onMessage(data) {
+        if (data.type === 'simvar' || data.type === 'position' || data.PLANE_LATITUDE !== undefined) {
+            this.updatePosition(data);
         }
+    }
 
-        // Also poll the REST API as fallback
-        this.pollPosition();
+    // SimGlassBase lifecycle hook
+    onConnect() {
+        console.log('[Map] WebSocket connected');
+    }
+
+    // SimGlassBase lifecycle hook
+    onDisconnect() {
+        console.log('[Map] WebSocket disconnected');
     }
 
     async pollPosition() {
@@ -385,7 +366,7 @@ class MapWidget {
 
         // Poll every 2 seconds
         if (!this._destroyed) {
-            setTimeout(() => this.pollPosition(), 2000);
+            this._pollTimeout = setTimeout(() => this.pollPosition(), 2000);
         }
     }
 
@@ -566,11 +547,10 @@ class MapWidget {
             this._flightPlanTimer = null;
         }
 
-        // Close WebSocket
-        if (this.ws) {
-            this.ws.onclose = null; // Prevent reconnect
-            this.ws.close();
-            this.ws = null;
+        // Clear polling timeout
+        if (this._pollTimeout) {
+            clearTimeout(this._pollTimeout);
+            this._pollTimeout = null;
         }
 
         // Close BroadcastChannel
@@ -578,6 +558,9 @@ class MapWidget {
             this.syncChannel.close();
             this.syncChannel = null;
         }
+
+        // Call parent's destroy() for WebSocket cleanup
+        super.destroy();
     }
 }
 

@@ -3,10 +3,14 @@
  * Displays nearby AI/multiplayer aircraft on radar display
  */
 
-class TrafficWidget {
+class TrafficWidget extends SimGlassBase {
     constructor() {
-        this.ws = null;
-        this.reconnectDelay = 2000;
+        super({
+            widgetName: 'traffic-radar',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.range = 10; // nm
         this.ownPosition = { lat: 0, lon: 0, alt: 0, hdg: 0 };
         this.traffic = [];
@@ -19,7 +23,6 @@ class TrafficWidget {
 
     init() {
         this.radarSize = document.getElementById('radar-display').offsetWidth;
-        this.connectWebSocket();
         this.bindEvents();
         this.startPolling();
 
@@ -30,45 +33,23 @@ class TrafficWidget {
         });
     }
 
-    connectWebSocket() {
-        const wsUrl = `ws://${window.location.hostname}:3001/ws`;
-        this.ws = new WebSocket(wsUrl);
-
-        this.ws.onopen = () => {
-            console.log('[Traffic] WebSocket connected');
-            this.updateConnectionStatus(true);
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'simData') {
-                    this.updateOwnPosition(msg.data);
-                }
-                if (msg.type === 'traffic') {
-                    this.updateTraffic(msg.data);
-                }
-            } catch (e) {
-                console.error('[Traffic] Parse error:', e);
-            }
-        };
-
-        this.ws.onclose = () => {
-            console.log('[Traffic] WebSocket closed');
-            this.updateConnectionStatus(false);
-            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
-        };
-
-        this.ws.onerror = (error) => {
-            console.error('[Traffic] WebSocket error:', error);
-        };
+    // SimGlassBase override: called when WebSocket connects
+    onConnect() {
+        console.log('[Traffic] Connected');
     }
 
-    updateConnectionStatus(connected) {
-        const status = document.getElementById('conn-status');
-        if (status) {
-            status.classList.toggle('connected', connected);
-            status.title = connected ? 'Connected to SimConnect' : 'Disconnected';
+    // SimGlassBase override: called when WebSocket disconnects
+    onDisconnect() {
+        console.log('[Traffic] Disconnected');
+    }
+
+    // SimGlassBase override: handle incoming messages
+    onMessage(msg) {
+        if (msg.type === 'simData' || msg.type === 'flightData') {
+            this.updateOwnPosition(msg.data);
+        }
+        if (msg.type === 'traffic') {
+            this.updateTraffic(msg.data);
         }
     }
 
@@ -286,8 +267,11 @@ class TrafficWidget {
 
     destroy() {
         this._destroyed = true;
-        if (this._pollInterval) clearInterval(this._pollInterval);
-        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+        if (this._pollInterval) {
+            clearInterval(this._pollInterval);
+            this._pollInterval = null;
+        }
+        super.destroy();
     }
 
     async startPolling() {

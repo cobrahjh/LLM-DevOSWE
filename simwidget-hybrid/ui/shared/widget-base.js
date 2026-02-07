@@ -268,7 +268,20 @@ class SimGlassBase {
             this.ws.send(JSON.stringify({ type: 'command', category, action, ...data }));
         }
     }
-    
+
+    /**
+     * Cleanup WebSocket and reconnect timer
+     */
+    destroy() {
+        this.clearReconnectInterval();
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.onerror = null;
+            this.ws.close();
+            this.ws = null;
+        }
+    }
+
     // Override these in subclass
     onConnect() {}
     onDisconnect() {}

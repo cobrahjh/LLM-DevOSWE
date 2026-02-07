@@ -2,16 +2,19 @@
  * Mobile Companion Widget
  * Remote control + flight data viewer for phone/tablet
  */
-class MobileCompanionWidget {
+class MobileCompanionWidget extends SimGlassBase {
     constructor() {
-        this.ws = null;
-        this.connected = false;
+        super({
+            widgetName: 'mobile-companion',
+            widgetVersion: '2.0.0',
+            autoConnect: true
+        });
+
         this.BASE = location.origin;
         this.pollTimer = null;
 
         this.initElements();
         this.initEvents();
-        this.connectWebSocket();
         this.startPolling();
     }
 
@@ -78,35 +81,21 @@ class MobileCompanionWidget {
         }
     }
 
-    connectWebSocket() {
-        const host = location.hostname || '127.0.0.1';
-        const port = location.port || '8080';
-        this.ws = new WebSocket('ws://' + host + ':' + port);
+    // SimGlassBase override: handle incoming messages
+    onMessage(data) {
+        if (data.type === 'simdata' || data.type === 'flightData' || data.PLANE_ALTITUDE !== undefined) {
+            this.updateFlightData(data);
+        }
+    }
 
-        this.ws.onopen = () => {
-            this.connected = true;
-            this.updateStatus(true);
-        };
+    // SimGlassBase override: called when connected
+    onConnect() {
+        this.updateStatus(true);
+    }
 
-        this.ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.type === 'simdata' || data.PLANE_ALTITUDE !== undefined) {
-                    this.updateFlightData(data);
-                }
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            this.connected = false;
-            this.updateStatus(false);
-            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
-        };
-
-        this.ws.onerror = () => {
-            this.connected = false;
-            this.updateStatus(false);
-        };
+    // SimGlassBase override: called when disconnected
+    onDisconnect() {
+        this.updateStatus(false);
     }
 
     startPolling() {
@@ -136,8 +125,11 @@ class MobileCompanionWidget {
 
     destroy() {
         this._destroyed = true;
-        if (this.pollTimer) clearInterval(this.pollTimer);
-        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+        if (this.pollTimer) {
+            clearInterval(this.pollTimer);
+            this.pollTimer = null;
+        }
+        super.destroy();
     }
 
     updateStatus(connected) {
