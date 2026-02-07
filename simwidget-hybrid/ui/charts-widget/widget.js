@@ -309,7 +309,15 @@ class ChartsWidget {
                 recentAirports: this.recentAirports,
                 source: this.currentSource
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveState',
+                    widget: 'charts-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadState() {
@@ -325,7 +333,15 @@ class ChartsWidget {
                     });
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadState',
+                    widget: 'charts-widget',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 }
 

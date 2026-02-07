@@ -513,7 +513,15 @@ class VoiceStressWidget {
                 calmBaseline: this.calmBaseline,
                 stressBaseline: this.stressBaseline
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveState',
+                    widget: 'voice-stress',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadState() {
@@ -535,14 +543,33 @@ class VoiceStressWidget {
                 this.el.resetBtn.classList.remove('hidden');
             }
             this.updateAnalyzeButton();
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadState',
+                    widget: 'voice-stress',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     destroy() {
         if (this.countdownInterval) clearInterval(this.countdownInterval);
         if (this.animationId) cancelAnimationFrame(this.animationId);
         if (this.mediaStream) this.mediaStream.getTracks().forEach(t => t.stop());
-        if (this.audioContext) { try { this.audioContext.close(); } catch (_) {} }
+        if (this.audioContext) {
+            try {
+                this.audioContext.close();
+            } catch (e) {
+                if (window.telemetry) {
+                    telemetry.captureError(e, {
+                        operation: 'closeAudioContext',
+                        widget: 'voice-stress'
+                    });
+                }
+            }
+        }
     }
 
     // --- Server Integration ---

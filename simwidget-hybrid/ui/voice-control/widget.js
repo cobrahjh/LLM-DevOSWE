@@ -145,7 +145,16 @@ function initSpeechRecognition() {
         if (settings.continuous && document.getElementById('btn-listen').dataset.shouldListen === 'true') {
             setTimeout(() => {
                 if (document.getElementById('btn-listen').dataset.shouldListen === 'true') {
-                    try { recognition.start(); } catch(e) {}
+                    try {
+                        recognition.start();
+                    } catch(e) {
+                        if (window.telemetry) {
+                            telemetry.captureError(e, {
+                                operation: 'autoRestartRecognition',
+                                widget: 'voice-control'
+                            });
+                        }
+                    }
                 }
             }, 100);
         }
@@ -472,8 +481,16 @@ function loadSettings() {
         if (saved) {
             settings = { ...settings, ...JSON.parse(saved) };
         }
-    } catch (e) {}
-    
+    } catch (e) {
+        if (window.telemetry) {
+            telemetry.captureError(e, {
+                operation: 'loadSettings',
+                widget: 'voice-control',
+                storage: 'localStorage'
+            });
+        }
+    }
+
     // Apply to UI
     document.getElementById('setting-language').value = settings.language;
     document.getElementById('setting-continuous').checked = settings.continuous;
@@ -514,7 +531,15 @@ function loadCommands() {
         if (saved) {
             voiceCommands = JSON.parse(saved);
         }
-    } catch (e) {}
+    } catch (e) {
+        if (window.telemetry) {
+            telemetry.captureError(e, {
+                operation: 'loadCommands',
+                widget: 'voice-control',
+                storage: 'localStorage'
+            });
+        }
+    }
 }
 
 function saveCommands() {
