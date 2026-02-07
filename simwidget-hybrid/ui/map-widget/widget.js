@@ -10,6 +10,7 @@
 
 class MapWidget {
     constructor() {
+        this._destroyed = false;
         this.map = null;
         this.marker = null;
         this.trackLine = null;
@@ -85,6 +86,8 @@ class MapWidget {
     }
 
     async loadFlightPlan() {
+        if (this._destroyed) return;
+
         try {
             const response = await fetch('/api/flightplan');
             if (response.ok) {
@@ -96,7 +99,9 @@ class MapWidget {
         }
 
         // Refresh every 10 seconds
-        setTimeout(() => this.loadFlightPlan(), 10000);
+        if (!this._destroyed) {
+            this._flightPlanTimer = setTimeout(() => this.loadFlightPlan(), 10000);
+        }
     }
 
     updateRoute(flightPlan) {
@@ -325,6 +330,8 @@ class MapWidget {
     }
 
     connectWebSocket() {
+        if (this._destroyed) return;
+
         const wsUrl = 'ws://' + window.location.host;
 
         try {
@@ -344,8 +351,10 @@ class MapWidget {
             };
 
             this.ws.onclose = () => {
-                console.log('[Map] WebSocket closed, reconnecting...');
-                setTimeout(() => this.connectWebSocket(), 3000);
+                if (!this._destroyed) {
+                    console.log('[Map] WebSocket closed, reconnecting...');
+                    setTimeout(() => this.connectWebSocket(), 3000);
+                }
             };
 
             this.ws.onerror = () => {
@@ -354,7 +363,9 @@ class MapWidget {
 
         } catch (e) {
             console.error('[Map] WebSocket error:', e);
-            setTimeout(() => this.connectWebSocket(), 5000);
+            if (!this._destroyed) {
+                setTimeout(() => this.connectWebSocket(), 5000);
+            }
         }
 
         // Also poll the REST API as fallback
@@ -362,6 +373,8 @@ class MapWidget {
     }
 
     async pollPosition() {
+        if (this._destroyed) return;
+
         try {
             const response = await fetch('/api/simvars');
             if (response.ok) {
@@ -371,7 +384,9 @@ class MapWidget {
         } catch (e) {}
 
         // Poll every 2 seconds
-        setTimeout(() => this.pollPosition(), 2000);
+        if (!this._destroyed) {
+            setTimeout(() => this.pollPosition(), 2000);
+        }
     }
 
     updatePosition(data) {
@@ -541,9 +556,33 @@ class MapWidget {
             this.radarLayer = null;
         }
     }
+
+    destroy() {
+        this._destroyed = true;
+
+        // Clear flight plan timer
+        if (this._flightPlanTimer) {
+            clearTimeout(this._flightPlanTimer);
+            this._flightPlanTimer = null;
+        }
+
+        // Close WebSocket
+        if (this.ws) {
+            this.ws.onclose = null; // Prevent reconnect
+            this.ws.close();
+            this.ws = null;
+        }
+
+        // Close BroadcastChannel
+        if (this.syncChannel) {
+            this.syncChannel.close();
+            this.syncChannel = null;
+        }
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.mapWidget = new MapWidget();
+    window.addEventListener('beforeunload', () => window.mapWidget?.destroy());
 });

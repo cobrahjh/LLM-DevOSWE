@@ -35,6 +35,7 @@ let dragOffset = { x: 0, y: 0 };
 let resizeStart = { x: 0, y: 0, width: 0, height: 0 };
 let ws = null;
 let isConnected = false;
+let _destroyed = false;
 
 // Widget ID for storage
 const WIDGET_ID = 'flight-data-widget';
@@ -80,13 +81,15 @@ function loadWidgetState() {
 // ============================================
 
 function connectWebSocket() {
+    if (_destroyed) return;
+
     // Use location.host for remote access, 127.0.0.1 for local
     const host = location.hostname;
     const wsUrl = (host === 'localhost' || host === '127.0.0.1')
         ? 'ws://127.0.0.1:8080'
         : `ws://${location.host}`;
     console.log(`[FlightData] Connecting to SimGlass server at ${wsUrl}...`);
-    
+
     ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
@@ -110,8 +113,10 @@ function connectWebSocket() {
         console.log('[FlightData] Disconnected from SimGlass server');
         isConnected = false;
         updateConnectionStatus(false);
-        // Reconnect after 3 seconds
-        setTimeout(connectWebSocket, 3000);
+        // Reconnect after 3 seconds (unless destroyed)
+        if (!_destroyed) {
+            setTimeout(connectWebSocket, 3000);
+        }
     };
     
     ws.onerror = (error) => {
@@ -301,6 +306,19 @@ closeBtn.addEventListener('click', () => {
 });
 
 // ============================================
+// CLEANUP
+// ============================================
+
+function destroy() {
+    _destroyed = true;
+    if (ws) {
+        ws.onclose = null; // Prevent reconnect
+        ws.close();
+        ws = null;
+    }
+}
+
+// ============================================
 // INITIALIZATION
 // ============================================
 
@@ -309,3 +327,5 @@ document.addEventListener('DOMContentLoaded', () => {
     loadWidgetState();
     connectWebSocket();
 });
+
+window.addEventListener('beforeunload', destroy);

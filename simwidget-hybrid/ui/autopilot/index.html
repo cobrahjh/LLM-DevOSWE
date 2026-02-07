@@ -156,6 +156,7 @@
     <script>
         // Initialize widget
         window.widget = new AutopilotWidget();
+        window.addEventListener('beforeunload', () => window.widget?.destroy());
 
         // Settings panel
         const settings = new SettingsPanel();

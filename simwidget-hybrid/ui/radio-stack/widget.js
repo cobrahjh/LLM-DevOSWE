@@ -29,7 +29,7 @@ class RadioStack {
         });
 
         this.renderPresets();
-        setInterval(() => this.sync(), 5000);
+        this._syncInterval = setInterval(() => this.sync(), 5000);
     }
 
     swap(radio) {
@@ -62,6 +62,16 @@ class RadioStack {
             }
         } catch (e) {}
     }
+
+    destroy() {
+        if (this._syncInterval) {
+            clearInterval(this._syncInterval);
+            this._syncInterval = null;
+        }
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => new RadioStack());
+document.addEventListener('DOMContentLoaded', () => {
+    window.radioStack = new RadioStack();
+    window.addEventListener('beforeunload', () => window.radioStack?.destroy());
+});

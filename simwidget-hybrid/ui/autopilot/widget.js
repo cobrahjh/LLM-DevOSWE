@@ -85,6 +85,9 @@ class AutopilotWidget extends SimGlassBase {
         this.elements = {};
         this.cacheElements();
 
+        // Track repeat intervals for cleanup
+        this.repeatIntervals = new Map();
+
         // Bind event handlers
         this.setupEventListeners();
 
@@ -138,14 +141,23 @@ class AutopilotWidget extends SimGlassBase {
 
             // Handle repeat for +/- buttons
             if (btn.dataset.repeat === 'true') {
-                let repeatInterval;
                 btn.addEventListener('mousedown', () => {
-                    repeatInterval = setInterval(() => {
+                    const repeatInterval = setInterval(() => {
                         this.sendCommand(btn.dataset.cmd);
                     }, 150);
+                    this.repeatIntervals.set(btn, repeatInterval);
                 });
-                btn.addEventListener('mouseup', () => clearInterval(repeatInterval));
-                btn.addEventListener('mouseleave', () => clearInterval(repeatInterval));
+
+                const clearRepeat = () => {
+                    const interval = this.repeatIntervals.get(btn);
+                    if (interval) {
+                        clearInterval(interval);
+                        this.repeatIntervals.delete(btn);
+                    }
+                };
+
+                btn.addEventListener('mouseup', clearRepeat);
+                btn.addEventListener('mouseleave', clearRepeat);
             }
         });
     }
@@ -373,6 +385,21 @@ class AutopilotWidget extends SimGlassBase {
     onMessage(msg) {
         if (msg.type === 'flightData' && msg.data) {
             this.onSimData(msg.data);
+        }
+    }
+
+    /**
+     * Cleanup on widget unload
+     * Override SimGlassBase.destroy()
+     */
+    destroy() {
+        // Clear all repeat intervals
+        this.repeatIntervals.forEach((interval) => clearInterval(interval));
+        this.repeatIntervals.clear();
+
+        // Call parent destroy (closes WebSocket, etc.)
+        if (super.destroy) {
+            super.destroy();
         }
     }
 }
