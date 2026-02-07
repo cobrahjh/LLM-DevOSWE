@@ -100,7 +100,7 @@ class MobileCompanionWidget {
         this.ws.onclose = () => {
             this.connected = false;
             this.updateStatus(false);
-            setTimeout(() => this.connectWebSocket(), 3000);
+            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
         };
 
         this.ws.onerror = () => {
@@ -134,6 +134,12 @@ class MobileCompanionWidget {
         this.vsEl.textContent = Math.round(d.VERTICAL_SPEED || d.verticalSpeed || 0);
     }
 
+    destroy() {
+        this._destroyed = true;
+        if (this.pollTimer) clearInterval(this.pollTimer);
+        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+    }
+
     updateStatus(connected) {
         if (connected) {
             this.statusEl.textContent = 'Connected';
@@ -147,4 +153,5 @@ class MobileCompanionWidget {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.mobileCompanion = new MobileCompanionWidget();
+    window.addEventListener('beforeunload', () => window.mobileCompanion?.destroy());
 });

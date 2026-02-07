@@ -538,6 +538,13 @@ class VoiceStressWidget {
         } catch (e) {}
     }
 
+    destroy() {
+        if (this.countdownInterval) clearInterval(this.countdownInterval);
+        if (this.animationId) cancelAnimationFrame(this.animationId);
+        if (this.mediaStream) this.mediaStream.getTracks().forEach(t => t.stop());
+        if (this.audioContext) { try { this.audioContext.close(); } catch (_) {} }
+    }
+
     // --- Server Integration ---
 
     async sendToServer(result) {
@@ -559,4 +566,5 @@ class VoiceStressWidget {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.voiceStress = new VoiceStressWidget();
+    window.addEventListener('beforeunload', () => window.voiceStress?.destroy());
 });

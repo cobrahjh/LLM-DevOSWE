@@ -63,7 +63,7 @@ class FlightLogWidget {
         };
 
         this.ws.onclose = () => {
-            setTimeout(() => this.connectWebSocket(), 3000);
+            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
         };
     }
 
@@ -308,6 +308,12 @@ class FlightLogWidget {
         } catch (e) {}
     }
 
+    destroy() {
+        this._destroyed = true;
+        this.stopTimer();
+        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+    }
+
     loadFlights() {
         try {
             const saved = localStorage.getItem('flightlog-widget-flights');
@@ -321,4 +327,5 @@ class FlightLogWidget {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.flightLogWidget = new FlightLogWidget();
+    window.addEventListener('beforeunload', () => window.flightLogWidget?.destroy());
 });

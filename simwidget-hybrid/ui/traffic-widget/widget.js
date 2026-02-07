@@ -54,9 +54,9 @@ class TrafficWidget {
         };
 
         this.ws.onclose = () => {
-            console.log('[Traffic] WebSocket closed, reconnecting...');
+            console.log('[Traffic] WebSocket closed');
             this.updateConnectionStatus(false);
-            setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
+            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
         };
 
         this.ws.onerror = (error) => {
@@ -284,9 +284,15 @@ class TrafficWidget {
         });
     }
 
+    destroy() {
+        this._destroyed = true;
+        if (this._pollInterval) clearInterval(this._pollInterval);
+        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+    }
+
     async startPolling() {
         // Poll for traffic data
-        setInterval(async () => {
+        this._pollInterval = setInterval(async () => {
             try {
                 const response = await fetch('/api/traffic');
                 if (response.ok) {
@@ -302,3 +308,4 @@ class TrafficWidget {
 
 // Initialize
 const trafficWidget = new TrafficWidget();
+window.addEventListener('beforeunload', () => trafficWidget.destroy());

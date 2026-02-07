@@ -174,10 +174,10 @@ WPTs: ${routeText}`;
             };
 
             this.ws.onclose = () => {
-                setTimeout(() => this.connectWebSocket(), 3000);
+                if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
             };
         } catch (e) {
-            setTimeout(() => this.connectWebSocket(), 5000);
+            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 5000);
         }
     }
 
@@ -205,7 +205,7 @@ WPTs: ${routeText}`;
         } catch (e) {}
 
         // Poll every 5 seconds
-        setTimeout(() => this.pollFlightPlan(), 5000);
+        if (!this._destroyed) setTimeout(() => this.pollFlightPlan(), 5000);
     }
 
     updatePosition(data) {
@@ -492,6 +492,12 @@ WPTs: ${routeText}`;
         return icons[type?.toLowerCase()] || '📍';
     }
 
+    destroy() {
+        this._destroyed = true;
+        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+        if (this.syncChannel) { this.syncChannel.close(); this.syncChannel = null; }
+    }
+
     formatWaypointType(type) {
         if (!type) return '';
         const types = {
@@ -515,4 +521,5 @@ WPTs: ${routeText}`;
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.flightPlanWidget = new FlightPlanWidget();
+    window.addEventListener('beforeunload', () => window.flightPlanWidget?.destroy());
 });

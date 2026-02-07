@@ -53,9 +53,9 @@ class ATCWidget {
         };
 
         this.ws.onclose = () => {
-            console.log('[ATC] WebSocket closed, reconnecting...');
+            console.log('[ATC] WebSocket closed');
             this.updateConnectionStatus(false);
-            setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
+            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
         };
 
         this.ws.onerror = (error) => {
@@ -212,9 +212,15 @@ class ATCWidget {
         setTimeout(() => toast.remove(), 2000);
     }
 
+    destroy() {
+        this._destroyed = true;
+        if (this._pollInterval) clearInterval(this._pollInterval);
+        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+    }
+
     async startPolling() {
         // Fallback polling for radio data
-        setInterval(async () => {
+        this._pollInterval = setInterval(async () => {
             try {
                 const response = await fetch('/api/radios');
                 if (response.ok) {
@@ -253,3 +259,4 @@ document.head.appendChild(toastStyle);
 
 // Initialize
 const atcWidget = new ATCWidget();
+window.addEventListener('beforeunload', () => atcWidget.destroy());

@@ -154,6 +154,8 @@ function updatePresetButtons() {
 // Initialize
 updatePresetButtons();
 checkStatus();
-setInterval(checkStatus, 2000);
+const _wasmPollInterval = setInterval(checkStatus, 2000);
+
+window.addEventListener('beforeunload', () => clearInterval(_wasmPollInterval));
 
 console.log('[WASM Camera Widget] Initialized');

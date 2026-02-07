@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStatus();
     
     // Poll status every 2s
-    setInterval(updateStatus, 2000);
+    const _camPollInterval = setInterval(updateStatus, 2000);
+    window.addEventListener('beforeunload', () => clearInterval(_camPollInterval));
 });
 
 // Initialize platform indicator section

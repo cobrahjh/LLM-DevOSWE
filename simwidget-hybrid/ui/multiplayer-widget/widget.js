@@ -81,7 +81,7 @@ class MultiplayerWidget {
 
         this.ws.onclose = () => {
             this.setConnectionStatus(false);
-            setTimeout(() => this.connectWebSocket(), 3000);
+            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), 3000);
         };
 
         this.ws.onerror = () => {
@@ -298,6 +298,12 @@ class MultiplayerWidget {
         return { lat: lat2 * 180 / Math.PI, lon: lon2 * 180 / Math.PI };
     }
 
+    destroy() {
+        this._destroyed = true;
+        if (this.refreshInterval) clearInterval(this.refreshInterval);
+        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+    }
+
     bearingToCardinal(bearing) {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         const index = Math.round(bearing / 45) % 8;
@@ -307,4 +313,5 @@ class MultiplayerWidget {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.multiplayerWidget = new MultiplayerWidget();
+    window.addEventListener('beforeunload', () => window.multiplayerWidget?.destroy());
 });

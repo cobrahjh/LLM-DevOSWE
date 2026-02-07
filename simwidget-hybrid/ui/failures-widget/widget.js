@@ -53,9 +53,9 @@ class FailuresWidget {
         };
 
         this.ws.onclose = () => {
-            console.log('[Failures] WebSocket closed, reconnecting...');
+            console.log('[Failures] WebSocket closed');
             this.updateConnectionStatus(false);
-            setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
+            if (!this._destroyed) setTimeout(() => this.connectWebSocket(), this.reconnectDelay);
         };
 
         this.ws.onerror = (error) => {
@@ -326,9 +326,15 @@ class FailuresWidget {
         setTimeout(() => toast.remove(), 2000);
     }
 
+    destroy() {
+        this._destroyed = true;
+        if (this._pollInterval) clearInterval(this._pollInterval);
+        if (this.ws) { this.ws.onclose = null; this.ws.close(); this.ws = null; }
+    }
+
     async startPolling() {
         // Poll for failure data
-        setInterval(async () => {
+        this._pollInterval = setInterval(async () => {
             try {
                 const response = await fetch('/api/failures');
                 if (response.ok) {
@@ -367,3 +373,4 @@ document.head.appendChild(toastStyle);
 
 // Initialize
 const failuresWidget = new FailuresWidget();
+window.addEventListener('beforeunload', () => failuresWidget.destroy());
