@@ -1,48 +1,23 @@
 /**
- * SimGlass Device ID Manager v1.0.0
- * Last Updated: 2025-01-07
- * 
+ * SimGlass Device ID Manager v1.1.0
+ * Last Updated: 2026-02-07
+ *
  * Generates and manages anonymous device UUIDs for telemetry.
+ * Requires: <script src="/ui/shared/platform-utils.js"></script>
  */
 
 class DeviceIdManager {
     constructor() {
         this.storageKey = 'SimGlass_device_id';
         this.sessionKey = '_SimGlass_session_id';
-        this.platform = this.detectPlatform();
-    }
-    
-    /**
-     * Detect platform type
-     */
-    detectPlatform() {
-        // MSFS in-game panel
-        if (window.name === 'ingamepanel' || typeof Coherent !== 'undefined') {
-            return 'msfs-panel';
-        }
-        // Electron app
-        if (navigator.userAgent.includes('Electron')) {
-            return 'electron';
-        }
-        // Mobile device
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            return 'mobile';
-        }
-        return 'desktop';
+        this.platform = PlatformUtils.getPlatform();
     }
     
     /**
      * Check if localStorage is available
      */
     hasLocalStorage() {
-        try {
-            const test = '__storage_test__';
-            localStorage.setItem(test, test);
-            localStorage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
+        return PlatformUtils.hasFeature('localStorage');
     }
     
     /**

@@ -1,11 +1,12 @@
 /**
- * SimGlass Base Class v1.1.0
- * Last Updated: 2025-01-07
+ * SimGlass Base Class v1.2.0
+ * Last Updated: 2026-02-07
  *
  * Shared functionality for all SimGlass widgets.
  * Include in your widget:
  *   <link rel="stylesheet" href="/ui/shared/widget-common.css">
  *   <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+ *   <script src="/ui/shared/platform-utils.js"></script>
  *   <script src="/ui/shared/telemetry.js"></script>
  *   <script src="/ui/shared/settings-panel.js"></script>
  *   <script src="/ui/shared/feedback-section.js"></script>
@@ -31,7 +32,7 @@ class SimGlassBase {
         this.reconnectInterval = null;
         this.serverUrl = options.serverUrl || this.detectServerUrl();
         this.statusElementId = options.statusElementId || 'conn-status';
-        this.platform = this.detectPlatform();
+        this.platform = PlatformUtils.getPlatform();
         
         // Widget info for telemetry
         this.widgetName = options.widgetName || 'unknown';
@@ -152,39 +153,10 @@ class SimGlassBase {
     }
     
     /**
-     * Detect platform: 'desktop', 'mobile', 'msfs-panel'
-     */
-    detectPlatform() {
-        // Check for MSFS in-game panel
-        if (window.name === 'ingamepanel' || 
-            window.location.href.includes('cohtml') ||
-            typeof Coherent !== 'undefined') {
-            return 'msfs-panel';
-        }
-        
-        // Check for mobile
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            return 'mobile';
-        }
-        
-        return 'desktop';
-    }
-    
-    /**
-     * Apply platform-specific visibility
+     * Apply platform-specific visibility (delegates to PlatformUtils)
      */
     applyPlatformVisibility() {
-        document.body.classList.add(`platform-${this.platform}`);
-        
-        // Hide elements not for this platform
-        document.querySelectorAll('.desktop-only, .mobile-only, .msfs-panel-only').forEach(el => {
-            el.style.display = 'none';
-        });
-        
-        // Show elements for this platform
-        document.querySelectorAll(`.${this.platform}-only`).forEach(el => {
-            el.style.display = '';
-        });
+        PlatformUtils.applyPlatformVisibility();
     }
     
     /**

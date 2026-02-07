@@ -1,8 +1,9 @@
 /**
- * SimGlass Capability Detector v1.0.0
- * Last Updated: 2025-01-07
- * 
+ * SimGlass Capability Detector v1.1.0
+ * Last Updated: 2026-02-07
+ *
  * Detects platform capabilities and installed addons.
+ * Requires: <script src="/ui/shared/platform-utils.js"></script>
  */
 
 class CapabilityDetector {
@@ -45,25 +46,11 @@ class CapabilityDetector {
     }
     
     testLocalStorage() {
-        try {
-            const test = '__test__';
-            localStorage.setItem(test, test);
-            localStorage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
+        return PlatformUtils.hasFeature('localStorage');
     }
-    
+
     testSessionStorage() {
-        try {
-            const test = '__test__';
-            sessionStorage.setItem(test, test);
-            sessionStorage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
+        return PlatformUtils.hasFeature('sessionStorage');
     }
     
     testWebSocket() {
@@ -71,7 +58,7 @@ class CapabilityDetector {
     }
     
     testNotifications() {
-        return 'Notification' in window;
+        return PlatformUtils.hasFeature('notifications');
     }
     
     testClipboard() {
@@ -92,8 +79,7 @@ class CapabilityDetector {
     
     testFileDownload() {
         // MSFS panels can't download files
-        if (window.name === 'ingamepanel') return false;
-        return true;
+        return !PlatformUtils.isMSFSPanel();
     }
     
     /**
@@ -168,7 +154,7 @@ class CapabilityDetector {
             limitations.push('no-gamepad-input');
         }
         
-        if (window.name === 'ingamepanel') {
+        if (PlatformUtils.isMSFSPanel()) {
             limitations.push('msfs-panel-limited-dom');
             limitations.push('no-external-links');
         }

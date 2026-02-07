@@ -2,6 +2,8 @@
  * Mobile Companion Mode - SimGlass
  * Auto-detects mobile devices and enables companion mode
  *
+ * Requires: <script src="/ui/shared/platform-utils.js"></script>
+ *
  * Usage:
  *   - Add ?mobile=1 to URL to force mobile companion mode
  *   - Add ?mobile=0 to force desktop mode
@@ -15,12 +17,6 @@
     const params = new URLSearchParams(window.location.search);
     const mobileParam = params.get('mobile');
 
-    // Auto-detect mobile
-    function isMobileDevice() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-            || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
-    }
-
     // Determine if mobile mode should be enabled
     let enableMobile = false;
 
@@ -29,7 +25,7 @@
     } else if (mobileParam === '0' || mobileParam === 'false') {
         enableMobile = false;
     } else {
-        enableMobile = isMobileDevice();
+        enableMobile = PlatformUtils.isMobile(true); // includeTouchScreens
     }
 
     // Apply mobile companion class

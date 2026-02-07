@@ -1,8 +1,9 @@
 /**
- * SimGlass Telemetry Service v1.0.0
- * Last Updated: 2025-01-07
- * 
+ * SimGlass Telemetry Service v1.1.0
+ * Last Updated: 2026-02-07
+ *
  * Error capture and feedback submission to Supabase.
+ * Requires: <script src="/ui/shared/platform-utils.js"></script>
  * Include: <script src="/ui/shared/telemetry.js"></script>
  */
 
@@ -16,7 +17,7 @@ class TelemetryService {
         // Widget context
         this.widget = options.widget || 'unknown';
         this.version = options.version || '0.0.0';
-        this.platform = this.detectPlatform();
+        this.platform = PlatformUtils.getPlatform();
         this.sessionId = this.generateSessionId();
         
         // Error deduplication
@@ -37,16 +38,6 @@ class TelemetryService {
         if (options.captureGlobalErrors !== false) {
             this.setupGlobalErrorHandler();
         }
-    }
-    
-    detectPlatform() {
-        if (window.name === 'ingamepanel' || typeof Coherent !== 'undefined') {
-            return 'msfs-panel';
-        }
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            return 'mobile';
-        }
-        return 'desktop';
     }
     
     generateSessionId() {
