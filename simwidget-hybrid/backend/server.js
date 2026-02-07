@@ -60,6 +60,15 @@ let simConnect = null;
 let simConnectConnection = null;
 let isSimConnected = false;
 
+// SimConnect reconnection with exponential backoff
+let simConnectRetryTimeout = null;
+let simConnectRetryDelay = 2000;
+const SC_RETRY_MIN = 2000;
+const SC_RETRY_MAX = 60000;
+const SC_RETRY_MULTIPLIER = 1.5;
+let simConnectRetryCount = 0;
+let mockDataInterval = null;
+
 // Fuel write data definition IDs (set during SimConnect init)
 let fuelWriteDefId = null;
 let fuelWriteDefIdRight = null;
@@ -1389,6 +1398,12 @@ app.post('/api/simconnect/remote', async (req, res) => {
         config.simconnect = { remoteHost: host || null, remotePort: port || 500 };
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
 
+        // Cancel pending retry and reset backoff
+        if (simConnectRetryTimeout) clearTimeout(simConnectRetryTimeout);
+        simConnectRetryTimeout = null;
+        simConnectRetryDelay = SC_RETRY_MIN;
+        simConnectRetryCount = 0;
+
         // Close existing connection
         if (simConnectConnection) {
             try {
@@ -1425,7 +1440,9 @@ app.get('/api/simconnect/status', (req, res) => {
         connected: isSimConnected,
         remoteHost: config.simconnect?.remoteHost || null,
         remotePort: config.simconnect?.remotePort || 500,
-        mockMode: !isSimConnected
+        mockMode: !isSimConnected,
+        retryCount: simConnectRetryCount,
+        nextRetryIn: simConnectRetryTimeout ? Math.round(simConnectRetryDelay / SC_RETRY_MULTIPLIER / 1000) : null
     });
 });
 
@@ -1436,8 +1453,12 @@ app.post('/api/shutdown', (req, res) => {
     
     // Close WebSocket connections
     wss.clients.forEach(client => {
-        client.send(JSON.stringify({ type: 'server_shutdown' }));
-        client.close();
+        try {
+            client.send(JSON.stringify({ type: 'server_shutdown' }));
+            client.close();
+        } catch (_) {
+            try { client.terminate(); } catch (__) {}
+        }
     });
     
     // Close server gracefully
@@ -1977,7 +1998,9 @@ app.post('/api/cockpit/sync/:sessionId', (req, res) => {
     // Broadcast to WebSocket clients in this session
     wss.clients.forEach(client => {
         if (client.sessionId === req.params.sessionId && client.readyState === 1) {
-            client.send(JSON.stringify({ type: 'cockpitSync', state: session.state, flightData }));
+            try {
+                client.send(JSON.stringify({ type: 'cockpitSync', state: session.state, flightData }));
+            } catch (_) {}
         }
     });
 
@@ -2749,15 +2772,31 @@ function executeCommand(command, value) {
 }
 
 // WebSocket handling
+// Ping/pong heartbeat — detect dead clients every 30s
+const WS_HEARTBEAT_INTERVAL = 30000;
+setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws._isAlive === false) {
+            ws.terminate();
+            return;
+        }
+        ws._isAlive = false;
+        ws.ping();
+    });
+}, WS_HEARTBEAT_INTERVAL);
+
 wss.on('connection', (ws) => {
     console.log('Client connected');
-    
+    ws._isAlive = true;
+
+    ws.on('pong', () => { ws._isAlive = true; });
+
     // Add client to hot reload manager (development only)
     hotReloadManager.addClient(ws);
-    
+
     // Send current state immediately
     ws.send(JSON.stringify({ type: 'flightData', data: flightData }));
-    
+
     ws.on('message', (message) => {
         try {
             const msg = JSON.parse(message);
@@ -2773,7 +2812,11 @@ wss.on('connection', (ws) => {
             console.error('Message parse error:', e);
         }
     });
-    
+
+    ws.on('error', (err) => {
+        console.error('[WS] Client error:', err.message);
+    });
+
     ws.on('close', () => {
         console.log('Client disconnected');
     });
@@ -2918,9 +2961,30 @@ function broadcastFlightData() {
     const message = JSON.stringify({ type: 'flightData', data: flightData });
     wss.clients.forEach((client) => {
         if (client.readyState === 1) { // WebSocket.OPEN
-            client.send(message);
+            try {
+                client.send(message);
+            } catch (e) {
+                try { client.terminate(); } catch (_) {}
+            }
         }
     });
+}
+
+function scheduleSimConnectRetry() {
+    if (simConnectRetryTimeout) clearTimeout(simConnectRetryTimeout);
+    simConnectRetryCount++;
+    const delay = simConnectRetryDelay;
+    simConnectRetryDelay = Math.min(simConnectRetryDelay * SC_RETRY_MULTIPLIER, SC_RETRY_MAX);
+    console.log(`[SimConnect] Retry #${simConnectRetryCount} in ${(delay / 1000).toFixed(1)}s...`);
+    simConnectRetryTimeout = setTimeout(() => initSimConnect(), delay);
+}
+
+function stopMockData() {
+    if (mockDataInterval) {
+        clearInterval(mockDataInterval);
+        mockDataInterval = null;
+        console.log('[SimConnect] Mock data stopped');
+    }
 }
 
 // SimConnect initialization
@@ -2960,6 +3024,14 @@ async function initSimConnect() {
         const { recvOpen, handle } = await open('SimGlass', Protocol.KittyHawk, connectOptions);
         
         console.log('Connected to MSFS:', recvOpen.applicationName);
+        if (mockDataInterval) {
+            console.log('[SimConnect] Connected — switching from mock to live data');
+            stopMockData();
+        }
+        if (simConnectRetryTimeout) clearTimeout(simConnectRetryTimeout);
+        simConnectRetryTimeout = null;
+        simConnectRetryDelay = SC_RETRY_MIN;
+        simConnectRetryCount = 0;
         simConnectConnection = handle;
         isSimConnected = true;
         flightData.connected = true;
@@ -3439,11 +3511,10 @@ async function initSimConnect() {
         });
         
         handle.on('close', () => {
-            console.log('SimConnect closed');
+            console.log('[SimConnect] Connection closed');
             isSimConnected = false;
             flightData.connected = false;
-            // Try to reconnect after 5 seconds
-            setTimeout(initSimConnect, 5000);
+            scheduleSimConnectRetry();
         });
         
         handle.on('error', (err) => {
@@ -3451,25 +3522,31 @@ async function initSimConnect() {
         });
         
     } catch (err) {
-        console.log('SimConnect not available:', err.message);
-        console.log('Running in MOCK mode - generating fake data for UI development');
+        const wasAlreadyMock = !!mockDataInterval;
         isSimConnected = false;
         flightData.connected = false;
-        
-        // Start mock data generator
+
+        if (!wasAlreadyMock) {
+            console.log('[SimConnect] Not available:', err.message);
+            console.log('[SimConnect] Running in MOCK mode — will keep retrying');
+        }
+
+        // Start mock data generator (idempotent — won't double-start)
         startMockData();
+        scheduleSimConnectRetry();
     }
 }
 
 // Mock data for browser testing without MSFS
 function startMockData() {
-    console.log('Starting mock data generator...');
-    
+    if (mockDataInterval) return; // Already running
+    console.log('[SimConnect] Starting mock data generator...');
+
     let mockAlt = 5000;
     let mockHdg = 0;
     let mockSpd = 120;
-    
-    setInterval(() => {
+
+    mockDataInterval = setInterval(() => {
         // Simulate gentle flying
         mockAlt += (Math.random() - 0.5) * 100;
         mockHdg = (mockHdg + 0.5) % 360;

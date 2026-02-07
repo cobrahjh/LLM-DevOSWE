@@ -141,11 +141,26 @@ class EngineMonitorWidget extends SimGlassBase {
      * Start canvas render loop
      */
     startRenderLoop() {
+        this._rafId = null;
         const render = () => {
             this.renderRpmGauge();
-            requestAnimationFrame(render);
+            this._rafId = requestAnimationFrame(render);
         };
         render();
+    }
+
+    /**
+     * Cleanup timers, RAF, and WebSocket
+     */
+    destroy() {
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
     }
 
     /**
