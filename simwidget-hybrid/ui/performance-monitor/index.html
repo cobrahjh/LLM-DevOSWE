@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Monitor - SimGlass</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="/ui/shared/hot-reload-client.js"></script>
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">⚡ Performance Monitor</span>
+            <button class="btn-reset" id="btn-reset" title="Reset Statistics">🔄</button>
+        </div>
+
+        <div class="widget-content">
+            <!-- WebSocket Status -->
+            <div class="metric-section">
+                <h3>WebSocket</h3>
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <span class="metric-label">Status</span>
+                        <span class="metric-value" id="ws-status">---</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Latency</span>
+                        <span class="metric-value" id="ws-latency">---</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Messages/sec</span>
+                        <span class="metric-value" id="ws-rate">---</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Reconnects</span>
+                        <span class="metric-value" id="ws-reconnects">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Browser Performance -->
+            <div class="metric-section">
+                <h3>Browser</h3>
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <span class="metric-label">FPS</span>
+                        <span class="metric-value" id="browser-fps">---</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Memory</span>
+                        <span class="metric-value" id="browser-memory">---</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">CPU Time</span>
+                        <span class="metric-value" id="browser-cpu">---</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">DOM Nodes</span>
+                        <span class="metric-value" id="browser-dom">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Tracking -->
+            <div class="metric-section">
+                <h3>Errors</h3>
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <span class="metric-label">Total Errors</span>
+                        <span class="metric-value" id="error-total">0</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Last Hour</span>
+                        <span class="metric-value" id="error-recent">0</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Error Rate</span>
+                        <span class="metric-value" id="error-rate">---</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Last Error</span>
+                        <span class="metric-value" id="error-last">None</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="metric-section">
+                <h3>System Health</h3>
+                <div class="health-indicators">
+                    <div class="health-item">
+                        <span class="health-label">API Server</span>
+                        <span class="health-status" id="health-api">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Checking...</span>
+                        </span>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-label">SimConnect</span>
+                        <span class="health-status" id="health-simconnect">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Checking...</span>
+                        </span>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-label">Camera Service</span>
+                        <span class="health-status" id="health-camera">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Checking...</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Chart -->
+            <div class="metric-section">
+                <h3>Latency History (60s)</h3>
+                <canvas id="perf-chart" width="600" height="120"></canvas>
+            </div>
+
+            <!-- Recent Events Log -->
+            <div class="metric-section">
+                <h3>Recent Events</h3>
+                <div class="events-log" id="events-log">
+                    <div class="event-item dim">No events yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SimGlassBase Dependencies -->
+    <script src="/ui/shared/platform-utils.js"></script>
+    <script src="/ui/shared/telemetry.js"></script>
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/feedback-section.js"></script>
+    <script src="/ui/shared/widget-base.js"></script>
+
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -242,6 +242,7 @@ async function testWidgets() {
         'flight-recorder',
         'fuel-widget',
         'keymap-editor',
+        'performance-monitor',
         'voice-control'
     ];
 
