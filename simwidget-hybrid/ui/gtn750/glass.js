@@ -1,5 +1,5 @@
 /**
- * GTN750 GPS Glass v2.0.0 - Full Garmin Feature Set
+ * GTN750 GPS Glass v2.1.0 - Full Garmin Feature Set with Code Splitting
  * Modular architecture with page manager and soft keys
  *
  * Orchestrator: creates and wires together all module instances.
@@ -10,17 +10,40 @@
  *   - GTNDataHandler (WebSocket, traffic, frequencies) — browser mode
  *   - GTNSimVarHandler (SimVar API, traffic, frequencies) — MSFS native mode
  *   - GTNDataFields (corner data fields)
+ *
+ * Code Splitting Strategy:
+ *   - Critical: core, map-renderer, cdi, data-fields (load immediately)
+ *   - Deferred 500ms: data-handler, simvar-handler, overlays
+ *   - Lazy (on-demand): flight-plan (FPL page), page modules (PROC, CHARTS, etc.)
  */
 
 class GTN750Glass extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'gtn750',
-            widgetVersion: '2.0.0',
+            widgetVersion: '2.1.0',
             autoConnect: false  // Uses GTNDataHandler for WebSocket management
         });
 
         this.serverPort = 8080;
+
+        // Module loader for code splitting
+        this.moduleLoader = new ModuleLoader({
+            basePath: '',
+            telemetry: this.telemetry
+        });
+
+        // Track lazy-loaded modules
+        this.loadedModules = {
+            flightPlan: false,
+            dataHandler: false,
+            overlays: false,
+            pageProc: false,
+            pageCharts: false,
+            pageNrst: false,
+            pageAux: false,
+            pageSystem: false
+        };
 
         // Initialize core utilities
         this.core = new GTNCore();
@@ -63,31 +86,17 @@ class GTN750Glass extends SimGlassBase {
         // Cross-glass sync
         this.syncChannel = new BroadcastChannel('SimGlass-sync');
 
-        // Create module instances
+        // Create critical module instances (loaded immediately)
         this.dataFieldsManager = new GTNDataFields({ core: this.core });
         this.cdiManager = new GTNCdi({ core: this.core, elements: {}, serverPort: this.serverPort });
-        this.flightPlanManager = new GTNFlightPlan({
-            core: this.core,
-            elements: {},
-            serverPort: this.serverPort,
-            syncChannel: this.syncChannel,
-            onWaypointChanged: () => this.flightPlanManager.updateWaypointDisplay(this.data, this.cdiManager),
-            onDirectToActivated: () => {
-                if (this.pageManager) this.pageManager.switchPage('map');
-            }
-        });
         this.mapRenderer = new GTNMapRenderer({
             core: this.core,
             getState: () => this.getRendererState()
         });
-        // Auto-detect: use SimVar API inside MSFS, WebSocket in browser
-        const HandlerClass = (typeof SimVar !== 'undefined') ? GTNSimVarHandler : GTNDataHandler;
-        this.dataHandler = new HandlerClass({
-            core: this.core,
-            serverPort: this.serverPort,
-            elements: {},
-            onDataUpdate: (d) => this.handleSimData(d)
-        });
+
+        // Deferred modules (loaded after 500ms)
+        this.flightPlanManager = null;
+        this.dataHandler = null;
 
         this.initSyncListener();
         this.init();
@@ -97,20 +106,134 @@ class GTN750Glass extends SimGlassBase {
         this.cacheElements();
         this.wireModuleElements();
         this.setupCanvas();
-        this.initOverlays();
         this.initSoftKeys();
         this.initPageManager();
         this.bindEvents();
         this.bindTawsAlerts();
         this.dataFieldsManager.loadConfig();
+        this.mapRenderer.start();
+
+        // Defer non-critical modules (500ms after initial render)
+        this.deferredInit();
+    }
+
+    /**
+     * Deferred initialization - Load non-critical modules after 500ms
+     */
+    async deferredInit() {
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        try {
+            // Load data handler and simvar handler modules
+            await this.loadDataHandler();
+
+            // Load overlays
+            await this.loadOverlays();
+
+            console.log('[GTN750] Deferred modules loaded');
+        } catch (error) {
+            console.error('[GTN750] Failed to load deferred modules:', error);
+            if (this.telemetry) {
+                this.telemetry.captureError(error, { context: 'GTN750.deferredInit' });
+            }
+        }
+    }
+
+    /**
+     * Lazy load data handler module
+     */
+    async loadDataHandler() {
+        if (this.loadedModules.dataHandler) return;
+
+        await this.moduleLoader.loadMultiple([
+            'modules/gtn-data-handler.js',
+            'modules/gtn-simvar-handler.js'
+        ]);
+
+        // Auto-detect: use SimVar API inside MSFS, WebSocket in browser
+        const HandlerClass = (typeof SimVar !== 'undefined') ? GTNSimVarHandler : GTNDataHandler;
+        this.dataHandler = new HandlerClass({
+            core: this.core,
+            serverPort: this.serverPort,
+            elements: this.elements,
+            onDataUpdate: (d) => this.handleSimData(d)
+        });
+
         this.dataHandler.connect();
         this.dataHandler.startClock();
+
+        this.loadedModules.dataHandler = true;
+    }
+
+    /**
+     * Lazy load flight plan module
+     */
+    async loadFlightPlan() {
+        if (this.loadedModules.flightPlan || this.flightPlanManager) return;
+
+        await this.moduleLoader.load('modules/gtn-flight-plan.js');
+
+        this.flightPlanManager = new GTNFlightPlan({
+            core: this.core,
+            elements: this.elements,
+            serverPort: this.serverPort,
+            syncChannel: this.syncChannel,
+            onWaypointChanged: () => this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager),
+            onDirectToActivated: () => {
+                if (this.pageManager) this.pageManager.switchPage('map');
+            }
+        });
+
         this.flightPlanManager.fetchFlightPlan();
-        this.mapRenderer.start();
-        this.dataHandler.startTrafficPolling(
-            () => this.map.showTraffic || this.pageManager?.getCurrentPageId() === 'traffic',
-            this.trafficOverlay
-        );
+        this.loadedModules.flightPlan = true;
+    }
+
+    /**
+     * Lazy load overlays
+     */
+    async loadOverlays() {
+        if (this.loadedModules.overlays) return;
+
+        await this.moduleLoader.loadMultiple([
+            'overlays/terrain-overlay.js',
+            'overlays/traffic-overlay.js',
+            'overlays/weather-overlay.js',
+            'overlays/map-controls.js'
+        ]);
+
+        this.initOverlays();
+        this.loadedModules.overlays = true;
+
+        // Start traffic polling if data handler loaded
+        if (this.dataHandler) {
+            this.dataHandler.startTrafficPolling(
+                () => this.map.showTraffic || this.pageManager?.getCurrentPageId() === 'traffic',
+                this.trafficOverlay
+            );
+        }
+    }
+
+    /**
+     * Lazy load page module (PROC, CHARTS, NRST, AUX, SYSTEM)
+     */
+    async loadPageModule(pageId) {
+        const moduleKey = `page${pageId.charAt(0).toUpperCase() + pageId.slice(1)}`;
+        if (this.loadedModules[moduleKey]) return;
+
+        const moduleMap = {
+            proc: 'pages/page-proc.js',
+            charts: 'pages/page-charts.js',
+            nrst: 'pages/page-nrst.js',
+            aux: 'pages/page-aux.js',
+            system: 'pages/page-system.js'
+        };
+
+        const modulePath = moduleMap[pageId];
+        if (!modulePath) return;
+
+        await this.moduleLoader.load(modulePath);
+        this.loadedModules[moduleKey] = true;
+        console.log(`[GTN750] Loaded page module: ${pageId}`);
     }
 
     /**
@@ -136,38 +259,42 @@ class GTN750Glass extends SimGlassBase {
             obsCourse: document.getElementById('obs-course')
         };
 
-        // Flight plan elements
-        this.flightPlanManager.elements = {
-            fplDep: this.elements.fplDep,
-            fplArr: this.elements.fplArr,
-            fplDist: this.elements.fplDist,
-            fplEte: this.elements.fplEte,
-            fplList: this.elements.fplList,
-            fplProgress: this.elements.fplProgress,
-            wptId: this.elements.wptId,
-            wptDis: this.elements.wptDis,
-            wptBrg: this.elements.wptBrg,
-            wptEte: this.elements.wptEte,
-            wptDtk: document.getElementById('wpt-dtk'),
-            wptType: document.getElementById('wpt-type')
-        };
+        // Flight plan elements (lazy-loaded)
+        if (this.flightPlanManager) {
+            this.flightPlanManager.elements = {
+                fplDep: this.elements.fplDep,
+                fplArr: this.elements.fplArr,
+                fplDist: this.elements.fplDist,
+                fplEte: this.elements.fplEte,
+                fplList: this.elements.fplList,
+                fplProgress: this.elements.fplProgress,
+                wptId: this.elements.wptId,
+                wptDis: this.elements.wptDis,
+                wptBrg: this.elements.wptBrg,
+                wptEte: this.elements.wptEte,
+                wptDtk: document.getElementById('wpt-dtk'),
+                wptType: document.getElementById('wpt-type')
+            };
+        }
 
-        // Data handler elements
-        this.dataHandler.elements = {
-            conn: this.elements.conn,
-            sysGpsStatus: this.elements.sysGpsStatus,
-            com1: this.elements.com1,
-            com1Stby: this.elements.com1Stby,
-            com2: this.elements.com2,
-            com2Stby: this.elements.com2Stby,
-            nav1: this.elements.nav1,
-            nav1Stby: this.elements.nav1Stby,
-            nav1Ident: this.elements.nav1Ident,
-            nav1Radial: this.elements.nav1Radial,
-            nav1Dme: this.elements.nav1Dme,
-            xpdr: this.elements.xpdr,
-            utcTime: this.elements.utcTime
-        };
+        // Data handler elements (lazy-loaded)
+        if (this.dataHandler) {
+            this.dataHandler.elements = {
+                conn: this.elements.conn,
+                sysGpsStatus: this.elements.sysGpsStatus,
+                com1: this.elements.com1,
+                com1Stby: this.elements.com1Stby,
+                com2: this.elements.com2,
+                com2Stby: this.elements.com2Stby,
+                nav1: this.elements.nav1,
+                nav1Stby: this.elements.nav1Stby,
+                nav1Ident: this.elements.nav1Ident,
+                nav1Radial: this.elements.nav1Radial,
+                nav1Dme: this.elements.nav1Dme,
+                xpdr: this.elements.xpdr,
+                utcTime: this.elements.utcTime
+            };
+        }
     }
 
     /**
@@ -185,17 +312,17 @@ class GTN750Glass extends SimGlassBase {
             terrainOverlay: this.terrainOverlay,
             trafficOverlay: this.trafficOverlay,
             weatherOverlay: this.weatherOverlay,
-            flightPlan: this.flightPlanManager.flightPlan,
-            activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
-            activeWaypoint: this.flightPlanManager.activeWaypoint,
+            flightPlan: this.flightPlanManager?.flightPlan || null,
+            activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0,
+            activeWaypoint: this.flightPlanManager?.activeWaypoint || null,
             obs: this.cdiManager.obs,
             nav1: this.cdiManager.nav1,
             nav2: this.cdiManager.nav2,
             gps: this.cdiManager.gps,
             onUpdateDatafields: () => {
                 this.dataFieldsManager.update(this.data, {
-                    flightPlan: this.flightPlanManager.flightPlan,
-                    activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
+                    flightPlan: this.flightPlanManager?.flightPlan || null,
+                    activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0,
                     cdi: this.cdiManager.cdi
                 });
                 // Range display
@@ -413,7 +540,18 @@ class GTN750Glass extends SimGlassBase {
         });
     }
 
-    onPageActivate(pageId) {
+    async onPageActivate(pageId) {
+        // Lazy load flight plan module when FPL page accessed
+        if (pageId === 'fpl' && !this.flightPlanManager) {
+            await this.loadFlightPlan();
+        }
+
+        // Lazy load page-specific modules
+        if (['proc', 'charts', 'nrst', 'aux', 'system'].includes(pageId)) {
+            await this.loadPageModule(pageId);
+        }
+
+        // Page-specific initialization
         if (pageId === 'proc') {
             if (this.proceduresPage) {
                 this.proceduresPage.init();
@@ -1236,9 +1374,9 @@ class GTN750Glass extends SimGlassBase {
     }
 
     destroy() {
-        this.mapRenderer.stop();
-        this.dataHandler.destroy();
-        this.flightPlanManager.destroy();
+        if (this.mapRenderer) this.mapRenderer.stop();
+        if (this.dataHandler) this.dataHandler.destroy();
+        if (this.flightPlanManager) this.flightPlanManager.destroy();
         this.terrainPageRenderActive = false;
         this.trafficPageRenderActive = false;
         this.weatherPageRenderActive = false;

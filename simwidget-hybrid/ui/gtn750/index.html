@@ -558,6 +558,8 @@
     </div>
     </div> <!-- widget-container -->
 
+    <!-- Critical Path: Load immediately -->
+    <script src="/ui/shared/module-loader.js"></script>
     <script src="/ui/shared/settings-panel.js"></script>
     <script src="/ui/shared/theme-switcher.js"></script>
     <script src="/ui/shared/widget-customizer.js"></script>
@@ -566,19 +568,9 @@
     <script src="modules/gtn-softkeys.js"></script>
     <script src="modules/gtn-data-fields.js"></script>
     <script src="modules/gtn-cdi.js"></script>
-    <script src="modules/gtn-flight-plan.js"></script>
     <script src="modules/gtn-map-renderer.js"></script>
-    <script src="modules/gtn-data-handler.js"></script>
-    <script src="modules/gtn-simvar-handler.js"></script>
-    <script src="overlays/terrain-overlay.js"></script>
-    <script src="overlays/traffic-overlay.js"></script>
-    <script src="overlays/weather-overlay.js"></script>
-    <script src="overlays/map-controls.js"></script>
-    <script src="pages/page-proc.js"></script>
-    <script src="pages/page-aux.js"></script>
-    <script src="pages/page-charts.js"></script>
-    <script src="pages/page-nrst.js"></script>
-    <script src="pages/page-system.js"></script>
+
+    <!-- Main orchestrator (handles lazy loading) -->
     <script src="glass.js"></script>
     <script>
         const settings = new SettingsPanel();
