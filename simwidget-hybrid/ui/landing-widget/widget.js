@@ -3,10 +3,14 @@
  * Tracks touchdown vertical speed and grades landings
  */
 
-class LandingWidget {
+class LandingWidget extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
-        this.ws = null;
+        super({
+            widgetName: 'landing-widget',
+            widgetVersion: '1.1.0',
+            autoConnect: true
+        });
+
         this.history = [];
         this.lastData = null;
         this.wasOnGround = true;
@@ -16,7 +20,6 @@ class LandingWidget {
         this.initElements();
         this.initEvents();
         this.loadHistory();
-        this.connectWebSocket();
     }
 
     initElements() {
@@ -35,28 +38,11 @@ class LandingWidget {
         this.resetBtn.addEventListener('click', () => this.resetCurrent());
     }
 
-    connectWebSocket() {
-        if (this._destroyed) return;
-
-        const host = location.hostname || 'localhost';
-        const wsUrl = `ws://${host}:8080`;
-
-        this.ws = new WebSocket(wsUrl);
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'flightData') {
-                    this.processFlightData(msg.data);
-                }
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            if (!this._destroyed) {
-                setTimeout(() => this.connectWebSocket(), 3000);
-            }
-        };
+    // SimGlassBase lifecycle hook
+    onMessage(msg) {
+        if (msg.type === 'flightData') {
+            this.processFlightData(msg.data);
+        }
     }
 
     processFlightData(data) {
@@ -204,17 +190,10 @@ class LandingWidget {
         } catch (e) {}
     }
 
-    destroy() {
-        this._destroyed = true;
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
-        }
-    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.landingWidget = new LandingWidget();
+    // SimGlassBase provides destroy() - wire to beforeunload
     window.addEventListener('beforeunload', () => window.landingWidget?.destroy());
 });
