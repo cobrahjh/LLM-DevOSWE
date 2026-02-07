@@ -1,6 +1,6 @@
 # SimGlass Catalog
 
-> **54 widgets** for Microsoft Flight Simulator 2024
+> **55 widgets** for Microsoft Flight Simulator 2024
 
 ## Quick Start
 
@@ -50,6 +50,7 @@ Ctrl+/                          # Keyboard shortcuts
 | 📻 **Radio Stack** | COM/NAV frequencies | `/ui/radio-stack/` |
 | 📡 **ATC Comm** | ATC phrases & TTS | `/ui/atc-widget/` |
 | 👥 **Multiplayer** | VATSIM/IVAO traffic | `/ui/multiplayer-widget/` |
+| 🌐 **VATSIM Live** | Real-time VATSIM network traffic, ATC, flight following | `/ui/vatsim-live/` |
 | ✈️ **Traffic** | Aircraft traffic display | `/ui/traffic-widget/` |
 | 🎙️ **Voice Stress** | Voice stress analyzer | `/ui/voice-stress/` |
 
@@ -154,7 +155,7 @@ Custom presets: Save via Settings > Backup & Restore
 
 ## Features
 
-- ✅ 54 widgets
+- ✅ 55 widgets
 - ✅ WebSocket real-time data
 - ✅ SimConnect integration
 - ✅ Mobile responsive
@@ -190,4 +191,4 @@ GET  /api/debug/camera
 
 ---
 
-Generated: 2026-02-07
+Generated: 2026-02-07 (Updated: 2026-02-07 with VATSIM Live)

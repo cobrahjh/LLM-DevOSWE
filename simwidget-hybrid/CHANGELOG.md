@@ -15,16 +15,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - System health checks for API server, SimConnect, and camera service
   - Event log with color-coded severity indicators
   - Statistics: average load time, slowest widget tracking
+- **VATSIM Live Widget** (`/ui/vatsim-live/`) v1.2.0 - Real-time VATSIM network integration
+  - Live traffic display from VATSIM API (15-second updates)
+  - Nearby aircraft list with distance, altitude, speed, heading
+  - Active ATC stations with frequencies and ATIS
+  - Network statistics (pilots online, ATC online, nearby count)
+  - Search and filter capabilities for aircraft and ATC
+  - Configurable range (10-200nm) and update intervals
+  - **Notification System** - Alerts for new/departing traffic
+    - Browser notifications (with permission)
+    - In-widget notifications with auto-dismiss
+    - Detects aircraft entering/leaving range
+  - **Flight Following** - Track specific VATSIM aircraft
+    - Follow button on each aircraft (☆/⭐)
+    - Real-time position tracking with map broadcast
+    - Altitude change detection (±1000ft threshold)
+    - Heading change detection (±30° threshold)
+    - Automatic notifications for significant changes
+    - Visual highlighting of followed aircraft (orange glow)
 - **Comprehensive Test Suite** - Expanded from 9 to 60 automated tests
-  - All 54 widgets now tested for accessibility
+  - All 55 widgets now tested for accessibility
   - 6 shared resources validated with file size reporting
   - Load time measurement per widget
   - HTML structure validation with warnings
   - 100% test pass rate (60/60 passing)
 
 ### Changed
-- **Widget Catalog** - Updated to reflect all 54 widgets (was 30)
-  - Added 14 previously undocumented widgets
+- **Map Widget** v2.0.0 → v2.1.0 - VATSIM traffic rendering
+  - Displays VATSIM traffic as markers on map
+  - Aircraft icons rotate to match heading
+  - Purple gradient callsign labels
+  - Popup shows altitude, groundspeed, heading
+  - Listens for vatsim-traffic BroadcastChannel messages
+  - Automatic rendering when VATSIM Live widget active
+  - Proper cleanup of traffic markers in destroy()
+- **Widget Catalog** - Updated to reflect all 55 widgets (was 30)
+  - Added 15 previously undocumented widgets (including VATSIM Live)
   - Categorized into 10 logical groups
   - Updated generation date to 2026-02-07
 - **Notepad Widget** - Completed migration to SimGlassBase v2.0.0

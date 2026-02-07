@@ -3,7 +3,7 @@
 Flow Pro replacement for MSFS 2024 - modular widget overlay system.
 
 **Server Version:** v1.11.0
-**Status:** 54 widgets available | 60 automated tests passing
+**Status:** 55 widgets available | 61 automated tests passing
 
 ---
 
@@ -63,6 +63,12 @@ Browse to: http://localhost:8080
 | AI Copilot | `/ui/copilot-widget/` | Intelligent flight assistant |
 | Voice Control | `/ui/voice-control/` | Voice commands |
 | Otto Search | `/ui/otto-search/` | Command palette |
+
+#### Multiplayer & Network
+
+| Widget | URL | Description |
+|--------|-----|-------------|
+| VATSIM Live | `/ui/vatsim-live/` | Real-time VATSIM traffic, ATC, flight following |
 
 #### Utilities
 
