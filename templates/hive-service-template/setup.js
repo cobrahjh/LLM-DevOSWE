@@ -257,7 +257,7 @@ node "%~dp0remove.js" ${projectName}
 :: Claude Code launcher for ${projectName}
 :: Double-click to open project in Claude Code
 cd /d "${projectDir}"
-cmd /k "C:\\LLM-DevOSWE\\mclaude.bat"
+cmd /k "claude"
 `;
         fs.writeFileSync(launcherPath, launcherContent);
         console.log(`  ✓ Created: claude-${projectName}.bat`);

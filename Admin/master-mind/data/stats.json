@@ -1,0 +1,14 @@
+{
+  "totalQueries": 5,
+  "queriesByBackend": {
+    "Iris (LM Studio Remote)": 5,
+    "Ollama": 3,
+    "Nova (LM Studio Local)": 3
+  },
+  "avgResponseTime": {
+    "Iris (LM Studio Remote)": 2554,
+    "Ollama": 57816
+  },
+  "lastQuery": 1770436624821,
+  "costIncurred": 0
+}
