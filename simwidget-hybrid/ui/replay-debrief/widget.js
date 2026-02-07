@@ -1,5 +1,11 @@
-class FlightReplay {
+class FlightReplay extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'replay-debrief',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // HTTP polling for flight data
+        });
+
         this.recording = false;
         this.playing = false;
         this.frames = [];
@@ -303,6 +309,9 @@ class FlightReplay {
             clearInterval(this.playInterval);
             this.playInterval = null;
         }
+
+        // Call parent destroy
+        super.destroy();
     }
 }
 

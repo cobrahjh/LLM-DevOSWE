@@ -1,5 +1,5 @@
 /**
- * Charts Widget - SimGlass
+ * Charts Widget - SimGlass v2.0.0
  * Airport charts viewer using FREE sources:
  * - FAA DTPP for US airports (no login required)
  * - SkyVector for worldwide charts
@@ -8,8 +8,14 @@
  * No Navigraph subscription needed!
  */
 
-class NavigraphWidget {
+class NavigraphWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'navigraph-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // HTTP only, no WebSocket
+        });
+
         this.isAuthenticated = true; // No auth needed for free charts
         this.currentAirport = null;
         this.charts = [];
@@ -463,8 +469,14 @@ class NavigraphWidget {
             this.searchAirport();
         }
     }
+
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.navigraphWidget = new NavigraphWidget();
+    window.addEventListener('beforeunload', () => window.navigraphWidget?.destroy());
 });

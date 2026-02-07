@@ -1,5 +1,5 @@
 /**
- * Fuel Planner Widget - SimGlass
+ * Fuel Planner Widget - SimGlass v2.0.0
  * Calculate trip fuel, reserves, endurance
  */
 
@@ -13,8 +13,14 @@ const AIRCRAFT_PROFILES = {
     custom: { name: 'Custom', burn: 10, speed: 150, capacity: 100 }
 };
 
-class FuelPlanner {
+class FuelPlanner extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'fuel-planner',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // Calculator only, no WebSocket
+        });
+
         this.aircraft = 'c172';
         this.initElements();
         this.initEvents();
@@ -145,8 +151,14 @@ Ground Speed: ${Math.round(this.lastCalc.groundSpeed)} kt`;
         channel.postMessage({ type: 'copy-route', data: { text } });
         channel.close();
     }
+
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.fuelPlanner = new FuelPlanner();
+    window.addEventListener('beforeunload', () => window.fuelPlanner?.destroy());
 });
