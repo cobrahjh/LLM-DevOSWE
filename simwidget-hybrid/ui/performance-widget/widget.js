@@ -3,10 +3,14 @@
  * Displays FPS, GPU, CPU usage and frame timing
  */
 
-class PerformanceWidget {
+class PerformanceWidget extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
-        this.ws = null;
+        super({
+            widgetName: 'performance-widget',
+            widgetVersion: '1.1.0',
+            autoConnect: true
+        });
+
         this.fpsHistory = [];
         this.targetFPS = 60;
         this._rafId = null;
@@ -14,7 +18,6 @@ class PerformanceWidget {
 
         this.initElements();
         this.initEvents();
-        this.connectWebSocket();
         this.startLocalMonitoring();
     }
 
@@ -47,28 +50,11 @@ class PerformanceWidget {
         this.refreshBtn.addEventListener('click', () => this.refresh());
     }
 
-    connectWebSocket() {
-        if (this._destroyed) return;
-
-        const host = location.hostname || 'localhost';
-        const wsUrl = `ws://${host}:8080`;
-
-        this.ws = new WebSocket(wsUrl);
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'performance') {
-                    this.updatePerformance(msg.data);
-                }
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            if (!this._destroyed) {
-                setTimeout(() => this.connectWebSocket(), 3000);
-            }
-        };
+    // SimGlassBase lifecycle hook
+    onMessage(msg) {
+        if (msg.type === 'performance') {
+            this.updatePerformance(msg.data);
+        }
     }
 
     startLocalMonitoring() {
@@ -194,8 +180,7 @@ class PerformanceWidget {
     }
 
     destroy() {
-        this._destroyed = true;
-
+        // Additional cleanup beyond SimGlassBase
         if (this._rafId) {
             cancelAnimationFrame(this._rafId);
             this._rafId = null;
@@ -206,11 +191,8 @@ class PerformanceWidget {
             this._fetchInterval = null;
         }
 
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
-        }
+        // Call parent's destroy() for WebSocket cleanup
+        super.destroy();
     }
 }
 
