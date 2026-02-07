@@ -527,7 +527,14 @@ class KeySender {
 
             const startTime = Date.now();
             const script = 'C:\\LLM-DevOSWE\\send-key.ps1';
-            const cmd = `powershell -ExecutionPolicy Bypass -File ${script} -Key ${key}`;
+            // Sanitize key to prevent PowerShell injection - strip anything that isn't
+            // alphanumeric, +, -, or underscore (valid key combo characters)
+            const safeKey = key.replace(/[^A-Za-z0-9_+\-\s]/g, '');
+            if (!safeKey) {
+                reject(new Error('Invalid key after sanitization'));
+                return;
+            }
+            const cmd = `powershell -ExecutionPolicy Bypass -File "${script}" -Key "${safeKey}"`;
 
             this.log(`Executing (PowerShell fallback): ${key}`);
 

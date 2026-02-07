@@ -2333,20 +2333,9 @@ app.post('/api/environment/weather', async (req, res) => {
             return res.json({ success: true, preset, method: 'simconnect' });
         }
 
-        // Method 2: Use keyboard to open weather panel and select preset
-        // MSFS 2024: Press ESC -> Flight Conditions -> Weather
-        const { exec } = require('child_process');
-        const psScript = `
-            Add-Type -AssemblyName System.Windows.Forms
-            # Store current weather state for UI feedback
-            Write-Host "Setting weather to: ${preset}"
-        `;
-
-        exec(`powershell -ExecutionPolicy Bypass -Command "${psScript}"`, (err) => {
-            if (err) {
-                console.error('[Weather] PS Error:', err.message);
-            }
-        });
+        // Method 2: Log the weather change (preset already validated against whitelist above)
+        const presetName = presetConfig[preset].name;
+        console.log(`[Weather] Setting weather to: ${presetName}`);
 
         // Return success - weather changes are UI-only until MSFS SDK improves
         res.json({
@@ -2585,12 +2574,20 @@ app.post('/api/keymaps/import', (req, res) => {
 // Send a custom key (for testing/widgets)
 app.post('/api/sendkey', (req, res) => {
     const { key } = req.body;
-    
+
     if (!key) {
         res.status(400).json({ error: 'Missing key in request body' });
         return;
     }
-    
+
+    // Validate key format: only allow alphanumeric, modifiers, and common key names
+    // Prevents command injection when key is passed to PowerShell exec
+    const KEY_PATTERN = /^[A-Za-z0-9_+\-\s]{1,50}$/;
+    if (!KEY_PATTERN.test(key)) {
+        res.status(400).json({ error: 'Invalid key format. Use alphanumeric characters and modifiers (e.g. ALT+Z, CTRL+SHIFT+F1)' });
+        return;
+    }
+
     keySender.sendKey(key)
         .then(() => res.json({ success: true, key }))
         .catch(e => res.json({ success: false, error: e.message }));
