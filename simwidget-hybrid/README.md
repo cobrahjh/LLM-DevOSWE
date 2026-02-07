@@ -2,7 +2,7 @@
 
 Flow Pro replacement for MSFS 2024 - modular widget overlay system.
 
-**Server Version:** v1.11.0
+**Server Version:** v1.14.0
 **Status:** 55 widgets available | 61 automated tests passing
 
 ---
