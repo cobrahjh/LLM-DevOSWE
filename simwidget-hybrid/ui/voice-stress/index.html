@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Voice Stress Analyzer - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+
+    <div class="container">
+        <h1>Voice Stress Analyzer</h1>
+        <p class="subtitle">Scientific Acoustic Analysis | F0, Jitter, Shimmer, HNR</p>
+
+        <div class="warning-banner">Detects physiological stress markers — NOT a lie detector</div>
+
+        <div class="status-bar">
+            <span id="calmStatus" class="status-badge">&#9675; Calm Baseline</span>
+            <span id="stressStatus" class="status-badge">&#9675; Stress Baseline</span>
+            <button id="resetBtn" class="reset-btn hidden">Reset</button>
+        </div>
+
+        <div id="promptBox" class="prompt-box hidden">
+            <div class="prompt-label" id="promptLabel">SPEAK CALMLY:</div>
+            <div class="prompt-text" id="promptText"></div>
+        </div>
+
+        <div id="recordingPanel" class="recording-panel hidden">
+            <div class="countdown" id="countdown">8</div>
+            <div class="live-f0"><span id="liveF0">--</span> Hz</div>
+            <div class="recording-label">Keep speaking...</div>
+            <div class="level-bar">
+                <div class="level-fill" id="levelFill" style="width: 0%"></div>
+            </div>
+            <button id="stopBtn" class="btn btn-stop" style="margin-top: 16px;">Stop Early</button>
+        </div>
+
+        <div id="canvasPanel" class="hidden">
+            <div class="canvas-panel">
+                <div class="panel-title">WAVEFORM</div>
+                <canvas id="waveform" height="70"></canvas>
+            </div>
+            <div class="canvas-panel">
+                <div class="panel-title">F0 CONTOUR (Pitch over time)</div>
+                <canvas id="f0canvas" height="90"></canvas>
+            </div>
+        </div>
+
+        <div id="buttonPanel">
+            <button id="calmBtn" class="btn btn-calm">1. Record CALM Baseline</button>
+            <button id="stressBtn" class="btn btn-stress">2. Record STRESS Baseline</button>
+            <button id="analyzeBtn" class="btn btn-analyze" disabled>3. ANALYZE Voice</button>
+        </div>
+
+        <div id="resultPanel" class="result-panel hidden">
+            <div class="result-verdict" id="resultVerdict"></div>
+            <div class="result-score" id="resultScore"></div>
+            <div class="result-metrics" id="resultMetrics"></div>
+            <div class="result-breakdown" id="resultBreakdown"></div>
+        </div>
+
+        <div id="metricsPanel" class="metrics-panel hidden">
+            <div class="metrics-title">LIVE ACOUSTIC FEATURES</div>
+            <div class="metric-row">
+                <span class="metric-label">F0 (Pitch)</span>
+                <span class="metric-value" id="metricF0">-- Hz</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">F0 Variance</span>
+                <span class="metric-value" id="metricF0Var">-- Hz</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Jitter <span class="metric-normal">(normal &lt;1%)</span></span>
+                <span class="metric-value" id="metricJitter">--%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Shimmer <span class="metric-normal">(normal &lt;4%)</span></span>
+                <span class="metric-value" id="metricShimmer">--%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">HNR <span class="metric-normal">(normal &gt;20 dB)</span></span>
+                <span class="metric-value" id="metricHNR">-- dB</span>
+            </div>
+        </div>
+
+        <div id="historyPanel" class="history-panel hidden">
+            <div class="history-title">SESSION HISTORY</div>
+            <div id="historyList"></div>
+        </div>
+
+        <div class="science-box">
+            <h3>Scientific Basis</h3>
+            <ul>
+                <li><strong>F0 (Pitch)</strong> &#8212; increases under stress (most validated marker)</li>
+                <li><strong>Jitter</strong> &#8212; period variation, decreases under stress (tighter control)</li>
+                <li><strong>Shimmer</strong> &#8212; amplitude variation between cycles</li>
+                <li><strong>HNR</strong> &#8212; harmonics-to-noise ratio, measures voice clarity</li>
+                <li>Requires personal baseline &#8212; no universal "stress voice"</li>
+            </ul>
+            <p style="margin-top: 8px; color: #ffaa00;">Stress does not equal deception. No reliable voice-only lie detection exists.</p>
+        </div>
+    </div>
+
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="widget.js"></script>
+    <script>
+        const settings = new SettingsPanel();
+        const customizer = new WidgetCustomizer({ widgetId: 'voice-stress', settingsPanel: settings });
+        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>
