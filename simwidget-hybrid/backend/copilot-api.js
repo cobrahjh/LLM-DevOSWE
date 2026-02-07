@@ -277,7 +277,8 @@ function setupCopilotRoutes(app, getFlightData) {
             provider: cfg.provider || 'openai',
             model: cfg.model || 'gpt-4o',
             hasApiKey: !!(getApiKey(cfg)),
-            apiKeyMemoryOnly: !!cfg.apiKeyMemoryOnly
+            apiKeyMemoryOnly: !!cfg.apiKeyMemoryOnly,
+            ttsVoice: cfg.ttsVoice || 'nova'
         });
     });
 
@@ -290,7 +291,7 @@ function setupCopilotRoutes(app, getFlightData) {
 
     // Save copilot config (license, provider, model, API key)
     app.post('/api/copilot/config', express_json_guard, (req, res) => {
-        const { licenseKey, provider, model, apiKey, apiKeyMemoryOnly } = req.body;
+        const { licenseKey, provider, model, apiKey, apiKeyMemoryOnly, ttsVoice } = req.body;
 
         const cfg = getCopilotConfig();
 
@@ -298,6 +299,7 @@ function setupCopilotRoutes(app, getFlightData) {
         if (provider !== undefined) cfg.provider = provider;
         if (model !== undefined) cfg.model = model;
         if (apiKeyMemoryOnly !== undefined) cfg.apiKeyMemoryOnly = apiKeyMemoryOnly;
+        if (ttsVoice !== undefined) cfg.ttsVoice = ttsVoice;
 
         if (apiKey !== undefined && apiKey !== '') {
             if (apiKeyMemoryOnly) {
@@ -318,6 +320,74 @@ function setupCopilotRoutes(app, getFlightData) {
             tier: licenseResult.tier || null,
             hasApiKey: !!(getApiKey(cfg))
         });
+    });
+
+    // Text-to-speech endpoint — proxies to OpenAI TTS
+    app.post('/api/copilot/speak', express_json_guard, async (req, res) => {
+        const cfg = getCopilotConfig();
+
+        const licenseResult = validateKey(cfg.licenseKey);
+        if (!licenseResult.valid) {
+            return res.status(403).json({ error: 'License required' });
+        }
+
+        const apiKey = getApiKey(cfg);
+        if (!apiKey || cfg.provider !== 'openai') {
+            return res.status(400).json({ error: 'OpenAI API key required for TTS' });
+        }
+
+        let { text, voice } = req.body;
+        if (!text || typeof text !== 'string') {
+            return res.status(400).json({ error: 'Text is required' });
+        }
+
+        // Cap at 4096 chars (OpenAI TTS limit)
+        text = text.slice(0, 4096);
+        voice = voice || cfg.ttsVoice || 'nova';
+
+        const VALID_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer'];
+        if (!VALID_VOICES.includes(voice)) voice = 'nova';
+
+        try {
+            const response = await fetch('https://api.openai.com/v1/audio/speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'tts-1',
+                    input: text,
+                    voice: voice,
+                    response_format: 'mp3'
+                }),
+                signal: AbortSignal.timeout(15000)
+            });
+
+            if (!response.ok) {
+                const err = await response.text().catch(() => '');
+                console.error('[Copilot] TTS error:', response.status, err);
+                return res.status(response.status).json({ error: mapProviderError(response.status, 'OpenAI TTS') });
+            }
+
+            res.writeHead(200, {
+                'Content-Type': 'audio/mpeg',
+                'Cache-Control': 'no-cache'
+            });
+
+            const reader = response.body.getReader();
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                res.write(value);
+            }
+            res.end();
+        } catch (err) {
+            console.error('[Copilot] TTS error:', err.message);
+            if (!res.headersSent) {
+                res.status(502).json({ error: 'TTS request failed: ' + err.message });
+            }
+        }
     });
 
     // Streaming chat endpoint

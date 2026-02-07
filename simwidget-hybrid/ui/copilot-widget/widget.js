@@ -440,6 +440,9 @@ class AICopilot {
         this.isListening = false;
         this.synth = window.speechSynthesis;
         this.recognition = null;
+        this.ttsVoice = 'nova'; // OpenAI TTS voice
+        this.useNaturalVoice = true; // Use OpenAI TTS when available
+        this._ttsAudio = null; // Current playing audio
 
         // Flight data
         this.flightData = {
@@ -682,6 +685,7 @@ class AICopilot {
             const res = await fetch('/api/copilot/status');
             if (res.ok) {
                 this.copilotStatus = await res.json();
+                if (this.copilotStatus.ttsVoice) this.ttsVoice = this.copilotStatus.ttsVoice;
                 if (!this.copilotStatus.licensed || !this.copilotStatus.hasApiKey) {
                     this.showAIBanner();
                 }
@@ -1457,15 +1461,59 @@ class AICopilot {
     }
 
     speak(text) {
-        if (!this.synth || !this.voiceEnabled) return;
+        if (!this.voiceEnabled) return;
 
-        this.synth.cancel();
+        // Stop any current speech
+        if (this._ttsAudio) {
+            this._ttsAudio.pause();
+            this._ttsAudio = null;
+        }
+        if (this.synth) this.synth.cancel();
+
+        // Try OpenAI natural voice first
+        if (this.useNaturalVoice && this.copilotStatus?.licensed && this.copilotStatus?.hasApiKey && this.copilotStatus?.provider === 'openai') {
+            this.speakNatural(text);
+            return;
+        }
+
+        // Fallback to browser TTS
+        this.speakBrowser(text);
+    }
+
+    async speakNatural(text) {
+        try {
+            const res = await fetch('/api/copilot/speak', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text.slice(0, 4096), voice: this.ttsVoice })
+            });
+
+            if (!res.ok) {
+                this.speakBrowser(text);
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            this._ttsAudio = audio;
+            audio.onended = () => {
+                URL.revokeObjectURL(url);
+                this._ttsAudio = null;
+            };
+            audio.play().catch(() => this.speakBrowser(text));
+        } catch (e) {
+            this.speakBrowser(text);
+        }
+    }
+
+    speakBrowser(text) {
+        if (!this.synth) return;
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
 
-        // Prefer British voice for copilot feel
         const voices = this.synth.getVoices();
         const preferred = voices.find(v =>
             v.name.includes('Google UK English Female') ||
@@ -1633,7 +1681,9 @@ class AICopilot {
             localStorage.setItem('copilot-settings', JSON.stringify({
                 callouts: this.callouts,
                 vSpeeds: this.vSpeeds,
-                voiceEnabled: this.voiceEnabled
+                voiceEnabled: this.voiceEnabled,
+                ttsVoice: this.ttsVoice,
+                useNaturalVoice: this.useNaturalVoice
             }));
         } catch (e) {}
     }
@@ -1646,6 +1696,8 @@ class AICopilot {
                 this.callouts = { ...this.callouts, ...s.callouts };
                 this.vSpeeds = { ...this.vSpeeds, ...s.vSpeeds };
                 this.voiceEnabled = s.voiceEnabled !== false;
+                if (s.ttsVoice) this.ttsVoice = s.ttsVoice;
+                if (s.useNaturalVoice !== undefined) this.useNaturalVoice = s.useNaturalVoice;
 
                 // Apply to UI
                 document.getElementById('callout-altitude').checked = this.callouts.altitude;
@@ -1720,6 +1772,31 @@ class AICopilot {
                                 <span>Memory only (not saved to disk)</span>
                             </label>
                         </div>
+                        <div class="cs-divider"></div>
+                        <div class="cs-row">
+                            <label>Voice (OpenAI TTS)</label>
+                            <div class="cs-input-group">
+                                <select id="cs-tts-voice">
+                                    <option value="nova" ${self.ttsVoice === 'nova' ? 'selected' : ''}>Nova (warm female)</option>
+                                    <option value="shimmer" ${self.ttsVoice === 'shimmer' ? 'selected' : ''}>Shimmer (bright female)</option>
+                                    <option value="alloy" ${self.ttsVoice === 'alloy' ? 'selected' : ''}>Alloy (neutral)</option>
+                                    <option value="echo" ${self.ttsVoice === 'echo' ? 'selected' : ''}>Echo (male)</option>
+                                    <option value="fable" ${self.ttsVoice === 'fable' ? 'selected' : ''}>Fable (British)</option>
+                                    <option value="onyx" ${self.ttsVoice === 'onyx' ? 'selected' : ''}>Onyx (deep male)</option>
+                                    <option value="coral" ${self.ttsVoice === 'coral' ? 'selected' : ''}>Coral (conversational)</option>
+                                    <option value="sage" ${self.ttsVoice === 'sage' ? 'selected' : ''}>Sage (calm)</option>
+                                    <option value="ash" ${self.ttsVoice === 'ash' ? 'selected' : ''}>Ash (clear)</option>
+                                    <option value="ballad" ${self.ttsVoice === 'ballad' ? 'selected' : ''}>Ballad (soft)</option>
+                                </select>
+                                <button class="btn-small" id="cs-tts-test">Test</button>
+                            </div>
+                        </div>
+                        <div class="cs-row">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="cs-natural-voice" ${self.useNaturalVoice ? 'checked' : ''}>
+                                <span>Use natural voice (uses API credits)</span>
+                            </label>
+                        </div>
                         <div class="cs-row">
                             <button class="btn btn-primary" id="cs-save-btn">Save Configuration</button>
                         </div>
@@ -1762,14 +1839,34 @@ class AICopilot {
                     }
                 });
 
+                // TTS voice test
+                container.querySelector('#cs-tts-test').addEventListener('click', async () => {
+                    const voice = container.querySelector('#cs-tts-voice').value;
+                    self.ttsVoice = voice;
+                    self.useNaturalVoice = true;
+                    self.speakNatural('Good day Captain, this is your AI copilot. Ready for departure.');
+                });
+
+                // Natural voice toggle
+                container.querySelector('#cs-natural-voice').addEventListener('change', (e) => {
+                    self.useNaturalVoice = e.target.checked;
+                    self.saveSettings();
+                });
+
                 container.querySelector('#cs-save-btn').addEventListener('click', async () => {
                     const saveStatus = container.querySelector('#cs-save-status');
                     const licenseKey = container.querySelector('#cs-license-key').value.trim();
+                    const ttsVoice = container.querySelector('#cs-tts-voice').value;
                     const body = {
                         provider: providerSelect.value,
                         model: modelSelect.value,
-                        apiKeyMemoryOnly: container.querySelector('#cs-memory-only').checked
+                        apiKeyMemoryOnly: container.querySelector('#cs-memory-only').checked,
+                        ttsVoice: ttsVoice
                     };
+
+                    self.ttsVoice = ttsVoice;
+                    self.useNaturalVoice = container.querySelector('#cs-natural-voice').checked;
+                    self.saveSettings();
 
                     if (licenseKey && !licenseKey.includes('•')) {
                         body.licenseKey = licenseKey;

@@ -727,6 +727,11 @@
 .copilot-settings .cs-warn { color: #f59e0b; }
 .copilot-settings .cs-err { color: #ef4444; }
 
+.copilot-settings .cs-divider {
+    border-top: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    margin: 4px 0;
+}
+
 /* Mobile adjustments */
 @media (max-width: 400px) {
     .copilot-tabs {
