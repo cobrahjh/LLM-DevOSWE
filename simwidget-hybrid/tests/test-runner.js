@@ -236,14 +236,79 @@ async function testWidgets() {
     log('─'.repeat(40), 'cyan');
 
     const widgets = [
+        // Control & Automation
         'aircraft-control',
-        'camera-widget',
+        'autopilot',
+        'voice-control',
+
+        // Flight Planning & Navigation
+        'flightplan-widget',
+        'gtn750',
+        'map-widget',
+        'navigraph-widget',
+        'simbrief-widget',
+        'holding-calc',
+
+        // Flight Data & Monitoring
         'flight-data-widget',
+        'flight-dashboard',
         'flight-recorder',
+        'flightlog-widget',
+        'flight-log',
+        'landing-widget',
+        'performance-widget',
+        'replay-debrief',
+
+        // Aircraft Systems
+        'engine-monitor',
         'fuel-widget',
+        'fuel-monitor',
+        'fuel-planner',
+        'health-dashboard',
+        'weight-balance',
+        'failures-widget',
+
+        // ATC & Communication
+        'atc-widget',
+        'copilot-widget',
+        'flight-instructor',
+        'multiplayer-widget',
+        'traffic-widget',
+        'voice-stress',
+
+        // Weather & Environment
+        'environment',
+        'metar-widget',
+        'weather-widget',
+
+        // Camera & Media
+        'camera-widget',
+        'wasm-camera',
+        'video-viewer',
+
+        // Utilities & Tools
+        'charts-widget',
+        'checklist-widget',
+        'checklist-maker',
+        'kneeboard-widget',
+        'notepad-widget',
+        'timer-widget',
+
+        // System & Configuration
+        'dashboard',
         'keymap-editor',
+        'panel-launcher',
         'performance-monitor',
-        'voice-control'
+        'plugin-manager',
+        'services-panel',
+        'toolbar-panel',
+
+        // UI Components
+        'interaction-wheel',
+        'mobile-companion',
+        'otto-search',
+        'radio-stack',
+        'tinywidgets'
     ];
 
     for (const widget of widgets) {
