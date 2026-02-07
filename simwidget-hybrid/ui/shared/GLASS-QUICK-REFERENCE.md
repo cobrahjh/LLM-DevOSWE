@@ -1,6 +1,6 @@
 # SimGlassBase Quick Reference
 
-## Minimal Widget Template
+## Minimal glass Template
 
 ```javascript
 const API_BASE = `http://${window.location.hostname}:8080`;
@@ -8,7 +8,7 @@ const API_BASE = `http://${window.location.hostname}:8080`;
 class MyWidget extends SimGlassBase {
     constructor() {
         super({
-            widgetName: 'my-widget',
+            widgetName: 'my-glass',
             widgetVersion: '1.0.0',
             autoConnect: true  // true = WebSocket, false = HTTP only
         });
@@ -124,7 +124,7 @@ try {
     if (window.telemetry) {
         telemetry.captureError(e, {
             operation: 'operationName',
-            widget: 'my-widget'
+            glass: 'my-glass'
         });
     }
 }
@@ -145,7 +145,7 @@ loadSettings() {
         if (window.telemetry) {
             telemetry.captureError(e, {
                 operation: 'loadSettings',
-                widget: 'my-widget'
+                glass: 'my-glass'
             });
         }
     }
@@ -179,10 +179,10 @@ onMessage(data) {
 ## File Structure
 
 ```
-ui/my-widget/
-├── index.html      # Load widget-base.js FIRST, then widget.js
-├── widget.js       # Extends SimGlassBase
-├── styles.css      # Widget styles
+ui/my-glass/
+├── index.html      # Load glass-base.js FIRST, then glass.js
+├── glass.js       # Extends SimGlassBase
+├── styles.css      # glass styles
 └── manifest.json   # Optional metadata
 ```
 
@@ -193,22 +193,22 @@ ui/my-widget/
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Widget</title>
-    <link rel="stylesheet" href="../shared/widget-base.css">
+    <title>My glass</title>
+    <link rel="stylesheet" href="../shared/glass-base.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="widget-container">
+    <div id="glass-container">
         <!-- Your UI here -->
     </div>
 
-    <script src="../shared/widget-base.js"></script>
-    <script src="widget.js"></script>
+    <script src="../shared/glass-base.js"></script>
+    <script src="glass.js"></script>
 </body>
 </html>
 ```
 
-## Checklist: New Widget
+## Checklist: New glass
 
 - [ ] Extends SimGlassBase
 - [ ] Calls `super()` with widgetName, widgetVersion, autoConnect
@@ -231,11 +231,11 @@ ui/my-widget/
 
 ## Examples by Complexity
 
-| Complexity | Widget | Lines | Features |
+| Complexity | glass | Lines | Features |
 |------------|--------|-------|----------|
 | Simple | holding-calc | 237 | Calculator, no WebSocket |
 | Medium | fuel | 450 | Live data, HTTP API |
 | Complex | flight-recorder | 863 | WebSocket + sessions + intervals |
 | Modular | gtn750 | 1250 | 6 modules, orchestration |
 
-See `WIDGET-DEVELOPMENT-GUIDE.md` for detailed documentation.
+See `glass-DEVELOPMENT-GUIDE.md` for detailed documentation.

@@ -1,8 +1,8 @@
-# SimGlass Widget Development Guide
+# SimGlass glass Development Guide
 
 **Last Updated:** February 2026
 **Architecture Version:** SimGlassBase v2.0.0
-**Coverage:** 48/48 widgets (100%)
+**Coverage:** 48/48 glasses (100%)
 
 ---
 
@@ -11,7 +11,7 @@
 1. [Overview](#overview)
 2. [Quick Start](#quick-start)
 3. [SimGlassBase Architecture](#simglassbase-architecture)
-4. [Creating a New Widget](#creating-a-new-widget)
+4. [Creating a New glass](#creating-a-new-glass)
 5. [Lifecycle Hooks](#lifecycle-hooks)
 6. [Best Practices](#best-practices)
 7. [Common Patterns](#common-patterns)
@@ -23,7 +23,7 @@
 
 ## Overview
 
-**SimGlassBase** is the standardized base class for all SimGlass widgets. It provides:
+**SimGlassBase** is the standardized base class for all SimGlass glasses. It provides:
 
 - ✅ **WebSocket management** - Automatic connection, reconnection, and cleanup
 - ✅ **Lifecycle hooks** - Consistent onMessage/onConnect/onDisconnect pattern
@@ -32,16 +32,16 @@
 - ✅ **Resource cleanup** - Proper destroy() pattern with automatic WebSocket cleanup
 
 **Why SimGlassBase?**
-- Eliminates 1000+ lines of duplicate WebSocket code across 48 widgets
+- Eliminates 1000+ lines of duplicate WebSocket code across 48 glasses
 - Standardizes error handling and resource cleanup
 - Reduces bugs (no more forgotten interval cleanup)
-- Faster development (focus on widget logic, not infrastructure)
+- Faster development (focus on glass logic, not infrastructure)
 
 ---
 
 ## Quick Start
 
-### Minimal Widget Template
+### Minimal glass Template
 
 ```javascript
 const API_BASE = `http://${window.location.hostname}:8080`;
@@ -49,7 +49,7 @@ const API_BASE = `http://${window.location.hostname}:8080`;
 class MyWidget extends SimGlassBase {
     constructor() {
         super({
-            widgetName: 'my-widget',
+            widgetName: 'my-glass',
             widgetVersion: '1.0.0',
             autoConnect: true  // or false if no WebSocket needed
         });
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ```javascript
 super({
-    widgetName: 'string',      // Required - unique widget identifier
+    widgetName: 'string',      // Required - unique glass identifier
     widgetVersion: 'string',   // Required - semantic version (e.g., '2.0.0')
     autoConnect: boolean       // Required - true for WebSocket, false for HTTP-only
 });
@@ -102,12 +102,12 @@ super({
 ### When to Use `autoConnect: true` vs `false`
 
 **Use `autoConnect: true` when:**
-- Widget needs real-time flight data updates
+- glass needs real-time flight data updates
 - Displays live telemetry (altitude, speed, heading, etc.)
 - Examples: flight-recorder, traffic, map, fuel, health-dashboard
 
 **Use `autoConnect: false` when:**
-- Widget is a calculator or static tool
+- glass is a calculator or static tool
 - Only uses HTTP API calls
 - Uses other APIs (Web Speech, Canvas, etc.)
 - Examples: voice-control, holding-calc, weight-balance, notepad
@@ -116,9 +116,9 @@ super({
 
 ```javascript
 class SimGlassBase {
-    // Properties available in your widget
-    this.widgetName       // Your widget name
-    this.widgetVersion    // Your widget version
+    // Properties available in your glass
+    this.widgetName       // Your glass name
+    this.widgetVersion    // Your glass version
     this.ws              // WebSocket instance (if autoConnect: true)
     this._destroyed      // Cleanup flag
 
@@ -134,16 +134,16 @@ class SimGlassBase {
 
 ---
 
-## Creating a New Widget
+## Creating a New glass
 
-### Step 1: Create Widget Directory
+### Step 1: Create glass Directory
 
 ```
-ui/my-widget/
-├── index.html        # Widget HTML
-├── widget.js         # Widget logic (extends SimGlassBase)
-├── styles.css        # Widget styles
-└── manifest.json     # Widget metadata (optional)
+ui/my-glass/
+├── index.html        # glass HTML
+├── glass.js         # glass logic (extends SimGlassBase)
+├── styles.css        # glass styles
+└── manifest.json     # glass metadata (optional)
 ```
 
 ### Step 2: HTML Structure
@@ -153,31 +153,31 @@ ui/my-widget/
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Widget</title>
-    <link rel="stylesheet" href="../shared/widget-base.css">
+    <title>My glass</title>
+    <link rel="stylesheet" href="../shared/glass-base.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="widget-container">
-        <!-- Your widget UI here -->
+    <div id="glass-container">
+        <!-- Your glass UI here -->
     </div>
 
     <!-- Load SimGlassBase FIRST -->
-    <script src="../shared/widget-base.js"></script>
+    <script src="../shared/glass-base.js"></script>
 
-    <!-- Then load your widget -->
-    <script src="widget.js"></script>
+    <!-- Then load your glass -->
+    <script src="glass.js"></script>
 </body>
 </html>
 ```
 
-### Step 3: Implement Widget Class
+### Step 3: Implement glass Class
 
 ```javascript
 class MyWidget extends SimGlassBase {
     constructor() {
         super({
-            widgetName: 'my-widget',
+            widgetName: 'my-glass',
             widgetVersion: '1.0.0',
             autoConnect: true
         });
@@ -186,7 +186,7 @@ class MyWidget extends SimGlassBase {
         this.myData = null;
         this.myInterval = null;
 
-        // Set up widget
+        // Set up glass
         this.initElements();
         this.initEvents();
         this.loadSettings();
@@ -210,11 +210,11 @@ class MyWidget extends SimGlassBase {
     }
 
     onConnect() {
-        console.log('[My Widget] Connected to server');
+        console.log('[My glass] Connected to server');
     }
 
     onDisconnect() {
-        console.log('[My Widget] Disconnected from server');
+        console.log('[My glass] Disconnected from server');
     }
 
     updateDisplay() {
@@ -277,7 +277,7 @@ Called when WebSocket successfully connects.
 
 ```javascript
 onConnect() {
-    console.log('[My Widget] WebSocket connected');
+    console.log('[My glass] WebSocket connected');
     // Update connection indicator
     this.statusDot?.classList.add('connected');
 }
@@ -289,7 +289,7 @@ Called when WebSocket disconnects.
 
 ```javascript
 onDisconnect() {
-    console.log('[My Widget] WebSocket disconnected');
+    console.log('[My glass] WebSocket disconnected');
     // Update connection indicator
     this.statusDot?.classList.remove('connected');
 }
@@ -355,7 +355,7 @@ async fetchData() {
         if (window.telemetry) {
             telemetry.captureError(e, {
                 operation: 'fetchData',
-                widget: 'my-widget'
+                glass: 'my-glass'
             });
         }
         return null;
@@ -363,12 +363,12 @@ async fetchData() {
 }
 ```
 
-### 5. Version Your Widget
+### 5. Version Your glass
 
 ```javascript
 constructor() {
     super({
-        widgetName: 'my-widget',
+        widgetName: 'my-glass',
         widgetVersion: '2.0.0',  // Update on breaking changes
         autoConnect: true
     });
@@ -404,7 +404,7 @@ class MyWidget extends SimGlassBase {
             if (window.telemetry) {
                 telemetry.captureError(e, {
                     operation: 'loadSettings',
-                    widget: 'my-widget',
+                    glass: 'my-glass',
                     storage: 'localStorage'
                 });
             }
@@ -509,7 +509,7 @@ class MyWidget extends SimGlassBase {
 
     handleMessage(msg) {
         if (msg.type === 'other-event') {
-            console.log('Received from other widget:', msg.data);
+            console.log('Received from other glass:', msg.data);
         }
     }
 
@@ -550,7 +550,7 @@ class MyWidget extends SimGlassBase {
 
 ## Migration Guide
 
-### Converting Module-Level Widget to SimGlassBase
+### Converting Module-Level glass to SimGlassBase
 
 **Before (Module-level pattern):**
 
@@ -583,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
 class MyWidget extends SimGlassBase {
     constructor() {
         super({
-            widgetName: 'my-widget',
+            widgetName: 'my-glass',
             widgetVersion: '2.0.0',
             autoConnect: true  // SimGlassBase handles WebSocket
         });
@@ -634,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ## Examples
 
-### Simple Widget (Calculator - No WebSocket)
+### Simple glass (Calculator - No WebSocket)
 
 **holding-calc v2.0.0** - 237 lines
 
@@ -675,7 +675,7 @@ class HoldingCalculator extends SimGlassBase {
 }
 ```
 
-### Medium Widget (Live Data Display)
+### Medium glass (Live Data Display)
 
 **fuel v3.0.0** - 450 lines
 
@@ -721,7 +721,7 @@ class FuelWidget extends SimGlassBase {
 }
 ```
 
-### Complex Widget (Multiple Intervals + Sessions)
+### Complex glass (Multiple Intervals + Sessions)
 
 **flight-recorder v2.0.0** - 863 lines
 
@@ -796,7 +796,7 @@ class FlightRecorderWidget extends SimGlassBase {
 1. Is backend server running? `curl http://localhost:8080/api/status`
 2. Is `autoConnect: true` set?
 3. Check browser console for WebSocket errors
-4. Verify SimGlassBase is loaded before your widget
+4. Verify SimGlassBase is loaded before your glass
 
 ### Page Refresh Causes Errors
 
@@ -850,12 +850,12 @@ destroy() {
 
 ## Resources
 
-**Widget Base Files:**
-- `ui/shared/widget-base.js` - SimGlassBase implementation
-- `ui/shared/widget-base.css` - Base widget styles
+**glass Base Files:**
+- `ui/shared/glass-base.js` - SimGlassBase implementation
+- `ui/shared/glass-base.css` - Base glass styles
 - `ui/shared/themes.js` - Theme definitions
 
-**Example Widgets:**
+**Example glasses:**
 - **Simple:** `ui/holding-calc/` (calculator, no WebSocket)
 - **Medium:** `ui/fuel/` (live data display)
 - **Complex:** `ui/flight-recorder/` (recording + playback)
@@ -869,21 +869,21 @@ destroy() {
 
 ## Migration History
 
-**February 2026:** 48/48 widgets (100%) migrated to SimGlassBase
+**February 2026:** 48/48 glasses (100%) migrated to SimGlassBase
 
 **Sessions:**
-- Sessions 1-10: 44 widgets migrated
+- Sessions 1-10: 44 glasses migrated
 - Session 11: voice-control v2.0.0 (Web Speech API)
 - Session 12: flight-recorder v2.0.0 (complex WebSocket with sessions)
 
 **Impact:**
 - Eliminated 1000+ lines of duplicate code
-- Standardized lifecycle across all widgets
+- Standardized lifecycle across all glasses
 - Fixed systemic cleanup bugs
 - Added comprehensive error handling
 
 ---
 
-**Questions?** Check existing widgets in `ui/` for real-world examples.
+**Questions?** Check existing glasses in `ui/` for real-world examples.
 
-**Contributing:** All new widgets MUST extend SimGlassBase.
+**Contributing:** All new glasses MUST extend SimGlassBase.
