@@ -11,6 +11,7 @@ let isConnected = false;
 let selectedIndex = 0;
 let filteredCommands = [];
 let currentCategory = 'all';
+let _destroyed = false;
 
 // Command database
 const COMMANDS = [
@@ -72,9 +73,17 @@ const COMMANDS = [
 ];
 
 function connect() {
+    if (_destroyed) return;
+
     ws = new WebSocket(WS_URL);
     ws.onopen = () => { isConnected = true; updateStatus(true, 'Connected'); };
-    ws.onclose = () => { isConnected = false; updateStatus(false, 'Disconnected'); setTimeout(connect, 3000); };
+    ws.onclose = () => {
+        isConnected = false;
+        updateStatus(false, 'Disconnected');
+        if (!_destroyed) {
+            setTimeout(connect, 3000);
+        }
+    };
     ws.onerror = () => updateStatus(false, 'Error');
 }
 
@@ -222,3 +231,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     connect();
 });
+
+function destroy() {
+    _destroyed = true;
+    if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+    }
+}
+
+window.addEventListener('beforeunload', destroy);

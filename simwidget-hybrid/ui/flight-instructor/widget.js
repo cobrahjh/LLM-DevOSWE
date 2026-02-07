@@ -68,6 +68,7 @@ const SCENARIOS = {
 
 class FlightInstructor {
     constructor() {
+        this._destroyed = false;
         this.running = false;
         this.scenarioKey = 'pattern';
         this.phase = 0;
@@ -96,6 +97,8 @@ class FlightInstructor {
     }
 
     connectWebSocket() {
+        if (this._destroyed) return;
+
         const host = location.hostname || 'localhost';
         this.ws = new WebSocket(`ws://${host}:8080`);
 
@@ -110,7 +113,9 @@ class FlightInstructor {
         };
 
         this.ws.onclose = () => {
-            setTimeout(() => this.connectWebSocket(), 3000);
+            if (!this._destroyed) {
+                setTimeout(() => this.connectWebSocket(), 3000);
+            }
         };
     }
 
@@ -276,6 +281,23 @@ class FlightInstructor {
         u.pitch = 1.0;
         this.synth.speak(u);
     }
+
+    destroy() {
+        this._destroyed = true;
+
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+            this.ws = null;
+        }
+
+        if (this.synth) {
+            this.synth.cancel();
+        }
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => new FlightInstructor());
+document.addEventListener('DOMContentLoaded', () => {
+    window.flightInstructor = new FlightInstructor();
+    window.addEventListener('beforeunload', () => window.flightInstructor?.destroy());
+});
