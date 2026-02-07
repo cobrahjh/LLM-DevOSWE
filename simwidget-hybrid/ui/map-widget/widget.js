@@ -1,10 +1,11 @@
 /**
- * Map Widget - SimGlass v2.0.0
+ * Map Widget - SimGlass v2.1.0
  * Live aircraft position map using Leaflet
  *
  * Widget Interconnection:
  * - Receives waypoint-select from flightplan-widget
  * - Receives route-update from flightplan-widget
+ * - Receives vatsim-traffic from vatsim-live widget
  * - Broadcasts position-update to other widgets
  */
 
@@ -12,7 +13,7 @@ class MapWidget extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'map-widget',
-            widgetVersion: '2.0.0',
+            widgetVersion: '2.1.0',
             autoConnect: true
         });
 
@@ -34,6 +35,11 @@ class MapWidget extends SimGlassBase {
         // Weather overlay
         this.weatherMarkers = [];
         this.weatherCache = {};
+
+        // VATSIM traffic overlay
+        this.trafficMarkers = [];
+        this.trafficEnabled = true;
+        this.trafficData = [];
 
         // Radar overlay (RainViewer)
         this.radarLayer = null;
@@ -74,6 +80,14 @@ class MapWidget extends SimGlassBase {
                 case 'route-update':
                     // Flight plan updated, refresh route
                     this.updateRoute(data);
+                    break;
+
+                case 'vatsim-traffic':
+                    // VATSIM traffic data from vatsim-live widget
+                    if (this.trafficEnabled && data) {
+                        this.trafficData = data;
+                        this.renderTraffic();
+                    }
                     break;
             }
         };
@@ -273,6 +287,69 @@ class MapWidget extends SimGlassBase {
             }
         }
         return 99999;
+    }
+
+    // VATSIM traffic rendering
+    renderTraffic() {
+        if (!this.map || !this.trafficEnabled) return;
+
+        // Clear existing traffic markers
+        this.trafficMarkers.forEach(m => this.map.removeLayer(m));
+        this.trafficMarkers = [];
+
+        // Render each aircraft
+        this.trafficData.forEach(aircraft => {
+            if (!aircraft.lat || !aircraft.lon) return;
+
+            // Create traffic icon
+            const trafficIcon = L.divIcon({
+                className: 'traffic-marker',
+                html: `
+                    <div class="traffic-icon" style="transform: rotate(${aircraft.heading || 0}deg)">
+                        <div class="traffic-plane">✈</div>
+                    </div>
+                    <div class="traffic-label">${aircraft.callsign || 'UNKNOWN'}</div>
+                `,
+                iconSize: [60, 40],
+                iconAnchor: [30, 20]
+            });
+
+            // Create marker
+            const marker = L.marker([aircraft.lat, aircraft.lon], {
+                icon: trafficIcon,
+                zIndexOffset: 100
+            }).addTo(this.map);
+
+            // Popup with aircraft info
+            const altStr = aircraft.altitude ? Math.round(aircraft.altitude).toLocaleString() + ' ft' : 'N/A';
+            const spdStr = aircraft.groundspeed ? aircraft.groundspeed + ' kt' : 'N/A';
+            const hdgStr = aircraft.heading ? aircraft.heading + '°' : 'N/A';
+
+            marker.bindPopup(`
+                <b>VATSIM Traffic</b><br>
+                <b>${aircraft.callsign || 'UNKNOWN'}</b><br>
+                Alt: ${altStr}<br>
+                GS: ${spdStr}<br>
+                HDG: ${hdgStr}
+            `);
+
+            this.trafficMarkers.push(marker);
+        });
+    }
+
+    toggleTraffic() {
+        this.trafficEnabled = !this.trafficEnabled;
+
+        if (this.trafficEnabled) {
+            // Re-render existing traffic
+            this.renderTraffic();
+        } else {
+            // Clear all traffic markers
+            this.trafficMarkers.forEach(m => this.map.removeLayer(m));
+            this.trafficMarkers = [];
+        }
+
+        return this.trafficEnabled;
     }
 
     initMap() {
@@ -559,6 +636,18 @@ class MapWidget extends SimGlassBase {
         if (this._pollTimeout) {
             clearTimeout(this._pollTimeout);
             this._pollTimeout = null;
+        }
+
+        // Clear traffic markers
+        if (this.trafficMarkers && this.map) {
+            this.trafficMarkers.forEach(m => {
+                try {
+                    this.map.removeLayer(m);
+                } catch (e) {
+                    // Ignore errors if map already destroyed
+                }
+            });
+            this.trafficMarkers = [];
         }
 
         // Close BroadcastChannel

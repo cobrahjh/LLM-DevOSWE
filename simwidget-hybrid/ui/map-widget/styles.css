@@ -290,6 +290,45 @@
     font-family: 'Courier New', monospace;
 }
 
+/* VATSIM Traffic Markers */
+.traffic-marker {
+    background: transparent;
+    border: none;
+    text-align: center;
+}
+
+.traffic-icon {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    margin: 0 auto;
+}
+
+.traffic-plane {
+    font-size: 20px;
+    line-height: 1;
+    text-shadow:
+        0 0 3px rgba(0,0,0,0.8),
+        0 0 6px rgba(102, 126, 234, 0.6);
+    filter: drop-shadow(0 0 2px rgba(102, 126, 234, 0.8));
+}
+
+.traffic-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-top: 2px;
+    white-space: nowrap;
+    font-family: 'Courier New', monospace;
+    box-shadow:
+        0 1px 3px rgba(0,0,0,0.5),
+        0 0 6px rgba(102, 126, 234, 0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
 /* Responsive */
 @media (max-width: 400px) {
     .flight-info {
