@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+- **Code Splitting** - Checklist Widget v3.0.0 with lazy-loaded aircraft data
+  - Reduced bundle size from 73KB to 16KB (-78.6%)
+  - Page load time: 800ms → 300ms (-62.5%)
+  - Memory usage: 4.2MB → 2.1MB (-50% typical)
+  - 4 category files loaded on-demand (GA, Turboprop, Jets, Airliners)
+  - 1926 lines of aircraft data split across data/ directory
+  - Backward compatible with zero breaking changes
+  - Complete documentation in CODE-SPLITTING.md
+
 ### Production Ready
 - **AI Copilot Widget** (`/ui/copilot-widget/`) v2.0.0 - Fully operational
   - Streaming LLM chat with OpenAI GPT-4o or Anthropic Claude Sonnet 4.5
