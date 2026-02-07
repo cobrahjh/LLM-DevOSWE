@@ -1,25 +1,31 @@
 /**
- * Services Panel Widget v1.1.0
- * 
+ * Services Panel Widget v2.0.0
+ *
  * Monitors and controls SimGlass services with enhanced logging and status feedback
- * 
+ *
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\ui\services-panel\widget.js
  * Last Updated: 2025-01-08
  */
 
-class ServicesPanel {
+class ServicesPanel extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'services-panel',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // HTTP polling only, no WebSocket
+        });
+
         const host = window.location.hostname || 'localhost';
         this.services = {
             SimGlass: { port: 8080, url: `http://${host}:8080`, status: 'checking' },
             agent: { port: 8585, url: `http://${host}:8585`, status: 'checking' },
             remote: { port: 8590, url: `http://${host}:8590`, status: 'checking' }
         };
-        
+
         this.collapsed = false;
         this.checkInterval = null;
         this.logContainer = null;
-        
+
         this.init();
     }
     
@@ -242,4 +248,65 @@ class ServicesPanel {
             this.addLogMessage(`Main API failed (${err.message}), trying Remote API...`, 'warning', service);
             
             // Fallback to Remote Support API
-            try {\n                const remoteResponse = await fetch('http://localhost:8590/api/services', {\n                    method: 'POST',\n                    headers: { \n                        'Content-Type': 'application/json',\n                        'X-API-Key': 'SimGlass-remote-2025'\n                    },\n                    body: JSON.stringify({ service, action })\n                });\n                \n                if (remoteResponse.ok) {\n                    const result = await remoteResponse.json();\n                    if (result.success) {\n                        this.addLogMessage(`${action} via Remote API: OK`, 'success', service);\n                    } else {\n                        this.addLogMessage(`Remote API error: ${result.error}`, 'error', service);\n                    }\n                } else {\n                    this.addLogMessage(`Remote API HTTP ${remoteResponse.status}`, 'error', service);\n                }\n            } catch (remoteErr) {\n                this.addLogMessage(`Remote API also failed: ${remoteErr.message}`, 'error', service);\n                this.addLogMessage('Try manually starting the service from command line', 'warning', service);\n            }\n        }\n        \n        // Re-enable controls and check status after a delay\n        setTimeout(() => {\n            this.disableControls(service, false);\n            this.checkService(service);\n        }, 3000);\n    }\n    \n    toggleCollapse() {\n        this.collapsed = !this.collapsed;\n        const container = document.getElementById('services-panel');\n        \n        if (this.collapsed) {\n            container.classList.add('collapsed');\n            this.addLogMessage('Panel collapsed to status dots', 'info');\n        } else {\n            container.classList.remove('collapsed');\n            this.addLogMessage('Panel expanded', 'info');\n        }\n    }\n    \n    destroy() {\n        if (this.checkInterval) {\n            clearInterval(this.checkInterval);\n        }\n    }\n}\n\n// Initialize\nconst servicesPanel = new ServicesPanel();
+            try {
+                const remoteResponse = await fetch('http://localhost:8590/api/services', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-API-Key': 'SimGlass-remote-2025'
+                    },
+                    body: JSON.stringify({ service, action })
+                });
+                
+                if (remoteResponse.ok) {
+                    const result = await remoteResponse.json();
+                    if (result.success) {
+                        this.addLogMessage(`${action} via Remote API: OK`, 'success', service);
+                    } else {
+                        this.addLogMessage(`Remote API error: ${result.error}`, 'error', service);
+                    }
+                } else {
+                    this.addLogMessage(`Remote API HTTP ${remoteResponse.status}`, 'error', service);
+                }
+            } catch (remoteErr) {
+                this.addLogMessage(`Remote API also failed: ${remoteErr.message}`, 'error', service);
+                this.addLogMessage('Try manually starting the service from command line', 'warning', service);
+            }
+        }
+        
+        // Re-enable controls and check status after a delay
+        setTimeout(() => {
+            this.disableControls(service, false);
+            this.checkService(service);
+        }, 3000);
+    }
+    
+    toggleCollapse() {
+        this.collapsed = !this.collapsed;
+        const container = document.getElementById('services-panel');
+        
+        if (this.collapsed) {
+            container.classList.add('collapsed');
+            this.addLogMessage('Panel collapsed to status dots', 'info');
+        } else {
+            container.classList.remove('collapsed');
+            this.addLogMessage('Panel expanded', 'info');
+        }
+    }
+    
+    destroy() {
+        if (this.checkInterval) {
+            clearInterval(this.checkInterval);
+            this.checkInterval = null;
+        }
+
+        // Call parent destroy
+        super.destroy();
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    window.servicesPanel = new ServicesPanel();
+    window.addEventListener('beforeunload', () => window.servicesPanel?.destroy());
+});

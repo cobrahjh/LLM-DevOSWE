@@ -1,10 +1,16 @@
 /**
- * Holding Pattern Calculator - SimGlass
+ * Holding Pattern Calculator - SimGlass v2.0.0
  * Entry type, timing, wind correction
  */
 
-class HoldingCalculator {
+class HoldingCalculator extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'holding-calc',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for calculator
+        });
+
         this.canvas = document.getElementById('holding-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.synth = window.speechSynthesis;
@@ -224,8 +230,14 @@ class HoldingCalculator {
         utterance.rate = 0.9;
         this.synth.speak(utterance);
     }
+
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.holdingCalc = new HoldingCalculator();
+    window.addEventListener('beforeunload', () => window.holdingCalc?.destroy());
 });

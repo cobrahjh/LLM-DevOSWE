@@ -296,7 +296,5 @@ class NotepadWidget extends SimGlassBase {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.notepadWidget = new NotepadWidget();
-    window.addEventListener('beforeunload', () =>
-        window.notepadWidget?.destroy()
-    );
+    window.addEventListener('beforeunload', () => window.notepadWidget?.destroy());
 });

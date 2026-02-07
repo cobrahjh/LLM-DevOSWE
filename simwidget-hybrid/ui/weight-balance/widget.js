@@ -1,5 +1,5 @@
 /**
- * Weight & Balance Widget - SimGlass
+ * Weight & Balance Widget - SimGlass v2.0.0
  * CG calculations with visual envelope display
  */
 
@@ -90,8 +90,14 @@ const AIRCRAFT_DATA = {
     }
 };
 
-class WeightBalance {
+class WeightBalance extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'weight-balance',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for calculator
+        });
+
         this.aircraft = 'c172';
         this.canvas = document.getElementById('envelope-canvas');
         this.ctx = this.canvas.getContext('2d');
@@ -294,8 +300,14 @@ Status: ${this.lastCalc.withinWeight && this.lastCalc.withinCG ? 'WITHIN LIMITS'
         channel.postMessage({ type: 'copy-route', data: { text } });
         channel.close();
     }
+
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.weightBalance = new WeightBalance();
+    window.addEventListener('beforeunload', () => window.weightBalance?.destroy());
 });
