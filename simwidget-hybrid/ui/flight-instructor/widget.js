@@ -66,9 +66,14 @@ const SCENARIOS = {
     }
 };
 
-class FlightInstructor {
+class FlightInstructor extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
+        super({
+            widgetName: 'flight-instructor',
+            widgetVersion: '1.1.0',
+            autoConnect: true
+        });
+
         this.running = false;
         this.scenarioKey = 'pattern';
         this.phase = 0;
@@ -79,10 +84,8 @@ class FlightInstructor {
         this.feedbackCooldown = {};
         this.synth = window.speechSynthesis;
         this.voiceEnabled = true;
-        this.ws = null;
 
         this.init();
-        this.connectWebSocket();
     }
 
     init() {
@@ -96,27 +99,12 @@ class FlightInstructor {
         };
     }
 
-    connectWebSocket() {
-        if (this._destroyed) return;
-
-        const host = location.hostname || 'localhost';
-        this.ws = new WebSocket(`ws://${host}:8080`);
-
-        this.ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'flightData') {
-                    this.lastData = msg.data;
-                    if (this.running) this.evaluate(msg.data);
-                }
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            if (!this._destroyed) {
-                setTimeout(() => this.connectWebSocket(), 3000);
-            }
-        };
+    // SimGlassBase lifecycle hook
+    onMessage(msg) {
+        if (msg.type === 'flightData') {
+            this.lastData = msg.data;
+            if (this.running) this.evaluate(msg.data);
+        }
     }
 
     toggle() {
@@ -283,17 +271,13 @@ class FlightInstructor {
     }
 
     destroy() {
-        this._destroyed = true;
-
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
-        }
-
+        // Additional cleanup beyond SimGlassBase
         if (this.synth) {
             this.synth.cancel();
         }
+
+        // Call parent's destroy() for WebSocket cleanup
+        super.destroy();
     }
 }
 
