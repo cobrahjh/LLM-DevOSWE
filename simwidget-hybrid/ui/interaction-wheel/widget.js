@@ -9,6 +9,7 @@ const API_URL = `http://${window.location.host}`;
 
 let ws = null;
 let isConnected = false;
+let _destroyed = false;
 
 // Define wheel segments - quick actions arranged in a circle
 // Commands must match server.js eventMap entries
@@ -25,6 +26,8 @@ const WHEEL_ACTIONS = [
 
 // Connect to SimGlass WebSocket
 function connect() {
+    if (_destroyed) return;
+
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
@@ -37,7 +40,9 @@ function connect() {
         console.log('[Wheel] Disconnected');
         isConnected = false;
         updateStatus(false, 'Disconnected');
-        setTimeout(connect, 3000);
+        if (!_destroyed) {
+            setTimeout(connect, 3000);
+        }
     };
 
     ws.onerror = (err) => {
@@ -167,6 +172,16 @@ function hideTooltip() {
     tooltip.classList.remove('visible');
 }
 
+// Cleanup
+function destroy() {
+    _destroyed = true;
+    if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Wheel] Initializing Interaction Wheel...');
@@ -179,3 +194,5 @@ document.addEventListener('DOMContentLoaded', () => {
     createWheel();
     connect();
 });
+
+window.addEventListener('beforeunload', destroy);

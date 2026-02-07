@@ -5,6 +5,7 @@
  */
 class ToolbarPanelWidget {
     constructor() {
+        this._destroyed = false;
         this.ws = null;
         this.connected = false;
         this.flightData = {};
@@ -57,6 +58,8 @@ class ToolbarPanelWidget {
     }
 
     connectWebSocket() {
+        if (this._destroyed) return;
+
         const host = location.hostname || '127.0.0.1';
         const port = location.port || '8080';
         this.ws = new WebSocket('ws://' + host + ':' + port);
@@ -76,7 +79,9 @@ class ToolbarPanelWidget {
         this.ws.onclose = () => {
             this.connected = false;
             this.statusDot.classList.remove('connected');
-            setTimeout(() => this.connectWebSocket(), 3000);
+            if (!this._destroyed) {
+                setTimeout(() => this.connectWebSocket(), 3000);
+            }
         };
 
         this.ws.onerror = () => {
@@ -84,8 +89,18 @@ class ToolbarPanelWidget {
             this.statusDot.classList.remove('connected');
         };
     }
+
+    destroy() {
+        this._destroyed = true;
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+            this.ws = null;
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.toolbarPanel = new ToolbarPanelWidget();
+    window.addEventListener('beforeunload', () => window.toolbarPanel?.destroy());
 });

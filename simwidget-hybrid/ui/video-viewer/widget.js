@@ -5,6 +5,7 @@
 
 class VideoViewer {
     constructor() {
+        this._destroyed = false;
         this.streaming = false;
         this.recording = false;
         this.recordedFrames = [];
@@ -405,9 +406,27 @@ class VideoViewer {
             container.requestFullscreen();
         }
     }
+
+    destroy() {
+        this._destroyed = true;
+
+        if (this.frameInterval) {
+            clearInterval(this.frameInterval);
+            this.frameInterval = null;
+        }
+
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+            this.ws = null;
+        }
+
+        this.streaming = false;
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.videoViewer = new VideoViewer();
+    window.addEventListener('beforeunload', () => window.videoViewer?.destroy());
 });
