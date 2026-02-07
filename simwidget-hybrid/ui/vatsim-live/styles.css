@@ -211,12 +211,57 @@
     margin-bottom: 6px;
 }
 
+.aircraft-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-follow {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #888;
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-follow:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #f59e0b;
+    color: #f59e0b;
+    transform: scale(1.1);
+}
+
+.aircraft-followed {
+    border-color: #f59e0b !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+}
+
+.aircraft-followed .btn-follow {
+    color: #f59e0b;
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.2);
+}
+
 .callsign,
 .atc-callsign {
     font-size: 16px;
     font-weight: bold;
     color: #667eea;
     font-family: 'Courier New', monospace;
+}
+
+.aircraft-followed .callsign {
+    color: #f59e0b;
 }
 
 .distance {

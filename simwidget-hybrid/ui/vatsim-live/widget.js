@@ -1,7 +1,7 @@
 /**
  * VATSIM Live Widget - SimGlass
- * Real-time VATSIM network integration with notifications
- * @version 1.1.0
+ * Real-time VATSIM network integration with notifications and flight following
+ * @version 1.2.0
  */
 
 const VATSIM_DATA_URL = 'https://data.vatsim.net/v3/vatsim-data.json';
@@ -12,7 +12,7 @@ class VatsimLiveWidget extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'vatsim-live',
-            widgetVersion: '1.1.0',
+            widgetVersion: '1.2.0',
             autoConnect: true  // Connect to SimGlass for position data
         });
 
@@ -43,6 +43,10 @@ class VatsimLiveWidget extends SimGlassBase {
         // Notification tracking
         this.previousNearbyCallsigns = new Set();
         this.notificationQueue = [];
+
+        // Flight following
+        this.followedCallsign = null;
+        this.followedAircraftData = null;
 
         // BroadcastChannel for map integration
         this.mapChannel = new BroadcastChannel('simglass-sync');
@@ -239,6 +243,9 @@ class VatsimLiveWidget extends SimGlassBase {
                 this.checkForNewTraffic();
             }
 
+            // Update followed aircraft
+            this.updateFollowedAircraft();
+
         } catch (error) {
             this.updateStatus('error', error.message);
 
@@ -342,7 +349,8 @@ class VatsimLiveWidget extends SimGlassBase {
 
     createAircraftItem(pilot) {
         const item = document.createElement('div');
-        item.className = 'aircraft-item';
+        const isFollowed = this.followedCallsign === pilot.callsign;
+        item.className = 'aircraft-item' + (isFollowed ? ' aircraft-followed' : '');
 
         const aircraft = pilot.flight_plan?.aircraft || 'Unknown';
         const departure = pilot.flight_plan?.departure || '?';
@@ -351,7 +359,12 @@ class VatsimLiveWidget extends SimGlassBase {
         item.innerHTML = `
             <div class="aircraft-header">
                 <span class="callsign">${pilot.callsign}</span>
-                <span class="distance">${pilot.distance.toFixed(0)} nm</span>
+                <div class="aircraft-actions">
+                    <button class="btn-follow" data-callsign="${pilot.callsign}" title="${isFollowed ? 'Unfollow' : 'Follow on map'}">
+                        ${isFollowed ? '⭐' : '☆'}
+                    </button>
+                    <span class="distance">${pilot.distance.toFixed(0)} nm</span>
+                </div>
             </div>
             <div class="aircraft-details">
                 <span class="aircraft-type">${aircraft}</span>
@@ -363,6 +376,13 @@ class VatsimLiveWidget extends SimGlassBase {
                 <span>HDG: ${pilot.heading}°</span>
             </div>
         `;
+
+        // Add follow button handler
+        const followBtn = item.querySelector('.btn-follow');
+        followBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleFollowAircraft(pilot.callsign);
+        });
 
         return item;
     }
@@ -566,6 +586,94 @@ class VatsimLiveWidget extends SimGlassBase {
         if ('Notification' in window && Notification.permission === 'default') {
             await Notification.requestPermission();
         }
+    }
+
+    // Flight Following
+    toggleFollowAircraft(callsign) {
+        if (this.followedCallsign === callsign) {
+            // Unfollow
+            this.followedCallsign = null;
+            this.followedAircraftData = null;
+            this.showInWidgetNotification('🔭 Flight Following', `Stopped following ${callsign}`, 'info-subtle');
+        } else {
+            // Follow
+            this.followedCallsign = callsign;
+            const pilot = this.pilots.find(p => p.callsign === callsign);
+            if (pilot) {
+                this.followedAircraftData = pilot;
+                this.showInWidgetNotification('🔭 Flight Following', `Now following ${callsign}`, 'info');
+
+                // Center map on followed aircraft
+                this.broadcastFollowCommand(pilot);
+            }
+        }
+
+        // Re-render to update follow button state
+        this.renderAircraft();
+    }
+
+    broadcastFollowCommand(pilot) {
+        if (!this.mapChannel) return;
+
+        this.mapChannel.postMessage({
+            type: 'follow-aircraft',
+            data: {
+                callsign: pilot.callsign,
+                lat: pilot.latitude,
+                lon: pilot.longitude,
+                altitude: pilot.altitude,
+                heading: pilot.heading
+            },
+            source: 'vatsim-live'
+        });
+    }
+
+    updateFollowedAircraft() {
+        if (!this.followedCallsign) return;
+
+        // Find followed aircraft in current data
+        const pilot = this.pilots.find(p => p.callsign === this.followedCallsign);
+
+        if (!pilot) {
+            // Aircraft no longer in range
+            this.showInWidgetNotification(
+                '🔭 Flight Following',
+                `${this.followedCallsign} is no longer in range`,
+                'info-subtle'
+            );
+            this.followedCallsign = null;
+            this.followedAircraftData = null;
+            return;
+        }
+
+        // Check for significant changes (altitude ±1000ft, heading ±30°)
+        if (this.followedAircraftData) {
+            const altChange = Math.abs(pilot.altitude - this.followedAircraftData.altitude);
+            const hdgChange = Math.abs(pilot.heading - this.followedAircraftData.heading);
+
+            if (altChange >= 1000) {
+                const direction = pilot.altitude > this.followedAircraftData.altitude ? 'climbing' : 'descending';
+                this.showInWidgetNotification(
+                    `✈️ ${pilot.callsign}`,
+                    `Now ${direction} - ${Math.round(pilot.altitude).toLocaleString()} ft`,
+                    'info-subtle'
+                );
+            }
+
+            if (hdgChange >= 30) {
+                this.showInWidgetNotification(
+                    `✈️ ${pilot.callsign}`,
+                    `Heading change to ${pilot.heading}°`,
+                    'info-subtle'
+                );
+            }
+        }
+
+        // Update stored data
+        this.followedAircraftData = pilot;
+
+        // Broadcast updated position to map
+        this.broadcastFollowCommand(pilot);
     }
 
     // Settings Persistence
