@@ -3,7 +3,7 @@
 Flow Pro replacement for MSFS 2024 - modular widget overlay system.
 
 **Server Version:** v1.11.0
-**Status:** 30 widgets available
+**Status:** 54 widgets available | 60 automated tests passing
 
 ---
 
@@ -79,6 +79,7 @@ Browse to: http://localhost:8080
 
 | Widget | URL | Description |
 |--------|-----|-------------|
+| Performance Monitor | `/ui/performance-monitor/` | Real-time system health & metrics |
 | Panel Launcher | `/ui/panel-launcher/` | Quick launch all widgets |
 | Interaction Wheel | `/ui/interaction-wheel/` | Radial quick menu |
 | Plugin Manager | `/ui/plugin-manager/` | Third-party plugins |

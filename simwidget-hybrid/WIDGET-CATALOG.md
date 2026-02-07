@@ -1,6 +1,6 @@
 # SimGlass Catalog
 
-> **50+ widgets** for Microsoft Flight Simulator 2024
+> **54 widgets** for Microsoft Flight Simulator 2024
 
 ## Quick Start
 
@@ -18,6 +18,7 @@ Ctrl+/                          # Keyboard shortcuts
 | Widget | Description | Path |
 |--------|-------------|------|
 | ✈️ **Aircraft Control** | Autopilot, throttle, lights, gear | `/ui/aircraft-control/` |
+| 🛫 **Autopilot** | Autopilot control panel | `/ui/autopilot/` |
 | 📷 **Camera** | Camera views, drone mode | `/ui/camera-widget/` |
 | ⚙️ **Interaction Wheel** | Quick actions wheel | `/ui/interaction-wheel/` |
 | 🎤 **Voice Control** | Speech commands | `/ui/voice-control/` |
@@ -39,6 +40,7 @@ Ctrl+/                          # Keyboard shortcuts
 | Widget | Description | Path |
 |--------|-------------|------|
 | 🌦️ **Weather** | METAR/TAF display | `/ui/weather-widget/` |
+| 🌤️ **METAR** | METAR decoder | `/ui/metar-widget/` |
 | 🌤️ **Environment** | Time & weather control | `/ui/environment/` |
 
 ## Communication Widgets
@@ -48,6 +50,8 @@ Ctrl+/                          # Keyboard shortcuts
 | 📻 **Radio Stack** | COM/NAV frequencies | `/ui/radio-stack/` |
 | 📡 **ATC Comm** | ATC phrases & TTS | `/ui/atc-widget/` |
 | 👥 **Multiplayer** | VATSIM/IVAO traffic | `/ui/multiplayer-widget/` |
+| ✈️ **Traffic** | Aircraft traffic display | `/ui/traffic-widget/` |
+| 🎙️ **Voice Stress** | Voice stress analyzer | `/ui/voice-stress/` |
 
 ## Performance & Monitoring
 
@@ -55,9 +59,14 @@ Ctrl+/                          # Keyboard shortcuts
 |--------|-------------|------|
 | 📊 **Flight Data** | Altitude, speed, heading | `/ui/flight-data-widget/` |
 | 📈 **Performance** | FPS, GPU, CPU stats | `/ui/performance-widget/` |
+| ⚡ **Performance Monitor** | Real-time system health, WebSocket latency, error tracking | `/ui/performance-monitor/` |
+| 🔧 **Engine Monitor** | Engine parameters display | `/ui/engine-monitor/` |
+| ❤️ **Health Dashboard** | Aircraft systems health | `/ui/health-dashboard/` |
 | 🛬 **Landing Rate** | Touchdown grading | `/ui/landing-widget/` |
 | ⛽ **Fuel** | Fuel management | `/ui/fuel-widget/` |
+| 🛢️ **Fuel Monitor** | Real-time fuel monitoring | `/ui/fuel-monitor/` |
 | 🛢️ **Fuel Planner** | Trip fuel calculator | `/ui/fuel-planner/` |
+| ⚠️ **Failures** | Aircraft failure scenarios | `/ui/failures-widget/` |
 | ⚖️ **Weight & Balance** | CG calculator | `/ui/weight-balance/` |
 
 ## Utility Widgets
@@ -65,11 +74,15 @@ Ctrl+/                          # Keyboard shortcuts
 | Widget | Description | Path |
 |--------|-------------|------|
 | ✅ **Checklist** | Aircraft checklists | `/ui/checklist-widget/` |
+| 📝 **Checklist Maker** | Create custom checklists | `/ui/checklist-maker/` |
 | ⏱️ **Timer** | Stopwatch/countdown | `/ui/timer-widget/` |
 | 📝 **Notepad** | Quick notes | `/ui/notepad-widget/` |
 | 📒 **Kneeboard** | Reference info | `/ui/kneeboard-widget/` |
 | 📓 **Flight Log** | Auto flight logging | `/ui/flightlog-widget/` |
+| 📓 **Flight Log (Legacy)** | Legacy flight log | `/ui/flight-log/` |
 | 🎬 **Flight Recorder** | Record/replay | `/ui/flight-recorder/` |
+| 📹 **Replay Debrief** | Flight replay & analysis | `/ui/replay-debrief/` |
+| 🎥 **Video Viewer** | Video playback | `/ui/video-viewer/` |
 
 ## AI & Assistance
 
@@ -84,8 +97,10 @@ Ctrl+/                          # Keyboard shortcuts
 |--------|-------------|------|
 | ⌨️ **Keymap Editor** | Customize keybindings | `/ui/keymap-editor/` |
 | 🔌 **Plugin Manager** | Manage plugins | `/ui/plugin-manager/` |
+| 🔍 **Otto Search** | Quick widget search | `/ui/otto-search/` |
 | 🖥️ **Services Panel** | System status | `/ui/services-panel/` |
 | 🎬 **WASM Camera** | Custom cameras | `/ui/wasm-camera/` |
+| 🧩 **Tiny Widgets** | Compact widget collection | `/ui/tinywidgets/` |
 
 ## Dashboards
 
@@ -139,7 +154,7 @@ Custom presets: Save via Settings > Backup & Restore
 
 ## Features
 
-- ✅ 50+ widgets
+- ✅ 54 widgets
 - ✅ WebSocket real-time data
 - ✅ SimConnect integration
 - ✅ Mobile responsive
@@ -175,4 +190,4 @@ GET  /api/debug/camera
 
 ---
 
-Generated: 2026-01-23
+Generated: 2026-02-07
