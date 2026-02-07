@@ -7,7 +7,8 @@
  *   - GTNMapRenderer (map canvas rendering)
  *   - GTNCdi (CDI, OBS, nav source)
  *   - GTNFlightPlan (FPL, Direct-To, sequencing)
- *   - GTNDataHandler (WebSocket, traffic, frequencies)
+ *   - GTNDataHandler (WebSocket, traffic, frequencies) — browser mode
+ *   - GTNSimVarHandler (SimVar API, traffic, frequencies) — MSFS native mode
  *   - GTNDataFields (corner data fields)
  */
 
@@ -73,7 +74,9 @@ class GTN750Widget {
             core: this.core,
             getState: () => this.getRendererState()
         });
-        this.dataHandler = new GTNDataHandler({
+        // Auto-detect: use SimVar API inside MSFS, WebSocket in browser
+        const HandlerClass = (typeof SimVar !== 'undefined') ? GTNSimVarHandler : GTNDataHandler;
+        this.dataHandler = new HandlerClass({
             core: this.core,
             serverPort: this.serverPort,
             elements: {},

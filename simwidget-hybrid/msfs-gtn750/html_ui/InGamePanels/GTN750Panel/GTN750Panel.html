@@ -4,17 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>GTN750 GPS</title>
-    <link rel="stylesheet" href="/ui/shared/widget-common.css">
-    <link rel="stylesheet" href="/ui/shared/themes.css">
-    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
-    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
-    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <link rel="stylesheet" href="shared/widget-common.css">
+    <link rel="stylesheet" href="shared/themes.css">
     <link rel="stylesheet" href="styles.css">
-    <script src="/ui/shared/mobile-companion.js"></script>
 </head>
 <body>
-    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
-
     <div class="gtn750" id="gtn750">
         <!-- Frequency Bar (Top) - GTN 750 Style -->
         <div class="freq-bar">
@@ -35,7 +29,7 @@
             <!-- Audio Panel -->
             <div class="freq-section audio-section">
                 <div class="audio-btn" id="audio-panel">Audio<br>Panel</div>
-                <div class="audio-indicator">↓</div>
+                <div class="audio-indicator">&#8595;</div>
             </div>
 
             <!-- MIC Selector -->
@@ -124,23 +118,16 @@
         <div class="main-display" id="main-display">
             <!-- MAP Page -->
             <div class="gtn-page active" id="page-map">
-                <!-- Map Canvas -->
                 <canvas class="map-canvas" id="map-canvas"></canvas>
-
-                <!-- TAWS Alert -->
                 <div class="taws-alert" id="taws-alert" style="display:none;">
                     <span id="taws-text">PULL UP</span>
                 </div>
-
-                <!-- Map Range Selector -->
                 <div class="range-selector" id="range-selector">
                     <button class="range-btn" id="zoom-out">-</button>
                     <span class="range-value" id="df-range">10</span>
                     <span class="range-unit">nm</span>
                     <button class="range-btn" id="zoom-in">+</button>
                 </div>
-
-                <!-- Terrain Overlay Legend -->
                 <div class="terrain-legend" id="terrain-legend">
                     <div class="terrain-title">Terrain</div>
                     <div class="terrain-ft-label">FT</div>
@@ -152,18 +139,13 @@
                             <div class="terrain-segment terrain-green"></div>
                         </div>
                         <div class="terrain-labels">
-                            <span>0</span>
-                            <span>-500</span>
-                            <span>-1000</span>
-                            <span>-1500</span>
+                            <span>0</span><span>-500</span><span>-1000</span><span>-1500</span>
                         </div>
                     </div>
                 </div>
-
-                <!-- Corner Data Fields (Configurable) -->
                 <div class="corner-field top-left" data-field="trk">
                     <span class="corner-label" id="corner-tl-label">TRK</span>
-                    <span class="corner-value" id="df-trk">000°</span>
+                    <span class="corner-value" id="df-trk">000&deg;</span>
                 </div>
                 <div class="corner-field top-right" data-field="gs">
                     <span class="corner-label" id="corner-tr-label">GS</span>
@@ -177,8 +159,6 @@
                     <span class="corner-label" id="corner-br-label">ETE</span>
                     <span class="corner-value" id="corner-br">--:--</span>
                 </div>
-
-                <!-- Data Field Selector (hidden by default) -->
                 <div class="field-selector" id="field-selector">
                     <div class="field-option" data-type="trk">TRK - Track</div>
                     <div class="field-option" data-type="gs">GS - Ground Speed</div>
@@ -194,8 +174,6 @@
                     <div class="field-option" data-type="time">TIME - Zulu Time</div>
                     <div class="field-option" data-type="off">OFF - No Display</div>
                 </div>
-
-                <!-- Direct-To Modal -->
                 <div class="dto-modal" id="dto-modal" style="display: none;">
                     <div class="dto-header">DIRECT TO</div>
                     <div class="dto-content">
@@ -207,39 +185,20 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Position Display -->
                 <div class="position-display">
-                    <span class="pos-value" id="lat">N 00° 00.00'</span>
-                    <span class="pos-value" id="lon">W 000° 00.00'</span>
+                    <span class="pos-value" id="lat">N 00&deg; 00.00'</span>
+                    <span class="pos-value" id="lon">W 000&deg; 00.00'</span>
                 </div>
-
-                <!-- Active Waypoint -->
                 <div class="waypoint-box">
                     <div class="wpt-header">
                         <span class="wpt-id" id="wpt-id">----</span>
                         <span class="wpt-type" id="wpt-type">GPS</span>
                     </div>
                     <div class="wpt-data">
-                        <div class="wpt-item">
-                            <span class="wpt-label">DIS</span>
-                            <span class="wpt-value" id="wpt-dis">--.-</span>
-                            <span class="wpt-unit">nm</span>
-                        </div>
-                        <div class="wpt-item">
-                            <span class="wpt-label">BRG</span>
-                            <span class="wpt-value" id="wpt-brg">---</span>
-                            <span class="wpt-unit">°</span>
-                        </div>
-                        <div class="wpt-item">
-                            <span class="wpt-label">DTK</span>
-                            <span class="wpt-value" id="wpt-dtk">---</span>
-                            <span class="wpt-unit">°</span>
-                        </div>
-                        <div class="wpt-item">
-                            <span class="wpt-label">ETE</span>
-                            <span class="wpt-value" id="wpt-ete">--:--</span>
-                        </div>
+                        <div class="wpt-item"><span class="wpt-label">DIS</span><span class="wpt-value" id="wpt-dis">--.-</span><span class="wpt-unit">nm</span></div>
+                        <div class="wpt-item"><span class="wpt-label">BRG</span><span class="wpt-value" id="wpt-brg">---</span><span class="wpt-unit">&deg;</span></div>
+                        <div class="wpt-item"><span class="wpt-label">DTK</span><span class="wpt-value" id="wpt-dtk">---</span><span class="wpt-unit">&deg;</span></div>
+                        <div class="wpt-item"><span class="wpt-label">ETE</span><span class="wpt-value" id="wpt-ete">--:--</span></div>
                     </div>
                 </div>
             </div>
@@ -309,16 +268,14 @@
             <div class="gtn-page" id="page-terrain" style="display:none;">
                 <div class="gtn-terrain-container">
                     <canvas id="terrain-canvas"></canvas>
-                    <!-- Terrain Range Selector -->
                     <div class="terrain-range-selector">
                         <button class="range-btn" id="terrain-zoom-out">-</button>
                         <span class="range-value" id="terrain-range-value">10</span>
                         <span class="range-unit">nm</span>
                         <button class="range-btn" id="terrain-zoom-in">+</button>
                     </div>
-                    <!-- View Mode Toggle -->
                     <div class="terrain-view-toggle">
-                        <button class="view-btn" id="terrain-view-360">360°</button>
+                        <button class="view-btn" id="terrain-view-360">360&deg;</button>
                         <button class="view-btn active" id="terrain-view-arc">ARC</button>
                     </div>
                     <div class="terrain-page-legend">
@@ -332,10 +289,7 @@
                                 <div class="tl-segment tl-green"></div>
                             </div>
                             <div class="terrain-legend-labels">
-                                <span>0</span>
-                                <span>-500</span>
-                                <span>-1000</span>
-                                <span>-1500</span>
+                                <span>0</span><span>-500</span><span>-1000</span><span>-1500</span>
                             </div>
                         </div>
                     </div>
@@ -380,35 +334,23 @@
                         <label><input type="checkbox" id="wx-metar"> METAR</label>
                         <label><input type="checkbox" id="wx-winds"> WINDS</label>
                         <label><input type="checkbox" id="wx-lightning"> LTG</label>
-                        <button class="wx-anim-btn" id="wx-animate" title="Animate radar">▶</button>
+                        <button class="wx-anim-btn" id="wx-animate" title="Animate radar">&#9654;</button>
                     </div>
                     <div class="wx-radar-time" id="wx-radar-time"></div>
                 </div>
                 <div class="gtn-wx-info">
                     <div class="wx-condition-banner" id="wx-condition-banner">
-                        <span class="wx-condition-icon" id="wx-condition-icon">☀️</span>
+                        <span class="wx-condition-icon" id="wx-condition-icon">&#9728;</span>
                         <span class="wx-condition-text" id="wx-condition-text">Clear</span>
                     </div>
                     <div class="wx-sim-weather">
-                        <span class="wx-item"><b>Wind:</b> <span id="wx-wind">---°/--kt</span></span>
-                        <span class="wx-item"><b>Temp:</b> <span id="wx-temp">--°C</span></span>
-                        <span class="wx-item"><b>Baro:</b> <span id="wx-baro">--.--"</span></span>
+                        <span class="wx-item"><b>Wind:</b> <span id="wx-wind">---&deg;/--kt</span></span>
+                        <span class="wx-item"><b>Temp:</b> <span id="wx-temp">--&deg;C</span></span>
+                        <span class="wx-item"><b>Baro:</b> <span id="wx-baro">--,--"</span></span>
                         <span class="wx-item"><b>Vis:</b> <span id="wx-vis">--SM</span></span>
                         <span class="wx-item" id="wx-precip-item" style="display:none"><b>Precip:</b> <span id="wx-precip">None</span></span>
                     </div>
-                    <div class="wx-metar" id="wx-metar-text">External METAR data</div>
-                    <div class="wx-control-section">
-                        <div class="wx-control-label">SET WEATHER</div>
-                        <div class="wx-preset-grid">
-                            <button class="wx-preset-btn" data-preset="clear">Clear</button>
-                            <button class="wx-preset-btn" data-preset="scattered">Clouds</button>
-                            <button class="wx-preset-btn" data-preset="overcast">Overcast</button>
-                            <button class="wx-preset-btn" data-preset="rain">Rain</button>
-                            <button class="wx-preset-btn" data-preset="storm">Storm</button>
-                            <button class="wx-preset-btn" data-preset="fog">Fog</button>
-                        </div>
-                        <button class="wx-live-btn" id="wx-live-btn">LIVE WEATHER</button>
-                    </div>
+                    <div class="wx-metar" id="wx-metar-text">Sim weather data</div>
                 </div>
             </div>
 
@@ -433,22 +375,10 @@
                 <div class="gtn-aux-section">
                     <div class="aux-title">TRIP PLANNING</div>
                     <div class="aux-grid">
-                        <div class="aux-item">
-                            <span class="aux-label">Distance Rem</span>
-                            <span class="aux-value" id="aux-dist">--- NM</span>
-                        </div>
-                        <div class="aux-item">
-                            <span class="aux-label">Time Rem</span>
-                            <span class="aux-value" id="aux-time">--:--</span>
-                        </div>
-                        <div class="aux-item">
-                            <span class="aux-label">ETA</span>
-                            <span class="aux-value" id="aux-eta">--:--Z</span>
-                        </div>
-                        <div class="aux-item">
-                            <span class="aux-label">Fuel Req</span>
-                            <span class="aux-value" id="aux-fuel">--- GAL</span>
-                        </div>
+                        <div class="aux-item"><span class="aux-label">Distance Rem</span><span class="aux-value" id="aux-dist">--- NM</span></div>
+                        <div class="aux-item"><span class="aux-label">Time Rem</span><span class="aux-value" id="aux-time">--:--</span></div>
+                        <div class="aux-item"><span class="aux-label">ETA</span><span class="aux-value" id="aux-eta">--:--Z</span></div>
+                        <div class="aux-item"><span class="aux-label">Fuel Req</span><span class="aux-value" id="aux-fuel">--- GAL</span></div>
                     </div>
                 </div>
                 <div class="gtn-aux-section">
@@ -483,6 +413,10 @@
                                 <span class="status-value" id="sys-gps-status">3D FIX</span>
                             </div>
                             <div class="sys-status-item">
+                                <span class="status-label">Mode</span>
+                                <span class="status-value">MSFS Native</span>
+                            </div>
+                            <div class="sys-status-item">
                                 <span class="status-label">Software</span>
                                 <span class="status-value">v2.0.0</span>
                             </div>
@@ -497,7 +431,6 @@
 
         <!-- CDI Bar -->
         <div class="cdi-container">
-            <!-- Navigation Source Selector -->
             <div class="cdi-nav-source">
                 <button class="nav-src-btn active" id="nav-source-gps">GPS</button>
                 <button class="nav-src-btn" id="nav-source-nav1">NAV1</button>
@@ -512,7 +445,6 @@
                     <div class="cdi-dot"></div>
                 </div>
                 <div class="cdi-needle" id="cdi-needle"></div>
-                <!-- Glideslope indicator -->
                 <div class="cdi-gs-bar" id="cdi-gs-bar" style="display:none;">
                     <div class="cdi-gs-needle" id="cdi-gs-needle"></div>
                 </div>
@@ -522,19 +454,17 @@
                 <div class="cdi-info">
                     <span class="cdi-source" id="cdi-source">GPS</span>
                     <span class="cdi-tofrom" id="cdi-tofrom">TO</span>
-                    <span class="cdi-dtk">DTK <span id="cdi-dtk">---</span>°</span>
+                    <span class="cdi-dtk">DTK <span id="cdi-dtk">---</span>&deg;</span>
                     <span class="cdi-xtrk">XTK <span id="cdi-xtrk">0.0</span>NM</span>
                 </div>
                 <span class="cdi-label-right">R</span>
             </div>
-            <!-- OBS Controls -->
             <div class="obs-controls" id="obs-controls" style="display:none;">
                 <button class="obs-btn" id="obs-dec">&lt;</button>
                 <span class="obs-label">OBS</span>
-                <span class="obs-value" id="obs-value">---</span>°
+                <span class="obs-value" id="obs-value">---</span>&deg;
                 <button class="obs-btn" id="obs-inc">&gt;</button>
             </div>
-            <!-- NAV Flag -->
             <div class="cdi-flag" id="cdi-flag" style="display:none;">NAV</div>
         </div>
 
@@ -548,7 +478,7 @@
                 <span class="status-conn" id="conn"></span>
             </div>
             <div class="status-center">
-                <span class="status-msg" id="msg">INTEG OK</span>
+                <span class="status-msg" id="msg">MSFS NATIVE</span>
             </div>
             <div class="status-right">
                 <span class="status-time" id="utc-time">00:00:00Z</span>
@@ -556,9 +486,7 @@
         </div>
     </div>
 
-    <script src="/ui/shared/settings-panel.js"></script>
-    <script src="/ui/shared/theme-switcher.js"></script>
-    <script src="/ui/shared/widget-customizer.js"></script>
+    <!-- GTN750 Modules -->
     <script src="modules/gtn-core.js"></script>
     <script src="modules/gtn-pages.js"></script>
     <script src="modules/gtn-softkeys.js"></script>
@@ -578,11 +506,5 @@
     <script src="pages/page-nrst.js"></script>
     <script src="pages/page-system.js"></script>
     <script src="widget.js"></script>
-    <script>
-        const settings = new SettingsPanel();
-        settings.registerThemeSection();
-        const customizer = new WidgetCustomizer({ widgetId: 'gtn750', settingsPanel: settings });
-        document.getElementById('settings-btn').addEventListener('click', function() { settings.toggle(); });
-    </script>
 </body>
 </html>

@@ -1,0 +1,124 @@
+{
+  "content": [
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/GTN750Panel.html",
+      "size": 15000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/panel.json",
+      "size": 500,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/styles.css",
+      "size": 50000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/shared/widget-common.css",
+      "size": 5000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/shared/themes.css",
+      "size": 3000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/widget.js",
+      "size": 40000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-core.js",
+      "size": 5000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-pages.js",
+      "size": 3000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-softkeys.js",
+      "size": 5000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-data-fields.js",
+      "size": 6000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-cdi.js",
+      "size": 12000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-flight-plan.js",
+      "size": 16000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-map-renderer.js",
+      "size": 25000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-data-handler.js",
+      "size": 8000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-simvar-handler.js",
+      "size": 8000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/overlays/terrain-overlay.js",
+      "size": 10000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/overlays/traffic-overlay.js",
+      "size": 8000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/overlays/weather-overlay.js",
+      "size": 12000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/overlays/map-controls.js",
+      "size": 5000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/pages/page-proc.js",
+      "size": 5000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/pages/page-aux.js",
+      "size": 4000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/pages/page-charts.js",
+      "size": 5000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/pages/page-nrst.js",
+      "size": 5000,
+      "date": 132851673600000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/pages/page-system.js",
+      "size": 4000,
+      "date": 132851673600000000
+    }
+  ]
+}

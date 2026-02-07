@@ -1,0 +1,21 @@
+{
+  "ingame_panel": {
+    "panel_type": "CUSTOM_PANEL",
+    "panel_size": {
+      "width": 500,
+      "height": 700
+    },
+    "panel_pos": {
+      "x": 50,
+      "y": 50
+    },
+    "toolbar_title": "GTN750",
+    "toolbar_icon": "toolbar_icon.png",
+    "always_visible": false,
+    "hydrate_visible": false,
+    "auto_open": false,
+    "has_close_button": true,
+    "draggable": true,
+    "resizable": true
+  }
+}
