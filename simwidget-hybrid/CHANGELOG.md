@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Production Ready
+- **AI Copilot Widget** (`/ui/copilot-widget/`) v2.0.0 - Fully operational
+  - Streaming LLM chat with OpenAI GPT-4o or Anthropic Claude Sonnet 4.5
+  - License-based access system with HMAC-SHA256 validation
+  - BYO API key architecture with AES-256-CBC encryption
+  - Flight-aware system prompt with 30+ SimVars
+  - OpenAI TTS integration (10 natural voices)
+  - Settings panel for license/API key configuration
+  - Non-LLM features: checklists, emergency procedures, ATIS decoder, ATC helpers
+  - Backend: `copilot-license.js` (109 lines), `copilot-api.js` (476 lines)
+  - Frontend: Streaming SSE with conversation history, voice recognition
+
 ### Added
 - **Performance Monitor Widget** (`/ui/performance-monitor/`) - Real-time system health monitoring
   - WebSocket latency tracking with 60-second history chart
