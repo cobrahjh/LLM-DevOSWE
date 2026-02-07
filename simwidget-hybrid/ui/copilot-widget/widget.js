@@ -495,8 +495,11 @@ class AICopilot {
         // ATIS data
         this.atisData = null;
 
-        // LLM endpoint
-        this.llmEndpoint = 'http://localhost:3002/api/chat';
+        // LLM config
+        this.llmEndpoint = '/api/copilot/chat';
+        this.conversationHistory = [];
+        this.copilotStatus = null;
+        this.isStreaming = false;
 
         // Flight plan
         this.flightPlan = null;
@@ -555,6 +558,7 @@ class AICopilot {
         this.initVoice();
         this.initWebSocket();
         this.loadSettings();
+        this.initCopilotStatus();
     }
 
     // === Tab Navigation ===
@@ -673,36 +677,131 @@ class AICopilot {
         this.queryLLM(text);
     }
 
+    async initCopilotStatus() {
+        try {
+            const res = await fetch('/api/copilot/status');
+            if (res.ok) {
+                this.copilotStatus = await res.json();
+                if (!this.copilotStatus.licensed || !this.copilotStatus.hasApiKey) {
+                    this.showAIBanner();
+                }
+            }
+        } catch (e) {
+            // Server not available — non-LLM features still work
+        }
+    }
+
+    showAIBanner() {
+        const area = document.getElementById('message-area');
+        const banner = document.createElement('div');
+        banner.className = 'ai-unconfigured-banner';
+        banner.innerHTML = '<strong>AI not configured</strong> — Open Settings to add your license key and API key. Checklists, emergencies, and ATIS work without AI.';
+        banner.addEventListener('click', () => {
+            const settingsBtn = document.getElementById('settings-btn');
+            if (settingsBtn) settingsBtn.click();
+        });
+        area.parentElement.insertBefore(banner, area);
+    }
+
     async queryLLM(question) {
+        // Check if configured
+        if (!this.copilotStatus || !this.copilotStatus.licensed || !this.copilotStatus.hasApiKey) {
+            this.respond('AI is not configured. Open Settings > AI Copilot to add your license key and API key. I can still help with checklists, emergencies, and ATIS.');
+            return;
+        }
+
+        if (this.isStreaming) return;
+        this.isStreaming = true;
         this.updateStatus('Thinking...');
 
-        try {
-            const context = `You are an AI copilot assistant for Microsoft Flight Simulator. Current flight data: Altitude ${Math.round(this.flightData.altitude)}ft, Speed ${Math.round(this.flightData.speed)}kt, Heading ${Math.round(this.flightData.heading)}°. Keep responses brief and aviation-focused.`;
+        // Add user message to history
+        this.conversationHistory.push({ role: 'user', content: question });
+        this.trimHistory();
 
+        try {
             const response = await fetch(this.llmEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: question,
-                    context: context,
-                    persona: 'copilot'
+                    history: this.conversationHistory.slice(0, -1)
                 })
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                const reply = data.response || data.message || 'Unable to process that request.';
-                this.respond(reply);
-            } else {
-                // Fallback response
-                this.respond('I can help with checklists, emergencies, callouts, and flight information. Try "startup checklist", "emergency engine failure", or "decode atis".');
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                this.respond(err.error || 'LLM request failed. Check settings.');
+                this.isStreaming = false;
+                this.updateStatus('Standing by');
+                return;
+            }
+
+            // Stream SSE response
+            const msgEl = this.addStreamingMessage();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let fullText = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        if (data.chunk) {
+                            fullText += data.chunk;
+                            msgEl.querySelector('.msg-text').textContent = fullText;
+                            const area = document.getElementById('message-area');
+                            area.scrollTop = area.scrollHeight;
+                        }
+                        if (data.error) {
+                            fullText += '\n[Error: ' + data.error + ']';
+                            msgEl.querySelector('.msg-text').textContent = fullText;
+                        }
+                    } catch (e) { /* skip malformed */ }
+                }
+            }
+
+            // Finalize
+            msgEl.classList.remove('streaming');
+            this.conversationHistory.push({ role: 'assistant', content: fullText });
+            this.trimHistory();
+
+            if (this.voiceEnabled && fullText) {
+                this.speak(fullText.slice(0, 500));
             }
         } catch (e) {
-            // Fallback if LLM unavailable
-            this.respond('I can help with checklists, emergencies, callouts, and flight information. Try "startup checklist", "emergency engine failure", or "decode atis".');
+            this.respond('Connection error. Check if the server is running.');
         }
 
+        this.isStreaming = false;
         this.updateStatus('Standing by');
+    }
+
+    addStreamingMessage() {
+        const area = document.getElementById('message-area');
+        const msg = document.createElement('div');
+        msg.className = 'message copilot streaming';
+        const span = document.createElement('span');
+        span.className = 'msg-text';
+        msg.appendChild(span);
+        area.appendChild(msg);
+        area.scrollTop = area.scrollHeight;
+        return msg;
+    }
+
+    trimHistory() {
+        // Keep last 20 entries (10 pairs)
+        if (this.conversationHistory.length > 20) {
+            this.conversationHistory = this.conversationHistory.slice(-20);
+        }
     }
 
     addMessage(text, sender) {
@@ -1563,6 +1662,155 @@ class AICopilot {
 
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    registerCopilotSettings(settingsPanel) {
+        const self = this;
+        const MODELS = {
+            openai: [
+                { id: 'gpt-4o', name: 'GPT-4o' },
+                { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
+            ],
+            anthropic: [
+                { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5' },
+                { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5' }
+            ]
+        };
+
+        settingsPanel.registerSection('copilot-ai', {
+            title: 'AI Copilot',
+            icon: '🤖',
+            render: () => {
+                const status = self.copilotStatus || {};
+                const provider = status.provider || 'openai';
+                const model = status.model || 'gpt-4o';
+
+                const modelOptions = (p) => MODELS[p].map(m =>
+                    `<option value="${m.id}" ${m.id === model ? 'selected' : ''}>${m.name}</option>`
+                ).join('');
+
+                return `
+                    <div class="copilot-settings">
+                        <div class="cs-row">
+                            <label>License Key</label>
+                            <div class="cs-input-group">
+                                <input type="text" id="cs-license-key" placeholder="SW-XXXXX-XXXXX-XXXXX-XXXXX" value="${status.licensed ? '••••••••••••••••••••' : ''}">
+                                <button class="btn-small" id="cs-validate-btn">Validate</button>
+                            </div>
+                            <div class="cs-status" id="cs-license-status">${status.licensed ? '<span class="cs-ok">Licensed (' + (status.tier || 'pro') + ')</span>' : '<span class="cs-warn">Not licensed</span>'}</div>
+                        </div>
+                        <div class="cs-row">
+                            <label>Provider</label>
+                            <select id="cs-provider">
+                                <option value="openai" ${provider === 'openai' ? 'selected' : ''}>OpenAI</option>
+                                <option value="anthropic" ${provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
+                            </select>
+                        </div>
+                        <div class="cs-row">
+                            <label>Model</label>
+                            <select id="cs-model">${modelOptions(provider)}</select>
+                        </div>
+                        <div class="cs-row">
+                            <label>API Key</label>
+                            <input type="password" id="cs-api-key" placeholder="${status.hasApiKey ? 'Key saved (enter new to replace)' : 'Enter your API key'}">
+                        </div>
+                        <div class="cs-row">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="cs-memory-only" ${status.apiKeyMemoryOnly ? 'checked' : ''}>
+                                <span>Memory only (not saved to disk)</span>
+                            </label>
+                        </div>
+                        <div class="cs-row">
+                            <button class="btn btn-primary" id="cs-save-btn">Save Configuration</button>
+                        </div>
+                        <div class="cs-status" id="cs-save-status"></div>
+                    </div>
+                `;
+            },
+            onMount: (container) => {
+                const providerSelect = container.querySelector('#cs-provider');
+                const modelSelect = container.querySelector('#cs-model');
+
+                providerSelect.addEventListener('change', () => {
+                    const p = providerSelect.value;
+                    modelSelect.innerHTML = MODELS[p].map(m =>
+                        `<option value="${m.id}">${m.name}</option>`
+                    ).join('');
+                });
+
+                container.querySelector('#cs-validate-btn').addEventListener('click', async () => {
+                    const key = container.querySelector('#cs-license-key').value.trim();
+                    const statusEl = container.querySelector('#cs-license-status');
+                    if (!key || key.includes('•')) {
+                        statusEl.innerHTML = '<span class="cs-warn">Enter a license key to validate</span>';
+                        return;
+                    }
+                    try {
+                        const res = await fetch('/api/copilot/validate-key', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ key })
+                        });
+                        const result = await res.json();
+                        if (result.valid) {
+                            statusEl.innerHTML = '<span class="cs-ok">Valid key (' + (result.tier || 'pro') + ')</span>';
+                        } else {
+                            statusEl.innerHTML = '<span class="cs-err">' + (result.error || 'Invalid key') + '</span>';
+                        }
+                    } catch (e) {
+                        statusEl.innerHTML = '<span class="cs-err">Server error</span>';
+                    }
+                });
+
+                container.querySelector('#cs-save-btn').addEventListener('click', async () => {
+                    const saveStatus = container.querySelector('#cs-save-status');
+                    const licenseKey = container.querySelector('#cs-license-key').value.trim();
+                    const body = {
+                        provider: providerSelect.value,
+                        model: modelSelect.value,
+                        apiKeyMemoryOnly: container.querySelector('#cs-memory-only').checked
+                    };
+
+                    if (licenseKey && !licenseKey.includes('•')) {
+                        body.licenseKey = licenseKey;
+                    }
+
+                    const apiKey = container.querySelector('#cs-api-key').value.trim();
+                    if (apiKey) {
+                        body.apiKey = apiKey;
+                    }
+
+                    try {
+                        const res = await fetch('/api/copilot/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
+                        const result = await res.json();
+                        if (result.success) {
+                            saveStatus.innerHTML = '<span class="cs-ok">Saved! ' + (result.licensed ? 'Licensed.' : 'License invalid.') + (result.hasApiKey ? ' API key set.' : '') + '</span>';
+                            self.copilotStatus = {
+                                licensed: result.licensed,
+                                tier: result.tier,
+                                provider: body.provider,
+                                model: body.model,
+                                hasApiKey: result.hasApiKey,
+                                apiKeyMemoryOnly: body.apiKeyMemoryOnly
+                            };
+                            // Remove banner if now configured
+                            const banner = document.querySelector('.ai-unconfigured-banner');
+                            if (banner && result.licensed && result.hasApiKey) {
+                                banner.remove();
+                            }
+                        } else {
+                            saveStatus.innerHTML = '<span class="cs-err">Save failed</span>';
+                        }
+                    } catch (e) {
+                        saveStatus.innerHTML = '<span class="cs-err">Server error</span>';
+                    }
+                });
+            }
+        });
     }
 }
 

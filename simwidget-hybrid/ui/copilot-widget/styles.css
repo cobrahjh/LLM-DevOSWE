@@ -639,6 +639,94 @@
     border-radius: 2px;
 }
 
+/* Streaming message cursor */
+.message.streaming .msg-text::after {
+    content: '▋';
+    animation: blink-cursor 0.8s infinite;
+    color: rgba(255,255,255,0.7);
+}
+
+@keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* AI Unconfigured Banner */
+.ai-unconfigured-banner {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #fbbf24;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.ai-unconfigured-banner:hover {
+    border-color: #f59e0b;
+}
+
+.ai-unconfigured-banner strong {
+    color: #fcd34d;
+}
+
+/* Copilot Settings Section */
+.copilot-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.copilot-settings .cs-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.copilot-settings label {
+    font-size: 11px;
+    color: var(--widget-text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.copilot-settings input[type="text"],
+.copilot-settings input[type="password"],
+.copilot-settings select {
+    padding: 8px 10px;
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    border-radius: 6px;
+    color: var(--widget-text, #fff);
+    font-size: 12px;
+}
+
+.copilot-settings input:focus,
+.copilot-settings select:focus {
+    outline: none;
+    border-color: var(--widget-accent, #667eea);
+}
+
+.copilot-settings .cs-input-group {
+    display: flex;
+    gap: 6px;
+}
+
+.copilot-settings .cs-input-group input {
+    flex: 1;
+}
+
+.copilot-settings .cs-status {
+    font-size: 11px;
+    min-height: 16px;
+}
+
+.copilot-settings .cs-ok { color: #22c55e; }
+.copilot-settings .cs-warn { color: #f59e0b; }
+.copilot-settings .cs-err { color: #ef4444; }
+
 /* Mobile adjustments */
 @media (max-width: 400px) {
     .copilot-tabs {

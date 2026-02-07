@@ -205,9 +205,16 @@
     <script src="/ui/shared/widget-customizer.js"></script>
     <script src="widget.js"></script>
     <script>
-        const settings = new SettingsPanel();
-        const customizer = new WidgetCustomizer({ widgetId: 'copilot-widget', settingsPanel: settings });
-        document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+        document.addEventListener('DOMContentLoaded', () => {
+            const settings = new SettingsPanel();
+            window._copilotSettings = settings;
+            const customizer = new WidgetCustomizer({ widgetId: 'copilot-widget', settingsPanel: settings });
+            document.getElementById('settings-btn').addEventListener('click', () => settings.toggle());
+            // Register AI Copilot settings section
+            if (window.copilot) {
+                window.copilot.registerCopilotSettings(settings);
+            }
+        });
     </script>
 </body>
 </html>

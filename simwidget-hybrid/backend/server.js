@@ -43,6 +43,7 @@ const { HotReloadManager } = require('./hot-reload');
 const PluginLoader = require('./plugin-system/plugin-loader');
 const PluginAPI = require('./plugin-system/plugin-api');
 const { setupWeatherRoutes } = require('./weather-api');
+const { setupCopilotRoutes } = require('./copilot-api');
 
 // Hot reload manager (development only)
 const hotReloadManager = new HotReloadManager();
@@ -3688,6 +3689,9 @@ async function sendSimConnectEvent(event, value = 0) {
 // Start server with TroubleshootEngine
 // Setup Weather Control API
 setupWeatherRoutes(app, () => simConnectConnection);
+
+// Setup Copilot AI API (streaming LLM proxy)
+setupCopilotRoutes(app, () => flightData);
 
 const troubleshoot = new TroubleshootEngine('SimWidget');
 
