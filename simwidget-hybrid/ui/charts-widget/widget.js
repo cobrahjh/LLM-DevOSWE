@@ -1,5 +1,5 @@
 /**
- * Charts Widget - SimGlass
+ * Charts Widget - SimGlass v2.0.0
  * Free approach charts from multiple sources
  *
  * Sources:
@@ -8,8 +8,14 @@
  * - Eurocontrol: EAD basic charts (Europe)
  */
 
-class ChartsWidget {
+class ChartsWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'charts-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for chart display
+        });
+
         this.currentAirport = null;
         this.currentSource = 'chartfox';
         this.recentAirports = [];
@@ -345,7 +351,15 @@ class ChartsWidget {
     }
 }
 
+    // Cleanup - extends SimGlassBase.destroy()
+    destroy() {
+        // Call parent destroy for cleanup
+        super.destroy();
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.chartsWidget = new ChartsWidget();
+    window.addEventListener('beforeunload', () => window.chartsWidget?.destroy());
 });

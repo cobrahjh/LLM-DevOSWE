@@ -1,11 +1,17 @@
 /**
- * SimBrief Widget - SimGlass
+ * SimBrief Widget - SimGlass v2.0.0
  * Fetches and displays SimBrief OFP data
  * API: https://developers.navigraph.com/docs/simbrief/
  */
 
-class SimBriefWidget {
+class SimBriefWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'simbrief-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for SimBrief API
+        });
+
         this.ofpData = null;
         this.pilotId = null;
 
@@ -538,6 +544,14 @@ class SimBriefWidget {
     }
 }
 
+    // Cleanup - extends SimGlassBase.destroy()
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     window.simbriefWidget = new SimBriefWidget();
+    window.addEventListener('beforeunload', () => window.simbriefWidget?.destroy());
 });

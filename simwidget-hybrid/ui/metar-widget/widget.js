@@ -1,10 +1,16 @@
 /**
- * METAR Widget - SimGlass
+ * METAR Widget - SimGlass v2.0.0
  * Real-time aviation weather from aviationweather.gov
  */
 
-class MetarWidget {
+class MetarWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'metar-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for weather API
+        });
+
         this.currentStation = '';
         this.recentStations = [];
         this.autoRefreshInterval = null;
@@ -453,6 +459,9 @@ class MetarWidget {
             clearInterval(this.autoRefreshInterval);
             this.autoRefreshInterval = null;
         }
+
+        // Call parent destroy
+        super.destroy();
     }
 }
 

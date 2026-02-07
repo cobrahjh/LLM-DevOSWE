@@ -1,10 +1,16 @@
 /**
- * Kneeboard Widget - SimGlass
+ * Kneeboard Widget - SimGlass v2.0.0
  * Combined notes, frequencies, timer, and reference
  */
 
-class KneeboardWidget {
+class KneeboardWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'kneeboard-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for kneeboard
+        });
+
         this.currentTab = 'notes';
         this.notes = '';
         this.frequencies = [];
@@ -363,6 +369,9 @@ class KneeboardWidget {
             clearInterval(this._timerInterval);
             this._timerInterval = null;
         }
+
+        // Call parent destroy
+        super.destroy();
     }
 }
 

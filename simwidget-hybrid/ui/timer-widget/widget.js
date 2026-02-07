@@ -1,10 +1,16 @@
 /**
- * Timer Widget - SimGlass
+ * Timer Widget - SimGlass v2.0.0
  * Stopwatch and countdown timer for flight procedures
  */
 
-class TimerWidget {
+class TimerWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'timer-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for timer
+        });
+
         this.mode = 'stopwatch';
         this.running = false;
         this.elapsed = 0;
@@ -329,6 +335,9 @@ class TimerWidget {
             this.audioCtx.close();
             this.audioCtx = null;
         }
+
+        // Call parent destroy
+        super.destroy();
     }
 }
 

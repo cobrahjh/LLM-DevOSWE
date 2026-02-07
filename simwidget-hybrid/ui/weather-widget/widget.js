@@ -1,5 +1,5 @@
 /**
- * Weather Widget - SimGlass
+ * Weather Widget - SimGlass v2.0.0
  * METAR/TAF weather display for flight planning
  *
  * Voice Features:
@@ -7,8 +7,14 @@
  * - Uses VoiceAnnouncer shared service
  */
 
-class WeatherWidget {
+class WeatherWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'weather-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for weather fetch
+        });
+
         this.recentAirports = [];
         this.currentData = null;
 
@@ -396,7 +402,15 @@ Category: ${category}`;
     }
 }
 
+    // Cleanup - extends SimGlassBase.destroy()
+    destroy() {
+        // Call parent destroy
+        super.destroy();
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.weatherWidget = new WeatherWidget();
+    window.addEventListener('beforeunload', () => window.weatherWidget?.destroy());
 });
