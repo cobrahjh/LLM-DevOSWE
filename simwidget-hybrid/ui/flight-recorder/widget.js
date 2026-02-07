@@ -20,6 +20,7 @@ const STORAGE_KEY = 'SimGlass_recorder_settings';
 const SESSIONS_KEY = 'SimGlass_flight_sessions';
 
 // State
+let _destroyed = false;
 let ws = null;
 let isRecording = false;
 let isPaused = false;
@@ -108,8 +109,10 @@ function setupEventListeners() {
 // ============================================
 
 function connectWebSocket() {
+    if (_destroyed) return;
+
     ws = new WebSocket(WS_URL);
-    
+
     ws.onopen = () => {
         console.log('WebSocket connected');
     };
@@ -129,7 +132,9 @@ function connectWebSocket() {
     
     ws.onclose = () => {
         console.log('WebSocket disconnected, reconnecting...');
-        setTimeout(connectWebSocket, 3000);
+        if (!_destroyed) {
+            setTimeout(connectWebSocket, 3000);
+        }
     };
     
     ws.onerror = () => {
@@ -767,3 +772,26 @@ function toggleTransparency() {
 if (localStorage.getItem('recorder_transparent') === 'true') {
     document.body.classList.add('transparent');
 }
+
+// Cleanup
+function destroy() {
+    _destroyed = true;
+
+    if (recordingInterval) {
+        clearInterval(recordingInterval);
+        recordingInterval = null;
+    }
+
+    if (playbackInterval) {
+        clearInterval(playbackInterval);
+        playbackInterval = null;
+    }
+
+    if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+    }
+}
+
+window.addEventListener('beforeunload', destroy);

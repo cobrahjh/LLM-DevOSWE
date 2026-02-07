@@ -22,6 +22,7 @@
 
 class FuelWidget {
     constructor() {
+        this._destroyed = false;
         this.ws = null;
         this.fuelData = {
             fuelTotal: 0,
@@ -160,8 +161,10 @@ class FuelWidget {
     }
 
     connectWebSocket() {
+        if (this._destroyed) return;
+
         this.setStatus('Connecting...', '');
-        
+
         try {
             this.ws = new WebSocket(this.serverUrl);
             
@@ -182,7 +185,9 @@ class FuelWidget {
             
             this.ws.onclose = () => {
                 this.setStatus('Disconnected', 'disconnected');
-                this.scheduleReconnect();
+                if (!this._destroyed) {
+                    this.scheduleReconnect();
+                }
             };
             
             this.ws.onerror = (error) => {
@@ -196,11 +201,13 @@ class FuelWidget {
     }
 
     scheduleReconnect() {
+        if (this._destroyed) return;
+
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
             const delay = Math.min(1000 * this.reconnectAttempts, 5000);
             this.log(`Reconnecting in ${delay/1000}s...`);
-            setTimeout(() => this.connectWebSocket(), delay);
+            this._reconnectTimeout = setTimeout(() => this.connectWebSocket(), delay);
         }
     }
 
@@ -408,8 +415,24 @@ class FuelWidget {
         this.statusLog.textContent = message;
         this.statusLog.className = 'status-log ' + type;
     }
+
+    destroy() {
+        this._destroyed = true;
+
+        if (this._reconnectTimeout) {
+            clearTimeout(this._reconnectTimeout);
+            this._reconnectTimeout = null;
+        }
+
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+            this.ws = null;
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.fuelWidget = new FuelWidget();
+    window.addEventListener('beforeunload', () => window.fuelWidget?.destroy());
 });

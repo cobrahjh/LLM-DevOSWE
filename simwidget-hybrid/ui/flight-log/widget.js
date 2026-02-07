@@ -1,5 +1,6 @@
 class FlightLog {
     constructor() {
+        this._destroyed = false;
         this.recording = false;
         this.startTime = null;
         this.flightData = { maxAlt: 0, distance: 0, landings: 0, lastPos: null, wasOnGround: true };
@@ -14,7 +15,7 @@ class FlightLog {
         document.getElementById('btn-export').onclick = () => this.exportLog();
         this.renderHistory();
         this.updateTotals();
-        setInterval(() => this.update(), 1000);
+        this._updateInterval = setInterval(() => this.update(), 1000);
     }
 
     startRecording() {
@@ -116,5 +117,18 @@ class FlightLog {
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'flight-log.csv'; a.click();
     }
+
+    destroy() {
+        this._destroyed = true;
+
+        if (this._updateInterval) {
+            clearInterval(this._updateInterval);
+            this._updateInterval = null;
+        }
+    }
 }
-document.addEventListener('DOMContentLoaded', () => new FlightLog());
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.flightLog = new FlightLog();
+    window.addEventListener('beforeunload', () => window.flightLog?.destroy());
+});
