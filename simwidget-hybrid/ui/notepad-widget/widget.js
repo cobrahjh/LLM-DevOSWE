@@ -16,8 +16,14 @@ const TEMPLATES = {
     ALTIMETER: 'QNH: ____ hPa\nAltimeter: __.__ inHg'
 };
 
-class NotepadWidget {
+class NotepadWidget extends SimGlassBase {
     constructor() {
+        super({
+            widgetName: 'notepad-widget',
+            widgetVersion: '2.0.0',
+            autoConnect: false  // No WebSocket needed for notes
+        });
+
         this.savedItems = [];
         this.loadState();
         this.initElements();
@@ -28,9 +34,9 @@ class NotepadWidget {
 
     initSyncListener() {
         // Cross-widget communication
-        const syncChannel = new BroadcastChannel('SimGlass-sync');
+        this.syncChannel = new BroadcastChannel('SimGlass-sync');
 
-        syncChannel.onmessage = (event) => {
+        this.syncChannel.onmessage = (event) => {
             const { type, data } = event.data;
 
             switch (type) {
@@ -274,9 +280,23 @@ class NotepadWidget {
             }
         }
     }
+
+    destroy() {
+        // Close BroadcastChannel
+        if (this.syncChannel) {
+            this.syncChannel.close();
+            this.syncChannel = null;
+        }
+
+        // Call parent destroy
+        super.destroy();
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.notepadWidget = new NotepadWidget();
+    window.addEventListener('beforeunload', () =>
+        window.notepadWidget?.destroy()
+    );
 });
