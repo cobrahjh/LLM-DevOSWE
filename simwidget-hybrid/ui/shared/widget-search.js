@@ -1,5 +1,5 @@
 /**
- * SimWidget Quick Search / Launcher v1.0.0
+ * SimGlass Quick Search / Launcher v1.0.0
  * Fuzzy search and quick launch for all widgets
  */
 

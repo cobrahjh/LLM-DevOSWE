@@ -2,7 +2,7 @@
   "id": "flight-data-widget",
   "name": "Flight Data Widget",
   "version": "1.1.0",
-  "author": "Lovable (Ported to SimWidget)",
+  "author": "Lovable (Ported to SimGlass)",
   "description": "A comprehensive flight data display widget showing altitude, heading, airspeed, ground speed, vertical speed, and wind information",
   "category": "Flight Data",
   "entry": "index.html",

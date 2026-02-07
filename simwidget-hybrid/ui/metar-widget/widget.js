@@ -1,5 +1,5 @@
 /**
- * METAR Widget - SimWidget
+ * METAR Widget - SimGlass
  * Real-time aviation weather from aviationweather.gov
  */
 

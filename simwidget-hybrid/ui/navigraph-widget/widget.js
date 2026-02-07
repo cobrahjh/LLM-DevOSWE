@@ -1,5 +1,5 @@
 /**
- * Charts Widget - SimWidget
+ * Charts Widget - SimGlass
  * Airport charts viewer using FREE sources:
  * - FAA DTPP for US airports (no login required)
  * - SkyVector for worldwide charts

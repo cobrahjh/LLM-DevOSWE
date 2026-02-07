@@ -2,7 +2,7 @@
  * Health Dashboard Widget v1.0.0
  * Path: simwidget-hybrid/ui/health-dashboard/widget.js
  *
- * Real-time system health monitoring for SimWidget components
+ * Real-time system health monitoring for SimGlass components
  */
 
 const API_URL = `http://${window.location.host}`;

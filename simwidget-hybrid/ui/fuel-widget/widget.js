@@ -2,7 +2,7 @@
  * Fuel Widget v2.3.1
  * Last Updated: 2026-01-11
  * 
- * Dynamic fuel management widget for SimWidget Engine
+ * Dynamic fuel management widget for SimGlass Engine
  * - Transparency toggle (persisted)
  * - Auto-detects aircraft fuel tanks from SimConnect
  * - Multi-select tanks (click to toggle)
@@ -168,7 +168,7 @@ class FuelWidget {
             this.ws.onopen = () => {
                 this.reconnectAttempts = 0;
                 this.setStatus('Connected', 'connected');
-                this.log('Connected to SimWidget server', 'success');
+                this.log('Connected to SimGlass server', 'success');
             };
             
             this.ws.onmessage = (event) => {

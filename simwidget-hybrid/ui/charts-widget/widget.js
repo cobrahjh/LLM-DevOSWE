@@ -1,5 +1,5 @@
 /**
- * Charts Widget - SimWidget
+ * Charts Widget - SimGlass
  * Free approach charts from multiple sources
  *
  * Sources:

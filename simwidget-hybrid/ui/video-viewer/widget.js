@@ -1,5 +1,5 @@
 /**
- * Video Viewer Widget - SimWidget
+ * Video Viewer Widget - SimGlass
  * MSFS screen capture with HTTP polling or WebSocket streaming
  */
 

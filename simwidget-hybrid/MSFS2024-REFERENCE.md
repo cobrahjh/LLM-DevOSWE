@@ -2,7 +2,7 @@
 **Version:** v1.0.0
 **Last Updated:** 2026-01-05
 
-Quick reference for SimWidget development based on official MSFS 2024 SDK documentation.
+Quick reference for SimGlass development based on official MSFS 2024 SDK documentation.
 
 ## Default Keyboard Shortcuts
 
@@ -18,7 +18,7 @@ Quick reference for SimWidget development based on official MSFS 2024 SDK docume
 | Save Custom Camera 1-4 | SHIFT + F5-F8 | |
 | Photo Mode Toggle | SHIFT + V | |
 
-## SimConnect Key Events (Used in SimWidget)
+## SimConnect Key Events (Used in SimGlass)
 
 ### Autopilot Events
 | Event | Description | Value |

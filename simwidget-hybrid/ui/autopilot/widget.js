@@ -4,10 +4,10 @@
  * Path: ui/autopilot/widget.js
  *
  * Full autopilot control panel with heading, altitude, VS, speed modes
- * Extends SimWidgetBase for WebSocket connection
+ * Extends SimGlassBase for WebSocket connection
  */
 
-class AutopilotWidget extends SimWidgetBase {
+class AutopilotWidget extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'autopilot',
@@ -368,7 +368,7 @@ class AutopilotWidget extends SimWidgetBase {
 
     /**
      * Handle WebSocket messages from server
-     * Override SimWidgetBase.onMessage
+     * Override SimGlassBase.onMessage
      */
     onMessage(msg) {
         if (msg.type === 'flightData' && msg.data) {

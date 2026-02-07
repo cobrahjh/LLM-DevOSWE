@@ -1,5 +1,5 @@
 /**
- * Landing Rate Widget - SimWidget
+ * Landing Rate Widget - SimGlass
  * Tracks touchdown vertical speed and grades landings
  */
 

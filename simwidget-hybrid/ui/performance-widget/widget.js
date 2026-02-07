@@ -1,5 +1,5 @@
 /**
- * Performance Widget - SimWidget
+ * Performance Widget - SimGlass
  * Displays FPS, GPU, CPU usage and frame timing
  */
 

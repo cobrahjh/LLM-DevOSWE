@@ -1,13 +1,13 @@
 /**
- * SimWidget Presets System v1.0.0
+ * SimGlass Presets System v1.0.0
  * Last Updated: 2025-01-23
  *
  * Widget preset/layout system for quickly opening groups of related widgets.
  * Include: <script src="/ui/shared/presets.js"></script>
  */
 
-const SimWidgetPresets = (function() {
-    const STORAGE_KEY = 'simwidget-presets';
+const SimGlassPresets = (function() {
+    const STORAGE_KEY = 'SimGlass-presets';
 
     // Built-in preset definitions
     const builtInPresets = {
@@ -231,5 +231,5 @@ const SimWidgetPresets = (function() {
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SimWidgetPresets;
+    module.exports = SimGlassPresets;
 }

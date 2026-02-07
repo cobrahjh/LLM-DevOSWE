@@ -1,5 +1,5 @@
 /**
- * Flight Plan Widget - SimWidget
+ * Flight Plan Widget - SimGlass
  * Displays active flight plan with waypoints and progress
  *
  * Widget Interconnection:
@@ -24,7 +24,7 @@ class FlightPlanWidget {
         this.announcer = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer() : null;
 
         // Cross-widget communication
-        this.syncChannel = new BroadcastChannel('simwidget-sync');
+        this.syncChannel = new BroadcastChannel('SimGlass-sync');
         this.syncChannel.onmessage = (event) => {
             const { type, data } = event.data;
             if (type === 'simbrief-plan') {

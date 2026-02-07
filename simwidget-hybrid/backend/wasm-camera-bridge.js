@@ -1,7 +1,7 @@
 /**
  * WASM Camera Bridge v1.0.0
  * 
- * Communicates with SimWidget Camera WASM module via LVars
+ * Communicates with SimGlass Camera WASM module via LVars
  * 
  * LVars used:
  * - L:SIMWIDGET_CAM_COMMAND - Send commands to WASM (1=flyby, 3=toggle cinematic, etc.)

@@ -1,5 +1,5 @@
 /**
- * SimWidget Night Mode Auto-Switch v1.0.0
+ * SimGlass Night Mode Auto-Switch v1.0.0
  * Automatically switches theme based on sim time or system time
  */
 
@@ -128,7 +128,7 @@ class NightMode {
 
     saveState() {
         try {
-            localStorage.setItem('simwidget-night-mode', JSON.stringify({
+            localStorage.setItem('SimGlass-night-mode', JSON.stringify({
                 enabled: this.enabled,
                 autoMode: this.autoMode,
                 dayTheme: this.dayTheme,
@@ -141,7 +141,7 @@ class NightMode {
 
     loadState() {
         try {
-            const saved = localStorage.getItem('simwidget-night-mode');
+            const saved = localStorage.getItem('SimGlass-night-mode');
             if (saved) {
                 const state = JSON.parse(saved);
                 this.enabled = state.enabled || false;

@@ -1,4 +1,4 @@
-# SimWidget Catalog
+# SimGlass Catalog
 
 > **50+ widgets** for Microsoft Flight Simulator 2024
 

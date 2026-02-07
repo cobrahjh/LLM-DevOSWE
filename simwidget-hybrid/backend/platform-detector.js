@@ -1,5 +1,5 @@
 /**
- * Platform Detector for SimWidget
+ * Platform Detector for SimGlass
  * 
  * Detects the current platform and available input methods
  * Provides platform indicators for button processes
@@ -386,7 +386,7 @@ class PlatformDetector {
                 priority: 'info',
                 title: 'Limited Support',
                 description: `Platform ${this.platform} has limited input method support`,
-                benefit: 'Consider using Windows for full SimWidget functionality'
+                benefit: 'Consider using Windows for full SimGlass functionality'
             });
         }
 

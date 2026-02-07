@@ -1,5 +1,5 @@
 /**
- * SimWidget Plugin System
+ * SimGlass Plugin System
  * Loads and manages third-party widgets
  */
 

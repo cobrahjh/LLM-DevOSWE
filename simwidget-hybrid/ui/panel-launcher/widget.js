@@ -1,5 +1,5 @@
 /**
- * Panel Launcher Widget - SimWidget Phase 6
+ * Panel Launcher Widget - SimGlass Phase 6
  * Quick access to G1000/avionics panels and controls
  */
 
@@ -9,12 +9,12 @@ const API_URL = `http://${window.location.host}`;
 let ws = null;
 let isConnected = false;
 
-// Connect to SimWidget WebSocket
+// Connect to SimGlass WebSocket
 function connect() {
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
-        console.log('[Panel Launcher] Connected to SimWidget');
+        console.log('[Panel Launcher] Connected to SimGlass');
         isConnected = true;
         updateStatus(true);
     };

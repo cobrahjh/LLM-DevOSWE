@@ -1,4 +1,4 @@
-# SimWidget Windows Service Installer
+# SimGlass Windows Service Installer
 # Requires Administrator privileges
 # Version: 1.0.0
 
@@ -8,8 +8,8 @@ param(
     [string]$Action = 'status'
 )
 
-$ServiceName = "SimWidget"
-$DisplayName = "SimWidget MSFS Integration"
+$ServiceName = "SimGlass"
+$DisplayName = "SimGlass MSFS Integration"
 $Description = "Widget overlay system for Microsoft Flight Simulator 2024"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $NodePath = "C:\Program Files\nodejs\node.exe"
@@ -50,7 +50,7 @@ function Show-Status {
     }
 }
 
-function Install-SimWidgetService {
+function Install-SimGlassService {
     if (-not (Test-Admin)) {
         Write-Host "Error: Administrator privileges required" -ForegroundColor Red
         return
@@ -112,7 +112,7 @@ function Install-SimWidgetService {
     Write-Host "Use 'start' to start the service" -ForegroundColor Cyan
 }
 
-function Uninstall-SimWidgetService {
+function Uninstall-SimGlassService {
     if (-not (Test-Admin)) {
         Write-Host "Error: Administrator privileges required" -ForegroundColor Red
         return
@@ -136,7 +136,7 @@ function Uninstall-SimWidgetService {
     Write-Host "Service removed successfully!" -ForegroundColor Green
 }
 
-function Start-SimWidgetService {
+function Start-SimGlassService {
     $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
     if (-not $service) {
         Write-Host "Service not installed. Run 'install' first." -ForegroundColor Yellow
@@ -150,33 +150,33 @@ function Start-SimWidgetService {
     $service = Get-Service -Name $ServiceName
     if ($service.Status -eq 'Running') {
         Write-Host "Service started successfully!" -ForegroundColor Green
-        Write-Host "SimWidget available at: http://localhost:8080" -ForegroundColor Cyan
+        Write-Host "SimGlass available at: http://localhost:8080" -ForegroundColor Cyan
     } else {
         Write-Host "Service failed to start. Check logs." -ForegroundColor Red
     }
 }
 
-function Stop-SimWidgetService {
+function Stop-SimGlassService {
     Write-Host "Stopping $ServiceName..." -ForegroundColor Cyan
     Stop-Service -Name $ServiceName -ErrorAction SilentlyContinue
     Write-Host "Service stopped." -ForegroundColor Green
 }
 
-function Restart-SimWidgetService {
-    Stop-SimWidgetService
+function Restart-SimGlassService {
+    Stop-SimGlassService
     Start-Sleep -Seconds 2
-    Start-SimWidgetService
+    Start-SimGlassService
 }
 
 # Main
-Write-Host "`n=== SimWidget Service Manager ===" -ForegroundColor Magenta
+Write-Host "`n=== SimGlass Service Manager ===" -ForegroundColor Magenta
 
 switch ($Action) {
-    'install'   { Install-SimWidgetService }
-    'uninstall' { Uninstall-SimWidgetService }
-    'start'     { Start-SimWidgetService }
-    'stop'      { Stop-SimWidgetService }
-    'restart'   { Restart-SimWidgetService }
+    'install'   { Install-SimGlassService }
+    'uninstall' { Uninstall-SimGlassService }
+    'start'     { Start-SimGlassService }
+    'stop'      { Stop-SimGlassService }
+    'restart'   { Restart-SimGlassService }
     'status'    { Show-Status }
 }
 

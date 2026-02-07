@@ -1,6 +1,6 @@
 /**
  * Plugin Manager Widget
- * Manages SimWidget plugins - discover, enable, disable, filter
+ * Manages SimGlass plugins - discover, enable, disable, filter
  */
 
 const API_BASE = `http://${window.location.host}`;

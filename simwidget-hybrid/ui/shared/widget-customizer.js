@@ -1,5 +1,5 @@
 /**
- * SimWidget Customizer v1.0.0
+ * SimGlass Customizer v1.0.0
  *
  * Adds theme, layout, and profile customization to any widget.
  * Include after settings-panel.js:
@@ -226,12 +226,12 @@ class WidgetCustomizer {
      * Storage helpers
      */
     save(key, value) {
-        localStorage.setItem(`simwidget_${this.widgetId}_${key}`, JSON.stringify(value));
+        localStorage.setItem(`SimGlass_${this.widgetId}_${key}`, JSON.stringify(value));
     }
 
     load(key) {
         try {
-            return JSON.parse(localStorage.getItem(`simwidget_${this.widgetId}_${key}`));
+            return JSON.parse(localStorage.getItem(`SimGlass_${this.widgetId}_${key}`));
         } catch {
             return null;
         }

@@ -13,7 +13,7 @@
  * Path: ui/engine-monitor/widget.js
  */
 
-class EngineMonitorWidget extends SimWidgetBase {
+class EngineMonitorWidget extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'engine-monitor',

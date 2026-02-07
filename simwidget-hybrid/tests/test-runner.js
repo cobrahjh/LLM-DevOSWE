@@ -1,5 +1,5 @@
 /**
- * SimWidget Test Framework v1.0.0
+ * SimGlass Test Framework v1.0.0
  * 
  * Automated testing for API, WebSocket, and widget components
  * 
@@ -269,7 +269,7 @@ async function testWidgets() {
 
 async function runTests(suite) {
     log('\n╔═══════════════════════════════════════════╗', 'cyan');
-    log('║     SimWidget Test Framework v1.0.0       ║', 'cyan');
+    log('║     SimGlass Test Framework v1.0.0       ║', 'cyan');
     log('╚═══════════════════════════════════════════╝', 'cyan');
 
     const startTime = Date.now();

@@ -1,6 +1,6 @@
 /**
  * Camera Widget JavaScript v2
- * SimWidget Engine - Now with Platform Indicators
+ * SimGlass Engine - Now with Platform Indicators
  */
 
 const API_BASE = window.location.origin;

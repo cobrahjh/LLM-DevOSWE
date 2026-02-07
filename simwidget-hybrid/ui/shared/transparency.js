@@ -2,7 +2,7 @@
  * Widget Transparency Module v1.0.0
  * Last Updated: 2025-01-07
  * 
- * Shared transparency toggle for all SimWidget widgets.
+ * Shared transparency toggle for all SimGlass widgets.
  * Include this script and call initTransparency() after DOM load.
  * 
  * Usage:

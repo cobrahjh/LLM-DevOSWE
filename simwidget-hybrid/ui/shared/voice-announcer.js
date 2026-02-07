@@ -1,6 +1,6 @@
 /**
  * Voice Announcer - Shared TTS Service
- * Provides text-to-speech for all SimWidgets
+ * Provides text-to-speech for all SimGlasss
  *
  * Usage:
  *   const announcer = new VoiceAnnouncer();
@@ -64,7 +64,7 @@ class VoiceAnnouncer {
     }
 
     initSyncListener() {
-        const channel = new BroadcastChannel('simwidget-voice');
+        const channel = new BroadcastChannel('SimGlass-voice');
         channel.onmessage = (event) => {
             const { type, data } = event.data;
 
@@ -439,7 +439,7 @@ class VoiceAnnouncer {
 
     // Broadcast methods for cross-widget communication
     static broadcast(type, data) {
-        const channel = new BroadcastChannel('simwidget-voice');
+        const channel = new BroadcastChannel('SimGlass-voice');
         channel.postMessage({ type, data });
         channel.close();
     }

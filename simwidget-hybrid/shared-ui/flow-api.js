@@ -1,7 +1,7 @@
 /**
  * Flow Pro API Compatibility Layer v1.0.0
  * 
- * Provides Flow Pro compatible $api interface for SimWidget widgets.
+ * Provides Flow Pro compatible $api interface for SimGlass widgets.
  * Allows widgets written for Flow Pro to work with minimal changes.
  * 
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\shared-ui\flow-api.js

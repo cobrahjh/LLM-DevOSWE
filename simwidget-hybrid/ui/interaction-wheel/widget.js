@@ -1,5 +1,5 @@
 /**
- * Interaction Wheel Widget - SimWidget Phase 6
+ * Interaction Wheel Widget - SimGlass Phase 6
  * Flow Pro-style radial menu for quick flight actions
  */
 
@@ -23,12 +23,12 @@ const WHEEL_ACTIONS = [
     { id: 'spoiler', icon: '\u2594', label: 'SPOIL', command: 'SPOILERS_TOGGLE', category: 'flight', tooltip: 'Toggle spoilers' }
 ];
 
-// Connect to SimWidget WebSocket
+// Connect to SimGlass WebSocket
 function connect() {
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
-        console.log('[Wheel] Connected to SimWidget');
+        console.log('[Wheel] Connected to SimGlass');
         isConnected = true;
         updateStatus(true, 'Connected');
     };

@@ -1,6 +1,6 @@
 /**
  * Environment Widget
- * SimWidget Engine v2.0.0 - Phase 5: Environment Controls
+ * SimGlass Engine v2.0.0 - Phase 5: Environment Controls
  */
 
 class EnvironmentWidget {

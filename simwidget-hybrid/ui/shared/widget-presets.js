@@ -1,5 +1,5 @@
 /**
- * SimWidget Presets Manager v1.0.0
+ * SimGlass Presets Manager v1.0.0
  * Save and load widget arrangements/layouts
  */
 
@@ -38,11 +38,11 @@ class WidgetPresets {
         // Get all widget containers with saved positions
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key.startsWith('simwidget_')) {
+            if (key.startsWith('SimGlass_')) {
                 try {
                     const state = JSON.parse(localStorage.getItem(key));
                     widgets.push({
-                        id: key.replace('simwidget_', ''),
+                        id: key.replace('SimGlass_', ''),
                         state: state
                     });
                 } catch (e) {}
@@ -69,7 +69,7 @@ class WidgetPresets {
         // Apply widget states
         preset.widgets.forEach(w => {
             try {
-                localStorage.setItem('simwidget_' + w.id, JSON.stringify(w.state));
+                localStorage.setItem('SimGlass_' + w.id, JSON.stringify(w.state));
             } catch (e) {}
         });
 
@@ -106,7 +106,7 @@ class WidgetPresets {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'simwidget-presets-' + new Date().toISOString().split('T')[0] + '.json';
+        a.download = 'SimGlass-presets-' + new Date().toISOString().split('T')[0] + '.json';
         a.click();
         URL.revokeObjectURL(url);
     }
@@ -231,13 +231,13 @@ class WidgetPresets {
 
     saveToStorage() {
         try {
-            localStorage.setItem('simwidget-presets', JSON.stringify(this.presets));
+            localStorage.setItem('SimGlass-presets', JSON.stringify(this.presets));
         } catch (e) {}
     }
 
     loadPresets() {
         try {
-            const saved = localStorage.getItem('simwidget-presets');
+            const saved = localStorage.getItem('SimGlass-presets');
             if (saved) {
                 this.presets = JSON.parse(saved);
             }

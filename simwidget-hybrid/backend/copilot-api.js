@@ -12,7 +12,7 @@ const { validateKey, TIERS } = require('./copilot-license');
 
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
 const ENCRYPTION_ALGO = 'aes-256-cbc';
-const SALT = 'SimWidget-Copilot-KeyStore';
+const SALT = 'SimGlass-Copilot-KeyStore';
 
 // Derive encryption key from machine identity
 function getEncryptionKey() {

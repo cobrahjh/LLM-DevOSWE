@@ -1,7 +1,7 @@
 /**
  * Cost Tracker Module v1.0.0
  * 
- * Tracks operational costs for SimWidget services including:
+ * Tracks operational costs for SimGlass services including:
  * - Current usage costs
  * - Future projected costs
  * - External API costs
@@ -20,7 +20,7 @@ class CostTracker {
         this.costs = {
             // Service costs per hour (USD)
             services: {
-                simwidget: { hourly: 0.05, current: 0, projected: 0, external: 0 },
+                SimGlass: { hourly: 0.05, current: 0, projected: 0, external: 0 },
                 agent: { hourly: 0.08, current: 0, projected: 0, external: 0.12 },
                 remote: { hourly: 0.03, current: 0, projected: 0, external: 0 }
             },

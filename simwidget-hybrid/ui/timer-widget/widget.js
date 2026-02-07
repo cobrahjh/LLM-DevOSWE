@@ -1,5 +1,5 @@
 /**
- * Timer Widget - SimWidget
+ * Timer Widget - SimGlass
  * Stopwatch and countdown timer for flight procedures
  */
 

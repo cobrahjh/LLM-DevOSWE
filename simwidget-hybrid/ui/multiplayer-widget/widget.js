@@ -1,5 +1,5 @@
 /**
- * Multiplayer Widget - SimWidget
+ * Multiplayer Widget - SimGlass
  * Shows nearby VATSIM/IVAO/MSFS multiplayer traffic
  */
 

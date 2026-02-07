@@ -1,5 +1,5 @@
 /**
- * Fuel Planner Widget - SimWidget
+ * Fuel Planner Widget - SimGlass
  * Calculate trip fuel, reserves, endurance
  */
 
@@ -141,7 +141,7 @@ Total Required: ${this.lastCalc.totalFuel.toFixed(1)} gal
 Flight Time: ${this.formatTime(this.lastCalc.flightTimeMins)}
 Ground Speed: ${Math.round(this.lastCalc.groundSpeed)} kt`;
 
-        const channel = new BroadcastChannel('simwidget-sync');
+        const channel = new BroadcastChannel('SimGlass-sync');
         channel.postMessage({ type: 'copy-route', data: { text } });
         channel.close();
     }

@@ -1,5 +1,5 @@
 /**
- * SimWidget Telemetry Service v1.0.0
+ * SimGlass Telemetry Service v1.0.0
  * Last Updated: 2025-01-07
  * 
  * Error capture and feedback submission to Supabase.

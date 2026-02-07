@@ -1,5 +1,5 @@
 /**
- * SimWidget Flight Recorder v1.4.0
+ * SimGlass Flight Recorder v1.4.0
  * Records flight data for analysis and playback
  * Delta recording: optionals only recorded on change
  * Position playback: Sets aircraft to starting position only
@@ -16,8 +16,8 @@
 
 const API_BASE = `http://${window.location.hostname}:8080`;
 const WS_URL = `ws://${window.location.hostname}:8080`;
-const STORAGE_KEY = 'simwidget_recorder_settings';
-const SESSIONS_KEY = 'simwidget_flight_sessions';
+const STORAGE_KEY = 'SimGlass_recorder_settings';
+const SESSIONS_KEY = 'SimGlass_flight_sessions';
 
 // State
 let ws = null;
@@ -616,7 +616,7 @@ function exportSessionByIndex(index) {
         _exportInfo: {
             version: '1.0.0',
             exportedAt: new Date().toISOString(),
-            source: 'SimWidget Flight Recorder'
+            source: 'SimGlass Flight Recorder'
         },
         ...session
     };

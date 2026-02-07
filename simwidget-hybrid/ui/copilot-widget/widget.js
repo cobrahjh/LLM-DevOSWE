@@ -1,5 +1,5 @@
 /**
- * AI Copilot Widget - SimWidget
+ * AI Copilot Widget - SimGlass
  * Full-featured AI copilot for MSFS
  */
 
@@ -508,7 +508,7 @@ class AICopilot {
         this.flightPlan = null;
 
         // Cross-widget communication
-        this.syncChannel = new BroadcastChannel('simwidget-sync');
+        this.syncChannel = new BroadcastChannel('simglass-sync');
         this.initSyncListener();
 
         this.init();
@@ -1407,10 +1407,17 @@ class AICopilot {
 
         const testBtn = document.getElementById('btn-test-voice');
 
+        const voiceRow = voiceSelect.closest('.voice-select-row');
+
+        // Class-level so loadSettings() can call it too
+        this._syncVoiceUI = () => {
+            const row = document.getElementById('voice-select')?.closest('.voice-select-row');
+            if (row) row.style.display = this.useNaturalVoice ? 'flex' : 'none';
+        };
+
         voiceSelect.value = this.ttsVoice;
         naturalToggle.checked = this.useNaturalVoice;
-        voiceSelect.disabled = !this.useNaturalVoice;
-        testBtn.disabled = !this.useNaturalVoice;
+        this._syncVoiceUI();
 
         voiceSelect.addEventListener('change', (e) => {
             this.ttsVoice = e.target.value;
@@ -1424,8 +1431,7 @@ class AICopilot {
 
         naturalToggle.addEventListener('change', (e) => {
             this.useNaturalVoice = e.target.checked;
-            voiceSelect.disabled = !e.target.checked;
-            testBtn.disabled = !e.target.checked;
+            this._syncVoiceUI();
             this.saveSettings();
         });
 
@@ -1515,6 +1521,7 @@ class AICopilot {
     }
 
     async speakNatural(text) {
+        if (!this.useNaturalVoice) return;
         try {
             const res = await fetch('/api/copilot/speak', {
                 method: 'POST',
@@ -1742,6 +1749,11 @@ class AICopilot {
                 document.getElementById('vspeed-vr').value = this.vSpeeds.vr;
                 document.getElementById('vspeed-v2').value = this.vSpeeds.v2;
                 document.getElementById('vspeed-vref').value = this.vSpeeds.vref;
+
+                // Sync voice controls
+                document.getElementById('voice-select').value = this.ttsVoice;
+                document.getElementById('natural-voice-toggle').checked = this.useNaturalVoice;
+                if (this._syncVoiceUI) this._syncVoiceUI();
             }
         } catch (e) {}
     }
@@ -1873,17 +1885,26 @@ class AICopilot {
                     }
                 });
 
+                // Settings panel voice row visibility sync
+                const csVoiceRow = container.querySelector('#cs-tts-voice')?.closest('.cs-row');
+                const syncCsVoice = () => {
+                    if (csVoiceRow) csVoiceRow.style.display = self.useNaturalVoice ? '' : 'none';
+                };
+                syncCsVoice();
+
                 // TTS voice test
                 container.querySelector('#cs-tts-test').addEventListener('click', async () => {
+                    if (!self.useNaturalVoice) return;
                     const voice = container.querySelector('#cs-tts-voice').value;
                     self.ttsVoice = voice;
-                    self.useNaturalVoice = true;
                     self.speakNatural('Good day Captain, this is your AI copilot. Ready for departure.');
                 });
 
                 // Natural voice toggle
                 container.querySelector('#cs-natural-voice').addEventListener('change', (e) => {
                     self.useNaturalVoice = e.target.checked;
+                    syncCsVoice();
+                    if (self._syncVoiceUI) self._syncVoiceUI();
                     self.saveSettings();
                 });
 

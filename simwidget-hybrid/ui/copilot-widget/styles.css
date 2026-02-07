@@ -667,9 +667,13 @@
 }
 
 .voice-select-row select:disabled,
-.voice-select-row .btn-small:disabled {
+.voice-select-row .btn-small:disabled,
+.voice-select-row button:disabled,
+#btn-test-voice:disabled,
+#voice-select:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Streaming message cursor */

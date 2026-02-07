@@ -1,5 +1,5 @@
 /**
- * SimWidget Keyboard Shortcuts v1.0.0
+ * SimGlass Keyboard Shortcuts v1.0.0
  * Global hotkeys for widget control
  */
 

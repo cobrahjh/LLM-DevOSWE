@@ -1,18 +1,18 @@
 /**
- * SimWidget Global Hotkeys v1.0.0
+ * SimGlass Global Hotkeys v1.0.0
  * Last Updated: 2026-01-23
  *
- * Global keyboard shortcuts for SimWidget widgets.
+ * Global keyboard shortcuts for SimGlass widgets.
  * Supports customizable hotkeys stored in localStorage.
  *
  * Usage:
  *   <script src="/ui/shared/hotkeys.js"></script>
  *
  *   // Auto-initializes on DOMContentLoaded
- *   // Or manually: SimWidgetHotkeys.init()
+ *   // Or manually: SimGlassHotkeys.init()
  */
 
-const SimWidgetHotkeys = (() => {
+const SimGlassHotkeys = (() => {
     // Default hotkey mappings
     const DEFAULT_HOTKEYS = {
         'ctrl+1': { action: 'open', widget: 'copilot', label: 'Copilot', url: '/ui/copilot-widget/' },
@@ -25,7 +25,7 @@ const SimWidgetHotkeys = (() => {
         'escape': { action: 'close', label: 'Close Widget' }
     };
 
-    const STORAGE_KEY = 'simwidget-hotkeys';
+    const STORAGE_KEY = 'SimGlass-hotkeys';
     let hotkeys = {};
     let toastTimeout = null;
     let toastElement = null;
@@ -118,7 +118,7 @@ const SimWidgetHotkeys = (() => {
         // Create toast element if needed
         if (!toastElement) {
             toastElement = document.createElement('div');
-            toastElement.className = 'simwidget-hotkey-toast';
+            toastElement.className = 'SimGlass-hotkey-toast';
             toastElement.style.cssText = `
                 position: fixed;
                 bottom: 20px;
@@ -256,7 +256,7 @@ const SimWidgetHotkeys = (() => {
      * Generate help text for all hotkeys
      */
     function getHelpText() {
-        const lines = ['SimWidget Hotkeys:', ''];
+        const lines = ['SimGlass Hotkeys:', ''];
         for (const [key, config] of Object.entries(hotkeys)) {
             lines.push(`  ${formatHotkey(key).padEnd(15)} - ${config.label}`);
         }
@@ -324,5 +324,5 @@ const SimWidgetHotkeys = (() => {
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SimWidgetHotkeys;
+    module.exports = SimGlassHotkeys;
 }

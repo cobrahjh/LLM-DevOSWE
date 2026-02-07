@@ -1,8 +1,8 @@
 /**
- * SimWidget Flight Data Widget
+ * SimGlass Flight Data Widget
  * Ported from Flow Pro - 2025-01-05
  * 
- * Displays real-time flight data from MSFS via SimWidget WebSocket
+ * Displays real-time flight data from MSFS via SimGlass WebSocket
  * 
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\widgets\flight-data-widget\widget.js
  */
@@ -51,11 +51,11 @@ function saveWidgetState() {
         height: widget.offsetHeight,
         minimized: isMinimized
     };
-    localStorage.setItem(`simwidget_${WIDGET_ID}`, JSON.stringify(state));
+    localStorage.setItem(`SimGlass_${WIDGET_ID}`, JSON.stringify(state));
 }
 
 function loadWidgetState() {
-    const saved = localStorage.getItem(`simwidget_${WIDGET_ID}`);
+    const saved = localStorage.getItem(`SimGlass_${WIDGET_ID}`);
     if (saved) {
         try {
             const state = JSON.parse(saved);
@@ -76,7 +76,7 @@ function loadWidgetState() {
 }
 
 // ============================================
-// SIMWIDGET WEBSOCKET CONNECTION
+// SimGlass WEBSOCKET CONNECTION
 // ============================================
 
 function connectWebSocket() {
@@ -85,12 +85,12 @@ function connectWebSocket() {
     const wsUrl = (host === 'localhost' || host === '127.0.0.1')
         ? 'ws://127.0.0.1:8080'
         : `ws://${location.host}`;
-    console.log(`[FlightData] Connecting to SimWidget server at ${wsUrl}...`);
+    console.log(`[FlightData] Connecting to SimGlass server at ${wsUrl}...`);
     
     ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
-        console.log('[FlightData] Connected to SimWidget server');
+        console.log('[FlightData] Connected to SimGlass server');
         isConnected = true;
         updateConnectionStatus(true);
     };
@@ -107,7 +107,7 @@ function connectWebSocket() {
     };
     
     ws.onclose = () => {
-        console.log('[FlightData] Disconnected from SimWidget server');
+        console.log('[FlightData] Disconnected from SimGlass server');
         isConnected = false;
         updateConnectionStatus(false);
         // Reconnect after 3 seconds
@@ -134,11 +134,11 @@ function updateConnectionStatus(connected) {
 // ============================================
 
 function handleFlightData(data) {
-    // Map SimWidget data to our display format
+    // Map SimGlass data to our display format
     updateFlightData({
         altitude: data.altitude,
         heading: data.heading,
-        ias: data.speed,  // SimWidget sends 'speed' as IAS
+        ias: data.speed,  // SimGlass sends 'speed' as IAS
         groundspeed: data.groundSpeed || data.speed * 1.1,  // Estimate if not available
         vspeed: data.verticalSpeed,
         windDirection: data.windDirection,

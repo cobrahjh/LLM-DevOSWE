@@ -1,8 +1,8 @@
 /**
- * SimWidget Auto Theme v1.0.0
+ * SimGlass Auto Theme v1.0.0
  *
  * Automatically switches theme based on simulator time.
- * Uses the existing SimWidgetThemes system for theme management.
+ * Uses the existing SimGlassThemes system for theme management.
  *
  * Features:
  * - Listens for sim time via WebSocket or polls /api/simvars
@@ -10,13 +10,13 @@
  * - Switches to light theme during day (06:00-19:00)
  * - Toggle to enable/disable auto-switching
  * - Respects manual theme selection when disabled
- * - Broadcasts changes via 'simwidget-theme' BroadcastChannel
+ * - Broadcasts changes via 'SimGlass-theme' BroadcastChannel
  */
 
 (function() {
     'use strict';
 
-    const STORAGE_KEY = 'simwidget-auto-theme';
+    const STORAGE_KEY = 'SimGlass-auto-theme';
     const POLL_INTERVAL = 60000; // 1 minute
     const WS_RECONNECT_DELAY = 5000;
 
@@ -58,7 +58,7 @@
             }
 
             // Listen for manual theme changes to track state
-            window.addEventListener('simwidget-theme-changed', (e) => {
+            window.addEventListener('SimGlass-theme-changed', (e) => {
                 if (!this.config.enabled) {
                     // When auto mode is off, respect manual changes
                     this.lastAppliedTheme = e.detail.theme;
@@ -206,22 +206,22 @@
          */
         checkAndSwitch() {
             if (!this.config.enabled) return;
-            if (typeof SimWidgetThemes === 'undefined') {
-                console.warn('[AutoTheme] SimWidgetThemes not available');
+            if (typeof SimGlassThemes === 'undefined') {
+                console.warn('[AutoTheme] SimGlassThemes not available');
                 return;
             }
 
             const isNight = this.isNightTime();
             const targetTheme = isNight ? this.config.nightTheme : this.config.dayTheme;
-            const currentTheme = SimWidgetThemes.getCurrentTheme();
+            const currentTheme = SimGlassThemes.getCurrentTheme();
 
             if (currentTheme !== targetTheme) {
-                SimWidgetThemes.setTheme(targetTheme);
+                SimGlassThemes.setTheme(targetTheme);
                 this.lastAppliedTheme = targetTheme;
                 console.log(`[AutoTheme] Switched to ${targetTheme} (hour: ${this.getCurrentHour()}, night: ${isNight})`);
 
                 // Dispatch custom event for local listeners
-                window.dispatchEvent(new CustomEvent('simwidget-auto-theme-changed', {
+                window.dispatchEvent(new CustomEvent('SimGlass-auto-theme-changed', {
                     detail: {
                         theme: targetTheme,
                         isNight: isNight,
@@ -419,7 +419,7 @@
             });
 
             // Update checkbox when state changes externally
-            window.addEventListener('simwidget-auto-theme-changed', () => {
+            window.addEventListener('SimGlass-auto-theme-changed', () => {
                 checkbox.checked = this.config.enabled;
             });
 
@@ -451,7 +451,7 @@
 
     // Export to window
     if (typeof window !== 'undefined') {
-        window.SimWidgetAutoTheme = autoTheme;
+        window.SimGlassAutoTheme = autoTheme;
     }
 
     // ES module export

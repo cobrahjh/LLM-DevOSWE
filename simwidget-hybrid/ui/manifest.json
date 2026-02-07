@@ -1,6 +1,6 @@
 {
-  "name": "SimWidget",
-  "short_name": "SimWidget",
+  "name": "SimGlass",
+  "short_name": "SimGlass",
   "description": "Flight simulator companion widgets",
   "start_url": "/ui/flight-dashboard/",
   "display": "standalone",

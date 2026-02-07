@@ -1,6 +1,6 @@
 # Services Panel Widget v1.0.0
 
-Monitor and control SimWidget services.
+Monitor and control SimGlass services.
 
 **Path:** C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\ui\services-panel\  
 **Last Updated:** 2025-01-08
@@ -16,7 +16,7 @@ Monitor and control SimWidget services.
 
 | Service | Port | Description |
 |---------|------|-------------|
-| SimWidget | 8080 | Main server with SimConnect |
+| SimGlass | 8080 | Main server with SimConnect |
 | Agent | 8585 | Claude chat assistant |
 | Remote | 8590 | Remote command API |
 
@@ -28,7 +28,7 @@ The widget uses `/api/services` endpoint added in server v1.9.0:
 // GET /api/services - List services
 // POST /api/services - Control service
 {
-  "service": "simwidget|agent|remote",
+  "service": "SimGlass|agent|remote",
   "action": "start|stop|restart"
 }
 ```

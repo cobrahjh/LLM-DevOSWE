@@ -1,5 +1,5 @@
 /**
- * Checklist Widget - SimWidget
+ * Checklist Widget - SimGlass
  * Aircraft-specific checklists for MSFS
  */
 
@@ -2072,14 +2072,14 @@ class ChecklistWidget {
     // Voice control integration
     initVoiceControl() {
         // Listen for voice commands via BroadcastChannel
-        const channel = new BroadcastChannel('simwidget-checklist');
+        const channel = new BroadcastChannel('SimGlass-checklist');
         channel.onmessage = (event) => {
             this.handleVoiceCommand(event.data);
         };
 
         // Also listen via localStorage for fallback
         window.addEventListener('storage', (event) => {
-            if (event.key === 'simwidget-checklist-command') {
+            if (event.key === 'SimGlass-checklist-command') {
                 try {
                     const cmd = JSON.parse(event.newValue);
                     // Only process recent commands (within 2 seconds)

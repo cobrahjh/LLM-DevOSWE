@@ -1,5 +1,5 @@
 /**
- * SimWidget Settings Panel v1.0.0
+ * SimGlass Settings Panel v1.0.0
  * Last Updated: 2025-01-07
  * 
  * Modular settings panel with pluggable sections.
@@ -234,7 +234,7 @@ class WidgetDataManager {
         const data = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key.startsWith('simwidget_') || key.includes('-widget-')) {
+            if (key.startsWith('SimGlass_') || key.includes('-widget-')) {
                 data[key] = localStorage.getItem(key);
             }
         }
@@ -256,7 +256,7 @@ class WidgetDataManager {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'simwidget-backup-' + new Date().toISOString().split('T')[0] + '.json';
+        a.download = 'SimGlass-backup-' + new Date().toISOString().split('T')[0] + '.json';
         a.click();
         URL.revokeObjectURL(url);
         return Object.keys(data).length;
@@ -283,7 +283,7 @@ class WidgetDataManager {
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key.startsWith('simwidget_') || key.includes('-widget-')) {
+            if (key.startsWith('SimGlass_') || key.includes('-widget-')) {
                 keys.push(key);
             }
         }

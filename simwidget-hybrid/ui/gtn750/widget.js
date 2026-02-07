@@ -55,7 +55,7 @@ class GTN750Widget {
         this.declutterLevel = 0;
 
         // Cross-widget sync
-        this.syncChannel = new BroadcastChannel('simwidget-sync');
+        this.syncChannel = new BroadcastChannel('SimGlass-sync');
 
         // Create module instances
         this.dataFieldsManager = new GTNDataFields({ core: this.core });

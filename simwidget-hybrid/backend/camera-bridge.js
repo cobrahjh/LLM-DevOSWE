@@ -1,9 +1,9 @@
 /**
- * SimWidget Camera Bridge
+ * SimGlass Camera Bridge
  * Version: 1.0.0
  * Last updated: 2026-01-08
- * 
- * Bridges WASM camera module with SimWidget server via LVars
+ *
+ * Bridges WASM camera module with SimGlass server via LVars
  * Uses node-simconnect for LVar read/write
  */
 

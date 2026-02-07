@@ -1,5 +1,5 @@
 /**
- * Notepad Widget - SimWidget
+ * Notepad Widget - SimGlass
  * Quick notes for frequencies, clearances, and flight info
  *
  * Widget Interconnection:
@@ -28,7 +28,7 @@ class NotepadWidget {
 
     initSyncListener() {
         // Cross-widget communication
-        const syncChannel = new BroadcastChannel('simwidget-sync');
+        const syncChannel = new BroadcastChannel('SimGlass-sync');
 
         syncChannel.onmessage = (event) => {
             const { type, data } = event.data;

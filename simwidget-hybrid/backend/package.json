@@ -1,7 +1,7 @@
 {
-  "name": "simwidget-backend",
+  "name": "simglass-backend",
   "version": "1.0.0",
-  "description": "SimWidget Backend Server - bridges browser/panel UI to SimConnect",
+  "description": "SimGlass Backend Server - bridges browser/panel UI to SimConnect",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -1,5 +1,5 @@
 /**
- * SimWidget Voice Control v1.0.0
+ * SimGlass Voice Control v1.0.0
  * Voice command recognition for flight simulator control
  * Uses Web Speech API (Chrome/Edge)
  * 
@@ -8,8 +8,8 @@
  */
 
 const API_BASE = `http://${window.location.hostname}:8080`;
-const STORAGE_KEY = 'simwidget_voice_settings';
-const COMMANDS_KEY = 'simwidget_voice_commands';
+const STORAGE_KEY = 'SimGlass_voice_settings';
+const COMMANDS_KEY = 'SimGlass_voice_commands';
 
 // State
 let recognition = null;
@@ -387,12 +387,12 @@ async function executeChecklist(cmd) {
     };
 
     // Use BroadcastChannel API for cross-widget communication
-    const channel = new BroadcastChannel('simwidget-checklist');
+    const channel = new BroadcastChannel('SimGlass-checklist');
     channel.postMessage(action);
     channel.close();
 
     // Also store in localStorage for widgets that might not support BroadcastChannel
-    localStorage.setItem('simwidget-checklist-command', JSON.stringify({
+    localStorage.setItem('SimGlass-checklist-command', JSON.stringify({
         ...action,
         timestamp: Date.now()
     }));
@@ -401,7 +401,7 @@ async function executeChecklist(cmd) {
 }
 
 async function executeDashboard(cmd) {
-    const channel = new BroadcastChannel('simwidget-sync');
+    const channel = new BroadcastChannel('SimGlass-sync');
 
     if (cmd.layout) {
         // Change dashboard layout
@@ -425,7 +425,7 @@ async function executeDashboard(cmd) {
 }
 
 async function executeWidget(cmd) {
-    const channel = new BroadcastChannel('simwidget-sync');
+    const channel = new BroadcastChannel('SimGlass-sync');
 
     switch (cmd.widget) {
         case 'weather':

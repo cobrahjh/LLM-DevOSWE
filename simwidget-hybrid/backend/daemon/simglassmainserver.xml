@@ -1,7 +1,7 @@
 <service>
-	<id>simwidgetmainserver.exe</id>
-	<name>SimWidget Main Server</name>
-	<description>SimWidget Main Server</description>
+	<id>SimGlassmainserver.exe</id>
+	<name>SimGlass Main Server</name>
+	<description>SimGlass Main Server</description>
 	<executable>C:\Program Files\nodejs\node.exe</executable>
 	<argument>--harmony</argument>
 	<argument>C:\LLM-DevOSWE\Admin\agent\node_modules\node-windows\lib\wrapper.js</argument>
@@ -9,7 +9,7 @@
 	<argument>C:\LLM-DevOSWE\simwidget-hybrid\backend\server.js</argument>
 	<argument>--scriptoptions=</argument>
 	<argument>--log</argument>
-	<argument>SimWidget Main Server wrapper</argument>
+	<argument>SimGlass Main Server wrapper</argument>
 	<argument>--grow</argument>
 	<argument>0.25</argument>
 	<argument>--wait</argument>

@@ -1,5 +1,5 @@
 /**
- * Map Widget - SimWidget
+ * Map Widget - SimGlass
  * Live aircraft position map using Leaflet
  *
  * Widget Interconnection:
@@ -38,7 +38,7 @@ class MapWidget {
         this.radarTimestamp = 0;
 
         // Cross-widget communication
-        this.syncChannel = new BroadcastChannel('simwidget-sync');
+        this.syncChannel = new BroadcastChannel('SimGlass-sync');
         this.initSyncListener();
 
         this.initMap();

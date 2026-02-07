@@ -1,5 +1,5 @@
 /**
- * Weather Widget - SimWidget
+ * Weather Widget - SimGlass
  * METAR/TAF weather display for flight planning
  *
  * Voice Features:
@@ -169,7 +169,7 @@ Vis: ${visibility.display} ${visibility.unit || ''}
 QNH: ${pressure.display} ${pressure.unit || ''}
 Category: ${category}`;
 
-        const syncChannel = new BroadcastChannel('simwidget-sync');
+        const syncChannel = new BroadcastChannel('SimGlass-sync');
         syncChannel.postMessage({
             type: 'copy-route',
             data: { text: weatherText }

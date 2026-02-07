@@ -9,14 +9,14 @@
     <style>
         body { margin: 0; padding: 0; background: transparent; }
         
-        ingame-ui#simwidget_panel {
+        ingame-ui#SimGlass_panel {
             display: flex;
             flex-direction: column;
             width: 420px !important;
             height: 700px !important;
         }
-        ingame-ui#simwidget_panel .ingameUiContent,
-        ingame-ui#simwidget_panel .ingameUiWrapper {
+        ingame-ui#SimGlass_panel .ingameUiContent,
+        ingame-ui#SimGlass_panel .ingameUiWrapper {
             display: flex !important;
             flex-direction: column !important;
             width: 100% !important;
@@ -62,14 +62,14 @@
 <body class="border-box">
     <ingamepanel-custom>
         <ingame-ui
-            id="simwidget_panel"
-            panel-id="PANEL_SIMWIDGET"
+            id="SimGlass_panel"
+            panel-id="PANEL_SimGlass"
             class="ingameUiFrame"
             content-fit="false"
         >
             <div id="loading">
                 <div class="spinner"></div>
-                <div>Connecting to SimWidget Backend...</div>
+                <div>Connecting to SimGlass Backend...</div>
                 <div style="font-size: 12px; color: #888; margin-top: 8px;">
                     Make sure server is running on localhost:8080
                 </div>

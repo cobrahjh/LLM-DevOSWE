@@ -1,5 +1,5 @@
 /**
- * SimWidget Plugin API
+ * SimGlass Plugin API
  * Interface for plugins to interact with the simulator
  */
 

@@ -1,5 +1,5 @@
 /**
- * Hot Reload Patch for SimWidget Server
+ * Hot Reload Patch for SimGlass Server
  */
 
 const fs = require('fs');

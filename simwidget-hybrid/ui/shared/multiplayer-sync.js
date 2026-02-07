@@ -1,5 +1,5 @@
 /**
- * SimWidget Multiplayer Sync Client
+ * SimGlass Multiplayer Sync Client
  * Enables shared cockpit - sync widget state between pilots
  *
  * Usage:

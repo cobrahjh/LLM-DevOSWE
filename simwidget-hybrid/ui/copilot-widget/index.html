@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Copilot - SimWidget</title>
+    <title>AI Copilot - SimGlass</title>
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
@@ -201,11 +201,11 @@
                     <h3>Voice</h3>
                     <div class="voice-controls">
                         <label class="toggle-item">
-                            <input type="checkbox" id="natural-voice-toggle" checked>
+                            <input type="checkbox" id="natural-voice-toggle">
                             <span>Natural voice (OpenAI TTS)</span>
                         </label>
                         <div class="voice-select-row">
-                            <select id="voice-select">
+                            <select id="voice-select" disabled>
                                 <option value="nova">Nova (warm female)</option>
                                 <option value="shimmer">Shimmer (bright female)</option>
                                 <option value="alloy">Alloy (neutral)</option>
@@ -217,7 +217,7 @@
                                 <option value="ash">Ash (clear)</option>
                                 <option value="ballad">Ballad (soft)</option>
                             </select>
-                            <button class="btn-small" id="btn-test-voice">Test</button>
+                            <button class="btn-small" id="btn-test-voice" disabled>Test</button>
                         </div>
                     </div>
                 </div>

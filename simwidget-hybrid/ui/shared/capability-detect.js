@@ -1,5 +1,5 @@
 /**
- * SimWidget Capability Detector v1.0.0
+ * SimGlass Capability Detector v1.0.0
  * Last Updated: 2025-01-07
  * 
  * Detects platform capabilities and installed addons.

@@ -1,16 +1,16 @@
 /**
- * SimWidget Panel for MSFS
+ * SimGlass Panel for MSFS
  * Native In-Game Panel using SimVar API
  */
 
-class SimWidgetPanel extends HTMLElement {
+class SimGlassPanel extends HTMLElement {
     constructor() {
         super();
         this.updating = false;
     }
     
     connectedCallback() {
-        console.log('[SimWidget] Panel connected, initializing...');
+        console.log('[SimGlass] Panel connected, initializing...');
         
         // Wait for DOM to be ready
         setTimeout(() => {
@@ -40,14 +40,14 @@ class SimWidgetPanel extends HTMLElement {
         this.setupButton('btn-vs', 'K:AP_PANEL_VS_HOLD');
         this.setupButton('btn-apr', 'K:AP_APR_HOLD');
         
-        console.log('[SimWidget] Buttons configured');
+        console.log('[SimGlass] Buttons configured');
     }
     
     setupButton(id, event) {
         const btn = this.querySelector('#' + id);
         if (btn) {
             btn.addEventListener('click', () => {
-                console.log('[SimWidget] Button clicked:', event);
+                console.log('[SimGlass] Button clicked:', event);
                 if (typeof SimVar !== 'undefined') {
                     SimVar.SetSimVarValue(event, 'Number', 1);
                 }
@@ -56,7 +56,7 @@ class SimWidgetPanel extends HTMLElement {
     }
     
     startUpdateLoop() {
-        console.log('[SimWidget] Starting update loop');
+        console.log('[SimGlass] Starting update loop');
         setInterval(() => this.update(), 500);
     }
     
@@ -75,7 +75,7 @@ class SimWidgetPanel extends HTMLElement {
             this.updateAutopilot();
             this.updateTime();
         } catch (e) {
-            console.error('[SimWidget] Update error:', e);
+            console.error('[SimGlass] Update error:', e);
         }
         
         this.updating = false;
@@ -182,5 +182,5 @@ class SimWidgetPanel extends HTMLElement {
 }
 
 // Register custom element
-customElements.define('simwidget-panel', SimWidgetPanel);
-console.log('[SimWidget] Panel registered');
+customElements.define('SimGlass-panel', SimGlassPanel);
+console.log('[SimGlass] Panel registered');

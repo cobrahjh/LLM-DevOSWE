@@ -1,4 +1,4 @@
-# SimWidget Hybrid
+# SimGlass Hybrid
 
 Flow Pro replacement for MSFS 2024 - modular widget overlay system.
 

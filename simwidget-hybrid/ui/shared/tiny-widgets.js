@@ -1,5 +1,5 @@
 /**
- * SimWidget TinyWidgets v1.0.0
+ * SimGlass TinyWidgets v1.0.0
  * Last Updated: 2025-01-08
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\ui\shared\tiny-widgets.js
  * 

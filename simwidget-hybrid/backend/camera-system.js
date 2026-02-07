@@ -1,10 +1,10 @@
 /**
- * SimWidget Camera System v1.4.0
+ * SimGlass Camera System v1.4.0
  * With detailed debug logging
  * Uses configurable key mappings from config/keymaps.json
- * 
+ *
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\backend\camera-system.js
- * 
+ *
  * Changelog:
  * v1.4.0 - Added debug logging, action history
  * v1.3.0 - Switched to configurable keymaps

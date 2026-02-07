@@ -1,4 +1,4 @@
-# SimWidget Hybrid - TODO List
+# SimGlass Hybrid - TODO List
 
 ## How to Use
 - Add tasks below with `- [ ]` for uncomplete, `- [x]` for done
@@ -94,7 +94,7 @@ taskkill /F /IM node.exe
 
 **Allow firewall (Admin PowerShell on Harold-PC):**
 ```
-netsh advfirewall firewall add rule name="SimWidget Backend" dir=in action=allow protocol=tcp localport=8080
+netsh advfirewall firewall add rule name="SimGlass Backend" dir=in action=allow protocol=tcp localport=8080
 ```
 
 ---

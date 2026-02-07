@@ -1,9 +1,9 @@
 /**
- * SimWidget Service Worker
+ * SimGlass Service Worker
  * Enables offline caching and PWA functionality
  */
 
-const CACHE_NAME = 'simwidget-v1';
+const CACHE_NAME = 'simglass-v1';
 const OFFLINE_URL = '/ui/offline.html';
 
 // Assets to cache immediately on install

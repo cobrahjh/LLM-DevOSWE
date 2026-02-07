@@ -1,6 +1,6 @@
-# SimWidget Test Framework v1.0.0
+# SimGlass Test Framework v1.0.0
 
-Automated testing for SimWidget Engine components.
+Automated testing for SimGlass Engine components.
 
 ## Usage
 

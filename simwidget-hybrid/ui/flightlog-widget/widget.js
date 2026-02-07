@@ -1,5 +1,5 @@
 /**
- * Flight Log Widget - SimWidget
+ * Flight Log Widget - SimGlass
  * Auto-logs flights with stats and totals
  */
 

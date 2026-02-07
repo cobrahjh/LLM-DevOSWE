@@ -9,7 +9,7 @@
       "x": 50,
       "y": 100
     },
-    "toolbar_title": "SimWidget",
+    "toolbar_title": "SimGlass",
     "toolbar_icon": "toolbar_icon.png",
     "always_visible": false,
     "hydrate_visible": false,

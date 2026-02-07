@@ -237,15 +237,15 @@ class FlightReplay {
     saveRecording() {
         const name = 'Flight ' + new Date().toLocaleString();
         const rec = { name, frames: this.frames, events: this.events, date: Date.now() };
-        const saved = JSON.parse(localStorage.getItem('simwidget-recordings') || '[]');
+        const saved = JSON.parse(localStorage.getItem('SimGlass-recordings') || '[]');
         saved.unshift(rec);
         if (saved.length > 10) saved.pop();
-        localStorage.setItem('simwidget-recordings', JSON.stringify(saved));
+        localStorage.setItem('SimGlass-recordings', JSON.stringify(saved));
         this.loadRecordings();
     }
 
     loadRecordings() {
-        const saved = JSON.parse(localStorage.getItem('simwidget-recordings') || '[]');
+        const saved = JSON.parse(localStorage.getItem('SimGlass-recordings') || '[]');
         const list = document.getElementById('recordings-list');
         list.replaceChildren();
         if (saved.length === 0) {
@@ -275,7 +275,7 @@ class FlightReplay {
     }
 
     loadRecording(idx) {
-        const saved = JSON.parse(localStorage.getItem('simwidget-recordings') || '[]');
+        const saved = JSON.parse(localStorage.getItem('SimGlass-recordings') || '[]');
         if (idx >= saved.length) return;
         const rec = saved[idx];
         this.frames = rec.frames;

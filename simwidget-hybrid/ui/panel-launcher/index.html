@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Launcher - SimWidget</title>
+    <title>Panel Launcher - SimGlass</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
@@ -222,9 +222,9 @@
             </div>
         </section>
 
-        <!-- SimWidgets Quick Launch -->
+        <!-- SimGlasss Quick Launch -->
         <section class="panel-section">
-            <h2>SimWidgets</h2>
+            <h2>SimGlasss</h2>
             <div class="button-grid widget-grid">
                 <a href="/ui/copilot-widget/" target="_blank" class="widget-btn" title="AI Copilot">
                     <span class="icon">🧑‍✈️</span>
@@ -330,17 +330,17 @@
 
         // Theme selector integration
         const themeSelector = document.getElementById('theme-selector');
-        if (themeSelector && window.SimWidgetThemes) {
+        if (themeSelector && window.SimGlassThemes) {
             // Set initial value from saved theme
-            themeSelector.value = SimWidgetThemes.getCurrentTheme();
+            themeSelector.value = SimGlassThemes.getCurrentTheme();
 
             // Handle theme changes
             themeSelector.addEventListener('change', (e) => {
-                SimWidgetThemes.setTheme(e.target.value);
+                SimGlassThemes.setTheme(e.target.value);
             });
 
             // Update selector when theme changes from another widget
-            window.addEventListener('simwidget-theme-changed', (e) => {
+            window.addEventListener('SimGlass-theme-changed', (e) => {
                 themeSelector.value = e.detail.theme;
             });
         }
@@ -348,9 +348,9 @@
         // Auto theme toggle integration
         const autoThemeToggle = document.getElementById('auto-theme-toggle');
         const autoThemeLabel = autoThemeToggle ? autoThemeToggle.closest('.auto-theme-toggle') : null;
-        if (autoThemeToggle && window.SimWidgetAutoTheme) {
+        if (autoThemeToggle && window.SimGlassAutoTheme) {
             // Set initial state
-            autoThemeToggle.checked = SimWidgetAutoTheme.isEnabled();
+            autoThemeToggle.checked = SimGlassAutoTheme.isEnabled();
             if (autoThemeLabel) {
                 autoThemeLabel.classList.toggle('active', autoThemeToggle.checked);
             }
@@ -358,9 +358,9 @@
             // Handle toggle changes
             autoThemeToggle.addEventListener('change', (e) => {
                 if (e.target.checked) {
-                    SimWidgetAutoTheme.enable();
+                    SimGlassAutoTheme.enable();
                 } else {
-                    SimWidgetAutoTheme.disable();
+                    SimGlassAutoTheme.disable();
                 }
                 if (autoThemeLabel) {
                     autoThemeLabel.classList.toggle('active', e.target.checked);
@@ -368,8 +368,8 @@
             });
 
             // Update toggle when auto-theme state changes externally
-            window.addEventListener('simwidget-auto-theme-changed', (e) => {
-                autoThemeToggle.checked = SimWidgetAutoTheme.isEnabled();
+            window.addEventListener('SimGlass-auto-theme-changed', (e) => {
+                autoThemeToggle.checked = SimGlassAutoTheme.isEnabled();
                 if (autoThemeLabel) {
                     autoThemeLabel.classList.toggle('active', autoThemeToggle.checked);
                 }
@@ -378,12 +378,12 @@
 
         // Initialize preset buttons
         (function initPresets() {
-            if (typeof SimWidgetPresets === 'undefined') {
-                console.warn('[Panel Launcher] SimWidgetPresets not loaded');
+            if (typeof SimGlassPresets === 'undefined') {
+                console.warn('[Panel Launcher] SimGlassPresets not loaded');
                 return;
             }
 
-            const presets = SimWidgetPresets.getBuiltInPresets();
+            const presets = SimGlassPresets.getBuiltInPresets();
 
             // Set icons for each preset button using safe DOM insertion
             Object.keys(presets).forEach(name => {
@@ -391,7 +391,7 @@
                 if (iconEl) {
                     // Create a template element for safe SVG insertion from trusted source
                     const template = document.createElement('template');
-                    template.innerHTML = SimWidgetPresets.getPresetIcon(presets[name].icon);
+                    template.innerHTML = SimGlassPresets.getPresetIcon(presets[name].icon);
                     iconEl.appendChild(template.content.cloneNode(true));
                 }
             });
@@ -401,7 +401,7 @@
                 btn.addEventListener('click', () => {
                     const presetName = btn.dataset.preset;
                     btn.classList.add('loading');
-                    SimWidgetPresets.applyPreset(presetName);
+                    SimGlassPresets.applyPreset(presetName);
                     setTimeout(() => btn.classList.remove('loading'), 1000);
                 });
             });
@@ -409,8 +409,8 @@
 
         // Initialize settings backup
         (function initSettingsBackup() {
-            if (typeof SimWidgetSettingsBackup === 'undefined') {
-                console.warn('[Panel Launcher] SimWidgetSettingsBackup not loaded');
+            if (typeof SimGlassSettingsBackup === 'undefined') {
+                console.warn('[Panel Launcher] SimGlassSettingsBackup not loaded');
                 return;
             }
 
@@ -421,7 +421,7 @@
 
             // Update settings count display
             function updateSettingsCount() {
-                const summary = SimWidgetSettingsBackup.getSettingsSummary();
+                const summary = SimGlassSettingsBackup.getSettingsSummary();
                 countEl.textContent = `${summary.total} saved settings`;
                 if (summary.themes > 0 || summary.presets > 0 || summary.hotkeys > 0) {
                     const details = [];
@@ -436,7 +436,7 @@
 
             // Export button handler
             exportBtn.addEventListener('click', () => {
-                const count = SimWidgetSettingsBackup.exportSettings();
+                const count = SimGlassSettingsBackup.exportSettings();
                 statusEl.textContent = `Exported ${count} settings`;
                 statusEl.className = 'import-status success';
                 setTimeout(() => { statusEl.textContent = ''; }, 3000);
@@ -450,7 +450,7 @@
                 try {
                     statusEl.textContent = 'Importing...';
                     statusEl.className = 'import-status';
-                    const result = await SimWidgetSettingsBackup.importSettings(file);
+                    const result = await SimGlassSettingsBackup.importSettings(file);
                     statusEl.textContent = `Imported ${result.imported} settings. Reload to apply.`;
                     statusEl.className = 'import-status success';
                     updateSettingsCount();

@@ -1,5 +1,5 @@
 /**
- * Theme Switcher - SimWidget
+ * Theme Switcher - SimGlass
  * Manages theme selection and persistence across widgets
  *
  * Themes: default, cockpit, glass, day, highcontrast
@@ -11,7 +11,7 @@
 
 class ThemeSwitcher {
     constructor(options = {}) {
-        this.storageKey = options.storageKey || 'simwidget-theme';
+        this.storageKey = options.storageKey || 'SimGlass-theme';
         this.defaultTheme = options.defaultTheme || 'default';
         this.themes = ['default', 'cockpit', 'glass', 'day', 'oled', 'sunset', 'retro', 'highcontrast'];
         this.currentTheme = this.defaultTheme;
@@ -29,7 +29,7 @@ class ThemeSwitcher {
     }
 
     initSyncListener() {
-        const channel = new BroadcastChannel('simwidget-theme');
+        const channel = new BroadcastChannel('SimGlass-theme');
         channel.onmessage = (event) => {
             if (event.data.type === 'theme-change' && event.data.theme) {
                 this.applyTheme(event.data.theme, false);
@@ -90,7 +90,7 @@ class ThemeSwitcher {
 
         // Broadcast to other widgets
         if (broadcast) {
-            const channel = new BroadcastChannel('simwidget-theme');
+            const channel = new BroadcastChannel('SimGlass-theme');
             channel.postMessage({ type: 'theme-change', theme });
             channel.close();
         }
@@ -192,7 +192,7 @@ class ThemeSwitcher {
     // Static method to get current theme
     static current() {
         try {
-            return localStorage.getItem('simwidget-theme') || 'default';
+            return localStorage.getItem('SimGlass-theme') || 'default';
         } catch (e) {
             return 'default';
         }

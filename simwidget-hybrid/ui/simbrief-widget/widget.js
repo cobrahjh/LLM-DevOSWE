@@ -1,5 +1,5 @@
 /**
- * SimBrief Widget - SimWidget
+ * SimBrief Widget - SimGlass
  * Fetches and displays SimBrief OFP data
  * API: https://developers.navigraph.com/docs/simbrief/
  */
@@ -392,7 +392,7 @@ class SimBriefWidget {
             const waypoints = this.parseRouteToWaypoints(this.ofpData);
 
             // Use unified sync channel for all widgets
-            const syncChannel = new BroadcastChannel('simwidget-sync');
+            const syncChannel = new BroadcastChannel('SimGlass-sync');
             syncChannel.postMessage({
                 type: 'simbrief-plan',
                 data: {

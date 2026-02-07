@@ -14,7 +14,7 @@
  * Path: ui/fuel-monitor/widget.js
  */
 
-class FuelMonitorWidget extends SimWidgetBase {
+class FuelMonitorWidget extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'fuel-monitor',

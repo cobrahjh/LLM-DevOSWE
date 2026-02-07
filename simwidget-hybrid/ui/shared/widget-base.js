@@ -1,8 +1,8 @@
 /**
- * SimWidget Base Class v1.1.0
+ * SimGlass Base Class v1.1.0
  * Last Updated: 2025-01-07
- * 
- * Shared functionality for all SimWidget widgets.
+ *
+ * Shared functionality for all SimGlass widgets.
  * Include in your widget:
  *   <link rel="stylesheet" href="/ui/shared/widget-common.css">
  *   <link rel="stylesheet" href="/ui/shared/settings-panel.css">
@@ -12,7 +12,20 @@
  *   <script src="/ui/shared/widget-base.js"></script>
  */
 
-class SimWidgetBase {
+// One-time migration from SimWidget → SimGlass localStorage keys
+(function() {
+    if (typeof localStorage === 'undefined') return;
+    if (localStorage.getItem('simglass_migrated')) return;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('simwidget')) {
+            localStorage.setItem(key.replace('simwidget', 'simglass'), localStorage.getItem(key));
+        }
+    }
+    localStorage.setItem('simglass_migrated', '1');
+})();
+
+class SimGlassBase {
     constructor(options = {}) {
         this.ws = null;
         this.reconnectInterval = null;
@@ -44,15 +57,15 @@ class SimWidgetBase {
      */
     initTelemetry() {
         if (typeof TelemetryService === 'undefined') {
-            console.warn('[SimWidget] TelemetryService not loaded');
+            console.warn('[SimGlass] TelemetryService not loaded');
             return;
         }
         
         this.telemetry = new TelemetryService({
             widget: this.widgetName,
             version: this.widgetVersion,
-            supabaseUrl: this.telemetryConfig.supabaseUrl || window.SIMWIDGET_SUPABASE_URL || '',
-            supabaseKey: this.telemetryConfig.supabaseKey || window.SIMWIDGET_SUPABASE_KEY || '',
+            supabaseUrl: this.telemetryConfig.supabaseUrl || window.SIMGLASS_SUPABASE_URL || '',
+            supabaseKey: this.telemetryConfig.supabaseKey || window.SIMGLASS_SUPABASE_KEY || '',
             enabled: this.telemetryConfig.enabled !== false
         });
     }
@@ -62,7 +75,7 @@ class SimWidgetBase {
      */
     initSettings() {
         if (typeof SettingsPanel === 'undefined') {
-            console.warn('[SimWidget] SettingsPanel not loaded');
+            console.warn('[SimGlass] SettingsPanel not loaded');
             return;
         }
         
@@ -119,8 +132,8 @@ class SimWidgetBase {
                     <span class="about-value">${stats.uniqueErrors} unique / ${stats.totalErrors} total</span>
                 </div>
                 <div class="about-footer">
-                    <p>SimWidget Engine © 2025</p>
-                    <p><a href="https://github.com/simwidget" target="_blank">GitHub</a></p>
+                    <p>SimGlass Engine © 2025</p>
+                    <p><a href="https://github.com/simglass" target="_blank">GitHub</a></p>
                 </div>
             </div>
         `;
@@ -184,7 +197,7 @@ class SimWidgetBase {
             this.ws = new WebSocket(this.serverUrl);
             
             this.ws.onopen = () => {
-                console.log('[SimWidget] Connected to server');
+                console.log('[SimGlass] Connected to server');
                 this.updateConnectionStatus('connected');
                 this.clearReconnectInterval();
                 this.onConnect();
@@ -195,24 +208,24 @@ class SimWidgetBase {
                     const data = JSON.parse(event.data);
                     this.onMessage(data);
                 } catch (e) {
-                    console.error('[SimWidget] Parse error:', e);
+                    console.error('[SimGlass] Parse error:', e);
                 }
             };
             
             this.ws.onclose = () => {
-                console.log('[SimWidget] Disconnected');
+                console.log('[SimGlass] Disconnected');
                 this.updateConnectionStatus('disconnected');
                 this.scheduleReconnect();
                 this.onDisconnect();
             };
             
             this.ws.onerror = (error) => {
-                console.error('[SimWidget] WebSocket error:', error);
+                console.error('[SimGlass] WebSocket error:', error);
                 this.updateConnectionStatus('disconnected');
             };
             
         } catch (e) {
-            console.error('[SimWidget] Connection failed:', e);
+            console.error('[SimGlass] Connection failed:', e);
             this.updateConnectionStatus('disconnected');
             this.scheduleReconnect();
         }
@@ -224,7 +237,7 @@ class SimWidgetBase {
     scheduleReconnect() {
         if (!this.reconnectInterval) {
             this.reconnectInterval = setInterval(() => {
-                console.log('[SimWidget] Reconnecting...');
+                console.log('[SimGlass] Reconnecting...');
                 this.connect();
             }, 3000);
         }
@@ -292,5 +305,5 @@ class SimWidgetBase {
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SimWidgetBase;
+    module.exports = SimGlassBase;
 }

@@ -1,5 +1,5 @@
 /**
- * Checklist Maker - SimWidget
+ * Checklist Maker - SimGlass
  * Create and edit custom aircraft checklists
  */
 
@@ -54,7 +54,7 @@ class ChecklistMaker {
         try {
             localStorage.setItem('custom-checklists', JSON.stringify(this.customChecklists));
             // Notify checklist widget of update
-            const channel = new BroadcastChannel('simwidget-checklists');
+            const channel = new BroadcastChannel('SimGlass-checklists');
             channel.postMessage({ type: 'checklists-updated', data: this.customChecklists });
             channel.close();
         } catch (e) {

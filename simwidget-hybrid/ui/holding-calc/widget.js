@@ -1,5 +1,5 @@
 /**
- * Holding Pattern Calculator - SimWidget
+ * Holding Pattern Calculator - SimGlass
  * Entry type, timing, wind correction
  */
 

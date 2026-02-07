@@ -1,5 +1,5 @@
 /**
- * SimWidget Keymap Editor v1.5.0
+ * SimGlass Keymap Editor v1.5.0
  * UI for viewing and editing key mappings
  * Supports keyboard + gamepad/joystick/HOTAS input
  * Device enable/disable to filter noisy devices with constant input
@@ -38,7 +38,7 @@ let controllerPollInterval = null;
 
 // Device settings - which devices are enabled/disabled
 let deviceSettings = {};
-const DEVICE_SETTINGS_KEY = 'simwidget_device_settings';
+const DEVICE_SETTINGS_KEY = 'SimGlass_device_settings';
 // Store device IDs by index for reliable lookup
 let deviceIdByIndex = {};
 let skipNextRender = false;
@@ -378,7 +378,7 @@ async function exportKeymaps() {
             _exportInfo: {
                 exportedAt: new Date().toISOString(),
                 version: '1.4.0',
-                source: 'SimWidget Keymap Editor'
+                source: 'SimGlass Keymap Editor'
             },
             ...freshKeymaps
         };
@@ -389,7 +389,7 @@ async function exportKeymaps() {
         
         const a = document.createElement('a');
         a.href = url;
-        a.download = `simwidget-keymaps-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `SimGlass-keymaps-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

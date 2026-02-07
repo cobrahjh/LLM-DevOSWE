@@ -1,5 +1,5 @@
 /**
- * SimWidget Theme System v1.0.0
+ * SimGlass Theme System v1.0.0
  *
  * CSS variable-based theming with cross-widget synchronization.
  *
@@ -126,10 +126,10 @@ const THEMES = {
 };
 
 // Storage key for persisting theme
-const STORAGE_KEY = 'simwidget-current-theme';
+const STORAGE_KEY = 'simglass-current-theme';
 
 // BroadcastChannel for cross-widget sync
-const CHANNEL_NAME = 'simwidget-theme';
+const CHANNEL_NAME = 'simglass-theme';
 let themeChannel = null;
 
 /**
@@ -205,7 +205,7 @@ function applyTheme(themeName, broadcast = true) {
     document.body.dataset.theme = themeName;
 
     // Dispatch custom event for local listeners
-    window.dispatchEvent(new CustomEvent('simwidget-theme-changed', {
+    window.dispatchEvent(new CustomEvent('simglass-theme-changed', {
         detail: { theme: themeName, variables: theme.variables }
     }));
 
@@ -316,7 +316,7 @@ function createThemeSelector(options = {}) {
     });
 
     // Update selector when theme changes from another source
-    window.addEventListener('simwidget-theme-changed', (e) => {
+    window.addEventListener('simglass-theme-changed', (e) => {
         select.value = e.detail.theme;
     });
 
@@ -364,7 +364,7 @@ function createThemeButtons(options = {}) {
     });
 
     // Update buttons when theme changes from another source
-    window.addEventListener('simwidget-theme-changed', (e) => {
+    window.addEventListener('simglass-theme-changed', (e) => {
         container.querySelectorAll('.theme-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.theme === e.detail.theme);
         });
@@ -384,7 +384,7 @@ if (typeof document !== 'undefined') {
 
 // Export functions
 if (typeof window !== 'undefined') {
-    window.SimWidgetThemes = {
+    window.SimGlassThemes = {
         getThemes,
         getThemeIds,
         getTheme,

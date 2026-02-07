@@ -1,5 +1,5 @@
 /**
- * SimWidget Feedback Section v1.0.0
+ * SimGlass Feedback Section v1.0.0
  * Last Updated: 2025-01-07
  * 
  * Feedback form section for settings panel.
@@ -27,7 +27,7 @@ class FeedbackSection {
     render() {
         return `
             <div class="feedback-section">
-                <p class="feedback-intro">Help us improve SimWidget! Share your thoughts, report issues, or suggest features.</p>
+                <p class="feedback-intro">Help us improve SimGlass! Share your thoughts, report issues, or suggest features.</p>
                 
                 <div class="feedback-rating">
                     <label>How's your experience?</label>
@@ -62,7 +62,7 @@ class FeedbackSection {
                 <div class="feedback-status" id="feedback-status"></div>
                 
                 <div class="feedback-footer">
-                    <small>Feedback is anonymous and helps improve SimWidget for everyone.</small>
+                    <small>Feedback is anonymous and helps improve SimGlass for everyone.</small>
                 </div>
             </div>
         `;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimWidget Services</title>
+    <title>SimGlass Services</title>
     <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
@@ -13,7 +13,7 @@
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="widget-container" id="services-panel">
         <div class="widget-header">
-            <span class="widget-title">SimWidget Services</span>
+            <span class="widget-title">SimGlass Services</span>
             <div class="header-controls">
                 <button class="btn-icon" id="btn-costs" title="Cost Summary">$</button>
                 <button class="btn-icon" id="btn-collapse" title="Collapse">−</button>
@@ -25,14 +25,14 @@
             <div class="services-section">
                 <div class="section-label">SERVICES</div>
                 
-                <!-- SimWidget Server -->
-                <div class="service-row" data-service="simwidget">
+                <!-- SimGlass Server -->
+                <div class="service-row" data-service="SimGlass">
                     <div class="service-status">
-                        <span class="status-dot" id="status-simwidget"></span>
+                        <span class="status-dot" id="status-SimGlass"></span>
                     </div>
                     <div class="service-info">
-                        <span class="service-name">SimWidget</span>
-                        <span class="service-cost" id="cost-simwidget">$0.00</span>
+                        <span class="service-name">SimGlass</span>
+                        <span class="service-cost" id="cost-SimGlass">$0.00</span>
                     </div>
                     <div class="service-port">:8080</div>
                     <div class="service-controls">
@@ -110,7 +110,7 @@
         
         <!-- Compact mode (status dots only) -->
         <div class="compact-mode" id="compact-view">
-            <span class="compact-dot" id="compact-simwidget" title="SimWidget :8080 - $0.00">
+            <span class="compact-dot" id="compact-SimGlass" title="SimGlass :8080 - $0.00">
                 <span class="compact-cost">$0</span>
             </span>
             <span class="compact-dot" id="compact-agent" title="Agent :8585 - $0.00">

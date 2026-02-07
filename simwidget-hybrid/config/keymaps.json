@@ -1,6 +1,6 @@
 {
     "version": "3.0",
-    "description": "SimWidget Key Mappings v3.0 - GUID-based with editable names",
+    "description": "SimGlass Key Mappings v3.0 - GUID-based with editable names",
     "camera": {
         "cam-001-cockpit-vfr": {
             "originalId": "cockpitVFR",

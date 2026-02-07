@@ -1,5 +1,5 @@
 /**
- * SimWidget Dashboard
+ * SimGlass Dashboard
  * Multi-widget layout with drag-and-drop
  */
 
@@ -526,7 +526,7 @@ class Dashboard {
             }
 
             // Broadcast settings to other widgets
-            const channel = new BroadcastChannel('simwidget-voice-settings');
+            const channel = new BroadcastChannel('simglass-voice-settings');
             channel.postMessage({
                 enabled: this.voiceEnabled.checked,
                 voice: this.voiceSelect.value,
@@ -551,7 +551,7 @@ class Dashboard {
         this.isSpeaking = false;
 
         setTimeout(() => {
-            const utterance = new SpeechSynthesisUtterance('SimWidget voice test. All systems nominal.');
+            const utterance = new SpeechSynthesisUtterance('SimGlass voice test. All systems nominal.');
             utterance.rate = parseFloat(this.voiceRate.value);
             utterance.pitch = parseFloat(this.voicePitch.value);
             utterance.volume = parseFloat(this.voiceVolume.value);

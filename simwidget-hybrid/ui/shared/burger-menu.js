@@ -2,7 +2,7 @@
  * Burger Menu v1.0.0
  * Last Updated: 2025-01-07
  * 
- * Sliding navigation menu for SimWidget Engine.
+ * Sliding navigation menu for SimGlass Engine.
  * Include: <script src="/ui/shared/burger-menu.js"></script>
  */
 
@@ -43,7 +43,7 @@ class BurgerMenu {
                     <div class="burger-header">
                         <h2 class="burger-title">
                             <span class="burger-icon">🚁</span>
-                            SimWidget Engine
+                            SimGlass Engine
                         </h2>
                         <button class="burger-close" title="Close Menu">✕</button>
                     </div>
@@ -99,7 +99,7 @@ class BurgerMenu {
                                     <span class="status-dot" id="status-simconnect"></span>
                                 </div>
                                 <div class="status-item">
-                                    <span class="status-label">SimWidget Server</span>
+                                    <span class="status-label">SimGlass Server</span>
                                     <span class="status-dot active" id="status-server"></span>
                                 </div>
                                 <div class="status-item">

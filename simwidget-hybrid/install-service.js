@@ -1,11 +1,11 @@
 /**
- * SimWidget Main Server - Windows Service Installer v1.0.0
- * 
+ * SimGlass Main Server - Windows Service Installer v1.0.0
+ *
  * Installs the Main Server as a Windows service for auto-start
- * 
+ *
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\install-service.js
  * Last Updated: 2026-01-09
- * 
+ *
  * Usage:
  *   Install:   node install-service.js
  *   Uninstall: node install-service.js --uninstall
@@ -15,8 +15,8 @@ const Service = require('node-windows').Service;
 const path = require('path');
 
 const svc = new Service({
-    name: 'SimWidget Main Server',
-    description: 'SimWidget Engine WebSocket server for MSFS 2024',
+    name: 'SimGlass Main Server',
+    description: 'SimGlass Engine WebSocket server for MSFS 2024',
     script: path.join(__dirname, 'backend', 'server.js'),
     nodeOptions: [],
     workingDirectory: path.join(__dirname, 'backend'),
@@ -25,12 +25,12 @@ const svc = new Service({
 
 if (process.argv.includes('--uninstall')) {
     svc.on('uninstall', () => {
-        console.log('✅ SimWidget Main Server service uninstalled');
+        console.log('✅ SimGlass Main Server service uninstalled');
     });
     svc.uninstall();
 } else {
     svc.on('install', () => {
-        console.log('✅ SimWidget Main Server service installed');
+        console.log('✅ SimGlass Main Server service installed');
         console.log('Starting service...');
         svc.start();
     });
@@ -51,6 +51,6 @@ if (process.argv.includes('--uninstall')) {
         console.error('❌ Error:', err);
     });
 
-    console.log('Installing SimWidget Main Server as Windows service...');
+    console.log('Installing SimGlass Main Server as Windows service...');
     svc.install();
 }

@@ -1,5 +1,5 @@
 /**
- * Flight Instructor Widget - SimWidget
+ * Flight Instructor Widget - SimGlass
  * Real-time flight training with scenario evaluation, phase tracking, and voice coaching
  */
 

@@ -105,7 +105,7 @@ exit /b 0
 
 :: ============================================================
 :install_to
-set "DEST=%~1\simwidget-gtn750"
+set "DEST=%~1\SimGlass-gtn750"
 
 echo.
 echo  Installing to: %DEST%

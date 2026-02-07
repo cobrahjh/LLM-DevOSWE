@@ -1,9 +1,9 @@
-# SimWidget Backend
+# SimGlass Backend
 
 **Entry:** `server.js` | **Port:** 8080
 
 ## What This Is
-Main SimWidget server — MSFS flight sim overlay backend with camera control, telemetry, plugin system, and WebSocket streaming.
+Main SimGlass server — MSFS flight sim overlay backend with camera control, telemetry, plugin system, and WebSocket streaming.
 
 ## Key Rules
 - NEVER change port 8080

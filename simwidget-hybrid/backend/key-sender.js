@@ -1,5 +1,5 @@
 /**
- * SimWidget Key Sender v3.1.0
+ * SimGlass Key Sender v3.1.0
  * Uses TCP connection to KeySenderService for fast key sending (~5ms vs ~700ms)
  * 
  * Path: C:\LLM-DevOSWE\SimWidget_Engine\simwidget-hybrid\backend\key-sender.js
@@ -387,7 +387,7 @@ class KeySender {
     exportToV2() {
         const v2 = {
             version: "2.0",
-            description: "SimWidget Key Mappings (exported from v3.0)"
+            description: "SimGlass Key Mappings (exported from v3.0)"
         };
         
         for (const [category, actions] of Object.entries(this.keymaps)) {

@@ -3,7 +3,7 @@
     "name": "Flight Checklist",
     "version": "1.0.0",
     "description": "Interactive pre-flight and landing checklists",
-    "author": "SimWidget Team",
+    "author": "SimGlass Team",
     "category": "utility",
     "entry": "index.html",
     "icon": "checklist.png",

@@ -1,5 +1,5 @@
 /**
- * Kneeboard Widget - SimWidget
+ * Kneeboard Widget - SimGlass
  * Combined notes, frequencies, timer, and reference
  */
 

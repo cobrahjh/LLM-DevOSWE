@@ -1,5 +1,5 @@
 /**
- * SimWidget Device ID Manager v1.0.0
+ * SimGlass Device ID Manager v1.0.0
  * Last Updated: 2025-01-07
  * 
  * Generates and manages anonymous device UUIDs for telemetry.
@@ -7,8 +7,8 @@
 
 class DeviceIdManager {
     constructor() {
-        this.storageKey = 'simwidget_device_id';
-        this.sessionKey = '_simwidget_session_id';
+        this.storageKey = 'SimGlass_device_id';
+        this.sessionKey = '_SimGlass_session_id';
         this.platform = this.detectPlatform();
     }
     
@@ -109,7 +109,7 @@ class DeviceIdManager {
      */
     isTelemetryEnabled() {
         if (!this.hasLocalStorage()) return true; // Default on for MSFS panels
-        return localStorage.getItem('simwidget_telemetry_disabled') !== 'true';
+        return localStorage.getItem('SimGlass_telemetry_disabled') !== 'true';
     }
     
     /**
@@ -118,9 +118,9 @@ class DeviceIdManager {
     setTelemetryEnabled(enabled) {
         if (this.hasLocalStorage()) {
             if (enabled) {
-                localStorage.removeItem('simwidget_telemetry_disabled');
+                localStorage.removeItem('SimGlass_telemetry_disabled');
             } else {
-                localStorage.setItem('simwidget_telemetry_disabled', 'true');
+                localStorage.setItem('SimGlass_telemetry_disabled', 'true');
             }
         }
     }

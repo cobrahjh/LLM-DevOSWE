@@ -1,5 +1,5 @@
 /**
- * Hot Reload Module for SimWidget Engine v1.1.0
+ * Hot Reload Module for SimGlass Engine v1.1.0
  * Last Updated: 2026-01-09
  */
 

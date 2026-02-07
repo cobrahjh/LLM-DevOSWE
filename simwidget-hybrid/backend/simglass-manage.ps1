@@ -1,11 +1,11 @@
-# SimWidget Engine - PowerShell Management Script
+# SimGlass Engine - PowerShell Management Script
 # v1.0.0 - Last updated: 2026-01-09
 #
 # Usage:
-#   .\simwidget-manage.ps1 start   - Start the server
-#   .\simwidget-manage.ps1 stop    - Stop the server
-#   .\simwidget-manage.ps1 restart - Restart the server
-#   .\simwidget-manage.ps1 status  - Check server status
+#   .\SimGlass-manage.ps1 start   - Start the server
+#   .\SimGlass-manage.ps1 stop    - Stop the server
+#   .\SimGlass-manage.ps1 restart - Restart the server
+#   .\SimGlass-manage.ps1 status  - Check server status
 
 param(
     [Parameter(Position=0)]
@@ -16,7 +16,7 @@ param(
 $ServerPath = "C:\LLM-DevOSWE\simwidget-hybrid\backend"
 $Port = 8080
 
-function Get-SimWidgetStatus {
+function Get-SimGlassStatus {
     $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
     if ($conn) {
         $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
@@ -29,43 +29,43 @@ function Get-SimWidgetStatus {
     return @{ Running = $false }
 }
 
-function Start-SimWidget {
-    $status = Get-SimWidgetStatus
+function Start-SimGlass {
+    $status = Get-SimGlassStatus
     if ($status.Running) {
-        Write-Host "SimWidget already running (PID: $($status.PID))" -ForegroundColor Yellow
+        Write-Host "SimGlass already running (PID: $($status.PID))" -ForegroundColor Yellow
         return
     }
     
-    Write-Host "Starting SimWidget Engine..." -ForegroundColor Cyan
+    Write-Host "Starting SimGlass Engine..." -ForegroundColor Cyan
     Push-Location $ServerPath
     Start-Process -FilePath "node" -ArgumentList "server.js" -WindowStyle Minimized
     Pop-Location
     
     Start-Sleep -Seconds 2
-    $status = Get-SimWidgetStatus
+    $status = Get-SimGlassStatus
     if ($status.Running) {
-        Write-Host "SimWidget started successfully (PID: $($status.PID))" -ForegroundColor Green
+        Write-Host "SimGlass started successfully (PID: $($status.PID))" -ForegroundColor Green
     } else {
-        Write-Host "Failed to start SimWidget" -ForegroundColor Red
+        Write-Host "Failed to start SimGlass" -ForegroundColor Red
     }
 }
 
-function Stop-SimWidget {
-    $status = Get-SimWidgetStatus
+function Stop-SimGlass {
+    $status = Get-SimGlassStatus
     if (-not $status.Running) {
-        Write-Host "SimWidget is not running" -ForegroundColor Yellow
+        Write-Host "SimGlass is not running" -ForegroundColor Yellow
         return
     }
     
-    Write-Host "Stopping SimWidget (PID: $($status.PID))..." -ForegroundColor Cyan
+    Write-Host "Stopping SimGlass (PID: $($status.PID))..." -ForegroundColor Cyan
     Stop-Process -Id $status.PID -Force -ErrorAction SilentlyContinue
-    Write-Host "SimWidget stopped" -ForegroundColor Green
+    Write-Host "SimGlass stopped" -ForegroundColor Green
 }
 
 function Show-Status {
-    $status = Get-SimWidgetStatus
+    $status = Get-SimGlassStatus
     if ($status.Running) {
-        Write-Host "SimWidget Engine: " -NoNewline
+        Write-Host "SimGlass Engine: " -NoNewline
         Write-Host "RUNNING" -ForegroundColor Green
         Write-Host "  PID: $($status.PID)"
         Write-Host "  Port: $Port"
@@ -86,15 +86,15 @@ function Show-Status {
             Write-Host "NOT RESPONDING" -ForegroundColor Red
         }
     } else {
-        Write-Host "SimWidget Engine: " -NoNewline
+        Write-Host "SimGlass Engine: " -NoNewline
         Write-Host "STOPPED" -ForegroundColor Red
     }
 }
 
 # Execute action
 switch ($Action) {
-    'start'   { Start-SimWidget }
-    'stop'    { Stop-SimWidget }
-    'restart' { Stop-SimWidget; Start-Sleep -Seconds 1; Start-SimWidget }
+    'start'   { Start-SimGlass }
+    'stop'    { Stop-SimGlass }
+    'restart' { Stop-SimGlass; Start-Sleep -Seconds 1; Start-SimGlass }
     'status'  { Show-Status }
 }

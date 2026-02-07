@@ -1,5 +1,5 @@
-﻿/**
- * SimWidget Backend Server v1.9.0
+/**
+ * SimGlass Backend Server v1.9.0
  * 
  * Bridges SimConnect to browser/toolbar panel via WebSocket
  * 
@@ -251,7 +251,7 @@ app.get('/', (req, res) => {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SimWidget Command Center</title>
+    <title>SimGlass Command Center</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; padding: 40px; max-width: 1200px; margin: 0 auto; }
         h1 { color: #7ec8e3; display: flex; align-items: center; gap: 12px; }
@@ -276,7 +276,7 @@ app.get('/', (req, res) => {
     </style>
 </head>
 <body>
-    <h1>🎛️ SimWidget Command Center <span class="status">Online</span></h1>
+    <h1>🎛️ SimGlass Command Center <span class="status">Online</span></h1>
     <p class="version">Server v${SERVER_VERSION} | KeySender v${keySender.getVersion()} | <a href="http://192.168.1.192:8500" target="_blank">Master (O)</a></p>
     
     <div style="margin: 20px 0;">
@@ -415,7 +415,7 @@ app.get('/api', (req, res) => {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SimWidget API</title>
+    <title>SimGlass API</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; padding: 40px; }
         h1 { color: #7ec8e3; }
@@ -432,7 +432,7 @@ app.get('/api', (req, res) => {
 </head>
 <body>
     <div class="back"><a href="/">← Back to Home</a></div>
-    <h1>🔌 SimWidget API</h1>
+    <h1>🔌 SimGlass API</h1>
     <p>Version: ${SERVER_VERSION}</p>
     
     <h2>Status</h2>
@@ -474,7 +474,7 @@ app.get('/api', (req, res) => {
 
 function getApiIndex() {
     return {
-        name: 'SimWidget API',
+        name: 'SimGlass API',
         version: SERVER_VERSION,
         endpoints: {
             'GET /api/status': 'Connection status and flight data',
@@ -1453,7 +1453,7 @@ app.post('/api/shutdown', (req, res) => {
 app.get('/api/services', (req, res) => {
     res.json({
         services: [
-            { name: 'simwidget', port: 8080, description: 'Main SimWidget server' },
+            { name: 'SimGlass', port: 8080, description: 'Main SimGlass server' },
             { name: 'agent', port: 8585, description: 'Claude Agent server' },
             { name: 'remote', port: 8590, description: 'Remote Support service' }
         ]
@@ -1468,7 +1468,7 @@ app.post('/api/services', async (req, res) => {
     }
     
     const serviceConfigs = {
-        simwidget: {
+        SimGlass: {
             dir: 'C:\\DevOSWE\\simwidget-hybrid\\backend',
             start: 'npx nodemon server.js',
             port: 8080
@@ -1523,7 +1523,7 @@ app.post('/api/services', async (req, res) => {
 app.get('/api/logs/:service', (req, res) => {
     const service = req.params.service;
     const logPaths = {
-        simwidget: path.join(__dirname, '..', 'logs', 'server.log'),
+        SimGlass: path.join(__dirname, '..', 'logs', 'server.log'),
         agent: 'C:\\DevOSWE\\Admin\\agent\\logs\\agent-errors.log',
         remote: 'C:\\DevOSWE\\Admin\\remote-support\\logs\\audit.log'
     };
@@ -2146,11 +2146,11 @@ app.post('/api/wasm-camera', (req, res) => {
         
         // Set smoothing if provided
         if (smooth !== undefined) {
-            setLVar('SIMWIDGET_CAM_SMOOTH', Math.max(0, Math.min(100, smooth)));
+            setLVar('SimGlass_CAM_SMOOTH', Math.max(0, Math.min(100, smooth)));
         }
         
         // Send command
-        setLVar('SIMWIDGET_CAM_CMD', cmdValue);
+        setLVar('SimGlass_CAM_CMD', cmdValue);
         
         res.json({ success: true, action, command: cmdValue });
     } catch (e) {
@@ -2211,8 +2211,8 @@ setInterval(checkLorby, 10000);
 // Poll WASM camera status
 setInterval(async () => {
     if (lorbyConnected) {
-        wasmCameraReady = (await getLVar('SIMWIDGET_CAM_READY')) === 1;
-        wasmCameraStatus = await getLVar('SIMWIDGET_CAM_STATUS');
+        wasmCameraReady = (await getLVar('SimGlass_CAM_READY')) === 1;
+        wasmCameraStatus = await getLVar('SimGlass_CAM_STATUS');
     }
 }, 2000);
 
@@ -2957,7 +2957,7 @@ async function initSimConnect() {
             ? { remote: { host: remoteHost, port: remotePort } }
             : {};
 
-        const { recvOpen, handle } = await open('SimWidget', Protocol.KittyHawk, connectOptions);
+        const { recvOpen, handle } = await open('SimGlass', Protocol.KittyHawk, connectOptions);
         
         console.log('Connected to MSFS:', recvOpen.applicationName);
         simConnectConnection = handle;
@@ -3693,12 +3693,12 @@ setupWeatherRoutes(app, () => simConnectConnection);
 // Setup Copilot AI API (streaming LLM proxy)
 setupCopilotRoutes(app, () => flightData);
 
-const troubleshoot = new TroubleshootEngine('SimWidget');
+const troubleshoot = new TroubleshootEngine('SimGlass');
 
 troubleshoot.startServer(server, PORT, '0.0.0.0', async () => {
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
-║           SimWidget Backend Server v${SERVER_VERSION}                   ║
+║           SimGlass Backend Server v${SERVER_VERSION}                   ║
 ╠═══════════════════════════════════════════════════════════╣
 ║                                                           ║
 ║  HTTP Server:    http://localhost:${PORT}                   ║

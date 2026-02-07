@@ -1,5 +1,5 @@
 /**
- * Mobile Companion Mode - SimWidget
+ * Mobile Companion Mode - SimGlass
  * Auto-detects mobile devices and enables companion mode
  *
  * Usage:
@@ -52,11 +52,11 @@
             screen.orientation.lock('portrait').catch(() => {});
         }
 
-        console.log('[SimWidget] Mobile companion mode enabled');
+        console.log('[SimGlass] Mobile companion mode enabled');
     }
 
     // Export detection function
-    window.SimWidgetMobile = {
+    window.SimGlassMobile = {
         isEnabled: () => enableMobile,
         isMobileDevice: isMobileDevice,
         enable: () => {

@@ -1,5 +1,5 @@
 /**
- * Otto Search Bar - SimWidget Phase 6
+ * Otto Search Bar - SimGlass Phase 6
  * Command palette for quick action search
  */
 

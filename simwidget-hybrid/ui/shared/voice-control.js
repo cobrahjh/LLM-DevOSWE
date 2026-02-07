@@ -1,5 +1,5 @@
 /**
- * Voice Control Module - SimWidget
+ * Voice Control Module - SimGlass
  * Web Speech API voice recognition for hands-free control
  *
  * Commands:
@@ -184,14 +184,14 @@ class VoiceControl {
 
         // Send via BroadcastChannel
         try {
-            const channel = new BroadcastChannel('simwidget-checklist');
+            const channel = new BroadcastChannel('SimGlass-checklist');
             channel.postMessage(command);
             channel.close();
         } catch (e) {}
 
         // Also send via localStorage for cross-origin support
         try {
-            localStorage.setItem('simwidget-checklist-command', JSON.stringify(command));
+            localStorage.setItem('SimGlass-checklist-command', JSON.stringify(command));
         } catch (e) {}
 
         // Callback

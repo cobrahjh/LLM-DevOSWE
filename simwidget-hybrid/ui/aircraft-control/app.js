@@ -1,12 +1,12 @@
 /**
- * SimWidget Shared UI JavaScript
+ * SimGlass Shared UI JavaScript
  * v1.2 - Added settings panel and telemetry
  * 
  * Connects to backend via WebSocket for real-time flight data
  * Works in both browser and MSFS toolbar panel
  */
 
-class SimWidgetApp {
+class SimGlassApp {
     constructor() {
         this.ws = null;
         this.reconnectInterval = null;
@@ -47,8 +47,8 @@ class SimWidgetApp {
             this.telemetry = new TelemetryService({
                 widget: this.widgetName,
                 version: this.widgetVersion,
-                supabaseUrl: window.SIMWIDGET_SUPABASE_URL || '',
-                supabaseKey: window.SIMWIDGET_SUPABASE_KEY || ''
+                supabaseUrl: window.SimGlass_SUPABASE_URL || '',
+                supabaseKey: window.SimGlass_SUPABASE_KEY || ''
             });
         }
     }
@@ -125,7 +125,7 @@ class SimWidgetApp {
                 <p>Version: ${this.widgetVersion}</p>
                 <p>Session Errors: ${stats.uniqueErrors}</p>
                 <hr style="border-color: #3f3f46; margin: 12px 0;">
-                <p style="color: #52525b; font-size: 11px;">SimWidget Engine © 2025</p>
+                <p style="color: #52525b; font-size: 11px;">SimGlass Engine © 2025</p>
             </div>
         `;
     }
@@ -670,5 +670,5 @@ class SimWidgetApp {
 
 // Start app
 document.addEventListener('DOMContentLoaded', () => {
-    window.simWidget = new SimWidgetApp();
+    window.SimGlass = new SimGlassApp();
 });

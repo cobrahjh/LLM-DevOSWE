@@ -1,5 +1,5 @@
 /**
- * SimWidget Camera Controller v3.1
+ * SimGlass Camera Controller v3.1
  *
  * Now with platform detection and indicator support
  * Uses the best available input method for the current platform

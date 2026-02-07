@@ -5,7 +5,7 @@ REM Requires Visual Studio Build Tools
 REM Change to script directory
 cd /d "%~dp0"
 
-echo SimWidget Video Capture - Build Script
+echo SimGlass Video Capture - Build Script
 echo =======================================
 echo.
 

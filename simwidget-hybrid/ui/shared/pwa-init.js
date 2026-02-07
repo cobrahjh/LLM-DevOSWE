@@ -56,7 +56,7 @@
             installBtn = document.createElement('button');
             installBtn.id = 'pwa-install-btn';
             installBtn.className = 'pwa-install-btn';
-            installBtn.title = 'Install SimWidget as an app';
+            installBtn.title = 'Install SimGlass as an app';
 
             const icon = document.createElement('span');
             icon.className = 'install-icon';
@@ -195,5 +195,5 @@
     });
 
     // Expose install function globally
-    window.installSimWidget = installPWA;
+    window.installSimGlass = installPWA;
 })();
