@@ -308,7 +308,8 @@ async function testWidgets() {
         'mobile-companion',
         'otto-search',
         'radio-stack',
-        'tinywidgets'
+        'tinywidgets',
+        'vatsim-live'
     ];
 
     let totalLoadTime = 0;

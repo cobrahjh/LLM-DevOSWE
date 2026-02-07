@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VATSIM Live - SimGlass</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="/ui/shared/hot-reload-client.js"></script>
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <span class="widget-title">🌐 VATSIM Live</span>
+            <div class="header-controls">
+                <span class="status-indicator" id="vatsim-status">⚫</span>
+                <span class="pilot-count" id="pilot-count">0 pilots</span>
+            </div>
+        </div>
+
+        <div class="widget-content">
+            <!-- Connection Status -->
+            <div class="status-section" id="status-section">
+                <div class="status-message" id="status-message">
+                    <span class="status-icon">🔄</span>
+                    <span class="status-text">Connecting to VATSIM...</span>
+                </div>
+            </div>
+
+            <!-- Network Stats -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Pilots Online</span>
+                    <span class="stat-value" id="stat-pilots">---</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">ATC Online</span>
+                    <span class="stat-value" id="stat-atc">---</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Nearby (50nm)</span>
+                    <span class="stat-value" id="stat-nearby">---</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Last Update</span>
+                    <span class="stat-value" id="stat-updated">---</span>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="aircraft">✈️ Nearby Aircraft</button>
+                <button class="tab" data-tab="atc">📡 Active ATC</button>
+                <button class="tab" data-tab="settings">⚙️ Settings</button>
+            </div>
+
+            <!-- Aircraft Tab -->
+            <div class="tab-content active" id="tab-aircraft">
+                <div class="filter-bar">
+                    <input type="text" id="aircraft-search" placeholder="Search callsign, airline, aircraft..." class="search-input">
+                    <label class="filter-option">
+                        <input type="checkbox" id="filter-range" checked>
+                        <span>Within range only</span>
+                    </label>
+                </div>
+                <div class="aircraft-list" id="aircraft-list">
+                    <div class="empty-state">No aircraft nearby</div>
+                </div>
+            </div>
+
+            <!-- ATC Tab -->
+            <div class="tab-content" id="tab-atc">
+                <div class="filter-bar">
+                    <select id="atc-filter" class="filter-select">
+                        <option value="all">All Positions</option>
+                        <option value="nearby">Nearby Only</option>
+                        <option value="DEL">Delivery</option>
+                        <option value="GND">Ground</option>
+                        <option value="TWR">Tower</option>
+                        <option value="APP">Approach</option>
+                        <option value="DEP">Departure</option>
+                        <option value="CTR">Center</option>
+                    </select>
+                </div>
+                <div class="atc-list" id="atc-list">
+                    <div class="empty-state">No ATC online</div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="tab-settings">
+                <div class="settings-section">
+                    <h3>Display Settings</h3>
+
+                    <div class="setting-item">
+                        <label for="range-slider">Range (nautical miles)</label>
+                        <div class="range-control">
+                            <input type="range" id="range-slider" min="10" max="200" value="50" step="10">
+                            <span class="range-value" id="range-value">50 nm</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="update-interval">Update Interval</label>
+                        <select id="update-interval" class="setting-select">
+                            <option value="15">15 seconds (VATSIM default)</option>
+                            <option value="30">30 seconds</option>
+                            <option value="60">60 seconds</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="show-on-map" checked>
+                            Broadcast to Map Widget
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="show-notifications" checked>
+                            Show Notifications
+                        </label>
+                    </div>
+
+                    <h3>Filters</h3>
+
+                    <div class="setting-item">
+                        <label for="min-altitude">Minimum Altitude (ft)</label>
+                        <input type="number" id="min-altitude" value="0" step="1000" class="setting-input">
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="max-altitude">Maximum Altitude (ft)</label>
+                        <input type="number" id="max-altitude" value="50000" step="1000" class="setting-input">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SimGlassBase Dependencies -->
+    <script src="/ui/shared/platform-utils.js"></script>
+    <script src="/ui/shared/telemetry.js"></script>
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/feedback-section.js"></script>
+    <script src="/ui/shared/widget-base.js"></script>
+
+    <script src="widget.js"></script>
+</body>
+</html>

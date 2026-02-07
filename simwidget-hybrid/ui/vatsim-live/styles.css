@@ -1,0 +1,403 @@
+/* VATSIM Live Widget Styles */
+
+.widget-container {
+    padding: 15px;
+    background: var(--widget-bg, #1a1a2e);
+    color: var(--widget-text, #e0e0e0);
+    min-height: 100vh;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--widget-accent, #667eea);
+}
+
+.widget-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--widget-accent, #667eea);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.status-indicator {
+    font-size: 14px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.pilot-count {
+    color: #888;
+}
+
+/* Status Section */
+.status-section {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.status-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.status-icon {
+    font-size: 20px;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    color: #667eea;
+    font-family: 'Courier New', monospace;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab {
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.search-input,
+.filter-select,
+.setting-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #e0e0e0;
+    padding: 8px 12px;
+    font-size: 13px;
+    flex: 1;
+}
+
+.search-input:focus,
+.filter-select:focus,
+.setting-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #aaa;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.filter-option input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Aircraft List */
+.aircraft-list,
+.atc-list {
+    max-height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.aircraft-item,
+.atc-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    transition: all 0.2s;
+}
+
+.aircraft-item:hover,
+.atc-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: #667eea;
+    transform: translateX(2px);
+}
+
+.aircraft-header,
+.atc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.callsign,
+.atc-callsign {
+    font-size: 16px;
+    font-weight: bold;
+    color: #667eea;
+    font-family: 'Courier New', monospace;
+}
+
+.distance {
+    font-size: 12px;
+    color: #888;
+    font-family: 'Courier New', monospace;
+}
+
+.aircraft-details,
+.atc-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.aircraft-type {
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+.route {
+    color: #888;
+}
+
+.aircraft-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 11px;
+    color: #888;
+    font-family: 'Courier New', monospace;
+}
+
+.atc-frequency {
+    font-size: 14px;
+    font-weight: bold;
+    color: #22c55e;
+    font-family: 'Courier New', monospace;
+}
+
+.atc-name {
+    color: #aaa;
+}
+
+.atc-time {
+    color: #888;
+}
+
+.atc-atis {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 11px;
+    color: #aaa;
+    line-height: 1.4;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Settings Section */
+.settings-section {
+    max-width: 500px;
+}
+
+.settings-section h3 {
+    margin: 20px 0 15px 0;
+    font-size: 14px;
+    color: #667eea;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.settings-section h3:first-child {
+    margin-top: 0;
+}
+
+.setting-item {
+    margin-bottom: 15px;
+}
+
+.setting-item label {
+    display: block;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 6px;
+}
+
+.setting-item label input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.range-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.range-control input[type="range"] {
+    flex: 1;
+}
+
+.range-value {
+    min-width: 50px;
+    text-align: right;
+    font-size: 13px;
+    color: #667eea;
+    font-family: 'Courier New', monospace;
+}
+
+.setting-select {
+    width: 100%;
+}
+
+.setting-input {
+    width: 100%;
+}
+
+/* Scrollbar Styling */
+.aircraft-list::-webkit-scrollbar,
+.atc-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.aircraft-list::-webkit-scrollbar-track,
+.atc-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.aircraft-list::-webkit-scrollbar-thumb,
+.atc-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.aircraft-list::-webkit-scrollbar-thumb:hover,
+.atc-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tabs {
+        flex-wrap: wrap;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-option {
+        justify-content: center;
+    }
+
+    .aircraft-stats {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .widget-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
