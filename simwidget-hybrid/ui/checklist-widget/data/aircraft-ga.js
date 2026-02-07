@@ -3,7 +3,7 @@
 
 const AIRCRAFT_CHECKLISTS = AIRCRAFT_CHECKLISTS || {};
 
-AIRCRAFT_CHECKLISTS.    generic: {
+AIRCRAFT_CHECKLISTS.generic = {
         name: 'Generic GA',
         checklists: {
             preflight: {
@@ -75,10 +75,10 @@ AIRCRAFT_CHECKLISTS.    generic: {
                 ]
             }
         }
-    },
+    };
 
 
-AIRCRAFT_CHECKLISTS.    c172: {
+AIRCRAFT_CHECKLISTS.c172 = {
         name: 'Cessna 172 Skyhawk',
         checklists: {
             preflight: {
@@ -188,10 +188,10 @@ AIRCRAFT_CHECKLISTS.    c172: {
                 ]
             }
         }
-    },
+    };
 
 
-AIRCRAFT_CHECKLISTS.    c208: {
+AIRCRAFT_CHECKLISTS.c208 = {
         name: 'Cessna 208 Caravan',
         checklists: {
             preflight: {
@@ -274,10 +274,10 @@ AIRCRAFT_CHECKLISTS.    c208: {
                 ]
             }
         }
-    },
+    };
 
 
-AIRCRAFT_CHECKLISTS.    da40: {
+AIRCRAFT_CHECKLISTS.da40 = {
         name: 'Diamond DA40',
         checklists: {
             preflight: {
@@ -358,5 +358,162 @@ AIRCRAFT_CHECKLISTS.    da40: {
                 ]
             }
         }
-    },
+    };
+
+
+AIRCRAFT_CHECKLISTS.da62 = {
+        name: 'Diamond DA62',
+        checklists: {
+            preflight: {
+                name: 'Pre-Flight',
+                items: [
+                    { text: 'Documents', action: 'CHECK' },
+                    { text: 'Battery', action: 'ON' },
+                    { text: 'Fuel Quantity', action: 'CHECK' },
+                    { text: 'Flaps', action: 'CHECK' },
+                    { text: 'Battery', action: 'OFF' },
+                    { text: 'Exterior', action: 'INSPECT' }
+                ]
+            },
+            startup: {
+                name: 'Engine Start',
+                items: [
+                    { text: 'Parking Brake', action: 'SET' },
+                    { text: 'Battery', action: 'ON' },
+                    { text: 'Avionics', action: 'OFF' },
+                    { text: 'Beacon', action: 'ON' },
+                    { text: 'ECU A+B', action: 'ON' },
+                    { text: 'Glow', action: 'WAIT' },
+                    { text: 'Engine 1', action: 'START' },
+                    { text: 'Engine 2', action: 'START' },
+                    { text: 'Generators', action: 'ON' },
+                    { text: 'Avionics', action: 'ON' }
+                ]
+            },
+            taxi: {
+                name: 'Taxi',
+                items: [
+                    { text: 'Brakes', action: 'CHECK' },
+                    { text: 'Instruments', action: 'CHECK' },
+                    { text: 'Taxi Light', action: 'ON' }
+                ]
+            },
+            takeoff: {
+                name: 'Before Takeoff',
+                items: [
+                    { text: 'Flight Controls', action: 'CHECK' },
+                    { text: 'Trim', action: 'SET' },
+                    { text: 'Flaps', action: 'T/O' },
+                    { text: 'Props', action: 'MAX' },
+                    { text: 'Transponder', action: 'ALT' },
+                    { text: 'Lights', action: 'ON' }
+                ]
+            },
+            cruise: {
+                name: 'Cruise',
+                items: [
+                    { text: 'Power', action: 'SET' },
+                    { text: 'Props', action: 'SET' },
+                    { text: 'Fuel', action: 'MONITOR' }
+                ]
+            },
+            landing: {
+                name: 'Before Landing',
+                items: [
+                    { text: 'Props', action: 'MAX' },
+                    { text: 'Flaps', action: 'AS REQ' },
+                    { text: 'Gear', action: 'DOWN' },
+                    { text: 'Speed', action: '85 KIAS' }
+                ]
+            },
+            shutdown: {
+                name: 'Shutdown',
+                items: [
+                    { text: 'Parking Brake', action: 'SET' },
+                    { text: 'Avionics', action: 'OFF' },
+                    { text: 'ECU', action: 'OFF' },
+                    { text: 'Battery', action: 'OFF' }
+                ]
+            }
+        }
+    };
+
+
+AIRCRAFT_CHECKLISTS.sr22 = {
+        name: 'Cirrus SR22',
+        checklists: {
+            preflight: {
+                name: 'Pre-Flight',
+                items: [
+                    { text: 'CAPS Pin', action: 'CHECK REMOVED' },
+                    { text: 'Bat 1 & 2', action: 'ON' },
+                    { text: 'Fuel Quantity', action: 'CHECK' },
+                    { text: 'Flaps', action: 'CHECK' },
+                    { text: 'Bat 1 & 2', action: 'OFF' },
+                    { text: 'Exterior', action: 'INSPECT' }
+                ]
+            },
+            startup: {
+                name: 'Engine Start',
+                items: [
+                    { text: 'Parking Brake', action: 'SET' },
+                    { text: 'Bat 1 & 2', action: 'ON' },
+                    { text: 'Avionics', action: 'OFF' },
+                    { text: 'Mixture', action: 'RICH' },
+                    { text: 'Throttle', action: '1/4"' },
+                    { text: 'Fuel Pump', action: 'BOOST' },
+                    { text: 'Ignition', action: 'START' },
+                    { text: 'Oil/Fuel', action: 'CHECK' },
+                    { text: 'Alt 1 & 2', action: 'ON' },
+                    { text: 'Avionics', action: 'ON' }
+                ]
+            },
+            taxi: {
+                name: 'Taxi',
+                items: [
+                    { text: 'Brakes', action: 'CHECK' },
+                    { text: 'HSI/CDI', action: 'CHECK' },
+                    { text: 'Autopilot', action: 'CHECK' }
+                ]
+            },
+            takeoff: {
+                name: 'Before Takeoff',
+                items: [
+                    { text: 'Flight Controls', action: 'CHECK' },
+                    { text: 'Trim', action: 'SET' },
+                    { text: 'Flaps', action: '50%' },
+                    { text: 'Fuel Pump', action: 'BOOST' },
+                    { text: 'Mixture', action: 'RICH' },
+                    { text: 'Transponder', action: 'ALT' },
+                    { text: 'Lights', action: 'ON' }
+                ]
+            },
+            cruise: {
+                name: 'Cruise',
+                items: [
+                    { text: 'Power', action: 'SET' },
+                    { text: 'Mixture', action: 'LEAN' },
+                    { text: 'Fuel Pump', action: 'OFF' }
+                ]
+            },
+            landing: {
+                name: 'Before Landing',
+                items: [
+                    { text: 'Fuel Pump', action: 'BOOST' },
+                    { text: 'Mixture', action: 'RICH' },
+                    { text: 'Flaps', action: '100%' },
+                    { text: 'Speed', action: '80 KIAS' }
+                ]
+            },
+            shutdown: {
+                name: 'Shutdown',
+                items: [
+                    { text: 'Parking Brake', action: 'SET' },
+                    { text: 'Avionics', action: 'OFF' },
+                    { text: 'Mixture', action: 'CUTOFF' },
+                    { text: 'Bat 1 & 2', action: 'OFF' }
+                ]
+            }
+        }
+    };
 

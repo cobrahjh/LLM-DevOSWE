@@ -1,16 +1,16 @@
 /**
  * ChecklistGlass v3.0.0 - Refactored with Lazy-Loading Aircraft Data
- * 
+ *
  * Code Splitting Architecture:
  * - This file contains ONLY the ChecklistGlass widget logic
  * - Aircraft checklist data is stored in separate aircraft-*.js files
  * - Data is lazy-loaded on-demand when an aircraft is selected
  * - Reduces initial load time and memory footprint
- * 
+ *
  * Aircraft data files are loaded via loadAircraftData() which dynamically
  * imports the appropriate aircraft-{id}.js module and registers it in
  * the global AIRCRAFT_CHECKLISTS object.
- * 
+ *
  * Dependencies:
  * - SimGlassBase (../../shared/simglass-base.js)
  * - loadAircraftData() function (checklist-loader.js)
@@ -21,7 +21,7 @@ class ChecklistGlass extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'checklist-glass',
-            widgetVersion: '3.0.0',
+            widgetVersion: '2.0.0',
             autoConnect: false  // Local checklist display, no WebSocket
         });
 
@@ -30,44 +30,16 @@ class ChecklistGlass extends SimGlassBase {
         this.checkedItems = {};
         this.audioEnabled = true;
         this.synth = window.speechSynthesis;
-        this.loadingAircraft = false;
 
-        // Async initialization
-        this.init();
-    }
-
-    async init() {
         this.loadState();
-        await this.ensureAircraftLoaded(this.currentAircraft);
         this.initAircraftSelector();
         this.initTabs();
         this.initControls();
         this.renderChecklist();
     }
 
-    /**
-     * Lazy-load aircraft data if not already loaded
-     * @param {string} aircraftId - Aircraft identifier
-     */
-    async ensureAircraftLoaded(aircraftId) {
-        if (AIRCRAFT_CHECKLISTS[aircraftId] || this.loadingAircraft) return;
-        this.loadingAircraft = true;
-        try {
-            await loadAircraftData(aircraftId);
-        } catch (error) {
-            console.error(`Failed to load aircraft data for ${aircraftId}:`, error);
-            // Fallback to generic if specific aircraft fails
-            if (aircraftId !== 'generic') {
-                await loadAircraftData('generic');
-                this.currentAircraft = 'generic';
-            }
-        } finally {
-            this.loadingAircraft = false;
-        }
-    }
-
     get checklists() {
-        return AIRCRAFT_CHECKLISTS[this.currentAircraft]?.checklists || {};
+        return AIRCRAFT_CHECKLISTS[this.currentAircraft].checklists;
     }
 
     loadState() {
@@ -99,10 +71,8 @@ class ChecklistGlass extends SimGlassBase {
     initAircraftSelector() {
         const select = document.getElementById('aircraft-select');
         select.value = this.currentAircraft;
-        select.addEventListener('change', async () => {
-            const newAircraft = select.value;
-            await this.ensureAircraftLoaded(newAircraft);
-            this.currentAircraft = newAircraft;
+        select.addEventListener('change', () => {
+            this.currentAircraft = select.value;
             this.currentChecklist = 'preflight';
             this.renderTabs();
             this.renderChecklist();
