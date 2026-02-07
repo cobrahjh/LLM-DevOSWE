@@ -9,6 +9,8 @@
 const API_BASE = `http://${window.location.host}`;
 
 // State
+let _destroyed = false;
+let _wasmPollInterval = null;
 let isActive = false;
 let isReady = false;
 let currentPreset = 1;
@@ -154,8 +156,18 @@ function updatePresetButtons() {
 // Initialize
 updatePresetButtons();
 checkStatus();
-const _wasmPollInterval = setInterval(checkStatus, 2000);
-
-window.addEventListener('beforeunload', () => clearInterval(_wasmPollInterval));
+_wasmPollInterval = setInterval(checkStatus, 2000);
 
 console.log('[WASM Camera Widget] Initialized');
+
+// Cleanup
+function destroy() {
+    _destroyed = true;
+
+    if (_wasmPollInterval) {
+        clearInterval(_wasmPollInterval);
+        _wasmPollInterval = null;
+    }
+}
+
+window.addEventListener('beforeunload', destroy);

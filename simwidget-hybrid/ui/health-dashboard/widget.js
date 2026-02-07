@@ -359,3 +359,17 @@ function stopAutoRefresh() {
         refreshInterval = null;
     }
 }
+
+// Cleanup
+function destroy() {
+    _destroyed = true;
+    stopAutoRefresh();
+
+    if (ws) {
+        ws.onclose = null;
+        ws.close();
+        ws = null;
+    }
+}
+
+window.addEventListener('beforeunload', destroy);
