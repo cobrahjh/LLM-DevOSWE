@@ -1,7 +1,7 @@
 /**
  * VATSIM Live Widget - SimGlass
- * Real-time VATSIM network integration
- * @version 1.0.0
+ * Real-time VATSIM network integration with notifications
+ * @version 1.1.0
  */
 
 const VATSIM_DATA_URL = 'https://data.vatsim.net/v3/vatsim-data.json';
@@ -12,7 +12,7 @@ class VatsimLiveWidget extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'vatsim-live',
-            widgetVersion: '1.0.0',
+            widgetVersion: '1.1.0',
             autoConnect: true  // Connect to SimGlass for position data
         });
 
@@ -40,12 +40,21 @@ class VatsimLiveWidget extends SimGlassBase {
         this.searchQuery = '';
         this.atcFilter = 'all';
 
+        // Notification tracking
+        this.previousNearbyCallsigns = new Set();
+        this.notificationQueue = [];
+
         // BroadcastChannel for map integration
         this.mapChannel = new BroadcastChannel('simglass-sync');
 
         this.loadSettings();
         this.initUI();
         this.startVatsimUpdates();
+
+        // Request notification permission if enabled in settings
+        if (this.settings.showNotifications) {
+            this.requestNotificationPermission();
+        }
     }
 
     initUI() {
@@ -223,6 +232,11 @@ class VatsimLiveWidget extends SimGlassBase {
             // Broadcast to map if enabled
             if (this.settings.showOnMap) {
                 this.broadcastToMap();
+            }
+
+            // Check for new nearby aircraft and notify
+            if (this.settings.showNotifications) {
+                this.checkForNewTraffic();
             }
 
         } catch (error) {
@@ -456,6 +470,102 @@ class VatsimLiveWidget extends SimGlassBase {
             data: nearby,
             source: 'vatsim-live'
         });
+    }
+
+    // Notification System
+    checkForNewTraffic() {
+        // Get current nearby callsigns
+        const currentNearby = this.pilots
+            .filter(pilot => {
+                const distance = this.calculateDistance(pilot.latitude, pilot.longitude);
+                return distance <= this.settings.range;
+            })
+            .map(pilot => pilot.callsign);
+
+        const currentCallsigns = new Set(currentNearby);
+
+        // Find new aircraft (in current but not in previous)
+        const newAircraft = currentNearby.filter(callsign =>
+            !this.previousNearbyCallsigns.has(callsign)
+        );
+
+        // Find departed aircraft (in previous but not in current)
+        const departedAircraft = Array.from(this.previousNearbyCallsigns).filter(callsign =>
+            !currentCallsigns.has(callsign)
+        );
+
+        // Show notifications for new aircraft
+        newAircraft.forEach(callsign => {
+            const pilot = this.pilots.find(p => p.callsign === callsign);
+            if (pilot) {
+                const distance = this.calculateDistance(pilot.latitude, pilot.longitude);
+                this.showNotification(
+                    '✈️ New Traffic',
+                    `${callsign} nearby (${distance.toFixed(0)} nm)`,
+                    'info'
+                );
+            }
+        });
+
+        // Optionally notify about departed aircraft (less intrusive)
+        if (departedAircraft.length > 0 && departedAircraft.length <= 3) {
+            // Only show if <= 3 aircraft to avoid spam
+            departedAircraft.forEach(callsign => {
+                this.showNotification(
+                    '🛫 Traffic Departed',
+                    `${callsign} left the area`,
+                    'info-subtle'
+                );
+            });
+        }
+
+        // Update tracking set
+        this.previousNearbyCallsigns = currentCallsigns;
+    }
+
+    showNotification(title, message, type = 'info') {
+        // Check if browser supports notifications
+        if ('Notification' in window && Notification.permission === 'granted') {
+            // Use browser notifications
+            new Notification(title, {
+                body: message,
+                icon: '/favicon.ico',
+                tag: 'vatsim-' + Date.now(),
+                requireInteraction: false
+            });
+        }
+
+        // Also show in-widget notification
+        this.showInWidgetNotification(title, message, type);
+    }
+
+    showInWidgetNotification(title, message, type) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `vatsim-notification vatsim-notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        `;
+
+        // Add to page
+        document.body.appendChild(notification);
+
+        // Fade in
+        setTimeout(() => notification.classList.add('show'), 10);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+
+    // Request notification permission on first use
+    async requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            await Notification.requestPermission();
+        }
     }
 
     // Settings Persistence
