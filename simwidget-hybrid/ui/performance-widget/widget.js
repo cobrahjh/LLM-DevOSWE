@@ -5,9 +5,12 @@
 
 class PerformanceWidget {
     constructor() {
+        this._destroyed = false;
         this.ws = null;
         this.fpsHistory = [];
         this.targetFPS = 60;
+        this._rafId = null;
+        this._fetchInterval = null;
 
         this.initElements();
         this.initEvents();
@@ -45,6 +48,8 @@ class PerformanceWidget {
     }
 
     connectWebSocket() {
+        if (this._destroyed) return;
+
         const host = location.hostname || 'localhost';
         const wsUrl = `ws://${host}:8080`;
 
@@ -60,7 +65,9 @@ class PerformanceWidget {
         };
 
         this.ws.onclose = () => {
-            setTimeout(() => this.connectWebSocket(), 3000);
+            if (!this._destroyed) {
+                setTimeout(() => this.connectWebSocket(), 3000);
+            }
         };
     }
 
@@ -70,6 +77,8 @@ class PerformanceWidget {
         let frameCount = 0;
 
         const measureFPS = () => {
+            if (this._destroyed) return;
+
             frameCount++;
             const now = performance.now();
             const elapsed = now - lastTime;
@@ -81,14 +90,14 @@ class PerformanceWidget {
                 lastTime = now;
             }
 
-            requestAnimationFrame(measureFPS);
+            this._rafId = requestAnimationFrame(measureFPS);
         };
 
-        requestAnimationFrame(measureFPS);
+        this._rafId = requestAnimationFrame(measureFPS);
 
         // Fetch server performance data periodically
         this.fetchPerformance();
-        setInterval(() => this.fetchPerformance(), 2000);
+        this._fetchInterval = setInterval(() => this.fetchPerformance(), 2000);
     }
 
     async fetchPerformance() {
@@ -183,8 +192,29 @@ class PerformanceWidget {
     refresh() {
         this.fetchPerformance();
     }
+
+    destroy() {
+        this._destroyed = true;
+
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+
+        if (this._fetchInterval) {
+            clearInterval(this._fetchInterval);
+            this._fetchInterval = null;
+        }
+
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+            this.ws = null;
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.performanceWidget = new PerformanceWidget();
+    window.addEventListener('beforeunload', () => window.performanceWidget?.destroy());
 });

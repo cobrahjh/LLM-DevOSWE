@@ -303,9 +303,21 @@ class TimerWidget {
             }
         } catch (e) {}
     }
+
+    destroy() {
+        if (this.interval) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+        if (this.audioCtx) {
+            this.audioCtx.close();
+            this.audioCtx = null;
+        }
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.timerWidget = new TimerWidget();
+    window.addEventListener('beforeunload', () => window.timerWidget?.destroy());
 });

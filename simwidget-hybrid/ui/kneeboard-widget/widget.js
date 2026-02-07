@@ -23,7 +23,7 @@ class KneeboardWidget {
 
         // Start clock updates
         this.updateZuluTime();
-        setInterval(() => this.updateZuluTime(), 1000);
+        this._clockInterval = setInterval(() => this.updateZuluTime(), 1000);
     }
 
     loadState() {
@@ -211,7 +211,7 @@ class KneeboardWidget {
         });
 
         // Update timers every second
-        setInterval(() => {
+        this._timerInterval = setInterval(() => {
             this.updateFlightTimer();
             this.updateCountdown();
         }, 1000);
@@ -345,9 +345,21 @@ class KneeboardWidget {
             }
         });
     }
+
+    destroy() {
+        if (this._clockInterval) {
+            clearInterval(this._clockInterval);
+            this._clockInterval = null;
+        }
+        if (this._timerInterval) {
+            clearInterval(this._timerInterval);
+            this._timerInterval = null;
+        }
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.kneeboardWidget = new KneeboardWidget();
+    window.addEventListener('beforeunload', () => window.kneeboardWidget?.destroy());
 });
