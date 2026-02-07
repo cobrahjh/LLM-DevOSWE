@@ -404,7 +404,6 @@ class GTN750Widget {
     }
 
     onPageActivate(pageId) {
-        if (pageId === 'nrst') this.fetchNearestAirports();
         if (pageId === 'proc') {
             if (this.proceduresPage) {
                 this.proceduresPage.init();
@@ -695,7 +694,7 @@ class GTN750Widget {
     async setWeatherPreset(preset) {
         console.log('[GTN750] Setting weather preset:', preset);
         try {
-            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/preset', {
+            const response = await fetch(`http://${window.location.hostname}:${this.serverPort}/api/weather/preset`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ preset })
@@ -710,7 +709,7 @@ class GTN750Widget {
 
     async setLiveWeather() {
         try {
-            const response = await fetch('http://' + window.location.hostname + ':8080/api/weather/mode', {
+            const response = await fetch(`http://${window.location.hostname}:${this.serverPort}/api/weather/mode`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mode: 'live' })

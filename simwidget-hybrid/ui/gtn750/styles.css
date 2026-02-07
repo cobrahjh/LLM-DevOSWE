@@ -27,6 +27,10 @@
     --gtn-bg-panel: #1a2535;
     --gtn-accent: #0066aa;
     --gtn-accent-hover: #0088cc;
+    --gtn-text: #cccccc;
+    --gtn-text-dim: #888888;
+    --gtn-primary: #0066aa;
+    --gtn-warning: #ffaa00;
     --gtn-font: 'Segoe UI', Arial, sans-serif;
     --gtn-mono: 'Consolas', 'Monaco', monospace;
 }

@@ -98,9 +98,6 @@ class GTNMapRenderer {
             state.weatherOverlay.setEnabled(false);
         }
 
-        // Range rings (repeated for layering)
-        this.renderRangeRings(ctx, cx, cy, w, h, state);
-
         // Flight plan route
         if (state.flightPlan?.waypoints) {
             this.renderRoute(ctx, cx, cy, w, h, state);
