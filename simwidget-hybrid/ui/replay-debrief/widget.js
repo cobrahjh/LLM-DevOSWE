@@ -285,6 +285,20 @@ class FlightReplay {
         this.renderEvents();
         document.getElementById('rec-status').textContent = 'Loaded: ' + rec.name;
     }
+
+    destroy() {
+        if (this.recordInterval) {
+            clearInterval(this.recordInterval);
+            this.recordInterval = null;
+        }
+        if (this.playInterval) {
+            clearInterval(this.playInterval);
+            this.playInterval = null;
+        }
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => new FlightReplay());
+document.addEventListener('DOMContentLoaded', () => {
+    window.flightReplay = new FlightReplay();
+    window.addEventListener('beforeunload', () => window.flightReplay?.destroy());
+});

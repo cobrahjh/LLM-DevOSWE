@@ -5,6 +5,7 @@
 
 class EnvironmentWidget {
     constructor() {
+        this._destroyed = false;
         this.ws = null;
         this.data = {
             localTime: 720, // Minutes from midnight (12:00)
@@ -196,6 +197,8 @@ class EnvironmentWidget {
     }
 
     connect() {
+        if (this._destroyed) return;
+
         const host = window.location.hostname || 'localhost';
         this.ws = new WebSocket(`ws://${host}:8080`);
 
@@ -214,7 +217,9 @@ class EnvironmentWidget {
 
         this.ws.onclose = () => {
             this.elements.conn?.classList.remove('connected');
-            setTimeout(() => this.connect(), 3000);
+            if (!this._destroyed) {
+                setTimeout(() => this.connect(), 3000);
+            }
         };
     }
 
@@ -309,9 +314,19 @@ class EnvironmentWidget {
             this.elements.btnSlew.classList.toggle('active', this.data.isSlew);
         }
     }
+
+    destroy() {
+        this._destroyed = true;
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+            this.ws = null;
+        }
+    }
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     window.envWidget = new EnvironmentWidget();
+    window.addEventListener('beforeunload', () => window.envWidget?.destroy());
 });

@@ -5,6 +5,7 @@
 
 class LandingWidget {
     constructor() {
+        this._destroyed = false;
         this.ws = null;
         this.history = [];
         this.lastData = null;
@@ -35,6 +36,8 @@ class LandingWidget {
     }
 
     connectWebSocket() {
+        if (this._destroyed) return;
+
         const host = location.hostname || 'localhost';
         const wsUrl = `ws://${host}:8080`;
 
@@ -50,7 +53,9 @@ class LandingWidget {
         };
 
         this.ws.onclose = () => {
-            setTimeout(() => this.connectWebSocket(), 3000);
+            if (!this._destroyed) {
+                setTimeout(() => this.connectWebSocket(), 3000);
+            }
         };
     }
 
@@ -198,8 +203,18 @@ class LandingWidget {
             }
         } catch (e) {}
     }
+
+    destroy() {
+        this._destroyed = true;
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.close();
+            this.ws = null;
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.landingWidget = new LandingWidget();
+    window.addEventListener('beforeunload', () => window.landingWidget?.destroy());
 });
