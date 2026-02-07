@@ -1400,6 +1400,40 @@ class AICopilot {
             this.vSpeeds.vref = parseInt(e.target.value) || 65;
             this.saveSettings();
         });
+
+        // Voice controls
+        const voiceSelect = document.getElementById('voice-select');
+        const naturalToggle = document.getElementById('natural-voice-toggle');
+
+        const testBtn = document.getElementById('btn-test-voice');
+
+        voiceSelect.value = this.ttsVoice;
+        naturalToggle.checked = this.useNaturalVoice;
+        voiceSelect.disabled = !this.useNaturalVoice;
+        testBtn.disabled = !this.useNaturalVoice;
+
+        voiceSelect.addEventListener('change', (e) => {
+            this.ttsVoice = e.target.value;
+            this.saveSettings();
+            fetch('/api/copilot/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ttsVoice: this.ttsVoice })
+            }).catch(() => {});
+        });
+
+        naturalToggle.addEventListener('change', (e) => {
+            this.useNaturalVoice = e.target.checked;
+            voiceSelect.disabled = !e.target.checked;
+            testBtn.disabled = !e.target.checked;
+            this.saveSettings();
+        });
+
+        testBtn.addEventListener('click', () => {
+            if (!this.useNaturalVoice) return;
+            this.ttsVoice = voiceSelect.value;
+            this.speakNatural('Good day Captain, this is your AI copilot. Ready for departure.');
+        });
     }
 
     // === Voice ===

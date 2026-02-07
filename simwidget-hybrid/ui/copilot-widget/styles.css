@@ -639,6 +639,39 @@
     border-radius: 2px;
 }
 
+/* Voice controls in Advisor */
+.voice-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.voice-select-row {
+    display: flex;
+    gap: 6px;
+}
+
+.voice-select-row select {
+    flex: 1;
+    padding: 8px;
+    background: var(--widget-bg-secondary, #16213e);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    border-radius: 6px;
+    color: var(--widget-text, #fff);
+    font-size: 12px;
+}
+
+.voice-select-row select:focus {
+    outline: none;
+    border-color: var(--widget-accent, #667eea);
+}
+
+.voice-select-row select:disabled,
+.voice-select-row .btn-small:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Streaming message cursor */
 .message.streaming .msg-text::after {
     content: '▋';
