@@ -86,7 +86,15 @@ class FlightReplay {
             this.detectEvents(frame);
             this.updateTimeDisplay();
             this.drawTimeline();
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'updateFromSim',
+                    widget: 'replay-debrief',
+                    dataType: typeof data
+                });
+            }
+        }
     }
 
     detectEvents(frame) {

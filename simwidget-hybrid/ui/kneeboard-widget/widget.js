@@ -324,7 +324,15 @@ class KneeboardWidget {
                 osc.start();
                 setTimeout(() => osc.stop(), 200);
             }, 300);
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'playBeep',
+                    widget: 'kneeboard-widget',
+                    audioContext: 'WebAudioAPI'
+                });
+            }
+        }
     }
 
     // Clear

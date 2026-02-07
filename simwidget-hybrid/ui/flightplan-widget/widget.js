@@ -202,7 +202,15 @@ WPTs: ${routeText}`;
                 const posData = await posResponse.json();
                 this.updatePosition(posData);
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'pollPosition',
+                    widget: 'flightplan-widget',
+                    url: '/api/simvars'
+                });
+            }
+        }
 
         // Poll every 5 seconds
         if (!this._destroyed) {

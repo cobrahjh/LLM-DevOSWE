@@ -2086,7 +2086,15 @@ class ChecklistWidget {
                     if (Date.now() - cmd.timestamp < 2000) {
                         this.handleVoiceCommand(cmd);
                     }
-                } catch (e) {}
+                } catch (e) {
+                    if (window.telemetry) {
+                        telemetry.captureError(e, {
+                            operation: 'voiceCommandParse',
+                            widget: 'checklist-widget',
+                            rawValue: event.newValue
+                        });
+                    }
+                }
             }
         });
     }
