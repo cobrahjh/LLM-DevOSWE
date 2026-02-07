@@ -110,7 +110,8 @@
     overflow-y: auto;
 }
 
-/* Auth Notice */
+/* Ready Notice */
+.ready-notice,
 .auth-notice {
     text-align: center;
     padding: 30px 20px;

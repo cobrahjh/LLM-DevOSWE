@@ -1,46 +1,88 @@
 /**
  * Plugin Manager Widget
- * Manages SimWidget plugins - discover, enable, disable
+ * Manages SimWidget plugins - discover, enable, disable, filter
  */
 
 const API_BASE = `http://${window.location.host}`;
 
 let plugins = [];
+let filteredPlugins = [];
+let searchTerm = '';
+let categoryFilter = 'all';
 
 async function loadPlugins() {
     const grid = document.getElementById('pluginGrid');
     const empty = document.getElementById('emptyState');
+    const loading = document.getElementById('loadingState');
+    const countEl = document.getElementById('pluginCount');
+    const statusEl = document.getElementById('statusText');
+    const lastScanEl = document.getElementById('lastScan');
 
-    // Clear grid safely
-    grid.textContent = '';
+    if (loading) loading.style.display = 'block';
+    grid.style.display = 'none';
+    empty.classList.remove('visible');
 
     try {
         const res = await fetch(`${API_BASE}/api/plugins`);
         const data = await res.json();
         plugins = data.plugins || [];
 
-        if (plugins.length === 0) {
-            grid.style.display = 'none';
-            empty.classList.add('visible');
-            return;
-        }
+        if (loading) loading.style.display = 'none';
 
-        grid.style.display = 'flex';
-        empty.classList.remove('visible');
+        const enabled = plugins.filter(p => p.enabled).length;
+        countEl.textContent = plugins.length + ' plugin' + (plugins.length !== 1 ? 's' : '') + ' (' + enabled + ' active)';
+        statusEl.textContent = 'Connected';
+        lastScanEl.textContent = 'Last scan: ' + new Date().toLocaleTimeString();
 
-        plugins.forEach(plugin => {
-            const card = createPluginCard(plugin);
-            grid.appendChild(card);
-        });
+        applyFilters();
 
     } catch (err) {
         console.error('Failed to load plugins:', err);
-        grid.textContent = '';
+        if (loading) loading.style.display = 'none';
+        grid.style.display = 'flex';
+        grid.replaceChildren();
         const errorDiv = document.createElement('div');
         errorDiv.className = 'loading';
         errorDiv.textContent = 'Failed to connect to server';
         grid.appendChild(errorDiv);
+        document.getElementById('statusText').textContent = 'Disconnected';
     }
+}
+
+function applyFilters() {
+    const grid = document.getElementById('pluginGrid');
+    const empty = document.getElementById('emptyState');
+
+    filteredPlugins = plugins.filter(p => {
+        const matchesSearch = !searchTerm ||
+            p.name.toLowerCase().includes(searchTerm) ||
+            (p.description || '').toLowerCase().includes(searchTerm) ||
+            p.id.toLowerCase().includes(searchTerm);
+        const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
+        return matchesSearch && matchesCategory;
+    });
+
+    grid.replaceChildren();
+
+    if (filteredPlugins.length === 0) {
+        grid.style.display = 'none';
+        empty.classList.add('visible');
+        if (plugins.length > 0 && (searchTerm || categoryFilter !== 'all')) {
+            document.querySelector('.empty-text').textContent = 'No matching plugins';
+            document.querySelector('.empty-hint').textContent = 'Try adjusting your search or filter';
+        } else {
+            document.querySelector('.empty-text').textContent = 'No plugins found';
+            document.querySelector('.empty-hint').innerHTML = 'Add plugins to the <code>plugins/</code> folder with a <code>plugin.json</code> manifest';
+        }
+        return;
+    }
+
+    grid.style.display = 'flex';
+    empty.classList.remove('visible');
+
+    filteredPlugins.forEach(plugin => {
+        grid.appendChild(createPluginCard(plugin));
+    });
 }
 
 function createPluginCard(plugin) {
@@ -48,7 +90,6 @@ function createPluginCard(plugin) {
     card.className = 'plugin-card' + (plugin.enabled ? ' enabled' : '');
     card.dataset.id = plugin.id;
 
-    // Header with icon and info
     const header = document.createElement('div');
     header.className = 'plugin-header';
 
@@ -82,12 +123,10 @@ function createPluginCard(plugin) {
     header.appendChild(icon);
     header.appendChild(info);
 
-    // Description
     const desc = document.createElement('div');
     desc.className = 'plugin-description';
     desc.textContent = plugin.description || 'No description';
 
-    // Footer with category and buttons
     const footer = document.createElement('div');
     footer.className = 'plugin-footer';
 
@@ -96,6 +135,7 @@ function createPluginCard(plugin) {
     category.textContent = plugin.category;
 
     const buttons = document.createElement('div');
+    buttons.className = 'plugin-buttons';
 
     if (plugin.enabled && plugin.entryUrl) {
         const openBtn = document.createElement('button');
@@ -120,7 +160,6 @@ function createPluginCard(plugin) {
     footer.appendChild(category);
     footer.appendChild(buttons);
 
-    // Assemble card
     card.appendChild(header);
     card.appendChild(desc);
     card.appendChild(footer);
@@ -130,15 +169,15 @@ function createPluginCard(plugin) {
 
 function getPluginEmoji(category) {
     const emojis = {
-        'utility': '🔧',
-        'navigation': '🧭',
-        'display': '📊',
-        'communication': '📡',
-        'weather': '🌤️',
-        'traffic': '✈️',
-        'general': '📦'
+        'utility': '\uD83D\uDD27',
+        'navigation': '\uD83E\uDDED',
+        'display': '\uD83D\uDCCA',
+        'communication': '\uD83D\uDCE1',
+        'weather': '\uD83C\uDF24\uFE0F',
+        'traffic': '\u2708\uFE0F',
+        'general': '\uD83D\uDCE6'
     };
-    return emojis[category] || '📦';
+    return emojis[category] || '\uD83D\uDCE6';
 }
 
 async function togglePlugin(pluginId, enable) {
@@ -183,6 +222,16 @@ async function refreshPlugins() {
 
 // Event listeners
 document.getElementById('refreshBtn').addEventListener('click', refreshPlugins);
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value.toLowerCase().trim();
+    applyFilters();
+});
+
+document.getElementById('categoryFilter').addEventListener('change', (e) => {
+    categoryFilter = e.target.value;
+    applyFilters();
+});
 
 // Initial load
 loadPlugins();

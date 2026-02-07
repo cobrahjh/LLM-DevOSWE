@@ -73,9 +73,9 @@ class NavigraphWidget {
     }
 
     showReadyMessage() {
-        // Hide auth notice - no login needed for free charts
+        // Show the ready notice (no auth needed)
         if (this.authNotice) {
-            this.authNotice.style.display = 'none';
+            this.authNotice.style.display = 'block';
         }
     }
 
@@ -151,28 +151,65 @@ class NavigraphWidget {
     }
 
     async fetchAirportData(icao) {
-        // Simulate API delay
-        await new Promise(r => setTimeout(r, 300));
+        // Try to get real airport info from the server
+        let name = icao + ' Airport';
+        let elevation = '--';
+        let runways = '--';
 
-        // Determine region for chart source
+        try {
+            const res = await fetch(`http://${window.location.host}/api/airport/${icao}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.name) name = data.name;
+                if (data.elevation) elevation = data.elevation + 'ft';
+                if (data.runways) runways = data.runways;
+            }
+        } catch (e) {
+            // Fallback to known airports lookup
+            const known = this.getKnownAirport(icao);
+            if (known) {
+                name = known.name;
+                elevation = known.elevation;
+                runways = known.runways;
+            }
+        }
+
         const isUSAirport = icao.startsWith('K') || icao.startsWith('P');
         const chartSource = isUSAirport ? 'FAA DTPP' : 'SkyVector';
 
-        // Generate charts based on region
         const charts = isUSAirport
             ? this.generateFAACharts(icao)
             : this.generateSkyVectorCharts(icao);
 
         return {
             icao: icao,
-            name: icao + ' Airport',
-            city: isUSAirport ? 'USA' : 'International',
-            country: isUSAirport ? 'United States' : 'Worldwide',
-            elevation: 'See chart',
-            runways: 'See chart',
+            name: name,
+            elevation: elevation,
+            runways: runways,
             source: chartSource,
             charts: charts
         };
+    }
+
+    getKnownAirport(icao) {
+        const airports = {
+            'KJFK': { name: 'John F Kennedy Intl', elevation: '13ft', runways: '4L/22R, 4R/22L, 13L/31R, 13R/31L' },
+            'KLAX': { name: 'Los Angeles Intl', elevation: '128ft', runways: '6L/24R, 6R/24L, 7L/25R, 7R/25L' },
+            'KORD': { name: 'Chicago O\'Hare Intl', elevation: '672ft', runways: '9C/27C, 9L/27R, 9R/27L, 10L/28R, 10C/28C, 10R/28L, 14L/32R, 14R/32L' },
+            'KATL': { name: 'Hartsfield-Jackson Atlanta Intl', elevation: '1026ft', runways: '8L/26R, 8R/26L, 9L/27R, 9R/27L, 10/28' },
+            'KSFO': { name: 'San Francisco Intl', elevation: '13ft', runways: '1L/19R, 1R/19L, 10L/28R, 10R/28L' },
+            'EGLL': { name: 'London Heathrow', elevation: '83ft', runways: '09L/27R, 09R/27L' },
+            'LFPG': { name: 'Paris Charles de Gaulle', elevation: '392ft', runways: '08L/26R, 08R/26L, 09L/27R, 09R/27L' },
+            'EDDF': { name: 'Frankfurt Main', elevation: '364ft', runways: '07L/25R, 07C/25C, 07R/25L, 18/36' },
+            'NZWN': { name: 'Wellington Intl', elevation: '41ft', runways: '16/34' },
+            'YBBN': { name: 'Brisbane Intl', elevation: '13ft', runways: '01L/19R, 01R/19L' },
+            'RJTT': { name: 'Tokyo Haneda', elevation: '35ft', runways: '04/22, 16L/34R, 16R/34L' },
+            'OMDB': { name: 'Dubai Intl', elevation: '62ft', runways: '12L/30R, 12R/30L' },
+            'VHHH': { name: 'Hong Kong Intl', elevation: '28ft', runways: '07L/25R, 07R/25L' },
+            'WSSS': { name: 'Singapore Changi', elevation: '22ft', runways: '02L/20R, 02C/20C, 02R/20L' },
+            'CYYZ': { name: 'Toronto Pearson Intl', elevation: '569ft', runways: '05/23, 06L/24R, 06R/24L, 15L/33R, 15R/33L' }
+        };
+        return airports[icao] || null;
     }
 
     generateFAACharts(icao) {

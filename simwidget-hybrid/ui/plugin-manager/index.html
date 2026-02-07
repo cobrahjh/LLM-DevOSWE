@@ -4,26 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plugin Manager - SimWidget</title>
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="/ui/shared/settings-panel.css">
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
 </head>
 <body>
-    <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;&#65039;</button>
     <div class="container">
         <header class="header">
             <h1>Plugin Manager</h1>
-            <button class="refresh-btn" id="refreshBtn" title="Scan for plugins">Refresh</button>
+            <div class="header-controls">
+                <span class="plugin-count" id="pluginCount">0 plugins</span>
+                <button class="refresh-btn" id="refreshBtn" title="Scan for plugins">Refresh</button>
+            </div>
         </header>
 
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Filter plugins..." />
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+                <option value="utility">Utility</option>
+                <option value="navigation">Navigation</option>
+                <option value="display">Display</option>
+                <option value="communication">Communication</option>
+                <option value="weather">Weather</option>
+                <option value="traffic">Traffic</option>
+                <option value="general">General</option>
+            </select>
+        </div>
+
         <div class="plugin-grid" id="pluginGrid">
-            <!-- Plugins will be populated by JS -->
+            <div class="loading" id="loadingState">Loading plugins...</div>
         </div>
 
         <div class="empty-state" id="emptyState">
             <div class="empty-icon">&#128268;</div>
             <div class="empty-text">No plugins found</div>
-            <div class="empty-hint">Add plugins to the <code>plugins/</code> folder</div>
+            <div class="empty-hint">Add plugins to the <code>plugins/</code> folder with a <code>plugin.json</code> manifest</div>
+        </div>
+
+        <div class="plugin-info-bar" id="infoBar">
+            <span id="statusText">Ready</span>
+            <span id="lastScan">--</span>
         </div>
     </div>
 

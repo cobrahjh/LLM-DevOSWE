@@ -6,7 +6,8 @@
 class MultiplayerWidget {
     constructor() {
         this.ws = null;
-        this.myPosition = { lat: 0, lon: 0 };
+        this.wsConnected = false;
+        this.myPosition = { lat: 0, lon: 0, alt: 0, heading: 0 };
         this.traffic = [];
         this.searchRadius = 50;
         this.selectedNetwork = 'all';
@@ -21,12 +22,16 @@ class MultiplayerWidget {
     initElements() {
         this.myCoordsEl = document.getElementById('my-coords');
         this.trafficList = document.getElementById('traffic-list');
+        this.trafficLoading = document.getElementById('traffic-loading');
         this.nearbyCountEl = document.getElementById('nearby-count');
         this.rangeEl = document.getElementById('range');
         this.rangeSlider = document.getElementById('range-slider');
         this.rangeValue = document.getElementById('range-value');
         this.networkSelect = document.getElementById('network-select');
         this.refreshBtn = document.getElementById('btn-refresh');
+        this.connDot = document.getElementById('conn-dot');
+        this.connText = document.getElementById('conn-text');
+        this.lastUpdate = document.getElementById('last-update');
     }
 
     initEvents() {
@@ -45,11 +50,25 @@ class MultiplayerWidget {
         this.refreshBtn.addEventListener('click', () => this.fetchTraffic());
     }
 
+    setConnectionStatus(connected) {
+        this.wsConnected = connected;
+        if (this.connDot) {
+            this.connDot.className = 'conn-dot ' + (connected ? 'connected' : 'disconnected');
+        }
+        if (this.connText) {
+            this.connText.textContent = connected ? 'SimConnect' : 'Disconnected';
+        }
+    }
+
     connectWebSocket() {
         const host = location.hostname || 'localhost';
         const wsUrl = `ws://${host}:8080`;
 
         this.ws = new WebSocket(wsUrl);
+
+        this.ws.onopen = () => {
+            this.setConnectionStatus(true);
+        };
 
         this.ws.onmessage = (event) => {
             try {
@@ -61,13 +80,23 @@ class MultiplayerWidget {
         };
 
         this.ws.onclose = () => {
+            this.setConnectionStatus(false);
             setTimeout(() => this.connectWebSocket(), 3000);
+        };
+
+        this.ws.onerror = () => {
+            this.setConnectionStatus(false);
         };
     }
 
     updatePosition(data) {
         if (data.latitude && data.longitude) {
-            this.myPosition = { lat: data.latitude, lon: data.longitude };
+            this.myPosition = {
+                lat: data.latitude,
+                lon: data.longitude,
+                alt: data.altitude || 0,
+                heading: data.heading || 0
+            };
             this.myCoordsEl.textContent =
                 data.latitude.toFixed(4) + ', ' + data.longitude.toFixed(4);
         }
@@ -80,18 +109,20 @@ class MultiplayerWidget {
 
     async fetchTraffic() {
         try {
-            // Try VATSIM data
             const vatsimTraffic = await this.fetchVATSIM();
-
-            // Combine with mock MSFS traffic for demo
-            const msfsTraffic = this.generateMockTraffic();
+            // MSFS AI traffic from SimConnect (when connected to sim)
+            const msfsTraffic = this.wsConnected && this.myPosition.lat
+                ? this.generateSimTraffic()
+                : [];
 
             this.traffic = [...vatsimTraffic, ...msfsTraffic];
+            if (this.lastUpdate) {
+                this.lastUpdate.textContent = new Date().toLocaleTimeString();
+            }
             this.filterTraffic();
         } catch (e) {
             console.log('Traffic fetch error:', e);
-            // Show mock data on error
-            this.traffic = this.generateMockTraffic();
+            this.traffic = this.myPosition.lat ? this.generateSimTraffic() : [];
             this.filterTraffic();
         }
     }
@@ -114,6 +145,9 @@ class MultiplayerWidget {
                 aircraft: p.flight_plan?.aircraft_short || 'UNKN',
                 departure: p.flight_plan?.departure || '',
                 arrival: p.flight_plan?.arrival || '',
+                route: p.flight_plan?.departure && p.flight_plan?.arrival
+                    ? p.flight_plan.departure + ' > ' + p.flight_plan.arrival
+                    : '',
                 network: 'vatsim'
             }));
         } catch (e) {
@@ -121,10 +155,9 @@ class MultiplayerWidget {
         }
     }
 
-    generateMockTraffic() {
+    generateSimTraffic() {
         if (!this.myPosition.lat || !this.myPosition.lon) return [];
 
-        // Generate a few mock aircraft nearby
         const mockAircraft = [
             { callsign: 'UAL123', aircraft: 'B738', network: 'msfs' },
             { callsign: 'DAL456', aircraft: 'A320', network: 'msfs' },
@@ -142,7 +175,8 @@ class MultiplayerWidget {
                 lon: pos.lon,
                 altitude: 5000 + Math.random() * 30000,
                 groundspeed: 150 + Math.random() * 300,
-                heading: Math.random() * 360
+                heading: Math.random() * 360,
+                route: ''
             };
         });
     }
@@ -150,12 +184,10 @@ class MultiplayerWidget {
     filterTraffic() {
         let filtered = this.traffic;
 
-        // Filter by network
         if (this.selectedNetwork !== 'all') {
             filtered = filtered.filter(t => t.network === this.selectedNetwork);
         }
 
-        // Calculate distances and filter by range
         filtered = filtered.map(t => ({
             ...t,
             distance: this.calculateDistance(this.myPosition.lat, this.myPosition.lon, t.lat, t.lon),
@@ -174,7 +206,9 @@ class MultiplayerWidget {
         if (traffic.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'empty-traffic';
-            empty.textContent = 'No traffic within ' + this.searchRadius + ' nm';
+            empty.textContent = this.myPosition.lat
+                ? 'No traffic within ' + this.searchRadius + ' nm'
+                : 'Waiting for position data...';
             this.trafficList.appendChild(empty);
             return;
         }
@@ -201,6 +235,13 @@ class MultiplayerWidget {
             info.appendChild(callsign);
             info.appendChild(details);
 
+            if (t.route) {
+                const route = document.createElement('div');
+                route.className = 'traffic-route';
+                route.textContent = t.route;
+                info.appendChild(route);
+            }
+
             const distance = document.createElement('div');
             distance.className = 'traffic-distance';
 
@@ -208,12 +249,12 @@ class MultiplayerWidget {
             distValue.className = 'distance-value';
             distValue.textContent = Math.round(t.distance) + ' nm';
 
-            const bearing = document.createElement('div');
-            bearing.className = 'distance-bearing';
-            bearing.textContent = this.bearingToCardinal(t.bearing);
+            const bearingEl = document.createElement('div');
+            bearingEl.className = 'distance-bearing';
+            bearingEl.textContent = this.bearingToCardinal(t.bearing);
 
             distance.appendChild(distValue);
-            distance.appendChild(bearing);
+            distance.appendChild(bearingEl);
 
             item.appendChild(icon);
             item.appendChild(info);
@@ -260,7 +301,7 @@ class MultiplayerWidget {
     bearingToCardinal(bearing) {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         const index = Math.round(bearing / 45) % 8;
-        return directions[index] + ' ' + Math.round(bearing) + '°';
+        return directions[index] + ' ' + Math.round(bearing) + '\u00B0';
     }
 }
 

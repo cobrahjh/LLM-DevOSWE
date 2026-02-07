@@ -50,6 +50,50 @@
     background: rgba(255,255,255,0.1);
 }
 
+/* Connection Bar */
+.connection-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--widget-bg-secondary, #16213e);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 11px;
+}
+
+.conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #444;
+}
+
+.conn-dot.connected {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.conn-dot.disconnected {
+    background: #ef4444;
+}
+
+.conn-text {
+    color: var(--widget-text-muted, #888);
+    flex: 1;
+}
+
+.last-update {
+    color: var(--widget-text-muted, #666);
+    font-size: 10px;
+}
+
+.traffic-route {
+    font-size: 9px;
+    color: var(--widget-accent, #667eea);
+    margin-top: 2px;
+}
+
 /* My Position */
 .my-position {
     background: var(--widget-bg-secondary, #16213e);
