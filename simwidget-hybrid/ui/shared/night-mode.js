@@ -39,7 +39,15 @@ class NightMode {
                 if (msg.type === 'flightData' && msg.data.localTime !== undefined) {
                     this.simTime = msg.data.localTime;
                 }
-            } catch (e) {}
+            } catch (e) {
+                if (window.telemetry) {
+                    telemetry.captureError(e, {
+                        operation: 'websocketMessage',
+                        component: 'NightMode',
+                        dataType: typeof event.data
+                    });
+                }
+            }
         };
 
         this.ws.onclose = () => {
@@ -136,7 +144,15 @@ class NightMode {
                 sunriseHour: this.sunriseHour,
                 sunsetHour: this.sunsetHour
             }));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveState',
+                    component: 'NightMode',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadState() {
@@ -151,7 +167,15 @@ class NightMode {
                 this.sunriseHour = state.sunriseHour || 6;
                 this.sunsetHour = state.sunsetHour || 18;
             }
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'loadState',
+                    component: 'NightMode',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     getStatus() {

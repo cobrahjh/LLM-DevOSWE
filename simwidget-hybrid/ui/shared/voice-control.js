@@ -187,12 +187,28 @@ class VoiceControl {
             const channel = new BroadcastChannel('SimGlass-checklist');
             channel.postMessage(command);
             channel.close();
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'sendCommand',
+                    component: 'VoiceControl',
+                    channel: 'BroadcastChannel'
+                });
+            }
+        }
 
         // Also send via localStorage for cross-origin support
         try {
             localStorage.setItem('SimGlass-checklist-command', JSON.stringify(command));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'sendCommand',
+                    component: 'VoiceControl',
+                    channel: 'localStorage'
+                });
+            }
+        }
 
         // Callback
         this.onCommand(command);
@@ -238,7 +254,14 @@ class VoiceControl {
 
         try {
             this.recognition.stop();
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'stopListening',
+                    component: 'VoiceControl'
+                });
+            }
+        }
     }
 
     isSupported() {

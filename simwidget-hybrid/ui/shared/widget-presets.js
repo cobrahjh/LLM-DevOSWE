@@ -45,7 +45,15 @@ class WidgetPresets {
                         id: key.replace('SimGlass_', ''),
                         state: state
                     });
-                } catch (e) {}
+                } catch (e) {
+                    if (window.telemetry) {
+                        telemetry.captureError(e, {
+                            operation: 'captureCurrentArrangement',
+                            component: 'WidgetPresets',
+                            widgetKey: key
+                        });
+                    }
+                }
             }
         }
 
@@ -70,7 +78,15 @@ class WidgetPresets {
         preset.widgets.forEach(w => {
             try {
                 localStorage.setItem('SimGlass_' + w.id, JSON.stringify(w.state));
-            } catch (e) {}
+            } catch (e) {
+                if (window.telemetry) {
+                    telemetry.captureError(e, {
+                        operation: 'loadPreset',
+                        component: 'WidgetPresets',
+                        widgetId: w.id
+                    });
+                }
+            }
         });
 
         // Notify widgets to reload their state
@@ -232,7 +248,15 @@ class WidgetPresets {
     saveToStorage() {
         try {
             localStorage.setItem('SimGlass-presets', JSON.stringify(this.presets));
-        } catch (e) {}
+        } catch (e) {
+            if (window.telemetry) {
+                telemetry.captureError(e, {
+                    operation: 'saveToStorage',
+                    component: 'WidgetPresets',
+                    storage: 'localStorage'
+                });
+            }
+        }
     }
 
     loadPresets() {

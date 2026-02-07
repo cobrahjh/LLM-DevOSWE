@@ -1331,7 +1331,9 @@ app.get('/api/detect', async (req, res) => {
             });
         });
         results.chaseplane.detected = stdout.includes('CP MSFS Bridge');
-    } catch (e) {}
+    } catch (e) {
+        console.log('[Platform] ChasePlane detection failed:', e.message);
+    }
 
     // Check for AutoHotKey
     try {
@@ -1408,7 +1410,9 @@ app.post('/api/simconnect/remote', async (req, res) => {
         if (simConnectConnection) {
             try {
                 simConnectConnection.close();
-            } catch (e) {}
+            } catch (e) {
+                console.log('[SimConnect] Close failed:', e.message);
+            }
             simConnectConnection = null;
             isSimConnected = false;
             flightData.connected = false;
@@ -1434,7 +1438,9 @@ app.get('/api/simconnect/status', (req, res) => {
         if (fs.existsSync(CONFIG_PATH)) {
             config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
         }
-    } catch (e) {}
+    } catch (e) {
+        console.log('[SimConnect] Config read failed:', e.message);
+    }
 
     res.json({
         connected: isSimConnected,

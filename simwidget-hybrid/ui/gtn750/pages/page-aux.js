@@ -72,7 +72,15 @@ class AuxPage {
             try {
                 const settings = JSON.parse(saved);
                 Object.assign(this.tripData, settings);
-            } catch (e) {}
+            } catch (e) {
+                if (window.telemetry) {
+                    telemetry.captureError(e, {
+                        operation: 'loadSettings',
+                        component: 'GTN750-AuxPage',
+                        storage: 'localStorage'
+                    });
+                }
+            }
         }
     }
 
