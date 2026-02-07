@@ -1,0 +1,27 @@
+name: SimGlass Tests
+
+on:
+  push:
+    branches: [ master ]
+    paths: [ 'simwidget-hybrid/**' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: simwidget-hybrid
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    - name: Install dependencies
+      run: cd backend && npm ci
+    - name: Start server
+      run: cd backend && Start-Process node -ArgumentList "server.js" && Start-Sleep 5
+      shell: powershell
+    - name: Run tests
+      run: node tests/test-runner.js
