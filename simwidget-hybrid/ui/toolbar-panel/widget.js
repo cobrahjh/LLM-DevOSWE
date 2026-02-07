@@ -3,16 +3,19 @@
  * Compact panel container with tab navigation and quick actions
  * Designed for MSFS toolbar or sidebar embedding
  */
-class ToolbarPanelWidget {
+class ToolbarPanelWidget extends SimGlassBase {
     constructor() {
-        this._destroyed = false;
-        this.ws = null;
-        this.connected = false;
+        super({
+            widgetName: 'toolbar-panel',
+            widgetVersion: '1.1.0',
+            statusElementId: 'status-dot',
+            autoConnect: true
+        });
+
         this.flightData = {};
 
         this.initElements();
         this.initEvents();
-        this.connectWebSocket();
     }
 
     initElements() {
@@ -57,50 +60,22 @@ class ToolbarPanelWidget {
         }
     }
 
-    connectWebSocket() {
-        if (this._destroyed) return;
-
-        const host = location.hostname || '127.0.0.1';
-        const port = location.port || '8080';
-        this.ws = new WebSocket('ws://' + host + ':' + port);
-
-        this.ws.onopen = () => {
-            this.connected = true;
-            this.statusDot.classList.add('connected');
-        };
-
-        this.ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                this.flightData = data;
-            } catch (e) {}
-        };
-
-        this.ws.onclose = () => {
-            this.connected = false;
-            this.statusDot.classList.remove('connected');
-            if (!this._destroyed) {
-                setTimeout(() => this.connectWebSocket(), 3000);
-            }
-        };
-
-        this.ws.onerror = () => {
-            this.connected = false;
-            this.statusDot.classList.remove('connected');
-        };
+    // SimGlassBase lifecycle hooks
+    onConnect() {
+        this.statusDot.classList.add('connected');
     }
 
-    destroy() {
-        this._destroyed = true;
-        if (this.ws) {
-            this.ws.onclose = null;
-            this.ws.close();
-            this.ws = null;
-        }
+    onDisconnect() {
+        this.statusDot.classList.remove('connected');
+    }
+
+    onMessage(data) {
+        this.flightData = data;
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     window.toolbarPanel = new ToolbarPanelWidget();
+    // SimGlassBase provides destroy() - wire to beforeunload
     window.addEventListener('beforeunload', () => window.toolbarPanel?.destroy());
 });
