@@ -74,6 +74,7 @@ class GTN750Widget {
             getState: () => this.getRendererState()
         });
         this.dataHandler = new GTNDataHandler({
+            core: this.core,
             serverPort: this.serverPort,
             elements: {},
             onDataUpdate: (d) => this.handleSimData(d)
@@ -209,6 +210,7 @@ class GTN750Widget {
         if (d.heading !== undefined) this.data.heading = d.heading;
         if (d.magvar !== undefined) this.data.magvar = d.magvar;
         if (d.groundTrack !== undefined) this.data.track = d.groundTrack;
+        if (d.track !== undefined && d.groundTrack === undefined) this.data.track = d.track;
         if (d.verticalSpeed !== undefined) this.data.verticalSpeed = d.verticalSpeed;
         if (d.com1Active !== undefined) this.data.com1Active = d.com1Active;
         if (d.com1Standby !== undefined) this.data.com1Standby = d.com1Standby;
@@ -225,7 +227,6 @@ class GTN750Widget {
         if (d.ambientPressure !== undefined) this.data.ambientPressure = d.ambientPressure;
         if (d.visibility !== undefined) this.data.visibility = d.visibility;
         if (d.precipState !== undefined) this.data.precipState = d.precipState;
-        if (d.track !== undefined) this.data.track = d.track;
         // Fuel
         if (d.fuelTotal !== undefined) this.data.fuelTotal = d.fuelTotal;
         if (d.fuelFlow !== undefined) this.data.fuelFlow = d.fuelFlow;

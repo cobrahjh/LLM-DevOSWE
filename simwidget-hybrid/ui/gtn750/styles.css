@@ -569,16 +569,21 @@ body {
 .corner-field {
     position: absolute;
     background: rgba(0, 0, 0, 0.8);
-    padding: 4px 8px;
-    border-radius: 3px;
+    padding: 4px 6px;
+    border-radius: 4px;
     border: 1px solid #333;
     z-index: 10;
     cursor: pointer;
-    transition: border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s;
 }
 
 .corner-field:hover {
+    background: rgba(0, 136, 255, 0.2);
     border-color: var(--gtn-blue);
+}
+
+.corner-field:active {
+    background: rgba(0, 136, 255, 0.4);
 }
 
 .corner-field.top-left { top: 8px; left: 8px; }
@@ -746,22 +751,6 @@ body {
 
 .dto-cancel:hover {
     background: var(--gtn-accent);
-}
-
-/* Make corner fields look tappable */
-.corner-field {
-    cursor: pointer;
-    transition: background 0.15s;
-    border-radius: 4px;
-    padding: 4px 6px;
-}
-
-.corner-field:hover {
-    background: rgba(0, 136, 255, 0.2);
-}
-
-.corner-field:active {
-    background: rgba(0, 136, 255, 0.4);
 }
 
 /* Position Display */

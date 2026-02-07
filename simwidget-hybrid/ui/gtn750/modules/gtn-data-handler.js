@@ -5,6 +5,7 @@
 
 class GTNDataHandler {
     constructor(options = {}) {
+        this.core = options.core || null;
         this.serverPort = options.serverPort || 8080;
         this.elements = options.elements || {};
         this.onDataUpdate = options.onDataUpdate || null;
@@ -78,14 +79,8 @@ class GTNDataHandler {
 
         this.updateNavTuningInfo(data, nav1);
 
-        if (this.elements.utcTime && data.zuluTime) {
-            // Requires core for formatTime - use inline format
-            const total = data.zuluTime * 3600;
-            const h = Math.floor(total / 3600) % 24;
-            const m = Math.floor((total % 3600) / 60);
-            const s = Math.floor(total % 60);
-            this.elements.utcTime.textContent =
-                `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}Z`;
+        if (this.elements.utcTime && data.zuluTime && this.core) {
+            this.elements.utcTime.textContent = this.core.formatTime(data.zuluTime);
         }
     }
 
