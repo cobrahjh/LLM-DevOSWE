@@ -11,7 +11,7 @@
   "autoStart": true,
   "port": 8080,
   "simconnect": {
-    "remoteHost": null,
+    "remoteHost": "192.168.1.162",
     "remotePort": 500
   },
   "copilot": {
