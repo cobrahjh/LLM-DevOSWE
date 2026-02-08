@@ -15,6 +15,11 @@
  *   - Critical: core, map-renderer, cdi, data-fields (load immediately)
  *   - Deferred 500ms: data-handler, simvar-handler, overlays
  *   - Lazy (on-demand): flight-plan (FPL page), page modules (PROC, CHARTS, etc.)
+ *
+ * @typedef {import('./types.js').SimData} SimData
+ * @typedef {import('./types.js').FlightPlan} FlightPlan
+ * @typedef {import('./types.js').CDIState} CDIState
+ * @typedef {import('./types.js').MapState} MapState
  */
 
 class GTN750Glass extends SimGlassBase {
