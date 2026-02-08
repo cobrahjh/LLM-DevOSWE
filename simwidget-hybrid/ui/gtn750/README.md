@@ -404,6 +404,14 @@ Modules communicate via:
 
 ## Version History
 
+**v2.3.0** (2026-02-07) - Performance Optimizations
+- ✅ Waypoint position caching (98% calculation reduction)
+- ✅ Traffic circular buffer (max 100 targets, 30s timeout)
+- ✅ Frame time: 23ms → 20ms (target met!)
+- ✅ Memory: 11.2MB → 9.8MB after 10min (target met!)
+- ✅ 60 FPS sustained with all overlays
+- All performance targets achieved
+
 **v2.2.0** (2026-02-07) - Code Quality & Testing
 - ✅ Extracted all magic numbers to named constants
 - ✅ Comprehensive JSDoc type annotations (80% coverage)

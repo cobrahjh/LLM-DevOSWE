@@ -1,5 +1,5 @@
 /**
- * GTN750 GPS Glass v2.1.0 - Full Garmin Feature Set with Code Splitting
+ * GTN750 GPS Glass v2.3.0 - Full Garmin Feature Set with Code Splitting
  * Modular architecture with page manager and soft keys
  *
  * Orchestrator: creates and wires together all module instances.
@@ -26,7 +26,7 @@ class GTN750Glass extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'gtn750',
-            widgetVersion: '2.1.0',
+            widgetVersion: '2.3.0',
             autoConnect: false  // Uses GTNDataHandler for WebSocket management
         });
 

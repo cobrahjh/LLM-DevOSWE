@@ -8,10 +8,14 @@ class TrafficOverlay {
         this.core = options.core || new GTNCore();
         this.enabled = false;
         this.mode = 'OPERATE'; // OPERATE, STANDBY, TEST
-        this.targets = [];
         this.testTargets = [];
         this.lastUpdate = 0;
         this.updateInterval = 1000; // Update every second
+
+        // Traffic target management with circular buffer
+        this.MAX_TARGETS = 100;              // Maximum targets to track
+        this.STALE_TARGET_MS = 30000;        // Remove targets not seen in 30s
+        this.targets = new Map();            // id → target object
 
         // Display settings
         this.showTargetTrend = true;
@@ -70,13 +74,37 @@ class TrafficOverlay {
     }
 
     /**
-     * Update traffic targets from data source
+     * Update traffic targets from data source with circular buffer management
+     * Prevents memory growth by limiting max targets and removing stale entries
      */
     updateTargets(targets) {
-        this.targets = targets.map(t => ({
-            ...t,
-            lastSeen: Date.now()
-        }));
+        const now = Date.now();
+
+        // Add or update targets
+        targets.forEach(target => {
+            this.targets.set(target.id, {
+                ...target,
+                lastSeen: now
+            });
+        });
+
+        // Cleanup: Remove stale targets (not seen in 30s)
+        for (const [id, target] of this.targets) {
+            if (now - target.lastSeen > this.STALE_TARGET_MS) {
+                this.targets.delete(id);
+            }
+        }
+
+        // Enforce max capacity - remove oldest targets if over limit
+        if (this.targets.size > this.MAX_TARGETS) {
+            const sortedTargets = Array.from(this.targets.entries())
+                .sort((a, b) => a[1].lastSeen - b[1].lastSeen);  // Oldest first
+
+            const toRemove = sortedTargets.slice(0, this.targets.size - this.MAX_TARGETS);
+            toRemove.forEach(([id]) => this.targets.delete(id));
+
+            console.log(`[TrafficOverlay] Removed ${toRemove.length} old targets (max: ${this.MAX_TARGETS})`);
+        }
     }
 
     /**
@@ -97,7 +125,8 @@ class TrafficOverlay {
     render(ctx, aircraft, mapSettings) {
         if (!this.enabled || this.mode === 'STANDBY') return;
 
-        const targets = this.mode === 'TEST' ? this.testTargets : this.targets;
+        // Convert Map to array for rendering (TEST mode still uses array)
+        const targets = this.mode === 'TEST' ? this.testTargets : Array.from(this.targets.values());
         const { latitude, longitude, altitude, heading } = aircraft;
         const { range, orientation, width, height } = mapSettings;
 
@@ -367,14 +396,14 @@ class TrafficOverlay {
         });
 
         // Return target count
-        return this.mode === 'TEST' ? this.testTargets.length : this.targets.length;
+        return this.mode === 'TEST' ? this.testTargets.length : this.targets.size;
     }
 
     /**
      * Get current target count
      */
     getTargetCount() {
-        return this.mode === 'TEST' ? this.testTargets.length : this.targets.length;
+        return this.mode === 'TEST' ? this.testTargets.length : this.targets.size;
     }
 
     /**

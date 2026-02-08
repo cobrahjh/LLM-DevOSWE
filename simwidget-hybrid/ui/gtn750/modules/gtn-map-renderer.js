@@ -11,6 +11,10 @@ class GTNMapRenderer {
         // Render loop
         this._renderFrameId = null;
         this._boundRenderLoop = this._renderLoop.bind(this);
+
+        // Waypoint position cache for performance
+        this._waypointCache = new Map();
+        this._lastCacheKey = null;
     }
 
     // ===== RENDER LOOP =====
@@ -612,14 +616,29 @@ class GTNMapRenderer {
         const activeIdx = state.activeWaypointIndex || 0;
         const declutterLevel = state.declutterLevel || 0;
 
+        // Cache waypoint positions - only recalculate when aircraft moves significantly
+        const cacheKey = `${Math.round(state.data.latitude * 100)},${Math.round(state.data.longitude * 100)},${state.map.range},${Math.round(rotation)}`;
+
+        if (this._lastCacheKey !== cacheKey) {
+            this._waypointCache.clear();
+            this._lastCacheKey = cacheKey;
+        }
+
         const positions = waypoints.map(wp => {
             if (!wp.lat || !wp.lng) return null;
-            return this.core.latLonToCanvas(
-                wp.lat, wp.lng,
-                state.data.latitude, state.data.longitude,
-                rotation, state.map.range,
-                w, h, state.map.orientation === 'north'
-            );
+
+            // Check cache first
+            const wpKey = `${wp.lat},${wp.lng}`;
+            if (!this._waypointCache.has(wpKey)) {
+                const pos = this.core.latLonToCanvas(
+                    wp.lat, wp.lng,
+                    state.data.latitude, state.data.longitude,
+                    rotation, state.map.range,
+                    w, h, state.map.orientation === 'north'
+                );
+                this._waypointCache.set(wpKey, pos);
+            }
+            return this._waypointCache.get(wpKey);
         });
 
         // Completed legs (dimmed)
