@@ -8,7 +8,12 @@
     "test": "node tests/test-runner.js",
     "test:api": "node tests/test-runner.js api",
     "test:ws": "node tests/test-runner.js websocket",
-    "test:widgets": "node tests/test-runner.js widgets"
+    "test:widgets": "node tests/test-runner.js widgets",
+    "test:splitting": "node tests/test-runner.js splitting",
+    "test:functional": "node tests/functional-tests.js",
+    "test:performance": "node tests/performance-regression.js",
+    "test:all": "npm test && npm run test:functional && npm run test:performance",
+    "baseline": "node tests/performance-regression.js baseline"
   },
   "dependencies": {
     "chokidar": "^5.0.0",
@@ -16,6 +21,17 @@
     "serve-index": "^1.9.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
-  }
+    "@playwright/test": "^1.58.2",
+    "nodemon": "^3.1.11",
+    "playwright": "^1.58.2"
+  },
+  "description": "Flow Pro replacement for MSFS 2024 - modular widget overlay system.",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
 }

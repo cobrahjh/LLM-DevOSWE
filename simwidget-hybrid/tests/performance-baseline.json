@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-02-08T02:42:50.734Z",
+  "bundles": {
+    "checklist-widget": {
+      "size": 15763,
+      "target": 20000,
+      "description": "Checklist (code-split)",
+      "withinTarget": true
+    },
+    "copilot-widget": {
+      "size": 61508,
+      "target": 80000,
+      "description": "Copilot (code-split)",
+      "withinTarget": true
+    },
+    "gtn750": {
+      "size": 62896,
+      "target": 65000,
+      "description": "GTN750 (modular)",
+      "withinTarget": true
+    },
+    "map-widget": {
+      "size": 22132,
+      "target": 100000,
+      "description": "Map",
+      "withinTarget": true
+    },
+    "vatsim-live": {
+      "size": 25501,
+      "target": 100000,
+      "description": "VATSIM Live",
+      "withinTarget": true
+    }
+  },
+  "sharedLibs": {
+    "widget-base.js": {
+      "size": 9366
+    },
+    "telemetry.js": {
+      "size": 8001
+    },
+    "settings-panel.js": {
+      "size": 13799
+    },
+    "themes.js": {
+      "size": 13303
+    },
+    "platform-utils.js": {
+      "size": 6663
+    }
+  },
+  "loadTimes": {
+    "checklist-widget": {
+      "loadTime": 1
+    },
+    "copilot-widget": {
+      "loadTime": 1
+    },
+    "gtn750": {
+      "loadTime": 0
+    },
+    "map-widget": {
+      "loadTime": 1
+    },
+    "vatsim-live": {
+      "loadTime": 1
+    }
+  }
+}
