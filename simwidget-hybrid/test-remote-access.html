@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimGlass Remote Access Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        h1 { color: #4CAF50; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .status.success { background: #4CAF50; color: white; }
+        .status.error { background: #f44336; color: white; }
+        .status.info { background: #2196F3; color: white; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .data-card { background: #16213e; padding: 15px; border-radius: 8px; }
+        .data-label { color: #aaa; font-size: 12px; }
+        .data-value { font-size: 24px; font-weight: bold; color: #4CAF50; }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #45a049; }
+        button:active { transform: scale(0.98); }
+        .ap-on { background: #4CAF50; }
+        .ap-off { background: #f44336; }
+        input { padding: 8px; width: 80px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>🛫 SimGlass Remote Access Test</h1>
+
+    <div id="status" class="status info">Connecting to SimGlass server...</div>
+
+    <h2>Flight Data (Real-Time)</h2>
+    <div class="data-grid" id="flight-data">
+        <div class="data-card">
+            <div class="data-label">Altitude</div>
+            <div class="data-value" id="altitude">---</div>
+        </div>
+        <div class="data-card">
+            <div class="data-label">Speed</div>
+            <div class="data-value" id="speed">---</div>
+        </div>
+        <div class="data-card">
+            <div class="data-label">Heading</div>
+            <div class="data-value" id="heading">---</div>
+        </div>
+        <div class="data-card">
+            <div class="data-label">Vertical Speed</div>
+            <div class="data-value" id="vs">---</div>
+        </div>
+    </div>
+
+    <h2>Autopilot Control</h2>
+    <div id="ap-status" class="status info">AP Master: Unknown</div>
+    <div>
+        <button id="btn-ap-master" onclick="toggleAPMaster()">Toggle AP Master</button>
+        <button onclick="setHeading()">Set HDG: <input type="number" id="hdg-input" value="270" min="0" max="360"></button>
+        <button onclick="setAltitude()">Set ALT: <input type="number" id="alt-input" value="5000" min="0" max="50000" step="100"></button>
+    </div>
+
+    <h2>Test Results</h2>
+    <div id="tests"></div>
+
+    <script>
+        // Configuration - Change these to match your setup
+        const SERVER_IP = '192.168.1.192';  // Your PC's IP
+        const SERVER_PORT = '8080';
+
+        // Or use Caddy HTTPS (requires hosts file setup)
+        // const BASE_URL = 'https://hive.local';
+        // const WS_URL = 'wss://hive.local';
+
+        const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
+        const WS_URL = `ws://${SERVER_IP}:${SERVER_PORT}`;
+
+        let ws = null;
+        let flightData = {};
+
+        // Test connection
+        async function testConnection() {
+            const tests = [];
+
+            // Test 1: HTTP API
+            try {
+                const res = await fetch(`${BASE_URL}/api/status`);
+                const data = await res.json();
+                tests.push(`✓ API accessible (${data.connected ? 'Live' : 'Mock'} mode)`);
+                updateStatus(`Connected to SimGlass (${data.connected ? 'Live SimConnect' : 'Mock Data'})`, 'success');
+            } catch (e) {
+                tests.push(`✗ API error: ${e.message}`);
+                updateStatus('Cannot connect to SimGlass server', 'error');
+                return;
+            }
+
+            // Test 2: WebSocket
+            try {
+                ws = new WebSocket(WS_URL);
+                ws.onopen = () => {
+                    tests.push('✓ WebSocket connected');
+                };
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'flightData') {
+                        flightData = msg.data;
+                        updateFlightData(msg.data);
+                        updateAPStatus(msg.data);
+                        if (tests.length === 2) {
+                            tests.push('✓ Receiving flight data');
+                        }
+                    }
+                };
+                ws.onerror = () => {
+                    tests.push('✗ WebSocket error');
+                };
+            } catch (e) {
+                tests.push(`✗ WebSocket error: ${e.message}`);
+            }
+
+            // Test 3: Widget accessibility
+            try {
+                const widget = await fetch(`${BASE_URL}/ui/autopilot/`);
+                if (widget.ok) {
+                    tests.push('✓ Autopilot widget accessible');
+                }
+            } catch (e) {
+                tests.push(`✗ Widget access error: ${e.message}`);
+            }
+
+            // Display tests
+            setTimeout(() => {
+                document.getElementById('tests').innerHTML =
+                    tests.map(t => `<div style="padding:5px;">${t}</div>`).join('');
+            }, 2000);
+        }
+
+        function updateStatus(msg, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = msg;
+            statusEl.className = `status ${type}`;
+        }
+
+        function updateFlightData(data) {
+            document.getElementById('altitude').textContent = Math.round(data.altitude || 0) + ' ft';
+            document.getElementById('speed').textContent = Math.round(data.speed || 0) + ' kts';
+            document.getElementById('heading').textContent = Math.round(data.heading || 0) + '°';
+            document.getElementById('vs').textContent = Math.round(data.verticalSpeed || 0) + ' fpm';
+        }
+
+        function updateAPStatus(data) {
+            const apStatus = document.getElementById('ap-status');
+            const masterOn = data.apMaster;
+            apStatus.textContent = `AP Master: ${masterOn ? 'ON' : 'OFF'}`;
+            apStatus.className = `status ${masterOn ? 'success' : 'error'}`;
+
+            const btn = document.getElementById('btn-ap-master');
+            btn.className = masterOn ? 'ap-on' : 'ap-off';
+        }
+
+        async function toggleAPMaster() {
+            try {
+                const res = await fetch(`${BASE_URL}/api/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: 'AP_MASTER', value: 1 })
+                });
+                const result = await res.json();
+                console.log('AP Master toggled:', result);
+            } catch (e) {
+                alert('Command failed: ' + e.message);
+            }
+        }
+
+        async function setHeading() {
+            const hdg = document.getElementById('hdg-input').value;
+            try {
+                await fetch(`${BASE_URL}/api/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: 'AP_HDG_HOLD', value: 1 })
+                });
+                await fetch(`${BASE_URL}/api/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: 'HEADING_BUG_SET', value: parseInt(hdg) })
+                });
+                console.log('Heading set to:', hdg);
+            } catch (e) {
+                alert('Command failed: ' + e.message);
+            }
+        }
+
+        async function setAltitude() {
+            const alt = document.getElementById('alt-input').value;
+            try {
+                await fetch(`${BASE_URL}/api/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: 'AP_ALT_HOLD', value: 1 })
+                });
+                await fetch(`${BASE_URL}/api/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: 'AP_ALT_VAR_SET_ENGLISH', value: parseInt(alt) })
+                });
+                console.log('Altitude set to:', alt);
+            } catch (e) {
+                alert('Command failed: ' + e.message);
+            }
+        }
+
+        // Start connection test
+        testConnection();
+    </script>
+</body>
+</html>
