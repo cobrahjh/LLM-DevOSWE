@@ -1,859 +1,1058 @@
-/**
- * Terminal Hub Server
- * Web-based terminal manager for the Hive
- *
- * Features:
- * - List all running terminal sessions
- * - Create new terminals
- * - Send input to terminals
- * - Real-time output via WebSocket
- */
-
-const http = require('http');
+const express = require('express');
+const { PowerShell } = require('node-powershell');
+const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
+const pty = require('node-pty');
+const Database = require('better-sqlite3');
 const fs = require('fs');
-const path = require('path');
-const WebSocket = require('ws');
-const { spawn, exec } = require('child_process');
+const util = require('util');
+const { exec: execCallback } = require('child_process');
+const execPromise = util.promisify(execCallback);
 
 const PORT = 8771;
+const SERVICE_NAME = 'Terminal-Hub';
+const HIVE_MESH = 'http://localhost:8750';
 
-// Default command timeout (30 seconds)
-const DEFAULT_TIMEOUT = 30000;
+const http = require('http');
+const path = require('path');
+const WebSocket = require('ws');
 
-// Track running commands per terminal
-const runningCommands = new Map(); // termId -> { command, startTime, timeoutId }
+// Initialize SQLite database
+const dbPath = path.join(__dirname, 'terminal-hub.db');
+const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
 
-// Get running processes (filtered for interesting ones)
-async function getRunningProcesses() {
-    return new Promise((resolve, reject) => {
-        // PowerShell command to get processes with more details
-        const cmd = `powershell -Command "Get-Process | Where-Object { $_.ProcessName -match 'node|cmd|powershell|bash|python|code|npm|git|OpenConsole|WindowsTerminal|conhost' } | Select-Object Id, ProcessName, CPU, WorkingSet64, MainWindowTitle | ConvertTo-Json"`;
+// Create tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS session_presets (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    shell TEXT,
+    computer TEXT,
+    cwd TEXT,
+    username TEXT,
+    password TEXT,
+    auto_start INTEGER DEFAULT 0,
+    created_at INTEGER DEFAULT (strftime('%s', 'now')),
+    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+  );
 
-        exec(cmd, { maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            try {
-                let processes = JSON.parse(stdout || '[]');
-                // Ensure it's an array
-                if (!Array.isArray(processes)) processes = [processes];
+  CREATE TABLE IF NOT EXISTS command_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    session_label TEXT,
+    command TEXT NOT NULL,
+    output TEXT,
+    success INTEGER DEFAULT 1,
+    execution_time INTEGER,
+    executed_at INTEGER DEFAULT (strftime('%s', 'now'))
+  );
 
-                // Format the output
-                const formatted = processes.map(p => ({
-                    pid: p.Id,
-                    name: p.ProcessName,
-                    cpu: p.CPU ? p.CPU.toFixed(1) : '0.0',
-                    memory: p.WorkingSet64 ? Math.round(p.WorkingSet64 / 1024 / 1024) : 0,
-                    title: p.MainWindowTitle || ''
-                })).filter(p => p.pid); // Filter out any null entries
+  CREATE TABLE IF NOT EXISTS session_state (
+    session_id TEXT PRIMARY KEY,
+    preset_id TEXT,
+    type TEXT NOT NULL,
+    shell TEXT,
+    computer TEXT,
+    label TEXT,
+    cwd TEXT,
+    buffer TEXT,
+    created_at INTEGER,
+    last_used INTEGER,
+    command_count INTEGER DEFAULT 0
+  );
 
-                resolve(formatted);
-            } catch (e) {
-                resolve([]);
-            }
-        });
-    });
-}
-const terminals = new Map(); // id -> { process, clients, buffer }
-let terminalCounter = 0;
+  CREATE INDEX IF NOT EXISTS idx_command_history_session ON command_history(session_id);
+  CREATE INDEX IF NOT EXISTS idx_command_history_time ON command_history(executed_at);
+`);
 
-// Create HTTP server
-const server = http.createServer((req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    if (req.method === 'OPTIONS') {
-        res.writeHead(200);
-        res.end();
-        return;
-    }
-
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    console.log(`[REQ] ${req.method} ${url.pathname}`);
-
-    if (url.pathname === '/' || url.pathname === '/index.html') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(fs.readFileSync(path.join(__dirname, 'terminal-hub.html')));
-    } else if (url.pathname === '/mobile-engine.js') {
-        res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
-        const mePath = path.join(__dirname, '..', 'agent', 'agent-ui', 'modules', 'mobile-engine.js');
-        if (fs.existsSync(mePath)) {
-            res.end(fs.readFileSync(mePath));
-        } else {
-            res.end('// mobile-engine.js not found');
-        }
-    } else if (url.pathname === '/api/terminals' && req.method === 'GET') {
-        // List all terminals
-        const list = [];
-        terminals.forEach((term, id) => {
-            const cmdInfo = runningCommands.get(id);
-            list.push({
-                id,
-                title: term.title || `Terminal ${id}`,
-                cwd: term.cwd,
-                running: term.isWT ? true : (term.process ? !term.process.killed : false),
-                clients: term.clients.size,
-                bufferSize: term.buffer.length,
-                isWT: term.isWT || false,
-                isMonitor: term.isMonitor || false,
-                runningCommand: cmdInfo ? {
-                    command: cmdInfo.command,
-                    elapsed: Date.now() - cmdInfo.startTime
-                } : null
-            });
-        });
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ terminals: list, runningCount: runningCommands.size }));
-    } else if (url.pathname === '/api/terminals' && req.method === 'POST') {
-        // Create new terminal
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                const opts = body ? JSON.parse(body) : {};
-                const id = createTerminal(opts);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ id, message: 'Terminal created' }));
-            } catch (e) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: e.message }));
-            }
-        });
-    } else if (url.pathname.match(/^\/api\/terminals\/\d+$/) && req.method === 'DELETE') {
-        // Kill terminal
-        const id = parseInt(url.pathname.split('/').pop());
-        if (terminals.has(id)) {
-            const term = terminals.get(id);
-            if (term.process) {
-                try { term.process.kill(); } catch (e) { /* already dead */ }
-            }
-            terminals.delete(id);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Terminal killed' }));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Terminal not found' }));
-        }
-    } else if (url.pathname.match(/^\/api\/terminals\/\d+\/buffer$/) && req.method === 'GET') {
-        // Get terminal buffer content
-        const id = parseInt(url.pathname.split('/')[3]);
-        if (terminals.has(id)) {
-            const term = terminals.get(id);
-            res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-            res.end(term.buffer);
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Terminal not found' }));
-        }
-    } else if (url.pathname.match(/^\/api\/terminals\/\d+\/interrupt$/) && req.method === 'POST') {
-        // Send Ctrl+C to interrupt running command
-        const id = parseInt(url.pathname.split('/')[3]);
-        if (terminals.has(id)) {
-            const term = terminals.get(id);
-            const result = interruptTerminal(id, term);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(result));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Terminal not found' }));
-        }
-    } else if (url.pathname.match(/^\/api\/terminals\/\d+\/exec$/) && req.method === 'POST') {
-        // Execute command with timeout
-        const id = parseInt(url.pathname.split('/')[3]);
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', async () => {
-            if (!terminals.has(id)) {
-                res.writeHead(404, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Terminal not found' }));
-                return;
-            }
-            try {
-                const { command, timeout = DEFAULT_TIMEOUT } = JSON.parse(body);
-                const result = await executeWithTimeout(id, command, timeout);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(result));
-            } catch (e) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: e.message }));
-            }
-        });
-    } else if (url.pathname.match(/^\/api\/terminals\/\d+\/cancel$/) && req.method === 'POST') {
-        // Cancel running command
-        const id = parseInt(url.pathname.split('/')[3]);
-        if (terminals.has(id)) {
-            const result = cancelCommand(id);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(result));
-        } else {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Terminal not found' }));
-        }
-    } else if (url.pathname === '/api/terminals/cancel-all' && req.method === 'POST') {
-        // Cancel all running commands
-        const cancelled = [];
-        for (const id of runningCommands.keys()) {
-            cancelCommand(id);
-            cancelled.push(id);
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, cancelled, count: cancelled.length }));
-    } else if (url.pathname === '/api/health') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            status: 'ok',
-            service: 'Terminal Hub',
-            terminals: terminals.size
-        }));
-    } else if (url.pathname === '/api/processes' && req.method === 'GET') {
-        // List running processes
-        getRunningProcesses().then(processes => {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(processes));
-        }).catch(err => {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: err.message }));
-        });
-    } else if (url.pathname === '/api/processes/attach' && req.method === 'POST') {
-        // Create a monitoring terminal for a process
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                const { pid, name } = JSON.parse(body);
-                // Create a PowerShell terminal that monitors the process
-                const id = createMonitorTerminal(pid, name);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ id, message: `Monitoring ${name} (PID: ${pid})` }));
-            } catch (e) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: e.message }));
-            }
-        });
-    } else if (url.pathname === '/api/processes/kill' && req.method === 'POST') {
-        // Kill a process
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                const { pid } = JSON.parse(body);
-                process.kill(pid, 'SIGTERM');
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, message: `Killed process ${pid}` }));
-            } catch (e) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: e.message }));
-            }
-        });
-    } else if (url.pathname === '/api/terminals/wt' && req.method === 'POST') {
-        // Launch terminal in Windows Terminal with bridge back to Terminal Hub
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                const opts = body ? JSON.parse(body) : {};
-                const result = createWTTerminal(opts);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(result));
-            } catch (e) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: e.message }));
-            }
-        });
-    } else if (url.pathname === '/api/wt/windows' && req.method === 'GET') {
-        // List Windows Terminal windows
-        getWTWindows().then(windows => {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(windows));
-        }).catch(err => {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: err.message }));
-        });
-    } else if (url.pathname === '/api/terminals/bridge' && req.method === 'POST') {
-        // Receive bridged output from Windows Terminal
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                const { id, output } = JSON.parse(body);
-                if (terminals.has(id)) {
-                    const term = terminals.get(id);
-                    term.buffer += output;
-                    if (term.buffer.length > 100000) {
-                        term.buffer = term.buffer.slice(-50000);
-                    }
-                    // Broadcast to WebSocket clients
-                    const msg = JSON.stringify({ type: 'output', data: output });
-                    term.clients.forEach(ws => {
-                        if (ws.readyState === WebSocket.OPEN) {
-                            ws.send(msg);
-                        }
-                    });
-                }
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ ok: true }));
-            } catch (e) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: e.message }));
-            }
-        });
-    } else {
-        res.writeHead(404);
-        res.end('Not Found');
-    }
-});
-
-// WebSocket server
-const wss = new WebSocket.Server({ server });
-
-wss.on('connection', (ws, req) => {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const termId = parseInt(url.searchParams.get('id'));
-
-    if (!termId || !terminals.has(termId)) {
-        ws.send(JSON.stringify({ type: 'error', message: 'Invalid terminal ID' }));
-        ws.close();
-        return;
-    }
-
-    const term = terminals.get(termId);
-    term.clients.add(ws);
-
-    // Send buffer (recent output)
-    if (term.buffer.length > 0) {
-        ws.send(JSON.stringify({ type: 'output', data: term.buffer }));
-    }
-
-    ws.on('message', (msg) => {
-        try {
-            const data = JSON.parse(msg);
-            if (data.type === 'input' && data.data) {
-                if (term.process && term.process.stdin && !term.process.killed) {
-                    term.process.stdin.write(data.data);
-                } else {
-                    ws.send(JSON.stringify({ type: 'output', data: '[Terminal has no input stream]\r\n' }));
-                }
-            } else if (data.type === 'interrupt') {
-                // Send Ctrl+C
-                interruptTerminal(termId, term);
-            } else if (data.type === 'cancel') {
-                // Cancel running command
-                cancelCommand(termId);
-            } else if (data.type === 'exec') {
-                // Execute command with timeout
-                const timeout = data.timeout || DEFAULT_TIMEOUT;
-                executeWithTimeout(termId, data.command, timeout)
-                    .then(result => {
-                        ws.send(JSON.stringify({ type: 'exec-result', ...result }));
-                    })
-                    .catch(err => {
-                        ws.send(JSON.stringify({ type: 'exec-result', success: false, error: err.message }));
-                    });
-            } else if (data.type === 'resize' && data.cols && data.rows) {
-                // Resize not supported with basic spawn, would need node-pty
-            }
-        } catch (e) {
-            console.error('WebSocket message error:', e);
-        }
-    });
-
-    ws.on('close', () => {
-        term.clients.delete(ws);
-    });
-});
-
-// Interrupt terminal (send Ctrl+C)
-function interruptTerminal(id, term) {
-    if (!term.process || term.process.killed) {
-        return { success: false, error: 'Terminal process not running' };
-    }
-
-    try {
-        // Send Ctrl+C (ETX character)
-        term.process.stdin.write('\x03');
-        console.log(`[Terminal ${id}] Sent interrupt (Ctrl+C)`);
-
-        // Cancel any tracked running command
-        if (runningCommands.has(id)) {
-            const cmd = runningCommands.get(id);
-            if (cmd.timeoutId) clearTimeout(cmd.timeoutId);
-            runningCommands.delete(id);
-        }
-
-        // Broadcast interrupt to clients
-        const msg = JSON.stringify({ type: 'interrupt' });
-        term.clients.forEach(ws => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(msg);
-            }
-        });
-
-        return { success: true, message: 'Interrupt signal sent' };
-    } catch (e) {
-        return { success: false, error: e.message };
-    }
-}
-
-// Execute command with timeout
-function executeWithTimeout(id, command, timeout) {
-    return new Promise((resolve, reject) => {
-        const term = terminals.get(id);
-        if (!term || !term.process || term.process.killed) {
-            reject(new Error('Terminal not available'));
-            return;
-        }
-
-        // Check if command already running
-        if (runningCommands.has(id)) {
-            reject(new Error('Command already running. Cancel it first.'));
-            return;
-        }
-
-        const startTime = Date.now();
-        const bufferStart = term.buffer.length;
-        let resolved = false;
-
-        // Track this command
-        const cmdInfo = {
-            command,
-            startTime,
-            timeoutId: null
-        };
-        runningCommands.set(id, cmdInfo);
-
-        // Set up timeout
-        cmdInfo.timeoutId = setTimeout(() => {
-            if (!resolved) {
-                resolved = true;
-                runningCommands.delete(id);
-                // Send Ctrl+C to stop the command
-                try {
-                    term.process.stdin.write('\x03');
-                } catch (e) { /* ignore */ }
-                resolve({
-                    success: false,
-                    error: `Command timed out after ${timeout}ms`,
-                    timedOut: true,
-                    output: term.buffer.slice(bufferStart),
-                    executionTime: Date.now() - startTime
-                });
-            }
-        }, timeout);
-
-        // Listen for output to detect command completion
-        const outputHandler = (data) => {
-            // Simple heuristic: if we see a prompt pattern, command might be done
-            const text = data.toString();
-            // Common prompt patterns: PS C:\>, >, $, #
-            if (text.match(/(\r\n|\n)(PS [^>]+>|\$|#|>)\s*$/)) {
-                if (!resolved) {
-                    resolved = true;
-                    clearTimeout(cmdInfo.timeoutId);
-                    runningCommands.delete(id);
-                    term.process.stdout.removeListener('data', outputHandler);
-                    resolve({
-                        success: true,
-                        output: term.buffer.slice(bufferStart),
-                        executionTime: Date.now() - startTime
-                    });
-                }
-            }
-        };
-
-        term.process.stdout.on('data', outputHandler);
-
-        // Send the command
-        console.log(`[Terminal ${id}] Executing with ${timeout}ms timeout: ${command}`);
-        term.process.stdin.write(command + '\r\n');
-    });
-}
-
-// Cancel running command
-function cancelCommand(id) {
-    const term = terminals.get(id);
-    const cmdInfo = runningCommands.get(id);
-
-    if (!cmdInfo) {
-        return { success: false, error: 'No command running' };
-    }
-
-    console.log(`[Terminal ${id}] Cancelling command: ${cmdInfo.command}`);
-
-    // Clear timeout
-    if (cmdInfo.timeoutId) clearTimeout(cmdInfo.timeoutId);
-    runningCommands.delete(id);
-
-    // Send Ctrl+C
-    if (term && term.process && !term.process.killed) {
-        try {
-            term.process.stdin.write('\x03');
-        } catch (e) { /* ignore */ }
-    }
-
-    // Broadcast cancel to clients
-    if (term) {
-        const msg = JSON.stringify({ type: 'cancelled', command: cmdInfo.command });
-        term.clients.forEach(ws => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(msg);
-            }
-        });
-    }
-
-    return {
-        success: true,
-        message: 'Command cancelled',
-        command: cmdInfo.command,
-        elapsed: Date.now() - cmdInfo.startTime
-    };
-}
-
-// Shell configurations
+// Shell configurations for local terminals
 const SHELLS = {
-    powershell: {
-        path: 'powershell.exe',
-        args: ['-NoLogo', '-NoExit'],
-        name: 'PowerShell'
-    },
-    cmd: {
-        path: 'cmd.exe',
-        args: ['/K'],
-        name: 'CMD'
-    },
-    bash: {
-        path: 'C:\\Program Files\\Git\\usr\\bin\\bash.exe',
-        args: ['--login', '-i'],
-        name: 'Git Bash'
-    }
+  powershell: { path: 'powershell.exe', args: ['-NoLogo', '-NoExit'], name: 'PowerShell' },
+  cmd: { path: 'cmd.exe', args: ['/K'], name: 'CMD' },
+  bash: { path: 'C:\\Program Files\\Git\\usr\\bin\\bash.exe', args: ['--login', '-i'], name: 'Git Bash' }
 };
 
-function createTerminal(opts = {}) {
-    const id = ++terminalCounter;
-    const cwd = opts.cwd || process.env.USERPROFILE || 'C:\\';
-    const shellType = opts.shell || 'powershell';
-    const title = opts.title || `Terminal ${id}`;
+const app = express();
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-    // Get shell config
-    const shellConfig = SHELLS[shellType] || SHELLS.powershell;
-    const shellPath = shellConfig.path;
-    const shellArgs = shellConfig.args || [];
+// Create HTTP server for both Express and WebSocket
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
-    let proc;
+// Active sessions - fully concurrent
+const sessions = new Map();
+
+// Running commands - track for cancellation
+const runningCommands = new Map();
+
+// Default timeout (30 seconds)
+const DEFAULT_TIMEOUT = 30000;
+
+// Database helper functions
+const dbHelpers = {
+  savePreset: (preset) => {
+    const stmt = db.prepare(`
+      INSERT INTO session_presets (id, name, type, shell, computer, cwd, username, password, auto_start)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        name = excluded.name,
+        type = excluded.type,
+        shell = excluded.shell,
+        computer = excluded.computer,
+        cwd = excluded.cwd,
+        username = excluded.username,
+        password = excluded.password,
+        auto_start = excluded.auto_start,
+        updated_at = strftime('%s', 'now')
+    `);
+    return stmt.run(
+      preset.id || uuidv4(),
+      preset.name,
+      preset.type,
+      preset.shell || null,
+      preset.computer || 'localhost',
+      preset.cwd || null,
+      preset.username || null,
+      preset.password || null,
+      preset.auto_start ? 1 : 0
+    );
+  },
+
+  getPresets: () => {
+    return db.prepare('SELECT * FROM session_presets ORDER BY name').all();
+  },
+
+  getPreset: (id) => {
+    return db.prepare('SELECT * FROM session_presets WHERE id = ?').get(id);
+  },
+
+  deletePreset: (id) => {
+    return db.prepare('DELETE FROM session_presets WHERE id = ?').run(id);
+  },
+
+  saveCommandHistory: (sessionId, sessionLabel, command, output, success, executionTime) => {
+    const stmt = db.prepare(`
+      INSERT INTO command_history (session_id, session_label, command, output, success, execution_time)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    return stmt.run(sessionId, sessionLabel, command, output, success ? 1 : 0, executionTime);
+  },
+
+  getCommandHistory: (sessionId = null, limit = 100) => {
+    if (sessionId) {
+      return db.prepare('SELECT * FROM command_history WHERE session_id = ? ORDER BY executed_at DESC LIMIT ?').all(sessionId, limit);
+    }
+    return db.prepare('SELECT * FROM command_history ORDER BY executed_at DESC LIMIT ?').all(limit);
+  },
+
+  saveSessionState: (sessionId, session) => {
+    const stmt = db.prepare(`
+      INSERT INTO session_state (session_id, preset_id, type, shell, computer, label, cwd, buffer, created_at, last_used, command_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(session_id) DO UPDATE SET
+        last_used = excluded.last_used,
+        command_count = excluded.command_count,
+        buffer = excluded.buffer
+    `);
+    return stmt.run(
+      sessionId,
+      session.preset_id || null,
+      session.type,
+      session.shell || null,
+      session.computer,
+      session.label,
+      session.cwd || null,
+      session.buffer || '',
+      session.created || Date.now(),
+      session.lastUsed || Date.now(),
+      session.commandCount || 0
+    );
+  },
+
+  getSessionStates: () => {
+    return db.prepare('SELECT * FROM session_state ORDER BY last_used DESC').all();
+  },
+
+  deleteSessionState: (sessionId) => {
+    return db.prepare('DELETE FROM session_state WHERE session_id = ?').run(sessionId);
+  }
+};
+
+// WebSocket connection handling
+wss.on('connection', (ws, req) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const sessionId = url.searchParams.get('session');
+
+  if (!sessionId || !sessions.has(sessionId)) {
+    ws.send(JSON.stringify({ type: 'error', message: 'Invalid session ID' }));
+    ws.close();
+    return;
+  }
+
+  const session = sessions.get(sessionId);
+  session.clients.add(ws);
+  console.log(`⚡ WebSocket client connected to session ${session.label}`);
+
+  // Send buffer (recent output)
+  if (session.buffer.length > 0) {
+    ws.send(JSON.stringify({ type: 'output', data: session.buffer }));
+  }
+
+  ws.on('message', async (msg) => {
     try {
-        proc = spawn(shellPath, shellArgs, {
-            cwd: cwd.startsWith('/') ? 'C:\\LLM-DevOSWE' : cwd,  // Convert unix paths
-            env: { ...process.env, TERM: 'xterm-256color' },
-            stdio: ['pipe', 'pipe', 'pipe'],
-            shell: false
-        });
-    } catch (e) {
-        console.error(`Failed to spawn ${shellConfig.name}:`, e.message);
-        return null;
-    }
+      const data = JSON.parse(msg);
 
-    // Handle spawn errors
-    proc.on('error', (err) => {
-        console.error(`Terminal ${id} (${shellConfig.name}) error:`, err.message);
-        const term = terminals.get(id);
-        if (term) {
-            const msg = `\r\n[Error: ${err.message}]\r\n`;
-            term.buffer += msg;
-            term.clients.forEach(ws => {
-                if (ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: 'output', data: msg }));
-                }
-            });
-        }
-    });
-
-    const term = {
-        process: proc,
-        clients: new Set(),
-        buffer: '',
-        cwd,
-        title
-    };
-
-    const broadcast = (data) => {
-        const msg = JSON.stringify({ type: 'output', data });
-        term.clients.forEach(ws => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(msg);
-            }
-        });
-    };
-
-    proc.stdout.on('data', (data) => {
-        const text = data.toString();
-        term.buffer += text;
-        // Keep buffer under 100KB
-        if (term.buffer.length > 100000) {
-            term.buffer = term.buffer.slice(-50000);
-        }
-        broadcast(text);
-    });
-
-    proc.stderr.on('data', (data) => {
-        const text = data.toString();
-        term.buffer += text;
-        if (term.buffer.length > 100000) {
-            term.buffer = term.buffer.slice(-50000);
-        }
-        broadcast(text);
-    });
-
-    proc.on('exit', (code) => {
-        const msg = `\r\n[Process exited with code ${code}]\r\n`;
-        term.buffer += msg;
-        broadcast(msg);
-        term.clients.forEach(ws => {
-            ws.send(JSON.stringify({ type: 'exit', code }));
-        });
-    });
-
-    terminals.set(id, term);
-    console.log(`Terminal ${id} created: ${shellConfig.name} (${shellPath}) in ${cwd}`);
-
-    // Send initial command to show prompt (piped stdio doesn't show PS prompt natively)
-    setTimeout(() => {
-        if (!proc.killed) {
-            if (shellType === 'powershell') {
-                proc.stdin.write('Write-Output "[Terminal Hub] PowerShell ready - $(Get-Location)"; Write-Output ""\r\n');
-            } else if (shellType === 'cmd') {
-                proc.stdin.write('echo [Terminal Hub] CMD ready & echo.\r\n');
-            } else {
-                proc.stdin.write('echo "[Terminal Hub] Shell ready - $(pwd)"\n');
-            }
-        }
-    }, 500);
-
-    return id;
-}
-
-// Create a terminal that monitors a process
-function createMonitorTerminal(pid, processName) {
-    const id = ++terminalCounter;
-    const title = `Monitor: ${processName} (${pid})`;
-
-    // PowerShell script to monitor process
-    const monitorScript = `
-$pid = ${pid}
-$processName = "${processName}"
-Write-Host "=== Process Monitor: $processName (PID: $pid) ===" -ForegroundColor Cyan
-Write-Host ""
-
-# Show initial process info
-try {
-    $proc = Get-Process -Id $pid -ErrorAction Stop
-    Write-Host "Process: $($proc.ProcessName)" -ForegroundColor Green
-    Write-Host "Started: $($proc.StartTime)"
-    Write-Host "Memory: $([math]::Round($proc.WorkingSet64/1MB, 2)) MB"
-    Write-Host "CPU Time: $($proc.TotalProcessorTime)"
-    Write-Host "Threads: $($proc.Threads.Count)"
-    Write-Host "Handles: $($proc.HandleCount)"
-    Write-Host ""
-    Write-Host "=== Monitoring (updates every 2s) ===" -ForegroundColor Yellow
-    Write-Host ""
-
-    while ($true) {
-        Start-Sleep -Seconds 2
-        $proc = Get-Process -Id $pid -ErrorAction Stop
-        $cpu = [math]::Round($proc.CPU, 2)
-        $mem = [math]::Round($proc.WorkingSet64/1MB, 2)
-        $time = Get-Date -Format "HH:mm:ss"
-        Write-Host "[$time] CPU: $cpu s | RAM: $mem MB | Threads: $($proc.Threads.Count)"
-    }
-} catch {
-    Write-Host "Process $pid not found or terminated." -ForegroundColor Red
-}
-`;
-
-    const proc = spawn('powershell.exe', ['-NoLogo', '-NoExit', '-Command', monitorScript], {
-        env: { ...process.env, TERM: 'xterm-256color' },
-        stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    const term = {
-        process: proc,
-        clients: new Set(),
-        buffer: '',
-        cwd: 'Monitor',
-        title,
-        isMonitor: true,
-        targetPid: pid
-    };
-
-    const broadcast = (data) => {
-        const msg = JSON.stringify({ type: 'output', data });
-        term.clients.forEach(ws => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(msg);
-            }
-        });
-    };
-
-    proc.stdout.on('data', (data) => {
-        const text = data.toString();
-        term.buffer += text;
-        if (term.buffer.length > 100000) {
-            term.buffer = term.buffer.slice(-50000);
-        }
-        broadcast(text);
-    });
-
-    proc.stderr.on('data', (data) => {
-        const text = data.toString();
-        term.buffer += text;
-        broadcast(text);
-    });
-
-    proc.on('exit', (code) => {
-        const msg = `\r\n[Monitor ended]\r\n`;
-        term.buffer += msg;
-        broadcast(msg);
-        term.clients.forEach(ws => {
-            ws.send(JSON.stringify({ type: 'exit', code }));
-        });
-    });
-
-    proc.on('error', (err) => {
-        console.error(`Monitor terminal error:`, err.message);
-    });
-
-    terminals.set(id, term);
-    console.log(`Monitor terminal ${id} created for ${processName} (PID: ${pid})`);
-
-    return id;
-}
-
-// Get Windows Terminal windows
-async function getWTWindows() {
-    return new Promise((resolve, reject) => {
-        const cmd = `powershell -Command "Get-Process WindowsTerminal -ErrorAction SilentlyContinue | Select-Object Id, MainWindowTitle | ConvertTo-Json"`;
-        exec(cmd, (err, stdout) => {
-            if (err) {
-                resolve([]);
-                return;
-            }
-            try {
-                let windows = JSON.parse(stdout || '[]');
-                if (!Array.isArray(windows)) windows = [windows];
-                resolve(windows.filter(w => w && w.Id).map(w => ({
-                    pid: w.Id,
-                    title: w.MainWindowTitle || 'Windows Terminal'
-                })));
-            } catch (e) {
-                resolve([]);
-            }
-        });
-    });
-}
-
-// Create a terminal that runs inside Windows Terminal with output bridged back
-function createWTTerminal(opts = {}) {
-    const id = ++terminalCounter;
-    const cwd = opts.cwd || 'C:\\LLM-DevOSWE';
-    const shellType = opts.shell || 'powershell';
-    const title = opts.title || `WT Terminal ${id}`;
-    const targetWindow = opts.windowId || 0; // 0 = current/new window, -1 = new window
-
-    // Create a virtual terminal entry to receive bridged output
-    const term = {
-        process: null,
-        clients: new Set(),
-        buffer: '',
-        cwd,
-        title,
-        isWT: true,
-        wtPid: null
-    };
-
-    terminals.set(id, term);
-
-    const broadcast = (data) => {
-        const msg = JSON.stringify({ type: 'output', data });
-        term.clients.forEach(ws => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(msg);
-            }
-        });
-    };
-
-    // Path to launcher batch file
-    const launcherBat = path.join(__dirname, 'launch-bridge.bat');
-
-    // Build wt command based on shell type
-    let wtCommand;
-    if (shellType === 'powershell') {
-        // Use batch launcher to avoid quote escaping issues
-        wtCommand = `wt -w ${targetWindow} new-tab --title "${title}" -d "${cwd}" "${launcherBat}" ${id} http://localhost:${PORT} "${title}"`;
-    } else if (shellType === 'cmd') {
-        wtCommand = `wt -w ${targetWindow} new-tab --title "${title}" -d "${cwd}" cmd /K`;
-    } else if (shellType === 'bash') {
-        wtCommand = `wt -w ${targetWindow} new-tab --title "${title}" -d "${cwd}" "C:\\Program Files\\Git\\bin\\bash.exe" --login -i`;
-    }
-
-    console.log(`Launching WT: ${wtCommand}`);
-
-    // Launch Windows Terminal
-    exec(wtCommand, (err) => {
-        if (err) {
-            console.error('Failed to launch Windows Terminal:', err.message);
-            term.buffer = `[Error launching Windows Terminal: ${err.message}]\r\n`;
-            broadcast(term.buffer);
+      if (data.type === 'input') {
+        // Direct input for local terminals
+        if (session.type === 'local' && session.pty) {
+          session.pty.write(data.data);
+          session.lastUsed = Date.now();
         } else {
-            const msg = `[Windows Terminal tab opened]\r\n[Title: ${title}]\r\n[Shell: ${shellType}]\r\n[CWD: ${cwd}]\r\n[Waiting for bridge connection...]\r\n\r\n`;
-            term.buffer = msg;
-            broadcast(msg);
-
-            // Try to find the new WT process
-            setTimeout(() => {
-                exec('powershell -Command "Get-Process WindowsTerminal | Select-Object -First 1 -ExpandProperty Id"', (e, pid) => {
-                    if (!e && pid) {
-                        term.wtPid = parseInt(pid.trim());
-                    }
-                });
-            }, 1000);
+          ws.send(JSON.stringify({ type: 'error', message: 'No input stream available' }));
         }
+      } else if (data.type === 'exec') {
+        // Execute command (works for both local and WinRM)
+        const command = data.command;
+        const timeout = data.timeout || DEFAULT_TIMEOUT;
+
+        if (session.type === 'local') {
+          // For local terminals, just send as input via PTY
+          if (session.pty) {
+            session.pty.write(command + '\r\n');
+            session.lastUsed = Date.now();
+            session.commandCount++;
+          }
+        } else {
+          // For WinRM, use executeWithStreaming
+          ws.send(JSON.stringify({ type: 'status', status: 'executing', command }));
+          try {
+            const result = await executeWithStreaming(sessionId, command, timeout);
+            ws.send(JSON.stringify({ type: 'result', ...result }));
+          } catch (err) {
+            ws.send(JSON.stringify({ type: 'error', message: err.message }));
+          }
+        }
+      } else if (data.type === 'interrupt') {
+        // Send Ctrl+C for local, cancel for WinRM
+        if (session.type === 'local' && session.pty) {
+          session.pty.write('\x03');
+        }
+        cancelRunningCommand(sessionId);
+        ws.send(JSON.stringify({ type: 'interrupted' }));
+      } else if (data.type === 'resize' && data.cols && data.rows) {
+        // Resize PTY
+        if (session.type === 'local' && session.pty) {
+          session.pty.resize(data.cols, data.rows);
+        }
+      }
+    } catch (e) {
+      console.error('WebSocket message error:', e);
+    }
+  });
+
+  ws.on('close', () => {
+    session.clients.delete(ws);
+    console.log(`WebSocket client disconnected from session ${session.label}`);
+  });
+});
+
+// Execute command with streaming output to WebSocket clients
+async function executeWithStreaming(sessionId, command, timeout) {
+  const session = sessions.get(sessionId);
+  if (!session) throw new Error('Session not found');
+
+  if (runningCommands.has(sessionId)) {
+    throw new Error('Command already running');
+  }
+
+  const commandId = uuidv4();
+  let cancelled = false;
+  let timeoutId = null;
+
+  runningCommands.set(sessionId, {
+    commandId,
+    command,
+    startTime: Date.now(),
+    cancel: () => { cancelled = true; }
+  });
+
+  const broadcast = (data) => {
+    const msg = JSON.stringify(data);
+    session.clients.forEach(ws => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(msg);
+      }
     });
+  };
 
-    console.log(`WT Terminal ${id} created: ${title}`);
+  try {
+    console.log(`⚡ [WS] Executing in ${session.label}: ${command}`);
+    const startTime = Date.now();
 
-    return { id, title, message: `Windows Terminal tab opening: ${title}` };
+    // Broadcast that we're starting
+    broadcast({ type: 'output', data: `❯ ${command}\n` });
+    session.buffer += `❯ ${command}\n`;
+
+    // Execute command (use SSH or PowerShell for remote sessions)
+    let result;
+    if (session.type === 'ssh') {
+      // SSH remote execution (suppress warnings to stderr)
+      const sshCommand = `ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${session.username}@${session.computer} "${command.replace(/"/g, '\\"')}"`;
+      const execResult = await Promise.race([
+        execPromise(sshCommand, { maxBuffer: 1024 * 1024 }),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Command timed out')), timeout);
+        }),
+        new Promise((_, reject) => {
+          const check = setInterval(() => {
+            if (cancelled) {
+              clearInterval(check);
+              reject(new Error('Command cancelled'));
+            }
+          }, 100);
+          runningCommands.get(sessionId).cancelInterval = check;
+        })
+      ]);
+      clearTimeout(timeoutId);
+      result = { raw: execResult.stdout || execResult.stderr || '' };
+    } else if (session.type === 'winrm' && session.computer !== 'localhost') {
+      // Use current user's credentials (implicit authentication)
+      const psCommand = `powershell -Command "Invoke-Command -ComputerName ${session.computer} -ScriptBlock { ${command.replace(/"/g, '\\"').replace(/\$/g, '\\$')} }"`;
+      const execResult = await Promise.race([
+        execPromise(psCommand, { maxBuffer: 1024 * 1024 }),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Command timed out')), timeout);
+        }),
+        new Promise((_, reject) => {
+          const check = setInterval(() => {
+            if (cancelled) {
+              clearInterval(check);
+              reject(new Error('Command cancelled'));
+            }
+          }, 100);
+          runningCommands.get(sessionId).cancelInterval = check;
+        })
+      ]);
+      clearTimeout(timeoutId);
+      result = { raw: execResult.stdout || execResult.stderr || '' };
+    } else {
+      result = await Promise.race([
+        session.ps.invoke(command),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Command timed out')), timeout);
+        }),
+        new Promise((_, reject) => {
+          const check = setInterval(() => {
+            if (cancelled) {
+              clearInterval(check);
+              reject(new Error('Command cancelled'));
+            }
+          }, 100);
+          runningCommands.get(sessionId).cancelInterval = check;
+        })
+      ]);
+      clearTimeout(timeoutId);
+    }
+
+    const executionTime = Date.now() - startTime;
+    const output = result.raw || result.stdout || '(no output)';
+
+    // Broadcast output
+    broadcast({ type: 'output', data: output + '\n' });
+    session.buffer += output + '\n';
+    if (session.buffer.length > 100000) session.buffer = session.buffer.slice(-50000);
+
+    session.lastUsed = Date.now();
+    session.commandCount++;
+
+    // Save to history
+    try {
+      dbHelpers.saveCommandHistory(sessionId, session.label, command, output, true, executionTime);
+      dbHelpers.saveSessionState(sessionId, session);
+    } catch (dbErr) {
+      console.error('Failed to save command history:', dbErr.message);
+    }
+
+    return { success: true, output, executionTime, commandCount: session.commandCount };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    const errMsg = `[Error: ${error.message}]\n`;
+    broadcast({ type: 'output', data: errMsg });
+    session.buffer += errMsg;
+
+    // Save error to history
+    try {
+      dbHelpers.saveCommandHistory(sessionId, session.label, command, error.message, false, Date.now() - startTime);
+    } catch (dbErr) {
+      console.error('Failed to save command history:', dbErr.message);
+    }
+
+    return { success: false, error: error.message, timedOut: error.message.includes('timed out') };
+  } finally {
+    const cmd = runningCommands.get(sessionId);
+    if (cmd?.cancelInterval) clearInterval(cmd.cancelInterval);
+    runningCommands.delete(sessionId);
+  }
 }
 
-// Create initial terminals - one of each type
-createTerminal({ title: 'PowerShell', shell: 'powershell', cwd: 'C:\\LLM-DevOSWE' });
-createTerminal({ title: 'CMD', shell: 'cmd', cwd: 'C:\\LLM-DevOSWE' });
-createTerminal({ title: 'Git Bash', shell: 'bash', cwd: '/c/LLM-DevOSWE' });
+// Cancel running command helper
+function cancelRunningCommand(sessionId) {
+  const running = runningCommands.get(sessionId);
+  if (running) {
+    running.cancel();
+    console.log(`⚠ Cancelled command in session ${sessionId}`);
+  }
+}
 
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-╔══════════════════════════════════════╗
-║       TERMINAL HUB - Port ${PORT}       ║
-║  Web-based terminal manager          ║
-╚══════════════════════════════════════╝
+// Create new session (local terminal, remote WinRM, or remote SSH)
+app.post('/session/create', async (req, res) => {
+  const { type = 'local', shell = 'powershell', computer = 'localhost', credentials, label, cwd } = req.body;
+  const sessionId = uuidv4();
 
-Endpoints:
-  GET  /                         - Web UI
-  GET  /api/terminals            - List terminals
-  POST /api/terminals            - Create terminal
-  DELETE /api/terminals/:id      - Kill terminal
-  POST /api/terminals/:id/exec   - Execute with timeout
-  POST /api/terminals/:id/interrupt - Send Ctrl+C
-  POST /api/terminals/:id/cancel - Cancel running command
-  POST /api/terminals/cancel-all - Cancel all commands
-  WS   /?id=N                    - Connect to terminal
+  try {
+    let session;
 
-WebSocket messages:
-  { type: 'input', data: '...' }     - Send input
-  { type: 'interrupt' }              - Send Ctrl+C
-  { type: 'cancel' }                 - Cancel command
-  { type: 'exec', command, timeout } - Execute with timeout
+    if (type === 'ssh') {
+      // SSH session - lightweight, just tracks connection info
+      session = {
+        type: 'ssh',
+        computer,
+        username: credentials?.username || 'Stone-PC',
+        shell: shell || 'bash',
+        label: label || `SSH-${computer}`,
+        created: Date.now(),
+        lastUsed: Date.now(),
+        commandCount: 0,
+        clients: new Set(),
+        buffer: ''
+      };
+    } else if (type === 'local') {
+      // Spawn local terminal with PTY (real terminal emulation)
+      const shellConfig = SHELLS[shell] || SHELLS.powershell;
+      const workDir = cwd || process.env.USERPROFILE || 'C:\\';
 
-Local:  http://localhost:${PORT}
-LAN:    http://192.168.1.192:${PORT}
-`);
+      const proc = pty.spawn(shellConfig.path, shellConfig.args, {
+        name: 'xterm-256color',
+        cols: 120,
+        rows: 30,
+        cwd: workDir,
+        env: process.env
+      });
+
+      session = {
+        type: 'local',
+        pty: proc,
+        shell,
+        computer: 'localhost',
+        label: label || `${shellConfig.name} ${sessions.size + 1}`,
+        created: Date.now(),
+        lastUsed: Date.now(),
+        commandCount: 0,
+        clients: new Set(),
+        buffer: ''
+      };
+
+      // Stream PTY output to WebSocket clients
+      proc.onData((data) => {
+        session.buffer += data;
+        if (session.buffer.length > 100000) session.buffer = session.buffer.slice(-50000);
+        const msg = JSON.stringify({ type: 'output', data });
+        session.clients.forEach(ws => {
+          if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+        });
+      });
+
+      proc.onExit(({ exitCode }) => {
+        const msg = `\r\n[Process exited with code ${exitCode}]\r\n`;
+        session.buffer += msg;
+        session.clients.forEach(ws => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'output', data: msg }));
+            ws.send(JSON.stringify({ type: 'exit', code: exitCode }));
+          }
+        });
+      });
+
+    } else {
+      // WinRM session via node-powershell
+      const ps = new PowerShell({
+        executionPolicy: 'Bypass',
+        noProfile: true
+      });
+
+      // Setup remote session
+      let remoteSession = null;
+      if (computer !== 'localhost') {
+        try {
+          if (credentials && credentials.username && credentials.password) {
+            const credCmd = `$cred = New-Object System.Management.Automation.PSCredential('${credentials.username}', (ConvertTo-SecureString '${credentials.password}' -AsPlainText -Force))`;
+            await ps.invoke(credCmd);
+            const result = await ps.invoke(`New-PSSession -ComputerName ${computer} -Credential $cred`);
+            remoteSession = true;
+          } else if (credentials && credentials.username) {
+            // Try current user's credentials
+            const result = await ps.invoke(`New-PSSession -ComputerName ${computer}`);
+            remoteSession = true;
+          } else {
+            const result = await ps.invoke(`New-PSSession -ComputerName ${computer}`);
+            remoteSession = true;
+          }
+        } catch (err) {
+          console.error(`Failed to create remote session to ${computer}:`, err.message);
+        }
+      }
+
+      session = {
+        type: 'winrm',
+        ps,
+        computer,
+        remoteSession,
+        label: label || `WinRM-${computer}`,
+        created: Date.now(),
+        lastUsed: Date.now(),
+        commandCount: 0,
+        clients: new Set(),
+        buffer: ''
+      };
+    }
+
+    sessions.set(sessionId, session);
+    console.log(`✓ Created ${session.type} session: ${session.label} (${sessionId})`);
+
+    // Save session state to database
+    try {
+      dbHelpers.saveSessionState(sessionId, session);
+    } catch (dbErr) {
+      console.error('Failed to save session state:', dbErr.message);
+    }
+
+    res.json({
+      success: true,
+      sessionId,
+      type: session.type,
+      computer: session.computer,
+      shell: session.shell,
+      label: session.label,
+      message: 'Session created'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Send command to session (non-blocking for other sessions)
+app.post('/session/:sessionId/exec', async (req, res) => {
+  const { sessionId } = req.params;
+  const { command, timeout = DEFAULT_TIMEOUT } = req.body;
+
+  const session = sessions.get(sessionId);
+  if (!session) {
+    return res.status(404).json({ success: false, error: 'Session not found' });
+  }
+
+  // Check if command already running
+  if (runningCommands.has(sessionId)) {
+    return res.status(409).json({ success: false, error: 'Command already running. Cancel it first.' });
+  }
+
+  const commandId = uuidv4();
+  let cancelled = false;
+  let timeoutId = null;
+
+  // Track this command
+  runningCommands.set(sessionId, {
+    commandId,
+    command,
+    startTime: Date.now(),
+    cancel: () => { cancelled = true; }
+  });
+
+  try {
+    console.log(`⚡ Executing in ${session.label}: ${command}`);
+    const startTime = Date.now();
+
+    // Execute command (use SSH or PowerShell for remote sessions)
+    let result;
+    if (session.type === 'ssh') {
+      // SSH remote execution (suppress warnings to stderr)
+      const sshCommand = `ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${session.username}@${session.computer} "${command.replace(/"/g, '\\"')}"`;
+      const execResult = await Promise.race([
+        execPromise(sshCommand, { maxBuffer: 1024 * 1024 }),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`Command timed out after ${timeout}ms`)), timeout);
+        }),
+        new Promise((_, reject) => {
+          const checkCancelled = setInterval(() => {
+            if (cancelled) {
+              clearInterval(checkCancelled);
+              reject(new Error('Command cancelled'));
+            }
+          }, 100);
+          runningCommands.get(sessionId).cancelInterval = checkCancelled;
+        })
+      ]);
+      clearTimeout(timeoutId);
+      result = { raw: execResult.stdout || execResult.stderr || '' };
+    } else if (session.type === 'winrm' && session.computer !== 'localhost') {
+      // Use current user's credentials (implicit authentication)
+      const psCommand = `powershell -Command "Invoke-Command -ComputerName ${session.computer} -ScriptBlock { ${command.replace(/"/g, '\\"').replace(/\$/g, '\\$')} }"`;
+      const execResult = await Promise.race([
+        execPromise(psCommand, { maxBuffer: 1024 * 1024 }),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`Command timed out after ${timeout}ms`)), timeout);
+        }),
+        new Promise((_, reject) => {
+          const checkCancelled = setInterval(() => {
+            if (cancelled) {
+              clearInterval(checkCancelled);
+              reject(new Error('Command cancelled'));
+            }
+          }, 100);
+          runningCommands.get(sessionId).cancelInterval = checkCancelled;
+        })
+      ]);
+      clearTimeout(timeoutId);
+      result = { raw: execResult.stdout || execResult.stderr || '' };
+    } else {
+      result = await Promise.race([
+        session.ps.invoke(command),
+        new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`Command timed out after ${timeout}ms`)), timeout);
+        }),
+        new Promise((_, reject) => {
+          const checkCancelled = setInterval(() => {
+            if (cancelled) {
+              clearInterval(checkCancelled);
+              reject(new Error('Command cancelled'));
+            }
+          }, 100);
+          runningCommands.get(sessionId).cancelInterval = checkCancelled;
+        })
+      ]);
+      clearTimeout(timeoutId);
+    }
+
+    const executionTime = Date.now() - startTime;
+
+    session.lastUsed = Date.now();
+    session.commandCount++;
+
+    console.log(`✓ Command completed in ${executionTime}ms`);
+
+    // Save to history
+    try {
+      dbHelpers.saveCommandHistory(sessionId, session.label, command, result.raw, true, executionTime);
+      dbHelpers.saveSessionState(sessionId, session);
+    } catch (dbErr) {
+      console.error('Failed to save command history:', dbErr.message);
+    }
+
+    res.json({
+      success: true,
+      output: result.raw || result.stdout || '(no output)',
+      sessionId,
+      label: session.label,
+      executionTime,
+      commandCount: session.commandCount
+    });
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.log(`✗ Command failed: ${error.message}`);
+
+    // Save error to history
+    try {
+      dbHelpers.saveCommandHistory(sessionId, session.label, command, error.message, false, Date.now() - startTime);
+    } catch (dbErr) {
+      console.error('Failed to save command history:', dbErr.message);
+    }
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      sessionId,
+      label: session.label,
+      timedOut: error.message.includes('timed out'),
+      cancelled: error.message.includes('cancelled')
+    });
+  } finally {
+    // Cleanup
+    const cmd = runningCommands.get(sessionId);
+    if (cmd?.cancelInterval) clearInterval(cmd.cancelInterval);
+    runningCommands.delete(sessionId);
+  }
+});
+
+// Cancel running command
+app.post('/session/:sessionId/cancel', async (req, res) => {
+  const { sessionId } = req.params;
+
+  const running = runningCommands.get(sessionId);
+  if (!running) {
+    return res.status(404).json({ success: false, error: 'No command running' });
+  }
+
+  console.log(`⚠ Cancelling command in session ${sessionId}`);
+  running.cancel();
+
+  // Also try to kill the PowerShell process and recreate
+  const session = sessions.get(sessionId);
+  if (session) {
+    try {
+      await session.ps.dispose();
+      session.ps = new PowerShell({
+        executionPolicy: 'Bypass',
+        noProfile: true
+      });
+      console.log(`✓ Recreated PowerShell instance for ${session.label}`);
+    } catch (e) {
+      console.log(`⚠ Failed to recreate PowerShell: ${e.message}`);
+    }
+  }
+
+  res.json({ success: true, message: 'Cancel signal sent', commandId: running.commandId });
+});
+
+// Execute command across multiple sessions concurrently
+app.post('/sessions/exec-all', async (req, res) => {
+  const { command, sessionIds, timeout } = req.body;
+
+  const targetSessions = sessionIds || Array.from(sessions.keys());
+  console.log(`⚡ Executing across ${targetSessions.length} sessions concurrently...`);
+
+  const results = await Promise.all(
+    targetSessions.map(async (sessionId) => {
+      try {
+        const response = await axios.post(`http://localhost:${PORT}/session/${sessionId}/exec`, { command, timeout });
+        return { sessionId, ...response.data };
+      } catch (error) {
+        return { sessionId, success: false, error: error.response?.data?.error || error.message };
+      }
+    })
+  );
+
+  res.json({ results, count: results.length });
+});
+
+// Cancel all running commands
+app.post('/sessions/cancel-all', async (req, res) => {
+  const cancelled = [];
+  for (const sessionId of runningCommands.keys()) {
+    try {
+      await axios.post(`http://localhost:${PORT}/session/${sessionId}/cancel`);
+      cancelled.push(sessionId);
+    } catch (error) {
+      console.log(`Failed to cancel ${sessionId}: ${error.message}`);
+    }
+  }
+  res.json({ success: true, cancelled, count: cancelled.length });
+});
+
+// Get session info
+app.get('/session/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  const session = sessions.get(sessionId);
+
+  if (!session) {
+    return res.status(404).json({ success: false, error: 'Session not found' });
+  }
+
+  const running = runningCommands.get(sessionId);
+  res.json({
+    sessionId,
+    label: session.label,
+    computer: session.computer,
+    created: session.created,
+    lastUsed: session.lastUsed,
+    uptime: Date.now() - session.created,
+    commandCount: session.commandCount,
+    running: running ? { command: running.command, elapsed: Date.now() - running.startTime } : null
+  });
+});
+
+// Update session label
+app.patch('/session/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  const { label } = req.body;
+  
+  const session = sessions.get(sessionId);
+  if (!session) {
+    return res.status(404).json({ success: false, error: 'Session not found' });
+  }
+
+  session.label = label;
+  console.log(`✓ Updated session label to: ${label}`);
+  res.json({ success: true, sessionId, label });
+});
+
+// Close session
+app.delete('/session/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  const session = sessions.get(sessionId);
+
+  if (!session) {
+    return res.status(404).json({ success: false, error: 'Session not found' });
+  }
+
+  try {
+    if (session.type === 'local' && session.pty) {
+      session.pty.kill();
+    } else if (session.ps) {
+      await session.ps.dispose();
+    }
+    sessions.delete(sessionId);
+    console.log(`✓ Closed session: ${session.label}`);
+    res.json({ success: true, message: 'Session closed', sessionId });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Close all sessions
+app.delete('/sessions/all', async (req, res) => {
+  const closed = [];
+  for (const [id, session] of sessions.entries()) {
+    try {
+      if (session.type === 'local' && session.pty) {
+        session.pty.kill();
+      } else if (session.ps) {
+        await session.ps.dispose();
+      }
+      sessions.delete(id);
+      closed.push(id);
+    } catch (error) {
+      console.error(`Failed to close session ${id}:`, error.message);
+    }
+  }
+  console.log(`✓ Closed ${closed.length} sessions`);
+  res.json({ success: true, closed, count: closed.length });
+});
+
+// List all sessions
+app.get('/sessions', (req, res) => {
+  const sessionList = Array.from(sessions.entries()).map(([id, session]) => {
+    const running = runningCommands.get(id);
+    return {
+      sessionId: id,
+      type: session.type || 'winrm',
+      shell: session.shell,
+      label: session.label,
+      computer: session.computer,
+      created: session.created,
+      lastUsed: session.lastUsed,
+      uptime: Date.now() - session.created,
+      commandCount: session.commandCount,
+      running: running ? { command: running.command, elapsed: Date.now() - running.startTime } : null,
+      alive: session.type === 'local' ? !!session.pty : true
+    };
+  });
+
+  res.json({
+    sessions: sessionList,
+    count: sessionList.length,
+    totalCommands: sessionList.reduce((sum, s) => sum + s.commandCount, 0),
+    runningCount: runningCommands.size
+  });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    service: SERVICE_NAME,
+    status: 'healthy',
+    port: PORT,
+    uptime: process.uptime(),
+    activeSessions: sessions.size
+  });
+});
+
+// ===== PRESET MANAGEMENT =====
+
+// Get all presets
+app.get('/presets', (req, res) => {
+  try {
+    const presets = dbHelpers.getPresets();
+    res.json({ success: true, presets, count: presets.length });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get single preset
+app.get('/presets/:id', (req, res) => {
+  try {
+    const preset = dbHelpers.getPreset(req.params.id);
+    if (!preset) {
+      return res.status(404).json({ success: false, error: 'Preset not found' });
+    }
+    res.json({ success: true, preset });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Create or update preset
+app.post('/presets', (req, res) => {
+  try {
+    const preset = req.body;
+    if (!preset.name || !preset.type) {
+      return res.status(400).json({ success: false, error: 'Name and type are required' });
+    }
+    const result = dbHelpers.savePreset(preset);
+    res.json({ success: true, id: preset.id || result.lastInsertRowid, message: 'Preset saved' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete preset
+app.delete('/presets/:id', (req, res) => {
+  try {
+    dbHelpers.deletePreset(req.params.id);
+    res.json({ success: true, message: 'Preset deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Create session from preset
+app.post('/presets/:id/launch', async (req, res) => {
+  try {
+    const preset = dbHelpers.getPreset(req.params.id);
+    if (!preset) {
+      return res.status(404).json({ success: false, error: 'Preset not found' });
+    }
+
+    const sessionOpts = {
+      type: preset.type,
+      shell: preset.shell,
+      computer: preset.computer,
+      cwd: preset.cwd,
+      label: preset.name,
+      credentials: preset.username ? {
+        username: preset.username,
+        password: preset.password
+      } : null
+    };
+
+    // Create session using existing logic
+    const response = await axios.post(`http://localhost:${PORT}/session/create`, sessionOpts);
+    res.json({ success: true, ...response.data, presetId: preset.id });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Launch multiple presets at once
+app.post('/presets/launch-multiple', async (req, res) => {
+  try {
+    const { presetIds } = req.body;
+    if (!Array.isArray(presetIds) || presetIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'presetIds array required' });
+    }
+
+    console.log(`⚡ Launching ${presetIds.length} presets concurrently...`);
+
+    const results = await Promise.all(
+      presetIds.map(async (presetId) => {
+        try {
+          const response = await axios.post(`http://localhost:${PORT}/presets/${presetId}/launch`);
+          return { presetId, ...response.data };
+        } catch (error) {
+          return { presetId, success: false, error: error.response?.data?.error || error.message };
+        }
+      })
+    );
+
+    const successCount = results.filter(r => r.success).length;
+    res.json({
+      success: true,
+      results,
+      total: results.length,
+      successCount,
+      failedCount: results.length - successCount
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ===== COMMAND HISTORY =====
+
+// Get command history
+app.get('/history', (req, res) => {
+  try {
+    const sessionId = req.query.session;
+    const limit = parseInt(req.query.limit) || 100;
+    const history = dbHelpers.getCommandHistory(sessionId, limit);
+    res.json({ success: true, history, count: history.length });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get saved session states
+app.get('/saved-sessions', (req, res) => {
+  try {
+    const states = dbHelpers.getSessionStates();
+    res.json({ success: true, sessions: states, count: states.length });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Clean up stale sessions (30 min idle)
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, session] of sessions.entries()) {
+    if (now - session.lastUsed > 1800000) {
+      session.ps.dispose();
+      sessions.delete(id);
+      console.log(`Cleaned up stale session: ${session.label} (${id})`);
+    }
+  }
+}, 60000);
+
+// Register with Hive mesh via WebSocket
+function registerWithHive() {
+  try {
+    const ws = new WebSocket(`ws://localhost:8750`);
+    ws.on('open', () => {
+      ws.send(JSON.stringify({
+        type: 'agent:register',
+        data: {
+          id: `winrm-bridge-${require('os').hostname()}`,
+          type: 'winrm-bridge',
+          status: 'online',
+          port: PORT,
+          capabilities: ['winrm', 'powershell', 'concurrent-sessions'],
+          ui: `http://localhost:${PORT}`
+        }
+      }));
+      console.log(`✓ Registered with Hive mesh via WebSocket`);
+    });
+    ws.on('error', () => {
+      console.log(`⚠ Hive mesh not available, running standalone`);
+    });
+    ws.on('close', () => {
+      setTimeout(registerWithHive, 30000);
+    });
+  } catch (e) {
+    console.log(`⚠ Hive mesh not available, running standalone`);
+  }
+}
+
+server.listen(PORT, '0.0.0.0', async () => {
+  console.log(`╔════════════════════════════════════════╗`);
+  console.log(`║  ${SERVICE_NAME} Running               ║`);
+  console.log(`╚════════════════════════════════════════╝`);
+  console.log(`Port: ${PORT}`);
+  console.log(`HTTP + WebSocket ready`);
+  console.log(`Local:  http://localhost:${PORT}`);
+  console.log(`LAN:    http://192.168.1.192:${PORT}`);
+  console.log(`WebSocket: ws://[host]:${PORT}?session=<id>`);
+  console.log(``);
+  await registerWithHive();
 });

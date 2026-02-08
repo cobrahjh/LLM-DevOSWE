@@ -1,1180 +1,696 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Terminal Hub - Hive</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --bg-dark: #0c0c14;
-            --bg-panel: #12121c;
-            --bg-terminal: #0a0a10;
-            --cyan: #00f0ff;
-            --green: #00ff88;
-            --amber: #ffaa00;
-            --red: #ff4466;
-            --text: #e0e0e0;
-            --text-dim: #666;
-            --border: rgba(0, 240, 255, 0.2);
-        }
-
-        body {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            background: var(--bg-dark);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(90deg, #0a1520, #1a0a20);
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-
-        .header h1 {
-            font-size: 18px;
-            color: var(--cyan);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header h1::before {
-            content: '>';
-            color: var(--green);
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--cyan);
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            background: rgba(0, 240, 255, 0.2);
-            border-color: var(--cyan);
-        }
-
-        .btn-new {
-            background: rgba(0, 255, 136, 0.1);
-            border-color: rgba(0, 255, 136, 0.3);
-            color: var(--green);
-        }
-
-        .btn-new:hover {
-            background: rgba(0, 255, 136, 0.2);
-            border-color: var(--green);
-        }
-
-        /* Main Layout */
-        .main {
-            display: flex;
-            flex: 1;
-            min-height: 0;
-        }
-
-        /* Terminal List Sidebar */
-        .sidebar {
-            width: 220px;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-        }
-
-        .sidebar-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .sidebar-tab {
-            flex: 1;
-            padding: 10px;
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .sidebar-tab:hover {
-            color: var(--text);
-            background: rgba(0, 240, 255, 0.05);
-        }
-
-        .sidebar-tab.active {
-            color: var(--cyan);
-            border-bottom: 2px solid var(--cyan);
-        }
-
-        .sidebar-header {
-            padding: 12px 15px;
-            font-size: 11px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .process-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .process-item {
-            padding: 8px 10px;
-            margin-bottom: 6px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid transparent;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        .process-item:hover {
-            border-color: var(--border);
-        }
-
-        .process-name {
-            font-weight: bold;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .process-info {
-            display: flex;
-            gap: 10px;
-            font-size: 10px;
-            color: var(--text-dim);
-        }
-
-        .process-info span {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .process-title {
-            font-size: 11px;
-            color: var(--cyan);
-            margin-top: 6px;
-            padding: 4px 6px;
-            background: rgba(0, 240, 255, 0.1);
-            border-radius: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .process-title.empty {
-            color: var(--text-dim);
-            background: rgba(255, 255, 255, 0.05);
-            font-style: italic;
-        }
-
-        .process-filter {
-            padding: 8px 10px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 11px;
-            color: var(--text-dim);
-        }
-
-        .process-filter input[type="checkbox"] {
-            accent-color: var(--cyan);
-        }
-
-        .process-actions {
-            margin-top: 6px;
-        }
-
-        .process-actions .btn {
-            padding: 3px 8px;
-            font-size: 10px;
-        }
-
-        .terminal-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .terminal-item {
-            padding: 10px 12px;
-            margin-bottom: 6px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .terminal-item:hover {
-            border-color: var(--border);
-            background: rgba(0, 240, 255, 0.05);
-        }
-
-        .terminal-item.active {
-            border-color: var(--cyan);
-            background: rgba(0, 240, 255, 0.1);
-        }
-
-        .terminal-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .terminal-item-title {
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--text);
-        }
-
-        .terminal-item-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--green);
-        }
-
-        .terminal-item-status.dead {
-            background: var(--red);
-        }
-
-        .terminal-item-info {
-            font-size: 10px;
-            color: var(--text-dim);
-        }
-
-        .terminal-item-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .terminal-item-actions .btn {
-            padding: 4px 8px;
-            font-size: 11px;
-        }
-
-        .btn-kill {
-            background: rgba(255, 68, 102, 0.1);
-            border-color: rgba(255, 68, 102, 0.3);
-            color: var(--red);
-        }
-
-        .btn-kill:hover {
-            background: rgba(255, 68, 102, 0.2);
-            border-color: var(--red);
-        }
-
-        /* Terminal Area */
-        .terminal-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .terminal-tabs {
-            display: flex;
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
-            overflow-x: auto;
-            flex-shrink: 0;
-        }
-
-        .terminal-tab {
-            padding: 10px 20px;
-            font-size: 12px;
-            color: var(--text-dim);
-            border-right: 1px solid var(--border);
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-
-        .terminal-tab:hover {
-            color: var(--text);
-            background: rgba(0, 240, 255, 0.05);
-        }
-
-        .terminal-tab.active {
-            color: var(--cyan);
-            background: var(--bg-terminal);
-            border-bottom: 2px solid var(--cyan);
-        }
-
-        .terminal-tab {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tab-close {
-            opacity: 0.5;
-            font-size: 14px;
-            line-height: 1;
-            padding: 2px 4px;
-            border-radius: 3px;
-            transition: all 0.2s;
-        }
-
-        .tab-close:hover {
-            opacity: 1;
-            background: rgba(255, 68, 102, 0.3);
-            color: var(--red);
-        }
-
-        .wt-badge {
-            font-size: 9px;
-            padding: 2px 5px;
-            background: rgba(0, 255, 136, 0.2);
-            color: var(--green);
-            border-radius: 3px;
-            margin-left: 6px;
-        }
-
-        .btn-wt {
-            background: rgba(138, 43, 226, 0.1);
-            border-color: rgba(138, 43, 226, 0.3);
-            color: #9966ff;
-        }
-
-        .btn-wt:hover {
-            background: rgba(138, 43, 226, 0.2);
-            border-color: #9966ff;
-        }
-
-        .terminal-output {
-            flex: 1;
-            background: var(--bg-terminal);
-            padding: 15px;
-            overflow-y: auto;
-            font-size: 13px;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-        }
-
-        .terminal-output span {
-            display: inline;
-        }
-
-        .terminal-output::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .terminal-output::-webkit-scrollbar-track {
-            background: var(--bg-dark);
-        }
-
-        .terminal-output::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-
-        /* Input Area */
-        .terminal-input-area {
-            display: flex;
-            background: var(--bg-panel);
-            border-top: 1px solid var(--border);
-            padding: 10px 15px;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .terminal-input-area input {
-            flex: 1;
-            background: var(--bg-terminal);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 10px 15px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .terminal-input-area input:focus {
-            border-color: var(--cyan);
-        }
-
-        .terminal-input-area input::placeholder {
-            color: var(--text-dim);
-        }
-
-        .btn-send {
-            padding: 10px 20px;
-            background: var(--cyan);
-            color: var(--bg-dark);
-            border: none;
-            font-weight: bold;
-        }
-
-        .btn-send:hover {
-            background: #00d0e0;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay.open {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 90vh;
-            overflow: hidden;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .modal-header h3 {
-            color: var(--cyan);
-            font-size: 16px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .modal-footer {
-            padding: 15px 20px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-dim);
-            margin-bottom: 8px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px 12px;
-            background: var(--bg-terminal);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 14px;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--cyan);
-        }
-
-        .shell-options {
-            display: flex;
-            gap: 10px;
-        }
-
-        .shell-btn {
-            flex: 1;
-            padding: 12px 10px;
-            background: var(--bg-terminal);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-
-        .shell-btn:hover {
-            border-color: var(--cyan);
-        }
-
-        .shell-btn.active {
-            border-color: var(--cyan);
-            background: rgba(0, 240, 255, 0.1);
-        }
-
-        .shell-icon {
-            font-size: 20px;
-        }
-
-        .shell-btn span:last-child {
-            font-size: 11px;
-        }
-
-        /* Empty State */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-dim);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: -250px;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                transition: left 0.3s;
-                width: 250px;
-            }
-
-            .sidebar.open {
-                left: 0;
-            }
-
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
-            }
-
-            .sidebar-overlay.open {
-                display: block;
-            }
-
-            .header h1 {
-                font-size: 16px;
-            }
-
-            .btn-menu {
-                display: flex;
-            }
-
-            .terminal-output {
-                font-size: 12px;
-                padding: 10px;
-            }
-
-            .terminal-input-area {
-                padding: 8px 10px;
-            }
-
-            .terminal-input-area input {
-                font-size: 16px; /* Prevent zoom on iOS */
-            }
-        }
-
-        @media (min-width: 769px) {
-            .btn-menu {
-                display: none;
-            }
-        }
-
-        /* Safe area support */
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .header {
-                padding-top: calc(12px + env(safe-area-inset-top));
-            }
-            .terminal-input-area {
-                padding-bottom: calc(10px + env(safe-area-inset-bottom));
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0c">
+<title>WinRM Bridge // Hive</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;600;800&display=swap');
+  :root {
+    --bg:#0a0a0c;--surface:#111114;--surface2:#18181c;--border:#2a2a30;
+    --text:#c8c8d0;--text-dim:#66666e;--accent:#f59e0b;--accent-dim:#78500d;
+    --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+    --mono:'JetBrains Mono',monospace;--sans:'Outfit',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;touch-action:manipulation}
+  body{font-family:var(--mono);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+  /* HEADER */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;min-height:48px}
+  .header-left{display:flex;align-items:center;gap:10px}
+  .btn-menu{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1}
+  .logo{font-family:var(--sans);font-weight:800;font-size:15px;color:var(--accent);letter-spacing:-0.5px}
+  .logo span{color:var(--text-dim);font-weight:300}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .header-right{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim)}
+  .session-count{color:var(--accent);font-weight:500}
+
+  /* QUICK CONNECT BAR (mobile) */
+  .quick-bar{display:block;flex-shrink:0;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .quick-bar::-webkit-scrollbar{display:none}
+  .quick-bar .qb{display:inline-block;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;font-family:var(--mono);font-size:13px;cursor:pointer;border-radius:6px;margin-right:6px;transition:all .15s;-webkit-user-select:none;user-select:none}
+  .quick-bar .qb:active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+  /* DRAWER OVERLAY */
+  .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50}
+  .drawer-overlay.show{display:block}
+
+  /* SIDEBAR / DRAWER */
+  .sidebar{position:fixed;top:0;left:-300px;width:300px;height:100%;z-index:60;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);transition:left .25s ease;overflow:hidden}
+  .sidebar.open{left:0}
+  .sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;min-height:52px}
+  .sidebar-title{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim)}
+  .btn-new{background:var(--accent);color:#000;border:none;padding:8px 14px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;border-radius:4px}
+  .btn-new:active{background:#fbbf24}
+  .sessions-list{flex:1;overflow-y:auto;padding:8px;-webkit-overflow-scrolling:touch}
+  .session-card{padding:14px;border:1px solid transparent;border-radius:6px;cursor:pointer;margin-bottom:6px;transition:all .15s;min-height:48px}
+  .session-card:active{background:var(--surface2);border-color:var(--border)}
+  .session-card.active{background:var(--surface2);border-color:var(--accent-dim)}
+  .session-label{font-size:14px;font-weight:500;color:var(--text)}
+  .session-meta{font-size:12px;color:var(--text-dim);margin-top:4px;display:flex;gap:12px}
+  .session-meta .computer{color:var(--blue)}
+  .session-meta .cmds{color:var(--accent)}
+  .no-sessions{padding:30px 16px;text-align:center;color:var(--text-dim);font-size:13px;line-height:1.6}
+  .quick-connect{padding:14px 16px;border-top:1px solid var(--border)}
+  .quick-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:8px}
+  .quick-btns{display:flex;flex-wrap:wrap;gap:6px}
+  .quick-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;cursor:pointer;border-radius:6px;transition:all .15s}
+  .quick-btn:active{border-color:var(--accent);color:var(--accent)}
+
+  /* SESSION TABS */
+  .session-tabs{display:flex;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-height:0}
+  .session-tabs::-webkit-scrollbar{display:none}
+  .session-tabs:empty{display:none}
+  .stab{display:flex;align-items:center;gap:6px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--text-dim);cursor:pointer;border-right:1px solid var(--border);white-space:nowrap;transition:all .15s;min-height:40px;-webkit-user-select:none;user-select:none}
+  .stab:active,.stab:hover{background:var(--surface2);color:var(--text)}
+  .stab.active{color:var(--accent);background:var(--bg);border-bottom:2px solid var(--accent)}
+  .stab .sdot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+  .stab .sclose{color:var(--text-dim);font-size:14px;margin-left:4px;padding:2px 4px;border-radius:3px;line-height:1}
+  .stab .sclose:hover,.stab .sclose:active{color:var(--red);background:var(--surface2)}
+
+  /* TERMINAL AREA */
+  .terminal-area{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0;min-height:0;overflow:hidden}
+  .terminal-header{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);min-height:44px;flex-shrink:0;gap:8px}
+  .terminal-title{font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .terminal-title .name{color:var(--accent);font-weight:500}
+  .terminal-actions{display:flex;gap:6px;flex-shrink:0}
+  .btn-action{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);padding:8px 12px;font-family:var(--mono);font-size:12px;cursor:pointer;border-radius:4px;white-space:nowrap}
+  .btn-action:active{border-color:var(--text-dim);color:var(--text)}
+  .btn-action.danger:active{border-color:var(--red);color:var(--red)}
+  .btn-action.broadcast{color:var(--accent);border-color:var(--accent-dim)}
+  .btn-action.broadcast:active{background:var(--accent);color:#000}
+  .btn-action.stop{background:var(--red);color:#fff;border-color:var(--red);animation:pulse-red 1s infinite}
+  @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.7}}
+  .session-running{color:var(--accent);font-size:11px;animation:pulse 1s infinite}
+
+  /* OUTPUT */
+  .terminal-output{flex:1;overflow-y:auto;padding:0;font-size:13px;line-height:1.65;-webkit-overflow-scrolling:touch;min-height:0;position:relative}
+  .output-entry{margin-bottom:14px;overflow-wrap:break-word;word-break:break-word}
+  .output-cmd{color:var(--accent);font-weight:500}
+  .output-cmd::before{content:'❯ ';color:var(--text-dim)}
+  .output-result{color:var(--text);white-space:pre-wrap;overflow-wrap:break-word;margin-top:4px;padding-left:2px;font-size:12px}
+  .output-error{color:var(--red)}
+  .output-info{color:var(--text-dim);font-style:italic}
+  .output-time{color:var(--text-dim);font-size:11px;float:right}
+  .welcome-msg{color:var(--text-dim);padding:40px 20px;text-align:center;font-size:13px;line-height:2}
+  .welcome-msg .big{font-family:var(--sans);font-size:22px;font-weight:600;color:var(--text)}
+  /* xterm.js container */
+  #xterm-container{display:none;width:100%;height:100%}
+  #xterm-container.active{display:block}
+  .xterm{height:100% !important}
+  .xterm-viewport{overflow-y:auto !important}
+
+  /* INPUT */
+  .terminal-input-area{padding:10px 12px;border-top:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .prompt{color:var(--accent);font-weight:700;font-size:14px}
+  .terminal-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:14px;outline:none;caret-color:var(--accent);padding:10px 12px;border-radius:6px;min-width:0}
+  .terminal-input:focus{border-color:var(--accent)}
+  .terminal-input::placeholder{color:var(--text-dim)}
+  .terminal-input:disabled{opacity:.4}
+  .btn-send{background:var(--accent);color:#000;border:none;padding:10px 16px;font-family:var(--mono);font-size:14px;font-weight:700;cursor:pointer;border-radius:6px;flex-shrink:0;min-width:48px;min-height:44px}
+  .btn-send:active{background:#fbbf24}
+  .btn-send:disabled{opacity:.3}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:flex-end;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px 12px 0 0;padding:24px 20px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto}
+  .modal h3{font-family:var(--sans);font-weight:600;font-size:18px;margin-bottom:18px;color:var(--accent)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+  .field input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px 14px;font-family:var(--mono);font-size:14px;border-radius:6px;outline:none}
+  .field input:focus{border-color:var(--accent)}
+  .modal-btns{display:flex;gap:10px;margin-top:20px}
+  .modal-btns button{flex:1;padding:14px;font-family:var(--mono);font-size:14px;font-weight:500;cursor:pointer;border-radius:8px;border:1px solid var(--border);min-height:48px}
+  .btn-cancel{background:var(--surface2);color:var(--text-dim)}
+  .btn-create{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+
+  /* === DESKTOP (>768px) === */
+  @media(min-width:769px){
+    .quick-bar{display:none !important}
+    .main{display:flex;flex:1;overflow:hidden;min-height:0}
+    .header{padding:12px 20px}
+    .terminal-header{padding:10px 20px}
+    .terminal-output{padding:0}
+    .terminal-input-area{padding:12px 20px}
+    .terminal-input{background:transparent;border:none;padding:0;border-radius:0}
+    .terminal-input:focus{border-color:transparent}
+    .btn-send{display:none}
+    .btn-action{padding:4px 10px;font-size:11px}
+    .session-card{padding:10px 12px;min-height:auto}
+    .quick-btn{padding:4px 8px;font-size:11px}
+    .modal{border-radius:6px;max-width:380px}
+    .modal-overlay{align-items:center}
+  }
+
+  /* === MOBILE (<768px) === */
+  @media(max-width:768px){
+    .main{display:flex;flex-direction:column;flex:1;min-height:0}
+    .quick-bar{display:block}
+    .header-right .port-label{display:none}
+  }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>
-            <button class="btn btn-menu" onclick="toggleSidebar()">☰</button>
-            Terminal Hub
-        </h1>
-        <div class="header-actions">
-            <button class="btn btn-new" onclick="createTerminal()">+ New</button>
-            <button class="btn" onclick="createWTTerminal()" title="Open in Windows Terminal">+ WT</button>
-            <button class="btn" onclick="refreshList()">↻</button>
-        </div>
+
+<div class="header">
+  <div class="header-left">
+    <button class="btn-menu" onclick="toggleDrawer()" aria-label="Menu">☰</button>
+    <div class="status-dot"></div>
+    <div class="logo">WINRM <span>// HIVE</span></div>
+  </div>
+  <div class="header-right">
+    <span class="port-label">:8771</span>
+    <span class="session-count" id="sessionCount">0</span> sessions
+    <button class="btn-menu" onclick="showHelp()" title="Help" style="margin-left:8px">?</button>
+  </div>
+</div>
+
+<!-- Mobile quick connect bar -->
+<div class="quick-bar" id="quickBar">
+  <span class="qb" onclick="quickLocal('powershell')">⚡ PS</span>
+  <span class="qb" onclick="quickLocal('cmd')">CMD</span>
+  <span class="qb" onclick="quickLocal('bash')">Bash</span>
+  <span class="qb" style="opacity:0.5">|</span>
+  <span class="qb" onclick="quickConnect('192.168.1.42')">Harold</span>
+  <span class="qb" onclick="quickConnect('192.168.1.97')">Morpu</span>
+  <span class="qb" onclick="showNewSession()">+ New</span>
+</div>
+
+<!-- Drawer overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+
+<div class="main">
+  <!-- Sidebar (drawer on mobile) -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Sessions</span>
+      <button class="btn-new" onclick="showNewSession()">+ NEW</button>
     </div>
-
-    <!-- New Terminal Modal -->
-    <div class="modal-overlay" id="newTermModal" onclick="closeNewTermModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3>New Terminal</h3>
-                <button class="modal-close" onclick="closeNewTermModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Shell Type</label>
-                    <div class="shell-options">
-                        <button class="shell-btn active" data-shell="powershell" onclick="selectShell(this)">
-                            <span class="shell-icon">⚡</span>
-                            <span>PowerShell</span>
-                        </button>
-                        <button class="shell-btn" data-shell="cmd" onclick="selectShell(this)">
-                            <span class="shell-icon">▶</span>
-                            <span>CMD</span>
-                        </button>
-                        <button class="shell-btn" data-shell="bash" onclick="selectShell(this)">
-                            <span class="shell-icon">$</span>
-                            <span>Git Bash</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Name (optional)</label>
-                    <input type="text" id="newTermName" placeholder="Terminal name...">
-                </div>
-                <div class="form-group">
-                    <label>Working Directory</label>
-                    <input type="text" id="newTermCwd" value="C:\LLM-DevOSWE">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn" onclick="closeNewTermModal()">Cancel</button>
-                <button class="btn btn-new" onclick="submitNewTerminal()">Create</button>
-            </div>
-        </div>
+    <div class="sessions-list" id="sessionsList">
+      <div class="no-sessions">No active sessions.<br>Create one to begin.</div>
     </div>
-
-    <div class="main">
-        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-        <div class="sidebar">
-            <div class="sidebar-tabs">
-                <button class="sidebar-tab active" onclick="showSidebarTab('terminals')">Terminals</button>
-                <button class="sidebar-tab" onclick="showSidebarTab('processes')">Apps</button>
-            </div>
-            <div class="terminal-list" id="terminalList">
-                <!-- Terminal items will be added here -->
-            </div>
-            <div class="process-list" id="processList" style="display:none;">
-                <!-- Process items will be rendered here -->
-            </div>
-        </div>
-
-        <div class="terminal-container">
-            <div class="terminal-tabs" id="terminalTabs">
-                <!-- Tabs will be added here -->
-            </div>
-            <div class="terminal-output" id="terminalOutput">
-                <div class="empty-state">
-                    <div class="empty-state-icon">⌨</div>
-                    <div>Select or create a terminal to begin</div>
-                </div>
-            </div>
-            <div class="terminal-input-area">
-                <button class="btn" onclick="clearOutput()" title="Clear screen">CLR</button>
-                <button class="btn btn-kill" id="btnInterrupt" onclick="sendInterrupt()" title="Send Ctrl+C" style="display:none">⏹ STOP</button>
-                <input type="text" id="terminalInput" placeholder="Type command and press Enter..." onkeydown="handleInput(event)" autocomplete="off" autocapitalize="off" spellcheck="false">
-                <button class="btn btn-send" onclick="sendCommand()">Send</button>
-            </div>
-        </div>
+    <div class="quick-connect">
+      <div class="quick-label">Local Terminals</div>
+      <div class="quick-btns">
+        <button class="quick-btn" onclick="quickLocal('powershell')">PowerShell</button>
+        <button class="quick-btn" onclick="quickLocal('cmd')">CMD</button>
+        <button class="quick-btn" onclick="quickLocal('bash')">Git Bash</button>
+      </div>
+      <div class="quick-label" style="margin-top:10px">Remote (WinRM)</div>
+      <div class="quick-btns">
+        <button class="quick-btn" onclick="quickConnect('192.168.1.42')">Harold-PC</button>
+        <button class="quick-btn" onclick="quickConnect('192.168.1.97')">Morpu-PC</button>
+      </div>
     </div>
+  </div>
 
-    <script src="mobile-engine.js"></script>
-    <script>
-        const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const API_BASE = `${location.protocol}//${location.host}`;
-        const WS_BASE = `${wsProtocol}//${location.host}`;
+  <!-- Terminal -->
+  <div class="terminal-area">
+    <div class="session-tabs" id="sessionTabs"></div>
+    <div class="terminal-header">
+      <div class="terminal-title" id="terminalTitle">Select or create a session</div>
+      <div class="terminal-actions">
+        <button class="btn-action broadcast" onclick="broadcastCmd()">⚡ ALL</button>
+        <button class="btn-action stop" id="btnCancel" onclick="cancelCmd()" style="display:none">⏹ STOP</button>
+        <button class="btn-action danger" id="btnClose" onclick="closeSession()" style="display:none">✕</button>
+      </div>
+    </div>
+    <div class="terminal-output" id="output">
+      <div id="xterm-container"></div>
+      <div id="welcome-msg" class="welcome-msg">
+        <div class="big">WinRM Bridge</div>
+        <div style="margin:16px 0;text-align:left;max-width:400px;display:inline-block">
+          <div style="color:var(--accent);font-weight:600;margin-bottom:8px">Quick Start</div>
+          <div style="line-height:1.8;font-size:12px">
+            1. Tap <b>⚡ Local</b> or a machine above<br>
+            2. Type PowerShell commands<br>
+            3. Press Enter or tap <b>▶</b> to execute
+          </div>
+          <div style="color:var(--accent);font-weight:600;margin:12px 0 8px">Features</div>
+          <div style="line-height:1.8;font-size:12px">
+            <b>⏹ STOP</b> - Cancel stuck commands<br>
+            <b>⚡ ALL</b> - Broadcast to all sessions<br>
+            <b>30s timeout</b> - Auto-cancels long commands<br>
+            <b>↑↓ arrows</b> - Command history
+          </div>
+          <div style="color:var(--accent);font-weight:600;margin:12px 0 8px">Remote Sessions</div>
+          <div style="line-height:1.8;font-size:12px">
+            Tap <b>+ New</b> to connect to remote<br>
+            machines via WinRM with credentials
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="terminal-input-area" id="inputArea">
+      <span class="prompt">❯</span>
+      <input class="terminal-input" id="cmdInput" placeholder="PowerShell command..." disabled
+             onkeydown="if(event.key==='Enter'){event.preventDefault();execCmd()}"
+             enterkeyhint="send" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <select id="timeoutSelect" title="Command timeout" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);padding:8px;font-family:var(--mono);font-size:11px;border-radius:4px;cursor:pointer">
+        <option value="10000">10s</option>
+        <option value="30000" selected>30s</option>
+        <option value="60000">1m</option>
+        <option value="120000">2m</option>
+        <option value="300000">5m</option>
+        <option value="0">∞</option>
+      </select>
+      <button class="btn-send" id="btnSend" onclick="execCmd()" disabled>▶</button>
+    </div>
+  </div>
+</div>
 
-        let terminals = [];
-        let activeTerminal = null;
-        let ws = null;
+<!-- New Session Modal -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)hideModal()">
+  <div class="modal">
+    <h3>New Session</h3>
+    <div class="field"><label>Computer</label><input id="modalComputer" value="localhost" placeholder="hostname or IP" enterkeyhint="next"></div>
+    <div class="field"><label>Label</label><input id="modalLabel" placeholder="e.g. Harold-PC Shell" enterkeyhint="next"></div>
+    <div class="field"><label>Username (remote)</label><input id="modalUser" placeholder="DOMAIN\\user" enterkeyhint="next"></div>
+    <div class="field"><label>Password (remote)</label><input id="modalPass" type="password" placeholder="password" enterkeyhint="done"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="hideModal()">Cancel</button>
+      <button class="btn-create" onclick="createSession()">Create</button>
+    </div>
+  </div>
+</div>
 
-        // Fetch terminal list
-        async function refreshList() {
-            try {
-                const resp = await fetch(`${API_BASE}/api/terminals`);
-                terminals = await resp.json();
-                renderTerminalList();
-                renderTabs();
-            } catch (e) {
-                console.error('Failed to fetch terminals:', e);
-            }
+<script>
+const API='';
+const WS_BASE = `${location.protocol==='https:'?'wss:':'ws:'}//${location.host}`;
+let sessions=[],activeSession=null,hist={},cmdHistory=[],cmdHistoryIdx=-1;
+let ws=null; // WebSocket connection
+let term=null,fitAddon=null; // xterm.js terminal
+let isLocalSession=false;
+
+// Initialize xterm.js terminal
+function initXterm(){
+  if(term){term.dispose()}
+  term=new Terminal({
+    cursorBlink:true,
+    fontSize:13,
+    fontFamily:'JetBrains Mono, Consolas, monospace',
+    lineHeight:1.2,
+    theme:{
+      background:'#0a0a0c',
+      foreground:'#c8c8d0',
+      cursor:'#f59e0b',
+      cursorAccent:'#0a0a0c',
+      selectionBackground:'rgba(245,158,11,0.3)',
+      black:'#0a0a0c',
+      red:'#ef4444',
+      green:'#22c55e',
+      yellow:'#f59e0b',
+      blue:'#3b82f6',
+      magenta:'#a855f7',
+      cyan:'#06b6d4',
+      white:'#c8c8d0',
+      brightBlack:'#66666e',
+      brightRed:'#f87171',
+      brightGreen:'#4ade80',
+      brightYellow:'#fbbf24',
+      brightBlue:'#60a5fa',
+      brightMagenta:'#c084fc',
+      brightCyan:'#22d3ee',
+      brightWhite:'#f8f8f8'
+    }
+  });
+  fitAddon=new FitAddon.FitAddon();
+  term.loadAddon(fitAddon);
+  term.loadAddon(new WebLinksAddon.WebLinksAddon());
+  term.open(document.getElementById('xterm-container'));
+  fitAddon.fit();
+
+  // Handle keyboard input from xterm (for local sessions)
+  term.onData((data)=>{
+    if(ws&&ws.readyState===WebSocket.OPEN&&isLocalSession){
+      ws.send(JSON.stringify({type:'input',data}));
+    }
+  });
+}
+
+// Handle window resize for xterm
+window.addEventListener('resize',()=>{
+  if(fitAddon&&term){
+    fitAddon.fit();
+    if(ws&&ws.readyState===WebSocket.OPEN&&isLocalSession){
+      ws.send(JSON.stringify({type:'resize',cols:term.cols,rows:term.rows}));
+    }
+  }
+});
+
+function showXterm(){
+  document.getElementById('xterm-container').classList.add('active');
+  document.getElementById('welcome-msg').style.display='none';
+  if(fitAddon)setTimeout(()=>fitAddon.fit(),10);
+}
+
+function hideXterm(){
+  document.getElementById('xterm-container').classList.remove('active');
+  document.getElementById('welcome-msg').style.display='';
+}
+
+function toggleDrawer(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('drawerOverlay').classList.toggle('show');
+}
+function closeDrawer(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('show');
+}
+
+async function api(path,opts={}){
+  const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
+  return r.json();
+}
+
+async function refreshSessions(){
+  const d=await api('/sessions');sessions=d.sessions||[];
+  document.getElementById('sessionCount').textContent=sessions.length;
+  renderSessions();
+}
+
+function renderSessions(){
+  const el=document.getElementById('sessionsList');
+  const tabs=document.getElementById('sessionTabs');
+  if(!sessions.length){
+    el.innerHTML='<div class="no-sessions">No active sessions.<br>Create one to begin.</div>';
+    tabs.innerHTML='';
+    return;
+  }
+  const typeIcon=(s)=>s.type==='local'?'⌨':'🌐';
+  el.innerHTML=sessions.map(s=>`
+    <div class="session-card ${activeSession===s.sessionId?'active':''}" onclick="selectSession('${s.sessionId}')">
+      <div class="session-label">${typeIcon(s)} ${esc(s.label)}${s.running?' <span class="session-running">⏳</span>':''}${s.alive===false?' <span style="color:var(--red)">✗</span>':''}</div>
+      <div class="session-meta">
+        <span class="computer">${s.type==='local'?(s.shell||'shell'):esc(s.computer)}</span>
+        <span class="cmds">${s.commandCount} cmds</span>
+        <span>${s.running?fmtUp(s.running.elapsed)+' running':fmtUp(s.uptime)}</span>
+      </div>
+    </div>`).join('');
+  tabs.innerHTML=sessions.map(s=>`
+    <div class="stab ${activeSession===s.sessionId?'active':''}" onclick="selectSession('${s.sessionId}')">
+      <span class="sdot" style="${s.running?'background:var(--accent);box-shadow:0 0 8px var(--accent)':''}"></span>
+      ${typeIcon(s)} ${esc(s.label)}${s.running?' ⏳':''}
+      <span class="sclose" onclick="event.stopPropagation();closeSessionById('${s.sessionId}')">✕</span>
+    </div>`).join('');
+}
+
+function selectSession(id){
+  // Close existing WebSocket
+  if(ws){ws.close();ws=null;}
+
+  activeSession=id;
+  const s=sessions.find(x=>x.sessionId===id);
+  isLocalSession = s.type === 'local';
+  const typeIcon = isLocalSession ? '⌨' : '🌐';
+  document.getElementById('terminalTitle').innerHTML=`${typeIcon} <span class="name">${esc(s.label)}</span> — ${isLocalSession ? (s.shell||'shell') : esc(s.computer)}`;
+  document.getElementById('btnClose').style.display='';
+  // Show STOP button for local terminals (always available for Ctrl+C)
+  document.getElementById('btnCancel').style.display = isLocalSession ? '' : 'none';
+  closeDrawer();
+
+  // Initialize xterm if needed
+  if(!term)initXterm();
+  term.clear();
+  term.reset();
+  showXterm();
+
+  // For local sessions: hide command input (xterm handles input)
+  // For WinRM sessions: show command input
+  const inputArea=document.getElementById('inputArea');
+  if(isLocalSession){
+    inputArea.style.display='none';
+  }else{
+    inputArea.style.display='';
+    document.getElementById('cmdInput').disabled=false;
+    document.getElementById('btnSend').disabled=false;
+  }
+
+  // Connect WebSocket for streaming
+  connectWebSocket(id);
+
+  // Focus xterm for local sessions, input for WinRM
+  if(window.innerWidth>768){
+    if(isLocalSession){
+      term.focus();
+    }else{
+      document.getElementById('cmdInput').focus();
+    }
+  }
+}
+
+function connectWebSocket(sessionId){
+  ws=new WebSocket(`${WS_BASE}?session=${sessionId}`);
+  ws.onopen=()=>{
+    console.log('WebSocket connected');
+    // Send initial terminal size for local sessions
+    if(isLocalSession&&term){
+      ws.send(JSON.stringify({type:'resize',cols:term.cols,rows:term.rows}));
+    }
+  };
+  ws.onmessage=(e)=>{
+    try{
+      const msg=JSON.parse(e.data);
+      if(msg.type==='output'){
+        appendStreamOutput(msg.data);
+      }else if(msg.type==='result'){
+        // For WinRM sessions, re-enable input
+        if(!isLocalSession){
+          document.getElementById('btnCancel').style.display='none';
+          document.getElementById('cmdInput').disabled=false;
+          document.getElementById('btnSend').disabled=false;
         }
-
-        // Render terminal list in sidebar
-        function renderTerminalList() {
-            const list = document.getElementById('terminalList');
-            if (terminals.length === 0) {
-                list.innerHTML = '<div style="padding: 20px; color: var(--text-dim); text-align: center;">No terminals</div>';
-                return;
-            }
-
-            list.innerHTML = terminals.map(t => `
-                <div class="terminal-item ${activeTerminal === t.id ? 'active' : ''}" onclick="selectTerminal(${t.id})">
-                    <div class="terminal-item-header">
-                        <span class="terminal-item-title">${escapeHtml(t.title)}${t.isWT ? '<span class="wt-badge">WT</span>' : ''}</span>
-                        <span class="terminal-item-status ${t.running ? '' : 'dead'}"></span>
-                    </div>
-                    <div class="terminal-item-info">ID: ${t.id} • ${t.clients} connected${t.isWT ? ' • Windows Terminal' : ''}</div>
-                    <div class="terminal-item-actions">
-                        <button class="btn btn-kill" onclick="event.stopPropagation(); killTerminal(${t.id})">Kill</button>
-                    </div>
-                </div>
-            `).join('');
+        refreshSessions();
+      }else if(msg.type==='interrupted'){
+        if(term)term.writeln('\x1b[33m[Interrupted]\x1b[0m');
+        if(!isLocalSession){
+          document.getElementById('btnCancel').style.display='none';
+          document.getElementById('cmdInput').disabled=false;
+          document.getElementById('btnSend').disabled=false;
         }
+      }else if(msg.type==='error'){
+        if(term)term.writeln('\x1b[31m[Error: '+msg.message+']\x1b[0m');
+      }
+    }catch(err){console.error('WS parse error:',err)}
+  };
+  ws.onclose=()=>{console.log('WebSocket disconnected')};
+  ws.onerror=(e)=>{console.error('WebSocket error:',e)};
+}
 
-        // Render tabs
-        function renderTabs() {
-            const tabs = document.getElementById('terminalTabs');
-            tabs.innerHTML = terminals.map(t => `
-                <div class="terminal-tab ${activeTerminal === t.id ? 'active' : ''}" onclick="selectTerminal(${t.id})">
-                    <span>${escapeHtml(t.title)}${t.isWT ? '<span class="wt-badge">WT</span>' : ''}</span>
-                    <span class="tab-close" onclick="event.stopPropagation(); killTerminal(${t.id})" title="Close terminal">×</span>
-                </div>
-            `).join('');
-        }
+function appendStreamOutput(text){
+  if(term){
+    term.write(text);
+  }
+}
 
-        // Select terminal
-        function selectTerminal(id) {
-            if (activeTerminal === id) return;
+async function execCmd(){
+  const input=document.getElementById('cmdInput'),cmd=input.value.trim();
+  if(!cmd||!activeSession)return;
+  input.value='';cmdHistory.unshift(cmd);cmdHistoryIdx=-1;
 
-            // Close existing connection
-            if (ws) {
-                ws.close();
-                ws = null;
-            }
+  // Get timeout from selector (0 = no timeout)
+  const timeoutVal = parseInt(document.getElementById('timeoutSelect').value) || 600000;
+  const timeout = timeoutVal === 0 ? 600000 : timeoutVal; // 0 means 10 min max
 
-            activeTerminal = id;
-            renderTerminalList();
-            renderTabs();
+  // Show command in xterm for WinRM sessions
+  if(term){
+    term.writeln('\x1b[33m❯ '+cmd+'\x1b[0m');
+  }
 
-            // Clear output
-            const output = document.getElementById('terminalOutput');
-            output.innerHTML = '';
+  // Use WebSocket if connected
+  if(ws && ws.readyState===WebSocket.OPEN){
+    // For WinRM, use exec with timeout
+    document.getElementById('btnCancel').style.display='';
+    document.getElementById('cmdInput').disabled=true;
+    document.getElementById('btnSend').disabled=true;
+    ws.send(JSON.stringify({type:'exec',command:cmd,timeout}));
+  }else{
+    // Fallback to REST API (WinRM only)
+    document.getElementById('btnCancel').style.display='';
+    document.getElementById('cmdInput').disabled=true;
+    document.getElementById('btnSend').disabled=true;
+    try{
+      const d=await api(`/session/${activeSession}/exec`,{method:'POST',body:{command:cmd,timeout}});
+      if(term){
+        const output=d.success?(d.output||'(no output)'):('\x1b[31m'+d.error+'\x1b[0m');
+        term.write(output);
+        if(!output.endsWith('\n'))term.writeln('');
+      }
+    }catch(err){
+      if(term)term.writeln('\x1b[31mError: '+err.message+'\x1b[0m');
+    }
+    document.getElementById('btnCancel').style.display='none';
+    document.getElementById('cmdInput').disabled=false;
+    document.getElementById('btnSend').disabled=false;
+    refreshSessions();
+  }
+}
 
-            // Connect to terminal
-            updateStatus('connecting', 'Connecting...');
-            ws = new WebSocket(`${WS_BASE}/?id=${id}`);
+async function cancelCmd(){
+  if(!activeSession)return;
+  // Use WebSocket if connected
+  if(ws && ws.readyState===WebSocket.OPEN){
+    ws.send(JSON.stringify({type:'interrupt'}));
+  }else{
+    try{
+      await api(`/session/${activeSession}/cancel`,{method:'POST'});
+    }catch(err){console.log('Cancel failed:',err)}
+  }
+  document.getElementById('btnCancel').style.display='none';
+}
 
-            ws.onopen = () => {
-                console.log(`Connected to terminal ${id}`);
-                updateStatus('connected', 'Connected');
-                // Request current buffer
-                appendOutput('[Connected to terminal]\n');
-            };
+async function broadcastCmd(){
+  const cmd=prompt('Broadcast to ALL sessions:');
+  if(!cmd||!sessions.length)return;
+  if(term){
+    term.writeln('\x1b[35m[BROADCAST] '+cmd+'\x1b[0m');
+  }
+  const d=await api('/sessions/exec-all',{method:'POST',body:{command:cmd}});
+  if(term){
+    for(const r of(d.results||[])){
+      const s=sessions.find(x=>x.sessionId===r.sessionId);
+      const label=s?s.label:r.sessionId;
+      if(r.success){
+        term.writeln('\x1b[36m['+label+']\x1b[0m');
+        term.write(r.output||'(no output)');
+        if(!(r.output||'').endsWith('\n'))term.writeln('');
+      }else{
+        term.writeln('\x1b[31m['+label+'] Error: '+r.error+'\x1b[0m');
+      }
+    }
+  }
+  refreshSessions();
+}
 
-            ws.onmessage = (event) => {
-                try {
-                    const msg = JSON.parse(event.data);
-                    if (msg.type === 'output') {
-                        appendOutput(msg.data);
-                    } else if (msg.type === 'exit') {
-                        appendOutput(`\n[Process exited with code ${msg.code}]\n`);
-                        updateStatus('disconnected', 'Exited');
-                        refreshList();
-                    } else if (msg.type === 'error') {
-                        appendOutput(`[Error: ${msg.message}]\n`);
-                        updateStatus('error', 'Error');
-                    }
-                } catch (e) {
-                    console.error('Parse error:', e);
-                }
-            };
+async function closeSession(){
+  if(!activeSession||!confirm('Close session?'))return;
+  await closeSessionById(activeSession);
+}
 
-            ws.onclose = () => {
-                console.log(`Disconnected from terminal ${id}`);
-                updateStatus('disconnected', 'Disconnected');
-            };
+async function closeSessionById(id){
+  await api(`/session/${id}`,{method:'DELETE'});
+  delete hist[id];
+  if(activeSession===id){
+    activeSession=null;
+    isLocalSession=false;
+    if(ws){ws.close();ws=null;}
+    document.getElementById('terminalTitle').textContent='Select or create a session';
+    document.getElementById('btnClose').style.display='none';
+    document.getElementById('btnCancel').style.display='none';
+    document.getElementById('inputArea').style.display='';
+    document.getElementById('cmdInput').disabled=true;
+    document.getElementById('btnSend').disabled=true;
+    hideXterm();
+  }
+  await refreshSessions();
+  // Auto-select another session if available
+  if(!activeSession&&sessions.length) selectSession(sessions[0].sessionId);
+}
 
-            ws.onerror = (e) => {
-                console.error('WebSocket error:', e);
-                updateStatus('error', 'Connection Error');
-            };
+function showNewSession(){closeDrawer();document.getElementById('modal').classList.add('show')}
+function hideModal(){document.getElementById('modal').classList.remove('show')}
 
-            // Close sidebar on mobile
-            if (window.innerWidth <= 768) {
-                toggleSidebar(false);
-            }
+async function createSession(){
+  const computer=document.getElementById('modalComputer').value.trim()||'localhost';
+  const label=document.getElementById('modalLabel').value.trim();
+  const user=document.getElementById('modalUser').value.trim();
+  const pass=document.getElementById('modalPass').value;
+  const body={computer};if(label)body.label=label;
+  if(user&&pass)body.credentials={username:user,password:pass};
+  const d=await api('/session/create',{method:'POST',body});
+  hideModal();
+  if(d.success){await refreshSessions();selectSession(d.sessionId)}
+  else{alert('Failed: '+d.error)}
+  document.getElementById('modalLabel').value='';
+  document.getElementById('modalUser').value='';
+  document.getElementById('modalPass').value='';
+}
 
-            // Focus input
-            document.getElementById('terminalInput').focus();
-        }
+// Create local terminal
+async function quickLocal(shell){
+  const names={powershell:'PowerShell',cmd:'CMD',bash:'Git Bash'};
+  const d=await api('/session/create',{method:'POST',body:{type:'local',shell,label:names[shell]||shell}});
+  if(d.success){await refreshSessions();selectSession(d.sessionId)}
+  else{alert('Failed: '+d.error)}
+}
 
-        // Append output to terminal
-        function appendOutput(text) {
-            const output = document.getElementById('terminalOutput');
+// Create remote WinRM session
+async function quickConnect(computer){
+  const names={'192.168.1.42':'Harold-PC','192.168.1.97':'Morpu-PC','192.168.1.162':'AI-PC','192.168.1.192':'Rock-PC'};
+  const d=await api('/session/create',{method:'POST',body:{type:'winrm',computer,label:names[computer]||computer}});
+  if(d.success){await refreshSessions();selectSession(d.sessionId)}
+  else{alert('Failed: '+d.error)}
+}
 
-            // Strip ANSI escape codes
-            let clean = text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+// Keyboard history (desktop)
+document.getElementById('cmdInput').addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'){e.preventDefault();if(cmdHistoryIdx<cmdHistory.length-1){cmdHistoryIdx++;e.target.value=cmdHistory[cmdHistoryIdx]}}
+  if(e.key==='ArrowDown'){e.preventDefault();if(cmdHistoryIdx>0){cmdHistoryIdx--;e.target.value=cmdHistory[cmdHistoryIdx]}else{cmdHistoryIdx=-1;e.target.value=''}}
+});
 
-            // Create text node to preserve whitespace
-            const span = document.createElement('span');
-            span.textContent = clean;
-            output.appendChild(span);
+// Handle mobile keyboard resize
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{
+    document.body.style.height=window.visualViewport.height+'px';
+  });
+  window.visualViewport.addEventListener('scroll',()=>{
+    document.body.style.height=window.visualViewport.height+'px';
+  });
+}
 
-            // Auto-scroll to bottom
-            output.scrollTop = output.scrollHeight;
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function fmtUp(ms){const s=Math.floor(ms/1000);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h'}
 
-            // Update status
-            updateStatus('connected', 'Receiving...');
-        }
+function showHelp(){
+  // Hide xterm and show welcome message area with help content
+  hideXterm();
+  const welcomeEl=document.getElementById('welcome-msg');
+  welcomeEl.innerHTML=`
+<div style="text-align:left;line-height:1.8;display:inline-block;max-width:450px">
+<h3 style="color:var(--accent);margin:0 0 12px;font-family:var(--sans)">WinRM Bridge Help</h3>
 
-        // Update connection status
-        function updateStatus(state, text) {
-            let status = document.getElementById('connStatus');
-            if (!status) {
-                status = document.createElement('div');
-                status.id = 'connStatus';
-                status.style.cssText = 'position:fixed;top:60px;right:10px;padding:6px 12px;border-radius:4px;font-size:11px;z-index:999;';
-                document.body.appendChild(status);
-            }
-            status.textContent = text || state;
-            status.style.background = state === 'connected' ? 'var(--green)' :
-                                      state === 'connecting' ? 'var(--amber)' : 'var(--red)';
-            status.style.color = '#000';
-        }
+<b style="color:var(--accent)">Keyboard Shortcuts</b>
+<div style="margin:4px 0 12px;font-size:12px">
+  <b>Enter</b> - Execute command<br>
+  <b>↑ / ↓</b> - Navigate command history<br>
+  <b>Ctrl+C</b> - Send interrupt to terminal
+</div>
 
-        // Clear terminal output
-        function clearOutput() {
-            document.getElementById('terminalOutput').innerHTML = '';
-        }
+<b style="color:var(--accent)">Buttons</b>
+<div style="margin:4px 0 12px;font-size:12px">
+  <b>⚡ Local</b> - Quick connect to localhost<br>
+  <b>⏹ STOP</b> - Cancel running command (Ctrl+C)<br>
+  <b>⚡ ALL</b> - Broadcast to all sessions<br>
+  <b>+ NEW</b> - Create session (local or remote)
+</div>
 
-        // Handle input
-        function handleInput(event) {
-            if (event.key === 'Enter') {
-                sendCommand();
-            }
-        }
+<b style="color:var(--accent)">Session Types</b>
+<div style="margin:4px 0 12px;font-size:12px">
+  <b>Local (⌨)</b> - Full interactive PTY terminal<br>
+  Supports colors, cursor movement, interactive CLIs<br><br>
+  <b>Remote (🌐)</b> - WinRM command execution<br>
+  Enter commands in input box below terminal
+</div>
 
-        // Send command
-        function sendCommand() {
-            const input = document.getElementById('terminalInput');
-            const cmd = input.value;
+<b style="color:var(--accent)">API</b>
+<div style="margin:4px 0;font-size:12px">
+  REST: <code>http://localhost:8771/sessions</code><br>
+  WebSocket: <code>ws://localhost:8771?session=ID</code>
+</div>
+</div>`;
+  welcomeEl.style.display='';
+}
 
-            if (!ws || ws.readyState !== WebSocket.OPEN) {
-                alert('Not connected to a terminal');
-                return;
-            }
-
-            // Send with newline (Enter)
-            ws.send(JSON.stringify({ type: 'input', data: cmd + '\r\n' }));
-            input.value = '';
-
-            // Show interrupt button when command is sent
-            document.getElementById('btnInterrupt').style.display = '';
-        }
-
-        // Send interrupt (Ctrl+C)
-        function sendInterrupt() {
-            if (!ws || ws.readyState !== WebSocket.OPEN) {
-                return;
-            }
-            ws.send(JSON.stringify({ type: 'interrupt' }));
-            document.getElementById('btnInterrupt').style.display = 'none';
-        }
-
-        // Cancel via API (for external use)
-        async function cancelCommand() {
-            if (!activeTerminal) return;
-            try {
-                await fetch(`${API_BASE}/api/terminals/${activeTerminal}/cancel`, { method: 'POST' });
-                document.getElementById('btnInterrupt').style.display = 'none';
-            } catch (e) {
-                console.error('Failed to cancel:', e);
-            }
-        }
-
-        // New terminal modal
-        let selectedShell = 'powershell';
-
-        function createTerminal() {
-            document.getElementById('newTermModal').classList.add('open');
-            document.getElementById('newTermName').value = '';
-            document.getElementById('newTermCwd').value = 'C:\\LLM-DevOSWE';
-        }
-
-        function closeNewTermModal(event) {
-            if (!event || event.target.classList.contains('modal-overlay')) {
-                document.getElementById('newTermModal').classList.remove('open');
-            }
-        }
-
-        function selectShell(btn) {
-            document.querySelectorAll('.shell-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            selectedShell = btn.dataset.shell;
-        }
-
-        async function submitNewTerminal() {
-            const name = document.getElementById('newTermName').value || `${selectedShell.charAt(0).toUpperCase() + selectedShell.slice(1)} ${terminals.length + 1}`;
-            const cwd = document.getElementById('newTermCwd').value || 'C:\\LLM-DevOSWE';
-
-            try {
-                const resp = await fetch(`${API_BASE}/api/terminals`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: name, cwd, shell: selectedShell })
-                });
-                const data = await resp.json();
-                closeNewTermModal();
-                await refreshList();
-                if (data.id) selectTerminal(data.id);
-            } catch (e) {
-                alert('Failed to create terminal: ' + e.message);
-            }
-        }
-
-        // Create terminal in Windows Terminal
-        async function createWTTerminal() {
-            const shell = prompt('Shell type (powershell, cmd, bash):', 'powershell') || 'powershell';
-            const name = prompt('Terminal name:', `WT ${shell}`) || `WT ${shell}`;
-            const cwd = prompt('Working directory:', 'C:\\LLM-DevOSWE') || 'C:\\LLM-DevOSWE';
-
-            try {
-                const resp = await fetch(`${API_BASE}/api/terminals/wt`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: name, cwd, shell })
-                });
-                const data = await resp.json();
-                if (data.error) {
-                    alert('Failed: ' + data.error);
-                    return;
-                }
-                await refreshList();
-                if (data.id) {
-                    selectTerminal(data.id);
-                    alert(`Windows Terminal tab opened!\n\nTerminal ID: ${data.id}\nThe tab will appear in your taskbar.`);
-                }
-            } catch (e) {
-                alert('Failed to create WT terminal: ' + e.message);
-            }
-        }
-
-        // Kill terminal
-        async function killTerminal(id) {
-            if (!confirm('Kill this terminal?')) return;
-
-            try {
-                await fetch(`${API_BASE}/api/terminals/${id}`, { method: 'DELETE' });
-                if (activeTerminal === id) {
-                    activeTerminal = null;
-                    if (ws) {
-                        ws.close();
-                        ws = null;
-                    }
-                    document.getElementById('terminalOutput').innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">⌨</div>
-                            <div>Select or create a terminal to begin</div>
-                        </div>
-                    `;
-                }
-                await refreshList();
-            } catch (e) {
-                alert('Failed to kill terminal: ' + e.message);
-            }
-        }
-
-        // Toggle sidebar (mobile)
-        function toggleSidebar(force) {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            const isOpen = force !== undefined ? force : !sidebar.classList.contains('open');
-
-            sidebar.classList.toggle('open', isOpen);
-            overlay.classList.toggle('open', isOpen);
-        }
-
-        // Escape HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Sidebar tab switching
-        function showSidebarTab(tab) {
-            document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`.sidebar-tab[onclick*="${tab}"]`).classList.add('active');
-
-            document.getElementById('terminalList').style.display = tab === 'terminals' ? 'block' : 'none';
-            document.getElementById('processList').style.display = tab === 'processes' ? 'block' : 'none';
-
-            if (tab === 'processes') {
-                refreshProcesses();
-            }
-        }
-
-        // Fetch running processes
-        let processes = [];
-        async function refreshProcesses() {
-            try {
-                const resp = await fetch(`${API_BASE}/api/processes`);
-                processes = await resp.json();
-                renderProcessList();
-            } catch (e) {
-                console.error('Failed to fetch processes:', e);
-            }
-        }
-
-        // Render process list
-        function renderProcessList() {
-            const list = document.getElementById('processList');
-            const filterCheckbox = document.getElementById('filterWindowed');
-            const filterWindowed = filterCheckbox ? filterCheckbox.checked : false;
-
-            // Filter processes
-            let filtered = processes;
-            if (filterWindowed) {
-                filtered = processes.filter(p => p.title && p.title.trim().length > 0);
-            }
-
-            if (filtered.length === 0) {
-                list.innerHTML = `
-                    <div class="process-filter">
-                        <input type="checkbox" id="filterWindowed" ${filterWindowed ? 'checked' : ''} onchange="refreshProcesses()">
-                        <label for="filterWindowed">Only apps with windows</label>
-                    </div>
-                    <div style="padding: 20px; color: var(--text-dim); text-align: center;">No processes found</div>
-                `;
-                return;
-            }
-
-            list.innerHTML = `
-                <div class="process-filter">
-                    <input type="checkbox" id="filterWindowed" ${filterWindowed ? 'checked' : ''} onchange="renderProcessList()">
-                    <label for="filterWindowed">Only apps with windows</label>
-                </div>
-            ` + filtered.map(p => `
-                <div class="process-item">
-                    <div class="process-name">${escapeHtml(p.name)}</div>
-                    <div class="process-info">
-                        <span>PID: ${p.pid}</span>
-                        <span>CPU: ${p.cpu}%</span>
-                        <span>RAM: ${p.memory}MB</span>
-                    </div>
-                    <div class="process-title ${p.title ? '' : 'empty'}">${p.title ? escapeHtml(p.title) : '(no window title)'}</div>
-                    <div class="process-actions">
-                        <button class="btn" onclick="runInTerminal('${escapeHtml(p.name)}', ${p.pid})">Attach</button>
-                        <button class="btn btn-kill" onclick="killProcess(${p.pid}, '${escapeHtml(p.name)}')">Kill</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Attach to a process (create monitor terminal)
-        async function runInTerminal(name, pid) {
-            try {
-                const resp = await fetch(`${API_BASE}/api/processes/attach`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pid, name })
-                });
-                const data = await resp.json();
-                if (data.id) {
-                    await refreshList();
-                    selectTerminal(data.id);
-                    // Switch to terminals tab
-                    showSidebarTab('terminals');
-                }
-            } catch (e) {
-                alert('Failed to attach: ' + e.message);
-            }
-        }
-
-        // Kill a process
-        async function killProcess(pid, name) {
-            if (!confirm(`Kill process ${name} (PID: ${pid})?`)) return;
-
-            try {
-                await fetch(`${API_BASE}/api/processes/kill`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pid })
-                });
-                await refreshProcesses();
-            } catch (e) {
-                alert('Failed to kill process: ' + e.message);
-            }
-        }
-
-        // Initialize
-        refreshList();
-
-        // Auto-refresh every 10 seconds
-        setInterval(refreshList, 10000);
-
-        // Auto-select first terminal if available
-        setTimeout(() => {
-            if (terminals.length > 0 && !activeTerminal) {
-                selectTerminal(terminals[0].id);
-            }
-        }, 500);
-    </script>
+refreshSessions();setInterval(refreshSessions,10000);
+</script>
 </body>
 </html>
