@@ -10,6 +10,27 @@ class GTNFlightPlan {
         this.serverPort = options.serverPort || 8080;
         this.syncChannel = options.syncChannel || null;
 
+        // Waypoint sequencing constants
+        this.SEQUENCING = {
+            DEBOUNCE_MS: 3000,           // Minimum time between sequences (ms)
+            MIN_THRESHOLD_NM: 0.5,       // Minimum sequence distance (NM)
+            LEG_PERCENT: 0.1,            // Sequence at 10% of leg distance
+            MIN_GROUND_SPEED: 15,        // Minimum speed to sequence (kt)
+            MAX_TRACK_ERROR: 120,        // Maximum track error to sequence (°)
+            CLOSE_PROXIMITY_NM: 0.2,     // Very close - sequence regardless of track (NM)
+            DEFAULT_LEG_DIST: 5          // Default leg distance if unknown (NM)
+        };
+
+        // Audio chime settings
+        this.AUDIO = {
+            FREQUENCY_HZ: 880,           // Sequence chime frequency (Hz)
+            DURATION_SEC: 0.15,          // Chime duration (seconds)
+            VOLUME: 0.1                  // Volume (0.0 - 1.0)
+        };
+
+        // Polling interval
+        this.FETCH_INTERVAL_MS = 30000;  // Flight plan fetch interval (30s)
+
         // Flight plan state
         this.flightPlan = null;
         this.activeWaypointIndex = 0;
@@ -46,7 +67,7 @@ class GTNFlightPlan {
         } catch (e) {
             console.log('[GTN750] No flight plan');
         }
-        this._fetchTimer = setTimeout(() => this.fetchFlightPlan(), 30000);
+        this._fetchTimer = setTimeout(() => this.fetchFlightPlan(), this.FETCH_INTERVAL_MS);
     }
 
     updateFplHeader() {
@@ -211,7 +232,7 @@ class GTNFlightPlan {
      */
     checkWaypointSequencing(data, obsSuspended) {
         const now = Date.now();
-        if (now - this.lastSequenceTime < 3000) return;
+        if (now - this.lastSequenceTime < this.SEQUENCING.DEBOUNCE_MS) return;
 
         if (obsSuspended) return;
         if (!this.flightPlan?.waypoints?.length) return;
@@ -226,17 +247,17 @@ class GTNFlightPlan {
             wp.lat, wp.lng
         );
 
-        const legDist = wp.distanceFromPrev || 5;
-        const threshold = Math.min(0.5, legDist * 0.1);
+        const legDist = wp.distanceFromPrev || this.SEQUENCING.DEFAULT_LEG_DIST;
+        const threshold = Math.min(this.SEQUENCING.MIN_THRESHOLD_NM, legDist * this.SEQUENCING.LEG_PERCENT);
 
-        if (dist <= threshold && data.groundSpeed > 15) {
+        if (dist <= threshold && data.groundSpeed > this.SEQUENCING.MIN_GROUND_SPEED) {
             const brg = this.core.calculateBearing(
                 data.latitude, data.longitude,
                 wp.lat, wp.lng
             );
             const trackError = Math.abs(this.core.normalizeAngle(data.track - brg));
 
-            if (trackError < 120 || dist < 0.2) {
+            if (trackError < this.SEQUENCING.MAX_TRACK_ERROR || dist < this.SEQUENCING.CLOSE_PROXIMITY_NM) {
                 this.sequenceToNextWaypoint();
             }
         }
@@ -303,12 +324,13 @@ class GTNFlightPlan {
             gain.connect(this.audioContext.destination);
 
             osc.type = 'sine';
-            osc.frequency.value = 880;
-            gain.gain.value = 0.1;
+            osc.frequency.value = this.AUDIO.FREQUENCY_HZ;
+            gain.gain.value = this.AUDIO.VOLUME;
 
+            const stopTime = this.audioContext.currentTime + this.AUDIO.DURATION_SEC;
             osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
-            osc.stop(this.audioContext.currentTime + 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.001, stopTime);
+            osc.stop(stopTime);
         } catch (e) {
             // Ignore audio errors
         }
