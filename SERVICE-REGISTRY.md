@@ -1,6 +1,16 @@
 # Service Registry
-**Last Updated:** 2026-01-31
+**Last Updated:** 2026-02-09
 **Single source of truth for all services, ports, and endpoints**
+
+> **Note:** This registry is manually maintained. See `Admin/orchestrator/orchestrator.js` for the authoritative runtime service configuration.
+
+## 📝 Recent Corrections (2026-02-09)
+- ✅ **Removed:** bible-summary (port 8900) - Vite frontend app with no backend server
+- ✅ **Added:** Claude Bridge Active (port 8601) - Production service documentation
+- ✅ **Marked:** Claude Bridge (port 8700) as INACTIVE - WebSocket prototype not running
+- ✅ **Marked:** Terminal Bridge (port 8701) as DEPRECATED - Port conflict with Hive-Mind
+- ✅ **Clarified:** Hive Brain services - Two implementations pending consolidation
+- 📋 **Reference:** See `docs/reports/HIVE-DUPLICATE-AUDIT-2026-02-09.md` for full analysis
 
 ## HiveStore (Persistence Layer)
 All Hive services use **HiveStore** - unified SQLite backend with `better-sqlite3` + WAL mode.
@@ -93,10 +103,10 @@ Get-Service Hive* | Start-Service
 | 8860 | MCP-Hive Bridge | Core | `node C:\LLM-DevOSWE\Admin\mcp-bridge\server.js` |
 | 8870 | Hive Voice | Optional | `node C:\LLM-DevOSWE\Admin\hive-voice\voice-server.js` |
 | 8875 | VoiceAccess | Core | `node C:\LLM-DevOSWE\Admin\voiceaccess\server.js` |
+| 8601 | Claude Bridge (Active) | Core | `node C:\LLM-DevOSWE\Admin\claude-bridge\bridge-server.js` |
 | 8766 | Kinship | Optional | `node C:\kinship\server.js` |
 | 8899 | Hive Dashboard | Core | `node C:\LLM-DevOSWE\Admin\hive-dashboard\server.js` |
 | 8900 | silverstream | Optional | `node C:/Projects/silverstream\server.js` |
-| 8900 | bible-summary | Optional | `node C:/Projects/bible-summary\server.js` |
 
 ---
 
@@ -120,6 +130,11 @@ Get-Service Hive* | Start-Service
   - `POST /api/intel/curated/collect` - Trigger fresh intel collection
   - `POST /api/intel/curated/:id/approve` - Approve intel item
   - `POST /api/intel/curated/:id/reject` - Reject intel item
+  - `POST /api/intel/curated/:id/implement` - Queue item for implementation
+  - `GET /api/intel/curated/briefing?days=7&llm=true` - Generate briefing from approved items
+  - `POST /api/intel/curated/auto-queue` - Auto-queue high-priority items (body: {threshold, dryRun})
+  - `POST /api/intel/curated/consume` - Full consumption (briefing + auto-queue)
+  - `GET /api/intel/curated/consumption-status` - Get consumption tracking stats
 - **Database:** `C:\LLM-Oracle\oracle-data\memory.json`
 
 ### Relay (Port 8600)
@@ -224,11 +239,12 @@ Get-Service Hive* | Start-Service
   - 16 agents for task orchestration
   - Part of DevClaude Hivemind system
 
-### Hive Brain (Port 8810)
+### Hive Brain Discovery (Port 8810)
 - **Location:** `C:\LLM-DevOSWE\Admin\hive-brain\hive-brain.js`
 - **NSSM Service:** HiveBrain
 - **Purpose:** Device discovery and colony management
 - **UI:** `http://localhost:8810`
+- **Note:** ⚠️ Orchestrator also references `server.js` on port 8800 in same directory - see consolidation plan in duplicate audit report
 - **Endpoints:**
   - `GET /api/health` - Health check
   - `POST /api/discover` - Trigger network scan
@@ -245,6 +261,7 @@ Get-Service Hive* | Start-Service
   - Device fingerprinting (OS, services)
   - Approval workflow for new devices
   - Background scanning every 5 minutes
+  - JSON file persistence
 
 ### Master Mind (Port 8820)
 - **Location:** `C:\LLM-DevOSWE\Admin\master-mind\master-mind.js`
@@ -378,6 +395,26 @@ Get-Service Hive* | Start-Service
 - **Location:** `C:\LLM-DevOSWE\Admin\claude-bridge\smart-router.js`
 - **Purpose:** Routes to Claude Code (priority) or fallback LLM (Ollama/Iris)
 
+### Claude Bridge - Active (Port 8601)
+- **Location:** `C:\LLM-DevOSWE\Admin\claude-bridge\bridge-server.js`
+- **Status:** ✅ **PRODUCTION** - Currently running
+- **Purpose:** Automatic task processor for Kitt - picks up tasks from relay queue
+- **Features:**
+  - Auto-consumes tasks from relay queue
+  - Spawns Claude Code CLI for each task
+  - Sends responses back to relay
+  - HTTP API for direct requests
+  - Health monitoring and status
+- **Endpoints:**
+  - `GET /api/health` - Service health with consumer ID and stats
+  - `POST /api/execute` - Execute task directly
+  - `GET /api/status` - Detailed service status
+- **Configuration:**
+  - Poll interval: 3s
+  - Task timeout: 10 minutes
+  - Auto-consume: Enabled
+  - Max concurrent: 1
+
 ### Browser Bridge (Port 8620)
 - **Location:** `C:\LLM-DevOSWE\Admin\browser-extension\bridge-server.js`
 - **Purpose:** Browser automation API, tab control, screenshots
@@ -386,12 +423,16 @@ Get-Service Hive* | Start-Service
 - **Location:** `C:\LLM-DevOSWE\Admin\google-drive\drive-service.js`
 - **Purpose:** Google Drive API, document backup, OAuth
 
-### Claude Bridge (Port 8700)
+### Claude Bridge (Port 8700) - INACTIVE
 - **Location:** `C:\LLM-DevOSWE\Admin\claude-bridge\bridge-service.js`
+- **Status:** ⚠️ **NOT RUNNING** - WebSocket bridge prototype
 - **Purpose:** WebSocket bridge to Claude Code CLI
+- **Note:** Port 8601 (bridge-server.js) is the active production service
 
-### Terminal Bridge (Port 8701)
+### Terminal Bridge (Port 8701) - DEPRECATED
 - **Location:** `C:\LLM-DevOSWE\Admin\terminal-bridge\terminal-bridge.js`
+- **Status:** ⚠️ **PORT CONFLICT** - Port 8701 used by Hive-Mind Monitor
+- **Replacement:** Terminal Hub (Port 8771) provides this functionality
 - **Purpose:** Streams Claude Code output to Command Center
 
 ### PMS50 GTN750 (Port 8830)
