@@ -29,12 +29,19 @@ class ThemeSwitcher {
     }
 
     initSyncListener() {
-        const channel = new BroadcastChannel('SimGlass-theme');
-        channel.onmessage = (event) => {
+        this._syncChannel = new BroadcastChannel('SimGlass-theme');
+        this._syncChannel.onmessage = (event) => {
             if (event.data.type === 'theme-change' && event.data.theme) {
                 this.applyTheme(event.data.theme, false);
             }
         };
+    }
+
+    destroy() {
+        if (this._syncChannel) {
+            this._syncChannel.close();
+            this._syncChannel = null;
+        }
     }
 
     loadTheme() {
