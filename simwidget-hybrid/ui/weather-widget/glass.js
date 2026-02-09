@@ -175,7 +175,7 @@ Vis: ${visibility.display} ${visibility.unit || ''}
 QNH: ${pressure.display} ${pressure.unit || ''}
 Category: ${category}`;
 
-        const syncChannel = new BroadcastChannel('SimGlass-sync');
+        const syncChannel = new SafeChannel('SimGlass-sync');
         syncChannel.postMessage({
             type: 'copy-route',
             data: { text: weatherText }

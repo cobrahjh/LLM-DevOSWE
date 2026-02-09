@@ -17,7 +17,7 @@ class FlightDashboard {
 
     initVoiceListener() {
         // Listen for voice commands from SimGlass-sync channel
-        const syncChannel = new BroadcastChannel('SimGlass-sync');
+        const syncChannel = new SafeChannel('SimGlass-sync');
         syncChannel.onmessage = (event) => {
             const { type, data } = event.data;
 

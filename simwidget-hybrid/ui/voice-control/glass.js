@@ -366,7 +366,7 @@ class VoiceControlGlass extends SimGlassBase {
         };
 
         // Use BroadcastChannel API for cross-glass communication
-        const channel = new BroadcastChannel('SimGlass-checklist');
+        const channel = new SafeChannel('SimGlass-checklist');
         channel.postMessage(action);
         channel.close();
 
@@ -380,7 +380,7 @@ class VoiceControlGlass extends SimGlassBase {
     }
 
     async executeDashboard(cmd) {
-        const channel = new BroadcastChannel('SimGlass-sync');
+        const channel = new SafeChannel('SimGlass-sync');
 
         if (cmd.layout) {
             // Change dashboard layout
@@ -404,7 +404,7 @@ class VoiceControlGlass extends SimGlassBase {
     }
 
     async executeWidget(cmd) {
-        const channel = new BroadcastChannel('SimGlass-sync');
+        const channel = new SafeChannel('SimGlass-sync');
 
         switch (cmd.glass) {
             case 'weather':

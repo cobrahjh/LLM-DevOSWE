@@ -331,7 +331,7 @@ class ChecklistGlass extends SimGlassBase {
     // Voice control integration
     initVoiceControl() {
         // Listen for voice commands via BroadcastChannel
-        this._voiceChannel = new BroadcastChannel('SimGlass-checklist');
+        this._voiceChannel = new SafeChannel('SimGlass-checklist');
         this._voiceChannel.onmessage = (event) => {
             this.handleVoiceCommand(event.data);
         };

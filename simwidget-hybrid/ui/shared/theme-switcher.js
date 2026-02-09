@@ -29,7 +29,7 @@ class ThemeSwitcher {
     }
 
     initSyncListener() {
-        this._syncChannel = new BroadcastChannel('SimGlass-theme');
+        this._syncChannel = new SafeChannel('SimGlass-theme');
         this._syncChannel.onmessage = (event) => {
             if (event.data.type === 'theme-change' && event.data.theme) {
                 this.applyTheme(event.data.theme, false);
@@ -97,7 +97,7 @@ class ThemeSwitcher {
 
         // Broadcast to other widgets
         if (broadcast) {
-            const channel = new BroadcastChannel('SimGlass-theme');
+            const channel = new SafeChannel('SimGlass-theme');
             channel.postMessage({ type: 'theme-change', theme });
             channel.close();
         }

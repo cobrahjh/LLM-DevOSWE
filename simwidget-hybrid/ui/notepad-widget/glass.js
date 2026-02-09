@@ -34,7 +34,7 @@ class NotepadGlass extends SimGlassBase {
 
     initSyncListener() {
         // Cross-glass communication
-        this.syncChannel = new BroadcastChannel('SimGlass-sync');
+        this.syncChannel = new SafeChannel('SimGlass-sync');
 
         this.syncChannel.onmessage = (event) => {
             const { type, data } = event.data;

@@ -32,7 +32,7 @@ class CockpitSync {
         };
 
         // BroadcastChannel for same-device tabs
-        this.localChannel = new BroadcastChannel('cockpit-sync-local');
+        this.localChannel = new SafeChannel('cockpit-sync-local');
         this.localChannel.onmessage = (e) => this.handleLocalMessage(e.data);
 
         // Load saved session

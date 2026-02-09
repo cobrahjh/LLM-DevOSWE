@@ -52,7 +52,7 @@ class MapGlass extends SimGlassBase {
         this._pollTimeout = null;
 
         // Cross-glass communication
-        this.syncChannel = new BroadcastChannel('SimGlass-sync');
+        this.syncChannel = new SafeChannel('SimGlass-sync');
         this.initSyncListener();
 
         this.initMap();

@@ -49,7 +49,7 @@ class VatsimLiveGlass extends SimGlassBase {
         this.followedAircraftData = null;
 
         // BroadcastChannel for map integration
-        this.mapChannel = new BroadcastChannel('simglass-sync');
+        this.mapChannel = new SafeChannel('simglass-sync');
 
         this.loadSettings();
         this.initUI();

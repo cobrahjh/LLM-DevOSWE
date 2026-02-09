@@ -526,7 +526,7 @@ class Dashboard {
             }
 
             // Broadcast settings to other widgets
-            const channel = new BroadcastChannel('simglass-voice-settings');
+            const channel = new SafeChannel('simglass-voice-settings');
             channel.postMessage({
                 enabled: this.voiceEnabled.checked,
                 voice: this.voiceSelect.value,

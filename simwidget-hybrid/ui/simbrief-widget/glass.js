@@ -398,7 +398,7 @@ class SimBriefGlass extends SimGlassBase {
             const waypoints = this.parseRouteToWaypoints(this.ofpData);
 
             // Use unified sync channel for all widgets
-            const syncChannel = new BroadcastChannel('SimGlass-sync');
+            const syncChannel = new SafeChannel('SimGlass-sync');
             syncChannel.postMessage({
                 type: 'simbrief-plan',
                 data: {

@@ -112,7 +112,7 @@ class GTN750Glass extends SimGlassBase {
         this._softKeyRetries = 0;
 
         // Cross-glass sync
-        this.syncChannel = new BroadcastChannel('SimGlass-sync');
+        this.syncChannel = new SafeChannel('SimGlass-sync');
 
         // Create critical module instances (loaded immediately)
         this.dataFieldsManager = new GTNDataFields({ core: this.core });

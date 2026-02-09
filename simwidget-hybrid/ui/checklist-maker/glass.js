@@ -60,7 +60,7 @@ class ChecklistMaker extends SimGlassBase {
         try {
             localStorage.setItem('custom-checklists', JSON.stringify(this.customChecklists));
             // Notify checklist glass of update
-            const channel = new BroadcastChannel('SimGlass-checklists');
+            const channel = new SafeChannel('SimGlass-checklists');
             channel.postMessage({ type: 'checklists-updated', data: this.customChecklists });
             channel.close();
         } catch (e) {

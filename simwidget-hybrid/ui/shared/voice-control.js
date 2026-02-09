@@ -184,7 +184,7 @@ class VoiceControl {
 
         // Send via BroadcastChannel
         try {
-            const channel = new BroadcastChannel('SimGlass-checklist');
+            const channel = new SafeChannel('SimGlass-checklist');
             channel.postMessage(command);
             channel.close();
         } catch (e) {

@@ -139,7 +139,7 @@ function initChannel() {
     if (themeChannel) return themeChannel;
 
     try {
-        themeChannel = new BroadcastChannel(CHANNEL_NAME);
+        themeChannel = new SafeChannel(CHANNEL_NAME);
         themeChannel.onmessage = (event) => {
             if (event.data && event.data.type === 'theme-change' && event.data.theme) {
                 // Apply without broadcasting to avoid loops

@@ -296,7 +296,7 @@ Gross Weight: ${Math.round(this.lastCalc.grossWeight)} lbs (Max: ${data.maxWeigh
 CG Position: ${this.lastCalc.cg.toFixed(1)} in (${data.cgRange.min}-${data.cgRange.max})
 Status: ${this.lastCalc.withinWeight && this.lastCalc.withinCG ? 'WITHIN LIMITS' : 'CHECK LIMITS'}`;
 
-        const channel = new BroadcastChannel('SimGlass-sync');
+        const channel = new SafeChannel('SimGlass-sync');
         channel.postMessage({ type: 'copy-route', data: { text } });
         channel.close();
     }

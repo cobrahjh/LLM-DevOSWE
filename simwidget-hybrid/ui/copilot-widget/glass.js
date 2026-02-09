@@ -97,7 +97,7 @@ class AICopilot extends SimGlassBase {
         this.flightPlan = null;
 
         // Cross-glass communication
-        this.syncChannel = new BroadcastChannel('simglass-sync');
+        this.syncChannel = new SafeChannel('simglass-sync');
         this.initSyncListener();
 
         this.init();

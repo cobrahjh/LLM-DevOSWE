@@ -147,7 +147,7 @@ Total Required: ${this.lastCalc.totalFuel.toFixed(1)} gal
 Flight Time: ${this.formatTime(this.lastCalc.flightTimeMins)}
 Ground Speed: ${Math.round(this.lastCalc.groundSpeed)} kt`;
 
-        const channel = new BroadcastChannel('SimGlass-sync');
+        const channel = new SafeChannel('SimGlass-sync');
         channel.postMessage({ type: 'copy-route', data: { text } });
         channel.close();
     }

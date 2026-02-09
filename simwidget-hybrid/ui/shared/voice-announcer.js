@@ -64,7 +64,7 @@ class VoiceAnnouncer {
     }
 
     initSyncListener() {
-        this._syncChannel = new BroadcastChannel('SimGlass-voice');
+        this._syncChannel = new SafeChannel('SimGlass-voice');
         this._syncChannel.onmessage = (event) => {
             const { type, data } = event.data;
 
@@ -447,7 +447,7 @@ class VoiceAnnouncer {
     }
 
     static broadcast(type, data) {
-        const channel = new BroadcastChannel('SimGlass-voice');
+        const channel = new SafeChannel('SimGlass-voice');
         channel.postMessage({ type, data });
         channel.close();
     }
