@@ -9,9 +9,13 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { exec } = require('child_process');
+const usageMetrics = require('../shared/usage-metrics');
 
 const PORT = 8899;
 const PUBLIC_DIR = __dirname;
+
+// Initialize usage metrics
+usageMetrics.init('Hive-Dashboard');
 
 // Lazy-load beautiful-mermaid (ESM module)
 let renderMermaid = null;
@@ -36,6 +40,9 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
+    // Track request
+    usageMetrics.trackRequest(req.method, req.url);
+
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -54,7 +61,8 @@ const server = http.createServer((req, res) => {
             status: 'ok',
             service: 'hive-dashboard',
             port: PORT,
-            uptime: process.uptime()
+            uptime: process.uptime(),
+            usage: usageMetrics.getSummary()
         }));
         return;
     }
