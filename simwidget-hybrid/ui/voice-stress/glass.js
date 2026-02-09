@@ -8,7 +8,7 @@ class VoiceStressGlass extends SimGlassBase {
         super({
             widgetName: 'voice-stress',
             widgetVersion: '2.0.0',
-            autoConnect: false  // Uses HTTP to port 8771
+            autoConnect: false  // Uses Web Audio API, no WebSocket needed
         });
 
         this.audioContext = null;
@@ -31,7 +31,7 @@ class VoiceStressGlass extends SimGlassBase {
         this.F0_MAX = 500;
         this.CORR_THRESHOLD = 0.2;
         this.RECORD_SECONDS = 8;
-        this.SERVER_URL = 'http://localhost:8771';
+        this.SERVER_URL = window.location.origin;
 
         this.calmPrompts = [
             'Count slowly from 1 to 10',
