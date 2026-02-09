@@ -15,9 +15,10 @@
       "category": "other",
       "summary": "🦞 OpenClaw (Clawdbot/Moltbot) 汉化版 - 开源个人 AI 助手中文版 | Claude/ChatGPT LLM 接入 | WhatsApp/Telegram/Discord 多平台 | 每小时自动同步 | CLI + Dashboard 全中文 | 全流程搭建教程，以及排错指南！",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-07T03:58:23.508Z",
-      "decidedAt": "2026-02-07T11:04:18.683Z"
+      "decidedAt": "2026-02-07T11:04:18.683Z",
+      "queuedAt": "2026-02-09T02:45:07.493Z"
     },
     {
       "id": "gh-1140561114",
@@ -34,9 +35,10 @@
       "category": "tool",
       "summary": "wooyun-legacy skill for Claude code is a tool that provides legacy support for Claude code.",
       "thoughts": "This tool could be useful for Hive by providing compatibility and support for existing Claude code, allowing users to continue using their existing workflows without interruption. It would enhance the ecosystem's flexibility and backward compatibility.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:20:47.449Z",
-      "decidedAt": "2026-01-29T18:47:25.840Z"
+      "decidedAt": "2026-01-29T18:47:25.840Z",
+      "queuedAt": "2026-02-09T02:45:07.500Z"
     },
     {
       "id": "gh-1140828984",
@@ -53,9 +55,10 @@
       "category": "library",
       "summary": "LuxTTS is a high-quality rapid TTS voice cloning model that reaches speeds of 150x realtime.",
       "thoughts": "This library could be very useful for Hive's voice control and accessibility features, allowing for more natural and responsive text-to-speech capabilities.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:20:55.066Z",
-      "decidedAt": "2026-01-29T18:47:34.591Z"
+      "decidedAt": "2026-01-29T18:47:34.591Z",
+      "queuedAt": "2026-02-09T02:45:07.507Z"
     },
     {
       "id": "gh-1143019584",
@@ -72,9 +75,10 @@
       "category": "tool",
       "summary": "Sherlock is a Python tool that intercepts LLM API traffic and visualizes token usage in real-time.",
       "thoughts": "Sherlock can be very useful for Hive by providing insights into AI development sessions, helping with cost tracking, debugging prompts, and monitoring context window usage. It integrates well with Hive's existing services like Oracle (LLM backend) and Relay (message queue), making it a valuable addi",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:20:58.330Z",
-      "decidedAt": "2026-01-29T18:47:53.295Z"
+      "decidedAt": "2026-01-29T18:47:53.295Z",
+      "queuedAt": "2026-02-09T02:45:07.514Z"
     },
     {
       "id": "devto-3200166",
@@ -96,9 +100,10 @@
       "category": "tutorial",
       "summary": "A tutorial on the importance of accessibility in UX/UI design.",
       "thoughts": "Accessibility is crucial for ensuring that Hive's real-time dashboards and monitoring, as well as voice control features, are usable by everyone. This tutorial provides valuable insights into designing accessible interfaces, which can significantly improve the user experience for all users.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:21:55.808Z",
-      "decidedAt": "2026-01-29T18:48:09.598Z"
+      "decidedAt": "2026-01-29T18:48:09.598Z",
+      "queuedAt": "2026-02-09T02:45:07.521Z"
     },
     {
       "id": "gh-rel-anthropics-anthropic-sdk-python-281224572",
@@ -113,9 +118,10 @@
       "category": "library",
       "summary": "anthropics/anthropic-sdk-python is a Python SDK for interacting with Anthropic's AI models.",
       "thoughts": "This library would be useful for Hive as it allows integration with Anthropic's AI models, enhancing AI agent orchestration capabilities. It provides a Python interface to interact with the LLM backend, which could complement existing AI agents like Claude Code and local LLMs.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:22:13.541Z",
-      "decidedAt": "2026-01-29T18:48:17.071Z"
+      "decidedAt": "2026-01-29T18:48:17.071Z",
+      "queuedAt": "2026-02-09T02:45:07.527Z"
     },
     {
       "id": "gh-rel-ollama-ollama-280117359",
@@ -130,9 +136,10 @@
       "category": "release",
       "summary": "ollama/ollama v0.15.2 is a release of an AI language model.",
       "thoughts": "This update to Ollama, a local LLM, could enhance Hive's AI agent orchestration capabilities, providing more advanced and responsive interactions within the flight simulation environment.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:22:15.661Z",
-      "decidedAt": "2026-01-29T19:52:35.640Z"
+      "decidedAt": "2026-01-29T19:52:35.640Z",
+      "queuedAt": "2026-02-09T02:45:07.533Z"
     },
     {
       "id": "gh-rel-electron-electron-280858804",
@@ -147,9 +154,10 @@
       "category": "release",
       "summary": "electron v40.1.0 is a release of the Electron framework.",
       "thoughts": "Electron is a key component in Hive, as it powers the MSFS 2024 flight simulation widgets and overlays. Updating to electron v40.1.0 could improve performance, security, and compatibility with other tools, making it useful for enhancing Hive capabilities.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:22:16.778Z",
-      "decidedAt": "2026-01-29T18:48:30.124Z"
+      "decidedAt": "2026-01-29T18:48:30.124Z",
+      "queuedAt": "2026-02-09T02:45:07.540Z"
     },
     {
       "id": "gh-rel-nodejs-node-280063957",
@@ -164,9 +172,10 @@
       "category": "release",
       "summary": "Node.js v25.5.0 is the latest release of Node.js, a JavaScript runtime built on Chrome's V8 JavaScript engine.",
       "thoughts": "This update likely includes performance improvements, bug fixes, and new features that could enhance Hive's backend capabilities, particularly in areas requiring high-performance computing and real-time data processing.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-29T18:22:17.828Z",
-      "decidedAt": "2026-01-29T19:52:41.642Z"
+      "decidedAt": "2026-01-29T19:52:41.642Z",
+      "queuedAt": "2026-02-09T02:45:07.546Z"
     },
     {
       "id": "gh-1143942597",
@@ -183,9 +192,10 @@
       "category": "library",
       "summary": "Qwen3-ASR is an open-source ASR library developed by Alibaba Cloud that supports multilingual speech recognition and timestamp prediction.",
       "thoughts": "Qwen3-ASR could be very useful for Hive's voice control and accessibility features, enhancing the system's ability to understand and respond to user commands in real-time. Its support for multiple languages and timestamps would also improve the accuracy of voice-based interactions within the flight ",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-30T20:28:20.054Z",
-      "decidedAt": "2026-01-30T20:45:18.156Z"
+      "decidedAt": "2026-01-30T20:45:18.156Z",
+      "queuedAt": "2026-02-09T02:45:07.552Z"
     },
     {
       "id": "reddit-1qr7cbh",
@@ -201,9 +211,10 @@
       "category": "release",
       "summary": "Kimi-k2.5 is a local LLM that achieves Gemini 2.5 Pro-like performance in long context.",
       "thoughts": "This release could significantly enhance Hive's AI agent orchestration capabilities, particularly for tasks requiring large language models with high context understanding. It would provide a powerful tool for enhancing the intelligence and functionality of Claude Code within Hive.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-01-30T20:34:48.330Z",
-      "decidedAt": "2026-01-30T20:45:26.122Z"
+      "decidedAt": "2026-01-30T20:45:26.122Z",
+      "queuedAt": "2026-02-09T02:45:07.558Z"
     },
     {
       "id": "reddit-1qsx51z",
@@ -219,9 +230,10 @@
       "category": "release",
       "summary": "Falcon-H1-Tiny is a specialized micro-model with 90M parameters.",
       "thoughts": "This release could be useful for Hive by providing smaller, more efficient AI models that can run on local systems, potentially improving performance and reducing latency in AI agent orchestration. It may also enable the development of new widgets or overlays that leverage advanced AI capabilities.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-01T21:56:38.199Z",
-      "decidedAt": "2026-02-01T21:57:32.092Z"
+      "decidedAt": "2026-02-01T21:57:32.092Z",
+      "queuedAt": "2026-02-09T02:45:07.564Z"
     },
     {
       "id": "gh-1141782198",
@@ -238,9 +250,10 @@
       "category": "library",
       "summary": "voicebox is an open-source voice synthesis studio using Qwen3-TTS.",
       "thoughts": "Voice control and accessibility are key capabilities for Hive. Integrating voicebox could enhance Hive's ability to provide hands-free interactions, making it more user-friendly and accessible for users with disabilities or those who prefer voice commands.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-03T00:40:54.360Z",
-      "decidedAt": "2026-02-04T23:13:47.033Z"
+      "decidedAt": "2026-02-04T23:13:47.033Z",
+      "queuedAt": "2026-02-09T02:45:07.569Z"
     },
     {
       "id": "reddit-1qtvp74",
@@ -256,9 +269,10 @@
       "category": "release",
       "summary": "GLM-5 is a new local LLM release expected in February.",
       "thoughts": "The GLM-5 update could enhance Hive's AI agent orchestration capabilities, potentially improving the performance and functionality of Claude Code and other local LLMs like Ollama/LM Studio.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-03T00:42:10.689Z",
-      "decidedAt": "2026-02-04T23:13:54.963Z"
+      "decidedAt": "2026-02-04T23:13:54.963Z",
+      "queuedAt": "2026-02-09T02:45:07.576Z"
     },
     {
       "id": "gh-1146028508",
@@ -275,9 +289,10 @@
       "category": "library",
       "summary": "MoonshotAI/Kimi-K2.5 is a powerful AI model designed to enhance natural language processing capabilities.",
       "thoughts": "Kimi-K2.5 could be highly useful for Hive's AI agent orchestration, providing advanced language understanding and generation that could improve the performance of Claude Code and other local LLMs like Ollama/LM Studio.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-03T00:43:20.079Z",
-      "decidedAt": "2026-02-04T23:14:04.166Z"
+      "decidedAt": "2026-02-04T23:14:04.166Z",
+      "queuedAt": "2026-02-09T02:45:07.581Z"
     },
     {
       "id": "reddit-1qtvo4r",
@@ -293,9 +308,10 @@
       "category": "release",
       "summary": "A new local LLM model called Step-3.5-Flash-int4 is available for devices with at least 128GB of storage.",
       "thoughts": "This release could be highly useful for Hive's AI agent orchestration capabilities, as it provides a more powerful and efficient local language model that can enhance the performance and functionality of Claude Code and other LLM-based agents within the ecosystem.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-03T01:01:38.644Z",
-      "decidedAt": "2026-02-04T23:14:12.694Z"
+      "decidedAt": "2026-02-04T23:14:12.694Z",
+      "queuedAt": "2026-02-09T02:45:07.586Z"
     },
     {
       "id": "reddit-1qttq5w",
@@ -311,9 +327,10 @@
       "category": "library",
       "summary": "Devstral Small is a faster and more efficient local agent coding library compared to glm 4.7 flash.",
       "thoughts": "This library could significantly enhance Hive's AI agent orchestration capabilities, particularly for Claude Code and other local LLMs like Ollama/LM Studio. Its improved performance would likely lead to better real-time dashboards, faster response times in voice control, and more efficient use of m",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-03T01:30:19.902Z",
-      "decidedAt": "2026-02-04T23:14:22.203Z"
+      "decidedAt": "2026-02-04T23:14:22.203Z",
+      "queuedAt": "2026-02-09T02:45:07.593Z"
     },
     {
       "id": "gh-1141934589",
@@ -7044,7 +7061,7 @@
   "lastFetch": "2026-02-08T23:48:51.960Z",
   "stats": {
     "total": 400,
-    "approved": 55,
+    "approved": 38,
     "rejected": 1,
     "pending": 344,
     "implemented": 0

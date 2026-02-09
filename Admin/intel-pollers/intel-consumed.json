@@ -1,0 +1,45 @@
+{
+  "briefings": [
+    {
+      "timestamp": "2026-02-09T01:52:47.286Z",
+      "itemCount": 34,
+      "categories": [
+        "other",
+        "library",
+        "release"
+      ],
+      "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
+    },
+    {
+      "timestamp": "2026-02-09T02:08:21.434Z",
+      "itemCount": 34,
+      "categories": [
+        "other",
+        "library",
+        "release"
+      ],
+      "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
+    }
+  ],
+  "queued": [
+    "gh-1145977416",
+    "gh-1140561114",
+    "gh-1140828984",
+    "gh-1143019584",
+    "devto-3200166",
+    "gh-rel-anthropics-anthropic-sdk-python-281224572",
+    "gh-rel-ollama-ollama-280117359",
+    "gh-rel-electron-electron-280858804",
+    "gh-rel-nodejs-node-280063957",
+    "gh-1143942597",
+    "reddit-1qr7cbh",
+    "reddit-1qsx51z",
+    "gh-1141782198",
+    "reddit-1qtvp74",
+    "gh-1146028508",
+    "reddit-1qtvo4r",
+    "reddit-1qttq5w"
+  ],
+  "lastBriefing": "2026-02-09T02:08:21.434Z",
+  "lastAutoQueue": "2026-02-09T02:45:07.595Z"
+}
