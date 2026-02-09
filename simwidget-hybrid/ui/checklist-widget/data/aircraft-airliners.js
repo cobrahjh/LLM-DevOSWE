@@ -1,7 +1,9 @@
 // Airliner Aircraft Checklists
 // Loaded on-demand when airliner aircraft selected
 
-const AIRCRAFT_CHECKLISTS = AIRCRAFT_CHECKLISTS || {};
+if (typeof AIRCRAFT_CHECKLISTS === 'undefined') {
+    var AIRCRAFT_CHECKLISTS = {};
+}
 
 AIRCRAFT_CHECKLISTS.a320 = {
         name: 'Airbus A320',

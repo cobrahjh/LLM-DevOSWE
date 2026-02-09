@@ -1,7 +1,9 @@
 // General Aviation Aircraft Checklists
 // Loaded on-demand when GA aircraft selected
 
-const AIRCRAFT_CHECKLISTS = AIRCRAFT_CHECKLISTS || {};
+if (typeof AIRCRAFT_CHECKLISTS === 'undefined') {
+    var AIRCRAFT_CHECKLISTS = {};
+}
 
 AIRCRAFT_CHECKLISTS.generic = {
         name: 'Generic GA',

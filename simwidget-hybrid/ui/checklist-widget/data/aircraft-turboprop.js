@@ -1,7 +1,9 @@
 // Turboprop Aircraft Checklists
 // Loaded on-demand when turboprop aircraft selected
 
-const AIRCRAFT_CHECKLISTS = AIRCRAFT_CHECKLISTS || {};
+if (typeof AIRCRAFT_CHECKLISTS === 'undefined') {
+    var AIRCRAFT_CHECKLISTS = {};
+}
 
 AIRCRAFT_CHECKLISTS.tbm930 = {
     name: 'TBM 930',
