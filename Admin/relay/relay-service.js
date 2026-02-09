@@ -43,9 +43,13 @@ const path = require('path');
 const http = require('http');
 const WebSocket = require('ws');
 const Database = require('better-sqlite3');
+const usageMetrics = require('../shared/usage-metrics');
 
 // Load environment variables
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+
+// Initialize usage metrics
+usageMetrics.init('Relay');
 
 const app = express();
 const PORT = 8600;
@@ -96,6 +100,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(apiKeyAuth);
+app.use(usageMetrics.middleware()); // Track all requests
 app.use(express.static(__dirname)); // Serve static files (task-history.html)
 
 // ============================================
@@ -788,7 +793,8 @@ app.get('/api/health', (req, res) => {
         version: '3.0.0',
         queue: stats,
         activeConsumers: consumers.count,
-        deadLetters: deadLetters.count
+        deadLetters: deadLetters.count,
+        usage: usageMetrics.getSummary()
     });
 });
 
