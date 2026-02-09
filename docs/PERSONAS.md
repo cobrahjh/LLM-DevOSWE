@@ -77,9 +77,10 @@ set LLM_BACKEND=lmstudio
 **Location:** ai-pc server (192.168.1.162:1234) via LM Studio
 
 **Models Available:**
-- `qwen:4b` (Qwen v1 4B) - **Primary** - Fast general-purpose model
+- `qwen/qwen3-vl-4b` - **Primary** - Vision model (4B params)
 - `vt-gwen-2.5-3b` - Fast text model
 - `liquid/lfm2.5-1.2b` - Ultra-fast tiny model
+- `openai/gpt-oss-20b` - Large general model
 - `text-embedding-nomic-embed-text-v1.5` - Embeddings
 
 **Switching to Iris:**
