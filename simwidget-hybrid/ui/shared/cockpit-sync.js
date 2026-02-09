@@ -289,6 +289,15 @@ class CockpitSync {
         return this.sessionId.slice(-6).toUpperCase();
     }
 
+    destroy() {
+        this.stopPolling();
+        if (this.localChannel) {
+            this.localChannel.close();
+            this.localChannel = null;
+        }
+        this.connected = false;
+    }
+
     // Static method to find sessions
     static async findSessions(apiBase = '') {
         try {

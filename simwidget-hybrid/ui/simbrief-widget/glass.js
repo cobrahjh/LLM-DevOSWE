@@ -542,11 +542,8 @@ class SimBriefGlass extends SimGlassBase {
             }
         }
     }
-}
 
-    // Cleanup - extends SimGlassBase.destroy()
     destroy() {
-        // Call parent destroy
         super.destroy();
     }
 }

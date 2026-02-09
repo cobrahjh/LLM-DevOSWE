@@ -400,11 +400,11 @@ Category: ${category}`;
             }
         }
     }
-}
 
-    // Cleanup - extends SimGlassBase.destroy()
     destroy() {
-        // Call parent destroy
+        if (this.announcer) {
+            this.announcer.destroy();
+        }
         super.destroy();
     }
 }

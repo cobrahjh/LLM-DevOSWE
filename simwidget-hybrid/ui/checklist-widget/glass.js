@@ -331,8 +331,8 @@ class ChecklistGlass extends SimGlassBase {
     // Voice control integration
     initVoiceControl() {
         // Listen for voice commands via BroadcastChannel
-        const channel = new BroadcastChannel('SimGlass-checklist');
-        channel.onmessage = (event) => {
+        this._voiceChannel = new BroadcastChannel('SimGlass-checklist');
+        this._voiceChannel.onmessage = (event) => {
             this.handleVoiceCommand(event.data);
         };
 
@@ -463,7 +463,10 @@ class ChecklistGlass extends SimGlassBase {
     }
 
     destroy() {
-        // Call parent destroy
+        if (this._voiceChannel) {
+            this._voiceChannel.close();
+            this._voiceChannel = null;
+        }
         super.destroy();
     }
 }

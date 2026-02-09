@@ -64,8 +64,8 @@ class VoiceAnnouncer {
     }
 
     initSyncListener() {
-        const channel = new BroadcastChannel('SimGlass-voice');
-        channel.onmessage = (event) => {
+        this._syncChannel = new BroadcastChannel('SimGlass-voice');
+        this._syncChannel.onmessage = (event) => {
             const { type, data } = event.data;
 
             switch (type) {
@@ -438,6 +438,14 @@ class VoiceAnnouncer {
     }
 
     // Broadcast methods for cross-widget communication
+    destroy() {
+        this.stop();
+        if (this._syncChannel) {
+            this._syncChannel.close();
+            this._syncChannel = null;
+        }
+    }
+
     static broadcast(type, data) {
         const channel = new BroadcastChannel('SimGlass-voice');
         channel.postMessage({ type, data });

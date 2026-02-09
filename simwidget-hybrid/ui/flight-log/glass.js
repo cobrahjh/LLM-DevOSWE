@@ -90,7 +90,7 @@ class FlightLog extends SimGlassBase {
                 telemetry.captureError(e, {
                     operation: 'updateFromSim',
                     glass: 'flight-log',
-                    dataType: typeof data
+                    dataType: typeof e
                 });
             }
         }

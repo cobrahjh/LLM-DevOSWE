@@ -161,6 +161,7 @@ class EngineMonitorGlass extends SimGlassBase {
             this.ws.close();
             this.ws = null;
         }
+        super.destroy();
     }
 
     /**

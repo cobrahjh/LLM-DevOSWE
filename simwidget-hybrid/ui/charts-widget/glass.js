@@ -349,11 +349,8 @@ class ChartsGlass extends SimGlassBase {
             }
         }
     }
-}
 
-    // Cleanup - extends SimGlassBase.destroy()
     destroy() {
-        // Call parent destroy for cleanup
         super.destroy();
     }
 }
