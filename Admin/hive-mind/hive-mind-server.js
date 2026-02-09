@@ -7,12 +7,19 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
+const usageMetrics = require('../shared/usage-metrics');
 
 const PORT = 8701;
 const SERVER_START_TIME = Date.now();
 
+// Initialize usage metrics
+usageMetrics.init('Hive-Mind');
+
 // Create HTTP server
 const server = http.createServer((req, res) => {
+    // Track request
+    usageMetrics.trackRequest(req.method, req.url);
+
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -24,7 +31,13 @@ const server = http.createServer((req, res) => {
         res.end(fs.readFileSync(path.join(__dirname, 'mobile-engine.js')));
     } else if (req.url === '/api/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', service: 'Hive-Mind', clients: clients.size, uptime: Date.now() - SERVER_START_TIME }));
+        res.end(JSON.stringify({
+            status: 'ok',
+            service: 'Hive-Mind',
+            clients: clients.size,
+            uptime: Date.now() - SERVER_START_TIME,
+            usage: usageMetrics.getSummary()
+        }));
     } else if (req.url === '/api/uptime') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ startTime: SERVER_START_TIME, uptime: Date.now() - SERVER_START_TIME }));
@@ -40,10 +53,12 @@ const clients = new Set();
 
 wss.on('connection', (ws) => {
     clients.add(ws);
+    usageMetrics.trackConnection(1);
     console.log('Client connected');
 
     ws.on('close', () => {
         clients.delete(ws);
+        usageMetrics.trackConnection(-1);
         console.log('Client disconnected');
     });
 });
