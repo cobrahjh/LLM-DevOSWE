@@ -1,9 +1,6 @@
 // Airliner Aircraft Checklists
 // Loaded on-demand when airliner aircraft selected
-
-if (typeof AIRCRAFT_CHECKLISTS === 'undefined') {
-    var AIRCRAFT_CHECKLISTS = {};
-}
+// AIRCRAFT_CHECKLISTS is declared in aircraft-registry.js
 
 AIRCRAFT_CHECKLISTS.a320 = {
         name: 'Airbus A320',

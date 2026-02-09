@@ -1,9 +1,6 @@
 // Business & Regional Jet Aircraft Checklists
 // Loaded on-demand when jet aircraft selected
-
-if (typeof AIRCRAFT_CHECKLISTS === "undefined") {
-    var AIRCRAFT_CHECKLISTS = {};
-}
+// AIRCRAFT_CHECKLISTS is declared in aircraft-registry.js
 
 AIRCRAFT_CHECKLISTS.cj4 = {
         name: 'Cessna CJ4',

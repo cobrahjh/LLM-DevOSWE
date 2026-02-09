@@ -1,9 +1,6 @@
 // General Aviation Aircraft Checklists
 // Loaded on-demand when GA aircraft selected
-
-if (typeof AIRCRAFT_CHECKLISTS === 'undefined') {
-    var AIRCRAFT_CHECKLISTS = {};
-}
+// AIRCRAFT_CHECKLISTS is declared in aircraft-registry.js
 
 AIRCRAFT_CHECKLISTS.generic = {
         name: 'Generic GA',
