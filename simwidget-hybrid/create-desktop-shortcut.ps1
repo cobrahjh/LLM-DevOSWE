@@ -1,8 +1,8 @@
 # Create GTN750 Browser Mode Desktop Shortcut
-# Target: harold-pc Desktop
+# Target: Desktop (auto-detects current user)
 
-$username = "hjhar"
-$desktopPath = "C:\Users\$username\Desktop"
+$username = $env:USERNAME
+$desktopPath = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = "$desktopPath\GTN750 v2.3.0.lnk"
 $targetUrl = "http://localhost:8080/ui/gtn750/"
 
