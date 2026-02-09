@@ -44,6 +44,7 @@ const PluginLoader = require('./plugin-system/plugin-loader');
 const PluginAPI = require('./plugin-system/plugin-api');
 const { setupWeatherRoutes } = require('./weather-api');
 const { setupCopilotRoutes } = require('./copilot-api');
+const usageMetrics = require('../../Admin/shared/usage-metrics');
 
 // Hot reload manager (development only)
 const hotReloadManager = new HotReloadManager();
@@ -95,6 +96,9 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = 8080;
+
+// Initialize usage metrics
+usageMetrics.init('SimGlass Backend');
 
 // Flight data state
 let flightData = {
@@ -230,6 +234,9 @@ const uiPath = path.join(__dirname, '../ui');
 const configPath = path.join(__dirname, '../config');
 const backendPath = path.join(__dirname);
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Usage metrics middleware (before routes)
+app.use(usageMetrics.middleware());
 
 // Serve shared UI for hot reload and common components
 const sharedUIPath = path.join(__dirname, '../shared-ui');
@@ -505,7 +512,8 @@ app.get('/api/status', async (req, res) => {
         connected: isSimConnected,
         camera: cameraController.getStatus(),
         ahkHelper: ahkStatus,
-        flightData
+        flightData,
+        usage: usageMetrics.getSummary()
     });
 });
 
@@ -2794,6 +2802,7 @@ setInterval(() => {
 wss.on('connection', (ws) => {
     console.log('Client connected');
     ws._isAlive = true;
+    usageMetrics.trackConnection(+1);
 
     ws.on('pong', () => { ws._isAlive = true; });
 
@@ -2825,6 +2834,7 @@ wss.on('connection', (ws) => {
 
     ws.on('close', () => {
         console.log('Client disconnected');
+        usageMetrics.trackConnection(-1);
     });
 });
 
