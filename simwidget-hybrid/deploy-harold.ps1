@@ -1,55 +1,64 @@
 # Deploy GTN750 v2.3.0 to harold-pc MSFS 2024 Community folder
 # Target: 192.168.1.42 (harold-pc), User: hjhar
+# Uses SSH/SCP (UNC admin shares not accessible from ROCK-PC)
 
 $haroldPC = "192.168.1.42"
 $username = "hjhar"
-$communityBase = "\\$haroldPC\C$\Users\$username\AppData\Local\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\Packages\Community"
-$gtnDest = "$communityBase\SimGlass-GTN750"
-$panel = "$gtnDest\html_ui\InGamePanels\GTN750Panel"
+$remoteDest = "C:/Users/$username/AppData/Local/Packages/Microsoft.Limitless_8wekyb3d8bbwe/LocalCache/Packages/Community/SimGlass-GTN750"
+$remotePanel = "$remoteDest/html_ui/InGamePanels/GTN750Panel"
+
+# Resolve script directory for relative paths
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+if (-not $scriptDir) { $scriptDir = Get-Location }
+Push-Location $scriptDir
 
 Write-Host "Deploying GTN750 v2.3.0 to harold-pc..." -ForegroundColor Cyan
-Write-Host "Target: $gtnDest" -ForegroundColor Gray
+Write-Host "Target: $username@$haroldPC`:$remoteDest" -ForegroundColor Gray
 Write-Host ""
 
-# Create directory structure
+# Create directory structure via SSH
 Write-Host "Creating directory structure..." -ForegroundColor Yellow
-New-Item -ItemType Directory -Path "$panel\modules" -Force | Out-Null
-New-Item -ItemType Directory -Path "$panel\overlays" -Force | Out-Null
-New-Item -ItemType Directory -Path "$panel\pages" -Force | Out-Null
+ssh "${username}@${haroldPC}" "powershell -Command `"New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\modules' -Force | Out-Null; New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\overlays' -Force | Out-Null; New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\pages' -Force | Out-Null`""
+if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: SSH directory creation failed" -ForegroundColor Red; Pop-Location; exit 1 }
 
 # Copy package files
 Write-Host "Copying package files..." -ForegroundColor Yellow
-Copy-Item "msfs-gtn750\layout.json" -Destination "$gtnDest\" -Force
-Copy-Item "msfs-gtn750\manifest.json" -Destination "$gtnDest\" -Force
-Copy-Item "msfs-gtn750\html_ui\InGamePanels\GTN750Panel\GTN750Panel.html" -Destination "$panel\" -Force
-Copy-Item "msfs-gtn750\html_ui\InGamePanels\GTN750Panel\panel.json" -Destination "$panel\" -Force
+scp "msfs-gtn750/layout.json" "msfs-gtn750/manifest.json" "${username}@${haroldPC}:${remoteDest}/"
+scp "msfs-gtn750/html_ui/InGamePanels/GTN750Panel/GTN750Panel.html" "msfs-gtn750/html_ui/InGamePanels/GTN750Panel/panel.json" "${username}@${haroldPC}:${remotePanel}/"
 
 # Copy GTN750 glass files (v2.3.0)
 Write-Host "Copying GTN750 glass files (v2.3.0 - Performance Optimized)..." -ForegroundColor Yellow
-Copy-Item "ui\gtn750\glass.js" -Destination "$panel\glass.js" -Force
-Copy-Item "ui\gtn750\styles.css" -Destination "$panel\styles.css" -Force
+scp "ui/gtn750/glass.js" "ui/gtn750/styles.css" "${username}@${haroldPC}:${remotePanel}/"
 
 # Copy modules (9 files with v2.3.0 optimizations)
 Write-Host "Copying modules (with waypoint caching)..." -ForegroundColor Yellow
-Copy-Item "ui\gtn750\modules\*.js" -Destination "$panel\modules\" -Force
+scp ui/gtn750/modules/*.js "${username}@${haroldPC}:${remotePanel}/modules/"
 
 # Copy overlays (4 files with circular buffer)
 Write-Host "Copying overlays (with traffic buffer)..." -ForegroundColor Yellow
-Copy-Item "ui\gtn750\overlays\*.js" -Destination "$panel\overlays\" -Force
+scp ui/gtn750/overlays/*.js "${username}@${haroldPC}:${remotePanel}/overlays/"
 
 # Copy pages (5 files)
 Write-Host "Copying pages..." -ForegroundColor Yellow
-Copy-Item "ui\gtn750\pages\*.js" -Destination "$panel\pages\" -Force
+scp ui/gtn750/pages/*.js "${username}@${haroldPC}:${remotePanel}/pages/"
+
+Pop-Location
+
+# Verify
+Write-Host ""
+Write-Host "Verifying deployment..." -ForegroundColor Yellow
+$fileCount = ssh "${username}@${haroldPC}" "powershell -Command `"(Get-ChildItem -Recurse '$($remoteDest -replace '/','\\')' -File).Count`""
+Write-Host "Files deployed: $fileCount" -ForegroundColor White
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "✅ GTN750 v2.3.0 deployed successfully!" -ForegroundColor Green
+Write-Host "GTN750 v2.3.0 deployed successfully!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Location: $gtnDest" -ForegroundColor Gray
+Write-Host "Location: $remoteDest" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Next steps in MSFS 2024 on harold-pc:" -ForegroundColor Cyan
-Write-Host "  1. Tools → Virtual File System → Actions → Rescan" -ForegroundColor White
+Write-Host "  1. Tools > Virtual File System > Actions > Rescan" -ForegroundColor White
 Write-Host "  2. Check toolbar for GTN750 panel" -ForegroundColor White
 Write-Host "  3. Open GTN750 from panels menu" -ForegroundColor White
 Write-Host ""
