@@ -366,6 +366,23 @@ function initDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_tool ON tool_logs(tool)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_tool_logs_created ON tool_logs(created_at)`);
 
+    // Device tokens table - for secure remote access (OpenClaw gateway pattern)
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS device_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE NOT NULL,
+            device_name TEXT,
+            device_info TEXT,
+            created_at INTEGER NOT NULL,
+            expires_at INTEGER NOT NULL,
+            last_used_at INTEGER,
+            revoked INTEGER DEFAULT 0,
+            permissions TEXT DEFAULT '[]'
+        )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_device_tokens_token ON device_tokens(token)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_device_tokens_expires ON device_tokens(expires_at)`);
+
     // Sessions - named sessions for tracking work
     db.exec(`
         CREATE TABLE IF NOT EXISTS sessions (
@@ -2260,6 +2277,170 @@ app.delete('/api/logs', (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// ============================================
+// DEVICE TOKEN AUTHENTICATION (OpenClaw Gateway Pattern)
+// ============================================
+
+const crypto = require('crypto');
+
+// Generate secure random token
+function generateDeviceToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+// Middleware: Validate device token
+function requireDeviceToken(req, res, next) {
+    const token = req.headers['x-device-token'] || req.query.deviceToken;
+
+    if (!token) {
+        return res.status(401).json({
+            error: 'Device token required',
+            hint: 'Include token in X-Device-Token header or deviceToken query param'
+        });
+    }
+
+    try {
+        const device = db.prepare(`
+            SELECT * FROM device_tokens
+            WHERE token = ? AND revoked = 0 AND expires_at > ?
+        `).get(token, Date.now());
+
+        if (!device) {
+            return res.status(401).json({ error: 'Invalid or expired device token' });
+        }
+
+        // Update last used
+        db.prepare('UPDATE device_tokens SET last_used_at = ? WHERE id = ?')
+            .run(Date.now(), device.id);
+
+        // Attach device info to request
+        req.device = device;
+        req.devicePermissions = JSON.parse(device.permissions || '[]');
+
+        next();
+    } catch (err) {
+        log(`Token validation error: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: 'Token validation failed' });
+    }
+}
+
+// Pair new device - generates token for remote access
+app.post('/api/auth/pair-device', (req, res) => {
+    try {
+        const { deviceName, deviceInfo, expiryDays = 30, permissions = [] } = req.body;
+
+        const token = generateDeviceToken();
+        const now = Date.now();
+        const expiresAt = now + (expiryDays * 24 * 60 * 60 * 1000);
+
+        db.prepare(`
+            INSERT INTO device_tokens (token, device_name, device_info, created_at, expires_at, permissions)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(
+            token,
+            deviceName || 'Unknown Device',
+            deviceInfo || '',
+            now,
+            expiresAt,
+            JSON.stringify(permissions)
+        );
+
+        log(`Device paired: ${deviceName} (expires in ${expiryDays} days)`);
+
+        res.json({
+            success: true,
+            token,
+            expiresIn: `${expiryDays} days`,
+            expiresAt: new Date(expiresAt).toISOString(),
+            deviceName,
+            usage: {
+                header: `X-Device-Token: ${token}`,
+                query: `?deviceToken=${token}`
+            }
+        });
+    } catch (err) {
+        log(`Device pairing error: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// List paired devices
+app.get('/api/auth/devices', (req, res) => {
+    try {
+        const devices = db.prepare(`
+            SELECT id, device_name, device_info, created_at, expires_at, last_used_at, revoked, permissions
+            FROM device_tokens
+            ORDER BY created_at DESC
+        `).all();
+
+        const now = Date.now();
+
+        res.json({
+            devices: devices.map(d => ({
+                id: d.id,
+                name: d.device_name,
+                info: d.device_info,
+                createdAt: new Date(d.created_at).toISOString(),
+                expiresAt: new Date(d.expires_at).toISOString(),
+                lastUsed: d.last_used_at ? new Date(d.last_used_at).toISOString() : null,
+                isExpired: d.expires_at < now,
+                isRevoked: d.revoked === 1,
+                permissions: JSON.parse(d.permissions || '[]'),
+                status: d.revoked === 1 ? 'revoked' : (d.expires_at < now ? 'expired' : 'active')
+            })),
+            total: devices.length,
+            active: devices.filter(d => d.revoked === 0 && d.expires_at > now).length
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Revoke device token
+app.post('/api/auth/devices/:id/revoke', (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = db.prepare('UPDATE device_tokens SET revoked = 1 WHERE id = ?').run(id);
+
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Device not found' });
+        }
+
+        log(`Device token revoked: ID ${id}`);
+        res.json({ success: true, id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete expired tokens (cleanup)
+app.post('/api/auth/cleanup', (req, res) => {
+    try {
+        const now = Date.now();
+        const result = db.prepare(`
+            DELETE FROM device_tokens WHERE expires_at < ? OR revoked = 1
+        `).run(now);
+
+        log(`Cleaned up ${result.changes} expired/revoked tokens`);
+        res.json({ success: true, removed: result.changes });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Validate token (for testing)
+app.get('/api/auth/validate', requireDeviceToken, (req, res) => {
+    res.json({
+        valid: true,
+        device: {
+            id: req.device.id,
+            name: req.device.device_name,
+            permissions: req.devicePermissions,
+            expiresAt: new Date(req.device.expires_at).toISOString()
+        }
+    });
 });
 
 // ============================================
