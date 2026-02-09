@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GTN750 GPS</title>
+    <link rel="stylesheet" href="shared/widget-common.css">
+    <link rel="stylesheet" href="shared/themes.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="gtn750" id="gtn750">
+        <!-- Frequency Bar (Top) - GTN 750 Style -->
+        <div class="freq-bar">
+            <!-- COM Section -->
+            <div class="freq-section com-section">
+                <div class="freq-header">
+                    <span class="freq-label">COM</span>
+                    <span class="freq-sub">Vol</span>
+                    <span class="freq-sub">Psh<br>Sq</span>
+                </div>
+                <div class="freq-main" id="com1">118.650</div>
+                <div class="freq-stby-row">
+                    <span class="freq-stby-label">STBY</span>
+                    <span class="freq-stby" id="com1-stby">124.850</span>
+                </div>
+            </div>
+
+            <!-- Audio Panel -->
+            <div class="freq-section audio-section">
+                <div class="audio-btn" id="audio-panel">Audio<br>Panel</div>
+                <div class="audio-indicator">&#8595;</div>
+            </div>
+
+            <!-- MIC Selector -->
+            <div class="freq-section mic-section">
+                <div class="freq-label">MIC</div>
+                <div class="selector-box">
+                    <div class="selector-btn active" id="mic-1">1</div>
+                    <div class="selector-btn" id="mic-2">2</div>
+                </div>
+                <div class="freq-label">Intercom</div>
+            </div>
+
+            <!-- MON Selector -->
+            <div class="freq-section mon-section">
+                <div class="freq-label">MON</div>
+                <div class="selector-box">
+                    <div class="selector-btn" id="mon-1">1</div>
+                    <div class="selector-btn" id="mon-2">2</div>
+                </div>
+            </div>
+
+            <!-- XPDR Section -->
+            <div class="freq-section xpdr-section">
+                <div class="freq-label">XPDR</div>
+                <div class="xpdr-row">
+                    <span class="xpdr-code" id="xpdr">1200</span>
+                    <button class="xpdr-ident" id="xpdr-ident">IDENT</button>
+                </div>
+                <div class="xpdr-mode-row">
+                    <span class="xpdr-mode" id="xpdr-mode">ON</span>
+                    <span class="xpdr-mode-indicator">R</span>
+                </div>
+            </div>
+
+            <!-- NAV Section -->
+            <div class="freq-section nav-section">
+                <div class="freq-label">NAV</div>
+                <div class="nav-main-row">
+                    <span class="freq-main nav-freq" id="nav1">110.50</span>
+                    <span class="nav-ils-indicator" id="nav-ils">ILS/GS RW25</span>
+                </div>
+                <div class="freq-stby-row">
+                    <span class="freq-stby-label">STBY</span>
+                    <span class="freq-stby" id="nav1-stby">113.90</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Page Buttons -->
+        <div class="home-buttons" id="home-buttons">
+            <button class="home-btn active" data-page="map">
+                <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
+                <span>Map</span>
+            </button>
+            <button class="home-btn" data-page="traffic">
+                <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+                <span>Traffic</span>
+            </button>
+            <button class="home-btn" data-page="terrain">
+                <svg viewBox="0 0 24 24"><path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/></svg>
+                <span>Terrain</span>
+            </button>
+            <button class="home-btn" data-page="wx">
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                <span>Weather</span>
+            </button>
+            <button class="home-btn" data-page="charts">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                <span>Charts</span>
+            </button>
+            <button class="home-btn" data-page="fpl">
+                <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                <span>FPL</span>
+            </button>
+            <button class="home-btn" data-page="proc">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                <span>Proc</span>
+            </button>
+            <button class="home-btn" data-page="nrst">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span>Nearest</span>
+            </button>
+        </div>
+
+        <!-- Main Display Area (Pages) -->
+        <div class="main-display" id="main-display">
+            <!-- MAP Page -->
+            <div class="gtn-page active" id="page-map">
+                <canvas class="map-canvas" id="map-canvas"></canvas>
+                <div class="taws-alert" id="taws-alert" style="display:none;">
+                    <span id="taws-text">PULL UP</span>
+                </div>
+                <div class="range-selector" id="range-selector">
+                    <button class="range-btn" id="zoom-out">-</button>
+                    <span class="range-value" id="df-range">10</span>
+                    <span class="range-unit">nm</span>
+                    <button class="range-btn" id="zoom-in">+</button>
+                </div>
+                <div class="terrain-legend" id="terrain-legend">
+                    <div class="terrain-title">Terrain</div>
+                    <div class="terrain-ft-label">FT</div>
+                    <div class="terrain-scale">
+                        <div class="terrain-bar">
+                            <div class="terrain-segment terrain-red"></div>
+                            <div class="terrain-segment terrain-orange"></div>
+                            <div class="terrain-segment terrain-yellow"></div>
+                            <div class="terrain-segment terrain-green"></div>
+                        </div>
+                        <div class="terrain-labels">
+                            <span>0</span><span>-500</span><span>-1000</span><span>-1500</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="corner-field top-left" data-field="trk">
+                    <span class="corner-label" id="corner-tl-label">TRK</span>
+                    <span class="corner-value" id="df-trk">000&deg;</span>
+                </div>
+                <div class="corner-field top-right" data-field="gs">
+                    <span class="corner-label" id="corner-tr-label">GS</span>
+                    <span class="corner-value" id="df-gs">0kt</span>
+                </div>
+                <div class="corner-field bottom-left" data-field="alt">
+                    <span class="corner-label" id="corner-bl-label">ALT</span>
+                    <span class="corner-value" id="df-alt">0ft</span>
+                </div>
+                <div class="corner-field bottom-right" data-field="ete">
+                    <span class="corner-label" id="corner-br-label">ETE</span>
+                    <span class="corner-value" id="corner-br">--:--</span>
+                </div>
+                <div class="field-selector" id="field-selector">
+                    <div class="field-option" data-type="trk">TRK - Track</div>
+                    <div class="field-option" data-type="gs">GS - Ground Speed</div>
+                    <div class="field-option" data-type="dis">DIS - Distance</div>
+                    <div class="field-option" data-type="ete">ETE - Time Enroute</div>
+                    <div class="field-option" data-type="brg">BRG - Bearing</div>
+                    <div class="field-option" data-type="dtk">DTK - Desired Track</div>
+                    <div class="field-option" data-type="alt">ALT - Altitude</div>
+                    <div class="field-option" data-type="vs">VS - Vertical Speed</div>
+                    <div class="field-option" data-type="hdg">HDG - Heading</div>
+                    <div class="field-option" data-type="xtk">XTK - Cross Track</div>
+                    <div class="field-option" data-type="wind">WIND - Wind</div>
+                    <div class="field-option" data-type="time">TIME - Zulu Time</div>
+                    <div class="field-option" data-type="off">OFF - No Display</div>
+                </div>
+                <div class="dto-modal" id="dto-modal" style="display: none;">
+                    <div class="dto-header">DIRECT TO</div>
+                    <div class="dto-content">
+                        <input type="text" id="dto-input" class="dto-input" placeholder="WAYPOINT" maxlength="5" autocomplete="off">
+                        <div class="dto-info" id="dto-info"></div>
+                        <div class="dto-buttons">
+                            <button class="dto-btn dto-activate" id="dto-activate">ACTIVATE</button>
+                            <button class="dto-btn dto-cancel" id="dto-cancel">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-display">
+                    <span class="pos-value" id="lat">N 00&deg; 00.00'</span>
+                    <span class="pos-value" id="lon">W 000&deg; 00.00'</span>
+                </div>
+                <div class="waypoint-box">
+                    <div class="wpt-header">
+                        <span class="wpt-id" id="wpt-id">----</span>
+                        <span class="wpt-type" id="wpt-type">GPS</span>
+                    </div>
+                    <div class="wpt-data">
+                        <div class="wpt-item"><span class="wpt-label">DIS</span><span class="wpt-value" id="wpt-dis">--.-</span><span class="wpt-unit">nm</span></div>
+                        <div class="wpt-item"><span class="wpt-label">BRG</span><span class="wpt-value" id="wpt-brg">---</span><span class="wpt-unit">&deg;</span></div>
+                        <div class="wpt-item"><span class="wpt-label">DTK</span><span class="wpt-value" id="wpt-dtk">---</span><span class="wpt-unit">&deg;</span></div>
+                        <div class="wpt-item"><span class="wpt-label">ETE</span><span class="wpt-value" id="wpt-ete">--:--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FPL Page -->
+            <div class="gtn-page" id="page-fpl" style="display:none;">
+                <div class="gtn-fpl-header">
+                    <div class="fpl-route">
+                        <span id="fpl-dep">----</span>
+                        <span class="fpl-arrow">&#9654;</span>
+                        <span id="fpl-arr">----</span>
+                    </div>
+                    <div class="fpl-stats">
+                        <span><b id="fpl-dist">0</b> NM</span>
+                        <span><b id="fpl-ete">--:--</b></span>
+                    </div>
+                </div>
+                <div class="gtn-fpl-list" id="fpl-list">
+                    <div class="gtn-fpl-empty">No flight plan loaded</div>
+                </div>
+                <div class="gtn-fpl-progress">
+                    <div class="progress-bar" id="fpl-progress" style="width:0%"></div>
+                </div>
+            </div>
+
+            <!-- WPT Page -->
+            <div class="gtn-page" id="page-wpt" style="display:none;">
+                <div class="gtn-wpt-search">
+                    <input type="text" id="wpt-search" placeholder="Enter waypoint ID" maxlength="5">
+                    <button id="wpt-go">GO</button>
+                </div>
+                <div class="gtn-wpt-info" id="wpt-info">
+                    <div class="wpt-info-empty">Enter waypoint identifier</div>
+                </div>
+            </div>
+
+            <!-- NRST Page -->
+            <div class="gtn-page" id="page-nrst" style="display:none;">
+                <div class="gtn-nrst-tabs">
+                    <button class="nrst-tab active" data-type="apt">APT</button>
+                    <button class="nrst-tab" data-type="vor">VOR</button>
+                    <button class="nrst-tab" data-type="ndb">NDB</button>
+                    <button class="nrst-tab" data-type="fix">FIX</button>
+                </div>
+                <div class="gtn-nrst-list" id="nrst-list">
+                    <div class="gtn-nrst-empty">Searching...</div>
+                </div>
+            </div>
+
+            <!-- PROC Page -->
+            <div class="gtn-page" id="page-proc" style="display:none;">
+                <div class="gtn-proc-tabs">
+                    <button class="proc-tab active" data-type="dep">DEPARTURE</button>
+                    <button class="proc-tab" data-type="arr">ARRIVAL</button>
+                    <button class="proc-tab" data-type="apr">APPROACH</button>
+                </div>
+                <div class="gtn-proc-airport">
+                    <span class="proc-label">Airport:</span>
+                    <input type="text" id="proc-apt" placeholder="ICAO" maxlength="4">
+                </div>
+                <div class="gtn-proc-list" id="proc-list">
+                    <div class="gtn-proc-empty">Select airport</div>
+                </div>
+            </div>
+
+            <!-- TERRAIN Page -->
+            <div class="gtn-page" id="page-terrain" style="display:none;">
+                <div class="gtn-terrain-container">
+                    <canvas id="terrain-canvas"></canvas>
+                    <div class="terrain-range-selector">
+                        <button class="range-btn" id="terrain-zoom-out">-</button>
+                        <span class="range-value" id="terrain-range-value">10</span>
+                        <span class="range-unit">nm</span>
+                        <button class="range-btn" id="terrain-zoom-in">+</button>
+                    </div>
+                    <div class="terrain-view-toggle">
+                        <button class="view-btn" id="terrain-view-360">360&deg;</button>
+                        <button class="view-btn active" id="terrain-view-arc">ARC</button>
+                    </div>
+                    <div class="terrain-page-legend">
+                        <div class="terrain-legend-title">Terrain</div>
+                        <div class="terrain-legend-label">FT</div>
+                        <div class="terrain-legend-scale">
+                            <div class="terrain-legend-bar">
+                                <div class="tl-segment tl-red"></div>
+                                <div class="tl-segment tl-orange"></div>
+                                <div class="tl-segment tl-yellow"></div>
+                                <div class="tl-segment tl-green"></div>
+                            </div>
+                            <div class="terrain-legend-labels">
+                                <span>0</span><span>-500</span><span>-1000</span><span>-1500</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="gtn-terrain-status">
+                    <span>TAWS: <b id="taws-status">ACTIVE</b></span>
+                    <span>Mode: <b id="terrain-mode">360</b></span>
+                    <span>Range: <b id="terrain-range">10</b> NM</span>
+                    <span>Clearance: <b id="terrain-clearance">---</b> ft</span>
+                </div>
+            </div>
+
+            <!-- TRAFFIC Page -->
+            <div class="gtn-page" id="page-traffic" style="display:none;">
+                <div class="gtn-traffic-container">
+                    <canvas id="traffic-canvas"></canvas>
+                    <div class="traffic-legend">
+                        <div class="legend-item"><span class="symbol">&#9670;</span> Same alt</div>
+                        <div class="legend-item"><span class="symbol">&#9650;</span> Above</div>
+                        <div class="legend-item"><span class="symbol">&#9660;</span> Below</div>
+                    </div>
+                </div>
+                <div class="gtn-traffic-status">
+                    <span>Mode: <b id="traffic-mode">OPERATE</b></span>
+                    <span>Targets: <b id="traffic-count">0</b></span>
+                </div>
+            </div>
+
+            <!-- WX Page -->
+            <div class="gtn-page" id="page-wx" style="display:none;">
+                <div class="gtn-wx-container">
+                    <canvas id="wx-canvas"></canvas>
+                    <div class="wx-range-selector">
+                        <button class="range-btn" id="wx-zoom-out">-</button>
+                        <span class="range-value" id="wx-range">50</span>
+                        <span class="range-unit">nm</span>
+                        <button class="range-btn" id="wx-zoom-in">+</button>
+                    </div>
+                    <div class="wx-overlay-controls">
+                        <label><input type="checkbox" id="wx-sim-radar"> SIM WX</label>
+                        <label><input type="checkbox" id="wx-nexrad" checked> NEXRAD</label>
+                        <label><input type="checkbox" id="wx-metar"> METAR</label>
+                        <label><input type="checkbox" id="wx-winds"> WINDS</label>
+                        <label><input type="checkbox" id="wx-lightning"> LTG</label>
+                        <button class="wx-anim-btn" id="wx-animate" title="Animate radar">&#9654;</button>
+                    </div>
+                    <div class="wx-radar-time" id="wx-radar-time"></div>
+                </div>
+                <div class="gtn-wx-info">
+                    <div class="wx-condition-banner" id="wx-condition-banner">
+                        <span class="wx-condition-icon" id="wx-condition-icon">&#9728;</span>
+                        <span class="wx-condition-text" id="wx-condition-text">Clear</span>
+                    </div>
+                    <div class="wx-sim-weather">
+                        <span class="wx-item"><b>Wind:</b> <span id="wx-wind">---&deg;/--kt</span></span>
+                        <span class="wx-item"><b>Temp:</b> <span id="wx-temp">--&deg;C</span></span>
+                        <span class="wx-item"><b>Baro:</b> <span id="wx-baro">--,--"</span></span>
+                        <span class="wx-item"><b>Vis:</b> <span id="wx-vis">--SM</span></span>
+                        <span class="wx-item" id="wx-precip-item" style="display:none"><b>Precip:</b> <span id="wx-precip">None</span></span>
+                    </div>
+                    <div class="wx-metar" id="wx-metar-text">Sim weather data</div>
+                </div>
+            </div>
+
+            <!-- CHARTS Page -->
+            <div class="gtn-page" id="page-charts" style="display:none;">
+                <div class="gtn-charts-search">
+                    <input type="text" id="chart-apt" placeholder="Airport ICAO" maxlength="4">
+                    <button id="chart-search">Search</button>
+                </div>
+                <div class="gtn-chart-types" id="chart-type-bar"></div>
+                <div class="gtn-charts-list" id="chart-list">
+                    <div class="gtn-charts-empty">Enter airport ICAO</div>
+                </div>
+                <div class="gtn-charts-actions">
+                    <button class="chart-action-btn" id="chart-view">VIEW</button>
+                    <button class="chart-action-btn" id="chart-fox">ChartFox</button>
+                </div>
+            </div>
+
+            <!-- AUX Page -->
+            <div class="gtn-page" id="page-aux" style="display:none;">
+                <div class="gtn-aux-section">
+                    <div class="aux-title">TRIP PLANNING</div>
+                    <div class="aux-grid">
+                        <div class="aux-item"><span class="aux-label">Distance Rem</span><span class="aux-value" id="aux-dist">--- NM</span></div>
+                        <div class="aux-item"><span class="aux-label">Time Rem</span><span class="aux-value" id="aux-time">--:--</span></div>
+                        <div class="aux-item"><span class="aux-label">ETA</span><span class="aux-value" id="aux-eta">--:--Z</span></div>
+                        <div class="aux-item"><span class="aux-label">Fuel Req</span><span class="aux-value" id="aux-fuel">--- GAL</span></div>
+                    </div>
+                </div>
+                <div class="gtn-aux-section">
+                    <div class="aux-title">UTILITIES</div>
+                    <div class="aux-timer" id="aux-timer">
+                        <span class="timer-display" id="timer-display">00:00:00</span>
+                        <button class="timer-btn" id="timer-toggle">START</button>
+                        <button class="timer-btn" id="timer-reset">RESET</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SYSTEM Page -->
+            <div class="gtn-page" id="page-system" style="display:none;">
+                <div class="gtn-sys-scroll">
+                    <div class="gtn-sys-section">
+                        <div class="sys-title">DISPLAY</div>
+                        <div class="sys-option">
+                            <span>Map Orientation</span>
+                            <select id="sys-map-orient">
+                                <option value="north">North Up</option>
+                                <option value="track" selected>Track Up</option>
+                                <option value="heading">Heading Up</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gtn-sys-section">
+                        <div class="sys-title">GPS STATUS</div>
+                        <div class="sys-status-grid">
+                            <div class="sys-status-item">
+                                <span class="status-label">GPS</span>
+                                <span class="status-value" id="sys-gps-status">3D FIX</span>
+                            </div>
+                            <div class="sys-status-item">
+                                <span class="status-label">Mode</span>
+                                <span class="status-value">MSFS Native</span>
+                            </div>
+                            <div class="sys-status-item">
+                                <span class="status-label">Software</span>
+                                <span class="status-value">v2.0.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gtn-sys-section">
+                        <button class="sys-reset-btn" id="sys-reset">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CDI Bar -->
+        <div class="cdi-container">
+            <div class="cdi-nav-source">
+                <button class="nav-src-btn active" id="nav-source-gps">GPS</button>
+                <button class="nav-src-btn" id="nav-source-nav1">NAV1</button>
+                <button class="nav-src-btn" id="nav-source-nav2">NAV2</button>
+            </div>
+            <div class="cdi-wrapper">
+                <div class="cdi-scale">
+                    <div class="cdi-dot"></div>
+                    <div class="cdi-dot"></div>
+                    <div class="cdi-center"></div>
+                    <div class="cdi-dot"></div>
+                    <div class="cdi-dot"></div>
+                </div>
+                <div class="cdi-needle" id="cdi-needle"></div>
+                <div class="cdi-gs-bar" id="cdi-gs-bar" style="display:none;">
+                    <div class="cdi-gs-needle" id="cdi-gs-needle"></div>
+                </div>
+            </div>
+            <div class="cdi-labels">
+                <span class="cdi-label-left">L</span>
+                <div class="cdi-info">
+                    <span class="cdi-source" id="cdi-source">GPS</span>
+                    <span class="cdi-tofrom" id="cdi-tofrom">TO</span>
+                    <span class="cdi-dtk">DTK <span id="cdi-dtk">---</span>&deg;</span>
+                    <span class="cdi-xtrk">XTK <span id="cdi-xtrk">0.0</span>NM</span>
+                </div>
+                <span class="cdi-label-right">R</span>
+            </div>
+            <div class="obs-controls" id="obs-controls" style="display:none;">
+                <button class="obs-btn" id="obs-dec">&lt;</button>
+                <span class="obs-label">OBS</span>
+                <span class="obs-value" id="obs-value">---</span>&deg;
+                <button class="obs-btn" id="obs-inc">&gt;</button>
+            </div>
+            <div class="cdi-flag" id="cdi-flag" style="display:none;">NAV</div>
+        </div>
+
+        <!-- Soft Keys Bar -->
+        <div class="gtn-softkeys" id="gtn-softkeys"></div>
+
+        <!-- Status Bar (Bottom) -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-gps" id="gps-status">GPS 3D</span>
+                <span class="status-conn" id="conn"></span>
+            </div>
+            <div class="status-center">
+                <span class="status-msg" id="msg">MSFS NATIVE</span>
+            </div>
+            <div class="status-right">
+                <span class="status-time" id="utc-time">00:00:00Z</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- GTN750 Modules -->
+    <script src="modules/gtn-core.js"></script>
+    <script src="modules/gtn-pages.js"></script>
+    <script src="modules/gtn-softkeys.js"></script>
+    <script src="modules/gtn-data-fields.js"></script>
+    <script src="modules/gtn-cdi.js"></script>
+    <script src="modules/gtn-flight-plan.js"></script>
+    <script src="modules/gtn-map-renderer.js"></script>
+    <script src="modules/gtn-data-handler.js"></script>
+    <script src="modules/gtn-simvar-handler.js"></script>
+    <script src="overlays/terrain-overlay.js"></script>
+    <script src="overlays/traffic-overlay.js"></script>
+    <script src="overlays/weather-overlay.js"></script>
+    <script src="overlays/map-controls.js"></script>
+    <script src="pages/page-proc.js"></script>
+    <script src="pages/page-aux.js"></script>
+    <script src="pages/page-charts.js"></script>
+    <script src="pages/page-nrst.js"></script>
+    <script src="pages/page-system.js"></script>
+    <script src="widget.js"></script>
+</body>
+</html>
