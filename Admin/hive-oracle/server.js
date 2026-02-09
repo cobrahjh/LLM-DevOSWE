@@ -16,14 +16,17 @@ const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const usageMetrics = require('../shared/usage-metrics');
 
 const PORT = process.env.PORT || 8850;
 const HIVE_BRAIN_URL = process.env.HIVE_BRAIN_URL || 'http://localhost:8800';
 const HIVE_NODE = process.env.HIVE_NODE || os.hostname();
 
 const app = express();
+usageMetrics.init('Hive-Oracle');
 app.use(cors());
 app.use(express.json());
+app.use(usageMetrics.middleware());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============== COLONY STATE ==============
@@ -401,7 +404,8 @@ app.get('/api/health', (req, res) => {
             online: nodes.filter(n => n.status === 'online').length,
             totalModels: nodes.reduce((sum, n) => sum + n.models.length, 0)
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        usage: usageMetrics.getSummary()
     });
 });
 
