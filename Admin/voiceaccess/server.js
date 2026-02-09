@@ -15,6 +15,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs');
+const usageMetrics = require('../shared/usage-metrics');
 
 const PORT = process.env.PORT || 8875;
 const RELAY_URL = process.env.RELAY_URL || 'http://localhost:8600';
@@ -25,8 +26,10 @@ const AGENT_URL = process.env.AGENT_URL || 'http://localhost:8585';
 const DATA_FILE = path.join(__dirname, 'voiceaccess-data.json');
 
 const app = express();
+usageMetrics.init('VoiceAccess');
 app.use(cors());
 app.use(express.json());
+app.use(usageMetrics.middleware());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============== DATA STORE ==============
@@ -367,7 +370,8 @@ app.get('/api/health', (req, res) => {
         activePersona: store.settings.defaultPersona,
         macros: store.macros.length,
         historySize: store.history.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        usage: usageMetrics.getSummary()
     });
 });
 
@@ -574,6 +578,7 @@ const clients = new Set();
 
 wss.on('connection', (ws) => {
     clients.add(ws);
+    usageMetrics.trackConnection(1);
     console.log(`[VoiceAccess] Client connected (${clients.size} total)`);
 
     // Send initial state
@@ -602,6 +607,7 @@ wss.on('connection', (ws) => {
 
     ws.on('close', () => {
         clients.delete(ws);
+        usageMetrics.trackConnection(-1);
     });
 });
 
