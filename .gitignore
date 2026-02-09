@@ -70,3 +70,5 @@ Admin/hive-brain/data/
 # Compiled binaries
 simwidget-hybrid/backend/video-capture/bin/
 .claude/
+# Terminal Hub backups
+Admin/terminal-hub.backup.*/
