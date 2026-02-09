@@ -31,8 +31,10 @@ const path = require('path');
 const { exec, spawn } = require('child_process');
 const os = require('os');
 const TroubleshootEngine = require('../shared/troubleshoot-engine');
+const usageMetrics = require('../shared/usage-metrics');
 
 const app = express();
+usageMetrics.init('Remote-Support');
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: '/ws' });
 
@@ -250,6 +252,7 @@ async function controlService(serviceId, action) {
 // ============================================
 
 app.use(express.json());
+app.use(usageMetrics.middleware());
 
 // CORS headers
 app.use((req, res, next) => {
@@ -271,7 +274,11 @@ app.use((req, res, next) => {
 
 // Health (no auth required)
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', version: '1.1.0' });
+    res.json({
+        status: 'ok',
+        version: '1.1.0',
+        usage: usageMetrics.getSummary()
+    });
 });
 
 // Graceful shutdown endpoint (no auth - for server manager)
@@ -503,13 +510,14 @@ wss.on('connection', (ws, req) => {
     // Auth check
     const url = new URL(req.url, `http://${req.headers.host}`);
     const key = url.searchParams.get('apiKey');
-    
+
     if (key !== API_KEY) {
         ws.close(4001, 'Unauthorized');
         return;
     }
-    
+
     console.log('[Remote] WebSocket client connected');
+    usageMetrics.trackConnection(1);
     audit('WS_CONNECT', {}, req.socket.remoteAddress);
     
     ws.on('message', async (data) => {
@@ -554,6 +562,7 @@ wss.on('connection', (ws, req) => {
     
     ws.on('close', () => {
         console.log('[Remote] WebSocket client disconnected');
+        usageMetrics.trackConnection(-1);
     });
 });
 
