@@ -485,15 +485,20 @@ async function queueForImplementation(itemId) {
 
     // Create task in Relay
     try {
-        const res = await fetch(`${CONFIG.relayUrl}/api/tasks`, {
+        const res = await fetch(`${CONFIG.relayUrl}/api/queue`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                title: `Implement: ${item.title}`,
-                description: `${item.summary}\n\nSource: ${item.url}\n\nThoughts: ${item.thoughts}`,
-                source: 'intel-curator',
+                message: `Implement: ${item.title}\n\n${item.summary}\n\nSource: ${item.url}\n\nAnalysis: ${item.thoughts}`,
+                sessionId: 'intel-curator',
                 priority: item.relevance >= 80 ? 'high' : 'normal',
-                metadata: { intelId: itemId, category: item.category }
+                taskType: item.category || 'other',
+                context: {
+                    intelId: itemId,
+                    category: item.category,
+                    relevance: item.relevance,
+                    url: item.url
+                }
             })
         });
 
