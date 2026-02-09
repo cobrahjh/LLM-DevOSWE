@@ -18,13 +18,17 @@ Write-Host ""
 
 # Create directory structure via SSH
 Write-Host "Creating directory structure..." -ForegroundColor Yellow
-ssh "${username}@${haroldPC}" "powershell -Command `"New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\modules' -Force | Out-Null; New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\overlays' -Force | Out-Null; New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\pages' -Force | Out-Null`""
+ssh "${username}@${haroldPC}" "powershell -Command `"New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\modules' -Force | Out-Null; New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\overlays' -Force | Out-Null; New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\pages' -Force | Out-Null; New-Item -ItemType Directory -Path '$($remoteDest -replace '/','\\')\\html_ui\\InGamePanels\\GTN750Panel\\shared' -Force | Out-Null`""
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: SSH directory creation failed" -ForegroundColor Red; Pop-Location; exit 1 }
 
 # Copy package files
 Write-Host "Copying package files..." -ForegroundColor Yellow
 scp "msfs-gtn750/layout.json" "msfs-gtn750/manifest.json" "${username}@${haroldPC}:${remoteDest}/"
 scp "msfs-gtn750/html_ui/InGamePanels/GTN750Panel/GTN750Panel.html" "msfs-gtn750/html_ui/InGamePanels/GTN750Panel/panel.json" "${username}@${haroldPC}:${remotePanel}/"
+
+# Copy shared CSS (referenced by GTN750Panel.html)
+Write-Host "Copying shared CSS..." -ForegroundColor Yellow
+scp "ui/shared/widget-common.css" "ui/shared/themes.css" "${username}@${haroldPC}:${remotePanel}/shared/"
 
 # Copy GTN750 glass files (v2.3.0)
 Write-Host "Copying GTN750 glass files (v2.3.0 - Performance Optimized)..." -ForegroundColor Yellow

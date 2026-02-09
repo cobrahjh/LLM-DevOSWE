@@ -2,123 +2,123 @@
   "content": [
     {
       "path": "html_ui/InGamePanels/GTN750Panel/GTN750Panel.html",
-      "size": 15000,
-      "date": 132851673600000000
+      "size": 27497,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/panel.json",
-      "size": 500,
-      "date": 132851673600000000
+      "size": 413,
+      "date": 133834560000000000
+    },
+    {
+      "path": "html_ui/InGamePanels/GTN750Panel/glass.js",
+      "size": 66726,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/styles.css",
-      "size": 50000,
-      "date": 132851673600000000
+      "size": 38184,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/shared/widget-common.css",
-      "size": 5000,
-      "date": 132851673600000000
+      "size": 2888,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/shared/themes.css",
-      "size": 3000,
-      "date": 132851673600000000
-    },
-    {
-      "path": "html_ui/InGamePanels/GTN750Panel/widget.js",
-      "size": 40000,
-      "date": 132851673600000000
+      "size": 11414,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-core.js",
-      "size": 5000,
-      "date": 132851673600000000
+      "size": 13003,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-pages.js",
-      "size": 3000,
-      "date": 132851673600000000
+      "size": 3750,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-softkeys.js",
-      "size": 5000,
-      "date": 132851673600000000
+      "size": 9791,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-data-fields.js",
-      "size": 6000,
-      "date": 132851673600000000
+      "size": 6666,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-cdi.js",
-      "size": 12000,
-      "date": 132851673600000000
+      "size": 13829,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-flight-plan.js",
-      "size": 16000,
-      "date": 132851673600000000
+      "size": 20172,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-map-renderer.js",
-      "size": 25000,
-      "date": 132851673600000000
+      "size": 26626,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-data-handler.js",
-      "size": 8000,
-      "date": 132851673600000000
+      "size": 8180,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/modules/gtn-simvar-handler.js",
-      "size": 8000,
-      "date": 132851673600000000
+      "size": 11025,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/overlays/terrain-overlay.js",
-      "size": 10000,
-      "date": 132851673600000000
+      "size": 21359,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/overlays/traffic-overlay.js",
-      "size": 8000,
-      "date": 132851673600000000
+      "size": 13026,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/overlays/weather-overlay.js",
-      "size": 12000,
-      "date": 132851673600000000
+      "size": 52393,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/overlays/map-controls.js",
-      "size": 5000,
-      "date": 132851673600000000
+      "size": 9859,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/pages/page-proc.js",
-      "size": 5000,
-      "date": 132851673600000000
+      "size": 13092,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/pages/page-aux.js",
-      "size": 4000,
-      "date": 132851673600000000
+      "size": 13300,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/pages/page-charts.js",
-      "size": 5000,
-      "date": 132851673600000000
+      "size": 10998,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/pages/page-nrst.js",
-      "size": 5000,
-      "date": 132851673600000000
+      "size": 8864,
+      "date": 133834560000000000
     },
     {
       "path": "html_ui/InGamePanels/GTN750Panel/pages/page-system.js",
-      "size": 4000,
-      "date": 132851673600000000
+      "size": 14945,
+      "date": 133834560000000000
     }
   ]
 }
