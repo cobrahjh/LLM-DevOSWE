@@ -41,11 +41,15 @@ const net = require('net');
 const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const usageMetrics = require('../shared/usage-metrics');
 
 const app = express();
 const server = http.createServer(app);
 
 const PORT = 8500;
+
+// Initialize usage metrics
+usageMetrics.init('Orchestrator');
 const PROJECT_ROOT = 'C:\\LLM-DevOSWE';
 const LOGS_DIR = path.join(__dirname, 'logs');
 
@@ -677,6 +681,7 @@ async function stopAllServices() {
 // ============================================
 
 app.use(express.json());
+app.use(usageMetrics.middleware());
 
 // CORS
 app.use((req, res, next) => {
@@ -689,7 +694,12 @@ app.use((req, res, next) => {
 
 // Health (no auth)
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', service: 'master', version: '1.0.0' });
+    res.json({
+        status: 'ok',
+        service: 'master',
+        version: '1.2.0',
+        usage: usageMetrics.getSummary()
+    });
 });
 
 // Status (no auth) - parallel health checks with 10s total timeout
