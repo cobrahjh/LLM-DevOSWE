@@ -179,17 +179,8 @@ const SERVICES = {
         priority: 8,
         autoRestart: true
     },
-    hivebrain: {
-        id: 'hivebrain',
-        name: 'Hive Brain Admin',
-        port: 8800,
-        dir: path.join(PROJECT_ROOT, 'Admin', 'hive-brain'),
-        start: 'node server.js',
-        winService: null,  // No Windows Service yet
-        healthEndpoint: '/api/health',
-        priority: 9,
-        autoRestart: true
-    },
+    // Removed: Hive Brain Admin (8800) - merged into unified Hive Brain (8810) v2.0.0
+    // See: docs/SERVICE-SEPARATION-RATIONALE.md
     hiveoracle: {
         id: 'hiveoracle',
         name: 'Hive Oracle (LLM)',
@@ -201,16 +192,17 @@ const SERVICES = {
         priority: 10,
         autoRestart: true
     },
-    hivebraindiscovery: {
-        id: 'hivebraindiscovery',
-        name: 'Hive-Brain Discovery',
+    hivebrain: {
+        id: 'hivebrain',
+        name: 'Hive Brain (Unified)',
         port: 8810,
         dir: path.join(PROJECT_ROOT, 'Admin', 'hive-brain'),
         start: 'node hive-brain.js',
-        winService: null,
+        winService: 'HiveBrain',
         healthEndpoint: '/api/health',
-        priority: 11,
-        autoRestart: true
+        priority: 9,
+        autoRestart: true,
+        description: 'v2.0.0 - Merged Discovery + Admin (WebSocket + JSON persistence)'
     },
     mastermind: {
         id: 'mastermind',

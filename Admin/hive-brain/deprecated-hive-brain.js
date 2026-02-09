@@ -1,44 +1,27 @@
 /**
- * Hive Brain - Unified Device Discovery & Colony Management v2.0.0
+ * Hive Brain - Device Discovery & Colony Management
  * Port: 8810
- *
- * MERGED FROM:
- * - hive-brain.js (8810) - JSON persistence, enrollment queue
- * - server.js (8800) - WebSocket real-time updates, health checking
  *
  * Features:
  * - Network scanning (ping sweep, port scan)
  * - Device fingerprinting (OS, services)
  * - Enrollment queue with approval workflow
- * - WebSocket real-time updates
- * - Device health monitoring
- * - JSON file persistence
- * - Background scanning (5 min interval)
- * - Colony health checks
+ * - Colony health monitoring
  */
 
 const express = require('express');
 const cors = require('cors');
-const http = require('http');
-const WebSocket = require('ws');
 const net = require('net');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
-const usageMetrics = require('../shared/usage-metrics');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Initialize usage metrics
-usageMetrics.init('Hive Brain');
-app.use(usageMetrics.middleware());
-
 const PORT = 8810;
-const HIVE_NODE = process.env.HIVE_NODE || os.hostname();
 const DATA_DIR = path.join(__dirname, 'data');
 const DEVICES_FILE = path.join(DATA_DIR, 'devices.json');
 const ENROLLMENT_FILE = path.join(DATA_DIR, 'enrollment-queue.json');
@@ -50,28 +33,25 @@ if (!fs.existsSync(DATA_DIR)) {
 
 // Known Hive service ports to scan
 const HIVE_PORTS = [
-    { port: 3002, service: 'Oracle' },
-    { port: 8080, service: 'SimGlass' },
-    { port: 8500, service: 'Orchestrator' },
+    { port: 3002, service: 'Oracle (LLM)' },
+    { port: 8080, service: 'SimWidget Main' },
+    { port: 8500, service: 'Master-O' },
     { port: 8585, service: 'KittBox' },
     { port: 8600, service: 'Relay' },
-    { port: 8601, service: 'Claude Bridge' },
+    { port: 8700, service: 'Hivemind' },
     { port: 8701, service: 'Hive-Mind' },
-    { port: 8750, service: 'Hive-Mesh' },
-    { port: 8771, service: 'Terminal Hub' },
+    { port: 8750, service: 'Mesh' },
+    { port: 8800, service: 'HiveImmortal Oracle' },
     { port: 8810, service: 'Hive Brain' },
-    { port: 8820, service: 'Master-Mind' },
-    { port: 8850, service: 'Hive Oracle' },
-    { port: 8860, service: 'MCP Bridge' },
-    { port: 8875, service: 'VoiceAccess' },
-    { port: 8899, service: 'Dashboard' },
     { port: 11434, service: 'Ollama' },
     { port: 1234, service: 'LM Studio' },
     { port: 22, service: 'SSH' },
 ];
 
 // Network ranges to scan
-const NETWORK_RANGES = ['192.168.1'];
+const NETWORK_RANGES = [
+    '192.168.1',  // Primary home network
+];
 
 // ============================================
 // DATA PERSISTENCE
@@ -142,10 +122,8 @@ async function checkPort(ip, port, timeout = 2000) {
 
 async function scanNetwork(range = '192.168.1', startIP = 1, endIP = 254) {
     console.log(`[Scan] Scanning ${range}.${startIP}-${endIP}...`);
-    broadcastWs({ type: 'scan_start', subnet: range, range: `${startIP}-${endIP}` });
-
     const results = [];
-    const batchSize = 20;
+    const batchSize = 20; // Scan in batches to avoid overwhelming
 
     for (let i = startIP; i <= endIP; i += batchSize) {
         const batch = [];
@@ -154,13 +132,6 @@ async function scanNetwork(range = '192.168.1', startIP = 1, endIP = 254) {
         }
         const batchResults = await Promise.all(batch);
         results.push(...batchResults.filter(r => r.alive));
-
-        broadcastWs({
-            type: 'scan_progress',
-            scanned: Math.min(i + batchSize, endIP),
-            total: endIP - startIP + 1,
-            found: results.length
-        });
     }
 
     console.log(`[Scan] Found ${results.length} alive hosts`);
@@ -213,7 +184,7 @@ async function fingerprintDevice(ip, openPorts) {
 
     // Determine if it's a Hive node
     const hiveServices = openPorts.filter(p =>
-        [3002, 8500, 8585, 8600, 8601, 8701, 8750, 8771, 8810, 8820, 8850, 8860].includes(p.port)
+        [3002, 8500, 8585, 8600, 8700, 8701, 8750, 8800, 8810].includes(p.port)
     );
     fingerprint.isHiveNode = hiveServices.length > 0;
 
@@ -226,50 +197,6 @@ async function fingerprintDevice(ip, openPorts) {
     }
 
     return fingerprint;
-}
-
-// ============================================
-// DEVICE HEALTH CHECKING
-// ============================================
-
-async function checkDeviceHealth(ip) {
-    const device = devices.known[ip];
-    if (!device) return null;
-
-    const health = { ip, services: {}, timestamp: Date.now() };
-
-    // Check key Hive services
-    const criticalServices = [
-        { name: 'Oracle', port: 3002 },
-        { name: 'Relay', port: 8600 },
-        { name: 'KittBox', port: 8585 },
-        { name: 'Hive-Mind', port: 8701 }
-    ];
-
-    for (const svc of criticalServices) {
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-            const res = await fetch(`http://${ip}:${svc.port}/api/health`, {
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-
-            health.services[svc.name] = res.ok ? 'online' : 'error';
-        } catch {
-            health.services[svc.name] = 'offline';
-        }
-    }
-
-    // Update device health timestamp
-    if (devices.known[ip]) {
-        devices.known[ip].lastHealthCheck = Date.now();
-        devices.known[ip].health = health;
-        saveJSON(DEVICES_FILE, devices);
-    }
-
-    return health;
 }
 
 // ============================================
@@ -289,7 +216,6 @@ async function runDiscovery() {
 
     isScanning = true;
     console.log('[Discovery] Starting network discovery...');
-    broadcastWs({ type: 'discovery_start' });
 
     try {
         const newDevices = [];
@@ -318,8 +244,6 @@ async function runDiscovery() {
                                 createdAt: Date.now()
                             });
                         }
-
-                        broadcastWs({ type: 'device_found', device: fingerprint });
                     } else if (devices.known[deviceKey]) {
                         // Update last seen
                         devices.known[deviceKey].lastSeen = Date.now();
@@ -339,13 +263,6 @@ async function runDiscovery() {
         lastScanTime = Date.now();
         console.log(`[Discovery] Complete. Found ${newDevices.length} new devices`);
 
-        broadcastWs({
-            type: 'discovery_complete',
-            newDevices: newDevices.length,
-            totalKnown: Object.keys(devices.known).length,
-            totalDiscovered: Object.keys(devices.discovered).length
-        });
-
         return {
             status: 'complete',
             newDevices: newDevices.length,
@@ -358,84 +275,26 @@ async function runDiscovery() {
 }
 
 // ============================================
-// WEBSOCKET SERVER
-// ============================================
-
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-const wsClients = new Set();
-
-wss.on('connection', (ws) => {
-    wsClients.add(ws);
-    usageMetrics.trackConnection(+1);
-    console.log(`[Hive-Brain] WebSocket client connected (${wsClients.size} total)`);
-
-    // Send current state
-    ws.send(JSON.stringify({
-        type: 'init',
-        devices: {
-            known: Object.values(devices.known),
-            discovered: Object.values(devices.discovered)
-        },
-        enrollment: enrollmentQueue,
-        isScanning,
-        lastScan: lastScanTime
-    }));
-
-    ws.on('close', () => {
-        wsClients.delete(ws);
-        usageMetrics.trackConnection(-1);
-        console.log(`[Hive-Brain] Client disconnected (${wsClients.size} remaining)`);
-    });
-
-    ws.on('message', async (data) => {
-        try {
-            const msg = JSON.parse(data);
-            if (msg.type === 'scan') {
-                runDiscovery();
-            }
-        } catch (e) {
-            console.error('[Hive-Brain] WebSocket message error:', e.message);
-        }
-    });
-});
-
-function broadcastWs(data) {
-    const json = JSON.stringify(data);
-    wsClients.forEach(ws => {
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(json);
-        }
-    });
-}
-
-// ============================================
 // REST API
 // ============================================
 
 // Health check
-app.get('/api/health', (req, res) => {
+function healthResponse(req, res) {
     res.json({
         status: 'ok',
         service: 'Hive Brain',
-        version: '2.0.0',
-        node: HIVE_NODE,
+        version: '1.0.0',
         isScanning,
         lastScan: lastScanTime,
         devices: {
             known: Object.keys(devices.known).length,
             discovered: Object.keys(devices.discovered).length
         },
-        enrollmentPending: enrollmentQueue.filter(e => e.status === 'pending').length,
-        wsClients: wsClients.size,
-        usage: usageMetrics.getSummary()
+        enrollmentPending: enrollmentQueue.filter(e => e.status === 'pending').length
     });
-});
-
-// Legacy /health endpoint
-app.get('/health', (req, res) => {
-    res.redirect('/api/health');
-});
+}
+app.get('/health', healthResponse);
+app.get('/api/health', healthResponse);
 
 // Trigger discovery scan
 app.post('/api/discover', async (req, res) => {
@@ -480,7 +339,6 @@ app.post('/api/devices/:ip/approve', (req, res) => {
     saveJSON(DEVICES_FILE, devices);
     saveJSON(ENROLLMENT_FILE, enrollmentQueue);
 
-    broadcastWs({ type: 'device_approved', device: devices.known[ip] });
     res.json({ success: true, device: devices.known[ip] });
 });
 
@@ -493,7 +351,6 @@ app.patch('/api/devices/:ip/notes', (req, res) => {
         devices.known[ip].notes = notes || '';
         devices.known[ip].notesUpdatedAt = Date.now();
         saveJSON(DEVICES_FILE, devices);
-        broadcastWs({ type: 'device_updated', device: devices.known[ip] });
         return res.json({ success: true, device: devices.known[ip] });
     }
 
@@ -501,7 +358,6 @@ app.patch('/api/devices/:ip/notes', (req, res) => {
         devices.discovered[ip].notes = notes || '';
         devices.discovered[ip].notesUpdatedAt = Date.now();
         saveJSON(DEVICES_FILE, devices);
-        broadcastWs({ type: 'device_updated', device: devices.discovered[ip] });
         return res.json({ success: true, device: devices.discovered[ip] });
     }
 
@@ -525,7 +381,6 @@ app.delete('/api/devices/:ip', (req, res) => {
     saveJSON(DEVICES_FILE, devices);
     saveJSON(ENROLLMENT_FILE, enrollmentQueue);
 
-    broadcastWs({ type: 'device_removed', ip });
     res.json({ success: true });
 });
 
@@ -562,55 +417,6 @@ app.get('/api/colony', (req, res) => {
     });
 });
 
-// Check device health
-app.get('/api/devices/:ip/health', async (req, res) => {
-    const health = await checkDeviceHealth(req.params.ip);
-    if (!health) {
-        return res.status(404).json({ error: 'Device not found' });
-    }
-    res.json(health);
-});
-
-// Check all devices health
-app.get('/api/health/all', async (req, res) => {
-    const results = {};
-    for (const ip of Object.keys(devices.known)) {
-        results[ip] = await checkDeviceHealth(ip);
-    }
-    res.json(results);
-});
-
-// Add device manually
-app.post('/api/devices', (req, res) => {
-    const { ip, hostname, os, type } = req.body;
-    if (!ip) {
-        return res.status(400).json({ error: 'IP required' });
-    }
-
-    const device = {
-        ip,
-        hostname: hostname || 'manual',
-        os: os || 'unknown',
-        type: type || 'unknown',
-        services: [],
-        isHiveNode: false,
-        firstSeen: Date.now(),
-        lastSeen: Date.now(),
-        manual: true
-    };
-
-    devices.known[ip] = device;
-    saveJSON(DEVICES_FILE, devices);
-
-    broadcastWs({ type: 'device_added', device });
-    res.json(device);
-});
-
-// Get usage stats
-app.get('/api/usage/stats', (req, res) => {
-    res.json(usageMetrics.getStats());
-});
-
 // ============================================
 // BACKGROUND SCANNING
 // ============================================
@@ -618,7 +424,7 @@ app.get('/api/usage/stats', (req, res) => {
 const SCAN_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 function startBackgroundScanning() {
-    console.log('[Hive Brain] Starting background scanning...');
+    console.log('[Brain] Starting background scanning...');
 
     // Initial scan after 30 seconds
     setTimeout(() => {
@@ -635,14 +441,9 @@ function startBackgroundScanning() {
 // START SERVER
 // ============================================
 
-server.listen(PORT, () => {
-    console.log('');
-    console.log('╔══════════════════════════════════════╗');
-    console.log('║      HIVE BRAIN v2.0.0 (UNIFIED)     ║');
-    console.log(`║      http://localhost:${PORT}              ║`);
-    console.log('╚══════════════════════════════════════╝');
-    console.log('');
-    console.log(`[Hive Brain] Node: ${HIVE_NODE}`);
+app.listen(PORT, () => {
+    console.log(`[Hive Brain] Device Discovery running on port ${PORT}`);
+    console.log(`[Hive Brain] API: http://localhost:${PORT}/api/health`);
     console.log(`[Hive Brain] Scanning networks: ${NETWORK_RANGES.join(', ')}`);
 
     // Load existing data
@@ -650,8 +451,6 @@ server.listen(PORT, () => {
     enrollmentQueue = loadJSON(ENROLLMENT_FILE, []);
 
     console.log(`[Hive Brain] Loaded ${Object.keys(devices.known).length} known devices`);
-    console.log(`[Hive Brain] Loaded ${Object.keys(devices.discovered).length} discovered devices`);
-    console.log(`[Hive Brain] Enrollment queue: ${enrollmentQueue.filter(e => e.status === 'pending').length} pending`);
 
     // Start background scanning
     startBackgroundScanning();
