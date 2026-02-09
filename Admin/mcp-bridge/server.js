@@ -15,13 +15,16 @@ const express = require('express');
 const cors = require('cors');
 const { spawn } = require('child_process');
 const path = require('path');
+const usageMetrics = require('../shared/usage-metrics');
 
 const app = express();
 const PORT = 8860;
 
 // Middleware
+usageMetrics.init('MCP-Bridge');
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(usageMetrics.middleware());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MCP Server configurations
@@ -279,7 +282,8 @@ app.get('/api/health', (req, res) => {
     port: PORT,
     uptime: process.uptime(),
     activeServers: activeServers.size,
-    availableServers: Object.keys(MCP_SERVERS).length
+    availableServers: Object.keys(MCP_SERVERS).length,
+    usage: usageMetrics.getSummary()
   });
 });
 
