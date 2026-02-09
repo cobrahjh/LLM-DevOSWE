@@ -25,8 +25,9 @@ out/
 .env.local
 .env.supabase
 
-# Downloaded archives (already extracted)
+# Downloaded/deployment archives
 *.zip
+*.tar.gz
 
 # Claude Code temp files and directories
 tmpclaude-*/
