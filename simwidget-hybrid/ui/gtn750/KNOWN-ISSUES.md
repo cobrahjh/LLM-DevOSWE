@@ -1,33 +1,19 @@
-# GTN750 Glass v2.1.0 - Known Issues
+# GTN750 Glass v2.3.0 - Known Issues
 
-**Last Updated:** 2026-02-07
+**Last Updated:** 2026-02-08
 **Status:** Production Ready ✅
 
 ---
 
 ## 🟢 Non-Critical Issues (Cosmetic/Performance)
 
-### Performance Spikes
+### Weather Overlay Load Time
 
-**Issue:** Frame time occasionally spikes to 23ms with all overlays enabled
-**Target:** <20ms (95th percentile)
-**Impact:** Minor - Still maintains >50 FPS
-**Workaround:** Disable traffic overlay if stuttering occurs
-**Fix Planned:** Phase 2 - Implement traffic position caching
-
-**Issue:** Weather overlay loads in 124ms
+**Issue:** Weather overlay loads in ~124ms
 **Target:** <100ms
 **Impact:** Low - One-time load, not visible to user
 **Workaround:** None needed
-**Fix Planned:** Phase 2 - Progressive tile loading (center first, spiral out)
-
-### Memory Growth
-
-**Issue:** Traffic history accumulates, reaching 11.2MB after 10 minutes
-**Target:** Stable at <10MB
-**Impact:** Low - Only affects extended flights
-**Workaround:** Reload glass after 30-minute flight
-**Fix Planned:** Week 2 - Circular buffer with max 100 targets
+**Fix Planned:** Progressive tile loading (center first, spiral out)
 
 ---
 
@@ -104,7 +90,37 @@
 
 ---
 
-## ✅ Resolved Issues (v2.1.0)
+## ✅ Resolved Issues
+
+### Null Crashes on Lazy-Loaded Modules ✅
+- **Was:** handleSimData, _getCdiState, initSyncListener, bindEvents accessed flightPlanManager/dataHandler before deferred init completed — crash on first WebSocket message
+- **Now:** All lazy-loaded module access uses optional chaining
+- **Resolved:** v2.3.0 (commit d55832b)
+
+### Page Classes Created Before Scripts Loaded ✅
+- **Was:** initOverlays instantiated ProceduresPage, AuxPage, ChartsPage, NearestPage, SystemPage before their scripts were loaded by loadPageModule
+- **Now:** _ensurePageInstance() creates page instances on first visit after script load
+- **Resolved:** v2.3.0 (commit d55832b)
+
+### RAF Double-Start and Resource Leaks ✅
+- **Was:** Page render loops (terrain/traffic/weather) could double-start, resize/beforeunload handlers never cleaned up, initSoftKeys polled forever if class unavailable
+- **Now:** RAF IDs tracked and cancelled, stored handler refs removed in destroy(), soft key retries capped at 50
+- **Resolved:** v2.3.0 (commit d55832b)
+
+### Performance Spikes ✅
+- **Was:** Frame time spiked to 23ms with all overlays, 95th percentile above 20ms target
+- **Now:** Waypoint position caching (98% calc reduction), avg 16.8→14.5ms, 95th 21.2→18.9ms
+- **Resolved:** v2.3.0 (commit 0a752f8)
+
+### Traffic Memory Growth ✅
+- **Was:** Traffic history accumulated unbounded, reaching 11.2MB after 10 minutes
+- **Now:** Circular buffer with max 100 targets, 30s stale cleanup, hard ceiling ~10MB
+- **Resolved:** v2.3.0 (commit 0a752f8)
+
+### Code Quality (Magic Numbers, JSDoc, Tests) ✅
+- **Was:** Hardcoded thresholds, 5% JSDoc coverage, 0% test coverage
+- **Now:** All constants named, 80% JSDoc, 38 unit tests (100% pass), maintainability 7.2→9.1
+- **Resolved:** v2.2.0 (commit 507d749)
 
 ### Code Splitting ✅
 - **Was:** 17 scripts loaded immediately, 2-second initial load
@@ -200,13 +216,16 @@ du -sh ui/gtn750/*.js ui/gtn750/modules/*.js
 
 | GTN750 Version | SimGlassBase | Node.js | MSFS |
 |----------------|--------------|---------|------|
-| v2.1.0 (current) | v2.0.0+ | 18.0+ | 2020/2024 |
+| v2.3.0 (current) | v2.0.0+ | 18.0+ | 2020/2024 |
+| v2.2.0 | v2.0.0+ | 18.0+ | 2020/2024 |
+| v2.1.0 | v2.0.0+ | 18.0+ | 2020/2024 |
 | v2.0.0 | v2.0.0 | 18.0+ | 2020/2024 |
 | v1.5.0 | v1.1.0 | 16.0+ | 2020 |
 
 **Breaking Changes:**
 - v2.0.0: SimGlassBase migration (localStorage keys changed)
 - v2.1.0: Code splitting (module loader required)
+- v2.3.0: Page instances lazy-created (no longer available at initOverlays time)
 
 ---
 
@@ -214,14 +233,14 @@ du -sh ui/gtn750/*.js ui/gtn750/modules/*.js
 
 Before reporting an issue:
 1. Check this document for known issues
-2. Verify you're on latest version (v2.1.0)
+2. Verify you're on latest version (v2.3.0)
 3. Test in Chrome/Edge (Safari has known limitations)
 4. Include browser console errors in report
 5. Provide reproduction steps
 
 **Template:**
 ```markdown
-**GTN750 Version:** v2.1.0
+**GTN750 Version:** v2.3.0
 **Browser:** Chrome 131
 **MSFS Version:** 2024
 **Issue:** Brief description
@@ -237,7 +256,6 @@ Before reporting an issue:
 
 ## 📅 Release Schedule
 
-- **v2.2.0** (Feb 2026): Performance fixes, JSDoc, unit tests
 - **v3.0.0** (Mar 2026): Procedures database (SID/STAR/Approach)
 - **v3.5.0** (Apr 2026): Airways and VNAV
 - **v4.0.0** (May 2026): TypeScript migration
