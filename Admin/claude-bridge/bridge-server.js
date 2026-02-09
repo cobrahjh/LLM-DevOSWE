@@ -19,9 +19,12 @@
 const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
+const usageMetrics = require('../shared/usage-metrics');
 
 const app = express();
+usageMetrics.init('Claude-Bridge');
 app.use(express.json());
+app.use(usageMetrics.middleware());
 
 // CORS headers
 app.use((req, res, next) => {
@@ -273,7 +276,8 @@ app.get('/api/health', (req, res) => {
             uptime: Math.round((Date.now() - state.startTime) / 1000),
             lastActivity: state.lastActivity ? new Date(state.lastActivity).toISOString() : null
         },
-        queueLength: state.requestQueue.length
+        queueLength: state.requestQueue.length,
+        usage: usageMetrics.getSummary()
     });
 });
 
