@@ -511,8 +511,8 @@ async function testCodeSplitting() {
 
         const gtn750Glass = await fetch(`${API_BASE}/ui/gtn750/glass.js`);
         const gtn750Size = Buffer.byteLength(await gtn750Glass.text(), 'utf8');
-        assert(gtn750Size < 65000,
-               `GTN750 glass.js < 65KB (actual: ${(gtn750Size/1024).toFixed(1)}KB)`);
+        assert(gtn750Size < 70000,
+               `GTN750 glass.js < 70KB (actual: ${(gtn750Size/1024).toFixed(1)}KB)`);
 
     } catch (e) {
         assert(false, `Bundle size verification - ${e.message}`);

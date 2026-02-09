@@ -88,6 +88,29 @@ class GTN750Glass extends SimGlassBase {
         // Declutter
         this.declutterLevel = 0;
 
+        // Shared range constants
+        this.TERRAIN_RANGES = [2, 5, 10, 20, 50];
+        this.WEATHER_RANGES = [10, 25, 50, 100, 200];
+
+        // RAF IDs for page render loops
+        this._terrainRafId = null;
+        this._trafficRafId = null;
+        this._weatherRafId = null;
+
+        // Handler refs for cleanup
+        this._resizeHandler = () => this.resizeCanvas();
+        this._beforeUnloadHandler = () => this.destroy();
+
+        // Page instances (lazy-created on first visit)
+        this.proceduresPage = null;
+        this.auxPage = null;
+        this.chartsPage = null;
+        this.nearestPage = null;
+        this.systemPage = null;
+
+        // Soft key retry counter
+        this._softKeyRetries = 0;
+
         // Cross-glass sync
         this.syncChannel = new BroadcastChannel('SimGlass-sync');
 
@@ -260,8 +283,8 @@ class GTN750Glass extends SimGlassBase {
             navSourceGps: this.elements.navSourceGps,
             navSourceNav1: this.elements.navSourceNav1,
             navSourceNav2: this.elements.navSourceNav2,
-            obsIndicator: document.getElementById('obs-indicator'),
-            obsCourse: document.getElementById('obs-course')
+            obsIndicator: this.elements.obsIndicator,
+            obsCourse: this.elements.obsCourse
         };
 
         // Flight plan elements (lazy-loaded)
@@ -277,8 +300,8 @@ class GTN750Glass extends SimGlassBase {
                 wptDis: this.elements.wptDis,
                 wptBrg: this.elements.wptBrg,
                 wptEte: this.elements.wptEte,
-                wptDtk: document.getElementById('wpt-dtk'),
-                wptType: document.getElementById('wpt-type')
+                wptDtk: this.elements.wptDtk,
+                wptType: this.elements.wptType
             };
         }
 
@@ -379,24 +402,24 @@ class GTN750Glass extends SimGlassBase {
         this.cdiManager.updateGps(d);
 
         // Mark sim time available
-        if (d.zuluTime) this.dataHandler.setHasSimTime(true);
+        if (d.zuluTime) this.dataHandler?.setHasSimTime(true);
 
         // Update UI through modules
-        this.dataHandler.updateUI(this.data, this.cdiManager.nav1);
-        this.flightPlanManager.setPosition(this.data.latitude, this.data.longitude);
-        this.flightPlanManager.setGroundSpeed(this.data.groundSpeed);
-        this.flightPlanManager.updateWaypointDisplay(this.data, this.cdiManager);
+        this.dataHandler?.updateUI(this.data, this.cdiManager.nav1);
+        this.flightPlanManager?.setPosition(this.data.latitude, this.data.longitude);
+        this.flightPlanManager?.setGroundSpeed(this.data.groundSpeed);
+        this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager);
         this.cdiManager.updateFromSource({
-            flightPlan: this.flightPlanManager.flightPlan,
-            activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
+            flightPlan: this.flightPlanManager?.flightPlan || null,
+            activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0,
             data: this.data
         });
-        this.flightPlanManager.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
+        this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.updateAuxData();
     }
 
     updateAuxData() {
-        if (!this.flightPlanManager.flightPlan?.waypoints) return;
+        if (!this.flightPlanManager?.flightPlan?.waypoints) return;
 
         let remDist = 0;
         for (let i = this.flightPlanManager.activeWaypointIndex; i < this.flightPlanManager.flightPlan.waypoints.length; i++) {
@@ -437,29 +460,54 @@ class GTN750Glass extends SimGlassBase {
             });
             this.mapControls.setRange(this.map.range);
         }
+    }
 
-        this.proceduresPage = new ProceduresPage({
-            core: this.core, serverPort: this.serverPort,
-            onProcedureSelect: (proc, type, waypoints) => this.handleProcedureSelect(proc, type, waypoints),
-            onProcedureLoad: (proc, type, waypoints) => this.handleProcedureLoad(proc, type, waypoints)
-        });
-        this.auxPage = new AuxPage({ core: this.core });
-        this.chartsPage = new ChartsPage({
-            core: this.core, serverPort: this.serverPort,
-            onChartSelect: (chart) => console.log(`[GTN750] Chart selected: ${chart.name}`)
-        });
-        this.nearestPage = new NearestPage({
-            core: this.core, serverPort: this.serverPort,
-            onItemSelect: (item, type) => console.log(`[GTN750] Nearest ${type} selected: ${item.icao || item.id}`),
-            onDirectTo: (item) => this.flightPlanManager.directTo(item)
-        });
-        this.systemPage = new SystemPage({
-            core: this.core,
-            onSettingChange: (key, value) => this.handleSettingChange(key, value)
-        });
-
-        // Wire nearest page to flight plan for D→ lookups
-        this.flightPlanManager.setNearestPage(this.nearestPage);
+    /**
+     * Lazy-create page instance on first visit (after script is loaded by loadPageModule)
+     */
+    _ensurePageInstance(pageId) {
+        switch (pageId) {
+            case 'proc':
+                if (!this.proceduresPage && typeof ProceduresPage !== 'undefined') {
+                    this.proceduresPage = new ProceduresPage({
+                        core: this.core, serverPort: this.serverPort,
+                        onProcedureSelect: (proc, type, waypoints) => this.handleProcedureSelect(proc, type, waypoints),
+                        onProcedureLoad: (proc, type, waypoints) => this.handleProcedureLoad(proc, type, waypoints)
+                    });
+                }
+                break;
+            case 'aux':
+                if (!this.auxPage && typeof AuxPage !== 'undefined') {
+                    this.auxPage = new AuxPage({ core: this.core });
+                }
+                break;
+            case 'charts':
+                if (!this.chartsPage && typeof ChartsPage !== 'undefined') {
+                    this.chartsPage = new ChartsPage({
+                        core: this.core, serverPort: this.serverPort,
+                        onChartSelect: (chart) => console.log(`[GTN750] Chart selected: ${chart.name}`)
+                    });
+                }
+                break;
+            case 'nrst':
+                if (!this.nearestPage && typeof NearestPage !== 'undefined') {
+                    this.nearestPage = new NearestPage({
+                        core: this.core, serverPort: this.serverPort,
+                        onItemSelect: (item, type) => console.log(`[GTN750] Nearest ${type} selected: ${item.icao || item.id}`),
+                        onDirectTo: (item) => this.flightPlanManager?.directTo(item)
+                    });
+                    this.flightPlanManager?.setNearestPage(this.nearestPage);
+                }
+                break;
+            case 'system':
+                if (!this.systemPage && typeof SystemPage !== 'undefined') {
+                    this.systemPage = new SystemPage({
+                        core: this.core,
+                        onSettingChange: (key, value) => this.handleSettingChange(key, value)
+                    });
+                }
+                break;
+        }
     }
 
     handleSettingChange(key, value) {
@@ -507,6 +555,10 @@ class GTN750Glass extends SimGlassBase {
 
     initSoftKeys() {
         if (typeof GTNSoftKeys === 'undefined') {
+            if (++this._softKeyRetries > 50) {
+                console.warn('[GTN750] GTNSoftKeys not available after 5s, giving up');
+                return;
+            }
             setTimeout(() => this.initSoftKeys(), 100);
             return;
         }
@@ -520,7 +572,7 @@ class GTN750Glass extends SimGlassBase {
     }
 
     onPageChange(pageId) {
-        const title = document.getElementById('page-title');
+        const title = this.elements.pageTitle;
         if (title) {
             const titles = {
                 map: 'MAP', fpl: 'FLIGHT PLAN', wpt: 'WAYPOINT',
@@ -556,11 +608,14 @@ class GTN750Glass extends SimGlassBase {
             await this.loadPageModule(pageId);
         }
 
+        // Lazy-create page instance after script is loaded
+        this._ensurePageInstance(pageId);
+
         // Page-specific initialization
         if (pageId === 'proc') {
             if (this.proceduresPage) {
                 this.proceduresPage.init();
-                if (this.flightPlanManager.flightPlan?.waypoints?.length > 0) {
+                if (this.flightPlanManager?.flightPlan?.waypoints?.length > 0) {
                     const dest = this.flightPlanManager.flightPlan.waypoints[this.flightPlanManager.flightPlan.waypoints.length - 1];
                     if (dest.ident?.length === 4) this.proceduresPage.setAirport(dest.ident);
                 }
@@ -576,7 +631,7 @@ class GTN750Glass extends SimGlassBase {
         if (pageId === 'charts') {
             if (this.chartsPage) {
                 this.chartsPage.init();
-                if (this.flightPlanManager.flightPlan?.waypoints?.length > 0) {
+                if (this.flightPlanManager?.flightPlan?.waypoints?.length > 0) {
                     const dest = this.flightPlanManager.flightPlan.waypoints[this.flightPlanManager.flightPlan.waypoints.length - 1];
                     if (dest.ident?.length === 4) this.chartsPage.setAirport(dest.ident);
                 }
@@ -594,15 +649,24 @@ class GTN750Glass extends SimGlassBase {
     }
 
     onPageDeactivate(pageId) {
-        if (pageId === 'terrain') this.terrainPageRenderActive = false;
-        if (pageId === 'traffic') this.trafficPageRenderActive = false;
-        if (pageId === 'wx') this.weatherPageRenderActive = false;
+        if (pageId === 'terrain') {
+            this.terrainPageRenderActive = false;
+            if (this._terrainRafId) { cancelAnimationFrame(this._terrainRafId); this._terrainRafId = null; }
+        }
+        if (pageId === 'traffic') {
+            this.trafficPageRenderActive = false;
+            if (this._trafficRafId) { cancelAnimationFrame(this._trafficRafId); this._trafficRafId = null; }
+        }
+        if (pageId === 'wx') {
+            this.weatherPageRenderActive = false;
+            if (this._weatherRafId) { cancelAnimationFrame(this._weatherRafId); this._weatherRafId = null; }
+        }
     }
 
     updateAuxPageData() {
         if (!this.auxPage) return;
         const tripData = this.auxPage.updateTripData(
-            { waypoints: this.flightPlanManager.flightPlan?.waypoints, activeWaypointIndex: this.flightPlanManager.activeWaypointIndex },
+            { waypoints: this.flightPlanManager?.flightPlan?.waypoints, activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0 },
             this.data
         );
         if (tripData) {
@@ -620,7 +684,7 @@ class GTN750Glass extends SimGlassBase {
         if (this.canvas) {
             this.ctx = this.canvas.getContext('2d');
             this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
+            window.addEventListener('resize', this._resizeHandler);
         }
     }
 
@@ -668,27 +732,30 @@ class GTN750Glass extends SimGlassBase {
     // ===== PAGE RENDERING (terrain, traffic, weather) =====
 
     startTerrainPageRender() {
+        if (this._terrainRafId) cancelAnimationFrame(this._terrainRafId);
         this.terrainPageRenderActive = true;
         const renderLoop = () => {
-            if (!this.terrainPageRenderActive) return;
+            if (!this.terrainPageRenderActive) { this._terrainRafId = null; return; }
             this.renderTerrainPage();
-            requestAnimationFrame(renderLoop);
+            this._terrainRafId = requestAnimationFrame(renderLoop);
         };
-        renderLoop();
+        this._terrainRafId = requestAnimationFrame(renderLoop);
     }
 
     startTrafficPageRender() {
+        if (this._trafficRafId) cancelAnimationFrame(this._trafficRafId);
         this.trafficPageRenderActive = true;
         if (this.trafficOverlay) this.trafficOverlay.setEnabled(true);
         const renderLoop = () => {
-            if (!this.trafficPageRenderActive) return;
+            if (!this.trafficPageRenderActive) { this._trafficRafId = null; return; }
             this.renderTrafficPage();
-            requestAnimationFrame(renderLoop);
+            this._trafficRafId = requestAnimationFrame(renderLoop);
         };
-        renderLoop();
+        this._trafficRafId = requestAnimationFrame(renderLoop);
     }
 
     startWeatherPageRender() {
+        if (this._weatherRafId) cancelAnimationFrame(this._weatherRafId);
         this.weatherPageRenderActive = true;
         if (this.weatherOverlay) {
             this.weatherOverlay.setEnabled(true);
@@ -696,11 +763,11 @@ class GTN750Glass extends SimGlassBase {
             this.weatherOverlay.setLayer('metar', true);
         }
         const renderLoop = () => {
-            if (!this.weatherPageRenderActive) return;
+            if (!this.weatherPageRenderActive) { this._weatherRafId = null; return; }
             this.renderWeatherPage();
-            requestAnimationFrame(renderLoop);
+            this._weatherRafId = requestAnimationFrame(renderLoop);
         };
-        renderLoop();
+        this._weatherRafId = requestAnimationFrame(renderLoop);
     }
 
     renderTerrainPage() {
@@ -824,8 +891,8 @@ class GTN750Glass extends SimGlassBase {
     }
 
     updateWeatherConditionDisplay() {
-        const iconEl = document.getElementById('wx-condition-icon');
-        const textEl = document.getElementById('wx-condition-text');
+        const iconEl = this.elements.wxConditionIcon;
+        const textEl = this.elements.wxConditionText;
         if (!iconEl || !textEl) return;
 
         const precip = this.data.precipState || 0;
@@ -855,7 +922,7 @@ class GTN750Glass extends SimGlassBase {
             const data = await response.json();
             if (data.success) {
                 document.querySelectorAll('.wx-preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.preset === preset));
-                document.getElementById('wx-live-btn')?.classList.remove('active');
+                this.elements.wxLiveBtn?.classList.remove('active');
             }
         } catch (e) { console.error('[GTN750] Weather error:', e); }
     }
@@ -870,7 +937,7 @@ class GTN750Glass extends SimGlassBase {
             const data = await response.json();
             if (data.success) {
                 document.querySelectorAll('.wx-preset-btn').forEach(btn => btn.classList.remove('active'));
-                document.getElementById('wx-live-btn')?.classList.add('active');
+                this.elements.wxLiveBtn?.classList.add('active');
             }
         } catch (e) { console.error('[GTN750] Live weather error:', e); }
     }
@@ -912,7 +979,7 @@ class GTN750Glass extends SimGlassBase {
     initSyncListener() {
         this.syncChannel.onmessage = (event) => {
             const { type, data } = event.data;
-            this.flightPlanManager.handleSyncMessage(type, data);
+            this.flightPlanManager?.handleSyncMessage(type, data);
         };
     }
 
@@ -1000,6 +1067,13 @@ class GTN750Glass extends SimGlassBase {
             auxTime: document.getElementById('aux-time'),
             auxEta: document.getElementById('aux-eta'),
             auxFuel: document.getElementById('aux-fuel'),
+            obsIndicator: document.getElementById('obs-indicator'),
+            obsCourse: document.getElementById('obs-course'),
+            wptDtk: document.getElementById('wpt-dtk'),
+            wptType: document.getElementById('wpt-type'),
+            wxConditionIcon: document.getElementById('wx-condition-icon'),
+            wxConditionText: document.getElementById('wx-condition-text'),
+            wxLiveBtn: document.getElementById('wx-live-btn'),
             sysMapOrient: document.getElementById('sys-map-orient'),
             sysGpsStatus: document.getElementById('sys-gps-status'),
             com1: document.getElementById('com1'),
@@ -1037,12 +1111,12 @@ class GTN750Glass extends SimGlassBase {
             });
         }
 
-        this.elements.btnDirect?.addEventListener('click', () => this.flightPlanManager.showDirectTo());
+        this.elements.btnDirect?.addEventListener('click', () => this.flightPlanManager?.showDirectTo());
 
         // Frequency swaps
-        this.elements.swapCom1?.addEventListener('click', () => this.dataHandler.swapFrequency('COM1'));
-        this.elements.swapCom2?.addEventListener('click', () => this.dataHandler.swapFrequency('COM2'));
-        this.elements.swapNav1?.addEventListener('click', () => this.dataHandler.swapFrequency('NAV1'));
+        this.elements.swapCom1?.addEventListener('click', () => this.dataHandler?.swapFrequency('COM1'));
+        this.elements.swapCom2?.addEventListener('click', () => this.dataHandler?.swapFrequency('COM2'));
+        this.elements.swapNav1?.addEventListener('click', () => this.dataHandler?.swapFrequency('NAV1'));
 
         // Zoom
         this.elements.zoomIn?.addEventListener('click', () => this.changeRange(-1));
@@ -1100,7 +1174,6 @@ class GTN750Glass extends SimGlassBase {
         });
 
         // Weather range
-        this.weatherRanges = [10, 25, 50, 100, 200];
         this.weatherRange = 50;
         this.elements.wxZoomIn?.addEventListener('click', () => this.changeWeatherRange(-1));
         this.elements.wxZoomOut?.addEventListener('click', () => this.changeWeatherRange(1));
@@ -1113,7 +1186,6 @@ class GTN750Glass extends SimGlassBase {
         document.getElementById('wx-lightning')?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('lightning', e.target.checked); });
 
         // Terrain range/view
-        this.terrainRanges = [2, 5, 10, 20, 50];
         this.elements.terrainZoomIn?.addEventListener('click', () => this.changeTerrainRange(-1));
         this.elements.terrainZoomOut?.addEventListener('click', () => this.changeTerrainRange(1));
         this.elements.terrainView360?.addEventListener('click', () => { if (this.terrainOverlay) { this.terrainOverlay.setViewMode('360'); this.updateTerrainViewButtons('360'); } });
@@ -1141,8 +1213,8 @@ class GTN750Glass extends SimGlassBase {
 
     _getCdiState() {
         return {
-            flightPlan: this.flightPlanManager.flightPlan,
-            activeWaypointIndex: this.flightPlanManager.activeWaypointIndex,
+            flightPlan: this.flightPlanManager?.flightPlan || null,
+            activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0,
             data: this.data
         };
     }
@@ -1174,9 +1246,9 @@ class GTN750Glass extends SimGlassBase {
             case 'map-north-up': this.map.orientation = 'north'; this.updateMapOrientation(); break;
             case 'map-track-up': this.map.orientation = 'track'; this.updateMapOrientation(); break;
             case 'map-heading-up': this.map.orientation = 'heading'; this.updateMapOrientation(); break;
-            case 'activate-leg': this.flightPlanManager.activateLeg(); break;
-            case 'invert-plan': this.flightPlanManager.invertFlightPlan(); break;
-            case 'direct-to': this.flightPlanManager.showDirectTo(); break;
+            case 'activate-leg': this.flightPlanManager?.activateLeg(); break;
+            case 'invert-plan': this.flightPlanManager?.invertFlightPlan(); break;
+            case 'direct-to': this.flightPlanManager?.showDirectTo(); break;
             case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
                 this.switchNearestType(action.split('-')[1]); break;
             case 'taws-inhibit':
@@ -1194,10 +1266,10 @@ class GTN750Glass extends SimGlassBase {
             case 'load-proc': if (this.proceduresPage) this.proceduresPage.loadProcedure(); break;
             case 'preview-proc': this.previewProcedure(); break;
             case 'view-proc-chart': if (this.proceduresPage) this.proceduresPage.viewChart(); break;
-            case 'aux-trip': this.showAuxSubpage('trip'); break;
-            case 'aux-util': this.showAuxSubpage('util'); break;
+            case 'aux-trip': if (this.auxPage) this.auxPage.showSubpage('trip'); break;
+            case 'aux-util': if (this.auxPage) this.auxPage.showSubpage('util'); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
-            case 'aux-calc': this.showAuxSubpage('calc'); break;
+            case 'aux-calc': if (this.auxPage) this.auxPage.showSubpage('calc'); break;
             case 'traffic-operate': case 'traffic-standby': case 'traffic-test':
                 this.setTrafficMode(action.split('-')[1]); break;
             case 'wx-simRadar': case 'wx-nexrad': case 'wx-metar': case 'wx-taf': case 'wx-winds': case 'wx-lightning':
@@ -1238,7 +1310,7 @@ class GTN750Glass extends SimGlassBase {
     }
 
     changeWeatherRange(delta) {
-        const ranges = this.weatherRanges || [10, 25, 50, 100, 200];
+        const ranges = this.WEATHER_RANGES;
         const idx = ranges.indexOf(this.weatherRange);
         const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
         this.weatherRange = ranges[newIdx];
@@ -1247,7 +1319,7 @@ class GTN750Glass extends SimGlassBase {
 
     changeTerrainRange(delta) {
         if (!this.terrainOverlay) return;
-        const ranges = this.terrainRanges || [2, 5, 10, 20, 50];
+        const ranges = this.TERRAIN_RANGES;
         const currentRange = this.terrainOverlay.getRange();
         const idx = ranges.indexOf(currentRange);
         const newIdx = Math.max(0, Math.min(ranges.length - 1, idx + delta));
@@ -1341,8 +1413,6 @@ class GTN750Glass extends SimGlassBase {
         }
     }
 
-    showAuxSubpage(subpage) { this.auxSubpage = subpage; }
-
     toggleAuxTimer() {
         if (this.auxPage) this.auxPage.toggleTimer();
     }
@@ -1365,16 +1435,10 @@ class GTN750Glass extends SimGlassBase {
 
     cycleTerrainRange() {
         if (this.terrainOverlay) {
-            const ranges = [2, 5, 10, 20, 50];
+            const ranges = this.TERRAIN_RANGES;
             const current = this.terrainOverlay.getRange();
             const idx = ranges.indexOf(current);
             this.terrainOverlay.setRange(ranges[(idx + 1) % ranges.length]);
-        }
-    }
-
-    fetchNearestAirports() {
-        if (this.nearestPage) {
-            this.nearestPage.setPosition(this.data.latitude, this.data.longitude);
         }
     }
 
@@ -1382,9 +1446,19 @@ class GTN750Glass extends SimGlassBase {
         if (this.mapRenderer) this.mapRenderer.stop();
         if (this.dataHandler) this.dataHandler.destroy();
         if (this.flightPlanManager) this.flightPlanManager.destroy();
+
+        // Cancel page render RAF loops
         this.terrainPageRenderActive = false;
         this.trafficPageRenderActive = false;
         this.weatherPageRenderActive = false;
+        if (this._terrainRafId) { cancelAnimationFrame(this._terrainRafId); this._terrainRafId = null; }
+        if (this._trafficRafId) { cancelAnimationFrame(this._trafficRafId); this._trafficRafId = null; }
+        if (this._weatherRafId) { cancelAnimationFrame(this._weatherRafId); this._weatherRafId = null; }
+
+        // Remove window listeners
+        window.removeEventListener('resize', this._resizeHandler);
+        window.removeEventListener('beforeunload', this._beforeUnloadHandler);
+
         if (this.syncChannel) this.syncChannel.close();
 
         // Call parent destroy
@@ -1397,12 +1471,12 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.gtn750 = new GTN750Glass();
         handleUrlHash();
-        window.addEventListener('beforeunload', () => window.gtn750?.destroy());
+        window.addEventListener('beforeunload', window.gtn750._beforeUnloadHandler);
     });
 } else {
     window.gtn750 = new GTN750Glass();
     handleUrlHash();
-    window.addEventListener('beforeunload', () => window.gtn750?.destroy());
+    window.addEventListener('beforeunload', window.gtn750._beforeUnloadHandler);
 }
 
 function handleUrlHash() {
