@@ -90,7 +90,7 @@ async function measureBundleSizes() {
 
     for (const widget of widgets) {
         try {
-            const res = await fetch(`${BASE_URL}/ui/${widget.name}/glass.js`);
+            const res = await fetch(`${BASE_URL}/ui/${widget.name}/pane.js`);
             const size = res.size;
             results[widget.name] = {
                 size,

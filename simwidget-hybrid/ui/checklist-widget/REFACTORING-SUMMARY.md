@@ -1,11 +1,11 @@
-# ChecklistGlass Refactoring Summary
+# ChecklistPane Refactoring Summary
 
 ## Overview
 Refactored checklist widget with lazy-loading architecture to reduce initial load time and memory footprint.
 
 ## Files
-- **Source:** `glass.js` (2222 lines)
-- **Refactored:** `glass-new.js` (475 lines)
+- **Source:** `pane.js` (2222 lines)
+- **Refactored:** `pane-new.js` (475 lines)
 - **Reduction:** 1747 lines (78.6%)
 
 ## Changes Made
@@ -15,7 +15,7 @@ Refactored checklist widget with lazy-loading architecture to reduce initial loa
 
 ### 2. Code Splitting
 - Removed lines 7-1796 (AIRCRAFT_CHECKLISTS data object)
-- Extracted lines 1797-2222 (ChecklistGlass class)
+- Extracted lines 1797-2222 (ChecklistPane class)
 - Added comprehensive header comment explaining architecture
 
 ### 3. Lazy-Loading Implementation
@@ -72,7 +72,7 @@ The refactored widget now requires:
 
 ```javascript
 // On page load
-const widget = new ChecklistGlass();
+const widget = new ChecklistPane();
 // Loads 'generic' aircraft data automatically
 
 // On aircraft selection
@@ -90,14 +90,14 @@ select.addEventListener('change', async () => {
    - `aircraft-c172.js`
    - `aircraft-c152.js`
    - etc.
-3. Update HTML to load loader before glass-new.js
+3. Update HTML to load loader before pane-new.js
 4. Test lazy-loading with different aircraft
 
 ## Backward Compatibility
 - All existing methods preserved
 - Same API surface
 - Same localStorage keys
-- Drop-in replacement for glass.js (with loader infrastructure)
+- Drop-in replacement for pane.js (with loader infrastructure)
 
 ## Testing Checklist
 - [ ] Load widget with default 'generic' aircraft

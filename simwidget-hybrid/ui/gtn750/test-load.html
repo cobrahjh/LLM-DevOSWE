@@ -47,7 +47,7 @@
                 log(`GTNCore defined: ${typeof GTNCore !== 'undefined'}`);
 
                 // Test 4: Try to create GTN750Glass
-                return fetch('glass.js').then(r => r.text());
+                return fetch('pane.js').then(r => r.text());
             })
             .then(code => {
                 eval(code);

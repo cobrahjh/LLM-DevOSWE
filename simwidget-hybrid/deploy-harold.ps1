@@ -30,9 +30,9 @@ scp "msfs-gtn750/html_ui/InGamePanels/GTN750Panel/GTN750Panel.html" "msfs-gtn750
 Write-Host "Copying shared CSS..." -ForegroundColor Yellow
 scp "ui/shared/widget-common.css" "ui/shared/themes.css" "${username}@${haroldPC}:${remotePanel}/shared/"
 
-# Copy GTN750 glass files (v2.3.0)
-Write-Host "Copying GTN750 glass files (v2.3.0 - Performance Optimized)..." -ForegroundColor Yellow
-scp "ui/gtn750/glass.js" "ui/gtn750/styles.css" "${username}@${haroldPC}:${remotePanel}/"
+# Copy GTN750 pane files (v2.3.0)
+Write-Host "Copying GTN750 pane files (v2.3.0 - Performance Optimized)..." -ForegroundColor Yellow
+scp "ui/gtn750/pane.js" "ui/gtn750/styles.css" "${username}@${haroldPC}:${remotePanel}/"
 
 # Copy modules (9 files with v2.3.0 optimizations)
 Write-Host "Copying modules (with waypoint caching)..." -ForegroundColor Yellow

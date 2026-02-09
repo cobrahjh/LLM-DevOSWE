@@ -19,7 +19,7 @@
 - **Location:** `C:\Users\hjhar\AppData\Local\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\Packages\Community\SimGlass-GTN750`
 - **Package Files:** manifest.json ✅, layout.json ✅
 - **Panel HTML:** GTN750Panel.html ✅
-- **Glass Files:** glass.js (v2.3.0) ✅, styles.css ✅
+- **Pane Files:** pane.js (v2.3.0) ✅, styles.css ✅
 - **Modules:** 9 files ✅
 - **Overlays:** 4 files ✅
 - **Pages:** 5 files ✅

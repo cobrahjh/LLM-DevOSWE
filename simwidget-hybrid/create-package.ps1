@@ -18,7 +18,7 @@ Copy-Item "msfs-gtn750\html_ui\InGamePanels\GTN750Panel\GTN750Panel.html" -Desti
 Copy-Item "msfs-gtn750\html_ui\InGamePanels\GTN750Panel\panel.json" -Destination "$panel\" -Force
 
 # Copy v2.3.0 glass files
-Copy-Item "ui\gtn750\glass.js" -Destination "$panel\" -Force
+Copy-Item "ui\gtn750\pane.js" -Destination "$panel\" -Force
 Copy-Item "ui\gtn750\styles.css" -Destination "$panel\" -Force
 Copy-Item "ui\gtn750\modules\*.js" -Destination "$panel\modules\" -Force
 Copy-Item "ui\gtn750\overlays\*.js" -Destination "$panel\overlays\" -Force
@@ -26,7 +26,7 @@ Copy-Item "ui\gtn750\pages\*.js" -Destination "$panel\pages\" -Force
 
 # Create installation instructions
 @"
-GTN750 Glass v2.3.0 - MSFS 2024 Installation Instructions
+GTN750 Pane v2.3.0 - MSFS 2024 Installation Instructions
 
 INSTALLATION:
 1. Extract SimGlass-GTN750 folder to your MSFS Community folder:
@@ -45,7 +45,7 @@ VERSION 2.3.0 FEATURES:
 - Memory: 11.2MB -> 9.8MB after 10min
 
 INCLUDED FILES:
-- glass.js (v2.3.0 - performance optimized)
+- pane.js (v2.3.0 - performance optimized)
 - 9 module files (gtn-core, gtn-cdi, gtn-map-renderer, etc.)
 - 4 overlay files (terrain, traffic, weather, map-controls)
 - 5 page files (proc, charts, nrst, aux, system)

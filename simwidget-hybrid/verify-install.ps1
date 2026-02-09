@@ -16,7 +16,7 @@ Write-Host "  layout.json: $(Test-Path "$base\layout.json")" -ForegroundColor $(
 Write-Host ""
 Write-Host "Panel Files:" -ForegroundColor Yellow
 Write-Host "  GTN750Panel.html: $(Test-Path "$panel\GTN750Panel.html")" -ForegroundColor $(if (Test-Path "$panel\GTN750Panel.html") { 'Green' } else { 'Red' })
-Write-Host "  glass.js: $(Test-Path "$panel\glass.js")" -ForegroundColor $(if (Test-Path "$panel\glass.js") { 'Green' } else { 'Red' })
+Write-Host "  pane.js: $(Test-Path "$panel\pane.js")" -ForegroundColor $(if (Test-Path "$panel\pane.js") { 'Green' } else { 'Red' })
 Write-Host "  styles.css: $(Test-Path "$panel\styles.css")" -ForegroundColor $(if (Test-Path "$panel\styles.css") { 'Green' } else { 'Red' })
 
 # Count files
@@ -39,7 +39,7 @@ Write-Host "  $($pages.Count) files" -ForegroundColor Green
 # Check version
 Write-Host ""
 Write-Host "Version:" -ForegroundColor Yellow
-$version = Select-String -Path "$panel\glass.js" -Pattern "GTN750 GPS Glass v\d+\.\d+\.\d+" | Select-Object -First 1
+$version = Select-String -Path "$panel\pane.js" -Pattern "GTN750 GPS Pane v\d+\.\d+\.\d+" | Select-Object -First 1
 if ($version) {
     Write-Host "  $($version.Line.Trim())" -ForegroundColor Green
 }

@@ -1,7 +1,7 @@
-﻿// Emergency Procedures - Loaded on-demand when Emergency mode activated
+// Emergency Procedures - Loaded on-demand when Emergency mode activated
 // Part of code splitting optimization for Copilot Widget v3.0.0
 
-// Populate the global EMERGENCY_PROCEDURES object (defined in glass.js as empty)
+// Populate the global EMERGENCY_PROCEDURES object (defined in pane.js as empty)
 Object.assign(EMERGENCY_PROCEDURES, {
     'engine-failure': {
         name: 'Engine Failure',

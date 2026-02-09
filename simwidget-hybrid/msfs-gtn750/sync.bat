@@ -30,7 +30,7 @@ set "PANEL=%DEST%\html_ui\InGamePanels\GTN750Panel"
 echo Copying files...
 
 :: Sync GTN750 source
-copy /Y "%GTN_SRC%\glass.js" "%PANEL%\" >nul
+copy /Y "%GTN_SRC%\pane.js" "%PANEL%\" >nul
 copy /Y "%GTN_SRC%\styles.css" "%PANEL%\" >nul
 xcopy /Y /S "%GTN_SRC%\modules\*.*" "%PANEL%\modules\" >nul
 xcopy /Y /S "%GTN_SRC%\overlays\*.*" "%PANEL%\overlays\" >nul

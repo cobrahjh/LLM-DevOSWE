@@ -36,7 +36,7 @@ async function testUnit() {
     log('\n🧪 LAYER 1: UNIT TESTS', 'cyan');
     log('─'.repeat(40), 'cyan');
 
-    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/glass.js`);
+    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/pane.js`);
     const code = await glassJs.text();
 
     assert(code.includes('class'), 'Contains class definition');
@@ -57,11 +57,11 @@ async function testIntegration() {
 
     assert(widget.ok, 'Widget loads (HTTP 200)');
     assert(html.includes('widget-container'), 'Widget-container present');
-    assert(html.includes('glass.js'), 'JavaScript loaded');
+    assert(html.includes('pane.js'), 'JavaScript loaded');
     assert(html.includes('styles.css') || html.includes('<style>'), 'Styling present');
     assert(html.includes('SimGlass') || html.includes('Timer'), 'Has title');
 
-    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/glass.js`);
+    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/pane.js`);
     const sizeKB = (glassJs.size / 1024).toFixed(1);
     assert(glassJs.size < 50000, `Bundle < 50KB (actual: ${sizeKB}KB)`);
 }
@@ -121,7 +121,7 @@ async function testPerformance() {
 
     assert(loadTime < 100, `Load time < 100ms (actual: ${loadTime}ms)`);
 
-    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/glass.js`);
+    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/pane.js`);
     const sizeKB = (glassJs.size / 1024).toFixed(1);
     
     log(`  📊 Metrics:`, 'cyan');

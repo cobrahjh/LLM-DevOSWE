@@ -499,20 +499,20 @@ async function testCodeSplitting() {
 
     // Verify bundle size reduction
     try {
-        const checklistGlass = await fetch(`${API_BASE}/ui/checklist-widget/glass.js`);
-        const checklistSize = Buffer.byteLength(await checklistGlass.text(), 'utf8');
+        const ChecklistPane = await fetch(`${API_BASE}/ui/checklist-widget/pane.js`);
+        const checklistSize = Buffer.byteLength(await ChecklistPane.text(), 'utf8');
         assert(checklistSize < 20000,
-               `Checklist glass.js < 20KB (actual: ${(checklistSize/1024).toFixed(1)}KB)`);
+               `Checklist pane.js < 20KB (actual: ${(checklistSize/1024).toFixed(1)}KB)`);
 
-        const copilotGlass = await fetch(`${API_BASE}/ui/copilot-widget/glass.js`);
-        const copilotSize = Buffer.byteLength(await copilotGlass.text(), 'utf8');
+        const CopilotPane = await fetch(`${API_BASE}/ui/copilot-widget/pane.js`);
+        const copilotSize = Buffer.byteLength(await CopilotPane.text(), 'utf8');
         assert(copilotSize < 80000,
-               `Copilot glass.js < 80KB (actual: ${(copilotSize/1024).toFixed(1)}KB)`);
+               `Copilot pane.js < 80KB (actual: ${(copilotSize/1024).toFixed(1)}KB)`);
 
-        const gtn750Glass = await fetch(`${API_BASE}/ui/gtn750/glass.js`);
-        const gtn750Size = Buffer.byteLength(await gtn750Glass.text(), 'utf8');
+        const GTN750Pane = await fetch(`${API_BASE}/ui/gtn750/pane.js`);
+        const gtn750Size = Buffer.byteLength(await GTN750Pane.text(), 'utf8');
         assert(gtn750Size < 70000,
-               `GTN750 glass.js < 70KB (actual: ${(gtn750Size/1024).toFixed(1)}KB)`);
+               `GTN750 pane.js < 70KB (actual: ${(gtn750Size/1024).toFixed(1)}KB)`);
 
     } catch (e) {
         assert(false, `Bundle size verification - ${e.message}`);

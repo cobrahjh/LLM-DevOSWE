@@ -1,7 +1,7 @@
-ï»¿// Copilot Checklists - Loaded on-demand when Checklist mode activated
+// Copilot Checklists - Loaded on-demand when Checklist mode activated
 // Part of code splitting optimization for Copilot Widget v3.0.0
 
-// Populate the global CHECKLISTS object (defined in glass.js as empty)
+// Populate the global CHECKLISTS object (defined in pane.js as empty)
 Object.assign(CHECKLISTS, {
     generic: {
         preflight: [
@@ -69,7 +69,7 @@ Object.assign(CHECKLISTS, {
         ],
         takeoff: [
             { text: 'Runup', action: 'COMPLETE' },
-            { text: 'Flaps', action: '0-10Â°' },
+            { text: 'Flaps', action: '0-10°' },
             { text: 'Trim', action: 'TAKEOFF' },
             { text: 'Transponder', action: 'ALT' },
             { text: 'Lights', action: 'ON' }
@@ -113,7 +113,7 @@ Object.assign(CHECKLISTS, {
             { text: 'Oil Pressure', action: 'GREEN' }
         ],
         taxi: [
-            { text: 'Flaps', action: '20Â°' },
+            { text: 'Flaps', action: '20°' },
             { text: 'Trims', action: 'SET' },
             { text: 'Flight Instruments', action: 'CHECK' },
             { text: 'Brakes', action: 'CHECK' }
@@ -216,7 +216,7 @@ Object.assign(CHECKLISTS, {
             { text: 'Generators', action: 'ON' }
         ],
         taxi: [
-            { text: 'Flaps', action: '15Â°' },
+            { text: 'Flaps', action: '15°' },
             { text: 'Speedbrakes', action: 'RETRACT' },
             { text: 'Trims', action: 'SET' },
             { text: 'Flight Controls', action: 'CHECK' },
@@ -240,7 +240,7 @@ Object.assign(CHECKLISTS, {
             { text: 'Approach Briefing', action: 'COMPLETE' },
             { text: 'Speedbrakes', action: 'ARM' },
             { text: 'Gear', action: 'DOWN' },
-            { text: 'Flaps', action: '35Â°' },
+            { text: 'Flaps', action: '35°' },
             { text: 'Speed', action: 'Vref + 5' }
         ],
         shutdown: [

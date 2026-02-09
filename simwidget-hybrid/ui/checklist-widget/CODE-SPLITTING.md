@@ -9,7 +9,7 @@ Implemented **lazy-loading architecture** for aircraft checklist data, reducing 
 ### File Sizes
 | File | Before | After | Change |
 |------|--------|-------|--------|
-| glass.js | 73KB (2222 lines) | 16KB (475 lines) | **-78.6%** |
+| pane.js | 73KB (2222 lines) | 16KB (475 lines) | **-78.6%** |
 | **Total initial load** | **73KB** | **19.5KB** | **-73.3%** |
 
 ### On-Demand Loading
@@ -53,7 +53,7 @@ renderChecklist();
 
 **Initial page load**:
 - aircraft-registry.js (3.5KB) - Always loaded
-- glass.js (16KB) - Widget logic only
+- pane.js (16KB) - Widget logic only
 - aircraft-ga.js (21KB) - **Only if 'generic' aircraft** (default)
 
 **On aircraft selection**:
@@ -73,7 +73,7 @@ renderChecklist();
 
 ### Modified Files
 
-**glass.js** (v2.0.0 → v3.0.0):
+**pane.js** (v2.0.0 → v3.0.0):
 - Removed 1747 lines of aircraft data
 - Added `ensureAircraftLoaded()` method
 - Added `init()` async initialization
@@ -83,7 +83,7 @@ renderChecklist();
 
 **index.html**:
 - Added `<script src="data/aircraft-registry.js"></script>`
-- Loads before glass.js
+- Loads before pane.js
 
 ### Created Files
 
@@ -111,13 +111,13 @@ renderChecklist();
 
 **Without code splitting** (v2.0.0):
 ```
-glass.js (73KB) ████████████████████ 2.2s
+pane.js (73KB) ████████████████████ 2.2s
 ```
 
 **With code splitting** (v3.0.0):
 ```
 aircraft-registry.js (3.5KB) ██ 0.1s
-glass.js (16KB)              ████ 0.4s
+pane.js (16KB)              ████ 0.4s
 aircraft-ga.js (21KB)        ██████ 0.6s (lazy)
 ```
 
@@ -209,8 +209,8 @@ pa28: { category: 'ga', name: 'Piper PA-28' },
 If issues arise, restore v2.0.0:
 ```bash
 cd ui/checklist-widget
-mv glass.js glass-v3-new.js
-mv glass-v2-backup.js glass.js
+mv pane.js glass-v3-new.js
+mv glass-v2-backup.js pane.js
 # Remove line from index.html: <script src="data/aircraft-registry.js"></script>
 ```
 

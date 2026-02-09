@@ -49,7 +49,7 @@ Best practices and patterns for implementing lazy-loading in SimGlass widgets.
 **Structure**:
 ```
 widget/
-├── glass.js (main logic)
+├── pane.js (main logic)
 ├── data/
 │   ├── registry.js (maps items to categories)
 │   ├── category-a.js (subset 1)
@@ -83,14 +83,14 @@ async function loadItemData(itemId) {
 
 **Category file** (data/category-a.js):
 ```javascript
-// Populate global object (defined as empty in glass.js)
+// Populate global object (defined as empty in pane.js)
 Object.assign(ITEM_DATA, {
     item1: { /* data */ },
     item2: { /* data */ }
 });
 ```
 
-**Widget** (glass.js):
+**Widget** (pane.js):
 ```javascript
 const ITEM_DATA = {}; // Empty, populated by category files
 
@@ -109,7 +109,7 @@ class Widget extends SimGlassBase {
 **Structure**:
 ```
 widget/
-├── glass.js (core + mode switching)
+├── pane.js (core + mode switching)
 ├── data/
 │   ├── data-loader.js (loading utility)
 │   ├── mode-a-data.js (loaded when mode A active)
@@ -137,7 +137,7 @@ function loadScript(src) {
 }
 ```
 
-**Widget** (glass.js):
+**Widget** (pane.js):
 ```javascript
 const MODE_A_DATA = {};
 const MODE_B_DATA = {};
@@ -162,7 +162,7 @@ class Widget extends SimGlassBase {
 **Structure**:
 ```
 widget/
-├── glass.js (core functionality)
+├── pane.js (core functionality)
 ├── modules/
 │   ├── module-loader.js (dynamic loader)
 │   ├── core-module.js (always loaded)
@@ -176,7 +176,7 @@ widget/
 
 ### 1. Empty Object Pattern
 ```javascript
-// In main glass.js
+// In main pane.js
 const DATA = {}; // Will be populated by lazy modules
 
 // In data module
@@ -375,7 +375,7 @@ When adding code splitting to an existing widget:
 - [ ] Create data/ directory
 - [ ] Extract data into separate files
 - [ ] Create loader utility
-- [ ] Update main glass.js to use empty objects
+- [ ] Update main pane.js to use empty objects
 - [ ] Add async loading methods
 - [ ] Add loading indicators
 - [ ] Add error handling with fallbacks

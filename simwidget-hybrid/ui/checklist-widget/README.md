@@ -217,7 +217,7 @@ Each aircraft has **realistic, accurate** checklists based on:
 4. Import into checklist widget
 
 **Option 2: Edit Source Code**
-1. Open `glass.js`
+1. Open `pane.js`
 2. Find `AIRCRAFT_CHECKLISTS` object
 3. Add new aircraft entry:
 ```javascript
@@ -373,7 +373,7 @@ With Voice Control widget active:
 
 ### Aircraft Dropdown Empty
 - **JavaScript error**: Check browser console (F12)
-- **File corruption**: Verify `glass.js` loaded correctly
+- **File corruption**: Verify `pane.js` loaded correctly
 - **Network issue**: Ensure widget files accessible
 
 ### Sync Not Working
@@ -387,7 +387,7 @@ With Voice Control widget active:
 ```
 checklist-widget/
 ├── index.html           # Main HTML with aircraft selector
-├── glass.js             # Widget logic (2222 lines)
+├── pane.js             # Widget logic (2222 lines)
 ├── styles.css           # Checklist styling
 └── README.md            # This file
 
@@ -453,7 +453,7 @@ this.speechVolume = 1.0;  // Volume (0 - 1)
 ## Version History
 
 **v2.0.0** (2026-02-07) - Widget→Glass Rebrand
-- Renamed widget.js → glass.js
+- Renamed widget.js → pane.js
 - SimGlassBase v2.0.0 migration
 - Proper lifecycle with destroy() methods
 - Updated terminology throughout

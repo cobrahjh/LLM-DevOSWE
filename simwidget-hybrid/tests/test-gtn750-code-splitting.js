@@ -89,7 +89,7 @@ async function testCriticalModulesAccessible() {
         '/ui/gtn750/modules/gtn-map-renderer.js',
         '/ui/gtn750/modules/gtn-pages.js',
         '/ui/gtn750/modules/gtn-softkeys.js',
-        '/ui/gtn750/glass.js'
+        '/ui/gtn750/pane.js'
     ];
 
     for (const module of critical) {
@@ -162,10 +162,10 @@ async function testIndexHtmlStructure() {
             'ModuleLoader script included in HTML'
         );
 
-        // Check glass.js is included
+        // Check pane.js is included
         assert(
-            html.includes('glass.js'),
-            'glass.js included in HTML'
+            html.includes('pane.js'),
+            'pane.js included in HTML'
         );
 
         // Check that lazy-loaded modules are NOT in HTML
@@ -194,12 +194,12 @@ async function testIndexHtmlStructure() {
     }
 }
 
-async function testGlassJsImplementation() {
-    log('\n🔧 glass.js Implementation', 'cyan');
+async function testPaneJsImplementation() {
+    log('\n🔧 pane.js Implementation', 'cyan');
     log('─'.repeat(40), 'cyan');
 
     try {
-        const glassPath = path.join(__dirname, '../ui/gtn750/glass.js');
+        const glassPath = path.join(__dirname, '../ui/gtn750/pane.js');
         const content = fs.readFileSync(glassPath, 'utf8');
 
         // Check version
@@ -248,7 +248,7 @@ async function testGlassJsImplementation() {
         );
 
     } catch (e) {
-        assert(false, `glass.js validation - ${e.message}`);
+        assert(false, `pane.js validation - ${e.message}`);
     }
 }
 
@@ -303,7 +303,7 @@ async function testPageModuleMapping() {
     log('─'.repeat(40), 'cyan');
 
     try {
-        const glassPath = path.join(__dirname, '../ui/gtn750/glass.js');
+        const glassPath = path.join(__dirname, '../ui/gtn750/pane.js');
         const content = fs.readFileSync(glassPath, 'utf8');
 
         // Check loadPageModule has correct mappings
@@ -395,7 +395,7 @@ async function runTests() {
     await testDeferredModulesAccessible();
     await testLazyModulesAccessible();
     await testIndexHtmlStructure();
-    await testGlassJsImplementation();
+    await testPaneJsImplementation();
     await testModuleLoaderUtility();
     await testPageModuleMapping();
     await testPerformanceMetrics();

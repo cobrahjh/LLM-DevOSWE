@@ -1,7 +1,7 @@
 /**
  * Default Voice Commands for SimGlass Voice Control
  * Loaded on-demand when no custom commands are saved
- * DEFAULT_VOICE_COMMANDS is consumed by VoiceControlGlass
+ * DEFAULT_VOICE_COMMANDS is consumed by VoiceControlPane
  */
 
 // eslint-disable-next-line no-unused-vars

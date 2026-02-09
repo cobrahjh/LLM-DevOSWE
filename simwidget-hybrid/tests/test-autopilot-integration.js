@@ -64,9 +64,9 @@ async function testStructure() {
     const html = await widget.text();
     assert(html.includes('Autopilot') || html.includes('AUTOPILOT'), 'Has autopilot title');
     assert(html.includes('widget-container'), 'Has widget-container');
-    assert(html.includes('glass.js'), 'Loads glass.js');
+    assert(html.includes('pane.js'), 'Loads pane.js');
 
-    const glassJs = await fetch(`${BASE_URL}/ui/autopilot/glass.js`);
+    const glassJs = await fetch(`${BASE_URL}/ui/autopilot/pane.js`);
     const code = await glassJs.text();
 
     assert(code.includes('SimGlassBase'), 'Extends SimGlassBase');
@@ -222,7 +222,7 @@ async function testPerformance() {
 
     assert(loadTime < 100, `Page load < 100ms (actual: ${loadTime}ms)`);
 
-    const glassJs = await fetch(`${BASE_URL}/ui/autopilot/glass.js`);
+    const glassJs = await fetch(`${BASE_URL}/ui/autopilot/pane.js`);
     const sizeKB = (glassJs.size / 1024).toFixed(1);
 
     log(`  📊 Performance Metrics:`, 'cyan');

@@ -46,7 +46,7 @@ async function testTimerWidget() {
     const html = await widget.text();
     assert(html.includes('Timer'), 'Has Timer title');
     assert(html.includes('widget-container'), 'Has widget-container class');
-    assert(html.includes('glass.js'), 'Loads glass.js');
+    assert(html.includes('pane.js'), 'Loads pane.js');
 
     // Structure validation
     log('\n🏗️  Structure Tests:', 'cyan');
@@ -55,8 +55,8 @@ async function testTimerWidget() {
     
     // Performance
     log('\n⚡ Performance Tests:', 'cyan');
-    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/glass.js`);
-    assert(glassJs.ok, 'glass.js accessible');
+    const glassJs = await fetch(`${BASE_URL}/ui/timer-widget/pane.js`);
+    assert(glassJs.ok, 'pane.js accessible');
     const sizeKB = (glassJs.size / 1024).toFixed(1);
     assert(glassJs.size < 50000, `Bundle size < 50KB (actual: ${sizeKB}KB)`);
 
