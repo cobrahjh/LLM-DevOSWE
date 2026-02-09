@@ -2283,9 +2283,7 @@ app.delete('/api/logs', (req, res) => {
 // DEVICE TOKEN AUTHENTICATION (OpenClaw Gateway Pattern)
 // ============================================
 
-const crypto = require('crypto');
-
-// Generate secure random token
+// Generate secure random token (crypto already required at top of file)
 function generateDeviceToken() {
     return crypto.randomBytes(32).toString('hex');
 }
