@@ -1,0 +1,15 @@
+{
+  "dependencies": [],
+  "content_type": "AIRCRAFT",
+  "title": "SimGlass Fuel Data Provider",
+  "manufacturer": "SimGlass",
+  "creator": "SimGlass Team",
+  "package_version": "1.0.0",
+  "minimum_game_version": "1.38.0",
+  "release_notes": {
+    "neutral": {
+      "LastUpdate": "",
+      "OlderHistory": ""
+    }
+  }
+}

@@ -61,6 +61,33 @@ class FuelGlass extends SimGlassBase {
         this.cacheElements();
         this.bindEvents();
         this.loadTransparencyPreference();
+        this.startWasmPolling();
+    }
+
+    /**
+     * Poll WASM gauge data from localStorage
+     * This provides real fuel data when MSFS gauge is active
+     */
+    startWasmPolling() {
+        this.wasmInterval = setInterval(() => {
+            try {
+                const wasmData = localStorage.getItem('simglass_fuel_data');
+                if (wasmData) {
+                    const data = JSON.parse(wasmData);
+                    // Check if data is recent (within last 2 seconds)
+                    if (data.timestamp && (Date.now() - data.timestamp < 2000)) {
+                        this.handleData(data);
+                        // Update connection status to show WASM source
+                        if (this.connectionStatus) {
+                            this.connectionStatus.textContent = 'WASM Connected';
+                            this.connectionStatus.className = 'connected';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('[Fuel Glass] WASM polling error:', e);
+            }
+        }, 500); // Poll every 500ms
     }
 
     cacheElements() {
@@ -375,6 +402,10 @@ class FuelGlass extends SimGlassBase {
 
     destroy() {
         this._destroyed = true;
+        if (this.wasmInterval) {
+            clearInterval(this.wasmInterval);
+            this.wasmInterval = null;
+        }
         super.destroy();
     }
 }
