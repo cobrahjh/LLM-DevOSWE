@@ -105,7 +105,7 @@ exit /b 0
 
 :: ============================================================
 :install_to
-set "DEST=%~1\SimGlass-gtn750"
+set "DEST=%~1\SimGlass-GTN750"
 
 echo.
 echo  Installing to: %DEST%
@@ -129,7 +129,7 @@ copy /Y "%PANEL_SRC%\GTN750Panel.html" "%PANEL%\" >nul 2>nul
 copy /Y "%PANEL_SRC%\panel.json" "%PANEL%\" >nul 2>nul
 
 :: Copy GTN750 source
-copy /Y "%GTN_SRC%\widget.js" "%PANEL%\" >nul 2>nul
+copy /Y "%GTN_SRC%\glass.js" "%PANEL%\" >nul 2>nul
 copy /Y "%GTN_SRC%\styles.css" "%PANEL%\" >nul 2>nul
 xcopy /Y /S "%GTN_SRC%\modules\*.*" "%PANEL%\modules\" >nul 2>nul
 xcopy /Y /S "%GTN_SRC%\overlays\*.*" "%PANEL%\overlays\" >nul 2>nul

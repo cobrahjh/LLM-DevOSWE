@@ -5,9 +5,9 @@ set "SCRIPT_DIR=%~dp0"
 set "GTN_SRC=%SCRIPT_DIR%..\ui\gtn750"
 set "SHARED_SRC=%SCRIPT_DIR%..\ui\shared"
 
-set "DEST_STEAM=%APPDATA%\Microsoft Flight Simulator\Packages\Community\SimGlass-gtn750"
-set "DEST_2020=%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community\SimGlass-gtn750"
-set "DEST_2024=%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\Packages\Community\SimGlass-gtn750"
+set "DEST_STEAM=%APPDATA%\Microsoft Flight Simulator\Packages\Community\SimGlass-GTN750"
+set "DEST_2020=%LOCALAPPDATA%\Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\Packages\Community\SimGlass-GTN750"
+set "DEST_2024=%LOCALAPPDATA%\Packages\Microsoft.Limitless_8wekyb3d8bbwe\LocalCache\Packages\Community\SimGlass-GTN750"
 
 :: Find active installation
 if exist "%DEST_2024%" (
@@ -30,7 +30,7 @@ set "PANEL=%DEST%\html_ui\InGamePanels\GTN750Panel"
 echo Copying files...
 
 :: Sync GTN750 source
-copy /Y "%GTN_SRC%\widget.js" "%PANEL%\" >nul
+copy /Y "%GTN_SRC%\glass.js" "%PANEL%\" >nul
 copy /Y "%GTN_SRC%\styles.css" "%PANEL%\" >nul
 xcopy /Y /S "%GTN_SRC%\modules\*.*" "%PANEL%\modules\" >nul
 xcopy /Y /S "%GTN_SRC%\overlays\*.*" "%PANEL%\overlays\" >nul
