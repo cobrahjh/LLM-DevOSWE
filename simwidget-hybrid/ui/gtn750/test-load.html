@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GTN750 Load Test</title>
+</head>
+<body>
+    <h1>GTN750 Dependency Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = [];
+        function log(msg, isError = false) {
+            results.push(`${isError ? '❌' : '✅'} ${msg}`);
+            document.getElementById('results').innerHTML = results.join('<br>');
+        }
+
+        // Test 1: Load widget-base.js
+        fetch('/ui/shared/widget-base.js')
+            .then(r => r.text())
+            .then(code => {
+                eval(code);
+                log('widget-base.js loaded');
+                log(`SimGlassBase defined: ${typeof SimGlassBase !== 'undefined'}`);
+
+                // Test 2: Load module-loader.js
+                return fetch('/ui/shared/module-loader.js');
+            })
+            .then(r => r.text())
+            .then(code => {
+                eval(code);
+                log('module-loader.js loaded');
+                log(`ModuleLoader defined: ${typeof ModuleLoader !== 'undefined'}`);
+
+                // Test 3: Load other dependencies
+                return Promise.all([
+                    fetch('/ui/shared/telemetry.js').then(r => r.text()),
+                    fetch('/ui/shared/platform-utils.js').then(r => r.text()),
+                    fetch('modules/gtn-core.js').then(r => r.text())
+                ]);
+            })
+            .then(([telemetry, platform, core]) => {
+                eval(telemetry);
+                log(`Telemetry defined: ${typeof Telemetry !== 'undefined'}`);
+                eval(platform);
+                log('platform-utils loaded');
+                eval(core);
+                log(`GTNCore defined: ${typeof GTNCore !== 'undefined'}`);
+
+                // Test 4: Try to create GTN750Glass
+                return fetch('glass.js').then(r => r.text());
+            })
+            .then(code => {
+                eval(code);
+                log(`GTN750Glass defined: ${typeof GTN750Glass !== 'undefined'}`);
+
+                // Try to instantiate
+                try {
+                    const test = new GTN750Glass();
+                    log('GTN750Glass instantiated successfully!');
+                } catch (e) {
+                    log(`Error instantiating: ${e.message}`, true);
+                    console.error(e);
+                }
+            })
+            .catch(err => {
+                log(`Load error: ${err.message}`, true);
+                console.error(err);
+            });
+    </script>
+</body>
+</html>

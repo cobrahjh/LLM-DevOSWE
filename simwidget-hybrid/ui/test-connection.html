@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SimGlass Connection Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+        .test { padding: 10px; margin: 5px 0; border-left: 3px solid #666; }
+        .pass { border-color: #22c55e; background: #1a3a1a; }
+        .fail { border-color: #ef4444; background: #3a1a1a; }
+        .info { border-color: #3b82f6; background: #1a1a3a; }
+        pre { background: #0a0a0a; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 SimGlass Connection Diagnostics</h1>
+    <div id="results"></div>
+
+    <script src="/ui/shared/platform-utils.js"></script>
+    <script src="/ui/shared/telemetry.js"></script>
+    <script src="/ui/shared/feedback-section.js"></script>
+    <script src="/ui/shared/widget-base.js"></script>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function addTest(message, status = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${status}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        // Test 1: Check if SimGlassBase is defined
+        if (typeof SimGlassBase !== 'undefined') {
+            addTest('✅ SimGlassBase class loaded successfully', 'pass');
+        } else {
+            addTest('❌ SimGlassBase class NOT FOUND', 'fail');
+        }
+
+        // Test 2: Check PlatformUtils
+        if (typeof PlatformUtils !== 'undefined') {
+            addTest('✅ PlatformUtils loaded', 'pass');
+        } else {
+            addTest('❌ PlatformUtils NOT FOUND', 'fail');
+        }
+
+        // Test 3: Check TelemetryService
+        if (typeof TelemetryService !== 'undefined') {
+            addTest('✅ TelemetryService loaded', 'pass');
+        } else {
+            addTest('❌ TelemetryService NOT FOUND', 'fail');
+        }
+
+        // Test 4: Try to create a test instance
+        try {
+            const testGlass = new SimGlassBase({
+                widgetName: 'test',
+                widgetVersion: '1.0.0',
+                autoConnect: false
+            });
+            addTest('✅ SimGlassBase instance created successfully', 'pass');
+
+            // Test 5: Try WebSocket connection
+            addTest('📡 Testing WebSocket connection...', 'info');
+            const ws = new WebSocket('ws://localhost:8080');
+
+            ws.onopen = () => {
+                addTest('✅ WebSocket connected!', 'pass');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    addTest(`✅ Received ${data.type} message<pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>`, 'pass');
+                    ws.close();
+                } catch (e) {
+                    addTest(`❌ Parse error: ${e.message}`, 'fail');
+                }
+            };
+
+            ws.onerror = (error) => {
+                addTest(`❌ WebSocket error: ${error}`, 'fail');
+            };
+
+            ws.onclose = () => {
+                addTest('🔌 WebSocket closed', 'info');
+            };
+
+        } catch (error) {
+            addTest(`❌ Failed to create SimGlassBase instance: ${error.message}<pre>${error.stack}</pre>`, 'fail');
+        }
+
+        // Test 6: Check window objects
+        addTest(`<strong>Available window objects:</strong><pre>${Object.keys(window).filter(k => k.includes('SimGlass') || k.includes('Platform') || k.includes('Telemetry')).join('\n')}</pre>`, 'info');
+    </script>
+</body>
+</html>
