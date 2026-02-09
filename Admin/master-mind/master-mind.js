@@ -17,10 +17,13 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const usageMetrics = require('../shared/usage-metrics');
 
 const app = express();
+usageMetrics.init('Master-Mind');
 app.use(cors());
 app.use(express.json());
+app.use(usageMetrics.middleware());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = 8820;
@@ -425,7 +428,8 @@ app.get('/api/health', async (req, res) => {
         stats: {
             totalQueries: stats.totalQueries,
             lastQuery: stats.lastQuery
-        }
+        },
+        usage: usageMetrics.getSummary()
     });
 });
 
