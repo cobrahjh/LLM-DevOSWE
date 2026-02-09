@@ -8,6 +8,7 @@ const fs = require('fs');
 const util = require('util');
 const { exec: execCallback } = require('child_process');
 const execPromise = util.promisify(execCallback);
+const usageMetrics = require('../shared/usage-metrics');
 
 const PORT = 8771;
 const SERVICE_NAME = 'Terminal-Hub';
@@ -75,7 +76,9 @@ const SHELLS = {
 };
 
 const app = express();
+usageMetrics.init('Terminal-Hub');
 app.use(express.json());
+app.use(usageMetrics.middleware());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Create HTTP server for both Express and WebSocket
@@ -194,6 +197,7 @@ wss.on('connection', (ws, req) => {
 
   const session = sessions.get(sessionId);
   session.clients.add(ws);
+  usageMetrics.trackConnection(1);
   console.log(`⚡ WebSocket client connected to session ${session.label}`);
 
   // Send buffer (recent output)
@@ -255,6 +259,7 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', () => {
     session.clients.delete(ws);
+    usageMetrics.trackConnection(-1);
     console.log(`WebSocket client disconnected from session ${session.label}`);
   });
 });
@@ -864,7 +869,8 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     port: PORT,
     uptime: process.uptime(),
-    activeSessions: sessions.size
+    activeSessions: sessions.size,
+    usage: usageMetrics.getSummary()
   });
 });
 
