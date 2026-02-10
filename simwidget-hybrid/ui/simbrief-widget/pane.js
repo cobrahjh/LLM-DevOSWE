@@ -425,6 +425,22 @@ class SimBriefPane extends SimGlassBase {
 
             syncChannel.close();
 
+            // Also store on server for cross-machine and late-joining panes
+            const planData = {
+                departure: this.ofpData.origin?.icao_code || this.ofpData.origin,
+                arrival: this.ofpData.destination?.icao_code || this.ofpData.destination,
+                waypoints: waypoints,
+                totalDistance: parseInt(this.ofpData.general?.route_distance) || 0,
+                route: this.ofpData.general?.route || '',
+                altitude: this.ofpData.general?.initial_altitude || 0,
+                source: 'simbrief'
+            };
+            fetch('/api/ai-pilot/shared-state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'nav', data: { simbriefPlan: planData } })
+            }).catch(() => {});
+
             this.showToast('Sent to Flight Plan & Map');
         } catch (e) {
             console.error('Failed to send to FMS:', e);

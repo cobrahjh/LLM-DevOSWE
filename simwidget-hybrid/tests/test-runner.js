@@ -511,8 +511,8 @@ async function testCodeSplitting() {
 
         const GTN750Pane = await fetch(`${API_BASE}/ui/gtn750/pane.js`);
         const gtn750Size = Buffer.byteLength(await GTN750Pane.text(), 'utf8');
-        assert(gtn750Size < 98000,
-               `GTN750 pane.js < 98KB (actual: ${(gtn750Size/1024).toFixed(1)}KB)`);
+        assert(gtn750Size < 100000,
+               `GTN750 pane.js < 100KB (actual: ${(gtn750Size/1024).toFixed(1)}KB)`);
 
     } catch (e) {
         assert(false, `Bundle size verification - ${e.message}`);

@@ -173,6 +173,9 @@ class GTN750Pane extends SimGlassBase {
 
             // Start broadcasting nav-state to other panes
             this._startNavBroadcast();
+
+            // Check server for a stored SimBrief plan (cross-machine or late join)
+            this._fetchStoredPlan();
         } catch (error) {
             console.error('[GTN750] Failed to load deferred modules:', error);
             if (this.telemetry) {
@@ -1084,6 +1087,25 @@ class GTN750Pane extends SimGlassBase {
                 this.flightPlanManager?.handleSyncMessage(msg.type, msg.data);
             }
         };
+    }
+
+    /**
+     * Check server for a stored SimBrief plan (handles cross-machine and late-join)
+     */
+    async _fetchStoredPlan() {
+        try {
+            const res = await fetch('/api/ai-pilot/shared-state/nav');
+            if (!res.ok) return;
+            const json = await res.json();
+            const plan = json.nav?.simbriefPlan;
+            if (plan && plan.waypoints?.length) {
+                GTNCore.log('[GTN750] Found stored SimBrief plan on server, loading...');
+                if (!this.flightPlanManager) await this.loadFlightPlan();
+                this.flightPlanManager?.handleSyncMessage('simbrief-plan', plan);
+            }
+        } catch (e) {
+            // Server not available, no stored plan — ignore
+        }
     }
 
     /**
