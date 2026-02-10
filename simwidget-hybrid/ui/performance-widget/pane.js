@@ -15,9 +15,11 @@ class PerformancePane extends SimGlassBase {
         this.targetFPS = 60;
         this._rafId = null;
         this._fetchInterval = null;
+        this._compact = false;
 
         this.initElements();
         this.initEvents();
+        this.setupCompactToggle();
         this.startLocalMonitoring();
     }
 
@@ -44,6 +46,16 @@ class PerformancePane extends SimGlassBase {
         this.fpsCard = this.fpsEl.closest('.perf-card');
         this.gpuCard = this.gpuEl.closest('.perf-card');
         this.cpuCard = this.cpuEl.closest('.perf-card');
+
+        // Compact elements
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.pwCompact = document.getElementById('pw-compact');
+        this.pwFps = document.getElementById('pw-fps');
+        this.pwGpu = document.getElementById('pw-gpu');
+        this.pwCpu = document.getElementById('pw-cpu');
+        this.pwRam = document.getElementById('pw-ram');
+        this.pwVram = document.getElementById('pw-vram');
+        this.pwFt = document.getElementById('pw-ft');
     }
 
     initEvents() {
@@ -124,6 +136,12 @@ class PerformancePane extends SimGlassBase {
         // Estimate thread times (simplified)
         this.mainThreadEl.textContent = (frameTime * 0.6).toFixed(1) + ' ms';
         this.renderThreadEl.textContent = (frameTime * 0.4).toFixed(1) + ' ms';
+
+        // Update compact view
+        if (this._compact) {
+            this.pwFps.textContent = fps;
+            this.pwFt.textContent = frameTime + 'ms';
+        }
     }
 
     updateServerStats(data) {
@@ -136,6 +154,11 @@ class PerformancePane extends SimGlassBase {
             this.ramEl.textContent = rss + ' MB';
             const ramPercent = Math.min(100, (heapUsed / heapTotal) * 100);
             this.ramBar.style.width = ramPercent + '%';
+
+            // Update compact RAM
+            if (this._compact) {
+                this.pwRam.textContent = rss + 'M';
+            }
         }
 
         // WebSocket clients as proxy for "objects"
@@ -180,6 +203,59 @@ class PerformancePane extends SimGlassBase {
 
         if (data.drawCalls !== undefined) {
             this.drawCallsEl.textContent = data.drawCalls.toLocaleString();
+        }
+
+        // Sync compact view with sim performance data
+        if (this._compact) {
+            if (data.gpuUsage !== undefined) this.pwGpu.textContent = data.gpuUsage + '%';
+            if (data.cpuUsage !== undefined) this.pwCpu.textContent = data.cpuUsage + '%';
+            if (data.vram !== undefined) this.pwVram.textContent = (data.vram / 1024).toFixed(1) + 'G';
+        }
+    }
+
+    setupCompactToggle() {
+        const stored = localStorage.getItem('performance-widget-compact');
+        this._compact = stored === 'true';
+        this.applyCompactState();
+
+        this.compactToggle.addEventListener('click', () => {
+            this._compact = !this._compact;
+            localStorage.setItem('performance-widget-compact', String(this._compact));
+            this.applyCompactState();
+        });
+    }
+
+    applyCompactState() {
+        const container = document.querySelector('.widget-container');
+        if (this._compact) {
+            container.classList.add('is-compact');
+            this.compactToggle.classList.add('active');
+        } else {
+            container.classList.remove('is-compact');
+            this.compactToggle.classList.remove('active');
+        }
+    }
+
+    updateCompact(data) {
+        if (!this._compact) return;
+
+        if (data.fps !== undefined) {
+            this.pwFps.textContent = data.fps;
+        }
+        if (data.gpuUsage !== undefined) {
+            this.pwGpu.textContent = data.gpuUsage + '%';
+        }
+        if (data.cpuUsage !== undefined) {
+            this.pwCpu.textContent = data.cpuUsage + '%';
+        }
+        if (data.ram !== undefined) {
+            this.pwRam.textContent = data.ram;
+        }
+        if (data.vram !== undefined) {
+            this.pwVram.textContent = (data.vram / 1024).toFixed(1) + 'G';
+        }
+        if (data.frameTime !== undefined) {
+            this.pwFt.textContent = data.frameTime + 'ms';
         }
     }
 

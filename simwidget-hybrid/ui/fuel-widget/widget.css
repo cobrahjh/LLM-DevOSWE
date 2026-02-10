@@ -409,3 +409,104 @@ h2 {
 
 .status-log.success { color: #86efac; }
 .status-log.error { color: #fca5a5; }
+
+/* ============================================
+   COMPACT TOGGLE BUTTON
+   ============================================ */
+.compact-toggle {
+    position: fixed;
+    top: 8px;
+    left: 36px;
+    z-index: 999;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: var(--sg-text-muted, #a1a1aa);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+.compact-toggle:hover { color: var(--sg-text-primary, #e4e4e7); }
+.compact-toggle.active { color: var(--sg-accent-green, #22c55e); }
+
+/* ============================================
+   COMPACT MODE — Layout switching
+   ============================================ */
+
+/* Default: full visible, compact hidden */
+.fw-full { display: block; }
+.fw-compact { display: none; }
+
+/* Compact mode: swap visibility */
+.widget-container.compact .fw-full { display: none; }
+.widget-container.compact .fw-compact { display: grid; }
+
+/* Compact mode: shrink container */
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+/* ============================================
+   COMPACT FUEL GRID (~280 x 80px)
+   ============================================ */
+.fw-compact {
+    grid-template-columns: 48px 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto;
+    gap: 2px;
+    padding: 3px;
+    background: var(--sg-bg-header, rgba(16, 32, 56, 0.8));
+    border: 1px solid var(--sg-border-subtle, #3f3f46);
+    border-radius: 5px;
+    user-select: none;
+}
+
+/* Fuel percent gauge cell */
+.fw-gauge-cell {
+    background: var(--sg-bg-card, #27272a);
+    border: 1px solid var(--sg-border-subtle, #3f3f46);
+    border-radius: 4px;
+}
+.fw-gauge-cell .val {
+    font-size: 16px;
+    color: var(--sg-accent-green, #22c55e);
+}
+.fw-gauge-cell.warning .val { color: var(--sg-accent-amber, #eab308); }
+.fw-gauge-cell.critical .val { color: var(--sg-accent-red, #ef4444); }
+
+/* Data cells */
+.fw-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 2px;
+    background: rgba(16, 32, 56, 0.6);
+    border-radius: 3px;
+    min-height: 42px;
+}
+.fw-cell .lbl {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--sg-text-muted, #a1a1aa);
+    letter-spacing: 0.8px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+.fw-cell .val {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--sg-font-data, 'Monaco', monospace);
+    color: var(--sg-accent-cyan, #22d3ee);
+    line-height: 1.2;
+}
+.fw-cell .unit {
+    font-size: 7px;
+    color: var(--sg-text-muted, #a1a1aa);
+    line-height: 1;
+}

@@ -295,3 +295,128 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.2); }
 }
+
+/* ── Compact Toggle Button ──────────────────────────────── */
+.compact-toggle {
+    position: fixed;
+    top: 6px;
+    right: 40px;
+    z-index: 1001;
+    background: var(--sg-bg-panel, rgba(30,30,40,0.85));
+    border: 1px solid var(--sg-border-subtle, rgba(255,255,255,0.1));
+    color: var(--sg-text-secondary, #aaa);
+    font-size: 14px;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.compact-toggle:hover {
+    background: var(--sg-accent-green, #4ade80);
+    color: #fff;
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #4ade80);
+    color: #fff;
+}
+
+/* ── Full / Compact layout switching ────────────────────── */
+.ww-full {
+    display: block;
+}
+
+.ww-compact {
+    display: none;
+}
+
+body.compact-mode .ww-full {
+    display: none;
+}
+
+body.compact-mode .ww-compact {
+    display: block;
+}
+
+body.compact-mode .widget-container {
+    min-width: auto;
+    max-width: 280px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+body.compact-mode .settings-btn {
+    display: none;
+}
+
+/* ── Compact view styles ────────────────────────────────── */
+.ww-compact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.ww-compact-station {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--sg-text-primary, #fff);
+    letter-spacing: 1px;
+}
+
+.ww-compact-cat {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.ww-compact-cat.vfr   { background: #22c55e; color: #000; }
+.ww-compact-cat.mvfr  { background: #3b82f6; color: #fff; }
+.ww-compact-cat.ifr   { background: #ef4444; color: #fff; }
+.ww-compact-cat.lifr  { background: #7c3aed; color: #fff; }
+
+.ww-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.ww-compact-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 3px 2px;
+}
+
+.ww-compact-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--sg-text-secondary, #888);
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.ww-compact-val {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sg-text-primary, #fff);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.ww-compact-val.wind       { color: #4ade80; }
+.ww-compact-val.visibility { color: #60a5fa; }
+.ww-compact-val.temp       { color: #f59e0b; }
+.ww-compact-val.pressure   { color: #a78bfa; }

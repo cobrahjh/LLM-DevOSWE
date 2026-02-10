@@ -19,33 +19,53 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
     <div class="widget-container metar-widget">
-        <div class="widget-header">
-            <span class="widget-title">🌦️ METAR</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+        <div class="mw-full">
+            <div class="widget-header">
+                <span class="widget-title">🌦️ METAR</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+                </div>
+            </div>
+
+            <div class="airport-input">
+                <input type="text" id="airport-code" placeholder="ICAO (e.g. KJFK)" maxlength="4">
+                <button class="btn-fetch" id="btn-fetch">Get METAR</button>
+            </div>
+
+            <div class="recent-airports" id="recent-airports"></div>
+
+            <div class="metar-content" id="metar-content">
+                <div class="metar-placeholder">
+                    <div class="placeholder-icon">✈️</div>
+                    <div class="placeholder-text">Enter an airport ICAO code</div>
+                </div>
+            </div>
+
+            <div class="auto-refresh">
+                <label>
+                    <input type="checkbox" id="auto-refresh">
+                    Auto-refresh every 5 min
+                </label>
             </div>
         </div>
 
-        <div class="airport-input">
-            <input type="text" id="airport-code" placeholder="ICAO (e.g. KJFK)" maxlength="4">
-            <button class="btn-fetch" id="btn-fetch">Get METAR</button>
-        </div>
-
-        <div class="recent-airports" id="recent-airports"></div>
-
-        <div class="metar-content" id="metar-content">
-            <div class="metar-placeholder">
-                <div class="placeholder-icon">✈️</div>
-                <div class="placeholder-text">Enter an airport ICAO code</div>
+        <div class="mw-compact" id="mw-compact">
+            <div class="mw-compact-row">
+                <span class="mw-station" id="mw-station">----</span>
+                <span class="mw-category" id="mw-category">--</span>
             </div>
-        </div>
-
-        <div class="auto-refresh">
-            <label>
-                <input type="checkbox" id="auto-refresh">
-                Auto-refresh every 5 min
-            </label>
+            <div class="mw-compact-row">
+                <span class="mw-item"><span class="mw-label">WND</span> <span id="mw-wind">---</span></span>
+                <span class="mw-item"><span class="mw-label">VIS</span> <span id="mw-vis">--</span></span>
+                <span class="mw-item"><span class="mw-label">CIG</span> <span id="mw-ceiling">---</span></span>
+            </div>
+            <div class="mw-compact-row">
+                <span class="mw-item"><span class="mw-label">TMP</span> <span id="mw-temp">--</span></span>
+                <span class="mw-item"><span class="mw-label">DEW</span> <span id="mw-dew">--</span></span>
+                <span class="mw-item"><span class="mw-label">ALT</span> <span id="mw-altimeter">--</span></span>
+            </div>
         </div>
     </div>
 

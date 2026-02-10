@@ -16,8 +16,11 @@ class MetarPane extends SimGlassBase {
         this.autoRefreshInterval = null;
         this.autoRefreshEnabled = false;
 
+        this.lastMetar = null;
+
         this.loadState();
         this.initControls();
+        this.setupCompactToggle();
         this.renderRecentStations();
 
         // Load last station if exists
@@ -152,7 +155,9 @@ class MetarPane extends SimGlassBase {
                 throw new Error('No METAR data found for ' + code);
             }
 
+            this.lastMetar = data[0];
             this.renderMetar(data[0]);
+            this.updateCompact(data[0]);
             this.setupAutoRefresh();
 
         } catch (error) {
@@ -452,6 +457,77 @@ class MetarPane extends SimGlassBase {
         const beta = (a * temp) / (b + temp);
         const rh = 100 * Math.exp(alpha - beta);
         return Math.round(rh);
+    }
+
+    setupCompactToggle() {
+        const btn = document.getElementById('compact-toggle');
+        const isCompact = localStorage.getItem('metar-widget-compact') === 'true';
+
+        if (isCompact) {
+            document.body.classList.add('compact-mode');
+            btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', () => {
+            const nowCompact = document.body.classList.toggle('compact-mode');
+            btn.classList.toggle('active', nowCompact);
+            localStorage.setItem('metar-widget-compact', nowCompact);
+
+            if (nowCompact && this.lastMetar) {
+                this.updateCompact(this.lastMetar);
+            }
+        });
+    }
+
+    updateCompact(metar) {
+        if (!metar) return;
+
+        // Station
+        const stationEl = document.getElementById('mw-station');
+        stationEl.textContent = metar.icaoId || metar.stationId || this.currentStation || '----';
+
+        // Flight category
+        const category = this.getFlightCategory(metar);
+        const catEl = document.getElementById('mw-category');
+        catEl.textContent = category;
+        catEl.className = 'mw-category ' + category.toLowerCase();
+
+        // Wind
+        const windEl = document.getElementById('mw-wind');
+        windEl.textContent = this.formatWind(metar);
+
+        // Visibility
+        const visEl = document.getElementById('mw-vis');
+        const vis = metar.visib !== undefined ? metar.visib : (metar.visibility || '--');
+        visEl.textContent = vis + ' SM';
+
+        // Ceiling
+        const ceilingEl = document.getElementById('mw-ceiling');
+        let ceiling = '--';
+        if (metar.clouds) {
+            for (const cloud of metar.clouds) {
+                if (cloud.cover === 'BKN' || cloud.cover === 'OVC') {
+                    ceiling = (cloud.base * 100) + 'ft';
+                    break;
+                }
+            }
+            if (ceiling === '--' && metar.clouds.length > 0) {
+                ceiling = metar.clouds[0].cover;
+            }
+        }
+        ceilingEl.textContent = ceiling;
+
+        // Temperature
+        const tempEl = document.getElementById('mw-temp');
+        tempEl.textContent = metar.temp !== undefined ? Math.round(metar.temp) + 'C' : '--';
+
+        // Dewpoint
+        const dewEl = document.getElementById('mw-dew');
+        dewEl.textContent = metar.dewp !== undefined ? Math.round(metar.dewp) + 'C' : '--';
+
+        // Altimeter
+        const altEl = document.getElementById('mw-altimeter');
+        altEl.textContent = metar.altim !== undefined ? metar.altim.toFixed(2) : '--';
     }
 
     destroy() {

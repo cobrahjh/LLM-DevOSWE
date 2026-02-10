@@ -376,3 +376,129 @@
         min-height: 72px;
     }
 }
+
+/* ============================================
+   COMPACT TOGGLE BUTTON
+   ============================================ */
+.compact-toggle {
+    position: fixed;
+    top: 8px;
+    left: 36px;
+    z-index: 999;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: var(--sg-text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+.compact-toggle:hover { color: var(--sg-text-primary); }
+.compact-toggle.active { color: var(--sg-accent-green); }
+
+/* ============================================
+   COMPACT MODE — Layout switching
+   ============================================ */
+
+/* Default: full visible, compact hidden */
+.ev-full { display: block; }
+.ev-compact { display: none; }
+
+/* Compact mode: swap visibility */
+.widget-container.compact .ev-full { display: none; }
+.widget-container.compact .ev-compact { display: flex; }
+
+/* Compact mode: shrink container */
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+/* ============================================
+   COMPACT ENVIRONMENT LAYOUT (~280 x 80px)
+   ============================================ */
+.ev-compact {
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 6px;
+    background: var(--sg-bg-header);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: 5px;
+    user-select: none;
+    min-width: 260px;
+    max-width: 280px;
+}
+
+/* Top row: time icon, local time, weather icon, weather name */
+.ev-compact-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--sg-border-subtle);
+}
+
+.ev-compact-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.ev-compact-time {
+    font-size: var(--sg-text-sm, 12px);
+    font-weight: 700;
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-yellow);
+    min-width: 46px;
+}
+
+.ev-compact-wx {
+    font-size: 14px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.ev-compact-wx-name {
+    font-size: var(--sg-text-xs, 10px);
+    font-weight: 600;
+    color: var(--sg-text-secondary);
+    text-transform: uppercase;
+}
+
+/* Bottom row: data cells */
+.ev-compact-bottom {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: space-between;
+}
+
+.ev-compact-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    flex: 1;
+}
+
+.ev-compact-lbl {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--sg-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+.ev-compact-val {
+    font-size: var(--sg-text-xs, 10px);
+    font-weight: 700;
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-primary);
+    white-space: nowrap;
+    line-height: 1.3;
+}

@@ -16,104 +16,135 @@
 <body>
     <!-- Settings Button -->
     <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
 
     <div class="widget-container" id="widget-root">
-        <!-- Header -->
-        <div class="widget-header">
-            <span class="widget-title">FUEL MONITOR</span>
-            <div class="header-controls">
-                <span class="connection-status" id="conn-status" title="Connection status"></span>
-            </div>
-        </div>
-
-        <!-- Total Fuel -->
-        <div class="fuel-total">
-            <div class="total-label">TOTAL FUEL</div>
-            <div class="total-value">
-                <span id="fuel-total-gal">--</span>
-                <span class="unit">gal</span>
-                <span class="secondary" id="fuel-total-lbs">(-- lbs)</span>
-            </div>
-            <div class="total-bar">
-                <div class="bar-fill" id="fuel-total-bar"></div>
-            </div>
-        </div>
-
-        <!-- Tank Gauges -->
-        <div class="tanks-section">
-            <div class="section-title">FUEL TANKS</div>
-            <div class="tanks-grid">
-                <div class="tank-item">
-                    <div class="tank-label">LEFT</div>
-                    <div class="tank-gauge">
-                        <div class="gauge-fill" id="tank-left-fill"></div>
-                        <div class="gauge-value" id="tank-left-val">--</div>
-                    </div>
-                </div>
-                <div class="tank-item">
-                    <div class="tank-label">RIGHT</div>
-                    <div class="tank-gauge">
-                        <div class="gauge-fill" id="tank-right-fill"></div>
-                        <div class="gauge-value" id="tank-right-val">--</div>
-                    </div>
+        <!-- Full Mode -->
+        <div class="fm-full">
+            <!-- Header -->
+            <div class="widget-header">
+                <span class="widget-title">FUEL MONITOR</span>
+                <div class="header-controls">
+                    <span class="connection-status" id="conn-status" title="Connection status"></span>
                 </div>
             </div>
+
+            <!-- Total Fuel -->
+            <div class="fuel-total">
+                <div class="total-label">TOTAL FUEL</div>
+                <div class="total-value">
+                    <span id="fuel-total-gal">--</span>
+                    <span class="unit">gal</span>
+                    <span class="secondary" id="fuel-total-lbs">(-- lbs)</span>
+                </div>
+                <div class="total-bar">
+                    <div class="bar-fill" id="fuel-total-bar"></div>
+                </div>
+            </div>
+
+            <!-- Tank Gauges -->
+            <div class="tanks-section">
+                <div class="section-title">FUEL TANKS</div>
+                <div class="tanks-grid">
+                    <div class="tank-item">
+                        <div class="tank-label">LEFT</div>
+                        <div class="tank-gauge">
+                            <div class="gauge-fill" id="tank-left-fill"></div>
+                            <div class="gauge-value" id="tank-left-val">--</div>
+                        </div>
+                    </div>
+                    <div class="tank-item">
+                        <div class="tank-label">RIGHT</div>
+                        <div class="tank-gauge">
+                            <div class="gauge-fill" id="tank-right-fill"></div>
+                            <div class="gauge-value" id="tank-right-val">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flow & Consumption -->
+            <div class="data-grid">
+                <div class="data-item">
+                    <span class="data-label">FLOW RATE</span>
+                    <span class="data-value" id="fuel-flow">--</span>
+                    <span class="data-unit">gph</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">USED</span>
+                    <span class="data-value" id="fuel-used">--</span>
+                    <span class="data-unit">gal</span>
+                </div>
+                <div class="data-item highlight">
+                    <span class="data-label">ENDURANCE</span>
+                    <span class="data-value" id="fuel-endurance">--:--</span>
+                    <span class="data-unit">hrs</span>
+                </div>
+                <div class="data-item highlight">
+                    <span class="data-label">RANGE</span>
+                    <span class="data-value" id="fuel-range">--</span>
+                    <span class="data-unit">nm</span>
+                </div>
+            </div>
+
+            <!-- Selector & Pump Status -->
+            <div class="status-section">
+                <div class="status-item">
+                    <span class="status-label">SELECTOR</span>
+                    <span class="status-value" id="fuel-selector">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">PUMP</span>
+                    <span class="status-indicator" id="fuel-pump-status">OFF</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-row">
+                <button class="btn btn-secondary" id="btn-pump" data-cmd="FUEL_PUMP">
+                    <span class="btn-led" id="pump-led"></span>
+                    PUMP
+                </button>
+                <button class="btn btn-secondary" id="btn-selector" data-cmd="FUEL_SELECTOR">
+                    SELECTOR
+                </button>
+                <button class="btn btn-primary" id="btn-reset">
+                    RESET
+                </button>
+            </div>
+
+            <!-- Footer -->
+            <div class="widget-footer">
+                <span class="widget-version">v1.0.0</span>
+                <span class="ground-speed">GS: <span id="ground-speed">--</span> kts</span>
+            </div>
         </div>
 
-        <!-- Flow & Consumption -->
-        <div class="data-grid">
-            <div class="data-item">
-                <span class="data-label">FLOW RATE</span>
-                <span class="data-value" id="fuel-flow">--</span>
-                <span class="data-unit">gph</span>
+        <!-- Compact Mode -->
+        <div class="fm-compact" id="fm-compact">
+            <div class="fm-compact-title">FUEL</div>
+            <div class="fm-compact-grid">
+                <div class="fm-compact-item">
+                    <span class="fm-compact-label">TOTAL</span>
+                    <span class="fm-compact-value" id="fm-total">--</span>
+                    <span class="fm-compact-unit">gal</span>
+                </div>
+                <div class="fm-compact-item">
+                    <span class="fm-compact-label">FLOW</span>
+                    <span class="fm-compact-value" id="fm-flow">--</span>
+                    <span class="fm-compact-unit">gph</span>
+                </div>
+                <div class="fm-compact-item">
+                    <span class="fm-compact-label">ENDUR</span>
+                    <span class="fm-compact-value" id="fm-endurance">--:--</span>
+                    <span class="fm-compact-unit">hrs</span>
+                </div>
+                <div class="fm-compact-item">
+                    <span class="fm-compact-label">USED</span>
+                    <span class="fm-compact-value" id="fm-used">--</span>
+                    <span class="fm-compact-unit">gal</span>
+                </div>
             </div>
-            <div class="data-item">
-                <span class="data-label">USED</span>
-                <span class="data-value" id="fuel-used">--</span>
-                <span class="data-unit">gal</span>
-            </div>
-            <div class="data-item highlight">
-                <span class="data-label">ENDURANCE</span>
-                <span class="data-value" id="fuel-endurance">--:--</span>
-                <span class="data-unit">hrs</span>
-            </div>
-            <div class="data-item highlight">
-                <span class="data-label">RANGE</span>
-                <span class="data-value" id="fuel-range">--</span>
-                <span class="data-unit">nm</span>
-            </div>
-        </div>
-
-        <!-- Selector & Pump Status -->
-        <div class="status-section">
-            <div class="status-item">
-                <span class="status-label">SELECTOR</span>
-                <span class="status-value" id="fuel-selector">--</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">PUMP</span>
-                <span class="status-indicator" id="fuel-pump-status">OFF</span>
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="actions-row">
-            <button class="btn btn-secondary" id="btn-pump" data-cmd="FUEL_PUMP">
-                <span class="btn-led" id="pump-led"></span>
-                PUMP
-            </button>
-            <button class="btn btn-secondary" id="btn-selector" data-cmd="FUEL_SELECTOR">
-                SELECTOR
-            </button>
-            <button class="btn btn-primary" id="btn-reset">
-                RESET
-            </button>
-        </div>
-
-        <!-- Footer -->
-        <div class="widget-footer">
-            <span class="widget-version">v1.0.0</span>
-            <span class="ground-speed">GS: <span id="ground-speed">--</span> kts</span>
         </div>
     </div>
 

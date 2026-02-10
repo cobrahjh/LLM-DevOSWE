@@ -20,6 +20,7 @@ class LandingPane extends SimGlassBase {
         this.initElements();
         this.initEvents();
         this.loadHistory();
+        this.setupCompactToggle();
     }
 
     initElements() {
@@ -32,6 +33,14 @@ class LandingPane extends SimGlassBase {
         this.wind = document.getElementById('wind');
         this.historyList = document.getElementById('history-list');
         this.resetBtn = document.getElementById('btn-reset');
+
+        // Compact elements
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.lwCompact = document.getElementById('lw-compact');
+        this.lwRate = document.getElementById('lw-rate');
+        this.lwGforce = document.getElementById('lw-gforce');
+        this.lwGrade = document.getElementById('lw-grade');
+        this.lwSpeed = document.getElementById('lw-speed');
     }
 
     initEvents() {
@@ -83,6 +92,11 @@ class LandingPane extends SimGlassBase {
         if (data.windDirection !== undefined && data.windSpeed !== undefined) {
             this.wind.textContent = Math.round(data.windDirection) + '°/' + Math.round(data.windSpeed) + 'kt';
         }
+
+        // Keep compact speed updated during flight
+        if (this.isCompact) {
+            this.lwSpeed.textContent = Math.round(data.speed || 0) + ' kts';
+        }
     }
 
     recordLanding(data) {
@@ -108,6 +122,8 @@ class LandingPane extends SimGlassBase {
         if (data.windDirection !== undefined) {
             this.wind.textContent = Math.round(data.windDirection) + '°/' + Math.round(data.windSpeed) + 'kt';
         }
+
+        this.updateCompact(data);
     }
 
     getGrade(rate) {
@@ -157,6 +173,36 @@ class LandingPane extends SimGlassBase {
             item.appendChild(time);
             this.historyList.appendChild(item);
         });
+    }
+
+    setupCompactToggle() {
+        this.isCompact = localStorage.getItem('landing-widget-compact') === '1';
+        this._applyCompactMode();
+
+        this.compactToggle.addEventListener('click', () => {
+            this.isCompact = !this.isCompact;
+            localStorage.setItem('landing-widget-compact', this.isCompact ? '1' : '0');
+            this._applyCompactMode();
+        });
+    }
+
+    _applyCompactMode() {
+        const container = document.querySelector('.widget-container');
+        container.classList.toggle('compact-mode', this.isCompact);
+        this.compactToggle.classList.toggle('active', this.isCompact);
+    }
+
+    updateCompact(data) {
+        if (!this.isCompact) return;
+
+        if (data && data.rate !== undefined) {
+            const grade = this.getGrade(data.rate);
+            this.lwRate.textContent = data.rate + ' fpm';
+            this.lwGforce.textContent = (data.gForce || 1.0).toFixed(1) + 'g';
+            this.lwGrade.textContent = grade.label;
+            this.lwGrade.style.color = grade.color;
+            this.lwSpeed.textContent = Math.round(data.speed || 0) + ' kts';
+        }
     }
 
     resetDisplay() {

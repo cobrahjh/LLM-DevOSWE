@@ -46,6 +46,9 @@ class FuelMonitorPane extends SimGlassBase {
         this.initialFuel = null;
         this.fuelWeight = 6.0;      // lbs per gallon (avgas default)
 
+        // Compact mode
+        this.compactMode = localStorage.getItem('fuel-monitor-compact') === 'true';
+
         // Cache DOM elements
         this.elements = {};
 
@@ -60,6 +63,7 @@ class FuelMonitorPane extends SimGlassBase {
         this.cacheElements();
         this.bindEvents();
         this.loadSettings();
+        this.setupCompactToggle();
     }
 
     /**
@@ -205,6 +209,7 @@ class FuelMonitorPane extends SimGlassBase {
         this.updateTankGauges();
         this.updateDataGrid();
         this.updateStatus();
+        this.updateCompact();
     }
 
     /**
@@ -355,6 +360,78 @@ class FuelMonitorPane extends SimGlassBase {
         const pumpBtn = document.getElementById('btn-pump');
         if (pumpBtn) {
             pumpBtn.classList.toggle('active', pumpOn);
+        }
+    }
+
+    /**
+     * Setup compact mode toggle button
+     */
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        const root = document.getElementById('widget-root');
+        if (!toggle || !root) return;
+
+        // Apply saved state on load
+        if (this.compactMode) {
+            root.classList.add('compact');
+            toggle.classList.add('active');
+        }
+
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            root.classList.toggle('compact', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+            localStorage.setItem('fuel-monitor-compact', String(this.compactMode));
+        });
+    }
+
+    /**
+     * Update compact mode display elements
+     */
+    updateCompact() {
+        if (!this.compactMode) return;
+
+        const { totalGallons, flowRate, fuelUsed } = this.fuel;
+
+        // Total fuel
+        const fmTotal = document.getElementById('fm-total');
+        if (fmTotal) {
+            fmTotal.textContent = this.formatNumber(totalGallons, 1);
+        }
+
+        // Flow rate
+        const fmFlow = document.getElementById('fm-flow');
+        if (fmFlow) {
+            fmFlow.textContent = this.formatNumber(flowRate, 1);
+        }
+
+        // Endurance
+        const fmEndurance = document.getElementById('fm-endurance');
+        if (fmEndurance) {
+            let enduranceHrs = 0;
+            if (flowRate > 0.5) {
+                enduranceHrs = totalGallons / flowRate;
+            }
+            if (enduranceHrs > 0 && enduranceHrs < 100) {
+                const hrs = Math.floor(enduranceHrs);
+                const mins = Math.round((enduranceHrs - hrs) * 60);
+                fmEndurance.textContent = `${hrs}:${mins.toString().padStart(2, '0')}`;
+                fmEndurance.classList.remove('warning', 'critical');
+                if (enduranceHrs < 0.5) {
+                    fmEndurance.classList.add('critical');
+                } else if (enduranceHrs < 1) {
+                    fmEndurance.classList.add('warning');
+                }
+            } else {
+                fmEndurance.textContent = '--:--';
+                fmEndurance.classList.remove('warning', 'critical');
+            }
+        }
+
+        // Fuel used
+        const fmUsed = document.getElementById('fm-used');
+        if (fmUsed) {
+            fmUsed.textContent = this.formatNumber(fuelUsed, 1);
         }
     }
 

@@ -163,3 +163,99 @@
 .perf-card.critical .perf-value { color: #ef4444 !important; }
 .perf-card.warning .perf-fill { background: #eab308 !important; }
 .perf-card.critical .perf-fill { background: #ef4444 !important; }
+
+/* ── Compact Toggle Button ── */
+.compact-toggle {
+    background: transparent;
+    border: 1px solid var(--sg-border, rgba(255,255,255,0.15));
+    color: var(--sg-text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    margin-right: 4px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.compact-toggle:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--sg-text-primary);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #22c55e);
+    color: var(--sg-bg-deep, #0a0a0a);
+    border-color: var(--sg-accent-green, #22c55e);
+}
+
+/* ── Full / Compact Layout Switching ── */
+.pw-full {
+    display: block;
+}
+
+.pw-compact {
+    display: none;
+}
+
+.widget-container.is-compact .pw-full {
+    display: none;
+}
+
+.widget-container.is-compact .pw-compact {
+    display: block;
+}
+
+.widget-container.is-compact {
+    min-width: 200px;
+    max-width: 280px;
+    padding: 10px;
+}
+
+/* ── Compact Layout ── */
+.pw-compact-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.pw-compact-row:last-child {
+    margin-bottom: 0;
+}
+
+.pw-compact-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 2px;
+    background: var(--sg-bg-panel);
+    border-radius: 4px;
+    min-width: 0;
+}
+
+.pw-compact-label {
+    font-size: 8px;
+    color: var(--sg-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.pw-compact-value {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: var(--sg-text-primary);
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+/* Compact value colors */
+.pw-compact-fps { color: #22c55e; }
+.pw-compact-gpu { color: #f97316; }
+.pw-compact-cpu { color: #3b82f6; }
+.pw-compact-ram { color: #a855f7; }
+.pw-compact-vram { color: var(--sg-accent-green, #22c55e); }
+.pw-compact-ft  { color: var(--sg-text-primary); }

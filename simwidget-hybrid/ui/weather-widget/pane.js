@@ -25,6 +25,7 @@ class WeatherPane extends SimGlassBase {
         this.initEvents();
         this.loadState();
         this.renderRecent();
+        this.setupCompactToggle();
     }
 
     initElements() {
@@ -165,6 +166,9 @@ class WeatherPane extends SimGlassBase {
         actions.appendChild(copyBtn);
         actions.appendChild(refreshBtn);
         this.content.appendChild(actions);
+
+        // Keep compact view in sync
+        this.updateCompact(data);
     }
 
     sendToNotepad(station, raw, wind, visibility, pressure, category) {
@@ -399,6 +403,89 @@ Category: ${category}`;
                 });
             }
         }
+    }
+
+    /* ── Compact mode ─────────────────────────────────────── */
+
+    setupCompactToggle() {
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.compactPanel = document.getElementById('ww-compact');
+        this.isCompact = localStorage.getItem('weather-widget-compact') === 'true';
+
+        // Apply stored state
+        if (this.isCompact) {
+            document.body.classList.add('compact-mode');
+            this.compactToggle.classList.add('active');
+        }
+
+        this.compactToggle.addEventListener('click', () => {
+            this.isCompact = !this.isCompact;
+            document.body.classList.toggle('compact-mode', this.isCompact);
+            this.compactToggle.classList.toggle('active', this.isCompact);
+            localStorage.setItem('weather-widget-compact', String(this.isCompact));
+
+            // Refresh compact values when switching into compact view
+            if (this.isCompact && this.currentData) {
+                this.updateCompact(this.currentData);
+            }
+        });
+    }
+
+    updateCompact(data) {
+        const station = data.station || data.icao || this.airportInput.value.toUpperCase() || '----';
+        const category = this.getFlightCategory(data);
+        const wind = this.parseWind(data);
+        const vis = this.parseVisibility(data);
+        const temp = this.parseTemp(data);
+        const pressure = this.parsePressure(data);
+
+        // Precipitation / weather phenomena
+        let precip = '--';
+        if (data.wx_codes && data.wx_codes.length > 0) {
+            precip = data.wx_codes.map(w => w.value || w).join(' ');
+        } else if (data.wx_string) {
+            precip = data.wx_string;
+        } else if (data.remarks) {
+            precip = 'None';
+        } else {
+            precip = 'None';
+        }
+
+        // Station
+        const stationEl = document.getElementById('ww-station');
+        if (stationEl) stationEl.textContent = station;
+
+        // Flight category badge
+        const catEl = document.getElementById('ww-cat');
+        if (catEl) {
+            catEl.textContent = category;
+            catEl.className = 'ww-compact-cat ' + category.toLowerCase();
+        }
+
+        // Grid values
+        const tempEl = document.getElementById('ww-temp');
+        if (tempEl) tempEl.textContent = temp.display;
+
+        const windEl = document.getElementById('ww-wind');
+        if (windEl) {
+            // Show a short version for compact: e.g. "270/12"
+            if (data.wind_direction && data.wind_speed) {
+                const dir = data.wind_direction.value || 'VRB';
+                const spd = data.wind_speed.value || 0;
+                windEl.textContent = dir + '/' + spd;
+            } else {
+                windEl.textContent = 'Calm';
+            }
+        }
+
+        const visEl = document.getElementById('ww-vis');
+        if (visEl) visEl.textContent = vis.display + (vis.unit ? vis.unit : '');
+
+        const qnhEl = document.getElementById('ww-qnh');
+        if (qnhEl) qnhEl.textContent = pressure.display;
+
+        const precipEl = document.getElementById('ww-precip');
+        if (precipEl) precipEl.textContent = precip;
     }
 
     destroy() {

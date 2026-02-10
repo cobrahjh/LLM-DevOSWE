@@ -263,6 +263,112 @@ body {
   100% { top: 100%; opacity: 0; }
 }
 
+/* ── Compact Toggle Button ────────────────────────────── */
+.compact-toggle {
+    background: transparent;
+    border: 1px solid var(--sg-border-subtle, rgba(255,255,255,0.1));
+    color: var(--sg-text-secondary, #888);
+    font-size: 14px;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+
+.compact-toggle:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--sg-text-primary, #fff);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #22c55e);
+    color: var(--sg-bg-deep, #0a0a1a);
+    border-color: var(--sg-accent-green, #22c55e);
+}
+
+/* ── Full / Compact Layout Switching ─────────────────── */
+.fd-compact {
+    display: none;
+}
+
+.widget-container.compact-mode {
+    min-width: 280px;
+    max-width: 280px;
+    min-height: auto;
+}
+
+.widget-container.compact-mode .fd-full {
+    display: none;
+}
+
+.widget-container.compact-mode .fd-compact {
+    display: block;
+}
+
+.widget-container.compact-mode .widget-header {
+    padding: 8px 12px;
+}
+
+.widget-container.compact-mode .widget-title {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+}
+
+.widget-container.compact-mode .widget-brand {
+    display: none;
+}
+
+.widget-container.compact-mode .widget-content {
+    padding: 6px 10px 10px;
+    height: auto;
+}
+
+.widget-container.compact-mode .scan-line {
+    display: none;
+}
+
+/* ── Compact Layout Elements ─────────────────────────── */
+.fd-compact-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.fd-compact-row:last-child {
+    margin-bottom: 0;
+}
+
+.fd-compact-cell {
+    flex: 1;
+    background: var(--sg-bg-panel, rgba(255,255,255,0.05));
+    border-radius: 4px;
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.fd-compact-label {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--sg-text-muted, #607080);
+    text-transform: uppercase;
+}
+
+.fd-compact-val {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--sg-font-data, 'JetBrains Mono', 'Consolas', monospace);
+    color: var(--sg-accent-green, #00E676);
+    white-space: nowrap;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 4px;

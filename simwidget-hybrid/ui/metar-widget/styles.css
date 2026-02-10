@@ -358,6 +358,119 @@
     font-size: 14px;
 }
 
+/* ── Compact Toggle Button ── */
+.compact-toggle {
+    position: fixed;
+    top: 6px;
+    right: 36px;
+    z-index: 1001;
+    background: var(--sg-bg-panel, #1e1e2e);
+    border: 1px solid var(--sg-border-subtle, #333);
+    border-radius: var(--sg-radius-sm, 4px);
+    color: var(--sg-text-secondary, #aaa);
+    font-size: 14px;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.compact-toggle:hover {
+    border-color: var(--sg-accent-green, #22c55e);
+    color: var(--sg-text-primary, #fff);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #22c55e);
+    color: #fff;
+    border-color: var(--sg-accent-green, #22c55e);
+}
+
+/* ── Full / Compact Visibility ── */
+.mw-full {
+    display: block;
+}
+
+.mw-compact {
+    display: none;
+}
+
+body.compact-mode .mw-full {
+    display: none;
+}
+
+body.compact-mode .mw-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    max-width: 280px;
+    min-height: 80px;
+}
+
+body.compact-mode .metar-widget {
+    min-width: unset;
+    width: 280px;
+}
+
+body.compact-mode .settings-btn {
+    display: none;
+}
+
+/* ── Compact Layout Styles ── */
+.mw-compact-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mw-compact-row:first-child {
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.mw-station {
+    font-family: var(--sg-font-data, monospace);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--sg-text-primary, #fff);
+    letter-spacing: 1px;
+}
+
+.mw-category {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mw-category.vfr   { background: var(--sg-status-ok, #22c55e); color: #fff; }
+.mw-category.mvfr  { background: #3b82f6; color: #fff; }
+.mw-category.ifr   { background: var(--sg-status-critical, #ef4444); color: #fff; }
+.mw-category.lifr  { background: #7c3aed; color: #fff; }
+
+.mw-item {
+    font-family: var(--sg-font-data, monospace);
+    font-size: 12px;
+    color: var(--sg-text-primary, #fff);
+    white-space: nowrap;
+}
+
+.mw-label {
+    font-size: 9px;
+    color: var(--sg-text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 2px;
+}
+
 /* Mobile */
 @media (max-width: 480px) {
     .weather-grid {

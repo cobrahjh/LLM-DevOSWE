@@ -25,30 +25,62 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">🌦️ Weather</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-speak" title="Read aloud">🔊</button>
-                <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+        <div class="ww-full">
+            <div class="widget-header">
+                <span class="widget-title">🌦️ Weather</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-speak" title="Read aloud">🔊</button>
+                    <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+                </div>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="airport-input" placeholder="ICAO (e.g., KJFK)" maxlength="4">
+                <button class="btn-search" id="btn-search">Get METAR</button>
+            </div>
+
+            <div class="weather-content" id="weather-content">
+                <div class="placeholder">
+                    <div class="placeholder-icon">✈️</div>
+                    <div class="placeholder-text">Enter airport ICAO code</div>
+                </div>
+            </div>
+
+            <div class="recent-airports" id="recent-airports">
+                <div class="recent-label">Recent:</div>
+                <div class="recent-list" id="recent-list"></div>
             </div>
         </div>
 
-        <div class="search-bar">
-            <input type="text" id="airport-input" placeholder="ICAO (e.g., KJFK)" maxlength="4">
-            <button class="btn-search" id="btn-search">Get METAR</button>
-        </div>
-
-        <div class="weather-content" id="weather-content">
-            <div class="placeholder">
-                <div class="placeholder-icon">✈️</div>
-                <div class="placeholder-text">Enter airport ICAO code</div>
+        <div class="ww-compact" id="ww-compact">
+            <div class="ww-compact-header">
+                <span class="ww-compact-station" id="ww-station">----</span>
+                <span class="ww-compact-cat" id="ww-cat">--</span>
             </div>
-        </div>
-
-        <div class="recent-airports" id="recent-airports">
-            <div class="recent-label">Recent:</div>
-            <div class="recent-list" id="recent-list"></div>
+            <div class="ww-compact-grid">
+                <div class="ww-compact-cell">
+                    <span class="ww-compact-label">TEMP</span>
+                    <span class="ww-compact-val temp" id="ww-temp">--</span>
+                </div>
+                <div class="ww-compact-cell">
+                    <span class="ww-compact-label">WIND</span>
+                    <span class="ww-compact-val wind" id="ww-wind">--</span>
+                </div>
+                <div class="ww-compact-cell">
+                    <span class="ww-compact-label">VIS</span>
+                    <span class="ww-compact-val visibility" id="ww-vis">--</span>
+                </div>
+                <div class="ww-compact-cell">
+                    <span class="ww-compact-label">QNH</span>
+                    <span class="ww-compact-val pressure" id="ww-qnh">--</span>
+                </div>
+                <div class="ww-compact-cell">
+                    <span class="ww-compact-label">PRECIP</span>
+                    <span class="ww-compact-val" id="ww-precip">--</span>
+                </div>
+            </div>
         </div>
     </div>
 

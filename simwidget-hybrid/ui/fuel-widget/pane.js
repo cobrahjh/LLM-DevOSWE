@@ -36,6 +36,9 @@ class FuelPane extends SimGlassBase {
             tanks: []
         };
 
+        // Compact mode state
+        this.compactMode = localStorage.getItem('fuel-widget-compact') === 'true';
+
         // Selected tanks (Set for multiple selection)
         this.selectedTanks = new Set();
 
@@ -60,6 +63,7 @@ class FuelPane extends SimGlassBase {
     init() {
         this.cacheElements();
         this.bindEvents();
+        this.setupCompactToggle();
         this.loadTransparencyPreference();
         this.startWasmPolling();
     }
@@ -126,6 +130,61 @@ class FuelPane extends SimGlassBase {
                 this.setSelectedTanksPercent(percent);
             });
         });
+    }
+
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        const root = document.getElementById('widget-root');
+        if (!toggle || !root) return;
+
+        // Apply saved compact mode on load
+        if (this.compactMode) {
+            root.classList.add('compact');
+            toggle.classList.add('active');
+        }
+
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            localStorage.setItem('fuel-widget-compact', this.compactMode);
+            root.classList.toggle('compact', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+            this.updateCompact();
+        });
+    }
+
+    updateCompact() {
+        if (!this.compactMode) return;
+
+        const { fuelTotal, fuelCapacity, fuelFlow } = this.fuelData;
+        const percent = fuelCapacity > 0 ? Math.round((fuelTotal / fuelCapacity) * 100) : 0;
+        const fuelUsed = fuelCapacity - fuelTotal;
+
+        // Endurance
+        const endurance = fuelFlow > 0 ? fuelTotal / fuelFlow : 0;
+        const hours = Math.floor(endurance);
+        const minutes = Math.floor((endurance - hours) * 60);
+        const endurStr = fuelFlow > 0 ? `${hours}:${minutes.toString().padStart(2, '0')}` : '--:--';
+
+        // Update compact DOM elements
+        const pctEl = document.getElementById('fw-pct');
+        const totalEl = document.getElementById('fw-total');
+        const flowEl = document.getElementById('fw-flow');
+        const endurEl = document.getElementById('fw-endur');
+        const usedEl = document.getElementById('fw-used');
+
+        if (pctEl) pctEl.textContent = percent + '%';
+        if (totalEl) totalEl.textContent = fuelTotal.toFixed(1);
+        if (flowEl) flowEl.textContent = fuelFlow.toFixed(1);
+        if (endurEl) endurEl.textContent = endurStr;
+        if (usedEl) usedEl.textContent = fuelUsed.toFixed(1);
+
+        // Color the gauge cell based on fuel level
+        const gaugeCell = pctEl?.closest('.fw-cell');
+        if (gaugeCell) {
+            gaugeCell.classList.remove('warning', 'critical');
+            if (percent <= 10) gaugeCell.classList.add('critical');
+            else if (percent <= 25) gaugeCell.classList.add('warning');
+        }
     }
 
     toggleTankSelection(tankKey) {
@@ -269,6 +328,7 @@ class FuelPane extends SimGlassBase {
             : '--:--';
         
         this.renderTanks(tanks);
+        this.updateCompact();
     }
 
     renderTanks(tanks) {

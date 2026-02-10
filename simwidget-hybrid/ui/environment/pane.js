@@ -21,16 +21,19 @@ class EnvironmentPane extends SimGlassBase {
         };
 
         this.weatherPresets = {
-            clear: { name: 'Clear Skies', icon: '☀️' },
-            fewclouds: { name: 'Few Clouds', icon: '🌤️' },
-            scattered: { name: 'Scattered Clouds', icon: '⛅' },
-            broken: { name: 'Broken Clouds', icon: '🌥️' },
-            overcast: { name: 'Overcast', icon: '☁️' },
-            rain: { name: 'Rain', icon: '🌧️' },
-            storm: { name: 'Thunderstorm', icon: '⛈️' },
-            snow: { name: 'Snow', icon: '🌨️' },
-            fog: { name: 'Fog', icon: '🌫️' }
+            clear: { name: 'Clear Skies', icon: '☀️', short: 'CLR' },
+            fewclouds: { name: 'Few Clouds', icon: '🌤️', short: 'FEW' },
+            scattered: { name: 'Scattered Clouds', icon: '⛅', short: 'SCT' },
+            broken: { name: 'Broken Clouds', icon: '🌥️', short: 'BKN' },
+            overcast: { name: 'Overcast', icon: '☁️', short: 'OVC' },
+            rain: { name: 'Rain', icon: '🌧️', short: 'RA' },
+            storm: { name: 'Thunderstorm', icon: '⛈️', short: 'TS' },
+            snow: { name: 'Snow', icon: '🌨️', short: 'SN' },
+            fog: { name: 'Fog', icon: '🌫️', short: 'FG' }
         };
+
+        // Compact mode state
+        this.compactMode = localStorage.getItem('environment-compact') === 'true';
 
         this.init();
     }
@@ -38,6 +41,14 @@ class EnvironmentPane extends SimGlassBase {
     init() {
         this.cacheElements();
         this.setupEvents();
+        this.setupCompactToggle();
+
+        // Apply saved compact mode
+        if (this.compactMode) {
+            document.getElementById('widget-root')?.classList.add('compact');
+            document.getElementById('compact-toggle')?.classList.add('active');
+        }
+
         this.updateUI();
     }
 
@@ -59,7 +70,17 @@ class EnvironmentPane extends SimGlassBase {
             // Actions
             btnPause: document.getElementById('btn-pause'),
             btnSlew: document.getElementById('btn-slew'),
-            btnRefuel: document.getElementById('btn-refuel')
+            btnRefuel: document.getElementById('btn-refuel'),
+            // Compact elements
+            evTimeIcon: document.getElementById('ev-time-icon'),
+            evLocal: document.getElementById('ev-local'),
+            evWxIcon: document.getElementById('ev-wx-icon'),
+            evWxName: document.getElementById('ev-wx-name'),
+            evWind: document.getElementById('ev-wind'),
+            evTemp: document.getElementById('ev-temp'),
+            evQnh: document.getElementById('ev-qnh'),
+            evVis: document.getElementById('ev-vis'),
+            evPrecip: document.getElementById('ev-precip')
         };
     }
 
@@ -238,6 +259,13 @@ class EnvironmentPane extends SimGlassBase {
         if (data.isPaused !== undefined) this.data.isPaused = data.isPaused;
         if (data.isSlew !== undefined) this.data.isSlew = data.isSlew;
 
+        // Environment data for compact view
+        if (data.windSpeed !== undefined) this.data.windSpeed = data.windSpeed;
+        if (data.windDir !== undefined) this.data.windDir = data.windDir;
+        if (data.temperature !== undefined) this.data.temperature = data.temperature;
+        if (data.pressure !== undefined) this.data.pressure = data.pressure;
+        if (data.visibility !== undefined) this.data.visibility = data.visibility;
+
         this.updateUI();
     }
 
@@ -303,6 +331,54 @@ class EnvironmentPane extends SimGlassBase {
 
         if (this.elements.btnSlew) {
             this.elements.btnSlew.classList.toggle('active', this.data.isSlew);
+        }
+
+        // Compact view
+        this.updateCompact();
+    }
+
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            localStorage.setItem('environment-compact', this.compactMode);
+            document.getElementById('widget-root')?.classList.toggle('compact', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+            this.updateUI();
+        });
+    }
+
+    updateCompact() {
+        const e = this.elements;
+        // Time icon and local time
+        if (e.evTimeIcon) e.evTimeIcon.textContent = this.getTimeIcon(this.data.localTime);
+        if (e.evLocal) e.evLocal.textContent = this.formatTime(this.data.localTime) + 'L';
+
+        // Weather icon and short name
+        const wx = this.weatherPresets[this.data.weather];
+        if (e.evWxIcon && wx) e.evWxIcon.textContent = wx.icon;
+        if (e.evWxName && wx) e.evWxName.textContent = wx.short;
+
+        // Environment data cells (populated from sim data when available)
+        if (e.evWind && this.data.windSpeed !== undefined) {
+            const dir = this.data.windDir !== undefined ? String(Math.round(this.data.windDir)).padStart(3, '0') : '---';
+            e.evWind.textContent = `${dir}/${Math.round(this.data.windSpeed)}kt`;
+        }
+        if (e.evTemp && this.data.temperature !== undefined) {
+            e.evTemp.textContent = `${Math.round(this.data.temperature)}\u00B0C`;
+        }
+        if (e.evQnh && this.data.pressure !== undefined) {
+            e.evQnh.textContent = this.data.pressure.toFixed(2);
+        }
+        if (e.evVis && this.data.visibility !== undefined) {
+            const visSM = (this.data.visibility / 1609.34).toFixed(0);
+            e.evVis.textContent = `${visSM}SM`;
+        }
+        if (e.evPrecip) {
+            const precip = this.data.weather;
+            const precipMap = { rain: 'RA', storm: 'TS', snow: 'SN', fog: 'FG' };
+            e.evPrecip.textContent = precipMap[precip] || 'NONE';
         }
     }
 

@@ -56,6 +56,9 @@ class EngineMonitorPane extends SimGlassBase {
         this.canvas = null;
         this.ctx = null;
 
+        // Compact mode
+        this.compactMode = localStorage.getItem('engine-monitor-compact') === 'true';
+
         // Cache elements
         this.elements = {};
 
@@ -69,6 +72,7 @@ class EngineMonitorPane extends SimGlassBase {
         console.log('[EngineMonitor] Initialized');
         this.cacheElements();
         this.setupCanvas();
+        this.setupCompactToggle();
         this.bindEvents();
         this.startRenderLoop();
     }
@@ -99,7 +103,15 @@ class EngineMonitorPane extends SimGlassBase {
             propVal: document.getElementById('ctrl-prop-val'),
             // Status
             engineStatus: document.getElementById('engine-status'),
-            hobbsTime: document.getElementById('hobbs-time')
+            hobbsTime: document.getElementById('hobbs-time'),
+            // Compact elements
+            emRpm: document.getElementById('em-rpm'),
+            emMap: document.getElementById('em-map'),
+            emEgt: document.getElementById('em-egt'),
+            emCht: document.getElementById('em-cht'),
+            emOilT: document.getElementById('em-oilt'),
+            emOilP: document.getElementById('em-oilp'),
+            emStatus: document.getElementById('em-status')
         };
     }
 
@@ -296,6 +308,7 @@ class EngineMonitorPane extends SimGlassBase {
         this.updateTemperatures();
         this.updateControls();
         this.updateStatus();
+        this.updateCompact();
     }
 
     /**
@@ -412,6 +425,99 @@ class EngineMonitorPane extends SimGlassBase {
                 totalHobbs += (Date.now() - this.hobbsStart) / 3600000;
             }
             this.elements.hobbsTime.textContent = totalHobbs.toFixed(1);
+        }
+    }
+
+    /**
+     * Setup compact mode toggle button
+     */
+    setupCompactToggle() {
+        const toggleBtn = document.getElementById('compact-toggle');
+        const root = document.getElementById('widget-root');
+        if (!toggleBtn || !root) return;
+
+        // Apply saved state
+        if (this.compactMode) {
+            root.classList.add('compact');
+            toggleBtn.classList.add('active');
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            root.classList.toggle('compact', this.compactMode);
+            toggleBtn.classList.toggle('active', this.compactMode);
+            localStorage.setItem('engine-monitor-compact', this.compactMode);
+        });
+    }
+
+    /**
+     * Update compact mode display elements
+     */
+    updateCompact() {
+        if (!this.compactMode) return;
+
+        // RPM
+        if (this.elements.emRpm) {
+            this.elements.emRpm.textContent = Math.round(this.engine.rpm);
+        }
+
+        // Manifold pressure
+        if (this.elements.emMap) {
+            this.elements.emMap.textContent = this.formatNumber(this.engine.manifoldPressure, 1);
+        }
+
+        // EGT
+        if (this.elements.emEgt) {
+            this.elements.emEgt.textContent = Math.round(this.engine.egt);
+            this.elements.emEgt.classList.remove('warning', 'critical');
+            if (this.engine.egt > this.limits.egtMax * 0.9) {
+                this.elements.emEgt.classList.add('critical');
+            } else if (this.engine.egt > this.limits.egtMax * 0.75) {
+                this.elements.emEgt.classList.add('warning');
+            }
+        }
+
+        // CHT
+        if (this.elements.emCht) {
+            this.elements.emCht.textContent = Math.round(this.engine.cht);
+            this.elements.emCht.classList.remove('warning', 'critical');
+            if (this.engine.cht > this.limits.chtMax * 0.9) {
+                this.elements.emCht.classList.add('critical');
+            } else if (this.engine.cht > this.limits.chtMax * 0.75) {
+                this.elements.emCht.classList.add('warning');
+            }
+        }
+
+        // Oil temp
+        if (this.elements.emOilT) {
+            this.elements.emOilT.textContent = Math.round(this.engine.oilTemp);
+            this.elements.emOilT.classList.remove('warning', 'critical', 'good');
+            if (this.engine.oilTemp > this.limits.oilTempMax) {
+                this.elements.emOilT.classList.add('critical');
+            } else if (this.engine.oilTemp < this.limits.oilTempMin) {
+                this.elements.emOilT.classList.add('warning');
+            } else if (this.engine.oilTemp > 180) {
+                this.elements.emOilT.classList.add('good');
+            }
+        }
+
+        // Oil pressure
+        if (this.elements.emOilP) {
+            this.elements.emOilP.textContent = Math.round(this.engine.oilPressure);
+            this.elements.emOilP.classList.remove('warning', 'critical', 'good');
+            if (this.engine.oilPressure < this.limits.oilPressMin) {
+                this.elements.emOilP.classList.add('critical');
+            } else if (this.engine.oilPressure > this.limits.oilPressMax) {
+                this.elements.emOilP.classList.add('warning');
+            } else {
+                this.elements.emOilP.classList.add('good');
+            }
+        }
+
+        // Engine status
+        if (this.elements.emStatus) {
+            this.elements.emStatus.textContent = this.engine.running ? 'RUN' : 'OFF';
+            this.elements.emStatus.classList.toggle('running', this.engine.running);
         }
     }
 

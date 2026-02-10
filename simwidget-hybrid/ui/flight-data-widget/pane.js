@@ -31,6 +31,7 @@ class FlightDataPane extends SimGlassBase {
         this.initElements();
         this.loadWidgetState();
         this.initEventHandlers();
+        this.setupCompactToggle();
     }
 
     initElements() {
@@ -51,6 +52,16 @@ class FlightDataPane extends SimGlassBase {
         this.windEl = document.getElementById('wind');
         this.latitudeEl = document.getElementById('latitude');
         this.longitudeEl = document.getElementById('longitude');
+
+        // Compact elements
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.fdCompact = document.getElementById('fd-compact');
+        this.fdIas = document.getElementById('fd-ias');
+        this.fdAlt = document.getElementById('fd-alt');
+        this.fdHdg = document.getElementById('fd-hdg');
+        this.fdVs = document.getElementById('fd-vs');
+        this.fdGs = document.getElementById('fd-gs');
+        this.fdWind = document.getElementById('fd-wind');
     }
 
     initEventHandlers() {
@@ -129,6 +140,56 @@ class FlightDataPane extends SimGlassBase {
             width: this.glass.offsetWidth,
             height: this.glass.offsetHeight
         };
+    }
+
+    setupCompactToggle() {
+        this.isCompact = localStorage.getItem('flight-data-compact') === '1';
+        this._applyCompactMode();
+
+        if (this.compactToggle) {
+            this.compactToggle.addEventListener('click', () => {
+                this.isCompact = !this.isCompact;
+                localStorage.setItem('flight-data-compact', this.isCompact ? '1' : '0');
+                this._applyCompactMode();
+            });
+        }
+    }
+
+    _applyCompactMode() {
+        const container = document.querySelector('.widget-container');
+        if (container) {
+            container.classList.toggle('compact-mode', this.isCompact);
+        }
+        if (this.compactToggle) {
+            this.compactToggle.classList.toggle('active', this.isCompact);
+        }
+    }
+
+    updateCompact(data) {
+        if (!this.isCompact) return;
+
+        if (data.ias !== undefined && this.fdIas) {
+            this.fdIas.textContent = this.formatNumber(Math.round(data.ias));
+        }
+        if (data.altitude !== undefined && this.fdAlt) {
+            this.fdAlt.textContent = this.formatNumber(Math.round(data.altitude));
+        }
+        if (data.heading !== undefined && this.fdHdg) {
+            this.fdHdg.textContent = this.formatNumber(Math.round(data.heading)).padStart(3, '0');
+        }
+        if (data.vspeed !== undefined && this.fdVs) {
+            const vs = Math.round(data.vspeed);
+            this.fdVs.textContent = (vs >= 0 ? '+' : '') + this.formatNumber(vs);
+            this.fdVs.style.color = vs > 100 ? '#00ff88' : vs < -100 ? '#ff4444' : 'var(--sg-accent-green, #00E676)';
+        }
+        if (data.groundspeed !== undefined && this.fdGs) {
+            this.fdGs.textContent = this.formatNumber(Math.round(data.groundspeed));
+        }
+        if (data.windDirection !== undefined && data.windSpeed !== undefined && this.fdWind) {
+            const dir = Math.round(data.windDirection).toString().padStart(3, '0');
+            const spd = Math.round(data.windSpeed);
+            this.fdWind.textContent = `${dir}/${spd}`;
+        }
     }
 
     // SimGlassBase lifecycle hook
@@ -231,6 +292,9 @@ class FlightDataPane extends SimGlassBase {
             const lonDir = lon >= 0 ? 'E' : 'W';
             this.longitudeEl.textContent = `${Math.abs(lon).toFixed(4)}° ${lonDir}`;
         }
+
+        // Update compact view
+        this.updateCompact(data);
     }
 
     saveWidgetState() {
