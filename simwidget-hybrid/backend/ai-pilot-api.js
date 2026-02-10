@@ -61,6 +61,17 @@ CURRENT FLIGHT STATE:
 - Engine RPM: ${Math.round(fd.engineRpm || 0)}`;
 }
 
+/** Scale API-level values to SimConnect axis range (0-16383 or -16383 to +16383) */
+function scaleSimValue(command, value) {
+    if (command === 'THROTTLE_SET' || command === 'MIXTURE_SET' || command === 'PROP_PITCH_SET') {
+        return Math.round((value / 100) * 16383);  // 0-100% → 0-16383
+    }
+    if (command === 'AXIS_ELEVATOR_SET') {
+        return Math.round((value / 50) * 16383);   // -50 to +50 → -16383 to +16383
+    }
+    return Math.round(value || 0);
+}
+
 function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
 
     // Map API command names to actual SimConnect event names
@@ -155,7 +166,9 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
         // Resolve the actual SimConnect event name
         const simEventName = COMMAND_TO_EVENT[command];
         const sc = getSimConnect ? getSimConnect() : null;
-        const simValue = Math.round(value || 0);
+
+        // Scale values for SimConnect (0-100% → 0-16383, etc.)
+        const simValue = scaleSimValue(command, value || 0);
 
         if (!sc || !eventMap || eventMap[simEventName] === undefined) {
             // SimConnect not available — command is valid but can't execute
@@ -321,7 +334,7 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
             for (const cmd of commands) {
                 if (!COMMAND_TO_EVENT[cmd.command]) continue;
                 const simEventName = COMMAND_TO_EVENT[cmd.command];
-                const simValue = Math.round(cmd.value || 0);
+                const simValue = scaleSimValue(cmd.command, cmd.value || 0);
 
                 if (sc && eventMap && eventMap[simEventName] !== undefined) {
                     try {
