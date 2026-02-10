@@ -1959,7 +1959,7 @@ class GTN750Pane extends SimGlassBase {
         if (e.gcCom1Stby) e.gcCom1Stby.textContent = (d.com1Standby || 118.00).toFixed(3);
         if (e.gcNav1) e.gcNav1.textContent = (d.nav1Active || 108.00).toFixed(2);
         if (e.gcNav1Stby) e.gcNav1Stby.textContent = (d.nav1Standby || 108.00).toFixed(2);
-        if (e.gcXpdr) e.gcXpdr.textContent = String(d.transponder || 1200).padStart(4, '0');
+        if (e.gcXpdr) e.gcXpdr.textContent = Math.round(d.transponder || 1200).toString(16).toUpperCase().padStart(4, '0');
         if (e.gcXpdrMode) {
             const modeMap = { 0: 'OFF', 1: 'SBY', 2: 'TST', 3: 'ON', 4: 'ALT', 5: 'GND' };
             e.gcXpdrMode.textContent = modeMap[d.transponderState] || 'ALT';

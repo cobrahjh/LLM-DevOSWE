@@ -132,7 +132,7 @@ class GTNSimVarHandler {
         if (this.elements.com2Stby) this.elements.com2Stby.textContent = data.com2Standby.toFixed(2);
         if (this.elements.nav1) this.elements.nav1.textContent = data.nav1Active.toFixed(2);
         if (this.elements.nav1Stby) this.elements.nav1Stby.textContent = data.nav1Standby.toFixed(2);
-        if (this.elements.xpdr) this.elements.xpdr.textContent = data.transponder.toString().padStart(4, '0');
+        if (this.elements.xpdr) this.elements.xpdr.textContent = Math.round(data.transponder).toString(16).toUpperCase().padStart(4, '0');
 
         this.updateNavTuningInfo(data, nav1);
 

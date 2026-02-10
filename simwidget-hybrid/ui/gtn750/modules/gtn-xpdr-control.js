@@ -204,8 +204,8 @@ class GTNXpdrControl {
      */
     update(data) {
         if (data.transponder !== undefined && this._digitIdx < 0) {
-            const codeStr = String(data.transponder).padStart(4, '0');
-            this._code = codeStr.split('').map(Number);
+            const codeStr = Math.round(data.transponder).toString(16).toUpperCase().padStart(4, '0');
+            this._code = codeStr.split('').map(d => parseInt(d, 16));
             this._updateDigitDisplay();
         }
         if (data.transponderState !== undefined) {
