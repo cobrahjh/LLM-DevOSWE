@@ -1,6 +1,8 @@
 /**
- * CockpitFX AeroLayer v1.1.0
- * Wind noise (broadband filtered), stall buffet, turbulence shake.
+ * CockpitFX AeroLayer v1.2.0
+ * Wind noise (broadband filtered), stall buffet, turbulence shake,
+ * crosswind stereo shift, gear drag noise, flap drag noise.
+ * v1.2: Crosswind-aware stereo panning, gear/flap aero drag noise.
  * v1.1: Stereo wind split (pink noise L/R), pink turbulence rumble.
  */
 class AeroLayer {
@@ -72,6 +74,30 @@ class AeroLayer {
         this.turbNoise.connect(this.turbFilter);
         this.turbFilter.connect(this.turbGain);
         this.turbGain.connect(this.output);
+
+        // Gear drag: low-frequency turbulent rumble from deployed landing gear
+        this.gearDragNoise = engine.createPinkNoiseSource();
+        this.gearDragFilter = this.ctx.createBiquadFilter();
+        this.gearDragFilter.type = 'lowpass';
+        this.gearDragFilter.frequency.value = 100;
+        this.gearDragFilter.Q.value = 1.2;
+        this.gearDragGain = this.ctx.createGain();
+        this.gearDragGain.gain.value = 0;
+        this.gearDragNoise.connect(this.gearDragFilter);
+        this.gearDragFilter.connect(this.gearDragGain);
+        this.gearDragGain.connect(this.output);
+
+        // Flap drag: higher-frequency airflow noise from flap deployment
+        this.flapDragNoise = engine.createPinkNoiseSource();
+        this.flapDragFilter = this.ctx.createBiquadFilter();
+        this.flapDragFilter.type = 'bandpass';
+        this.flapDragFilter.frequency.value = 600;
+        this.flapDragFilter.Q.value = 0.8;
+        this.flapDragGain = this.ctx.createGain();
+        this.flapDragGain.gain.value = 0;
+        this.flapDragNoise.connect(this.flapDragFilter);
+        this.flapDragFilter.connect(this.flapDragGain);
+        this.flapDragGain.connect(this.output);
     }
 
     update(data) {
@@ -84,6 +110,20 @@ class AeroLayer {
         const aoa = data.angleOfAttack || 0;
         const windSpd = data.windSpeed || 0;
         const stallThreshold = (this.profile.stall && this.profile.stall.aoaThreshold) || 16;
+
+        // Crosswind stereo shift — pan toward upwind side
+        const windDir = data.windDirection || 0;
+        const heading = data.heading || 0;
+        let relWind = windDir - heading;
+        // Normalize to -180..+180
+        while (relWind > 180) relWind -= 360;
+        while (relWind < -180) relWind += 360;
+        // relWind < 0 = wind from left, > 0 = wind from right
+        const windShift = Math.max(-1, Math.min(1, relWind / 90));
+        const panL = Math.max(-1, Math.min(1, -0.6 + windShift * 0.5));
+        const panR = Math.max(-1, Math.min(1, 0.6 + windShift * 0.5));
+        this.windPanL.pan.setTargetAtTime(panL, t, tau);
+        this.windPanR.pan.setTargetAtTime(panR, t, tau);
 
         // Wind noise — scales with IAS², stereo split with ±3% cutoff offset
         const windAmp = onGround ? 0 : Math.min(1.0, Math.pow(ias / 200, 2));
@@ -114,6 +154,32 @@ class AeroLayer {
             turbAmp = Math.min(1.0, turbAmp + accelMag / 10);
         }
         this.turbGain.gain.setTargetAtTime(turbAmp * 0.3, t, tau);
+
+        // Gear drag — low rumble from deployed gear, scales with airspeed²
+        const gearPos0 = data.gearPos0 || 0;
+        const gearPos1 = data.gearPos1 || 0;
+        const gearPos2 = data.gearPos2 || 0;
+        const gearAvg = (gearPos0 + gearPos1 + gearPos2) / 300; // 0..1
+        let gearDragAmp = 0;
+        if (!onGround && gearAvg > 0) {
+            gearDragAmp = gearAvg * Math.min(1.0, Math.pow(ias / 150, 2)) * 0.25;
+        }
+        const gearDragCutoff = Math.min(100 + ias * 1.5, 800);
+        this.gearDragFilter.frequency.setTargetAtTime(gearDragCutoff, t, tau);
+        this.gearDragGain.gain.setTargetAtTime(gearDragAmp, t, tau);
+
+        // Flap drag — higher-frequency airflow from flap deployment
+        const flapPct = data.flapPercent || 0;
+        let flapDragAmp = 0;
+        if (flapPct > 0) {
+            const flapSpeedFactor = Math.min(1.0, Math.pow(ias / 120, 2));
+            flapDragAmp = (flapPct / 100) * flapSpeedFactor * 0.2;
+            // Silent on ground below taxi speed
+            if (onGround && ias < 10) flapDragAmp = 0;
+        }
+        const flapDragCenter = Math.min(300 + flapPct * 4, 700);
+        this.flapDragFilter.frequency.setTargetAtTime(flapDragCenter, t, tau);
+        this.flapDragGain.gain.setTargetAtTime(flapDragAmp, t, tau);
     }
 
     setVolume(v) {
@@ -135,5 +201,7 @@ class AeroLayer {
         try { this.buffetNoise.stop(); } catch (e) {}
         try { this.buffetLfo.stop(); } catch (e) {}
         try { this.turbNoise.stop(); } catch (e) {}
+        try { this.gearDragNoise.stop(); } catch (e) {}
+        try { this.flapDragNoise.stop(); } catch (e) {}
     }
 }
