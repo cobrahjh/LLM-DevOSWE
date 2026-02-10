@@ -44,6 +44,14 @@ function loadConfig() {
         if (fs.existsSync(CONFIG_PATH)) {
             return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
         }
+        // Auto-create from example if missing
+        const examplePath = path.join(path.dirname(CONFIG_PATH), 'config.example.json');
+        if (fs.existsSync(examplePath)) {
+            const example = fs.readFileSync(examplePath, 'utf8');
+            fs.writeFileSync(CONFIG_PATH, example);
+            console.log('[Config] Created config.json from config.example.json');
+            return JSON.parse(example);
+        }
     } catch (e) {
         console.error('[Copilot] Config load error:', e.message);
     }

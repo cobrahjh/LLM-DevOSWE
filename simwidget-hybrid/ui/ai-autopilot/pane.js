@@ -78,7 +78,9 @@ class AiAutopilotPane extends SimGlassBase {
         this._llmLastRt = null;  // last LLM response time in ms
 
         // Voice announcer for AI advisory TTS
-        this._voice = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer({ rate: 0.95, pitch: 1.0 }) : null;
+        const savedVoice = localStorage.getItem('ai-ap-voice') || null;
+        const savedRate = parseFloat(localStorage.getItem('ai-ap-voice-rate')) || 0.95;
+        this._voice = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer({ rate: savedRate, pitch: 1.0, voice: savedVoice }) : null;
         this._ttsEnabled = localStorage.getItem('ai-ap-tts') !== 'false';
 
         // Cache DOM elements
@@ -1341,9 +1343,11 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                         });
                         const result = await res.json();
                         if (result.success) {
+                            const isLocal = body.provider.startsWith('ollama') || body.provider.startsWith('lmstudio');
+                            const ready = result.licensed && (result.hasApiKey || isLocal);
                             saveStatus.innerHTML = '<span class="as-ok">Saved! ' +
                                 (result.licensed ? 'Licensed.' : 'License invalid.') +
-                                (result.hasApiKey ? ' API key set.' : '') + '</span>';
+                                (isLocal ? ' Local LLM.' : (result.hasApiKey ? ' API key set.' : '')) + '</span>';
                             self.copilotStatus = {
                                 licensed: result.licensed,
                                 tier: result.tier,
@@ -1352,16 +1356,100 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                                 hasApiKey: result.hasApiKey,
                                 apiKeyMemoryOnly: body.apiKeyMemoryOnly
                             };
-                            const banner = document.querySelector('.ai-config-banner');
-                            if (banner && result.licensed && result.hasApiKey) {
-                                banner.remove();
-                            }
+                            self._renderConfigBanner();
                         } else {
                             saveStatus.innerHTML = '<span class="as-err">Save failed</span>';
                         }
                     } catch (e) {
                         saveStatus.innerHTML = '<span class="as-err">Server error</span>';
                     }
+                });
+            }
+        });
+
+        // Voice settings section
+        settingsPanel.registerSection('voice-config', {
+            title: 'Voice Settings',
+            icon: '',
+            render: () => {
+                const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+                const currentVoice = localStorage.getItem('ai-ap-voice') || '';
+                const currentRate = localStorage.getItem('ai-ap-voice-rate') || '0.95';
+                const ttsOn = self._ttsEnabled;
+
+                const voiceOptions = voices
+                    .filter(v => v.lang.startsWith('en'))
+                    .map(v => `<option value="${v.name}" ${v.name === currentVoice ? 'selected' : ''}>${v.name} (${v.lang})</option>`)
+                    .join('');
+
+                const allVoiceOptions = voices
+                    .filter(v => !v.lang.startsWith('en'))
+                    .map(v => `<option value="${v.name}" ${v.name === currentVoice ? 'selected' : ''}>${v.name} (${v.lang})</option>`)
+                    .join('');
+
+                return `
+                    <div class="ai-settings">
+                        <div class="as-row">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="vs-tts-enabled" ${ttsOn ? 'checked' : ''}>
+                                <span>Enable AI voice</span>
+                            </label>
+                        </div>
+                        <div class="as-row">
+                            <label>Voice</label>
+                            <select id="vs-voice">
+                                <option value="">Auto (best available)</option>
+                                <optgroup label="English">${voiceOptions}</optgroup>
+                                ${allVoiceOptions ? '<optgroup label="Other">' + allVoiceOptions + '</optgroup>' : ''}
+                            </select>
+                        </div>
+                        <div class="as-row">
+                            <label>Speed: <span id="vs-rate-label">${currentRate}x</span></label>
+                            <input type="range" id="vs-rate" min="0.5" max="2.0" step="0.05" value="${currentRate}" style="width:100%">
+                        </div>
+                        <div class="as-row" style="display:flex;gap:8px">
+                            <button class="btn-small" id="vs-test">Test Voice</button>
+                            <button class="btn-small" id="vs-stop">Stop</button>
+                        </div>
+                    </div>
+                `;
+            },
+            onMount: (container) => {
+                const ttsCheck = container.querySelector('#vs-tts-enabled');
+                const voiceSelect = container.querySelector('#vs-voice');
+                const rateSlider = container.querySelector('#vs-rate');
+                const rateLabel = container.querySelector('#vs-rate-label');
+
+                ttsCheck?.addEventListener('change', () => {
+                    self._ttsEnabled = ttsCheck.checked;
+                    localStorage.setItem('ai-ap-tts', ttsCheck.checked ? 'true' : 'false');
+                });
+
+                voiceSelect?.addEventListener('change', () => {
+                    const name = voiceSelect.value;
+                    localStorage.setItem('ai-ap-voice', name);
+                    if (self._voice) {
+                        self._voice.voiceName = name || null;
+                        self._voice.voice = null;
+                        self._voice.loadVoice();
+                    }
+                });
+
+                rateSlider?.addEventListener('input', () => {
+                    const rate = parseFloat(rateSlider.value);
+                    if (rateLabel) rateLabel.textContent = rate.toFixed(2) + 'x';
+                    localStorage.setItem('ai-ap-voice-rate', rate);
+                    if (self._voice) self._voice.rate = rate;
+                });
+
+                container.querySelector('#vs-test')?.addEventListener('click', () => {
+                    if (self._voice) {
+                        self._voice.speak('Autopilot advisory: maintaining cruise altitude at eight thousand five hundred feet, airspeed one hundred ten knots.');
+                    }
+                });
+
+                container.querySelector('#vs-stop')?.addEventListener('click', () => {
+                    if (self._voice) self._voice.stop();
                 });
             }
         });
