@@ -83,11 +83,29 @@ class RuleEngine {
 
         switch (phase) {
             case 'PREFLIGHT':
-            case 'TAXI':
-                // No AP commands during ground ops
+                // No AP during preflight
                 if (apState.master) {
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
+                break;
+
+            case 'TAXI':
+                // Disengage AP on ground
+                if (apState.master) {
+                    this._cmd('AP_MASTER', false, 'Disengage AP on ground');
+                }
+                // Prepare for takeoff: mixture rich, then throttle up to start the roll
+                this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
+                // Capture runway heading early for ground track
+                if (!this._runwayHeading) {
+                    if (this._activeRunway?.heading) {
+                        this._runwayHeading = this._activeRunway.heading;
+                    } else {
+                        this._runwayHeading = Math.round(d.heading || 0);
+                    }
+                }
+                // Apply throttle to accelerate — flight-phase.js transitions to TAKEOFF at gs > 40
+                this._cmdValue('THROTTLE_SET', 100, 'Full throttle — takeoff roll');
                 break;
 
             case 'TAKEOFF':
@@ -262,14 +280,15 @@ class RuleEngine {
                 break;
 
             case 'INITIAL_CLIMB':
-                // Engage AP and set climb profile
+                // Engage AP and set climb profile — GENTLY
+                // Use CURRENT heading (not runway heading) to avoid bank correction on liftoff
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP — initial climb');
+                    // Set heading bug to CURRENT heading first — don't bank immediately after liftoff
+                    const currentHdg = Math.round(d.heading || this._runwayHeading || 0);
+                    this._cmdValue('HEADING_BUG_SET', currentHdg, 'HDG ' + currentHdg + '\u00B0 (wings level)');
                 }
-                this._cmd('AP_HDG_HOLD', true, 'HDG hold runway heading');
-                if (this._runwayHeading !== null) {
-                    this._cmdValue('HEADING_BUG_SET', this._runwayHeading, 'HDG ' + this._runwayHeading + '\u00B0');
-                }
+                this._cmd('AP_HDG_HOLD', true, 'HDG hold');
                 this._cmd('AP_VS_HOLD', true, 'VS hold for climb');
                 this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate, 'VS +' + p.climb.normalRate);
                 // Advance to DEPARTURE at flap-retract altitude
@@ -331,11 +350,12 @@ class RuleEngine {
         let alert = null;
 
         // ── BANK ANGLE PROTECTION ──
-        // C172 AP max bank: 20° (from profile). Anything over 25° is dangerous.
-        // Over 30° = immediate correction. Over 45° = emergency wings-level.
-        const maxBank = limits.maxBank || 25;
-        const dangerBank = limits.dangerBank || 35;
-        const criticalBank = limits.criticalBank || 45;
+        // Tighter limits during takeoff/initial climb (below 1000 AGL)
+        // C172 shouldn't bank more than 15° below 1000 AGL
+        const lowAlt = agl < 1000;
+        const maxBank = lowAlt ? 15 : (limits.maxBank || 25);
+        const dangerBank = lowAlt ? 20 : (limits.dangerBank || 35);
+        const criticalBank = lowAlt ? 30 : (limits.criticalBank || 45);
 
         if (absBank > criticalBank) {
             // Emergency: extreme bank — wings level immediately
