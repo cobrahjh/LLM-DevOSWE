@@ -65,6 +65,17 @@ const AIRCRAFT_PROFILES = {
             reserveMin: 45      // minutes reserve required
         },
 
+        // Takeoff procedure parameters
+        takeoff: {
+            flapSetting: 0,        // 0° for normal, 10° for short field
+            runupRpm: 1800,
+            idleRpm: 1000,
+            rotationPitch: -25,    // AXIS_ELEVATOR_SET value for rotation
+            initialClimbAgl: 200,  // AGL to engage AP
+            flapRetractAgl: 500,   // AGL to retract flaps
+            departureAgl: 1000     // AGL to accelerate from Vy to cruise
+        },
+
         // Phase-specific speed targets
         phaseSpeeds: {
             TAKEOFF: 55,

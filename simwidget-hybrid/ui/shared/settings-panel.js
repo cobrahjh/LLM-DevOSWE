@@ -120,6 +120,12 @@ class SettingsPanel {
         this.isOpen ? this.close() : this.open();
     }
 
+    /** Re-render a section if it's currently visible */
+    rerenderSection(id) {
+        const visible = this.sectionsContainer?.querySelector(`[data-section="${id}"]`);
+        if (visible) this.showSection(id);
+    }
+
     /**
      * Register theme section (call after ThemeSwitcher is loaded)
      */

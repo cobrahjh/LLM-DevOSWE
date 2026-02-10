@@ -26,9 +26,23 @@ function getCopilotConfig() {
 function buildAiPilotPrompt(flightData) {
     const fd = flightData || {};
     return `You are an AI flight advisor for a Cessna 172 in Microsoft Flight Simulator.
-You provide concise, actionable autopilot recommendations.
+You provide concise, actionable autopilot and flight control recommendations.
 Keep responses to 2-3 sentences maximum.
-When recommending AP changes, prefix with "RECOMMEND:" on its own line.
+When recommending changes, prefix with "RECOMMEND:" on its own line.
+
+C172 V-SPEEDS: Vr=55, Vx=62, Vy=74, Vcruise=110, Vfe=85, Va=99, Vno=129, Vref=65, Vs0=48, Vs1=53
+
+PROCEDURES BY PHASE:
+- PREFLIGHT/TAXI: No AP commands. Verify mixture rich, fuel both, controls free.
+- BEFORE TAKEOFF: Runup at 1800 RPM, check mags (125 RPM max drop), flaps 0-10°, trim takeoff.
+- TAKEOFF ROLL: Full throttle, mixture rich. At 55 KIAS (Vr) rotate with ~10° pitch up.
+- INITIAL CLIMB: At 200 AGL with positive climb, engage AP, HDG hold, VS +700.
+- DEPARTURE (500+ AGL): Retract flaps, set Vy (74 kt), set cruise altitude target.
+- CLIMB: Maintain Vy, full throttle, lean above 3000 ft.
+- CRUISE: Level at target alt, set cruise power (2200-2400 RPM), lean mixture.
+- DESCENT: Enrich mixture, reduce power, -500 fpm, monitor carb heat.
+- APPROACH: Mixture rich, carb heat on, flaps as needed, 65-75 KIAS. Disengage AP below 200 AGL.
+- LANDING: Full flaps, 60-65 KIAS (Vref), AP OFF, flare at 10-20 ft AGL.
 
 CURRENT FLIGHT STATE:
 - Altitude: ${Math.round(fd.altitude || 0)} ft MSL, ${Math.round(fd.altitudeAGL || 0)} ft AGL
@@ -42,7 +56,9 @@ CURRENT FLIGHT STATE:
 - AP VS: ${fd.apVsLock ? Math.round(fd.apVsSet || 0) + ' fpm' : 'OFF'}
 - Wind: ${Math.round(fd.windDirection || 0)}°/${Math.round(fd.windSpeed || 0)} kt
 - Fuel: ${Math.round(fd.fuelTotal || 0)} gal, Flow: ${(fd.fuelFlow || 0).toFixed(1)} gph
-- Gear: ${fd.gearDown ? 'DOWN' : 'UP'}, Flaps: ${fd.flapsIndex || 0}`;
+- Gear: ${fd.gearDown ? 'DOWN' : 'UP'}, Flaps: ${fd.flapsIndex || 0}
+- Mixture: ${Math.round(fd.mixture || 0)}%, Throttle: ${Math.round(fd.throttle || 0)}%
+- Engine RPM: ${Math.round(fd.engineRpm || 0)}`;
 }
 
 function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
@@ -71,7 +87,16 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
         'AP_VS_VAR_SET': 'AP_VS_VAR_SET_ENGLISH',
         'AP_SPD_VAR_INC': 'AP_SPD_VAR_INC',
         'AP_SPD_VAR_DEC': 'AP_SPD_VAR_DEC',
-        'AP_SPD_VAR_SET': 'AP_SPD_VAR_SET'
+        'AP_SPD_VAR_SET': 'AP_SPD_VAR_SET',
+        // Flight control commands
+        'THROTTLE_SET': 'THROTTLE_SET',
+        'MIXTURE_SET': 'MIXTURE_SET',
+        'PROP_PITCH_SET': 'PROP_PITCH_SET',
+        'FLAPS_UP': 'FLAPS_UP',
+        'FLAPS_DOWN': 'FLAPS_DOWN',
+        'AXIS_ELEVATOR_SET': 'AXIS_ELEVATOR_SET',
+        'PARKING_BRAKES': 'PARKING_BRAKES',
+        'LANDING_LIGHTS_TOGGLE': 'LANDING_LIGHTS_TOGGLE'
     };
 
     // Status endpoint
@@ -115,6 +140,15 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
             }
             if (command === 'HEADING_BUG_SET' && (value < 0 || value > 360)) {
                 return res.status(400).json({ error: 'Heading out of range (0-360)' });
+            }
+            if (command === 'THROTTLE_SET' && (value < 0 || value > 100)) {
+                return res.status(400).json({ error: 'Throttle out of range (0-100)' });
+            }
+            if (command === 'MIXTURE_SET' && (value < 0 || value > 100)) {
+                return res.status(400).json({ error: 'Mixture out of range (0-100)' });
+            }
+            if (command === 'AXIS_ELEVATOR_SET' && (value < -50 || value > 50)) {
+                return res.status(400).json({ error: 'Elevator out of range (-50 to 50)' });
             }
         }
 
@@ -234,6 +268,7 @@ Use this exact format on its own line:
 COMMANDS_JSON: [{"command":"COMMAND_NAME","value":NUMBER}, ...]
 
 Valid commands and value ranges:
+AP COMMANDS:
 - HEADING_BUG_SET (0-360)
 - AP_ALT_VAR_SET (0-45000, altitude in feet)
 - AP_VS_VAR_SET (-6000 to 6000, fpm)
@@ -243,7 +278,17 @@ Valid commands and value ranges:
 - AP_VS_HOLD (no value, toggles VS hold)
 - AP_MASTER (no value, toggles AP master)
 
-For toggle commands, omit the value field. Only include commands that need to CHANGE from current state.`;
+FLIGHT CONTROL COMMANDS:
+- THROTTLE_SET (0-100, percentage)
+- MIXTURE_SET (0-100, percentage)
+- AXIS_ELEVATOR_SET (-50 to 50, pitch control: negative = nose up)
+- FLAPS_UP (no value, retract one notch)
+- FLAPS_DOWN (no value, extend one notch)
+- PARKING_BRAKES (no value, toggle)
+- LANDING_LIGHTS_TOGGLE (no value, toggle)
+
+For toggle commands, omit the value field. Only include commands that need to CHANGE from current state.
+For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MASTER after liftoff.`;
 
         const userMsg = message || `Current phase of flight: altitude ${Math.round(fd.altitude||0)}ft, speed ${Math.round(fd.speed||0)}kt, heading ${Math.round(fd.heading||0)}. Recommend optimal AP settings.`;
 
@@ -530,8 +575,8 @@ function parseCommandsFromText(text) {
     const lines = text.split('\n');
     for (const line of lines) {
         const trimmed = line.replace(/^[-*\s]+/, '').trim();
-        // Match patterns like: HEADING_BUG_SET 300, HEADING_BUG_SET: 300, AP_HDG_HOLD ON
-        const match = trimmed.match(/^((?:AP_|HEADING_|TOGGLE_|YAW_)\w+)[\s:]+(\d+|ON|OFF)?$/i);
+        // Match patterns like: HEADING_BUG_SET 300, THROTTLE_SET: 100, AP_HDG_HOLD ON
+        const match = trimmed.match(/^((?:AP_|HEADING_|TOGGLE_|YAW_|THROTTLE_|MIXTURE_|PROP_|FLAPS_|AXIS_|PARKING_|LANDING_)\w+)[\s:]+(-?\d+|ON|OFF)?$/i);
         if (match) {
             const cmd = { command: match[1].toUpperCase() };
             if (match[2] && match[2] !== 'ON' && match[2] !== 'OFF') {

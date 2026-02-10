@@ -129,7 +129,16 @@ class CommandQueue {
         const EVENT_MAP = {
             'AP_ALT_VAR_SET':   'AP_ALT_VAR_SET_ENGLISH',
             'AP_VS_VAR_SET':    'AP_VS_VAR_SET_ENGLISH',
-            'AP_AIRSPEED_HOLD': 'AP_PANEL_SPEED_HOLD'
+            'AP_AIRSPEED_HOLD': 'AP_PANEL_SPEED_HOLD',
+            // Flight control commands
+            'THROTTLE_SET':          'THROTTLE_SET',
+            'MIXTURE_SET':           'MIXTURE_SET',
+            'PROP_PITCH_SET':        'PROP_PITCH_SET',
+            'FLAPS_UP':              'FLAPS_UP',
+            'FLAPS_DOWN':            'FLAPS_DOWN',
+            'AXIS_ELEVATOR_SET':     'AXIS_ELEVATOR_SET',
+            'PARKING_BRAKES':        'PARKING_BRAKES',
+            'LANDING_LIGHTS_TOGGLE': 'LANDING_LIGHTS_TOGGLE'
         };
 
         const command = EVENT_MAP[cmd.type] || cmd.type;
@@ -139,7 +148,8 @@ class CommandQueue {
             'AP_MASTER', 'TOGGLE_FLIGHT_DIRECTOR', 'YAW_DAMPER_TOGGLE',
             'AP_HDG_HOLD', 'AP_ALT_HOLD', 'AP_VS_HOLD', 'AP_PANEL_SPEED_HOLD',
             'AP_NAV1_HOLD', 'AP_APR_HOLD', 'AP_BC_HOLD', 'AP_VNAV',
-            'HEADING_BUG_SET'
+            'HEADING_BUG_SET',
+            'FLAPS_UP', 'FLAPS_DOWN', 'PARKING_BRAKES', 'LANDING_LIGHTS_TOGGLE'
         ];
 
         if (toggleCmds.includes(command)) {
@@ -149,7 +159,8 @@ class CommandQueue {
         // Value-set commands: send as command with value
         const valueCmds = [
             'AP_ALT_VAR_SET_ENGLISH', 'AP_VS_VAR_SET_ENGLISH',
-            'AP_SPD_VAR_SET', 'HEADING_BUG_SET'
+            'AP_SPD_VAR_SET', 'HEADING_BUG_SET',
+            'THROTTLE_SET', 'MIXTURE_SET', 'PROP_PITCH_SET', 'AXIS_ELEVATOR_SET'
         ];
 
         if (valueCmds.includes(command)) {
@@ -198,6 +209,18 @@ class CommandQueue {
             cmd.value = Math.max(minSpd, Math.min(maxSpd, cmd.value));
         }
 
+        // Flight control safety limits
+        if (cmd.type === 'THROTTLE_SET') {
+            cmd.value = Math.max(0, Math.min(100, cmd.value));
+        }
+        if (cmd.type === 'MIXTURE_SET') {
+            cmd.value = Math.max(0, Math.min(100, cmd.value));
+        }
+        if (cmd.type === 'AXIS_ELEVATOR_SET') {
+            // Prevent extreme pitch angles — clamp to +/- 50%
+            cmd.value = Math.max(-50, Math.min(50, cmd.value));
+        }
+
         return true;
     }
 
@@ -212,6 +235,11 @@ class CommandQueue {
         if (type.includes('NAV')) return 'NAV';
         if (type.includes('APR')) return 'APR';
         if (type === 'AP_MASTER') return 'MASTER';
+        if (type === 'THROTTLE_SET') return 'THROTTLE';
+        if (type === 'MIXTURE_SET') return 'MIXTURE';
+        if (type === 'AXIS_ELEVATOR_SET') return 'ELEVATOR';
+        if (type.includes('FLAPS')) return 'FLAPS';
+        if (type === 'PARKING_BRAKES') return 'BRAKES';
         return null;
     }
 

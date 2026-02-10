@@ -795,6 +795,13 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             // Run rule engine
             this.ruleEngine.evaluate(this.flightPhase.phase, data, this.ap);
 
+            // Log takeoff sub-phase changes
+            const subPhase = this.ruleEngine.getTakeoffSubPhase();
+            if (subPhase && subPhase !== this._lastTakeoffSubPhase) {
+                this._lastTakeoffSubPhase = subPhase;
+                this._dbg('cmd', `Takeoff: <span class="val">${this._esc(subPhase)}</span>`);
+            }
+
             // Check LLM advisory triggers
             const trigger = this.llmAdvisor.checkTriggers(data, this.flightPhase.phase);
             if (trigger) {
@@ -844,6 +851,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         this._dbg('cmd', `Phase: <span class="dim">${this._esc(oldPhase)}</span> <span class="dim">&rarr;</span> <span class="val">${this._esc(newPhase)}</span>`);
         // Sync cruise alt to rule engine
         this.ruleEngine.setTargetCruiseAlt(this.flightPhase.targetCruiseAlt);
+        this._lastTakeoffSubPhase = null;
         this._render();
     }
 
@@ -1004,9 +1012,11 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     _renderPhase() {
         const phase = this.flightPhase.phase;
         const progress = this.flightPhase.getProgress();
+        const subPhase = this.ruleEngine.getTakeoffSubPhase();
 
         if (this.elements.phaseName) {
-            this.elements.phaseName.textContent = phase;
+            const display = (phase === 'TAKEOFF' && subPhase) ? `TAKEOFF \u203A ${subPhase}` : phase;
+            this.elements.phaseName.textContent = display;
             this.elements.phaseName.className = 'phase-name ' + phase.toLowerCase();
         }
 
@@ -1143,6 +1153,10 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             if (res.ok) {
                 this.copilotStatus = await res.json();
                 this._renderConfigBanner();
+                // Re-render AI config section if settings panel is showing it
+                if (this._settingsPanel) {
+                    this._settingsPanel.rerenderSection('ai-config');
+                }
             }
         } catch (e) {
             console.warn('[AI-AP] Could not fetch copilot status:', e.message);
@@ -1182,6 +1196,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
      * Called from index.html after SettingsPanel is created.
      */
     registerSettingsSection(settingsPanel) {
+        this._settingsPanel = settingsPanel;
         const self = this;
 
         const MODELS = {
