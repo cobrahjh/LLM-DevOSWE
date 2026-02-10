@@ -86,6 +86,16 @@ class GTNSoftKeys {
             { label: 'BACK', action: 'back' }
         ]);
 
+        // FPL page (waypoint selected)
+        this.registerContext('fpl-selected', [
+            { label: 'DELETE', action: 'fpl-delete' },
+            { label: 'INSERT', action: 'fpl-insert' },
+            { label: 'INFO', action: 'waypoint-info' },
+            { label: 'ACTV\nLEG', action: 'activate-leg' },
+            { label: 'D\u2192', action: 'direct-to' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
         // WPT page
         this.registerContext('wpt', [
             { label: 'MENU', action: 'wpt-menu' },

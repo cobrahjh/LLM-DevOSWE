@@ -43,6 +43,7 @@ class GTN750Pane extends SimGlassBase {
             flightPlan: false,
             dataHandler: false,
             overlays: false,
+            pageFpl: false,
             pageProc: false,
             pageCharts: false,
             pageNrst: false,
@@ -102,6 +103,7 @@ class GTN750Pane extends SimGlassBase {
         this._beforeUnloadHandler = () => this.destroy();
 
         // Page instances (lazy-created on first visit)
+        this.fplPage = null;
         this.proceduresPage = null;
         this.auxPage = null;
         this.chartsPage = null;
@@ -209,6 +211,9 @@ class GTN750Pane extends SimGlassBase {
             onWaypointChanged: () => this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager),
             onDirectToActivated: () => {
                 if (this.pageManager) this.pageManager.switchPage('map');
+            },
+            onFlightPlanChanged: (plan) => {
+                this.fplPage?.update(plan);
             }
         });
 
@@ -249,6 +254,7 @@ class GTN750Pane extends SimGlassBase {
         if (this.loadedModules[moduleKey]) return;
 
         const moduleMap = {
+            fpl: 'pages/page-fpl.js',
             proc: 'pages/page-proc.js',
             charts: 'pages/page-charts.js',
             nrst: 'pages/page-nrst.js',
@@ -477,6 +483,16 @@ class GTN750Pane extends SimGlassBase {
      */
     _ensurePageInstance(pageId) {
         switch (pageId) {
+            case 'fpl':
+                if (!this.fplPage && typeof FlightPlanPage !== 'undefined') {
+                    this.fplPage = new FlightPlanPage({
+                        core: this.core,
+                        serverPort: this.serverPort,
+                        flightPlanManager: this.flightPlanManager,
+                        softKeys: this.softKeys
+                    });
+                }
+                break;
             case 'proc':
                 if (!this.proceduresPage && typeof ProceduresPage !== 'undefined') {
                     this.proceduresPage = new ProceduresPage({
@@ -614,7 +630,7 @@ class GTN750Pane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['proc', 'charts', 'nrst', 'aux', 'system'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'system'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -622,6 +638,12 @@ class GTN750Pane extends SimGlassBase {
         this._ensurePageInstance(pageId);
 
         // Page-specific initialization
+        if (pageId === 'fpl') {
+            if (this.fplPage) {
+                this.fplPage.init();
+                this.fplPage.update(this.flightPlanManager?.flightPlan || null);
+            }
+        }
         if (pageId === 'proc') {
             if (this.proceduresPage) {
                 this.proceduresPage.init();
@@ -1301,9 +1323,17 @@ class GTN750Pane extends SimGlassBase {
             case 'map-north-up': this.map.orientation = 'north'; this.updateMapOrientation(); break;
             case 'map-track-up': this.map.orientation = 'track'; this.updateMapOrientation(); break;
             case 'map-heading-up': this.map.orientation = 'heading'; this.updateMapOrientation(); break;
-            case 'activate-leg': this.flightPlanManager?.activateLeg(); break;
+            case 'activate-leg':
+                if (this.fplPage && this.fplPage.cursorIndex >= 0) {
+                    this.fplPage.onActivateLeg();
+                } else {
+                    this.flightPlanManager?.activateLeg();
+                }
+                break;
             case 'invert-plan': this.flightPlanManager?.invertFlightPlan(); break;
             case 'direct-to': this.flightPlanManager?.showDirectTo(); break;
+            case 'fpl-delete': if (this.fplPage) this.fplPage.onDelete(); break;
+            case 'fpl-insert': if (this.fplPage) this.fplPage.onInsert(); break;
             case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
                 this.switchNearestType(action.split('-')[1]); break;
             case 'taws-inhibit':

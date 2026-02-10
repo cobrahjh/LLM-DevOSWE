@@ -1258,6 +1258,113 @@ body {
     transition: width 0.5s ease;
 }
 
+/* FPL Waypoint Row (Grid Layout) */
+.gtn-fpl-item {
+    display: grid;
+    grid-template-columns: 24px 52px 44px 48px 44px 40px 44px;
+    align-items: center;
+    padding: 5px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.1s, border-color 0.1s;
+    font-size: 11px;
+}
+
+.gtn-fpl-item:hover {
+    background: rgba(0, 136, 255, 0.1);
+}
+
+.gtn-fpl-item.cursor {
+    border-left-color: var(--gtn-cyan);
+    background: rgba(0, 255, 255, 0.08);
+}
+
+.gtn-fpl-item.active {
+    border-left-color: var(--gtn-magenta);
+    background: rgba(255, 0, 255, 0.08);
+}
+
+.gtn-fpl-item.cursor.active {
+    border-left-color: var(--gtn-cyan);
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.gtn-fpl-item.passed {
+    opacity: 0.5;
+}
+
+/* FPL Column Header */
+.gtn-fpl-col-header {
+    display: grid;
+    grid-template-columns: 24px 52px 44px 48px 44px 40px 44px;
+    padding: 3px 4px;
+    font-size: 8px;
+    color: var(--gtn-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--gtn-border);
+    position: sticky;
+    top: 0;
+    background: var(--gtn-bg-light);
+    z-index: 1;
+}
+
+.gtn-fpl-col-header span {
+    text-align: center;
+}
+
+/* FPL Cell Styles */
+.fpl-seq {
+    color: var(--gtn-text-dim);
+    font-size: 9px;
+    text-align: center;
+    font-family: var(--gtn-mono);
+}
+
+.fpl-ident {
+    font-weight: 700;
+    color: var(--gtn-white);
+    font-size: 12px;
+    font-family: var(--gtn-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fpl-alt {
+    color: var(--gtn-cyan);
+    font-size: 9px;
+    text-align: center;
+    font-family: var(--gtn-mono);
+}
+
+.fpl-dist {
+    color: var(--gtn-white);
+    font-size: 10px;
+    text-align: right;
+    font-family: var(--gtn-mono);
+}
+
+.fpl-dtk {
+    color: var(--gtn-green);
+    font-size: 10px;
+    text-align: center;
+    font-family: var(--gtn-mono);
+}
+
+.fpl-ete {
+    color: var(--gtn-white);
+    font-size: 10px;
+    text-align: right;
+    font-family: var(--gtn-mono);
+}
+
+/* FPL Active row ident = magenta */
+.gtn-fpl-item.active .fpl-ident {
+    color: var(--gtn-magenta);
+}
+
 /* NRST / PROC Tabs */
 .gtn-nrst-tabs, .gtn-proc-tabs {
     display: flex;

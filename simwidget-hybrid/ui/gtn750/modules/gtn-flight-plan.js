@@ -46,6 +46,7 @@ class GTNFlightPlan {
         // Callbacks for external notifications
         this.onWaypointChanged = options.onWaypointChanged || null;
         this.onDirectToActivated = options.onDirectToActivated || null;
+        this.onFlightPlanChanged = options.onFlightPlanChanged || null;
 
         // Timer handle for cleanup
         this._fetchTimer = null;
@@ -60,8 +61,7 @@ class GTNFlightPlan {
                 const data = await response.json();
                 if (data?.waypoints?.length > 0) {
                     this.flightPlan = data;
-                    this.renderFlightPlan();
-                    this.updateFplHeader();
+                    this.notifyChanged();
                 }
             }
         } catch (e) {
@@ -148,7 +148,7 @@ class GTNFlightPlan {
     selectWaypoint(index) {
         this.activeWaypointIndex = index;
         if (this.flightPlan?.waypoints[index]) {
-            this.renderFlightPlan();
+            this.notifyChanged();
             if (this.syncChannel) {
                 this.syncChannel.postMessage({
                     type: 'waypoint-select',
@@ -164,7 +164,7 @@ class GTNFlightPlan {
             for (let i = 0; i < this.activeWaypointIndex; i++) {
                 this.flightPlan.waypoints[i].passed = true;
             }
-            this.renderFlightPlan();
+            this.notifyChanged();
         }
     }
 
@@ -172,8 +172,7 @@ class GTNFlightPlan {
         if (this.flightPlan?.waypoints) {
             this.flightPlan.waypoints.reverse();
             this.activeWaypointIndex = 0;
-            this.renderFlightPlan();
-            this.updateFplHeader();
+            this.notifyChanged();
         }
     }
 
@@ -302,8 +301,7 @@ class GTNFlightPlan {
             this.activeWaypoint = null;
         }
 
-        this.renderFlightPlan();
-        this.updateFplHeader();
+        this.notifyChanged();
         if (this.onWaypointChanged) this.onWaypointChanged();
     }
 
@@ -512,7 +510,7 @@ class GTNFlightPlan {
     handleSyncMessage(type, data) {
         if (type === 'route-update' && data.waypoints) {
             this.flightPlan = data;
-            this.renderFlightPlan();
+            this.notifyChanged();
         }
         if (type === 'simbrief-plan' && data.waypoints) {
             this.flightPlan = {
@@ -525,7 +523,7 @@ class GTNFlightPlan {
                 source: 'simbrief'
             };
             this.activeWaypointIndex = 0;
-            this.renderFlightPlan();
+            this.notifyChanged();
             if (this.onWaypointChanged) this.onWaypointChanged();
             GTNCore.log(`[GTN750] SimBrief flight plan loaded: ${data.departure} -> ${data.arrival} (${data.waypoints.length} waypoints)`);
         }
@@ -537,9 +535,80 @@ class GTNFlightPlan {
                 this.flightPlan.waypoints[data.passedIndex].passed = true;
             }
             this.activeWaypointIndex = data.activeIndex;
-            this.renderFlightPlan();
+            this.notifyChanged();
             if (this.onWaypointChanged) this.onWaypointChanged();
         }
+    }
+
+    // ===== NOTIFY / GETTERS =====
+
+    notifyChanged() {
+        if (this.onFlightPlanChanged) {
+            this.onFlightPlanChanged(this.flightPlan);
+        } else {
+            this.renderFlightPlan();
+            this.updateFplHeader();
+        }
+    }
+
+    getFlightPlan() {
+        return this.flightPlan;
+    }
+
+    getActiveWaypointIndex() {
+        return this.activeWaypointIndex;
+    }
+
+    // ===== WAYPOINT EDITING =====
+
+    deleteWaypoint(index) {
+        if (!this.flightPlan?.waypoints || index < 0 || index >= this.flightPlan.waypoints.length) return;
+
+        this.flightPlan.waypoints.splice(index, 1);
+
+        // Adjust active waypoint index
+        if (this.activeWaypointIndex >= this.flightPlan.waypoints.length) {
+            this.activeWaypointIndex = Math.max(0, this.flightPlan.waypoints.length - 1);
+        } else if (index < this.activeWaypointIndex) {
+            this.activeWaypointIndex--;
+        }
+
+        this.notifyChanged();
+        if (this.onWaypointChanged) this.onWaypointChanged();
+    }
+
+    insertWaypoint(waypoint, atIndex) {
+        if (!this.flightPlan) {
+            this.flightPlan = { waypoints: [] };
+        }
+        if (!this.flightPlan.waypoints) {
+            this.flightPlan.waypoints = [];
+        }
+
+        const idx = Math.max(0, Math.min(atIndex, this.flightPlan.waypoints.length));
+        this.flightPlan.waypoints.splice(idx, 0, waypoint);
+
+        // Recalculate distanceFromPrev for inserted and next wp
+        if (idx > 0 && waypoint.lat && waypoint.lng) {
+            const prev = this.flightPlan.waypoints[idx - 1];
+            if (prev?.lat && prev?.lng) {
+                waypoint.distanceFromPrev = this.core.calculateDistance(prev.lat, prev.lng, waypoint.lat, waypoint.lng);
+            }
+        }
+        if (idx + 1 < this.flightPlan.waypoints.length) {
+            const next = this.flightPlan.waypoints[idx + 1];
+            if (next?.lat && next?.lng && waypoint.lat && waypoint.lng) {
+                next.distanceFromPrev = this.core.calculateDistance(waypoint.lat, waypoint.lng, next.lat, next.lng);
+            }
+        }
+
+        // Adjust active waypoint index
+        if (idx <= this.activeWaypointIndex) {
+            this.activeWaypointIndex++;
+        }
+
+        this.notifyChanged();
+        if (this.onWaypointChanged) this.onWaypointChanged();
     }
 
     destroy() {
