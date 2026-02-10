@@ -15,6 +15,9 @@ const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
 const TERRAIN_BIN = path.join(__dirname, '..', 'ui', 'shared', 'data', 'terrain-grid-10km.bin');
 let _terrainGrid = null; // { width, height, latMin, latMax, lonMin, lonMax, cellDeg, data: Int16Array }
 
+// Shared state for cross-machine pane sync (AI Autopilot ↔ GTN750)
+const _sharedState = { autopilot: null, nav: null, lastUpdate: 0 };
+
 function loadTerrainGrid() {
     if (_terrainGrid) return _terrainGrid;
     try {
@@ -117,7 +120,7 @@ CURRENT FLIGHT STATE:
 - Mixture: ${Math.round(fd.mixture || 0)}%, Throttle: ${Math.round(fd.throttle || 0)}%
 - Engine RPM: ${Math.round(fd.engineRpm || 0)}
 - Lat/Lon: ${(fd.latitude || 0).toFixed(4)}, ${(fd.longitude || 0).toFixed(4)}
-${buildTerrainContext(fd)}`;
+${buildTerrainContext(fd)}${buildNavContext()}`;
 }
 
 function buildTerrainContext(fd) {
@@ -136,6 +139,30 @@ function buildTerrainContext(fd) {
     if (worstAhead > 0 && alt > 0) {
         const clearance = Math.round(alt - worstAhead);
         ctx += `\n- Min clearance ahead: ${clearance} ft ${clearance < 1000 ? '⚠ LOW' : ''}`;
+    }
+    return ctx;
+}
+
+function buildNavContext() {
+    const nav = _sharedState.nav;
+    if (!nav) return '';
+    let ctx = '\nNAVIGATION (from GTN750):';
+    if (nav.flightPlan) {
+        const fp = nav.flightPlan;
+        ctx += `\n- Route: ${fp.departure || '?'} → ${fp.arrival || '?'} (${fp.waypointCount || 0} waypoints)`;
+        if (fp.cruiseAltitude) ctx += `\n- Cruise Alt: ${fp.cruiseAltitude} ft`;
+        if (fp.totalDistance) ctx += `\n- Total Distance: ${fp.totalDistance.toFixed(0)} nm`;
+    }
+    if (nav.activeWaypoint) {
+        const wp = nav.activeWaypoint;
+        ctx += `\n- Active WP: ${wp.ident} (${wp.distNm?.toFixed(1) || '?'} nm, ETE ${wp.eteMin?.toFixed(1) || '?'} min, BRG ${wp.bearingMag?.toFixed(0) || '?'}°)`;
+    }
+    if (nav.cdi) {
+        ctx += `\n- CDI: ${nav.cdi.source}, DTK ${nav.cdi.dtk?.toFixed(0) || '?'}°, XTRK ${nav.cdi.xtrk?.toFixed(1) || '0'} nm`;
+        if (nav.cdi.gsValid) ctx += ', GS valid';
+    }
+    if (nav.destDistNm != null) {
+        ctx += `\n- Remaining: ${nav.destDistNm.toFixed(0)} nm`;
     }
     return ctx;
 }
@@ -477,6 +504,33 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
             ahead,
             gridLoaded: !!_terrainGrid
         });
+    });
+
+    // ── Shared State API (cross-machine pane sync) ───────────────────
+    app.post('/api/ai-pilot/shared-state', express_json_guard, (req, res) => {
+        const { key, data } = req.body;
+        if (!key || (key !== 'autopilot' && key !== 'nav')) {
+            return res.status(400).json({ error: 'key must be "autopilot" or "nav"' });
+        }
+        _sharedState[key] = data;
+        _sharedState.lastUpdate = Date.now();
+        res.json({ ok: true });
+    });
+
+    app.get('/api/ai-pilot/shared-state', (req, res) => {
+        res.json({
+            autopilot: _sharedState.autopilot,
+            nav: _sharedState.nav,
+            lastUpdate: _sharedState.lastUpdate
+        });
+    });
+
+    app.get('/api/ai-pilot/shared-state/:key', (req, res) => {
+        const key = req.params.key;
+        if (key !== 'autopilot' && key !== 'nav') {
+            return res.status(400).json({ error: 'key must be "autopilot" or "nav"' });
+        }
+        res.json({ [key]: _sharedState[key], lastUpdate: _sharedState.lastUpdate });
     });
 }
 

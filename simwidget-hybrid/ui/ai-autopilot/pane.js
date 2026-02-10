@@ -67,6 +67,14 @@ class AiAutopilotPane extends SimGlassBase {
             onLoading: (loading) => this._onAdvisoryLoading(loading)
         });
 
+        // Nav state from GTN750 (via SafeChannel)
+        this._navState = null;
+        this._navStateTimestamp = 0;
+
+        // SafeChannel for cross-pane sync
+        this.syncChannel = typeof SafeChannel !== 'undefined' ? new SafeChannel('SimGlass-sync') : null;
+        this._syncBroadcastTimer = null;
+
         // Debug log
         this._debugLog = [];
         this._debugMaxEntries = 200;
@@ -108,6 +116,10 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Fetch copilot config status
         this._fetchCopilotStatus();
+
+        // SafeChannel sync — subscribe to GTN750 nav-state and broadcast autopilot-state
+        this._initSyncListener();
+        this._startSyncBroadcast();
 
         // Initial render
         this._render();
@@ -733,6 +745,111 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         if (this.elements.dsLlm) this.elements.dsLlm.textContent = this._debugStats.llm;
         if (this.elements.dsLlmRt) this.elements.dsLlmRt.textContent = this._llmLastRt !== null ? this._llmLastRt : '--';
         if (this.elements.dsCmd) this.elements.dsCmd.textContent = this._debugStats.cmd;
+    }
+
+    // ── SafeChannel Sync ────────────────────────────────────
+
+    _initSyncListener() {
+        if (!this.syncChannel) return;
+        this.syncChannel.onmessage = (event) => {
+            const msg = event.data;
+            if (!msg || !msg.type) return;
+
+            switch (msg.type) {
+                case 'nav-state':
+                    this._onNavStateReceived(msg.data);
+                    break;
+                case 'taws-alert':
+                    this._onTawsAlert(msg.data);
+                    break;
+                case 'simbrief-plan':
+                    this._onSimbriefPlan(msg.data);
+                    break;
+            }
+        };
+    }
+
+    _onNavStateReceived(nav) {
+        if (!nav) return;
+        this._navState = nav;
+        this._navStateTimestamp = Date.now();
+
+        // Feed nav data to rule engine
+        this.ruleEngine.setNavState(nav);
+
+        // Update cruise altitude from flight plan if available
+        if (nav.flightPlan?.cruiseAltitude && nav.flightPlan.cruiseAltitude > 0) {
+            this.flightPhase.targetCruiseAlt = nav.flightPlan.cruiseAltitude;
+            this.ruleEngine.setTargetCruiseAlt(nav.flightPlan.cruiseAltitude);
+        }
+
+        // Log nav-state receipt (throttled)
+        if (!this._lastNavLog || Date.now() - this._lastNavLog > 10000) {
+            this._lastNavLog = Date.now();
+            const wp = nav.activeWaypoint;
+            this._dbg('ws', `nav-state <span class="dim">wp:</span><span class="val">${wp?.ident || '---'}</span> <span class="dim">dis:</span><span class="val">${wp?.distNm?.toFixed(1) || '--'}</span> <span class="dim">cdi:</span><span class="val">${nav.cdi?.source || '?'}</span> <span class="dim">dest:</span><span class="val">${nav.destDistNm?.toFixed(0) || '--'}nm</span>`);
+        }
+    }
+
+    _onTawsAlert(alert) {
+        if (!alert) return;
+        if (alert.level === 'WARNING' || alert.level === 'CAUTION') {
+            this.ruleEngine.setExternalTerrainAlert(alert.level);
+            this._dbg('cmd', `TAWS <span class="${alert.level === 'WARNING' ? 'err' : 'val'}">${alert.level}</span>: ${this._esc(alert.message || 'TERRAIN')}`);
+        } else {
+            this.ruleEngine.setExternalTerrainAlert(null);
+        }
+    }
+
+    _onSimbriefPlan(plan) {
+        if (!plan) return;
+        if (plan.cruiseAltitude && plan.cruiseAltitude > 0) {
+            this.flightPhase.targetCruiseAlt = plan.cruiseAltitude;
+            this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
+            this._dbg('cmd', `SimBrief plan: cruise <span class="val">${plan.cruiseAltitude}ft</span>`);
+        }
+    }
+
+    _startSyncBroadcast() {
+        if (!this.syncChannel) return;
+        this._syncBroadcastTimer = setInterval(() => this._broadcastAutopilotState(), 1000);
+    }
+
+    _broadcastAutopilotState() {
+        if (!this.syncChannel || !this.aiEnabled) return;
+        const lastCmd = this.commandQueue.getLog()[0] || null;
+        this.syncChannel.postMessage({
+            type: 'autopilot-state',
+            data: {
+                enabled: this.aiEnabled,
+                autoControls: this._autoControlsEnabled,
+                phase: this.flightPhase.phase,
+                takeoffSubPhase: this.ruleEngine.getTakeoffSubPhase(),
+                targets: {
+                    altitude: this.flightPhase.targetCruiseAlt,
+                    speed: this.setValues.speed,
+                    heading: this.setValues.heading,
+                    vs: this.setValues.vs
+                },
+                ap: {
+                    master: this.ap.master,
+                    hdg: this.ap.headingHold,
+                    alt: this.ap.altitudeHold,
+                    vs: this.ap.vsHold,
+                    spd: this.ap.speedHold,
+                    nav: this.ap.navHold,
+                    apr: this.ap.aprHold
+                },
+                terrainAlert: this.ruleEngine.getTerrainAlert(),
+                lastCommand: lastCmd ? {
+                    type: lastCmd.type,
+                    value: lastCmd.value,
+                    description: lastCmd.description,
+                    time: lastCmd.time
+                } : null,
+                timestamp: Date.now()
+            }
+        });
     }
 
     // ── Phase Dots ─────────────────────────────────────────
@@ -1484,6 +1601,14 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         if (this._wsRateTimer) {
             clearInterval(this._wsRateTimer);
             this._wsRateTimer = null;
+        }
+        if (this._syncBroadcastTimer) {
+            clearInterval(this._syncBroadcastTimer);
+            this._syncBroadcastTimer = null;
+        }
+        if (this.syncChannel) {
+            this.syncChannel.close();
+            this.syncChannel = null;
         }
         // Restore original fetch
         if (this._origFetch) {

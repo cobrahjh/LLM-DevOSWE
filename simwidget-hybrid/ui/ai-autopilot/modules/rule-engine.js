@@ -22,6 +22,10 @@ class RuleEngine {
         this._terrainGrid = (typeof window !== 'undefined' && window._terrainGrid) || null;
         this._terrainAlert = null;     // current terrain alert: null | 'CAUTION' | 'WARNING'
         this._lastTerrainCheck = 0;
+
+        // Nav state from GTN750 (via SafeChannel)
+        this._navState = null;
+        this._externalTerrainAlert = null;  // from GTN750 TAWS: null | 'CAUTION' | 'WARNING'
     }
 
     /**
@@ -115,9 +119,33 @@ class RuleEngine {
                     this._cmd('AP_MASTER', true, 'Engage AP for approach');
                 }
                 if (phaseChanged) {
+                    this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.APPROACH, 'SPD ' + p.phaseSpeeds.APPROACH);
+                }
+                // Use nav data from GTN750 for smarter approach mode selection
+                if (this._navState) {
+                    const nav = this._navState;
+                    if (nav.cdi?.gsValid && nav.approach?.hasGlideslope) {
+                        // Glideslope available — engage APR for coupled approach
+                        if (!apState.aprHold || phaseChanged) {
+                            this._cmd('AP_APR_HOLD', true, 'APR mode (GS valid)');
+                        }
+                    } else if (nav.approach?.mode) {
+                        // Approach active but no glideslope — APR for lateral only
+                        if (!apState.aprHold || phaseChanged) {
+                            this._cmd('AP_APR_HOLD', true, 'APR mode (lateral)');
+                            this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
+                        }
+                    } else {
+                        // No approach loaded — NAV hold + VS descent
+                        if (phaseChanged) {
+                            this._cmd('AP_NAV1_HOLD', true, 'NAV hold (no approach)');
+                            this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
+                        }
+                    }
+                } else if (phaseChanged) {
+                    // No GTN750 nav data — default behavior
                     this._cmd('AP_APR_HOLD', true, 'APR mode');
                     this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
-                    this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.APPROACH, 'SPD ' + p.phaseSpeeds.APPROACH);
                 }
                 break;
 
@@ -310,6 +338,25 @@ class RuleEngine {
         } else {
             this._terrainAlert = null;
         }
+
+        // Merge external TAWS alert from GTN750 — trust the higher severity
+        if (this._externalTerrainAlert) {
+            const severityMap = { 'WARNING': 2, 'CAUTION': 1 };
+            const localSev = severityMap[this._terrainAlert] || 0;
+            const extSev = severityMap[this._externalTerrainAlert] || 0;
+            if (extSev > localSev) {
+                this._terrainAlert = this._externalTerrainAlert;
+                // If GTN750 says WARNING and local didn't detect it, react
+                if (this._externalTerrainAlert === 'WARNING' && localSev < 2 && phase !== 'TAKEOFF' && phase !== 'LANDING') {
+                    const safeAlt = alt + 1500;
+                    if (apState.master) {
+                        this._cmdValue('AP_ALT_VAR_SET', safeAlt, `TAWS: climb to ${safeAlt}ft (external alert)`);
+                        this._cmd('AP_VS_HOLD', true, 'TAWS: VS hold for climb');
+                        this._cmdValue('AP_VS_VAR_SET', 1000, 'TAWS: max climb');
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -349,12 +396,24 @@ class RuleEngine {
         this._targetCruiseAlt = alt;
     }
 
+    /** Set nav state from GTN750 (called from pane via SafeChannel) */
+    setNavState(nav) {
+        this._navState = nav || null;
+    }
+
+    /** Set external terrain alert from GTN750 TAWS (called from pane via SafeChannel) */
+    setExternalTerrainAlert(level) {
+        this._externalTerrainAlert = level || null;
+    }
+
     /** Reset command dedup tracking (e.g., on AI toggle) */
     reset() {
         this._lastCommands = {};
         this._lastPhase = null;
         this._takeoffSubPhase = null;
         this._runwayHeading = null;
+        this._navState = null;
+        this._externalTerrainAlert = null;
     }
 
     /** Update aircraft profile */

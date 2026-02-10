@@ -170,6 +170,9 @@ class GTN750Pane extends SimGlassBase {
             await this.loadOverlays();
 
             GTNCore.log('[GTN750] Deferred modules loaded');
+
+            // Start broadcasting nav-state to other panes
+            this._startNavBroadcast();
         } catch (error) {
             console.error('[GTN750] Failed to load deferred modules:', error);
             if (this.telemetry) {
@@ -1034,6 +1037,18 @@ class GTN750Pane extends SimGlassBase {
             this.elements.tawsStatus.textContent = this.taws.inhibited ? 'INHIBITED' : 'ACTIVE';
             this.elements.tawsStatus.style.color = this.taws.inhibited ? '#ffcc00' : '#00ff00';
         }
+
+        // Forward TAWS alert to SafeChannel for AI Autopilot
+        if (this.syncChannel) {
+            this.syncChannel.postMessage({
+                type: 'taws-alert',
+                data: {
+                    level: alert.level || 'CLEAR',
+                    message: alert.message || alert.level?.replace('_', ' ') || 'TERRAIN',
+                    timestamp: Date.now()
+                }
+            });
+        }
     }
 
     updateTawsStatus() {
@@ -1046,10 +1061,164 @@ class GTN750Pane extends SimGlassBase {
     // ===== SYNC =====
 
     initSyncListener() {
+        // Autopilot state from AI Autopilot pane
+        this._autopilotState = null;
+
         this.syncChannel.onmessage = (event) => {
-            const { type, data } = event.data;
-            this.flightPlanManager?.handleSyncMessage(type, data);
+            const msg = event.data;
+            if (!msg || !msg.type) return;
+
+            if (msg.type === 'autopilot-state') {
+                this._autopilotState = msg.data;
+                this._renderAutopilotStatus();
+            } else {
+                // Forward to flight plan manager for plan sync
+                this.flightPlanManager?.handleSyncMessage(msg.type, msg.data);
+            }
         };
+    }
+
+    /**
+     * Start broadcasting nav-state at 1Hz (called after deferredInit completes)
+     */
+    _startNavBroadcast() {
+        if (this._navBroadcastTimer) return;
+        this._navBroadcastTimer = setInterval(() => this._broadcastNavState(), 1000);
+    }
+
+    /**
+     * Build and broadcast nav-state to AI Autopilot and other panes
+     */
+    _broadcastNavState() {
+        if (!this.syncChannel) return;
+
+        const fpm = this.flightPlanManager;
+        const cdi = this.cdiManager;
+        const d = this.data;
+
+        // Build flight plan summary
+        let flightPlan = null;
+        if (fpm?.flightPlan?.waypoints?.length > 0) {
+            const wps = fpm.flightPlan.waypoints;
+            const dep = wps[0]?.ident || null;
+            const arr = wps[wps.length - 1]?.ident || null;
+            let totalDist = 0;
+            for (const wp of wps) {
+                if (wp.distanceFromPrev) totalDist += wp.distanceFromPrev;
+            }
+            flightPlan = {
+                departure: dep,
+                arrival: arr,
+                waypointCount: wps.length,
+                cruiseAltitude: fpm.flightPlan.cruiseAltitude || 0,
+                totalDistance: Math.round(totalDist),
+                source: fpm.flightPlan.source || 'manual'
+            };
+        }
+
+        // Build active waypoint
+        let activeWaypoint = null;
+        if (fpm?.activeWaypoint && d.latitude) {
+            const wp = fpm.activeWaypoint;
+            const distNm = this.core.calculateDistance(d.latitude, d.longitude, wp.lat, wp.lng);
+            const bearingMag = this.core.calculateBearing(d.latitude, d.longitude, wp.lat, wp.lng);
+            const eteMin = d.groundSpeed > 5 ? (distNm / d.groundSpeed) * 60 : null;
+            activeWaypoint = {
+                index: fpm.activeWaypointIndex || 0,
+                ident: wp.ident || '----',
+                lat: wp.lat,
+                lon: wp.lng,
+                distNm: Math.round(distNm * 10) / 10,
+                eteMin: eteMin ? Math.round(eteMin * 10) / 10 : null,
+                bearingMag: Math.round(bearingMag)
+            };
+        }
+
+        // Build CDI state
+        const cdiState = cdi?.cdi || {};
+        const cdiData = {
+            source: cdi?.navSource || 'GPS',
+            needle: cdiState.needle || 0,
+            dtk: cdiState.dtk || 0,
+            xtrk: cdiState.xtk || 0,
+            toFrom: cdiState.toFrom !== undefined ? cdiState.toFrom : 2,
+            gsNeedle: cdiState.gsNeedle || 0,
+            gsValid: cdiState.gsValid || false
+        };
+
+        // Build approach status
+        const approach = {
+            mode: cdi?.obs?.aprMode || false,
+            hasGlideslope: cdiState.gsValid || false,
+            navSource: cdi?.navSource || 'GPS'
+        };
+
+        // Remaining distance to destination
+        let destDistNm = null;
+        if (fpm?.flightPlan?.waypoints?.length > 0 && fpm.activeWaypointIndex !== undefined) {
+            let rem = 0;
+            const wps = fpm.flightPlan.waypoints;
+            // Distance from current position to active waypoint
+            if (fpm.activeWaypoint && d.latitude) {
+                rem += this.core.calculateDistance(d.latitude, d.longitude, fpm.activeWaypoint.lat, fpm.activeWaypoint.lng);
+            }
+            // Sum remaining leg distances
+            for (let i = fpm.activeWaypointIndex + 1; i < wps.length; i++) {
+                if (wps[i].distanceFromPrev) rem += wps[i].distanceFromPrev;
+            }
+            destDistNm = Math.round(rem * 10) / 10;
+        }
+
+        this.syncChannel.postMessage({
+            type: 'nav-state',
+            data: {
+                flightPlan,
+                activeWaypoint,
+                cdi: cdiData,
+                approach,
+                destDistNm,
+                timestamp: Date.now()
+            }
+        });
+    }
+
+    /**
+     * Render autopilot status badge in the GTN750 header area
+     */
+    _renderAutopilotStatus() {
+        const el = document.getElementById('gtn-ap-status');
+        if (!el) return;
+
+        const ap = this._autopilotState;
+        if (!ap || !ap.enabled) {
+            el.style.display = 'none';
+            return;
+        }
+
+        // Check for stale data (>5s)
+        if (Date.now() - ap.timestamp > 5000) {
+            el.style.display = 'none';
+            return;
+        }
+
+        el.style.display = 'flex';
+
+        // Build mode string
+        const modes = [];
+        if (ap.ap?.hdg) modes.push('HDG');
+        if (ap.ap?.alt) modes.push('ALT');
+        if (ap.ap?.vs) modes.push('VS');
+        if (ap.ap?.spd) modes.push('SPD');
+        if (ap.ap?.nav) modes.push('NAV');
+        if (ap.ap?.apr) modes.push('APR');
+
+        // Terrain alert styling
+        let alertClass = '';
+        if (ap.terrainAlert === 'WARNING') alertClass = ' ap-terrain-warning';
+        else if (ap.terrainAlert === 'CAUTION') alertClass = ' ap-terrain-caution';
+
+        el.className = 'gtn-ap-status' + alertClass;
+        el.innerHTML = `<span class="ap-phase">${ap.phase || '---'}</span><span class="ap-modes">${modes.join(' ') || 'AP'}</span>`;
     }
 
     // ===== DOM CACHE =====
@@ -1966,6 +2135,10 @@ class GTN750Pane extends SimGlassBase {
         window.removeEventListener('resize', this._resizeHandler);
         window.removeEventListener('beforeunload', this._beforeUnloadHandler);
 
+        if (this._navBroadcastTimer) {
+            clearInterval(this._navBroadcastTimer);
+            this._navBroadcastTimer = null;
+        }
         if (this.syncChannel) this.syncChannel.close();
 
         // Call parent destroy
