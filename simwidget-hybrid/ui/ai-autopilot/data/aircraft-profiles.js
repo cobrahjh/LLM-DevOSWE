@@ -81,13 +81,14 @@ const AIRCRAFT_PROFILES = {
 
         // Takeoff procedure parameters
         takeoff: {
-            flapSetting: 0,        // 0° for normal, 10° for short field
+            flapSetting: 0,           // 0° for normal, 10° for short field
             runupRpm: 1800,
             idleRpm: 1000,
-            rotationPitch: -8,     // AXIS_ELEVATOR_SET value for rotation (gentle ~16% deflection)
-            initialClimbAgl: 200,  // AGL to engage AP
-            flapRetractAgl: 500,   // AGL to retract flaps
-            departureAgl: 1000     // AGL to accelerate from Vy to cruise
+            targetRotationPitch: 7,   // degrees nose up for rotation (feedback target, not deflection)
+            targetClimbPitch: 10,     // degrees nose up for initial climb
+            initialClimbAgl: 200,     // AGL to engage AP
+            flapRetractAgl: 500,      // AGL to retract flaps
+            departureAgl: 1000        // AGL to accelerate from Vy to cruise
         },
 
         // Phase-specific speed targets

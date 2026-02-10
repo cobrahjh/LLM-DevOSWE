@@ -241,13 +241,12 @@ class RuleEngine {
                 break;
 
             case 'ROLL':
-                // Release parking brake if still set (redundant safety check)
+                // Release parking brake if still set
                 if (d.parkingBrake) {
                     this._cmd('PARKING_BRAKES', true, 'Release parking brake');
                 }
-                // Full throttle
                 this._cmdValue('THROTTLE_SET', 100, 'Full throttle');
-                // Use known runway heading if available, else capture from aircraft heading
+                // Capture runway heading once
                 if (!this._runwayHeading) {
                     if (this._activeRunway?.heading) {
                         this._runwayHeading = this._activeRunway.heading;
@@ -255,25 +254,23 @@ class RuleEngine {
                         this._runwayHeading = Math.round(d.heading || 0);
                     }
                 }
-                // Ground steering — use rudder to hold runway heading
-                // P-factor causes left yaw on takeoff roll, rudder compensates
-                if (this._runwayHeading !== null) {
-                    const hdgErr = ((d.heading || 0) - this._runwayHeading + 540) % 360 - 180;
-                    // Proportional rudder: ~2 units per degree of error, capped at ±15
-                    const rudder = Math.max(-15, Math.min(15, hdgErr * 2));
-                    this._cmdValue('AXIS_RUDDER_SET', rudder, `Rudder ${rudder > 0 ? 'R' : 'L'} (hdg err ${Math.round(hdgErr)}°)`);
-                }
+                // ── Feedback: rudder targets runway heading ──
+                this._targetHeading(d, this._runwayHeading, 'AXIS_RUDDER_SET', 15);
+                // ── Feedback: ailerons target wings level ──
+                this._targetBank(d, 0, 10);
                 // Transition to ROTATE at Vr
                 if (ias >= (speeds.Vr || 55)) {
                     this._takeoffSubPhase = 'ROTATE';
-                    // Center controls for rotation
-                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder for rotation');
                 }
                 break;
 
             case 'ROTATE':
-                // Pitch up for rotation
-                this._cmdValue('AXIS_ELEVATOR_SET', tk.rotationPitch || -25, 'Rotate — pitch up');
+                // ── Feedback: elevator targets rotation pitch (7° nose up) ──
+                // NOT a fixed deflection — observe actual pitch and adjust
+                this._targetPitch(d, tk.targetRotationPitch || 7);
+                // ── Feedback: rudder + ailerons still tracking runway ──
+                this._targetHeading(d, this._runwayHeading, 'AXIS_RUDDER_SET', 10);
+                this._targetBank(d, 0, 8);
                 // Transition to LIFTOFF when airborne
                 if (!onGround) {
                     this._takeoffSubPhase = 'LIFTOFF';
@@ -281,17 +278,17 @@ class RuleEngine {
                 break;
 
             case 'LIFTOFF':
-                // Reduce back-pressure to gentle climb attitude (not full release)
-                this._cmdValue('AXIS_ELEVATOR_SET', -3, 'Gentle climb pitch');
-                // Center rudder and ailerons — wings level priority
-                this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder');
-                this._cmdValue('AXIS_AILERONS_SET', 0, 'Wings level');
-                // Wait for positive climb rate and safe altitude
+                // ── Feedback: elevator targets climb pitch (10°) ──
+                this._targetPitch(d, tk.targetClimbPitch || 10);
+                // ── Feedback: wings level, heading track ──
+                this._targetBank(d, 0, 8);
+                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 8);
+                // Wait for positive climb and safe altitude
                 if (vs > 100 && agl > (tk.initialClimbAgl || 200)) {
-                    // Release all manual controls before AP takeover
-                    this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release pitch for AP');
-                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder for AP');
-                    this._cmdValue('AXIS_AILERONS_SET', 0, 'Center ailerons for AP');
+                    // Release all manual controls — AP takes over
+                    this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release for AP');
+                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Release for AP');
+                    this._cmdValue('AXIS_AILERONS_SET', 0, 'Release for AP');
                     this._takeoffSubPhase = 'INITIAL_CLIMB';
                 }
                 break;
@@ -772,6 +769,60 @@ class RuleEngine {
             value: value,
             description: description || `${command} \u2192 ${value}`
         });
+    }
+
+    // ── Feedback Control Methods ──────────────────────────────────
+    // These observe actual flight state and compute proportional inputs
+    // to reach a target. No hardcoded deflections — the AI adapts to
+    // what the aircraft is actually doing.
+
+    /**
+     * Target a pitch angle — adjusts elevator proportionally.
+     * If current pitch is below target, pulls back; above, pushes forward.
+     * @param {Object} d - flight data
+     * @param {number} targetDeg - desired pitch in degrees (positive = nose up)
+     */
+    _targetPitch(d, targetDeg) {
+        const pitch = d.pitch || 0;
+        const error = targetDeg - pitch;  // positive = need more nose up
+        // Gain: 1.5 units per degree of error, capped at ±12
+        // Negative because AXIS_ELEVATOR_SET negative = nose up
+        const elevator = Math.max(-12, Math.min(12, -error * 1.5));
+        this._cmdValue('AXIS_ELEVATOR_SET', Math.round(elevator * 10) / 10,
+            `Pitch ${pitch.toFixed(1)}° → ${targetDeg}° (elev ${elevator > 0 ? '+' : ''}${elevator.toFixed(1)})`);
+    }
+
+    /**
+     * Target a heading — adjusts rudder or ailerons proportionally.
+     * Computes shortest-path heading error and applies correction.
+     * @param {Object} d - flight data
+     * @param {number} targetHdg - desired heading in degrees
+     * @param {string} axis - 'AXIS_RUDDER_SET' or 'AXIS_AILERONS_SET'
+     * @param {number} maxDeflection - max control input magnitude
+     */
+    _targetHeading(d, targetHdg, axis, maxDeflection) {
+        if (targetHdg == null) return;
+        const hdg = d.heading || 0;
+        const error = ((hdg - targetHdg + 540) % 360) - 180;  // positive = heading right of target
+        // Gain: 1.5 units per degree, capped
+        const deflection = Math.max(-maxDeflection, Math.min(maxDeflection, error * 1.5));
+        this._cmdValue(axis, Math.round(deflection * 10) / 10,
+            `${axis === 'AXIS_RUDDER_SET' ? 'Rudder' : 'Aileron'} hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${error > 0 ? '+' : ''}${Math.round(error)}°)`);
+    }
+
+    /**
+     * Target a bank angle — adjusts ailerons proportionally.
+     * @param {Object} d - flight data
+     * @param {number} targetBank - desired bank degrees (0 = wings level)
+     * @param {number} maxDeflection - max aileron input magnitude
+     */
+    _targetBank(d, targetBank, maxDeflection) {
+        const bank = d.bank || 0;
+        const error = bank - targetBank;  // positive = banked right of target
+        // Gain: 1.0 units per degree, capped
+        const deflection = Math.max(-maxDeflection, Math.min(maxDeflection, error * 1.0));
+        this._cmdValue('AXIS_AILERONS_SET', Math.round(deflection * 10) / 10,
+            `Bank ${bank.toFixed(1)}° → ${targetBank}° (ail ${deflection > 0 ? '+' : ''}${deflection.toFixed(1)})`);
     }
 
     _getCruiseAlt() {
