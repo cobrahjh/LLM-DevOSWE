@@ -17,6 +17,10 @@ class CockpitFxPane extends SimGlassBase {
         this._lastData = {};
         this._bassFreq = 120;
         this._raf = null;
+        this._prevGS = undefined;
+
+        // Shake engine
+        this.shakeEngine = null; // created after DOM cache
 
         // Profile short names for softkey
         this._profileKeys = Object.keys(COCKPIT_FX_PROFILES);
@@ -24,6 +28,7 @@ class CockpitFxPane extends SimGlassBase {
 
         this._cacheDOM();
         this._initCanvas();
+        this.shakeEngine = new ShakeEngine(document.getElementById('widget-root'));
         this._bindUI();
         this._loadSettings();
         this._updateProfileBadge();
@@ -55,6 +60,7 @@ class CockpitFxPane extends SimGlassBase {
             skBassUp: document.getElementById('cfx-sk-bass-up'),
             skBassDn: document.getElementById('cfx-sk-bass-dn'),
             skLayers: document.getElementById('cfx-sk-layers'),
+            skShake: document.getElementById('cfx-sk-shake'),
             status: document.getElementById('conn-status'),
             // Layer activity bar fills
             lbEngine: document.getElementById('cfx-lb-engine'),
@@ -276,6 +282,29 @@ class CockpitFxPane extends SimGlassBase {
             this._saveSettings();
         });
 
+        // Shake softkey — toggle shake on/off, long-press cycles intensity
+        this.el.skShake.addEventListener('click', () => {
+            if (!this.shakeEngine) return;
+            const wasEnabled = this.shakeEngine.enabled;
+            this.shakeEngine.setEnabled(!wasEnabled);
+            this.el.skShake.classList.toggle('active', !wasEnabled);
+            this.el.skShake.textContent = !wasEnabled ? 'SHKE' : 'SHKE';
+            this._saveSettings();
+        });
+        this.el.skShake.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (!this.shakeEngine) return;
+            // Cycle intensity: 0.5 → 1.0 → 1.5 → 2.0 → 0.5
+            const steps = [0.5, 1.0, 1.5, 2.0];
+            const cur = this.shakeEngine.intensity;
+            const idx = steps.findIndex(s => Math.abs(s - cur) < 0.1);
+            const next = steps[(idx + 1) % steps.length];
+            this.shakeEngine.setIntensity(next);
+            this.el.skShake.textContent = 'I' + next.toFixed(1);
+            setTimeout(() => { this.el.skShake.textContent = 'SHKE'; }, 800);
+            this._saveSettings();
+        });
+
         // Master volume slider
         this.el.masterSlider.addEventListener('input', () => {
             const v = this.el.masterSlider.value / 100;
@@ -343,6 +372,11 @@ class CockpitFxPane extends SimGlassBase {
         this._lastData = d;
 
         if (this.enabled && this.audioEngine) this.audioEngine.update(d);
+
+        // Shake engine: inject _prevGS for braking detection
+        d._prevGS = this._prevGS;
+        if (this.shakeEngine) this.shakeEngine.update(d);
+        this._prevGS = d.groundSpeed || 0;
 
         this._updateDataStrip(d);
         this._updateCorners(d);
@@ -431,7 +465,9 @@ class CockpitFxPane extends SimGlassBase {
             bassVol: this.el.bassVolSlider.value,
             layerVols: this._layerVols,
             layerEnabled: this._layerEnabled,
-            profile: this.profile
+            profile: this.profile,
+            shakeEnabled: this.shakeEngine ? this.shakeEngine.enabled : false,
+            shakeIntensity: this.shakeEngine ? this.shakeEngine.intensity : 1.0
         };
         localStorage.setItem('cockpit-fx-settings', JSON.stringify(s));
     }
@@ -456,6 +492,13 @@ class CockpitFxPane extends SimGlassBase {
             if (s.layerVols) Object.assign(this._layerVols, s.layerVols);
             if (s.layerEnabled) Object.assign(this._layerEnabled, s.layerEnabled);
             if (s.profile) this.profile = s.profile;
+            if (this.shakeEngine) {
+                if (s.shakeEnabled !== undefined) {
+                    this.shakeEngine.setEnabled(s.shakeEnabled);
+                    if (this.el.skShake) this.el.skShake.classList.toggle('active', s.shakeEnabled);
+                }
+                if (s.shakeIntensity !== undefined) this.shakeEngine.setIntensity(s.shakeIntensity);
+            }
         } catch (e) {
             console.warn('[CockpitFX] Failed to load settings:', e);
         }
@@ -463,6 +506,10 @@ class CockpitFxPane extends SimGlassBase {
 
     destroy() {
         if (this._raf) cancelAnimationFrame(this._raf);
+        if (this.shakeEngine) {
+            this.shakeEngine.destroy();
+            this.shakeEngine = null;
+        }
         if (this.audioEngine) {
             this.audioEngine.destroy();
             this.audioEngine = null;
