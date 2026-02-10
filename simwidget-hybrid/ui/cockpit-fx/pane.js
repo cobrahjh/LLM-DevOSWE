@@ -77,12 +77,22 @@ class CockpitFxPane extends SimGlassBase {
         const c = this.el.canvas;
         if (!c) return;
         this._dpr = window.devicePixelRatio || 1;
-        c.width = c.offsetWidth * this._dpr;
-        c.height = c.offsetHeight * this._dpr;
-        this._ctx = c.getContext('2d');
-        this._ctx.scale(this._dpr, this._dpr);
-        this._cw = c.offsetWidth;
-        this._ch = c.offsetHeight;
+        // Defer sizing until layout is computed (offsetWidth/Height can be 0 in constructor)
+        const doSize = () => {
+            const w = c.offsetWidth || 320;
+            const h = c.offsetHeight || 134;
+            c.width = w * this._dpr;
+            c.height = h * this._dpr;
+            this._ctx = c.getContext('2d');
+            this._ctx.scale(this._dpr, this._dpr);
+            this._cw = w;
+            this._ch = h;
+        };
+        if (c.offsetWidth > 0 && c.offsetHeight > 0) {
+            doSize();
+        } else {
+            requestAnimationFrame(doSize);
+        }
     }
 
     // --- Render loop (canvas redraws at ~30fps) ---
