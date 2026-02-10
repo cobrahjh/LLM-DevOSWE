@@ -181,7 +181,8 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
 
         const model = cfg.model || getDefaultModel(provider);
         const abortController = new AbortController();
-        const timeoutId = setTimeout(() => abortController.abort(), 60000);
+        const timeout = isLocal ? 120000 : 30000;
+        const timeoutId = setTimeout(() => abortController.abort(), timeout);
 
         try {
             if (provider === 'anthropic') {
@@ -253,7 +254,8 @@ For toggle commands, omit the value field. Only include commands that need to CH
 
         const model = cfg.model || getDefaultModel(provider);
         const abortController = new AbortController();
-        const timeoutId = setTimeout(() => abortController.abort(), 60000);
+        const timeout = isLocal ? 120000 : 30000;
+        const timeoutId = setTimeout(() => abortController.abort(), timeout);
 
         try {
             // Get non-streaming response for parsing

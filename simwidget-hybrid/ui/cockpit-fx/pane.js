@@ -237,7 +237,7 @@ class CockpitFxPane extends SimGlassBase {
         this.el.skPower.addEventListener('click', () => {
             if (!this.audioEngine) this._initAudio();
             this.enabled = !this.enabled;
-            this.el.skPower.textContent = this.enabled ? 'OFF' : 'ON';
+            this.el.skPower.textContent = this.enabled ? 'ON' : 'OFF';
             this.el.skPower.classList.toggle('active', this.enabled);
             this.el.dot.className = 'cfx-status-dot ' + (this.enabled ? 'on' : 'off');
             if (this.enabled) this.audioEngine.resume();
