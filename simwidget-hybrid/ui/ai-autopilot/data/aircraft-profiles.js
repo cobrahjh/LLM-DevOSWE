@@ -61,6 +61,16 @@ const AIRCRAFT_PROFILES = {
             flapSpeeds: [85, 85, 85]  // max speed per flap notch
         },
 
+        // Weight (lbs)
+        weight: {
+            empty: 1680,          // empty weight (typical S model)
+            maxGross: 2550,       // max takeoff weight
+            maxLanding: 2550,     // max landing weight (same as MTOW for C172)
+            fuelWeightPerGal: 6,  // avgas = 6 lbs/gal
+            defaultPayload: 340,  // assumed pilot + passenger (170 lbs each)
+            maxUsefulLoad: 870    // max useful load
+        },
+
         // Fuel
         fuel: {
             capacity: 56,       // gallons (with long-range tanks)

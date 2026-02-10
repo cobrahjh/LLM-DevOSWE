@@ -36,6 +36,9 @@ class RuleEngine {
         this._lastEnvelopeLog = 0;    // throttle debug logging
         this._bankCorrectionActive = false;
         this._speedCorrectionActive = false;
+
+        // Dynamic flight envelope (computed every frame)
+        this._envelope = null;  // latest computed envelope snapshot
     }
 
     /**
@@ -297,6 +300,9 @@ class RuleEngine {
         // Skip ground phases
         if (onGround) return;
 
+        // Compute dynamic envelope (weight + bank adjusted stall speeds)
+        const env = this._computeEnvelope(d);
+
         const now = Date.now();
         let alert = null;
 
@@ -345,31 +351,49 @@ class RuleEngine {
             this._bankCorrectionActive = false;
         }
 
-        // ── AIRSPEED PROTECTION ──
-        // Stall margin: warn at Vs1+10, protect at Vs1+5
-        // Overspeed: warn at Vno, protect at Vne-5
-        const stallClean = speeds.Vs1 || 53;
-        const stallFlaps = speeds.Vs0 || 48;
-        const stallSpeed = (d.flapsIndex > 0) ? stallFlaps : stallClean;
-        const stallWarn = stallSpeed + 10;     // warning threshold
-        const stallProtect = stallSpeed + 5;   // hard protection
+        // ── AIRSPEED PROTECTION (dynamic weight + bank adjusted) ──
+        // Uses real-time stall speed from _computeEnvelope() instead of static POH values.
+        // At lighter weight: stall speed decreases (more margin).
+        // In a bank: load factor increases stall speed (less margin).
+        // At 45° bank, stall speed increases ~19%. At 60° bank, ~41%.
         const vno = speeds.Vno || 129;
         const vne = speeds.Vne || 163;
+
+        // Dynamic stall speed from envelope (falls back to static if envelope unavailable)
+        const stallSpeed = env ? env.vsActive : ((d.flapsIndex > 0) ? (speeds.Vs0 || 48) : (speeds.Vs1 || 53));
+        const stallProtect = stallSpeed + 5;   // hard protection: full power + nose down
+        const stallWarn = stallSpeed + 10;      // soft warning: reduce descent
+
+        // Dynamic Va — max speed for full deflection at current weight
+        const vaDynamic = env ? env.vaDynamic : (speeds.Va || 99);
 
         if (ias > 0 && ias < stallProtect && !onGround && phase !== 'TAKEOFF') {
             // Stall protection — pitch down and add power
             alert = 'STALL';
-            this._cmdValue('THROTTLE_SET', 100, `STALL: full power (IAS ${Math.round(ias)} < ${stallProtect})`);
+            const stallInfo = env ? `Vs ${Math.round(stallSpeed)}kt @${Math.round(env.loadFactor * 10) / 10}G` : '';
+            this._cmdValue('THROTTLE_SET', 100, `STALL: full power (IAS ${Math.round(ias)} < ${Math.round(stallProtect)} ${stallInfo})`);
             if (apState.master) {
-                // Reduce pitch / lower nose
-                this._cmdValue('AP_VS_VAR_SET', -200, 'STALL: nose down');
+                // Reduce pitch / lower nose — more aggressive if deep into stall
+                const vsCmd = ias < stallSpeed ? -500 : -200;
+                this._cmdValue('AP_VS_VAR_SET', vsCmd, 'STALL: nose down');
                 this._cmd('AP_VS_HOLD', true, 'STALL: VS hold recovery');
+            }
+            // If in a steep bank AND stalling, wings level is priority
+            if (absBank > 20 && apState.master) {
+                this._cmdValue('HEADING_BUG_SET', Math.round(d.heading || 0), 'STALL+BANK: wings level');
+                this._cmd('AP_HDG_HOLD', true, 'STALL: reduce bank');
             }
             this._speedCorrectionActive = true;
         } else if (ias > 0 && ias < stallWarn && !onGround && phase !== 'TAKEOFF') {
             // Approaching stall — increase power, reduce VS
+            alert = alert || 'STALL_WARN';
             if (vs < -300) {
-                this._cmdValue('AP_VS_VAR_SET', Math.min(vs + 200, 0), `Low IAS ${Math.round(ias)} — reduce descent`);
+                this._cmdValue('AP_VS_VAR_SET', Math.min(vs + 200, 0), `Low IAS ${Math.round(ias)} (stall ${Math.round(stallSpeed)}) — reduce descent`);
+            }
+            // If bank is adding to stall risk, shallow the turn
+            if (absBank > 25 && apState.master) {
+                const currentHdg = d.heading || 0;
+                this._cmdValue('HEADING_BUG_SET', Math.round(currentHdg), `Low speed + bank — shallow turn`);
             }
             this._speedCorrectionActive = true;
         } else if (ias > vne - 5) {
@@ -384,6 +408,13 @@ class RuleEngine {
             // Over Vno in non-descent phase — reduce power
             this._cmdValue('THROTTLE_SET', 70, `IAS ${Math.round(ias)} > Vno ${vno} — reduce power`);
             this._speedCorrectionActive = true;
+        } else if (ias > vaDynamic && absBank > 20) {
+            // Over dynamic Va in a turn — risk of structural damage from turbulence/gust
+            // Advisory only — reduce speed or shallow the turn
+            if (now - this._lastEnvelopeLog > 5000) {
+                this._lastEnvelopeLog = now;
+            }
+            this._speedCorrectionActive = false;
         } else {
             this._speedCorrectionActive = false;
         }
@@ -435,6 +466,124 @@ class RuleEngine {
     /** Get current envelope alert (for display) */
     getEnvelopeAlert() {
         return this._envelopeAlert;
+    }
+
+    /** Get latest computed flight envelope snapshot (for display/broadcast) */
+    getEnvelope() {
+        return this._envelope;
+    }
+
+    /**
+     * Compute dynamic flight envelope based on current conditions.
+     * Returns a snapshot of all computed limits adjusted for weight, bank, flaps.
+     *
+     * Key aerodynamics:
+     *   Vs_actual = Vs_ref × √(W_current / W_ref) × √(loadFactor)
+     *   loadFactor = 1 / cos(bankAngle)   (in level turn)
+     *   Va_actual = Va_ref × √(W_current / W_ref)
+     *
+     * @param {Object} d - flightData from WebSocket
+     * @returns {Object} envelope snapshot
+     */
+    _computeEnvelope(d) {
+        const p = this.profile;
+        if (!p || !p.weight || !p.speeds) return null;
+
+        const w = p.weight;
+        const speeds = p.speeds;
+        const bank = Math.abs(d.bank || 0);
+        const flapsOut = (d.flapsIndex || 0) > 0;
+
+        // ── Estimate current aircraft weight ──
+        // Use fuel data from WebSocket if available, otherwise estimate from capacity
+        const fuelGal = (typeof d.fuelTotal === 'number' && d.fuelTotal > 0)
+            ? d.fuelTotal
+            : (w.maxUsefulLoad - w.defaultPayload) / w.fuelWeightPerGal; // fallback: full tanks
+        const fuelWeight = fuelGal * w.fuelWeightPerGal;
+        const payload = w.defaultPayload;                    // 340 lbs (2 pax)
+        const estimatedWeight = w.empty + fuelWeight + payload;
+        const clampedWeight = Math.min(estimatedWeight, w.maxGross * 1.1); // allow 10% over for realism
+
+        // Weight ratio: lighter = lower stall speeds, heavier = higher
+        const weightRatio = clampedWeight / w.maxGross;
+        const sqrtWeightRatio = Math.sqrt(weightRatio);
+
+        // ── Load factor from bank angle ──
+        // In a coordinated level turn: loadFactor = 1 / cos(bank)
+        // At 60° bank that's 2G, at 45° it's 1.41G
+        const bankRad = bank * Math.PI / 180;
+        const cosBank = Math.cos(bankRad);
+        // Prevent division by zero at 90° — cap at 75° for calculation
+        const loadFactor = cosBank > 0.26 ? (1 / cosBank) : 3.86; // 3.86G at 75°
+        const sqrtLoadFactor = Math.sqrt(loadFactor);
+
+        // ── Dynamic stall speeds ──
+        // Reference Vs0/Vs1 in POH are at max gross weight, wings level
+        const vs1Base = speeds.Vs1 || 53;    // clean stall at max gross
+        const vs0Base = speeds.Vs0 || 48;    // full-flap stall at max gross
+
+        // Adjust for weight (lighter = lower stall speed)
+        const vs1Weight = vs1Base * sqrtWeightRatio;
+        const vs0Weight = vs0Base * sqrtWeightRatio;
+
+        // Adjust for bank (more bank = higher effective stall speed)
+        const vs1Dynamic = vs1Weight * sqrtLoadFactor;
+        const vs0Dynamic = vs0Weight * sqrtLoadFactor;
+
+        // Active stall speed based on flap config
+        const vsActive = flapsOut ? vs0Dynamic : vs1Dynamic;
+
+        // ── Dynamic maneuvering speed ──
+        // Va decreases with lighter weight (less structural margin needed)
+        const vaBase = speeds.Va || 99;
+        const vaDynamic = vaBase * sqrtWeightRatio;
+
+        // ── Stall margins ──
+        const ias = d.speed || 0;
+        const stallMargin = ias > 0 ? ias - vsActive : 999;
+        const stallMarginPct = ias > 0 ? ((ias - vsActive) / vsActive) * 100 : 999;
+
+        // ── Speed margins ──
+        const vno = speeds.Vno || 129;
+        const vne = speeds.Vne || 163;
+        const overspeedMargin = vne - ias;
+
+        const envelope = {
+            // Weight
+            estimatedWeight: Math.round(clampedWeight),
+            fuelWeight: Math.round(fuelWeight),
+            fuelGal: Math.round(fuelGal * 10) / 10,
+            weightRatio: Math.round(weightRatio * 100) / 100,
+            payload,
+
+            // Load factor
+            bankAngle: Math.round(bank * 10) / 10,
+            loadFactor: Math.round(loadFactor * 100) / 100,
+
+            // Dynamic stall speeds (weight + bank adjusted)
+            vs1Dynamic: Math.round(vs1Dynamic * 10) / 10,
+            vs0Dynamic: Math.round(vs0Dynamic * 10) / 10,
+            vsActive: Math.round(vsActive * 10) / 10,
+            flapsOut,
+
+            // Dynamic Va
+            vaDynamic: Math.round(vaDynamic * 10) / 10,
+
+            // Current margins
+            stallMargin: Math.round(stallMargin * 10) / 10,
+            stallMarginPct: Math.round(stallMarginPct),
+            overspeedMargin: Math.round(overspeedMargin),
+
+            // Reference (static POH) values for comparison
+            vs1Ref: vs1Base,
+            vs0Ref: vs0Base,
+            vaRef: vaBase,
+
+            timestamp: Date.now()
+        };
+
+        this._envelope = envelope;
+        return envelope;
     }
 
     /**
@@ -616,6 +765,7 @@ class RuleEngine {
         this._airportData = null;
         this._activeRunway = null;
         this._envelopeAlert = null;
+        this._envelope = null;
         this._bankCorrectionActive = false;
         this._speedCorrectionActive = false;
     }

@@ -1204,6 +1204,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 },
                 terrainAlert: this.ruleEngine.getTerrainAlert(),
                 envelopeAlert: this.ruleEngine.getEnvelopeAlert(),
+                envelope: this.ruleEngine.getEnvelope(),
                 airport: this._nearestAirport ? {
                     icao: this._nearestAirport.icao,
                     name: this._nearestAirport.name,

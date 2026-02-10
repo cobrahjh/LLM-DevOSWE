@@ -90,10 +90,14 @@ You provide concise, actionable autopilot and flight control recommendations.
 Keep responses to 2-3 sentences maximum.
 When recommending changes, prefix with "RECOMMEND:" on its own line.
 
-C172 V-SPEEDS: Vr=55, Vx=62, Vy=74, Vcruise=110, Vfe=85, Va=99, Vno=129, Vne=163, Vref=65, Vs0=48, Vs1=53
+C172 V-SPEEDS (POH at max gross 2550 lbs): Vr=55, Vx=62, Vy=74, Vcruise=110, Vfe=85, Va=99, Vno=129, Vne=163, Vref=65, Vs0=48, Vs1=53
 C172 LIMITS: Max bank 25° (AP), critical bank 45°, max pitch +20°/-15°, max VS +1000/-1500 fpm, ceiling 14000ft
-FLIGHT ENVELOPE: Monitor bank angle continuously. >25° needs correction, >35° is dangerous, >45° is emergency.
-SPEED ENVELOPE: Below Vs1+10 is stall warning zone. Above Vno needs power reduction. Near Vne is emergency.
+STALL SPEED IS DYNAMIC: Stall speed changes with weight and bank angle.
+- Lighter aircraft stalls at LOWER speed: Vs = Vs_ref × √(currentWeight / maxGross)
+- In a bank, stall speed INCREASES: Vs = Vs × √(1/cos(bankAngle))
+- At 30° bank: stall speed +7%. At 45° bank: +19%. At 60° bank: +41%.
+- ALWAYS use the DYNAMIC stall speed from the envelope data, not the static POH values.
+SPEED ENVELOPE: Below dynamic stall speed +10 is warning zone. Above Vno needs power reduction. Near Vne is emergency.
 
 PROCEDURES BY PHASE:
 - PREFLIGHT/TAXI: No AP commands. Verify mixture rich, fuel both, controls free.
@@ -125,7 +129,41 @@ CURRENT FLIGHT STATE:
 - Mixture: ${Math.round(fd.mixture || 0)}%, Throttle: ${Math.round(fd.throttle || 0)}%
 - Engine RPM: ${Math.round(fd.engineRpm || 0)}
 - Lat/Lon: ${(fd.latitude || 0).toFixed(4)}, ${(fd.longitude || 0).toFixed(4)}
-${buildTerrainContext(fd)}${buildNavContext()}${buildAirportContext()}`;
+${buildEnvelopeContext(fd)}${buildTerrainContext(fd)}${buildNavContext()}${buildAirportContext()}`;
+}
+
+function buildEnvelopeContext(fd) {
+    const apState = _sharedState.autopilot;
+    const env = apState?.envelope;
+    if (!env) {
+        // Fallback: compute basic envelope from flight data if no shared state
+        const fuelGal = fd.fuelTotal || 42;
+        const weight = 1680 + (fuelGal * 6) + 340; // empty + fuel + payload
+        const bank = Math.abs(fd.bank || 0);
+        const bankRad = bank * Math.PI / 180;
+        const cosB = Math.cos(bankRad);
+        const lf = cosB > 0.26 ? (1 / cosB) : 3.86;
+        const wr = Math.sqrt(weight / 2550);
+        const slr = Math.sqrt(lf);
+        const vs1d = Math.round(53 * wr * slr);
+        const vs0d = Math.round(48 * wr * slr);
+        const vsAct = (fd.flapsIndex > 0) ? vs0d : vs1d;
+        const margin = (fd.speed || 0) - vsAct;
+        return `\nDYNAMIC ENVELOPE (computed):
+- Est. Weight: ${Math.round(weight)} lbs (${Math.round(weight/2550*100)}% MTOW)
+- Bank: ${Math.round(bank)}°, Load Factor: ${lf.toFixed(2)}G
+- Dynamic Stall: ${vsAct} kt (clean ${vs1d}, flaps ${vs0d}) vs POH ${(fd.flapsIndex > 0) ? 48 : 53} kt
+- Stall Margin: ${Math.round(margin)} kt${margin < 10 ? ' ⚠ LOW' : ''}
+- Dynamic Va: ${Math.round(99 * wr)} kt (POH 99 at max gross)`;
+    }
+    let ctx = `\nDYNAMIC ENVELOPE (real-time):
+- Weight: ${env.estimatedWeight} lbs (${Math.round(env.weightRatio * 100)}% MTOW), Fuel: ${env.fuelGal} gal
+- Bank: ${env.bankAngle}°, Load Factor: ${env.loadFactor}G
+- Dynamic Stall: ${Math.round(env.vsActive)} kt (clean ${Math.round(env.vs1Dynamic)}, flaps ${Math.round(env.vs0Dynamic)}) vs POH Vs1=${env.vs1Ref}/Vs0=${env.vs0Ref}
+- Stall Margin: ${env.stallMargin} kt (${env.stallMarginPct}%)${env.stallMargin < 10 ? ' ⚠ CRITICALLY LOW' : env.stallMargin < 15 ? ' ⚠ LOW' : ''}
+- Dynamic Va: ${Math.round(env.vaDynamic)} kt (POH ${env.vaRef} at max gross)
+- Overspeed Margin: ${env.overspeedMargin} kt to Vne`;
+    return ctx;
 }
 
 function buildTerrainContext(fd) {
