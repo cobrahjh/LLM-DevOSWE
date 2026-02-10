@@ -1,261 +1,252 @@
-/* CockpitFX Mixer UI v1.0.0 */
-.cockpit-fx {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-    max-width: 420px;
-    margin: 0 auto;
-    font-family: var(--sg-font-ui, 'Segoe UI', sans-serif);
-    color: var(--sg-text-primary, #F0F4F8);
-    background: var(--sg-bg-deep, rgba(8, 18, 34, 0.94));
-    min-height: 100vh;
-    box-sizing: border-box;
+/* CockpitFX Compact v2.0.0 — Avionics-style 320x200 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-serif; }
+
+/* === Main 320x200 grid === */
+.cfx {
+    display: grid;
+    grid-template-rows: 22px 1fr 20px 24px;
+    width: 320px;
+    height: 200px;
+    background: rgba(6,14,28,0.96);
+    border: 1px solid rgba(0,230,118,0.12);
+    border-radius: 5px;
+    overflow: hidden;
+    user-select: none;
 }
 
-/* Header */
-.fx-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0 10px;
-    border-bottom: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
-}
-.fx-title {
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--sg-accent-green, #00E676);
-}
-.fx-profile-select {
-    background: var(--sg-bg-input, rgba(4,10,22,0.95));
-    color: var(--sg-text-primary, #F0F4F8);
-    border: 1px solid var(--sg-border-medium, rgba(0,230,118,0.22));
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-/* Master row */
-.fx-master {
+/* === ROW 1: Data strip (RPM, IAS, AOA, G) === */
+.cfx-data {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    background: var(--sg-bg-panel, rgba(12,24,44,0.90));
-    border-radius: 6px;
-    border: 1px solid var(--sg-border-medium, rgba(0,230,118,0.22));
+    gap: 1px;
+    padding: 0 4px;
+    background: rgba(4,10,22,0.95);
+    font-size: 9px;
+    font-family: 'B612 Mono', 'Consolas', monospace;
 }
-.fx-master-label {
-    font-size: 13px;
-    font-weight: 600;
-    min-width: 60px;
+.cfx-data-grp {
+    display: flex;
+    align-items: center;
+    gap: 2px;
 }
-.fx-master .fx-slider {
-    flex: 1;
-}
-.fx-master-pct {
-    font-size: 12px;
-    min-width: 32px;
-    text-align: right;
-    color: var(--sg-text-secondary, #A8B8CC);
-}
-.fx-master-toggle {
-    background: var(--sg-accent-red, #FF1744);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 4px 12px;
-    font-size: 12px;
+.cfx-data-lbl {
+    font-size: 7px;
     font-weight: 700;
-    cursor: pointer;
-    min-width: 40px;
-    transition: background 0.2s;
+    color: #607080;
+    letter-spacing: 0.5px;
 }
-.fx-master-toggle.active {
-    background: var(--sg-accent-green, #00E676);
-    color: #000;
+.cfx-data-val {
+    color: #00E676;
+    font-weight: 700;
+    font-size: 10px;
+}
+.cfx-data-val.warn { color: #FF9100; }
+.cfx-data-val.danger { color: #FF1744; }
+.cfx-data-sep {
+    width: 1px;
+    height: 12px;
+    background: rgba(255,255,255,0.08);
+    margin: 0 3px;
+}
+.cfx-status-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    margin-left: auto;
+    margin-right: 2px;
+}
+.cfx-status-dot.on { background: #00E676; box-shadow: 0 0 4px #00E676; }
+.cfx-status-dot.off { background: #FF1744; box-shadow: 0 0 4px #FF1744; }
+
+/* === ROW 2: Main canvas display === */
+.cfx-main {
+    position: relative;
+    background: #050e1a;
+    overflow: hidden;
+}
+.cfx-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
-/* Layer rows */
-.fx-layers {
+/* Corner data overlays */
+.cfx-corner {
+    position: absolute;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    padding: 2px 4px;
+    background: rgba(4,10,22,0.75);
+    border-radius: 2px;
+    pointer-events: none;
 }
-.fx-layer-row {
+.cfx-corner.tl { top: 2px; left: 2px; }
+.cfx-corner.tr { top: 2px; right: 2px; text-align: right; }
+.cfx-corner.bl { bottom: 2px; left: 2px; }
+.cfx-corner.br { bottom: 2px; right: 2px; text-align: right; }
+.cfx-corner-lbl {
+    font-size: 7px;
+    font-weight: 700;
+    color: #607080;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+.cfx-corner-val {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #00E676;
+    line-height: 1.2;
+}
+.cfx-corner-val.cyan { color: #00D4FF; }
+.cfx-corner-val.warn { color: #FF9100; }
+.cfx-corner-val.danger { color: #FF1744; }
+
+/* Layer bars (right edge overlay) */
+.cfx-layers {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    pointer-events: none;
+}
+.cfx-lbar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    background: var(--sg-bg-card, rgba(16,32,56,0.80));
-    border-radius: 4px;
-    border: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
+    gap: 2px;
+    background: rgba(4,10,22,0.70);
+    padding: 1px 3px;
+    border-radius: 2px;
 }
-.fx-layer-icon {
-    font-size: 14px;
-    width: 20px;
-    text-align: center;
-}
-.fx-layer-name {
-    font-size: 12px;
-    min-width: 80px;
-    color: var(--sg-text-secondary, #A8B8CC);
-}
-.fx-layer-slider {
-    flex: 1;
-}
-.fx-layer-pct {
-    font-size: 11px;
-    min-width: 28px;
-    text-align: right;
-    color: var(--sg-text-muted, #607080);
-}
-.fx-layer-toggle {
+.cfx-lbar-lbl {
+    font-size: 6px;
+    font-weight: 700;
+    color: #607080;
     width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: var(--sg-accent-green, #00E676);
+    letter-spacing: 0.3px;
+}
+.cfx-lbar-track {
+    width: 30px;
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 1px;
+    overflow: hidden;
+}
+.cfx-lbar-fill {
+    height: 100%;
+    border-radius: 1px;
+    background: #00E676;
+    transition: width 0.08s linear;
+}
+.cfx-lbar-fill.off { background: #3A4A5C; }
+
+/* Profile badge (center-top overlay) */
+.cfx-profile-badge {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1px 6px;
+    background: rgba(4,10,22,0.80);
+    border-radius: 3px;
+    border: 1px solid rgba(255,68,204,0.25);
+    font-size: 8px;
+    font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #FF44CC;
+    pointer-events: none;
 }
 
-/* Shared slider style */
-.fx-slider {
+/* === ROW 3: Master strip === */
+.cfx-strip {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 4px;
+    background: rgba(4,10,22,0.90);
+    font-size: 8px;
+}
+.cfx-strip-lbl {
+    font-weight: 700;
+    color: #607080;
+    font-size: 7px;
+    letter-spacing: 0.5px;
+}
+.cfx-strip-val {
+    color: #00D4FF;
+    font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    font-size: 9px;
+    min-width: 24px;
+}
+.cfx-strip-sep {
+    width: 1px;
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    margin: 0 2px;
+}
+.cfx-strip-slider {
     -webkit-appearance: none;
     appearance: none;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--sg-bg-input, rgba(4,10,22,0.95));
+    width: 50px;
+    height: 3px;
+    border-radius: 1px;
+    background: rgba(255,255,255,0.08);
     outline: none;
     cursor: pointer;
 }
-.fx-slider::-webkit-slider-thumb {
+.cfx-strip-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: var(--sg-accent-green, #00E676);
+    background: #00D4FF;
     cursor: pointer;
 }
-.fx-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+.cfx-strip-slider::-moz-range-thumb {
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: var(--sg-accent-green, #00E676);
+    background: #00D4FF;
     cursor: pointer;
     border: none;
 }
 
-/* Data readout strip */
-.fx-data {
+/* === ROW 4: Softkeys === */
+.cfx-softkeys {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px 14px;
-    padding: 8px 10px;
-    background: var(--sg-bg-panel, rgba(12,24,44,0.90));
-    border-radius: 4px;
-    border: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
-    font-family: var(--sg-font-data, 'Consolas', monospace);
-    font-size: 11px;
-    color: var(--sg-text-muted, #607080);
+    gap: 1px;
+    padding: 1px;
+    background: rgba(4,10,22,0.95);
 }
-.fx-data-item {
-    display: flex;
-    gap: 4px;
-}
-.fx-data-label {
-    color: var(--sg-text-muted, #607080);
-}
-.fx-data-value {
-    color: var(--sg-text-secondary, #A8B8CC);
-}
-
-/* Bass shaker section */
-.fx-bass {
+.cfx-sk {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    background: var(--sg-bg-card, rgba(16,32,56,0.80));
-    border-radius: 4px;
-    border: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
-}
-.fx-bass-label {
-    font-size: 12px;
-    color: var(--sg-text-secondary, #A8B8CC);
-    min-width: 100px;
-}
-.fx-bass .fx-slider {
-    flex: 1;
-}
-.fx-bass-freq {
-    font-size: 11px;
-    min-width: 40px;
-    text-align: right;
-    color: var(--sg-text-muted, #607080);
-}
-
-/* Motion effects section */
-.fx-motion-section {
-    padding: 8px 10px;
-    background: var(--sg-bg-panel, rgba(12,24,44,0.90));
-    border-radius: 6px;
-    border: 1px solid var(--sg-border-medium, rgba(0,230,118,0.22));
-}
-.fx-motion-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--sg-accent-cyan, #00D4FF);
-    margin-bottom: 6px;
-    text-transform: uppercase;
+    justify-content: center;
+    height: 22px;
+    font-size: 8px;
+    font-weight: 700;
+    color: #A8B8CC;
+    background: rgba(16,32,56,0.8);
+    border-radius: 2px;
+    cursor: pointer;
     letter-spacing: 0.5px;
 }
-.fx-motion-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 0;
+.cfx-sk:hover { color: #fff; background: rgba(16,32,56,1); }
+.cfx-sk.active {
+    color: #000;
+    background: #00E676;
 }
-.fx-motion-name {
-    font-size: 11px;
-    color: var(--sg-text-secondary, #A8B8CC);
-    min-width: 70px;
+.cfx-sk.profile-sk {
+    font-size: 7px;
+    color: #FF44CC;
 }
-.fx-motion-bar {
-    flex: 1;
-    height: 4px;
-    background: var(--sg-bg-input, rgba(4,10,22,0.95));
-    border-radius: 2px;
-    overflow: hidden;
-}
-.fx-motion-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.1s linear;
-    background: var(--sg-accent-green, #00E676);
-}
-.fx-motion-fill.warn {
-    background: var(--sg-accent-amber, #FF9100);
-}
-.fx-motion-fill.danger {
-    background: var(--sg-accent-red, #FF1744);
-}
-.fx-motion-value {
-    font-size: 10px;
-    font-family: var(--sg-font-data, 'Consolas', monospace);
-    color: var(--sg-text-muted, #607080);
-    min-width: 44px;
-    text-align: right;
-}
+.cfx-sk.profile-sk:hover { color: #fff; }
 
-/* Connection status */
-.fx-status {
-    font-size: 10px;
-    text-align: center;
-    color: var(--sg-text-dim, #3A4A5C);
-    padding-top: 4px;
-}
-.fx-status.connected { color: var(--sg-accent-green, #00E676); }
-.fx-status.disconnected { color: var(--sg-accent-red, #FF1744); }
+/* Hidden controls (for settings persistence — not shown in compact UI) */
+.cfx-hidden { display: none !important; }

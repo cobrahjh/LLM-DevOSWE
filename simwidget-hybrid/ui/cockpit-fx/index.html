@@ -1,172 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CockpitFX - SimGlass</title>
-    <!-- Shared Styles -->
-    <link rel="stylesheet" href="/ui/shared/widget-common.css">
-    <link rel="stylesheet" href="/ui/shared/themes.css">
-    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
-    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
-    <link rel="stylesheet" href="/ui/shared/responsive.css">
-    <!-- Widget Styles -->
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CockpitFX - SimGlass</title>
+<link rel="stylesheet" href="/ui/shared/widget-common.css">
+<link rel="stylesheet" href="/ui/shared/themes.css">
+<link rel="stylesheet" href="/ui/shared/settings-panel.css">
+<link rel="stylesheet" href="/ui/shared/responsive.css">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+<button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
 
-    <div class="cockpit-fx" id="widget-root">
-        <!-- Header -->
-        <div class="fx-header">
-            <span class="fx-title">COCKPIT FX</span>
-            <select class="fx-profile-select" id="fx-profile"></select>
+<div class="cfx" id="widget-root">
+    <!-- ROW 1: Data strip -->
+    <div class="cfx-data">
+        <div class="cfx-data-grp">
+            <span class="cfx-data-lbl">RPM</span>
+            <span class="cfx-data-val" id="cfx-rpm">0</span>
         </div>
-
-        <!-- Master -->
-        <div class="fx-master">
-            <span class="fx-master-label">MASTER</span>
-            <input type="range" class="fx-slider" id="fx-master-vol" min="0" max="100" value="80">
-            <span class="fx-master-pct" id="fx-master-pct">80%</span>
-            <button class="fx-master-toggle" id="fx-master-toggle">OFF</button>
+        <div class="cfx-data-sep"></div>
+        <div class="cfx-data-grp">
+            <span class="cfx-data-lbl">IAS</span>
+            <span class="cfx-data-val" id="cfx-ias">0</span>
         </div>
-
-        <!-- Layers -->
-        <div class="fx-layers">
-            <div class="fx-layer-row">
-                <span class="fx-layer-icon">E</span>
-                <span class="fx-layer-name">Engine</span>
-                <input type="range" class="fx-slider fx-layer-slider" id="fx-vol-engine" min="0" max="100" value="70">
-                <span class="fx-layer-pct" id="fx-pct-engine">70%</span>
-                <input type="checkbox" class="fx-layer-toggle" id="fx-en-engine" checked>
-            </div>
-            <div class="fx-layer-row">
-                <span class="fx-layer-icon">A</span>
-                <span class="fx-layer-name">Aero</span>
-                <input type="range" class="fx-slider fx-layer-slider" id="fx-vol-aero" min="0" max="100" value="60">
-                <span class="fx-layer-pct" id="fx-pct-aero">60%</span>
-                <input type="checkbox" class="fx-layer-toggle" id="fx-en-aero" checked>
-            </div>
-            <div class="fx-layer-row">
-                <span class="fx-layer-icon">G</span>
-                <span class="fx-layer-name">Ground</span>
-                <input type="range" class="fx-slider fx-layer-slider" id="fx-vol-ground" min="0" max="100" value="70">
-                <span class="fx-layer-pct" id="fx-pct-ground">70%</span>
-                <input type="checkbox" class="fx-layer-toggle" id="fx-en-ground" checked>
-            </div>
-            <div class="fx-layer-row">
-                <span class="fx-layer-icon">M</span>
-                <span class="fx-layer-name">Mechanical</span>
-                <input type="range" class="fx-slider fx-layer-slider" id="fx-vol-mechanical" min="0" max="100" value="55">
-                <span class="fx-layer-pct" id="fx-pct-mechanical">55%</span>
-                <input type="checkbox" class="fx-layer-toggle" id="fx-en-mechanical" checked>
-            </div>
-            <div class="fx-layer-row">
-                <span class="fx-layer-icon">W</span>
-                <span class="fx-layer-name">Environment</span>
-                <input type="range" class="fx-slider fx-layer-slider" id="fx-vol-environment" min="0" max="100" value="40">
-                <span class="fx-layer-pct" id="fx-pct-environment">40%</span>
-                <input type="checkbox" class="fx-layer-toggle" id="fx-en-environment" checked>
-            </div>
-            <div class="fx-layer-row">
-                <span class="fx-layer-icon">!</span>
-                <span class="fx-layer-name">Warnings</span>
-                <input type="range" class="fx-slider fx-layer-slider" id="fx-vol-warning" min="0" max="100" value="100">
-                <span class="fx-layer-pct" id="fx-pct-warning">100%</span>
-                <input type="checkbox" class="fx-layer-toggle" id="fx-en-warning" checked>
-            </div>
+        <div class="cfx-data-sep"></div>
+        <div class="cfx-data-grp">
+            <span class="cfx-data-lbl">AOA</span>
+            <span class="cfx-data-val" id="cfx-aoa">0.0</span>
         </div>
-
-        <!-- Motion Effects (visual bars for G-forces, rates, etc.) -->
-        <div class="fx-motion-section">
-            <div class="fx-motion-title">MOTION</div>
-            <div class="fx-motion-row">
-                <span class="fx-motion-name">G Long</span>
-                <div class="fx-motion-bar"><div class="fx-motion-fill" id="fx-m-glong"></div></div>
-                <span class="fx-motion-value" id="fx-mv-glong">0.00 g</span>
-            </div>
-            <div class="fx-motion-row">
-                <span class="fx-motion-name">G Lat</span>
-                <div class="fx-motion-bar"><div class="fx-motion-fill" id="fx-m-glat"></div></div>
-                <span class="fx-motion-value" id="fx-mv-glat">0.00 g</span>
-            </div>
-            <div class="fx-motion-row">
-                <span class="fx-motion-name">G Vert</span>
-                <div class="fx-motion-bar"><div class="fx-motion-fill" id="fx-m-gvert"></div></div>
-                <span class="fx-motion-value" id="fx-mv-gvert">1.00 G</span>
-            </div>
-            <div class="fx-motion-row">
-                <span class="fx-motion-name">Pitch Rate</span>
-                <div class="fx-motion-bar"><div class="fx-motion-fill" id="fx-m-pitch"></div></div>
-                <span class="fx-motion-value" id="fx-mv-pitch">0.00 &deg;/s</span>
-            </div>
-            <div class="fx-motion-row">
-                <span class="fx-motion-name">Yaw Rate</span>
-                <div class="fx-motion-bar"><div class="fx-motion-fill" id="fx-m-yaw"></div></div>
-                <span class="fx-motion-value" id="fx-mv-yaw">0.00 &deg;/s</span>
-            </div>
-            <div class="fx-motion-row">
-                <span class="fx-motion-name">Buffet</span>
-                <div class="fx-motion-bar"><div class="fx-motion-fill" id="fx-m-buffet"></div></div>
-                <span class="fx-motion-value" id="fx-mv-buffet">0.00</span>
-            </div>
-            <div class="fx-motion-row">
-                <span class="fx-motion-name">Turbulence</span>
-                <div class="fx-motion-bar"><div class="fx-motion-fill" id="fx-m-turb"></div></div>
-                <span class="fx-motion-value" id="fx-mv-turb">0.00</span>
-            </div>
+        <div class="cfx-data-sep"></div>
+        <div class="cfx-data-grp">
+            <span class="cfx-data-lbl">G</span>
+            <span class="cfx-data-val" id="cfx-gvert">1.00</span>
         </div>
-
-        <!-- Data Readout -->
-        <div class="fx-data">
-            <div class="fx-data-item"><span class="fx-data-label">RPM:</span> <span class="fx-data-value" id="fx-d-rpm">0</span></div>
-            <div class="fx-data-item"><span class="fx-data-label">IAS:</span> <span class="fx-data-value" id="fx-d-ias">0kt</span></div>
-            <div class="fx-data-item"><span class="fx-data-label">AOA:</span> <span class="fx-data-value" id="fx-d-aoa">0.0&deg;</span></div>
-            <div class="fx-data-item"><span class="fx-data-label">G:</span> <span class="fx-data-value" id="fx-d-g">1.00G</span></div>
-            <div class="fx-data-item"><span class="fx-data-label">Surface:</span> <span class="fx-data-value" id="fx-d-surface">---</span></div>
-            <div class="fx-data-item"><span class="fx-data-label">Gear:</span> <span class="fx-data-value" id="fx-d-gear">---</span></div>
-            <div class="fx-data-item"><span class="fx-data-label">Flaps:</span> <span class="fx-data-value" id="fx-d-flaps">0%</span></div>
+        <div class="cfx-data-sep"></div>
+        <div class="cfx-data-grp">
+            <span class="cfx-data-lbl">SFC</span>
+            <span class="cfx-data-val" id="cfx-sfc" style="font-size:8px">---</span>
         </div>
-
-        <!-- Bass Shaker -->
-        <div class="fx-bass">
-            <span class="fx-bass-label">Bass LP Filter</span>
-            <input type="range" class="fx-slider" id="fx-bass-freq" min="60" max="200" value="120">
-            <span class="fx-bass-freq" id="fx-bass-freq-val">120 Hz</span>
-        </div>
-        <div class="fx-bass">
-            <span class="fx-bass-label">Bass Volume</span>
-            <input type="range" class="fx-slider" id="fx-bass-vol" min="0" max="100" value="0">
-            <span class="fx-bass-freq" id="fx-bass-vol-val">0%</span>
-        </div>
-
-        <!-- Status -->
-        <div class="fx-status" id="conn-status">Connecting...</div>
+        <span class="cfx-status-dot off" id="cfx-dot"></span>
     </div>
 
-    <!-- Shared Scripts -->
-    <script src="/ui/shared/settings-panel.js"></script>
-    <script src="/ui/shared/theme-switcher.js"></script>
-    <script src="/ui/shared/widget-customizer.js"></script>
-    <script src="/ui/shared/safe-channel.js"></script>
-    <script src="/ui/shared/themes.js"></script>
-    <script src="/ui/shared/platform-utils.js"></script>
-    <script src="/ui/shared/telemetry.js"></script>
-    <script src="/ui/shared/feedback-section.js"></script>
-    <script src="/ui/shared/widget-base.js"></script>
-    <!-- CockpitFX Scripts -->
-    <script src="profiles.js"></script>
-    <script src="audio-engine.js"></script>
-    <script src="layers/engine-layer.js"></script>
-    <script src="layers/aero-layer.js"></script>
-    <script src="layers/ground-layer.js"></script>
-    <script src="layers/mechanical-layer.js"></script>
-    <script src="layers/environment-layer.js"></script>
-    <script src="layers/warning-layer.js"></script>
-    <script src="pane.js"></script>
-    <script>
-        window.widget = new CockpitFxPane();
-        window.addEventListener('beforeunload', () => window.widget?.destroy());
-    </script>
+    <!-- ROW 2: Main canvas + overlays -->
+    <div class="cfx-main">
+        <canvas class="cfx-canvas" id="cfx-canvas"></canvas>
+
+        <!-- Profile badge (center-top) -->
+        <div class="cfx-profile-badge" id="cfx-profile-badge">GA SINGLE</div>
+
+        <!-- Corner overlays -->
+        <div class="cfx-corner tl">
+            <span class="cfx-corner-lbl">PITCH</span>
+            <span class="cfx-corner-val" id="cfx-pitch">0.0&deg;/s</span>
+        </div>
+        <div class="cfx-corner bl">
+            <span class="cfx-corner-lbl">YAW</span>
+            <span class="cfx-corner-val" id="cfx-yaw">0.0&deg;/s</span>
+        </div>
+        <div class="cfx-corner br">
+            <span class="cfx-corner-lbl">TURB</span>
+            <span class="cfx-corner-val cyan" id="cfx-turb">0%</span>
+        </div>
+
+        <!-- Layer activity bars (right edge) -->
+        <div class="cfx-layers" id="cfx-layers">
+            <div class="cfx-lbar"><span class="cfx-lbar-lbl">ENG</span><div class="cfx-lbar-track"><div class="cfx-lbar-fill" id="cfx-lb-engine"></div></div></div>
+            <div class="cfx-lbar"><span class="cfx-lbar-lbl">AERO</span><div class="cfx-lbar-track"><div class="cfx-lbar-fill" id="cfx-lb-aero"></div></div></div>
+            <div class="cfx-lbar"><span class="cfx-lbar-lbl">GND</span><div class="cfx-lbar-track"><div class="cfx-lbar-fill" id="cfx-lb-ground"></div></div></div>
+            <div class="cfx-lbar"><span class="cfx-lbar-lbl">MECH</span><div class="cfx-lbar-track"><div class="cfx-lbar-fill" id="cfx-lb-mech"></div></div></div>
+            <div class="cfx-lbar"><span class="cfx-lbar-lbl">ENV</span><div class="cfx-lbar-track"><div class="cfx-lbar-fill" id="cfx-lb-env"></div></div></div>
+            <div class="cfx-lbar"><span class="cfx-lbar-lbl">WARN</span><div class="cfx-lbar-track"><div class="cfx-lbar-fill" id="cfx-lb-warn"></div></div></div>
+        </div>
+    </div>
+
+    <!-- ROW 3: Master volume / bass strip -->
+    <div class="cfx-strip">
+        <span class="cfx-strip-lbl">VOL</span>
+        <input type="range" class="cfx-strip-slider" id="fx-master-vol" min="0" max="100" value="80">
+        <span class="cfx-strip-val" id="fx-master-pct">80</span>
+        <div class="cfx-strip-sep"></div>
+        <span class="cfx-strip-lbl">BASS</span>
+        <input type="range" class="cfx-strip-slider" id="fx-bass-vol" min="0" max="100" value="0">
+        <span class="cfx-strip-val" id="fx-bass-vol-val">0</span>
+        <div class="cfx-strip-sep"></div>
+        <span class="cfx-strip-lbl">LP</span>
+        <span class="cfx-strip-val" id="fx-bass-freq-val" style="font-size:8px">120</span>
+    </div>
+
+    <!-- ROW 4: Softkeys -->
+    <div class="cfx-softkeys">
+        <div class="cfx-sk" id="cfx-sk-power">ON</div>
+        <div class="cfx-sk profile-sk" id="cfx-sk-profile">GA SNGL</div>
+        <div class="cfx-sk" id="cfx-sk-bass-up">LP+</div>
+        <div class="cfx-sk" id="cfx-sk-bass-dn">LP-</div>
+        <div class="cfx-sk" id="cfx-sk-layers">LYRS</div>
+    </div>
+</div>
+
+<!-- Hidden persistence elements (layer volumes/enables stored internally) -->
+<div class="cfx-hidden">
+    <input id="fx-bass-freq" type="hidden" value="120">
+    <span id="conn-status"></span>
+</div>
+
+<!-- Shared Scripts -->
+<script src="/ui/shared/settings-panel.js"></script>
+<script src="/ui/shared/theme-switcher.js"></script>
+<script src="/ui/shared/safe-channel.js"></script>
+<script src="/ui/shared/themes.js"></script>
+<script src="/ui/shared/platform-utils.js"></script>
+<script src="/ui/shared/telemetry.js"></script>
+<script src="/ui/shared/feedback-section.js"></script>
+<script src="/ui/shared/widget-base.js"></script>
+<!-- CockpitFX Scripts -->
+<script src="profiles.js"></script>
+<script src="audio-engine.js"></script>
+<script src="layers/engine-layer.js"></script>
+<script src="layers/aero-layer.js"></script>
+<script src="layers/ground-layer.js"></script>
+<script src="layers/mechanical-layer.js"></script>
+<script src="layers/environment-layer.js"></script>
+<script src="layers/warning-layer.js"></script>
+<script src="pane.js"></script>
+<script>
+    window.widget = new CockpitFxPane();
+    window.addEventListener('beforeunload', () => window.widget?.destroy());
+</script>
 </body>
 </html>
