@@ -44,6 +44,7 @@ const PluginLoader = require('./plugin-system/plugin-loader');
 const PluginAPI = require('./plugin-system/plugin-api');
 const { setupWeatherRoutes } = require('./weather-api');
 const { setupCopilotRoutes } = require('./copilot-api');
+const { setupAiPilotRoutes } = require('./ai-pilot-api');
 const usageMetrics = require('../../Admin/shared/usage-metrics');
 
 // Hot reload manager (development only)
@@ -3737,6 +3738,9 @@ setupWeatherRoutes(app, () => simConnectConnection);
 
 // Setup Copilot AI API (streaming LLM proxy)
 setupCopilotRoutes(app, () => flightData);
+
+// Setup AI Pilot API (autopilot advisory + command validation)
+setupAiPilotRoutes(app, () => flightData);
 
 const troubleshoot = new TroubleshootEngine('SimGlass');
 

@@ -524,6 +524,126 @@ async function testCodeSplitting() {
 }
 
 // ============================================
+// AI AUTOPILOT TESTS
+// ============================================
+
+async function testAiAutopilot() {
+    log('\n── AI Autopilot Tests ──', 'cyan');
+
+    // Test: AI Autopilot pane loads
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/`);
+        assert(res.ok, 'AI Autopilot pane loads (index.html)');
+        const html = await res.text();
+        assert(html.includes('AI AUTOPILOT'), 'HTML contains AI AUTOPILOT title');
+        assert(html.includes('widget-base.js'), 'HTML includes widget-base.js');
+        assert(html.includes('flight-phase.js'), 'HTML includes flight-phase.js');
+        assert(html.includes('rule-engine.js'), 'HTML includes rule-engine.js');
+        assert(html.includes('command-queue.js'), 'HTML includes command-queue.js');
+        assert(html.includes('llm-advisor.js'), 'HTML includes llm-advisor.js');
+        assert(html.includes('aircraft-profiles.js'), 'HTML includes aircraft-profiles.js');
+    } catch (e) {
+        assert(false, `AI Autopilot pane load - ${e.message}`);
+    }
+
+    // Test: pane.js loads
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/pane.js`);
+        assert(res.ok, 'pane.js loads');
+        const js = await res.text();
+        assert(js.includes('class AiAutopilotPane'), 'pane.js contains AiAutopilotPane class');
+        assert(js.includes('extends SimGlassBase'), 'AiAutopilotPane extends SimGlassBase');
+        assert(js.includes('destroy()'), 'pane.js has destroy() method');
+    } catch (e) {
+        assert(false, `pane.js load - ${e.message}`);
+    }
+
+    // Test: modules load
+    const modules = [
+        { path: 'modules/flight-phase.js', className: 'FlightPhase' },
+        { path: 'modules/rule-engine.js', className: 'RuleEngine' },
+        { path: 'modules/command-queue.js', className: 'CommandQueue' },
+        { path: 'modules/llm-advisor.js', className: 'LLMAdvisor' },
+        { path: 'data/aircraft-profiles.js', className: 'AIRCRAFT_PROFILES' }
+    ];
+
+    for (const mod of modules) {
+        try {
+            const res = await fetch(`${API_BASE}/ui/ai-autopilot/${mod.path}`);
+            assert(res.ok, `${mod.path} loads`);
+            const js = await res.text();
+            assert(js.includes(mod.className), `${mod.path} contains ${mod.className}`);
+        } catch (e) {
+            assert(false, `${mod.path} load - ${e.message}`);
+        }
+    }
+
+    // Test: styles.css loads
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/styles.css`);
+        assert(res.ok, 'styles.css loads');
+        const css = await res.text();
+        assert(css.includes('.phase-section'), 'CSS contains phase-section styles');
+        assert(css.includes('.command-log'), 'CSS contains command-log styles');
+        assert(css.includes('.advisory-panel'), 'CSS contains advisory-panel styles');
+    } catch (e) {
+        assert(false, `styles.css load - ${e.message}`);
+    }
+
+    // Test: API endpoints
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/status`);
+        assert(res.ok, 'GET /api/ai-pilot/status returns 200');
+        const data = res.json();
+        assert(data && data.flightData !== undefined, 'Status includes flightData');
+    } catch (e) {
+        assert(false, `API status - ${e.message}`);
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/profiles`);
+        assert(res.ok, 'GET /api/ai-pilot/profiles returns 200');
+        const data = res.json();
+        assert(data && data.profiles && data.profiles.includes('C172'), 'Profiles include C172');
+    } catch (e) {
+        assert(false, `API profiles - ${e.message}`);
+    }
+
+    // Test: command validation
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/command`, {
+            method: 'POST',
+            body: JSON.stringify({ command: 'AP_MASTER' })
+        });
+        assert(res.ok, 'POST /api/ai-pilot/command accepts valid command');
+    } catch (e) {
+        assert(false, `API command valid - ${e.message}`);
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/command`, {
+            method: 'POST',
+            body: JSON.stringify({ command: 'INVALID_CMD' })
+        });
+        assert(res.status === 400, 'POST /api/ai-pilot/command rejects invalid command');
+    } catch (e) {
+        assert(false, `API command invalid - ${e.message}`);
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/command`, {
+            method: 'POST',
+            body: JSON.stringify({ command: 'AP_ALT_VAR_SET', value: 99999 })
+        });
+        assert(res.status === 400, 'POST /api/ai-pilot/command rejects out-of-range altitude');
+    } catch (e) {
+        assert(false, `API command safety - ${e.message}`);
+    }
+
+    log('\n  AI Autopilot: 9 files, 4 modules, 3 API endpoints verified', 'cyan');
+}
+
+// ============================================
 // MAIN
 // ============================================
 
@@ -549,6 +669,7 @@ async function runTests(suite) {
     if (!suite || suite === 'websocket') await testWebSocket();
     if (!suite || suite === 'widgets') await testWidgets();
     if (!suite || suite === 'splitting') await testCodeSplitting();
+    if (!suite || suite === 'ai-autopilot') await testAiAutopilot();
 
     // Summary
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -567,8 +688,8 @@ async function runTests(suite) {
 }
 
 const suite = process.argv[2];
-if (suite && !['api', 'websocket', 'widgets', 'splitting'].includes(suite)) {
-    log('Usage: node test-runner.js [api|websocket|widgets|splitting]', 'yellow');
+if (suite && !['api', 'websocket', 'widgets', 'splitting', 'ai-autopilot'].includes(suite)) {
+    log('Usage: node test-runner.js [api|websocket|widgets|splitting|ai-autopilot]', 'yellow');
     process.exit(1);
 }
 
