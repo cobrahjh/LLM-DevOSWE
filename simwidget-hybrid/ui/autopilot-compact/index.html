@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Autopilot Strip - SimGlass</title>
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="/ui/shared/widget-common.css">
+    <link rel="stylesheet" href="/ui/shared/themes.css">
+    <link rel="stylesheet" href="/ui/shared/settings-panel.css">
+    <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
+    <link rel="stylesheet" href="/ui/shared/responsive.css">
+    <!-- Widget Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Settings Button -->
+    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+
+    <div class="compact-strip" id="widget-root">
+        <!-- AP Master -->
+        <button class="btn-ap-master" id="btn-ap" data-cmd="AP_MASTER">
+            <span class="btn-label">AP</span>
+        </button>
+
+        <!-- HDG -->
+        <button class="mode-btn-compact" id="btn-hdg" data-cmd="AP_HDG_HOLD">
+            <span class="btn-label">HDG</span>
+            <span class="btn-value" id="hdg-value">000&deg;</span>
+        </button>
+
+        <!-- ALT -->
+        <button class="mode-btn-compact" id="btn-alt" data-cmd="AP_ALT_HOLD">
+            <span class="btn-label">ALT</span>
+            <span class="btn-value" id="alt-value">10,000</span>
+        </button>
+
+        <!-- VS -->
+        <button class="mode-btn-compact" id="btn-vs" data-cmd="AP_VS_HOLD">
+            <span class="btn-label">VS</span>
+            <span class="btn-value" id="vs-value">+0</span>
+        </button>
+
+        <!-- SPD -->
+        <button class="mode-btn-compact" id="btn-spd" data-cmd="AP_AIRSPEED_HOLD">
+            <span class="btn-label">SPD</span>
+            <span class="btn-value" id="spd-value">200kt</span>
+        </button>
+
+        <!-- NAV -->
+        <button class="mode-btn-secondary" id="btn-nav" data-cmd="AP_NAV1_HOLD">
+            <span class="btn-label">NAV</span>
+        </button>
+
+        <!-- APR -->
+        <button class="mode-btn-secondary" id="btn-apr" data-cmd="AP_APR_HOLD">
+            <span class="btn-label">APR</span>
+        </button>
+    </div>
+
+    <!-- Shared Scripts -->
+    <script src="/ui/shared/settings-panel.js"></script>
+    <script src="/ui/shared/theme-switcher.js"></script>
+    <script src="/ui/shared/widget-customizer.js"></script>
+    <script src="/ui/shared/safe-channel.js"></script>
+    <script src="/ui/shared/themes.js"></script>
+    <script src="/ui/shared/platform-utils.js"></script>
+    <script src="/ui/shared/telemetry.js"></script>
+    <script src="/ui/shared/feedback-section.js"></script>
+    <script src="/ui/shared/widget-base.js"></script>
+    <!-- Widget Script -->
+    <script src="pane.js"></script>
+    <script>
+        window.widget = new AutopilotCompactPane();
+        window.addEventListener('beforeunload', () => window.widget?.destroy());
+
+        const settings = new SettingsPanel();
+        settings.registerThemeSection();
+        const customizer = new WidgetCustomizer({ widgetId: 'autopilot-compact', settingsPanel: settings });
+        document.getElementById('settings-btn')?.addEventListener('click', () => settings.toggle());
+    </script>
+</body>
+</html>
