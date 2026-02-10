@@ -32,7 +32,7 @@ class FlightPhase {
         this._lastData = d;
 
         const alt = d.altitude || 0;
-        const agl = d.altitudeAGL || alt - this.fieldElevation;
+        const agl = d.altitudeAGL != null ? d.altitudeAGL : alt - this.fieldElevation;
         const gs = d.groundSpeed || 0;
         const ias = d.speed || 0;
         const vs = d.verticalSpeed || 0;
