@@ -212,6 +212,9 @@ class GTN750Pane extends SimGlassBase {
             onDirectToActivated: () => {
                 if (this.pageManager) this.pageManager.switchPage('map');
             },
+            onInsertComplete: () => {
+                if (this.pageManager) this.pageManager.switchPage('fpl');
+            },
             onFlightPlanChanged: (plan) => {
                 this.fplPage?.update(plan);
             }
@@ -1340,6 +1343,7 @@ class GTN750Pane extends SimGlassBase {
                 if (this.pageManager) this.pageManager.switchPage('map');
                 this.flightPlanManager?.showDirectTo();
                 break;
+            case 'waypoint-info': this.showWaypointInfoModal(); break;
             case 'fpl-delete': if (this.fplPage) this.fplPage.onDelete(); break;
             case 'fpl-insert': if (this.fplPage) this.fplPage.onInsert(); break;
             case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
@@ -1391,6 +1395,48 @@ class GTN750Pane extends SimGlassBase {
                 break;
             default: GTNCore.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
+    }
+
+    // ===== WAYPOINT INFO MODAL =====
+
+    showWaypointInfoModal() {
+        const wp = this.fplPage?.getSelectedWaypoint();
+        if (!wp) return;
+
+        // Switch to map page where the modal lives
+        if (this.pageManager) this.pageManager.switchPage('map');
+
+        const body = document.getElementById('wpt-info-body');
+        const modal = document.getElementById('wpt-info-modal');
+        if (!body || !modal) return;
+
+        let html = `<div class="dto-name" style="font-size: 16px; font-weight: bold;">${wp.ident || '----'}</div>`;
+        html += `<div class="dto-coords">${wp.type || 'WAYPOINT'}</div>`;
+
+        if (wp.lat !== undefined && wp.lng !== undefined) {
+            html += `<div class="dto-coords">${this.core.formatLat(wp.lat)} ${this.core.formatLon(wp.lng)}</div>`;
+        }
+
+        if (wp.altitude) {
+            html += `<div class="dto-coords">ALT: ${Math.round(wp.altitude).toLocaleString()} ft</div>`;
+        }
+
+        if (this.data.latitude && wp.lat && wp.lng) {
+            const dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
+            const brg = this.core.calculateBearing(this.data.latitude, this.data.longitude, wp.lat, wp.lng);
+            html += `<div class="dto-coords">DIS: ${dist.toFixed(1)} nm &nbsp; BRG: ${Math.round(brg).toString().padStart(3, '0')}\u00B0</div>`;
+        }
+
+        body.innerHTML = html;
+        modal.style.display = 'block';
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+            document.removeEventListener('keydown', escHandler);
+        };
+        const escHandler = (e) => { if (e.key === 'Escape') closeModal(); };
+        document.addEventListener('keydown', escHandler);
+        document.getElementById('wpt-info-close').onclick = closeModal;
     }
 
     // ===== RANGE / DECLUTTER HELPERS =====

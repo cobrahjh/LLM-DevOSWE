@@ -316,6 +316,186 @@
     font-family: var(--sg-font-data);
 }
 
+/* ============================================
+   COMPACT TOGGLE BUTTON
+   ============================================ */
+.compact-toggle {
+    position: fixed;
+    top: 8px;
+    left: 36px;
+    z-index: 999;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: var(--sg-text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+.compact-toggle:hover { color: var(--sg-text-primary); }
+.compact-toggle.active { color: var(--sg-accent-green); }
+
+/* ============================================
+   COMPACT MODE — Layout switching
+   ============================================ */
+
+/* Default: full visible, compact hidden */
+.ap-full { display: block; }
+.ap-mcp { display: none; }
+
+/* Compact mode: swap visibility */
+.widget-container.compact .ap-full { display: none; }
+.widget-container.compact .ap-mcp { display: grid; }
+
+/* Compact mode: shrink container */
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+/* ============================================
+   COMPACT MCP GRID (~260 x 110px)
+   ============================================ */
+.ap-mcp {
+    grid-template-columns: 36px 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 2px;
+    padding: 3px;
+    background: var(--sg-bg-header);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: 5px;
+    user-select: none;
+}
+
+/* AP master — spans 2 rows */
+.mcp-ap {
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: 4px;
+    cursor: pointer;
+}
+.mcp-ap .lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--sg-text-muted);
+    letter-spacing: 1px;
+}
+.mcp-ap .ind {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--sg-text-dim);
+}
+.mcp-ap.active .lbl { color: var(--sg-accent-green); }
+.mcp-ap.active .ind {
+    background: var(--sg-accent-green);
+    box-shadow: 0 0 6px var(--sg-accent-green);
+}
+.mcp-ap.active {
+    border-color: rgba(0, 230, 118, 0.4);
+}
+
+/* Data cells */
+.mcp-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 2px;
+    background: rgba(16, 32, 56, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    min-height: 42px;
+}
+.mcp-cell:hover { background: rgba(16, 32, 56, 0.9); }
+.mcp-cell .lbl {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--sg-text-muted);
+    letter-spacing: 0.8px;
+    line-height: 1;
+}
+.mcp-cell .val {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
+    line-height: 1.2;
+}
+.mcp-cell .unit {
+    font-size: 7px;
+    color: var(--sg-text-muted);
+    line-height: 1;
+}
+.mcp-cell.active .lbl { color: var(--sg-accent-green); }
+.mcp-cell.active .val { color: var(--sg-accent-green); }
+.mcp-cell.active { background: rgba(0, 230, 118, 0.08); }
+
+/* Hover-reveal +/- adjusters */
+.mcp-cell .adj-row { display: none; }
+.mcp-cell:hover .adj-row {
+    display: flex;
+    gap: 2px;
+    margin-top: 1px;
+}
+.mcp-cell .adj {
+    font-size: 9px;
+    color: var(--sg-text-secondary);
+    cursor: pointer;
+    width: 14px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+}
+.mcp-cell .adj:hover {
+    color: var(--sg-text-primary);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Bottom nav row */
+.mcp-nav-row {
+    grid-column: 2 / 6;
+    display: flex;
+    gap: 2px;
+}
+.mcp-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--sg-text-muted);
+    background: rgba(16, 32, 56, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+.mcp-nav.active {
+    color: #000;
+    background: var(--sg-accent-cyan);
+}
+.mcp-nav:hover { background: rgba(16, 32, 56, 0.9); }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
 /* Responsive — container query */
 @container pane (max-width: 360px) {
     .widget-container {

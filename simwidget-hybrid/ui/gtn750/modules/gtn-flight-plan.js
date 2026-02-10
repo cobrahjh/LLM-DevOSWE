@@ -46,7 +46,12 @@ class GTNFlightPlan {
         // Callbacks for external notifications
         this.onWaypointChanged = options.onWaypointChanged || null;
         this.onDirectToActivated = options.onDirectToActivated || null;
+        this.onInsertComplete = options.onInsertComplete || null;
         this.onFlightPlanChanged = options.onFlightPlanChanged || null;
+
+        // Insert mode state (used when FPL INSERT opens Direct-To modal)
+        this._insertMode = false;
+        this._insertIndex = -1;
 
         // Timer handle for cleanup
         this._fetchTimer = null;
@@ -336,13 +341,21 @@ class GTNFlightPlan {
 
     // ===== DIRECT-TO =====
 
-    showDirectTo(prefilledIdent = null) {
+    showDirectTo(prefilledIdent = null, options = {}) {
         const modal = document.getElementById('dto-modal');
         const input = document.getElementById('dto-input');
         const info = document.getElementById('dto-info');
         const activateBtn = document.getElementById('dto-activate');
+        const header = modal?.querySelector('.dto-header');
 
         if (!modal) return;
+
+        // Store insert mode state
+        this._insertMode = options.insertMode || false;
+        this._insertIndex = options.insertIndex ?? -1;
+
+        // Update header text based on mode
+        if (header) header.textContent = this._insertMode ? 'INSERT WAYPOINT' : 'DIRECT TO';
 
         modal.style.display = 'block';
         input.value = prefilledIdent || '';
@@ -447,6 +460,24 @@ class GTNFlightPlan {
 
     activateDirectTo() {
         if (!this.dtoTarget) return;
+
+        // Insert mode: add waypoint to flight plan instead of Direct-To
+        if (this._insertMode && this._insertIndex >= 0) {
+            const waypoint = {
+                ident: this.dtoTarget.ident,
+                lat: this.dtoTarget.lat,
+                lng: this.dtoTarget.lon,
+                type: this.dtoTarget.type || 'WAYPOINT',
+                name: this.dtoTarget.name || this.dtoTarget.ident
+            };
+            GTNCore.log(`[GTN750] Insert waypoint: ${waypoint.ident} at index ${this._insertIndex}`);
+            this.insertWaypoint(waypoint, this._insertIndex);
+            this._insertMode = false;
+            this._insertIndex = -1;
+            this.hideDirectTo();
+            if (this.onInsertComplete) this.onInsertComplete();
+            return;
+        }
 
         GTNCore.log(`[GTN750] Direct-To activated: ${this.dtoTarget.ident}`);
 

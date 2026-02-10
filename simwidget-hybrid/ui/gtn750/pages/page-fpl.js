@@ -263,10 +263,10 @@ class FlightPlanPage {
 
     onInsert() {
         if (this.cursorIndex < 0 || !this.flightPlanManager) return;
-        const insertAt = this.cursorIndex;
-        this.flightPlanManager.showDirectTo();
-        // After Direct-To activates, the waypoint is added at the cursor position
-        // The flight plan manager will call notifyChanged -> update()
+        this.flightPlanManager.showDirectTo(null, {
+            insertMode: true,
+            insertIndex: this.cursorIndex
+        });
     }
 
     onActivateLeg() {
@@ -300,6 +300,13 @@ class FlightPlanPage {
         if (this._initialized) {
             this.render();
         }
+    }
+
+    // ===== GETTERS =====
+
+    getSelectedWaypoint() {
+        if (this.cursorIndex < 0 || !this.flightPlan?.waypoints) return null;
+        return this.flightPlan.waypoints[this.cursorIndex] || null;
     }
 
     // ===== HELPERS =====

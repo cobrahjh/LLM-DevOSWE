@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AP Proto: Strip</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-serif; }
+
+/* === STRIP: Single row annunciator ~520x34px === */
+.ap-strip {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 2px;
+    background: rgba(6,14,28,0.96);
+    border: 1px solid rgba(0,230,118,0.12);
+    border-radius: 4px;
+    max-width: 540px;
+    height: 34px;
+    user-select: none;
+}
+
+.ap-master {
+    width: 32px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: #607080;
+    background: rgba(16,32,56,0.8);
+    border: 1px solid rgba(0,230,118,0.1);
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+.ap-master.active {
+    color: #00E676;
+    background: rgba(0,204,0,0.25);
+    border-color: rgba(0,230,118,0.5);
+    text-shadow: 0 0 6px rgba(0,230,118,0.5);
+}
+
+.ap-cell {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 28px;
+    padding: 0 4px;
+    background: rgba(16,32,56,0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    min-width: 68px;
+    position: relative;
+}
+.ap-cell:hover { background: rgba(16,32,56,0.9); }
+
+.ap-label {
+    font-size: 9px; font-weight: 700;
+    color: #607080;
+    letter-spacing: 0.8px;
+    flex-shrink: 0;
+}
+.ap-cell.active .ap-label { color: #00E676; }
+
+.ap-val {
+    font-size: 14px; font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #00D4FF;
+    letter-spacing: 0.5px;
+}
+.ap-cell.active .ap-val { color: #00E676; }
+
+.ap-unit {
+    font-size: 8px;
+    color: #607080;
+    flex-shrink: 0;
+}
+
+/* Nav modes as tiny pills */
+.ap-nav {
+    width: 30px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700;
+    color: #607080;
+    background: rgba(16,32,56,0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+.ap-nav.active {
+    color: #000;
+    background: #00D4FF;
+}
+.ap-nav:hover { background: rgba(16,32,56,0.9); }
+
+/* Adjust buttons hidden until hover */
+.ap-adj { display: none; }
+.ap-cell:hover .ap-adj {
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 0; width: 18px; height: 100%;
+    font-size: 11px; color: #A8B8CC; cursor: pointer;
+    background: rgba(0,0,0,0.4); border-radius: 3px;
+}
+.ap-cell:hover .ap-adj.left { left: 0; border-radius: 3px 0 0 3px; }
+.ap-cell:hover .ap-adj.right { right: 0; border-radius: 0 3px 3px 0; }
+.ap-adj:hover { color: #fff; background: rgba(0,0,0,0.6); }
+</style>
+</head>
+<body>
+<div style="padding:20px">
+    <div style="color:#607080;font-size:10px;margin-bottom:6px;letter-spacing:1px">PROTO A: ANNUNCIATOR STRIP (~520 x 34px)</div>
+
+    <div class="ap-strip">
+        <div class="ap-master active" id="btn-ap">AP</div>
+
+        <div class="ap-cell active" id="cell-hdg">
+            <span class="ap-adj left" data-cmd="HEADING_BUG_DEC">-</span>
+            <span class="ap-label">HDG</span>
+            <span class="ap-val" id="hdg-val">270</span>
+            <span class="ap-unit">&deg;</span>
+            <span class="ap-adj right" data-cmd="HEADING_BUG_INC">+</span>
+        </div>
+
+        <div class="ap-cell active" id="cell-alt">
+            <span class="ap-adj left" data-cmd="AP_ALT_VAR_DEC">-</span>
+            <span class="ap-label">ALT</span>
+            <span class="ap-val" id="alt-val">5000</span>
+            <span class="ap-unit">ft</span>
+            <span class="ap-adj right" data-cmd="AP_ALT_VAR_INC">+</span>
+        </div>
+
+        <div class="ap-cell" id="cell-vs">
+            <span class="ap-adj left" data-cmd="AP_VS_VAR_DEC">-</span>
+            <span class="ap-label">VS</span>
+            <span class="ap-val" id="vs-val">+0</span>
+            <span class="ap-unit">fpm</span>
+            <span class="ap-adj right" data-cmd="AP_VS_VAR_INC">+</span>
+        </div>
+
+        <div class="ap-cell" id="cell-spd">
+            <span class="ap-adj left" data-cmd="AP_SPD_VAR_DEC">-</span>
+            <span class="ap-label">IAS</span>
+            <span class="ap-val" id="spd-val">120</span>
+            <span class="ap-unit">kt</span>
+            <span class="ap-adj right" data-cmd="AP_SPD_VAR_INC">+</span>
+        </div>
+
+        <div class="ap-nav" id="btn-nav">NAV</div>
+        <div class="ap-nav" id="btn-apr">APR</div>
+    </div>
+</div>
+
+<script src="/ui/shared/platform-utils.js"></script>
+<script src="/ui/shared/telemetry.js"></script>
+<script>
+const telem = new Telemetry();
+telem.onData(d => {
+    const ap = d.autopilot || {};
+    document.getElementById('hdg-val').textContent = ap.headingBug ?? '---';
+    document.getElementById('alt-val').textContent = ap.altitudeBug ?? '---';
+    document.getElementById('vs-val').textContent = (ap.verticalSpeed >= 0 ? '+' : '') + (ap.verticalSpeed ?? 0);
+    document.getElementById('spd-val').textContent = ap.airspeedBug ?? '---';
+
+    const setActive = (id, on) => document.getElementById(id)?.classList.toggle('active', !!on);
+    setActive('btn-ap', ap.master);
+    setActive('cell-hdg', ap.headingHold);
+    setActive('cell-alt', ap.altitudeHold);
+    setActive('cell-vs', ap.verticalSpeedHold);
+    setActive('cell-spd', ap.airspeedHold);
+    setActive('btn-nav', ap.navHold);
+    setActive('btn-apr', ap.approachHold);
+});
+
+document.querySelectorAll('[data-cmd]').forEach(el => {
+    el.addEventListener('click', () => {
+        fetch('/api/command', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({command: el.dataset.cmd}) });
+    });
+});
+['btn-ap','btn-nav','btn-apr'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', () => {
+        const cmds = { 'btn-ap':'AP_MASTER', 'btn-nav':'AP_NAV1_HOLD', 'btn-apr':'AP_APR_HOLD' };
+        fetch('/api/command', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({command: cmds[id]}) });
+    });
+});
+</script>
+</body>
+</html>

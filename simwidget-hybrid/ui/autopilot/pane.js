@@ -81,6 +81,9 @@ class AutopilotPane extends SimGlassBase {
             'groundSpeed': 'spdCurrent'
         };
 
+        // Compact mode state
+        this.compactMode = localStorage.getItem('ap-compact') === 'true';
+
         // Cache DOM elements
         this.elements = {};
         this.cacheElements();
@@ -90,6 +93,13 @@ class AutopilotPane extends SimGlassBase {
 
         // Bind event handlers
         this.setupEventListeners();
+        this.setupCompactToggle();
+
+        // Apply saved compact mode
+        if (this.compactMode) {
+            document.getElementById('widget-root')?.classList.add('compact');
+            document.getElementById('compact-toggle')?.classList.add('active');
+        }
 
         // Initial render
         this.render();
@@ -129,6 +139,35 @@ class AutopilotPane extends SimGlassBase {
 
         // Footer
         this.elements.navSource = document.getElementById('nav-source');
+
+        // Compact MCP elements
+        this.elements.cBtnAp = document.getElementById('c-btn-ap');
+        this.elements.cCellHdg = document.getElementById('c-cell-hdg');
+        this.elements.cCellAlt = document.getElementById('c-cell-alt');
+        this.elements.cCellVs = document.getElementById('c-cell-vs');
+        this.elements.cCellSpd = document.getElementById('c-cell-spd');
+        this.elements.cHdgVal = document.getElementById('c-hdg-val');
+        this.elements.cAltVal = document.getElementById('c-alt-val');
+        this.elements.cVsVal = document.getElementById('c-vs-val');
+        this.elements.cSpdVal = document.getElementById('c-spd-val');
+        this.elements.cBtnNav = document.getElementById('c-btn-nav');
+        this.elements.cBtnApr = document.getElementById('c-btn-apr');
+        this.elements.cBtnBc = document.getElementById('c-btn-bc');
+        this.elements.cBtnVnav = document.getElementById('c-btn-vnav');
+        this.elements.cBtnFd = document.getElementById('c-btn-fd');
+        this.elements.cBtnYd = document.getElementById('c-btn-yd');
+    }
+
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            localStorage.setItem('ap-compact', this.compactMode);
+            document.getElementById('widget-root')?.classList.toggle('compact', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+            this.render();
+        });
     }
 
     setupEventListeners() {
@@ -301,6 +340,7 @@ class AutopilotPane extends SimGlassBase {
         this.updateModeButtons();
         this.updateValues();
         this.updateCurrentValues();
+        this.updateCompact();
     }
 
     updateMasterStatus() {
@@ -390,6 +430,32 @@ class AutopilotPane extends SimGlassBase {
         if (this.elements.navSource) {
             this.elements.navSource.textContent = this.current.navSource;
         }
+    }
+
+    updateCompact() {
+        const e = this.elements;
+        // AP master
+        e.cBtnAp?.classList.toggle('active', this.ap.master);
+        // Mode cells
+        e.cCellHdg?.classList.toggle('active', this.ap.headingHold);
+        e.cCellAlt?.classList.toggle('active', this.ap.altitudeHold);
+        e.cCellVs?.classList.toggle('active', this.ap.vsHold);
+        e.cCellSpd?.classList.toggle('active', this.ap.speedHold);
+        // Nav buttons
+        e.cBtnNav?.classList.toggle('active', this.ap.navHold);
+        e.cBtnApr?.classList.toggle('active', this.ap.aprHold);
+        e.cBtnBc?.classList.toggle('active', this.ap.bcHold);
+        e.cBtnVnav?.classList.toggle('active', this.ap.vnavHold);
+        e.cBtnFd?.classList.toggle('active', this.ap.flightDirector);
+        e.cBtnYd?.classList.toggle('active', this.ap.yawDamper);
+        // Values
+        if (e.cHdgVal) e.cHdgVal.textContent = String(this.setValues.heading).padStart(3, '0');
+        if (e.cAltVal) e.cAltVal.textContent = this.setValues.altitude.toLocaleString();
+        if (e.cVsVal) {
+            const vs = this.setValues.vs;
+            e.cVsVal.textContent = vs >= 0 ? `+${vs}` : vs;
+        }
+        if (e.cSpdVal) e.cSpdVal.textContent = this.setValues.speed;
     }
 
     /**

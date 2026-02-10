@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AP Proto: MCP</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-serif; }
+
+/* === MCP: Mode Control Panel grid ~240x110px === */
+.ap-mcp {
+    display: grid;
+    grid-template-columns: 36px 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 2px;
+    padding: 3px;
+    background: rgba(6,14,28,0.96);
+    border: 1px solid rgba(0,230,118,0.12);
+    border-radius: 5px;
+    max-width: 260px;
+    user-select: none;
+}
+
+/* AP master spans 2 rows */
+.mcp-ap {
+    grid-row: 1 / 3;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    background: rgba(16,32,56,0.8);
+    border: 1px solid rgba(0,230,118,0.1);
+    border-radius: 4px;
+    cursor: pointer;
+}
+.mcp-ap .lbl { font-size: 10px; font-weight: 700; color: #607080; letter-spacing: 1px; }
+.mcp-ap .ind { width: 6px; height: 6px; border-radius: 50%; background: #3A4A5C; }
+.mcp-ap.active .lbl { color: #00E676; }
+.mcp-ap.active .ind { background: #00E676; box-shadow: 0 0 6px #00E676; }
+.mcp-ap.active { border-color: rgba(0,230,118,0.4); }
+
+/* Data cells */
+.mcp-cell {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 3px 2px;
+    background: rgba(16,32,56,0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    min-height: 42px;
+}
+.mcp-cell:hover { background: rgba(16,32,56,0.9); }
+.mcp-cell .lbl {
+    font-size: 8px; font-weight: 700; color: #607080;
+    letter-spacing: 0.8px; line-height: 1;
+}
+.mcp-cell .val {
+    font-size: 14px; font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #00D4FF; line-height: 1.2;
+}
+.mcp-cell .unit {
+    font-size: 7px; color: #607080; line-height: 1;
+}
+.mcp-cell.active .lbl { color: #00E676; }
+.mcp-cell.active .val { color: #00E676; }
+.mcp-cell.active { background: rgba(0,230,118,0.08); }
+
+/* Bottom nav row */
+.mcp-nav-row {
+    grid-column: 2 / 6;
+    display: flex; gap: 2px;
+}
+.mcp-nav {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    height: 20px;
+    font-size: 8px; font-weight: 700;
+    color: #607080;
+    background: rgba(16,32,56,0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+.mcp-nav.active { color: #000; background: #00D4FF; }
+.mcp-nav:hover { background: rgba(16,32,56,0.9); }
+
+/* Scroll adjust on click-hold (visual only here) */
+.mcp-cell .adj-row { display: none; }
+.mcp-cell:hover .adj-row {
+    display: flex; gap: 2px; margin-top: 1px;
+}
+.mcp-cell .adj {
+    font-size: 9px; color: #A8B8CC; cursor: pointer;
+    width: 14px; height: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.3); border-radius: 2px;
+}
+.mcp-cell .adj:hover { color: #fff; background: rgba(0,0,0,0.5); }
+</style>
+</head>
+<body>
+<div style="padding:20px">
+    <div style="color:#607080;font-size:10px;margin-bottom:6px;letter-spacing:1px">PROTO B: MCP GRID (~260 x 110px)</div>
+
+    <div class="ap-mcp">
+        <div class="mcp-ap active" id="btn-ap">
+            <span class="lbl">AP</span>
+            <span class="ind"></span>
+        </div>
+
+        <div class="mcp-cell active" id="cell-hdg">
+            <span class="lbl">HDG</span>
+            <span class="val" id="hdg-val">270</span>
+            <span class="unit">&deg;</span>
+            <div class="adj-row">
+                <span class="adj" data-cmd="HEADING_BUG_DEC">-</span>
+                <span class="adj" data-cmd="HEADING_BUG_INC">+</span>
+            </div>
+        </div>
+
+        <div class="mcp-cell active" id="cell-alt">
+            <span class="lbl">ALT</span>
+            <span class="val" id="alt-val">5000</span>
+            <span class="unit">ft</span>
+            <div class="adj-row">
+                <span class="adj" data-cmd="AP_ALT_VAR_DEC">-</span>
+                <span class="adj" data-cmd="AP_ALT_VAR_INC">+</span>
+            </div>
+        </div>
+
+        <div class="mcp-cell" id="cell-vs">
+            <span class="lbl">VS</span>
+            <span class="val" id="vs-val">+0</span>
+            <span class="unit">fpm</span>
+            <div class="adj-row">
+                <span class="adj" data-cmd="AP_VS_VAR_DEC">-</span>
+                <span class="adj" data-cmd="AP_VS_VAR_INC">+</span>
+            </div>
+        </div>
+
+        <div class="mcp-cell" id="cell-spd">
+            <span class="lbl">IAS</span>
+            <span class="val" id="spd-val">120</span>
+            <span class="unit">kt</span>
+            <div class="adj-row">
+                <span class="adj" data-cmd="AP_SPD_VAR_DEC">-</span>
+                <span class="adj" data-cmd="AP_SPD_VAR_INC">+</span>
+            </div>
+        </div>
+
+        <div class="mcp-nav-row">
+            <div class="mcp-nav" id="btn-nav">NAV</div>
+            <div class="mcp-nav" id="btn-apr">APR</div>
+            <div class="mcp-nav" id="btn-bc">BC</div>
+            <div class="mcp-nav" id="btn-vnav">VNAV</div>
+            <div class="mcp-nav" id="btn-fd">FD</div>
+            <div class="mcp-nav" id="btn-yd">YD</div>
+        </div>
+    </div>
+</div>
+
+<script src="/ui/shared/platform-utils.js"></script>
+<script src="/ui/shared/telemetry.js"></script>
+<script>
+const telem = new Telemetry();
+telem.onData(d => {
+    const ap = d.autopilot || {};
+    document.getElementById('hdg-val').textContent = ap.headingBug ?? '---';
+    document.getElementById('alt-val').textContent = ap.altitudeBug ?? '---';
+    document.getElementById('vs-val').textContent = (ap.verticalSpeed >= 0 ? '+' : '') + (ap.verticalSpeed ?? 0);
+    document.getElementById('spd-val').textContent = ap.airspeedBug ?? '---';
+
+    const s = (id, on) => document.getElementById(id)?.classList.toggle('active', !!on);
+    s('btn-ap', ap.master);
+    s('cell-hdg', ap.headingHold);
+    s('cell-alt', ap.altitudeHold);
+    s('cell-vs', ap.verticalSpeedHold);
+    s('cell-spd', ap.airspeedHold);
+    s('btn-nav', ap.navHold);
+    s('btn-apr', ap.approachHold);
+    s('btn-fd', ap.flightDirector);
+    s('btn-yd', ap.yawDamper);
+});
+
+document.querySelectorAll('[data-cmd]').forEach(el => {
+    el.addEventListener('click', e => {
+        e.stopPropagation();
+        fetch('/api/command', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({command: el.dataset.cmd}) });
+    });
+});
+const cmds = { 'btn-ap':'AP_MASTER','btn-nav':'AP_NAV1_HOLD','btn-apr':'AP_APR_HOLD','btn-bc':'AP_BC_HOLD','btn-vnav':'AP_VNAV','btn-fd':'TOGGLE_FLIGHT_DIRECTOR','btn-yd':'YAW_DAMPER_TOGGLE',
+    'cell-hdg':'AP_HDG_HOLD','cell-alt':'AP_ALT_HOLD','cell-vs':'AP_VS_HOLD','cell-spd':'AP_AIRSPEED_HOLD' };
+Object.entries(cmds).forEach(([id,cmd]) => {
+    document.getElementById(id)?.addEventListener('click', () => {
+        fetch('/api/command', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({command: cmd}) });
+    });
+});
+</script>
+</body>
+</html>

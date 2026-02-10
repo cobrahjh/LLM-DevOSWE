@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AP Proto: HUD</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-serif; }
+
+/* === HUD: Borderless floating overlay ~440x28px === */
+.ap-hud {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 4px 8px;
+    background: rgba(6,14,28,0.70);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 3px;
+    max-width: 460px;
+    height: 28px;
+    user-select: none;
+}
+
+/* AP indicator — just a dot + text */
+.hud-ap {
+    font-size: 11px; font-weight: 700;
+    color: #3A4A5C;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 3px;
+}
+.hud-ap .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #3A4A5C;
+}
+.hud-ap.active { color: #00E676; }
+.hud-ap.active .dot { background: #00E676; box-shadow: 0 0 4px #00E676; }
+
+/* Data items — label + value inline */
+.hud-item {
+    display: flex; align-items: baseline; gap: 2px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.hud-item.active { opacity: 1; }
+.hud-item:hover { opacity: 1; }
+
+.hud-item .lbl {
+    font-size: 8px; font-weight: 700;
+    color: #607080;
+    letter-spacing: 0.5px;
+}
+.hud-item.active .lbl { color: #00E676; }
+
+.hud-item .val {
+    font-size: 13px; font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #A8B8CC;
+}
+.hud-item.active .val { color: #00E676; }
+
+.hud-item .unit {
+    font-size: 7px; color: #607080;
+}
+
+/* Separator */
+.hud-sep {
+    width: 1px; height: 12px;
+    background: rgba(255,255,255,0.08);
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* Nav modes — tiny text */
+.hud-nav {
+    font-size: 8px; font-weight: 700;
+    color: #3A4A5C;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+.hud-nav.active { color: #00D4FF; }
+.hud-nav:hover { color: #A8B8CC; }
+
+/* Hover-reveal adjust */
+.hud-item .adj { display: none; }
+.hud-item:hover .adj {
+    display: inline;
+    font-size: 9px; color: #607080; cursor: pointer;
+    margin: 0 1px;
+}
+.hud-item:hover .adj:hover { color: #F0F4F8; }
+</style>
+</head>
+<body>
+<div style="padding:20px">
+    <div style="color:#607080;font-size:10px;margin-bottom:6px;letter-spacing:1px">PROTO C: HUD OVERLAY (~440 x 28px)</div>
+
+    <div class="ap-hud">
+        <div class="hud-ap active" id="btn-ap">
+            <span class="dot"></span>AP
+        </div>
+
+        <div class="hud-sep"></div>
+
+        <div class="hud-item active" id="cell-hdg">
+            <span class="lbl">H</span>
+            <span class="adj" data-cmd="HEADING_BUG_DEC">&lt;</span>
+            <span class="val" id="hdg-val">270</span>
+            <span class="unit">&deg;</span>
+            <span class="adj" data-cmd="HEADING_BUG_INC">&gt;</span>
+        </div>
+
+        <div class="hud-item active" id="cell-alt">
+            <span class="lbl">A</span>
+            <span class="adj" data-cmd="AP_ALT_VAR_DEC">&lt;</span>
+            <span class="val" id="alt-val">5000</span>
+            <span class="unit">ft</span>
+            <span class="adj" data-cmd="AP_ALT_VAR_INC">&gt;</span>
+        </div>
+
+        <div class="hud-item" id="cell-vs">
+            <span class="lbl">V</span>
+            <span class="adj" data-cmd="AP_VS_VAR_DEC">&lt;</span>
+            <span class="val" id="vs-val">+0</span>
+            <span class="adj" data-cmd="AP_VS_VAR_INC">&gt;</span>
+        </div>
+
+        <div class="hud-item" id="cell-spd">
+            <span class="lbl">S</span>
+            <span class="adj" data-cmd="AP_SPD_VAR_DEC">&lt;</span>
+            <span class="val" id="spd-val">120</span>
+            <span class="unit">kt</span>
+            <span class="adj" data-cmd="AP_SPD_VAR_INC">&gt;</span>
+        </div>
+
+        <div class="hud-sep"></div>
+
+        <div class="hud-nav" id="btn-nav">N</div>
+        <div class="hud-nav" id="btn-apr">A</div>
+    </div>
+</div>
+
+<!-- Same layout, dark transparent for scenery overlay -->
+<div style="padding:20px">
+    <div style="color:#607080;font-size:10px;margin-bottom:6px;letter-spacing:1px">PROTO C variant: over bright scenery</div>
+    <div style="background:linear-gradient(135deg,#5a9fd4,#87ceeb,#f0e68c);padding:20px;border-radius:8px">
+        <div class="ap-hud" style="background:rgba(6,14,28,0.82)">
+            <div class="hud-ap active"><span class="dot"></span>AP</div>
+            <div class="hud-sep"></div>
+            <div class="hud-item active"><span class="lbl">H</span><span class="val">270</span><span class="unit">&deg;</span></div>
+            <div class="hud-item active"><span class="lbl">A</span><span class="val">5000</span><span class="unit">ft</span></div>
+            <div class="hud-item"><span class="lbl">V</span><span class="val">+0</span></div>
+            <div class="hud-item"><span class="lbl">S</span><span class="val">120</span><span class="unit">kt</span></div>
+            <div class="hud-sep"></div>
+            <div class="hud-nav">N</div>
+            <div class="hud-nav">A</div>
+        </div>
+    </div>
+</div>
+
+<script src="/ui/shared/platform-utils.js"></script>
+<script src="/ui/shared/telemetry.js"></script>
+<script>
+const telem = new Telemetry();
+telem.onData(d => {
+    const ap = d.autopilot || {};
+    document.getElementById('hdg-val').textContent = ap.headingBug ?? '---';
+    document.getElementById('alt-val').textContent = ap.altitudeBug ?? '---';
+    document.getElementById('vs-val').textContent = (ap.verticalSpeed >= 0 ? '+' : '') + (ap.verticalSpeed ?? 0);
+    document.getElementById('spd-val').textContent = ap.airspeedBug ?? '---';
+
+    const s = (id, on) => document.getElementById(id)?.classList.toggle('active', !!on);
+    s('btn-ap', ap.master);
+    s('cell-hdg', ap.headingHold);
+    s('cell-alt', ap.altitudeHold);
+    s('cell-vs', ap.verticalSpeedHold);
+    s('cell-spd', ap.airspeedHold);
+    s('btn-nav', ap.navHold);
+    s('btn-apr', ap.approachHold);
+});
+
+document.querySelectorAll('[data-cmd]').forEach(el => {
+    el.addEventListener('click', e => {
+        e.stopPropagation();
+        fetch('/api/command', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({command: el.dataset.cmd}) });
+    });
+});
+const cmds = { 'btn-ap':'AP_MASTER','btn-nav':'AP_NAV1_HOLD','btn-apr':'AP_APR_HOLD',
+    'cell-hdg':'AP_HDG_HOLD','cell-alt':'AP_ALT_HOLD','cell-vs':'AP_VS_HOLD','cell-spd':'AP_AIRSPEED_HOLD' };
+Object.entries(cmds).forEach(([id,cmd]) => {
+    document.getElementById(id)?.addEventListener('click', () => {
+        fetch('/api/command', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({command: cmd}) });
+    });
+});
+</script>
+</body>
+</html>
