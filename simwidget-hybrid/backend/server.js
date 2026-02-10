@@ -3739,8 +3739,8 @@ setupWeatherRoutes(app, () => simConnectConnection);
 // Setup Copilot AI API (streaming LLM proxy)
 setupCopilotRoutes(app, () => flightData);
 
-// Setup AI Pilot API (autopilot advisory + command validation)
-setupAiPilotRoutes(app, () => flightData);
+// Setup AI Pilot API (autopilot advisory + command execution via SimConnect)
+setupAiPilotRoutes(app, () => flightData, () => simConnectConnection, eventMap);
 
 const troubleshoot = new TroubleshootEngine('SimGlass');
 

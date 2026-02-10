@@ -45,14 +45,43 @@ CURRENT FLIGHT STATE:
 - Gear: ${fd.gearDown ? 'DOWN' : 'UP'}, Flaps: ${fd.flapsIndex || 0}`;
 }
 
-function setupAiPilotRoutes(app, getFlightData) {
+function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
+
+    // Map API command names to actual SimConnect event names
+    // (API uses short names, SimConnect uses _ENGLISH suffix for value-set events)
+    const COMMAND_TO_EVENT = {
+        'AP_MASTER': 'AP_MASTER',
+        'TOGGLE_FLIGHT_DIRECTOR': 'TOGGLE_FLIGHT_DIRECTOR',
+        'YAW_DAMPER_TOGGLE': 'YAW_DAMPER_TOGGLE',
+        'AP_HDG_HOLD': 'AP_HDG_HOLD',
+        'AP_ALT_HOLD': 'AP_ALT_HOLD',
+        'AP_VS_HOLD': 'AP_VS_HOLD',
+        'AP_AIRSPEED_HOLD': 'AP_PANEL_SPEED_HOLD',
+        'AP_NAV1_HOLD': 'AP_NAV1_HOLD',
+        'AP_APR_HOLD': 'AP_APR_HOLD',
+        'AP_BC_HOLD': 'AP_BC_HOLD',
+        'HEADING_BUG_INC': 'HEADING_BUG_INC',
+        'HEADING_BUG_DEC': 'HEADING_BUG_DEC',
+        'HEADING_BUG_SET': 'HEADING_BUG_SET',
+        'AP_ALT_VAR_INC': 'AP_ALT_VAR_INC',
+        'AP_ALT_VAR_DEC': 'AP_ALT_VAR_DEC',
+        'AP_ALT_VAR_SET': 'AP_ALT_VAR_SET_ENGLISH',
+        'AP_VS_VAR_INC': 'AP_VS_VAR_INC',
+        'AP_VS_VAR_DEC': 'AP_VS_VAR_DEC',
+        'AP_VS_VAR_SET': 'AP_VS_VAR_SET_ENGLISH',
+        'AP_SPD_VAR_INC': 'AP_SPD_VAR_INC',
+        'AP_SPD_VAR_DEC': 'AP_SPD_VAR_DEC',
+        'AP_SPD_VAR_SET': 'AP_SPD_VAR_SET'
+    };
 
     // Status endpoint
     app.get('/api/ai-pilot/status', (req, res) => {
         const fd = getFlightData();
         const cfg = getCopilotConfig();
+        const sc = getSimConnect ? getSimConnect() : null;
         res.json({
             hasLlm: !!(cfg.licenseKey),
+            simConnected: !!sc,
             phase: 'UNKNOWN',  // phase is tracked client-side
             flightData: {
                 altitude: Math.round(fd.altitude || 0),
@@ -65,22 +94,11 @@ function setupAiPilotRoutes(app, getFlightData) {
         });
     });
 
-    // Command execution — validates and forwards AP command
+    // Command execution — validates, then fires SimConnect event directly
     app.post('/api/ai-pilot/command', express_json_guard, (req, res) => {
         const { command, value } = req.body;
 
-        // Whitelist of allowed AP commands
-        const ALLOWED_COMMANDS = [
-            'AP_MASTER', 'TOGGLE_FLIGHT_DIRECTOR', 'YAW_DAMPER_TOGGLE',
-            'AP_HDG_HOLD', 'AP_ALT_HOLD', 'AP_VS_HOLD', 'AP_AIRSPEED_HOLD',
-            'AP_NAV1_HOLD', 'AP_APR_HOLD', 'AP_BC_HOLD', 'AP_VNAV',
-            'HEADING_BUG_INC', 'HEADING_BUG_DEC', 'HEADING_BUG_SET',
-            'AP_ALT_VAR_INC', 'AP_ALT_VAR_DEC', 'AP_ALT_VAR_SET',
-            'AP_VS_VAR_INC', 'AP_VS_VAR_DEC', 'AP_VS_VAR_SET',
-            'AP_SPD_VAR_INC', 'AP_SPD_VAR_DEC', 'AP_SPD_VAR_SET'
-        ];
-
-        if (!command || !ALLOWED_COMMANDS.includes(command)) {
+        if (!command || !COMMAND_TO_EVENT[command]) {
             return res.status(400).json({ error: 'Invalid command: ' + command });
         }
 
@@ -95,10 +113,32 @@ function setupAiPilotRoutes(app, getFlightData) {
             if (command.includes('SPD') && (value < 40 || value > 500)) {
                 return res.status(400).json({ error: 'Speed out of range (40-500)' });
             }
+            if (command === 'HEADING_BUG_SET' && (value < 0 || value > 360)) {
+                return res.status(400).json({ error: 'Heading out of range (0-360)' });
+            }
         }
 
-        // Command is valid — client handles actual WS send
-        res.json({ success: true, command, value });
+        // Resolve the actual SimConnect event name
+        const simEventName = COMMAND_TO_EVENT[command];
+        const sc = getSimConnect ? getSimConnect() : null;
+        const simValue = Math.round(value || 0);
+
+        if (!sc || !eventMap || eventMap[simEventName] === undefined) {
+            // SimConnect not available — command is valid but can't execute
+            console.log(`[AI-Pilot] ${command} validated (SimConnect not connected)`);
+            return res.json({ success: true, command, simEvent: simEventName, value: simValue, executed: false });
+        }
+
+        const eventId = eventMap[simEventName];
+
+        try {
+            sc.transmitClientEvent(0, eventId, simValue, 1, 16);
+            console.log(`[AI-Pilot] ${command} → ${simEventName} (eventId: ${eventId}, value: ${simValue})`);
+            res.json({ success: true, command, simEvent: simEventName, value: simValue, executed: true });
+        } catch (e) {
+            console.error(`[AI-Pilot] SimConnect error: ${e.message}`);
+            res.status(500).json({ error: 'SimConnect transmit failed: ' + e.message });
+        }
     });
 
     // Advisory endpoint — proxies to copilot chat with AI pilot system prompt
