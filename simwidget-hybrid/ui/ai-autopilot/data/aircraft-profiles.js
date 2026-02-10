@@ -84,7 +84,7 @@ const AIRCRAFT_PROFILES = {
             flapSetting: 0,        // 0° for normal, 10° for short field
             runupRpm: 1800,
             idleRpm: 1000,
-            rotationPitch: -25,    // AXIS_ELEVATOR_SET value for rotation
+            rotationPitch: -8,     // AXIS_ELEVATOR_SET value for rotation (gentle ~16% deflection)
             initialClimbAgl: 200,  // AGL to engage AP
             flapRetractAgl: 500,   // AGL to retract flaps
             departureAgl: 1000     // AGL to accelerate from Vy to cruise

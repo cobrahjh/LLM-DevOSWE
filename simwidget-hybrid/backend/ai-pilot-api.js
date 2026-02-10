@@ -235,7 +235,7 @@ function scaleSimValue(command, value) {
     if (command === 'THROTTLE_SET' || command === 'MIXTURE_SET' || command === 'MIXTURE1_SET' || command === 'PROP_PITCH_SET') {
         return Math.round((value / 100) * 16383);  // 0-100% → 0-16383
     }
-    if (command === 'AXIS_ELEVATOR_SET') {
+    if (command === 'AXIS_ELEVATOR_SET' || command === 'AXIS_RUDDER_SET' || command === 'AXIS_AILERONS_SET') {
         return Math.round((value / 50) * 16383);   // -50 to +50 → -16383 to +16383
     }
     return Math.round(value || 0);
@@ -275,6 +275,9 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
         'FLAPS_UP': 'FLAPS_UP',
         'FLAPS_DOWN': 'FLAPS_DOWN',
         'AXIS_ELEVATOR_SET': 'AXIS_ELEVATOR_SET',
+        'AXIS_RUDDER_SET': 'AXIS_RUDDER_SET',
+        'AXIS_AILERONS_SET': 'AXIS_AILERONS_SET',
+        'CENTER_AILER_RUDDER': 'CENTER_AILER_RUDDER',
         'PARKING_BRAKES': 'PARKING_BRAKES',
         // Engine start
         'TOGGLE_STARTER1': 'TOGGLE_STARTER1',

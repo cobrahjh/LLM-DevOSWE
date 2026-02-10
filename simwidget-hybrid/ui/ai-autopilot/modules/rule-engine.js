@@ -255,9 +255,19 @@ class RuleEngine {
                         this._runwayHeading = Math.round(d.heading || 0);
                     }
                 }
+                // Ground steering — use rudder to hold runway heading
+                // P-factor causes left yaw on takeoff roll, rudder compensates
+                if (this._runwayHeading !== null) {
+                    const hdgErr = ((d.heading || 0) - this._runwayHeading + 540) % 360 - 180;
+                    // Proportional rudder: ~2 units per degree of error, capped at ±15
+                    const rudder = Math.max(-15, Math.min(15, hdgErr * 2));
+                    this._cmdValue('AXIS_RUDDER_SET', rudder, `Rudder ${rudder > 0 ? 'R' : 'L'} (hdg err ${Math.round(hdgErr)}°)`);
+                }
                 // Transition to ROTATE at Vr
                 if (ias >= (speeds.Vr || 55)) {
                     this._takeoffSubPhase = 'ROTATE';
+                    // Center controls for rotation
+                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder for rotation');
                 }
                 break;
 
@@ -271,10 +281,17 @@ class RuleEngine {
                 break;
 
             case 'LIFTOFF':
-                // Release back-pressure
-                this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release pitch — positive climb');
+                // Reduce back-pressure to gentle climb attitude (not full release)
+                this._cmdValue('AXIS_ELEVATOR_SET', -3, 'Gentle climb pitch');
+                // Center rudder and ailerons — wings level priority
+                this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder');
+                this._cmdValue('AXIS_AILERONS_SET', 0, 'Wings level');
                 // Wait for positive climb rate and safe altitude
-                if (vs > 200 && agl > (tk.initialClimbAgl || 200)) {
+                if (vs > 100 && agl > (tk.initialClimbAgl || 200)) {
+                    // Release all manual controls before AP takeover
+                    this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release pitch for AP');
+                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder for AP');
+                    this._cmdValue('AXIS_AILERONS_SET', 0, 'Center ailerons for AP');
                     this._takeoffSubPhase = 'INITIAL_CLIMB';
                 }
                 break;
