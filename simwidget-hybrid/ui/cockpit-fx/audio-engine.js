@@ -1,8 +1,9 @@
 /**
- * CockpitFX AudioEngine v2.0.0
+ * CockpitFX AudioEngine v2.1.0
  * Web Audio API graph manager — creates AudioContext, routes layers through
- * dynamics compressor, master gain and optional bass-shaker low-pass filter.
+ * cabin perspective filter, dynamics compressor, master gain and bass-shaker.
  * v2.0: Sample loading, decoding, playback (OGG with WAV fallback).
+ * v2.1: Inside/outside perspective — cabin LP + resonance filter.
  */
 class AudioEngine {
     constructor() {
@@ -22,11 +23,27 @@ class AudioEngine {
         this._compressor.attack.value = 0.003;
         this._compressor.release.value = 0.15;
 
-        // Full-range output → compressor → destination
-        this.masterGain.connect(this._compressor);
+        // Cabin perspective filter (inside = muffled, outside = flat)
+        // LP simulates fuselage attenuating high frequencies
+        this._cabinLP = this.ctx.createBiquadFilter();
+        this._cabinLP.type = 'lowpass';
+        this._cabinLP.frequency.value = 20000; // flat = outside
+        this._cabinLP.Q.value = 0.5;
+        // Peaking filter for cabin body resonance (~300 Hz)
+        this._cabinRes = this.ctx.createBiquadFilter();
+        this._cabinRes.type = 'peaking';
+        this._cabinRes.frequency.value = 300;
+        this._cabinRes.Q.value = 1.0;
+        this._cabinRes.gain.value = 0; // flat = outside
+        this._perspective = 'outside';
+
+        // Full-range: master → cabinLP → cabinRes → compressor → destination
+        this.masterGain.connect(this._cabinLP);
+        this._cabinLP.connect(this._cabinRes);
+        this._cabinRes.connect(this._compressor);
         this._compressor.connect(this.ctx.destination);
 
-        // Bass shaker chain: master → LP filter → bass gain → destination
+        // Bass shaker chain: master → LP filter → bass gain → compressor
         this.bassFilter = this.ctx.createBiquadFilter();
         this.bassFilter.type = 'lowpass';
         this.bassFilter.frequency.value = 120;
@@ -89,6 +106,48 @@ class AudioEngine {
     /** Set bass LP filter cutoff (Hz) */
     setBassFrequency(f) {
         this.bassFilter.frequency.setTargetAtTime(f, this.ctx.currentTime, 0.02);
+    }
+
+    /** Set perspective: 'inside' (muffled cabin) or 'outside' (full spectrum) */
+    setPerspective(p) {
+        this._perspective = p;
+        // Apply with current openness
+        this._applyCabinFilter(this._openness || 0);
+    }
+
+    /** Get current perspective */
+    getPerspective() { return this._perspective; }
+
+    /**
+     * Set cabin openness (0 = sealed, 1 = fully open).
+     * Blends the cabin filter: when inside + open, highs leak through.
+     * Has no effect in outside mode (already flat).
+     */
+    setCabinOpenness(v) {
+        this._openness = Math.max(0, Math.min(1, v));
+        if (this._perspective === 'inside') {
+            this._applyCabinFilter(this._openness);
+        }
+    }
+
+    /** Apply cabin filter with openness blend */
+    _applyCabinFilter(openness) {
+        const t = this.ctx.currentTime;
+        const tau = 0.08;
+        if (this._perspective === 'inside') {
+            // Sealed cabin: LP 2800 Hz, resonance +4 dB
+            // Fully open: LP 12000 Hz, resonance +1 dB (still some cabin effect)
+            const lpFreq = 2800 + openness * 9200;
+            const resGain = 4 - openness * 3;
+            this._cabinLP.frequency.setTargetAtTime(lpFreq, t, tau);
+            this._cabinLP.Q.setTargetAtTime(0.7 - openness * 0.2, t, tau);
+            this._cabinRes.gain.setTargetAtTime(resGain, t, tau);
+        } else {
+            // Outside: flat
+            this._cabinLP.frequency.setTargetAtTime(20000, t, tau);
+            this._cabinLP.Q.setTargetAtTime(0.5, t, tau);
+            this._cabinRes.gain.setTargetAtTime(0, t, tau);
+        }
     }
 
     /** Check OGG Vorbis support */

@@ -22,6 +22,7 @@ class CockpitFxPane extends SimGlassBase {
         this._masterVol = 80;
         this._bassVol = 0;
         this._bassFreq = 120;
+        this._perspective = 'outside';
         this._raf = null;
         this._prevGS = undefined;
 
@@ -271,7 +272,12 @@ class CockpitFxPane extends SimGlassBase {
             this.el.skPower.textContent = this.enabled ? 'ON' : 'OFF';
             this.el.skPower.classList.toggle('active', this.enabled);
             this.el.dot.className = 'cfx-status-dot ' + (this.enabled ? 'on' : 'off');
-            if (this.enabled) this.audioEngine.resume();
+            if (this.enabled) {
+                this.audioEngine.resume();
+                this.audioEngine.setMasterVolume(this._masterVol / 100);
+            } else {
+                this.audioEngine.setMasterVolume(0);
+            }
             this._saveSettings();
         });
 
@@ -286,14 +292,24 @@ class CockpitFxPane extends SimGlassBase {
             this._saveSettings();
         });
 
-        // Bass LP frequency softkeys
+        // Perspective toggle (INT/EXT) — replaces LP+ softkey
         this.el.skBassUp.addEventListener('click', () => {
+            this._perspective = this._perspective === 'outside' ? 'inside' : 'outside';
+            this.el.skBassUp.textContent = this._perspective === 'inside' ? 'INT' : 'EXT';
+            this.el.skBassUp.classList.toggle('active', this._perspective === 'inside');
+            if (this.audioEngine) this.audioEngine.setPerspective(this._perspective);
+            this._saveSettings();
+        });
+
+        // Bass LP frequency — click +10, right-click -10
+        this.el.skBassDn.addEventListener('click', () => {
             this._bassFreq = Math.min(200, this._bassFreq + 10);
             this.el.bassFreqLabel.textContent = this._bassFreq;
             if (this.audioEngine) this.audioEngine.setBassFrequency(this._bassFreq);
             this._saveSettings();
         });
-        this.el.skBassDn.addEventListener('click', () => {
+        this.el.skBassDn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
             this._bassFreq = Math.max(60, this._bassFreq - 10);
             this.el.bassFreqLabel.textContent = this._bassFreq;
             if (this.audioEngine) this.audioEngine.setBassFrequency(this._bassFreq);
@@ -444,6 +460,7 @@ class CockpitFxPane extends SimGlassBase {
         this.audioEngine.setMasterVolume(this._masterVol / 100);
         this.audioEngine.setBassFrequency(this._bassFreq);
         this.audioEngine.setBassVolume(this._bassVol / 100);
+        this.audioEngine.setPerspective(this._perspective);
     }
 
     _applyProfile() {
@@ -466,7 +483,16 @@ class CockpitFxPane extends SimGlassBase {
         const d = msg.data || msg;
         this._lastData = d;
 
-        if (this.enabled && this.audioEngine) this.audioEngine.update(d);
+        if (this.enabled && this.audioEngine) {
+            this.audioEngine.update(d);
+            // Feed door/canopy openness to cabin filter
+            const openness = Math.max(
+                d.canopyOpen || 0,
+                d.exitOpen0 || 0, d.exitOpen1 || 0,
+                d.exitOpen2 || 0, d.exitOpen3 || 0
+            );
+            this.audioEngine.setCabinOpenness(openness);
+        }
 
         // Shake engine: inject _prevGS for braking detection
         d._prevGS = this._prevGS;
@@ -558,6 +584,7 @@ class CockpitFxPane extends SimGlassBase {
             masterVol: this._masterVol !== undefined ? this._masterVol : 80,
             bassFreq: this._bassFreq,
             bassVol: this._bassVol !== undefined ? this._bassVol : 0,
+            perspective: this._perspective,
             layerVols: this._layerVols,
             layerBass: this._layerBass,
             layerEnabled: this._layerEnabled,
@@ -590,6 +617,11 @@ class CockpitFxPane extends SimGlassBase {
             if (s.layerVols) Object.assign(this._layerVols, s.layerVols);
             if (s.layerBass) Object.assign(this._layerBass, s.layerBass);
             if (s.layerEnabled) Object.assign(this._layerEnabled, s.layerEnabled);
+            if (s.perspective) {
+                this._perspective = s.perspective;
+                this.el.skBassUp.textContent = this._perspective === 'inside' ? 'INT' : 'EXT';
+                this.el.skBassUp.classList.toggle('active', this._perspective === 'inside');
+            }
             if (s.profile) this.profile = s.profile;
             if (this.shakeEngine) {
                 if (s.shakeEnabled !== undefined) {

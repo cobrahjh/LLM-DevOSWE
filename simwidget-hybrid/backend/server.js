@@ -3290,6 +3290,13 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'ROTATION VELOCITY BODY X', 'radians per second', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'ROTATION VELOCITY BODY Z', 'radians per second', SimConnectDataType.FLOAT64, 0);
 
+        // Doors / canopy / exits (5 vars) — for cabin perspective filter
+        handle.addToDataDefinition(0, 'CANOPY OPEN', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'EXIT OPEN:0', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'EXIT OPEN:1', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'EXIT OPEN:2', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'EXIT OPEN:3', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+
         // Individual Fuel Tank Capacities (11 vars)
         handle.addToDataDefinition(0, 'FUEL TANK LEFT MAIN CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'FUEL TANK RIGHT MAIN CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
@@ -3303,7 +3310,7 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL1 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL2 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
 
-        console.log('[SimConnect] Registered 121 SimVars for MSFS 2024');
+        console.log('[SimConnect] Registered 126 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3444,6 +3451,9 @@ async function initSimConnect() {
                     fd.gearPos0 = rf(); fd.gearPos1 = rf(); fd.gearPos2 = rf();
                     fd.flapPercent = rf();
                     fd.rotVelX = rf(); fd.rotVelZ = rf();
+                    fd.canopyOpen = rf();
+                    fd.exitOpen0 = rf(); fd.exitOpen1 = rf();
+                    fd.exitOpen2 = rf(); fd.exitOpen3 = rf();
                 } catch (e) {
                     if (!this._loggedReadError) {
                         console.error('[SimConnect] Data read partial at buffer offset, got', Object.keys(fd).length, 'vars. Error:', e.message);
@@ -3585,6 +3595,8 @@ function startMockData() {
             flapPercent: mockSpd < 100 ? 30 : 0,
             rotVelX: (Math.random() - 0.5) * 0.02,
             rotVelZ: (Math.random() - 0.5) * 0.01,
+            canopyOpen: 0,
+            exitOpen0: 0, exitOpen1: 0, exitOpen2: 0, exitOpen3: 0,
             // Flight controls (mock)
             aileron: 0,
             elevator: 0,
