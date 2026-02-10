@@ -1,0 +1,261 @@
+/* CockpitFX Mixer UI v1.0.0 */
+.cockpit-fx {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    max-width: 420px;
+    margin: 0 auto;
+    font-family: var(--sg-font-ui, 'Segoe UI', sans-serif);
+    color: var(--sg-text-primary, #F0F4F8);
+    background: var(--sg-bg-deep, rgba(8, 18, 34, 0.94));
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Header */
+.fx-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0 10px;
+    border-bottom: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
+}
+.fx-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--sg-accent-green, #00E676);
+}
+.fx-profile-select {
+    background: var(--sg-bg-input, rgba(4,10,22,0.95));
+    color: var(--sg-text-primary, #F0F4F8);
+    border: 1px solid var(--sg-border-medium, rgba(0,230,118,0.22));
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* Master row */
+.fx-master {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--sg-bg-panel, rgba(12,24,44,0.90));
+    border-radius: 6px;
+    border: 1px solid var(--sg-border-medium, rgba(0,230,118,0.22));
+}
+.fx-master-label {
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 60px;
+}
+.fx-master .fx-slider {
+    flex: 1;
+}
+.fx-master-pct {
+    font-size: 12px;
+    min-width: 32px;
+    text-align: right;
+    color: var(--sg-text-secondary, #A8B8CC);
+}
+.fx-master-toggle {
+    background: var(--sg-accent-red, #FF1744);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    min-width: 40px;
+    transition: background 0.2s;
+}
+.fx-master-toggle.active {
+    background: var(--sg-accent-green, #00E676);
+    color: #000;
+}
+
+/* Layer rows */
+.fx-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.fx-layer-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--sg-bg-card, rgba(16,32,56,0.80));
+    border-radius: 4px;
+    border: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
+}
+.fx-layer-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+}
+.fx-layer-name {
+    font-size: 12px;
+    min-width: 80px;
+    color: var(--sg-text-secondary, #A8B8CC);
+}
+.fx-layer-slider {
+    flex: 1;
+}
+.fx-layer-pct {
+    font-size: 11px;
+    min-width: 28px;
+    text-align: right;
+    color: var(--sg-text-muted, #607080);
+}
+.fx-layer-toggle {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--sg-accent-green, #00E676);
+}
+
+/* Shared slider style */
+.fx-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--sg-bg-input, rgba(4,10,22,0.95));
+    outline: none;
+    cursor: pointer;
+}
+.fx-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--sg-accent-green, #00E676);
+    cursor: pointer;
+}
+.fx-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--sg-accent-green, #00E676);
+    cursor: pointer;
+    border: none;
+}
+
+/* Data readout strip */
+.fx-data {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    padding: 8px 10px;
+    background: var(--sg-bg-panel, rgba(12,24,44,0.90));
+    border-radius: 4px;
+    border: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
+    font-family: var(--sg-font-data, 'Consolas', monospace);
+    font-size: 11px;
+    color: var(--sg-text-muted, #607080);
+}
+.fx-data-item {
+    display: flex;
+    gap: 4px;
+}
+.fx-data-label {
+    color: var(--sg-text-muted, #607080);
+}
+.fx-data-value {
+    color: var(--sg-text-secondary, #A8B8CC);
+}
+
+/* Bass shaker section */
+.fx-bass {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--sg-bg-card, rgba(16,32,56,0.80));
+    border-radius: 4px;
+    border: 1px solid var(--sg-border-subtle, rgba(0,230,118,0.1));
+}
+.fx-bass-label {
+    font-size: 12px;
+    color: var(--sg-text-secondary, #A8B8CC);
+    min-width: 100px;
+}
+.fx-bass .fx-slider {
+    flex: 1;
+}
+.fx-bass-freq {
+    font-size: 11px;
+    min-width: 40px;
+    text-align: right;
+    color: var(--sg-text-muted, #607080);
+}
+
+/* Motion effects section */
+.fx-motion-section {
+    padding: 8px 10px;
+    background: var(--sg-bg-panel, rgba(12,24,44,0.90));
+    border-radius: 6px;
+    border: 1px solid var(--sg-border-medium, rgba(0,230,118,0.22));
+}
+.fx-motion-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sg-accent-cyan, #00D4FF);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.fx-motion-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+.fx-motion-name {
+    font-size: 11px;
+    color: var(--sg-text-secondary, #A8B8CC);
+    min-width: 70px;
+}
+.fx-motion-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--sg-bg-input, rgba(4,10,22,0.95));
+    border-radius: 2px;
+    overflow: hidden;
+}
+.fx-motion-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.1s linear;
+    background: var(--sg-accent-green, #00E676);
+}
+.fx-motion-fill.warn {
+    background: var(--sg-accent-amber, #FF9100);
+}
+.fx-motion-fill.danger {
+    background: var(--sg-accent-red, #FF1744);
+}
+.fx-motion-value {
+    font-size: 10px;
+    font-family: var(--sg-font-data, 'Consolas', monospace);
+    color: var(--sg-text-muted, #607080);
+    min-width: 44px;
+    text-align: right;
+}
+
+/* Connection status */
+.fx-status {
+    font-size: 10px;
+    text-align: center;
+    color: var(--sg-text-dim, #3A4A5C);
+    padding-top: 4px;
+}
+.fx-status.connected { color: var(--sg-accent-green, #00E676); }
+.fx-status.disconnected { color: var(--sg-accent-red, #FF1744); }
