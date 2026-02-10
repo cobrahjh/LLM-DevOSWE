@@ -17,80 +17,95 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">◧</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">⚠️ Failures Monitor</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-clear" title="Clear All Failures">🔄</button>
-                <span class="connection-status" id="conn-status" title="SimConnect Status">●</span>
+        <div class="fail-full">
+            <div class="widget-header">
+                <span class="widget-title">⚠️ Failures Monitor</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-clear" title="Clear All Failures">🔄</button>
+                    <span class="connection-status" id="conn-status" title="SimConnect Status">●</span>
+                </div>
+            </div>
+
+            <div class="status-summary" id="status-summary">
+                <div class="status-indicator ok" id="overall-status">
+                    <span class="status-icon">✓</span>
+                    <span class="status-text">All Systems Normal</span>
+                </div>
+            </div>
+
+            <div class="systems-grid">
+                <div class="system-card" data-system="engine1">
+                    <div class="system-icon">🔧</div>
+                    <div class="system-name">Engine 1</div>
+                    <div class="system-status ok" id="status-engine1">OK</div>
+                </div>
+                <div class="system-card" data-system="engine2">
+                    <div class="system-icon">🔧</div>
+                    <div class="system-name">Engine 2</div>
+                    <div class="system-status ok" id="status-engine2">OK</div>
+                </div>
+                <div class="system-card" data-system="electrical">
+                    <div class="system-icon">⚡</div>
+                    <div class="system-name">Electrical</div>
+                    <div class="system-status ok" id="status-electrical">OK</div>
+                </div>
+                <div class="system-card" data-system="hydraulic">
+                    <div class="system-icon">💧</div>
+                    <div class="system-name">Hydraulics</div>
+                    <div class="system-status ok" id="status-hydraulic">OK</div>
+                </div>
+                <div class="system-card" data-system="fuel">
+                    <div class="system-icon">⛽</div>
+                    <div class="system-name">Fuel</div>
+                    <div class="system-status ok" id="status-fuel">OK</div>
+                </div>
+                <div class="system-card" data-system="avionics">
+                    <div class="system-icon">📡</div>
+                    <div class="system-name">Avionics</div>
+                    <div class="system-status ok" id="status-avionics">OK</div>
+                </div>
+                <div class="system-card" data-system="gear">
+                    <div class="system-icon">🛞</div>
+                    <div class="system-name">Gear</div>
+                    <div class="system-status ok" id="status-gear">OK</div>
+                </div>
+                <div class="system-card" data-system="flaps">
+                    <div class="system-icon">✈️</div>
+                    <div class="system-name">Flaps</div>
+                    <div class="system-status ok" id="status-flaps">OK</div>
+                </div>
+            </div>
+
+            <div class="failures-list" id="failures-list">
+                <div class="list-header">Active Failures</div>
+                <div class="list-content" id="list-content">
+                    <div class="no-failures">No active failures</div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <div class="section-header">Quick Failures (Test)</div>
+                <div class="action-grid">
+                    <button class="action-btn" data-failure="engine1">ENG 1</button>
+                    <button class="action-btn" data-failure="engine2">ENG 2</button>
+                    <button class="action-btn" data-failure="electrical">ELEC</button>
+                    <button class="action-btn" data-failure="hydraulic">HYD</button>
+                </div>
             </div>
         </div>
 
-        <div class="status-summary" id="status-summary">
-            <div class="status-indicator ok" id="overall-status">
-                <span class="status-icon">✓</span>
-                <span class="status-text">All Systems Normal</span>
+        <div class="fail-compact">
+            <div class="cell">
+                <span class="lbl">FAILURES</span>
+                <span class="val" id="compact-fail-count">0</span>
             </div>
-        </div>
-
-        <div class="systems-grid">
-            <div class="system-card" data-system="engine1">
-                <div class="system-icon">🔧</div>
-                <div class="system-name">Engine 1</div>
-                <div class="system-status ok" id="status-engine1">OK</div>
+            <div class="cell">
+                <span class="lbl">STATUS</span>
+                <span class="val" id="compact-status">ALL OK</span>
             </div>
-            <div class="system-card" data-system="engine2">
-                <div class="system-icon">🔧</div>
-                <div class="system-name">Engine 2</div>
-                <div class="system-status ok" id="status-engine2">OK</div>
-            </div>
-            <div class="system-card" data-system="electrical">
-                <div class="system-icon">⚡</div>
-                <div class="system-name">Electrical</div>
-                <div class="system-status ok" id="status-electrical">OK</div>
-            </div>
-            <div class="system-card" data-system="hydraulic">
-                <div class="system-icon">💧</div>
-                <div class="system-name">Hydraulics</div>
-                <div class="system-status ok" id="status-hydraulic">OK</div>
-            </div>
-            <div class="system-card" data-system="fuel">
-                <div class="system-icon">⛽</div>
-                <div class="system-name">Fuel</div>
-                <div class="system-status ok" id="status-fuel">OK</div>
-            </div>
-            <div class="system-card" data-system="avionics">
-                <div class="system-icon">📡</div>
-                <div class="system-name">Avionics</div>
-                <div class="system-status ok" id="status-avionics">OK</div>
-            </div>
-            <div class="system-card" data-system="gear">
-                <div class="system-icon">🛞</div>
-                <div class="system-name">Gear</div>
-                <div class="system-status ok" id="status-gear">OK</div>
-            </div>
-            <div class="system-card" data-system="flaps">
-                <div class="system-icon">✈️</div>
-                <div class="system-name">Flaps</div>
-                <div class="system-status ok" id="status-flaps">OK</div>
-            </div>
-        </div>
-
-        <div class="failures-list" id="failures-list">
-            <div class="list-header">Active Failures</div>
-            <div class="list-content" id="list-content">
-                <div class="no-failures">No active failures</div>
-            </div>
-        </div>
-
-        <div class="quick-actions">
-            <div class="section-header">Quick Failures (Test)</div>
-            <div class="action-grid">
-                <button class="action-btn" data-failure="engine1">ENG 1</button>
-                <button class="action-btn" data-failure="engine2">ENG 2</button>
-                <button class="action-btn" data-failure="electrical">ELEC</button>
-                <button class="action-btn" data-failure="hydraulic">HYD</button>
-            </div>
+            <div class="alert-msg" id="compact-alert">No active failures</div>
         </div>
     </div>
 

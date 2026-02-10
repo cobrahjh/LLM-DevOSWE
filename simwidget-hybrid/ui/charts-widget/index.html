@@ -18,36 +18,58 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">◧</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">📊 Charts</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+        <div class="charts-full">
+            <div class="widget-header">
+                <span class="widget-title">📊 Charts</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <input type="text" id="airport-input" placeholder="ICAO (e.g., KJFK)" maxlength="4">
+                <button id="btn-search">Search</button>
+            </div>
+
+            <div class="source-tabs" id="source-tabs">
+                <button class="tab active" data-source="chartfox">ChartFox</button>
+                <button class="tab" data-source="faa">FAA (US)</button>
+                <button class="tab" data-source="eurocontrol">EuroCtrl</button>
+            </div>
+
+            <div class="charts-content" id="charts-content">
+                <div class="placeholder">
+                    <div class="placeholder-icon">📊</div>
+                    <div class="placeholder-text">Enter airport code to search charts</div>
+                    <div class="placeholder-hint">Free sources: ChartFox, FAA, Eurocontrol</div>
+                </div>
+            </div>
+
+            <div class="recent-section" id="recent-section">
+                <div class="recent-label">Recent:</div>
+                <div class="recent-list" id="recent-list"></div>
             </div>
         </div>
 
-        <div class="search-section">
-            <input type="text" id="airport-input" placeholder="ICAO (e.g., KJFK)" maxlength="4">
-            <button id="btn-search">Search</button>
-        </div>
-
-        <div class="source-tabs" id="source-tabs">
-            <button class="tab active" data-source="chartfox">ChartFox</button>
-            <button class="tab" data-source="faa">FAA (US)</button>
-            <button class="tab" data-source="eurocontrol">EuroCtrl</button>
-        </div>
-
-        <div class="charts-content" id="charts-content">
-            <div class="placeholder">
-                <div class="placeholder-icon">📊</div>
-                <div class="placeholder-text">Enter airport code to search charts</div>
-                <div class="placeholder-hint">Free sources: ChartFox, FAA, Eurocontrol</div>
+        <div class="charts-compact">
+            <div class="cell">
+                <span class="lbl">ICAO</span>
+                <span class="val" id="compact-icao">----</span>
             </div>
-        </div>
-
-        <div class="recent-section" id="recent-section">
-            <div class="recent-label">Recent:</div>
-            <div class="recent-list" id="recent-list"></div>
+            <div class="cell">
+                <span class="lbl">CHART</span>
+                <span class="val" id="compact-chart">--</span>
+            </div>
+            <div class="cell">
+                <span class="lbl">TYPE</span>
+                <span class="val" id="compact-type">--</span>
+            </div>
+            <div class="cell">
+                <span class="lbl">STATUS</span>
+                <span class="val" id="compact-status">IDLE</span>
+            </div>
         </div>
     </div>
 

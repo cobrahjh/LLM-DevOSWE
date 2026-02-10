@@ -19,44 +19,53 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">◧</button>
     <div class="widget-container checklist-maker">
-        <div class="widget-header">
-            <span class="widget-title">✏️ Checklist Maker</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-export" title="Export JSON">📤</button>
-                <button class="btn-icon" id="btn-import" title="Import JSON">📥</button>
+        <div class="clm-full">
+            <div class="widget-header">
+                <span class="widget-title">✏️ Checklist Maker</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-export" title="Export JSON">📤</button>
+                    <button class="btn-icon" id="btn-import" title="Import JSON">📥</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Aircraft Selection -->
-        <div class="maker-section">
-            <div class="section-header">
-                <span class="section-title">Aircraft</span>
-                <button class="btn-sm btn-add" id="btn-new-aircraft">+ New Aircraft</button>
+            <!-- Aircraft Selection -->
+            <div class="maker-section">
+                <div class="section-header">
+                    <span class="section-title">Aircraft</span>
+                    <button class="btn-sm btn-add" id="btn-new-aircraft">+ New Aircraft</button>
+                </div>
+                <div class="aircraft-list" id="aircraft-list"></div>
             </div>
-            <div class="aircraft-list" id="aircraft-list"></div>
-        </div>
 
-        <!-- Checklist Phases -->
-        <div class="maker-section" id="phases-section" style="display:none;">
-            <div class="section-header">
-                <span class="section-title">Phases</span>
-                <button class="btn-sm btn-add" id="btn-new-phase">+ Add Phase</button>
+            <!-- Checklist Phases -->
+            <div class="maker-section" id="phases-section" style="display:none;">
+                <div class="section-header">
+                    <span class="section-title">Phases</span>
+                    <button class="btn-sm btn-add" id="btn-new-phase">+ Add Phase</button>
+                </div>
+                <div class="phase-list" id="phase-list"></div>
             </div>
-            <div class="phase-list" id="phase-list"></div>
-        </div>
 
-        <!-- Checklist Items -->
-        <div class="maker-section" id="items-section" style="display:none;">
-            <div class="section-header">
-                <span class="section-title" id="items-title">Items</span>
-                <button class="btn-sm btn-add" id="btn-new-item">+ Add Item</button>
+            <!-- Checklist Items -->
+            <div class="maker-section" id="items-section" style="display:none;">
+                <div class="section-header">
+                    <span class="section-title" id="items-title">Items</span>
+                    <button class="btn-sm btn-add" id="btn-new-item">+ Add Item</button>
+                </div>
+                <div class="items-list" id="items-list"></div>
             </div>
-            <div class="items-list" id="items-list"></div>
-        </div>
 
-        <!-- Hidden file input for import -->
-        <input type="file" id="import-file" accept=".json" style="display:none">
+            <!-- Hidden file input for import -->
+            <input type="file" id="import-file" accept=".json" style="display:none">
+        </div>
+        <div class="clm-compact">
+            <div class="cell"><span class="lbl">AIRCRAFT</span><span class="val" id="compact-aircraft">--</span></div>
+            <div class="cell"><span class="lbl">PHASES</span><span class="val" id="compact-phases">0</span></div>
+            <div class="cell"><span class="lbl">ITEMS</span><span class="val" id="compact-items">0</span></div>
+            <div class="cell"><span class="lbl">EDITING</span><span class="val" id="compact-editing">--</span></div>
+        </div>
     </div>
 
     <!-- Modal for editing -->

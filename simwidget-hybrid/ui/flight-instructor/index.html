@@ -10,34 +10,46 @@
 </head>
 <body>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">🎓 Flight Instructor</span>
-            <button class="btn-icon" id="btn-voice">🔊</button>
+        <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
+
+        <div class="fi-full">
+            <div class="widget-header">
+                <span class="widget-title">&#127891; Flight Instructor</span>
+                <button class="btn-icon" id="btn-voice">&#128266;</button>
+            </div>
+            <div class="scenario-select">
+                <select id="scenario">
+                    <option value="pattern">Traffic Pattern</option>
+                    <option value="landing">Landing Evaluation</option>
+                    <option value="stalls">Stall Recovery</option>
+                    <option value="emergencies">Emergency Procedures</option>
+                    <option value="instruments">Instrument Scan</option>
+                    <option value="crosswind">Crosswind Landing</option>
+                </select>
+                <button class="btn-start" id="btn-start">&#9654; Start</button>
+                <button class="btn-next" id="btn-next" title="Skip to next phase">&#9654;&#9654;</button>
+            </div>
+            <div class="instruction-panel" id="instruction-panel">
+                <div class="instruction-text" id="instruction-text">Select a training scenario and click Start</div>
+            </div>
+            <div class="metrics-panel">
+                <div class="metric"><span class="metric-label">Score</span><span class="metric-value" id="score">--</span></div>
+                <div class="metric"><span class="metric-label">Phase</span><span class="metric-value" id="phase">--</span></div>
+                <div class="metric"><span class="metric-label">Errors</span><span class="metric-value" id="errors">0</span></div>
+            </div>
+            <div class="feedback-panel" id="feedback-panel"></div>
+            <div class="grade-display" id="grade-display">
+                <div class="grade-letter" id="grade-letter">-</div>
+                <div class="grade-text" id="grade-text">Complete a scenario for grading</div>
+            </div>
         </div>
-        <div class="scenario-select">
-            <select id="scenario">
-                <option value="pattern">Traffic Pattern</option>
-                <option value="landing">Landing Evaluation</option>
-                <option value="stalls">Stall Recovery</option>
-                <option value="emergencies">Emergency Procedures</option>
-                <option value="instruments">Instrument Scan</option>
-                <option value="crosswind">Crosswind Landing</option>
-            </select>
-            <button class="btn-start" id="btn-start">&#9654; Start</button>
-            <button class="btn-next" id="btn-next" title="Skip to next phase">&#9654;&#9654;</button>
-        </div>
-        <div class="instruction-panel" id="instruction-panel">
-            <div class="instruction-text" id="instruction-text">Select a training scenario and click Start</div>
-        </div>
-        <div class="metrics-panel">
-            <div class="metric"><span class="metric-label">Score</span><span class="metric-value" id="score">--</span></div>
-            <div class="metric"><span class="metric-label">Phase</span><span class="metric-value" id="phase">--</span></div>
-            <div class="metric"><span class="metric-label">Errors</span><span class="metric-value" id="errors">0</span></div>
-        </div>
-        <div class="feedback-panel" id="feedback-panel"></div>
-        <div class="grade-display" id="grade-display">
-            <div class="grade-letter" id="grade-letter">-</div>
-            <div class="grade-text" id="grade-text">Complete a scenario for grading</div>
+
+        <div class="fi-compact">
+            <div class="cell"><span class="lbl">LESSON</span><span class="val" id="c-lesson">--</span></div>
+            <div class="cell"><span class="lbl">PHASE</span><span class="val" id="c-phase">--</span></div>
+            <div class="cell"><span class="lbl">SCORE</span><span class="val" id="c-score">--</span></div>
+            <div class="cell"><span class="lbl">GRADE</span><span class="val" id="c-grade">-</span></div>
+            <div class="tip" id="c-tip">Select a scenario and start training</div>
         </div>
     </div>
     <!-- SimGlassBase Dependencies -->

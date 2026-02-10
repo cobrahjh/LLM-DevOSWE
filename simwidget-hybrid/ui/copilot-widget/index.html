@@ -14,216 +14,232 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">◧</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">🧑‍✈️ AI Copilot</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-voice" title="Voice On/Off">🔊</button>
-                <button class="btn-icon" id="btn-listen" title="Listen for commands">🎤</button>
+        <div class="cop-full">
+            <div class="widget-header">
+                <span class="widget-title">🧑‍✈️ AI Copilot</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-voice" title="Voice On/Off">🔊</button>
+                    <button class="btn-icon" id="btn-listen" title="Listen for commands">🎤</button>
+                </div>
+            </div>
+
+            <!-- Mode Tabs -->
+            <div class="copilot-tabs">
+                <button class="tab active" data-mode="assist">Assist</button>
+                <button class="tab" data-mode="checklist">Checklist</button>
+                <button class="tab" data-mode="emergency">Emergency</button>
+                <button class="tab" data-mode="atc">ATC</button>
+                <button class="tab" data-mode="advisor">Advisor</button>
+            </div>
+
+            <!-- Flight Status Bar -->
+            <div class="flight-status">
+                <div class="status-item">
+                    <span class="status-label">ALT</span>
+                    <span class="status-value" id="stat-altitude">---</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">SPD</span>
+                    <span class="status-value" id="stat-speed">---</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">HDG</span>
+                    <span class="status-value" id="stat-heading">---</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">VS</span>
+                    <span class="status-value" id="stat-vspeed">---</span>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="copilot-content">
+                <!-- Assist Mode -->
+                <div class="mode-panel active" id="panel-assist">
+                    <div class="copilot-avatar">
+                        <div class="avatar-icon">🧑‍✈️</div>
+                        <div class="avatar-status" id="copilot-status">Standing by</div>
+                    </div>
+                    <div class="message-area" id="message-area">
+                        <div class="message copilot">
+                            <span class="msg-text">Good day, Captain. I'm your AI copilot. Ready to assist with checklists, callouts, and ATC communications.</span>
+                        </div>
+                    </div>
+                    <div class="input-area">
+                        <input type="text" id="pilot-input" placeholder="Type or say a command...">
+                        <button class="btn-send" id="btn-send">➤</button>
+                    </div>
+                </div>
+
+                <!-- Checklist Mode -->
+                <div class="mode-panel" id="panel-checklist">
+                    <div class="checklist-header">
+                        <select id="checklist-aircraft">
+                            <option value="generic">Generic GA</option>
+                            <option value="c172">Cessna 172</option>
+                            <option value="c208">Cessna 208 Caravan</option>
+                            <option value="tbm930">TBM 930</option>
+                            <option value="cj4">Citation CJ4</option>
+                            <option value="737">Boeing 737</option>
+                            <option value="a320">Airbus A320</option>
+                        </select>
+                        <select id="checklist-phase">
+                            <option value="preflight">Pre-Flight</option>
+                            <option value="startup">Startup</option>
+                            <option value="taxi">Taxi</option>
+                            <option value="takeoff">Takeoff</option>
+                            <option value="cruise">Cruise</option>
+                            <option value="landing">Landing</option>
+                            <option value="shutdown">Shutdown</option>
+                        </select>
+                    </div>
+                    <div class="checklist-items" id="checklist-items">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="checklist-controls">
+                        <button class="btn btn-secondary" id="btn-checklist-reset">Reset</button>
+                        <button class="btn btn-primary" id="btn-checklist-auto">▶ Auto Run</button>
+                    </div>
+                </div>
+
+                <!-- Emergency Mode -->
+                <div class="mode-panel" id="panel-emergency">
+                    <div class="emergency-header">
+                        <select id="emergency-type">
+                            <option value="engine-failure">Engine Failure</option>
+                            <option value="engine-fire">Engine Fire</option>
+                            <option value="electrical">Electrical Failure</option>
+                            <option value="hydraulic">Hydraulic Failure</option>
+                            <option value="pressurization">Pressurization Failure</option>
+                            <option value="ditching">Ditching</option>
+                        </select>
+                        <button class="btn btn-danger" id="btn-squawk-7700">SQUAWK 7700</button>
+                    </div>
+                    <div class="emergency-items" id="emergency-items">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="emergency-controls">
+                        <button class="btn btn-secondary" id="btn-emergency-reset">Reset</button>
+                        <button class="btn btn-warning" id="btn-emergency-auto">▶ Run Procedure</button>
+                    </div>
+                </div>
+
+                <!-- ATC Mode -->
+                <div class="mode-panel" id="panel-atc">
+                    <div class="atc-frequency">
+                        <span class="freq-label">FREQ</span>
+                        <input type="text" id="atc-freq" value="121.500" class="freq-input">
+                    </div>
+
+                    <!-- ATIS Decoder -->
+                    <div class="atis-section">
+                        <div class="atis-header">
+                            <span>ATIS Decoder</span>
+                            <button class="btn-small" id="btn-decode-atis">Decode</button>
+                        </div>
+                        <textarea id="atis-input" placeholder="Paste ATIS text here..." rows="3"></textarea>
+                        <div class="atis-decoded" id="atis-decoded"></div>
+                    </div>
+
+                    <div class="atc-messages" id="atc-messages">
+                        <div class="atc-msg incoming">
+                            <span class="callsign">ATC</span>
+                            <span class="msg">No active communications</span>
+                        </div>
+                    </div>
+                    <div class="atc-quick-actions">
+                        <button class="atc-btn" data-action="request-taxi">Request Taxi</button>
+                        <button class="atc-btn" data-action="request-takeoff">Request Takeoff</button>
+                        <button class="atc-btn" data-action="request-landing">Request Landing</button>
+                        <button class="atc-btn" data-action="readback">Readback</button>
+                    </div>
+                </div>
+
+                <!-- Advisor Mode -->
+                <div class="mode-panel" id="panel-advisor">
+                    <div class="advisor-section">
+                        <h3>Active Callouts</h3>
+                        <div class="callout-toggles">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="callout-altitude" checked>
+                                <span>Altitude (1000ft intervals)</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="callout-speed" checked>
+                                <span>Speed (V-speeds)</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="callout-approach">
+                                <span>Approach callouts</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="callout-gear" checked>
+                                <span>Gear reminders</span>
+                            </label>
+                            <label class="toggle-item">
+                                <input type="checkbox" id="callout-flaps" checked>
+                                <span>Flap callouts</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="advisor-section">
+                        <h3>V-Speeds</h3>
+                        <div class="vspeed-inputs">
+                            <div class="vspeed-row">
+                                <label>Vr</label>
+                                <input type="number" id="vspeed-vr" value="55" min="0" max="300">
+                            </div>
+                            <div class="vspeed-row">
+                                <label>V2</label>
+                                <input type="number" id="vspeed-v2" value="62" min="0" max="300">
+                            </div>
+                            <div class="vspeed-row">
+                                <label>Vref</label>
+                                <input type="number" id="vspeed-vref" value="65" min="0" max="300">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="advisor-section">
+                        <h3>Voice</h3>
+                        <div class="voice-controls">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="natural-voice-toggle">
+                                <span>Natural voice (OpenAI TTS)</span>
+                            </label>
+                            <div class="voice-select-row">
+                                <select id="voice-select" disabled>
+                                    <option value="nova">Nova (warm female)</option>
+                                    <option value="shimmer">Shimmer (bright female)</option>
+                                    <option value="alloy">Alloy (neutral)</option>
+                                    <option value="echo">Echo (male)</option>
+                                    <option value="fable">Fable (British)</option>
+                                    <option value="onyx">Onyx (deep male)</option>
+                                    <option value="coral">Coral (conversational)</option>
+                                    <option value="sage">Sage (calm)</option>
+                                    <option value="ash">Ash (clear)</option>
+                                    <option value="ballad">Ballad (soft)</option>
+                                </select>
+                                <button class="btn-small" id="btn-test-voice" disabled>Test</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Mode Tabs -->
-        <div class="copilot-tabs">
-            <button class="tab active" data-mode="assist">Assist</button>
-            <button class="tab" data-mode="checklist">Checklist</button>
-            <button class="tab" data-mode="emergency">Emergency</button>
-            <button class="tab" data-mode="atc">ATC</button>
-            <button class="tab" data-mode="advisor">Advisor</button>
-        </div>
-
-        <!-- Flight Status Bar -->
-        <div class="flight-status">
-            <div class="status-item">
-                <span class="status-label">ALT</span>
-                <span class="status-value" id="stat-altitude">---</span>
+        <!-- Compact Mode View -->
+        <div class="cop-compact">
+            <div class="cell">
+                <span class="lbl">STATUS</span>
+                <span class="val" id="compact-status">Idle</span>
             </div>
-            <div class="status-item">
-                <span class="status-label">SPD</span>
-                <span class="status-value" id="stat-speed">---</span>
+            <div class="cell">
+                <span class="lbl">MODE</span>
+                <span class="val" id="compact-mode">Assist</span>
             </div>
-            <div class="status-item">
-                <span class="status-label">HDG</span>
-                <span class="status-value" id="stat-heading">---</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">VS</span>
-                <span class="status-value" id="stat-vspeed">---</span>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="copilot-content">
-            <!-- Assist Mode -->
-            <div class="mode-panel active" id="panel-assist">
-                <div class="copilot-avatar">
-                    <div class="avatar-icon">🧑‍✈️</div>
-                    <div class="avatar-status" id="copilot-status">Standing by</div>
-                </div>
-                <div class="message-area" id="message-area">
-                    <div class="message copilot">
-                        <span class="msg-text">Good day, Captain. I'm your AI copilot. Ready to assist with checklists, callouts, and ATC communications.</span>
-                    </div>
-                </div>
-                <div class="input-area">
-                    <input type="text" id="pilot-input" placeholder="Type or say a command...">
-                    <button class="btn-send" id="btn-send">➤</button>
-                </div>
-            </div>
-
-            <!-- Checklist Mode -->
-            <div class="mode-panel" id="panel-checklist">
-                <div class="checklist-header">
-                    <select id="checklist-aircraft">
-                        <option value="generic">Generic GA</option>
-                        <option value="c172">Cessna 172</option>
-                        <option value="c208">Cessna 208 Caravan</option>
-                        <option value="tbm930">TBM 930</option>
-                        <option value="cj4">Citation CJ4</option>
-                        <option value="737">Boeing 737</option>
-                        <option value="a320">Airbus A320</option>
-                    </select>
-                    <select id="checklist-phase">
-                        <option value="preflight">Pre-Flight</option>
-                        <option value="startup">Startup</option>
-                        <option value="taxi">Taxi</option>
-                        <option value="takeoff">Takeoff</option>
-                        <option value="cruise">Cruise</option>
-                        <option value="landing">Landing</option>
-                        <option value="shutdown">Shutdown</option>
-                    </select>
-                </div>
-                <div class="checklist-items" id="checklist-items">
-                    <!-- Populated by JS -->
-                </div>
-                <div class="checklist-controls">
-                    <button class="btn btn-secondary" id="btn-checklist-reset">Reset</button>
-                    <button class="btn btn-primary" id="btn-checklist-auto">▶ Auto Run</button>
-                </div>
-            </div>
-
-            <!-- Emergency Mode -->
-            <div class="mode-panel" id="panel-emergency">
-                <div class="emergency-header">
-                    <select id="emergency-type">
-                        <option value="engine-failure">Engine Failure</option>
-                        <option value="engine-fire">Engine Fire</option>
-                        <option value="electrical">Electrical Failure</option>
-                        <option value="hydraulic">Hydraulic Failure</option>
-                        <option value="pressurization">Pressurization Failure</option>
-                        <option value="ditching">Ditching</option>
-                    </select>
-                    <button class="btn btn-danger" id="btn-squawk-7700">SQUAWK 7700</button>
-                </div>
-                <div class="emergency-items" id="emergency-items">
-                    <!-- Populated by JS -->
-                </div>
-                <div class="emergency-controls">
-                    <button class="btn btn-secondary" id="btn-emergency-reset">Reset</button>
-                    <button class="btn btn-warning" id="btn-emergency-auto">▶ Run Procedure</button>
-                </div>
-            </div>
-
-            <!-- ATC Mode -->
-            <div class="mode-panel" id="panel-atc">
-                <div class="atc-frequency">
-                    <span class="freq-label">FREQ</span>
-                    <input type="text" id="atc-freq" value="121.500" class="freq-input">
-                </div>
-
-                <!-- ATIS Decoder -->
-                <div class="atis-section">
-                    <div class="atis-header">
-                        <span>ATIS Decoder</span>
-                        <button class="btn-small" id="btn-decode-atis">Decode</button>
-                    </div>
-                    <textarea id="atis-input" placeholder="Paste ATIS text here..." rows="3"></textarea>
-                    <div class="atis-decoded" id="atis-decoded"></div>
-                </div>
-
-                <div class="atc-messages" id="atc-messages">
-                    <div class="atc-msg incoming">
-                        <span class="callsign">ATC</span>
-                        <span class="msg">No active communications</span>
-                    </div>
-                </div>
-                <div class="atc-quick-actions">
-                    <button class="atc-btn" data-action="request-taxi">Request Taxi</button>
-                    <button class="atc-btn" data-action="request-takeoff">Request Takeoff</button>
-                    <button class="atc-btn" data-action="request-landing">Request Landing</button>
-                    <button class="atc-btn" data-action="readback">Readback</button>
-                </div>
-            </div>
-
-            <!-- Advisor Mode -->
-            <div class="mode-panel" id="panel-advisor">
-                <div class="advisor-section">
-                    <h3>Active Callouts</h3>
-                    <div class="callout-toggles">
-                        <label class="toggle-item">
-                            <input type="checkbox" id="callout-altitude" checked>
-                            <span>Altitude (1000ft intervals)</span>
-                        </label>
-                        <label class="toggle-item">
-                            <input type="checkbox" id="callout-speed" checked>
-                            <span>Speed (V-speeds)</span>
-                        </label>
-                        <label class="toggle-item">
-                            <input type="checkbox" id="callout-approach">
-                            <span>Approach callouts</span>
-                        </label>
-                        <label class="toggle-item">
-                            <input type="checkbox" id="callout-gear" checked>
-                            <span>Gear reminders</span>
-                        </label>
-                        <label class="toggle-item">
-                            <input type="checkbox" id="callout-flaps" checked>
-                            <span>Flap callouts</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="advisor-section">
-                    <h3>V-Speeds</h3>
-                    <div class="vspeed-inputs">
-                        <div class="vspeed-row">
-                            <label>Vr</label>
-                            <input type="number" id="vspeed-vr" value="55" min="0" max="300">
-                        </div>
-                        <div class="vspeed-row">
-                            <label>V2</label>
-                            <input type="number" id="vspeed-v2" value="62" min="0" max="300">
-                        </div>
-                        <div class="vspeed-row">
-                            <label>Vref</label>
-                            <input type="number" id="vspeed-vref" value="65" min="0" max="300">
-                        </div>
-                    </div>
-                </div>
-                <div class="advisor-section">
-                    <h3>Voice</h3>
-                    <div class="voice-controls">
-                        <label class="toggle-item">
-                            <input type="checkbox" id="natural-voice-toggle">
-                            <span>Natural voice (OpenAI TTS)</span>
-                        </label>
-                        <div class="voice-select-row">
-                            <select id="voice-select" disabled>
-                                <option value="nova">Nova (warm female)</option>
-                                <option value="shimmer">Shimmer (bright female)</option>
-                                <option value="alloy">Alloy (neutral)</option>
-                                <option value="echo">Echo (male)</option>
-                                <option value="fable">Fable (British)</option>
-                                <option value="onyx">Onyx (deep male)</option>
-                                <option value="coral">Coral (conversational)</option>
-                                <option value="sage">Sage (calm)</option>
-                                <option value="ash">Ash (clear)</option>
-                                <option value="ballad">Ballad (soft)</option>
-                            </select>
-                            <button class="btn-small" id="btn-test-voice" disabled>Test</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="msg" id="compact-action">Standing by</div>
         </div>
     </div>
 

@@ -42,6 +42,7 @@ class ChecklistMaker extends SimGlassBase {
 
         this.loadState();
         this.initControls();
+        this.initCompactToggle();
         this.renderAircraftList();
     }
 
@@ -752,6 +753,49 @@ class ChecklistMaker extends SimGlassBase {
 
     closeModal() {
         document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    // Compact mode
+    initCompactToggle() {
+        const btn = document.getElementById('compact-toggle');
+        const saved = localStorage.getItem('checklist-maker-compact') === 'true';
+        if (saved) {
+            document.querySelector('.widget-container').classList.add('compact');
+            btn.classList.add('active');
+        }
+        btn.addEventListener('click', () => {
+            const container = document.querySelector('.widget-container');
+            container.classList.toggle('compact');
+            const isCompact = container.classList.contains('compact');
+            btn.classList.toggle('active', isCompact);
+            localStorage.setItem('checklist-maker-compact', isCompact);
+            if (isCompact) this.updateCompact();
+        });
+    }
+
+    updateCompact() {
+        const aircraftIds = Object.keys(this.customChecklists);
+        const aircraft = this.selectedAircraft ? this.customChecklists[this.selectedAircraft] : null;
+
+        document.getElementById('compact-aircraft').textContent =
+            aircraft ? aircraft.name : (aircraftIds.length > 0 ? aircraftIds.length + ' saved' : '--');
+
+        let phaseCount = 0;
+        let totalItems = 0;
+        if (aircraft) {
+            const checklists = aircraft.checklists || {};
+            phaseCount = Object.keys(checklists).length;
+            for (const phase of Object.values(checklists)) {
+                totalItems += (phase.items || []).length;
+            }
+        }
+        document.getElementById('compact-phases').textContent = phaseCount;
+        document.getElementById('compact-items').textContent = totalItems;
+
+        const editing = this.selectedPhase && aircraft
+            ? (aircraft.checklists[this.selectedPhase]?.name || '--')
+            : '--';
+        document.getElementById('compact-editing').textContent = editing;
     }
 
     destroy() {

@@ -12,8 +12,10 @@
 </head>
 <body>
 <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+<button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
 
 <div class="cfx" id="widget-root">
+<div class="cfx-full">
     <!-- ROW 1: Data strip -->
     <div class="cfx-data">
         <div class="cfx-data-grp">
@@ -97,7 +99,25 @@
         <div class="cfx-sk" id="cfx-sk-bass-dn">LP-</div>
         <div class="cfx-sk" id="cfx-sk-layers">LYRS</div>
     </div>
+</div><!-- /cfx-full -->
+
+<!-- Compact view -->
+<div class="cfx-compact">
+    <div class="cell">
+        <span class="lbl">ACTIVE FX</span>
+        <span class="val" id="cfx-compact-active">0/6</span>
+    </div>
+    <div class="cell">
+        <span class="lbl">MASTER</span>
+        <span class="val" id="cfx-compact-power">OFF</span>
+    </div>
+    <div class="cell">
+        <span class="lbl">PROFILE</span>
+        <span class="val" id="cfx-compact-profile">GA SNGL</span>
+    </div>
 </div>
+
+</div><!-- /widget-root -->
 
 <!-- Hidden persistence elements (layer volumes/enables stored internally) -->
 <div class="cfx-hidden">

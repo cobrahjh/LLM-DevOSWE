@@ -18,14 +18,18 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
-    <div class="widget-container">
-    <div class="widget camera-widget">
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
+
+    <div class="widget-container" id="widget-root">
+        <!-- ============ FULL LAYOUT ============ -->
+        <div class="cam-full" id="cam-full">
+        <div class="widget camera-widget">
         <div class="widget-header">
             <span class="widget-title">📷 CAMERA CONTROL</span>
             <span class="widget-brand">SimGlass</span>
             <span class="connection-status" id="conn-status" title="Disconnected">●</span>
         </div>
-        
+
         <div class="widget-content">
             <!-- View Buttons -->
             <div class="section">
@@ -127,6 +131,19 @@
             </div>
         </div>
     </div>
+        </div> <!-- cam-full -->
+
+        <!-- ============ COMPACT CAMERA LAYOUT ============ -->
+        <div class="cam-compact" id="cam-compact">
+            <div class="cam-compact-cell cam-view-cell">
+                <span class="lbl">VIEW</span>
+                <span class="val" id="cam-view-name">Cockpit</span>
+            </div>
+            <div class="cam-nav">
+                <button id="cam-prev" title="Previous view">&#9664;</button>
+                <button id="cam-next" title="Next view">&#9654;</button>
+            </div>
+        </div>
     </div> <!-- widget-container -->
 
     <script src="/ui/shared/settings-panel.js"></script>

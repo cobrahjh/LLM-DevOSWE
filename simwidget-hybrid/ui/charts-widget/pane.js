@@ -23,6 +23,7 @@ class ChartsPane extends SimGlassBase {
 
         this.initElements();
         this.initEvents();
+        this.initCompact();
         this.loadState();
         this.renderRecent();
     }
@@ -34,6 +35,12 @@ class ChartsPane extends SimGlassBase {
         this.content = document.getElementById('charts-content');
         this.recentList = document.getElementById('recent-list');
         this.sourceTabs = document.getElementById('source-tabs');
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.widgetContainer = document.querySelector('.widget-container');
+        this.compactIcao = document.getElementById('compact-icao');
+        this.compactChart = document.getElementById('compact-chart');
+        this.compactType = document.getElementById('compact-type');
+        this.compactStatus = document.getElementById('compact-status');
     }
 
     initEvents() {
@@ -59,6 +66,33 @@ class ChartsPane extends SimGlassBase {
                 }
             });
         });
+    }
+
+    initCompact() {
+        const saved = localStorage.getItem('charts-widget-compact');
+        if (saved === 'true') {
+            this.widgetContainer.classList.add('compact');
+            this.compactToggle.classList.add('active');
+        }
+        this.compactToggle.addEventListener('click', () => {
+            const isCompact = this.widgetContainer.classList.toggle('compact');
+            this.compactToggle.classList.toggle('active', isCompact);
+            localStorage.setItem('charts-widget-compact', isCompact);
+            if (isCompact) this.updateCompact();
+        });
+    }
+
+    updateCompact() {
+        this.compactIcao.textContent = this.currentAirport || '----';
+        if (this.charts.length > 0) {
+            this.compactChart.textContent = this.charts[0].name;
+            this.compactType.textContent = this.charts[0].type;
+            this.compactStatus.textContent = this.charts.length + ' CHT';
+        } else {
+            this.compactChart.textContent = '--';
+            this.compactType.textContent = '--';
+            this.compactStatus.textContent = this.currentAirport ? 'NONE' : 'IDLE';
+        }
     }
 
     async searchCharts(icao) {
@@ -91,6 +125,7 @@ class ChartsPane extends SimGlassBase {
             this.charts = charts;
             this.displayCharts(airport, charts);
             this.addToRecent(airport);
+            this.updateCompact();
 
         } catch (error) {
             this.showError(error.message || 'Failed to load charts');
