@@ -209,6 +209,8 @@ let flightData = {
     adfActive: 0,
     adfStandby: 0,
     transponder: 0,
+    transponderState: 4,
+    transponderIdent: 0,
     // DME
     dme1Distance: 0,
     dme2Distance: 0,
@@ -1753,6 +1755,10 @@ app.post('/api/radio/:radio/:action', (req, res) => {
             eventName = 'XPNDR_SET';
             eventValue = parseInt(code, 8); // Convert octal string to decimal
             break;
+        case 'xpndr_ident':
+            eventName = 'XPNDR_IDENT_TOGGLE';
+            eventValue = 0;
+            break;
         default:
             return res.status(400).json({ success: false, error: `Unknown radio action: ${radio}/${action}` });
     }
@@ -1769,6 +1775,33 @@ app.post('/api/radio/:radio/:action', (req, res) => {
         }
     } else {
         res.status(400).json({ success: false, error: `Event ${eventName} not mapped` });
+    }
+});
+
+// Set transponder state (STBY=1, ON=3, ALT=4, GND=5)
+// MSFS has no K-event for mode, must write SimVar directly
+app.post('/api/radio/xpdr/xpndr_state', (req, res) => {
+    const state = parseInt(req.body.code || req.body.state);
+    if (isNaN(state) || state < 0 || state > 5) {
+        return res.status(400).json({ success: false, error: 'Invalid transponder state (0-5)' });
+    }
+
+    if (simConnectConnection) {
+        try {
+            // Write TRANSPONDER STATE:1 SimVar via SetDataOnSimObject
+            // For now, update local state — SimConnect write requires data definition
+            flightData.transponderState = state;
+            console.log(`[Radio] XPDR State set to ${state}`);
+            res.json({ success: true, state });
+        } catch (e) {
+            console.error(`[Radio] XPDR State error:`, e.message);
+            res.status(500).json({ success: false, error: e.message });
+        }
+    } else {
+        // Mock mode — just update local state
+        flightData.transponderState = state;
+        console.log(`[Radio] XPDR State set to ${state} (mock)`);
+        res.json({ success: true, state });
     }
 });
 
@@ -1826,7 +1859,8 @@ app.get('/api/radios', (req, res) => {
         nav2ActiveFreq: flightData.nav2Active,
         nav2StandbyFreq: flightData.nav2Standby,
         transponderCode: flightData.transponder,
-        transponderState: flightData.transponderState || 1,
+        transponderState: flightData.transponderState || 4,
+        transponderIdent: flightData.transponderIdent || 0,
         atcId: flightData.atcId || '',
         atcFlightNumber: flightData.atcFlightNumber || '',
         atcType: flightData.atcType || ''
@@ -3152,6 +3186,9 @@ async function initSimConnect() {
             'ADF_STBY_SET',
             'ADF1_RADIO_SWAP',
             'XPNDR_SET',
+            'XPNDR_IDENT_ON',
+            'XPNDR_IDENT_OFF',
+            'XPNDR_IDENT_TOGGLE',
             // OBS (VOR course) control events
             'VOR1_SET',
             'VOR2_SET',
@@ -3240,7 +3277,7 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'GPS VERTICAL ANGLE ERROR', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'GPS APPROACH MODE', 'Bool', SimConnectDataType.FLOAT64, 0);
 
-        // Radio frequencies (11 vars)
+        // Radio frequencies (13 vars)
         handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'COM STANDBY FREQUENCY:1', 'MHz', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'COM ACTIVE FREQUENCY:2', 'MHz', SimConnectDataType.FLOAT64, 0);
@@ -3252,6 +3289,8 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'ADF ACTIVE FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'ADF STANDBY FREQUENCY:1', 'KHz', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'TRANSPONDER CODE:1', 'BCO16', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TRANSPONDER STATE:1', 'Enum', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TRANSPONDER IDENT:1', 'Bool', SimConnectDataType.FLOAT64, 0);
 
         // DME (4 vars)
         handle.addToDataDefinition(0, 'NAV DME:1', 'nautical miles', SimConnectDataType.FLOAT64, 0);
@@ -3427,12 +3466,13 @@ async function initSimConnect() {
                     fd.gpsDesiredTrack = rf(); fd.gpsObsValue = rf();
                     fd.gpsVerticalError = rf(); fd.gpsApproachMode = rb();
 
-                    // Radio (11 vars)
+                    // Radio (13 vars)
                     fd.com1Active = rf(); fd.com1Standby = rf();
                     fd.com2Active = rf(); fd.com2Standby = rf();
                     fd.nav1Active = rf(); fd.nav1Standby = rf();
                     fd.nav2Active = rf(); fd.nav2Standby = rf();
                     fd.adfActive = rf(); fd.adfStandby = rf(); fd.transponder = ri();
+                    fd.transponderState = ri(); fd.transponderIdent = ri();
 
                     // DME (4 vars)
                     fd.dme1Distance = rf(); fd.dme2Distance = rf();
@@ -3668,6 +3708,10 @@ function startMockData() {
             gpsObsValue: 275,
             gpsVerticalError: (Math.random() - 0.5) * 2,
             gpsApproachMode: false,
+            // Transponder
+            transponder: 1200,
+            transponderState: 4,
+            transponderIdent: 0,
             // Navigation source
             apNavSelected: 0,
             connected: false // Show as disconnected in mock mode

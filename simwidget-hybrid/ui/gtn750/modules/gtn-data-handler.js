@@ -84,6 +84,18 @@ class GTNDataHandler {
         if (this.elements.nav1Stby) this.elements.nav1Stby.textContent = data.nav1Standby.toFixed(2);
         if (this.elements.xpdr) this.elements.xpdr.textContent = data.transponder.toString().padStart(4, '0');
 
+        // Transponder mode and ident
+        if (this.elements.xpdrMode && data.transponderState !== undefined) {
+            const modeMap = { 0: 'OFF', 1: 'SBY', 2: 'TST', 3: 'ON', 4: 'ALT', 5: 'GND' };
+            this.elements.xpdrMode.textContent = modeMap[data.transponderState] || 'ON';
+        }
+        if (this.elements.xpdrIdent) {
+            this.elements.xpdrIdent.classList.toggle('active', !!data.transponderIdent);
+        }
+        if (this.elements.xpdrModeIndicator) {
+            this.elements.xpdrModeIndicator.style.visibility = data.transponderIdent ? 'visible' : 'hidden';
+        }
+
         this.updateNavTuningInfo(data, nav1);
 
         if (this.elements.utcTime && data.zuluTime && this.core) {

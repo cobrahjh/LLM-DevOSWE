@@ -129,6 +129,9 @@ class GTN750Pane extends SimGlassBase {
             getState: () => this.getRendererState()
         });
 
+        // XPDR control panel
+        this.xpdrControl = new GTNXpdrControl({ serverPort: this.serverPort });
+
         // Deferred modules (loaded after 500ms)
         this.flightPlanManager = null;
         this.dataHandler = null;
@@ -335,6 +338,9 @@ class GTN750Pane extends SimGlassBase {
                 nav1Radial: this.elements.nav1Radial,
                 nav1Dme: this.elements.nav1Dme,
                 xpdr: this.elements.xpdr,
+                xpdrIdent: this.elements.xpdrIdent,
+                xpdrMode: this.elements.xpdrMode,
+                xpdrModeIndicator: this.elements.xpdrModeIndicator,
                 utcTime: this.elements.utcTime
             };
         }
@@ -398,6 +404,8 @@ class GTN750Pane extends SimGlassBase {
         if (d.nav1Active !== undefined) this.data.nav1Active = d.nav1Active;
         if (d.nav1Standby !== undefined) this.data.nav1Standby = d.nav1Standby;
         if (d.transponder !== undefined) this.data.transponder = d.transponder;
+        if (d.transponderState !== undefined) this.data.transponderState = d.transponderState;
+        if (d.transponderIdent !== undefined) this.data.transponderIdent = d.transponderIdent;
         if (d.zuluTime !== undefined) this.data.zuluTime = d.zuluTime;
         // Weather
         if (d.windDirection !== undefined) this.data.windDirection = d.windDirection;
@@ -421,6 +429,7 @@ class GTN750Pane extends SimGlassBase {
 
         // Update UI through modules
         this.dataHandler?.updateUI(this.data, this.cdiManager.nav1);
+        this.xpdrControl?.update(this.data);
         this.flightPlanManager?.setPosition(this.data.latitude, this.data.longitude);
         this.flightPlanManager?.setGroundSpeed(this.data.groundSpeed);
         this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager);
@@ -1149,6 +1158,9 @@ class GTN750Pane extends SimGlassBase {
             swapCom2: document.getElementById('swap-com2'),
             swapNav1: document.getElementById('swap-nav1'),
             xpdr: document.getElementById('xpdr'),
+            xpdrIdent: document.getElementById('xpdr-ident'),
+            xpdrMode: document.getElementById('xpdr-mode'),
+            xpdrModeIndicator: document.querySelector('.xpdr-mode-indicator'),
             utcTime: document.getElementById('utc-time'),
             tabs: document.querySelectorAll('.gtn-tab'),
             // Compact mode elements
@@ -1157,6 +1169,7 @@ class GTN750Pane extends SimGlassBase {
             gcNav1: document.getElementById('gc-nav1'),
             gcNav1Stby: document.getElementById('gc-nav1-stby'),
             gcXpdr: document.getElementById('gc-xpdr'),
+            gcXpdrMode: document.getElementById('gc-xpdr-mode'),
             gcTrk: document.getElementById('gc-trk'),
             gcGs: document.getElementById('gc-gs'),
             gcAlt: document.getElementById('gc-alt'),
@@ -1208,6 +1221,11 @@ class GTN750Pane extends SimGlassBase {
         }
 
         this.elements.btnDirect?.addEventListener('click', () => this.flightPlanManager?.showDirectTo());
+
+        // XPDR code click → open modal
+        this.elements.xpdr?.addEventListener('click', (e) => { e.stopPropagation(); this.xpdrControl.toggle(); });
+        // Top bar IDENT button → quick ident toggle
+        this.elements.xpdrIdent?.addEventListener('click', (e) => { e.stopPropagation(); this.xpdrControl._onIdent(); });
 
         // Frequency swaps
         this.elements.swapCom1?.addEventListener('click', () => this.dataHandler?.swapFrequency('COM1'));
@@ -1773,6 +1791,10 @@ class GTN750Pane extends SimGlassBase {
         if (e.gcNav1) e.gcNav1.textContent = (d.nav1Active || 108.00).toFixed(2);
         if (e.gcNav1Stby) e.gcNav1Stby.textContent = (d.nav1Standby || 108.00).toFixed(2);
         if (e.gcXpdr) e.gcXpdr.textContent = String(d.transponder || 1200).padStart(4, '0');
+        if (e.gcXpdrMode) {
+            const modeMap = { 0: 'OFF', 1: 'SBY', 2: 'TST', 3: 'ON', 4: 'ALT', 5: 'GND' };
+            e.gcXpdrMode.textContent = modeMap[d.transponderState] || 'ALT';
+        }
 
         // Corner data
         if (e.gcTrk) e.gcTrk.textContent = Math.round(d.track || d.heading || 0).toString().padStart(3, '0') + '\u00B0';
@@ -1927,6 +1949,7 @@ class GTN750Pane extends SimGlassBase {
         if (this.mapRenderer) this.mapRenderer.stop();
         if (this.dataHandler) this.dataHandler.destroy();
         if (this.flightPlanManager) this.flightPlanManager.destroy();
+        if (this.xpdrControl) this.xpdrControl.destroy();
 
         // Cancel compact render
         this.stopCompactRender();
