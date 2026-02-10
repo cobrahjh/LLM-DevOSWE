@@ -443,18 +443,47 @@
                     <div class="wx-radar-time" id="wx-radar-time"></div>
                 </div>
                 <div class="gtn-wx-info">
-                    <div class="wx-condition-banner" id="wx-condition-banner">
+                    <!-- Row 1: Flight Rules Header -->
+                    <div class="wx-flt-header">
+                        <span class="wx-flt-rules wx-flt-vfr" id="wx-flt-rules">VFR</span>
+                        <span class="wx-nearest-id" id="wx-nearest-id">----</span>
                         <span class="wx-condition-icon" id="wx-condition-icon">☀️</span>
                         <span class="wx-condition-text" id="wx-condition-text">Clear</span>
                     </div>
-                    <div class="wx-sim-weather">
-                        <span class="wx-item"><b>Wind:</b> <span id="wx-wind">---°/--kt</span></span>
-                        <span class="wx-item"><b>Temp:</b> <span id="wx-temp">--°C</span></span>
-                        <span class="wx-item"><b>Baro:</b> <span id="wx-baro">--.--"</span></span>
-                        <span class="wx-item"><b>Vis:</b> <span id="wx-vis">--SM</span></span>
-                        <span class="wx-item" id="wx-precip-item" style="display:none"><b>Precip:</b> <span id="wx-precip">None</span></span>
+                    <!-- Row 2: Decoded METAR Grid -->
+                    <div class="wx-decoded-grid">
+                        <div class="wx-decoded-col">
+                            <span class="wx-decoded-label">Wind</span>
+                            <span class="wx-decoded-value" id="wx-d-wind">---°/--kt</span>
+                        </div>
+                        <div class="wx-decoded-col">
+                            <span class="wx-decoded-label">Vis</span>
+                            <span class="wx-decoded-value" id="wx-d-vis">--SM</span>
+                        </div>
+                        <div class="wx-decoded-col">
+                            <span class="wx-decoded-label">Ceil</span>
+                            <span class="wx-decoded-value" id="wx-d-ceil">CLR</span>
+                        </div>
+                        <div class="wx-decoded-col">
+                            <span class="wx-decoded-label">Temp/Dew</span>
+                            <span class="wx-decoded-value" id="wx-d-temp">--°/--°C</span>
+                        </div>
+                        <div class="wx-decoded-col">
+                            <span class="wx-decoded-label">Altim</span>
+                            <span class="wx-decoded-value" id="wx-d-altim">--.--"</span>
+                        </div>
                     </div>
-                    <div class="wx-metar" id="wx-metar-text">External METAR data</div>
+                    <!-- Row 3: Computed Aviation Data -->
+                    <div class="wx-computed-row">
+                        <span class="wx-computed-item">FrzLvl: <b id="wx-frz-lvl">---</b>ft</span>
+                        <span class="wx-computed-item">DnsAlt: <b id="wx-dns-alt">---</b>ft</span>
+                        <span class="wx-computed-item">Icing: <b id="wx-icing" class="wx-icing-none">NONE</b></span>
+                    </div>
+                    <!-- Row 4: Raw METAR -->
+                    <div class="wx-metar" id="wx-metar-text">Fetching weather...</div>
+                    <!-- Row 5: Station Detail (shown on tap) -->
+                    <div class="wx-station-detail" id="wx-station-detail" style="display:none;"></div>
+                    <!-- Row 6: Weather Presets -->
                     <div class="wx-control-section">
                         <div class="wx-control-label">SET WEATHER</div>
                         <div class="wx-preset-grid">

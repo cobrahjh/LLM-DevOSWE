@@ -896,29 +896,6 @@ class GTN750Pane extends SimGlassBase {
             altitude: this.data.altitude, heading: this.data.heading
         }, w, h, this.weatherRange || 50);
 
-        // METAR display
-        if (this.elements.wxMetarText) {
-            const metarData = this.weatherOverlay.metarData;
-            if (metarData && metarData.size > 0) {
-                let nearest = null, nearestDist = Infinity;
-                metarData.forEach(m => {
-                    const dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, m.lat, m.lon);
-                    if (dist < nearestDist) { nearestDist = dist; nearest = m; }
-                });
-                this.elements.wxMetarText.textContent = nearest ? (nearest.raw || `${nearest.icao}: ${nearest.category}`) : 'No METAR data';
-            } else {
-                this.elements.wxMetarText.textContent = 'Fetching weather...';
-            }
-        }
-
-        // TAF summary in METAR text area (append if TAF layer active)
-        if (this.elements.wxMetarText && this.weatherOverlay.layers.taf) {
-            const tafSummary = this.weatherOverlay.getNearestTafSummary(this.data.latitude, this.data.longitude);
-            if (tafSummary) {
-                this.elements.wxMetarText.textContent += ' | TAF: ' + tafSummary;
-            }
-        }
-
         // Radar timestamp
         if (this.elements.wxRadarTime) {
             const frameTime = this.weatherOverlay.getCurrentFrameTime();
@@ -932,33 +909,157 @@ class GTN750Pane extends SimGlassBase {
             }
         }
 
-        this.updateSimWeatherDisplay();
+        this.updateWxInfoPanel();
     }
 
     // ===== WEATHER DISPLAY =====
 
-    updateSimWeatherDisplay() {
-        if (this.elements.wxWind) {
+    /**
+     * Unified weather info panel update — flight rules, decoded METAR grid,
+     * computed aviation data, raw METAR, condition icon, and station detail on tap.
+     * Falls back to sim weather when no METAR data available.
+     */
+    updateWxInfoPanel() {
+        // Find nearest METAR station
+        let nearest = null, nearestDist = Infinity;
+        const metarData = this.weatherOverlay?.metarData;
+        if (metarData && metarData.size > 0) {
+            metarData.forEach(m => {
+                const dist = this.core.calculateDistance(this.data.latitude, this.data.longitude, m.lat, m.lon);
+                if (dist < nearestDist) { nearestDist = dist; nearest = m; }
+            });
+        }
+
+        const hasMetar = !!nearest;
+
+        // --- Flight Rules Badge ---
+        if (this.elements.wxFltRules) {
+            const cat = hasMetar ? (nearest.category || 'VFR') : this._simFlightRules();
+            this.elements.wxFltRules.textContent = cat;
+            this.elements.wxFltRules.className = 'wx-flt-rules wx-flt-' + cat.toLowerCase();
+        }
+        if (this.elements.wxNearestId) {
+            this.elements.wxNearestId.textContent = hasMetar ? nearest.icao : '----';
+        }
+
+        // --- Condition Icon (prefer METAR category over sim precip) ---
+        this._updateConditionFromMetar(nearest);
+
+        // --- Decoded METAR Grid ---
+        if (hasMetar) {
+            // Wind
+            if (this.elements.wxDWind) {
+                const dir = nearest.wdir != null ? String(nearest.wdir).padStart(3, '0') : 'VRB';
+                const spd = nearest.wspd != null ? nearest.wspd : '--';
+                let windStr = `${dir}°/${spd}kt`;
+                if (nearest.gust) windStr += `G${nearest.gust}`;
+                this.elements.wxDWind.textContent = windStr;
+            }
+            // Visibility
+            if (this.elements.wxDVis) {
+                const v = nearest.visib;
+                this.elements.wxDVis.textContent = v != null ? (v >= 10 ? '10+SM' : `${v}SM`) : '--SM';
+            }
+            // Ceiling — lowest BKN/OVC
+            if (this.elements.wxDCeil) {
+                const clouds = nearest.clouds || [];
+                const ceil = clouds.find(c => c.cover === 'BKN' || c.cover === 'OVC');
+                if (ceil) {
+                    const alt = String(Math.round((ceil.base || 0) / 100)).padStart(3, '0');
+                    this.elements.wxDCeil.textContent = `${ceil.cover}${alt}`;
+                } else if (clouds.length > 0 && clouds[0].cover === 'CLR') {
+                    this.elements.wxDCeil.textContent = 'CLR';
+                } else if (clouds.length > 0) {
+                    const top = clouds[clouds.length - 1];
+                    const alt = String(Math.round((top.base || 0) / 100)).padStart(3, '0');
+                    this.elements.wxDCeil.textContent = `${top.cover}${alt}`;
+                } else {
+                    this.elements.wxDCeil.textContent = 'CLR';
+                }
+            }
+            // Temp/Dewpoint
+            if (this.elements.wxDTemp) {
+                const t = nearest.temp != null ? nearest.temp : '--';
+                const d = nearest.dewp != null ? nearest.dewp : '--';
+                this.elements.wxDTemp.textContent = `${t}°/${d}°C`;
+                const spread = (nearest.temp != null && nearest.dewp != null) ? Math.abs(nearest.temp - nearest.dewp) : 99;
+                this.elements.wxDTemp.classList.toggle('wx-fog-risk', spread <= 3);
+            }
+            // Altimeter
+            if (this.elements.wxDAltim) {
+                const alt = nearest.altimeter;
+                this.elements.wxDAltim.textContent = alt != null ? `${Number(alt).toFixed(2)}"` : '--.--"';
+            }
+        } else {
+            // Fallback to sim weather data
             const dir = Math.round(this.data.windDirection || 0);
             const spd = Math.round(this.data.windSpeed || 0);
-            this.elements.wxWind.textContent = `${dir.toString().padStart(3, '0')}°/${spd}kt`;
+            if (this.elements.wxDWind) this.elements.wxDWind.textContent = `${String(dir).padStart(3, '0')}°/${spd}kt`;
+            if (this.elements.wxDVis) {
+                const visSM = (this.data.visibility || 10000) / 1609.34;
+                this.elements.wxDVis.textContent = visSM >= 10 ? '10+SM' : `${visSM.toFixed(1)}SM`;
+            }
+            if (this.elements.wxDCeil) this.elements.wxDCeil.textContent = '---';
+            if (this.elements.wxDTemp) {
+                this.elements.wxDTemp.textContent = `${Math.round(this.data.ambientTemp || 15)}°C`;
+                this.elements.wxDTemp.classList.remove('wx-fog-risk');
+            }
+            if (this.elements.wxDAltim) this.elements.wxDAltim.textContent = `${(this.data.ambientPressure || 29.92).toFixed(2)}"`;
         }
-        if (this.elements.wxTemp) this.elements.wxTemp.textContent = `${Math.round(this.data.ambientTemp || 15)}°C`;
-        if (this.elements.wxBaro) this.elements.wxBaro.textContent = `${(this.data.ambientPressure || 29.92).toFixed(2)}"`;
-        if (this.elements.wxVis) {
-            const visSM = (this.data.visibility || 10000) / 1609.34;
-            this.elements.wxVis.textContent = visSM >= 10 ? '10+SM' : `${visSM.toFixed(1)}SM`;
-        }
-        if (this.elements.wxPrecip && this.elements.wxPrecipItem) {
-            const precip = this.data.precipState || 0;
-            if (precip === 0) {
-                this.elements.wxPrecipItem.style.display = 'none';
+
+        // --- Computed Aviation Data ---
+        const oat = hasMetar && nearest.temp != null ? nearest.temp : (this.data.ambientTemp || 15);
+        const alt = this.data.altitude || 0;
+        const baro = hasMetar && nearest.altimeter != null ? nearest.altimeter : (this.data.ambientPressure || 29.92);
+
+        // Freezing level: surface temp + lapse rate 2°C/1000ft
+        if (this.elements.wxFrzLvl) {
+            if (oat <= 0) {
+                this.elements.wxFrzLvl.textContent = 'SFC';
             } else {
-                this.elements.wxPrecipItem.style.display = '';
-                this.elements.wxPrecip.textContent = (precip & 4) ? 'Snow' : (precip & 2) ? 'Rain' : 'Yes';
+                const frzLvl = Math.round(alt + (oat / 2) * 1000);
+                this.elements.wxFrzLvl.textContent = frzLvl.toLocaleString();
             }
         }
-        this.updateWeatherConditionDisplay();
+
+        // Density altitude: pressureAlt + 120 * (OAT - stdTemp)
+        if (this.elements.wxDnsAlt) {
+            const pressureAlt = alt + (29.92 - baro) * 1000;
+            const stdTemp = 15 - (pressureAlt / 1000 * 2);
+            const dnsAlt = Math.round(pressureAlt + 120 * (oat - stdTemp));
+            this.elements.wxDnsAlt.textContent = dnsAlt.toLocaleString();
+        }
+
+        // Icing risk
+        if (this.elements.wxIcing) {
+            const hasMoisture = hasMetar
+                ? ((nearest.weather && nearest.weather.length > 0) || (nearest.clouds && nearest.clouds.some(c => c.cover === 'BKN' || c.cover === 'OVC')))
+                : ((this.data.precipState || 0) > 0 || (this.data.visibility || 10000) < 5000);
+            let icing = 'NONE', cls = 'wx-icing-none';
+            if (oat <= 2 && oat > -5 && hasMoisture) { icing = 'LIGHT'; cls = 'wx-icing-light'; }
+            else if (oat <= -5 && hasMoisture) { icing = 'MOD'; cls = 'wx-icing-moderate'; }
+            this.elements.wxIcing.textContent = icing;
+            this.elements.wxIcing.className = cls;
+        }
+
+        // --- Raw METAR text ---
+        if (this.elements.wxMetarText) {
+            if (hasMetar) {
+                let text = nearest.raw || `${nearest.icao}: ${nearest.category}`;
+                if (this.weatherOverlay.layers.taf) {
+                    const tafSummary = this.weatherOverlay.getNearestTafSummary(this.data.latitude, this.data.longitude);
+                    if (tafSummary) text += ' | TAF: ' + tafSummary;
+                }
+                this.elements.wxMetarText.textContent = text;
+            } else {
+                this.elements.wxMetarText.textContent = 'No METAR data';
+            }
+        }
+
+        // --- Station Detail (from canvas tap) ---
+        this._updateStationDetail();
+
+        // Push sim weather to overlay for rendering
         if (this.weatherOverlay) {
             this.weatherOverlay.updateSimWeather({
                 precipState: this.data.precipState, visibility: this.data.visibility,
@@ -968,25 +1069,107 @@ class GTN750Pane extends SimGlassBase {
         }
     }
 
-    updateWeatherConditionDisplay() {
+    /**
+     * Derive flight rules from sim data when no METAR available
+     */
+    _simFlightRules() {
+        const visSM = (this.data.visibility || 10000) / 1609.34;
+        // No ceiling from sim, use visibility only
+        if (visSM < 1) return 'LIFR';
+        if (visSM < 3) return 'IFR';
+        if (visSM < 5) return 'MVFR';
+        return 'VFR';
+    }
+
+    /**
+     * Update condition icon/text from METAR category (preferred) or sim precip (fallback)
+     */
+    _updateConditionFromMetar(nearest) {
         const iconEl = this.elements.wxConditionIcon;
         const textEl = this.elements.wxConditionText;
         if (!iconEl || !textEl) return;
 
-        const precip = this.data.precipState || 0;
-        const vis = this.data.visibility || 10000;
-        const wind = this.data.windSpeed || 0;
-        let icon = '☀️', text = 'Clear';
+        if (nearest) {
+            const cat = nearest.category || 'VFR';
+            const catMap = { VFR: ['☀️', 'Clear'], MVFR: ['🌤️', 'Marginal'], IFR: ['🌧️', 'IFR'], LIFR: ['⛈️', 'Low IFR'] };
+            // Refine with weather phenomena if available
+            const wx = nearest.weather || [];
+            if (wx.some(w => w.includes('TS') || w.includes('GR'))) { iconEl.textContent = '⛈️'; textEl.textContent = 'Storm'; }
+            else if (wx.some(w => w.includes('SN'))) { iconEl.textContent = '🌨️'; textEl.textContent = 'Snow'; }
+            else if (wx.some(w => w.includes('RA') || w.includes('DZ'))) { iconEl.textContent = '🌧️'; textEl.textContent = 'Rain'; }
+            else if (wx.some(w => w.includes('FG'))) { iconEl.textContent = '🌫️'; textEl.textContent = 'Fog'; }
+            else if (wx.some(w => w.includes('BR') || w.includes('HZ'))) { iconEl.textContent = '🌁'; textEl.textContent = 'Haze'; }
+            else { const [icon, text] = catMap[cat] || catMap.VFR; iconEl.textContent = icon; textEl.textContent = text; }
+        } else {
+            // Sim precip fallback
+            const precip = this.data.precipState || 0;
+            const vis = this.data.visibility || 10000;
+            const wind = this.data.windSpeed || 0;
+            let icon = '☀️', text = 'Clear';
+            if (precip & 4) { icon = '🌨️'; text = 'Snow'; }
+            else if (precip & 2) { icon = wind > 25 ? '⛈️' : '🌧️'; text = wind > 25 ? 'Storm' : 'Rain'; }
+            else if (vis < 1000) { icon = '🌫️'; text = 'Fog'; }
+            else if (vis < 5000) { icon = '🌁'; text = 'Mist'; }
+            else if (wind > 30) { icon = '💨'; text = 'Windy'; }
+            else if (wind > 15) { icon = '🌤️'; text = 'Breezy'; }
+            iconEl.textContent = icon;
+            textEl.textContent = text;
+        }
+    }
 
-        if (precip & 4) { icon = '🌨️'; text = 'Snow'; }
-        else if (precip & 2) { icon = wind > 25 ? '⛈️' : '🌧️'; text = wind > 25 ? 'Storm' : 'Rain'; }
-        else if (vis < 1000) { icon = '🌫️'; text = 'Fog'; }
-        else if (vis < 5000) { icon = '🌁'; text = 'Mist'; }
-        else if (wind > 30) { icon = '💨'; text = 'Windy'; }
-        else if (wind > 15) { icon = '🌤️'; text = 'Breezy'; }
+    /**
+     * Show station detail div when a METAR station is tapped on the canvas
+     */
+    _updateStationDetail() {
+        const el = this.elements.wxStationDetail;
+        if (!el || !this.weatherOverlay) return;
 
-        iconEl.textContent = icon;
-        textEl.textContent = text;
+        const popup = this.weatherOverlay._metarPopup;
+        if (!popup || !popup.station) {
+            el.style.display = 'none';
+            return;
+        }
+
+        const s = popup.station;
+        el.style.display = '';
+
+        // Flight rules badge class for inline use
+        const rulesCls = 'wx-flt-' + (s.category || 'vfr').toLowerCase();
+
+        let html = `<span class="wx-sd-icao">${s.icao}</span>`;
+        html += `<span class="wx-sd-rules ${rulesCls}" style="display:inline-block;padding:1px 4px;border-radius:2px;font-size:9px;font-weight:700;margin-left:4px;">${s.category || 'VFR'}</span>`;
+
+        // Sky condition
+        const clouds = s.clouds || [];
+        if (clouds.length > 0) {
+            const skyStr = clouds.map(c => {
+                const base = c.base ? Math.round(c.base) : '';
+                return `${c.cover}${base ? ' ' + base + 'ft' : ''}`;
+            }).join(', ');
+            html += `<div class="wx-sd-row">Sky: <b>${skyStr}</b></div>`;
+        }
+
+        // Weather phenomena
+        const wx = s.weather || [];
+        if (wx.length > 0) {
+            html += `<div class="wx-sd-row">Wx: <b>${wx.join(', ')}</b></div>`;
+        }
+
+        // Wind
+        if (s.wdir != null || s.wspd != null) {
+            let wStr = `${s.wdir != null ? String(s.wdir).padStart(3, '0') : 'VRB'}°/${s.wspd || 0}kt`;
+            if (s.gust) wStr += ` G${s.gust}kt`;
+            html += `<div class="wx-sd-row">Wind: <b>${wStr}</b></div>`;
+        }
+
+        // Temp/Dew/Altimeter
+        if (s.temp != null) html += `<div class="wx-sd-row">Temp: <b>${s.temp}°C</b> Dew: <b>${s.dewp != null ? s.dewp + '°C' : '--'}</b></div>`;
+        if (s.altimeter != null) html += `<div class="wx-sd-row">Altim: <b>${Number(s.altimeter).toFixed(2)}"</b></div>`;
+
+        // Raw METAR
+        if (s.raw) html += `<div class="wx-sd-row" style="margin-top:3px;font-size:9px;color:var(--gtn-text-dim);">${s.raw}</div>`;
+
+        el.innerHTML = html;
     }
 
     async setWeatherPreset(preset) {
@@ -1338,12 +1521,17 @@ class GTN750Pane extends SimGlassBase {
             wxRange: document.getElementById('wx-range'),
             wxZoomIn: document.getElementById('wx-zoom-in'),
             wxZoomOut: document.getElementById('wx-zoom-out'),
-            wxWind: document.getElementById('wx-wind'),
-            wxTemp: document.getElementById('wx-temp'),
-            wxBaro: document.getElementById('wx-baro'),
-            wxVis: document.getElementById('wx-vis'),
-            wxPrecip: document.getElementById('wx-precip'),
-            wxPrecipItem: document.getElementById('wx-precip-item'),
+            wxFltRules: document.getElementById('wx-flt-rules'),
+            wxNearestId: document.getElementById('wx-nearest-id'),
+            wxDWind: document.getElementById('wx-d-wind'),
+            wxDVis: document.getElementById('wx-d-vis'),
+            wxDCeil: document.getElementById('wx-d-ceil'),
+            wxDTemp: document.getElementById('wx-d-temp'),
+            wxDAltim: document.getElementById('wx-d-altim'),
+            wxFrzLvl: document.getElementById('wx-frz-lvl'),
+            wxDnsAlt: document.getElementById('wx-dns-alt'),
+            wxIcing: document.getElementById('wx-icing'),
+            wxStationDetail: document.getElementById('wx-station-detail'),
             chartApt: document.getElementById('chart-apt'),
             chartSearch: document.getElementById('chart-search'),
             chartList: document.getElementById('chart-list'),
