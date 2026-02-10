@@ -176,6 +176,7 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.dsLlm = document.getElementById('ds-llm');
         this.elements.dsCmd = document.getElementById('ds-cmd');
         this.elements.dsLlmRt = document.getElementById('ds-llm-rt');
+        this.elements.simbriefImport = document.getElementById('simbrief-import');
     }
 
     // ── Event Setup ────────────────────────────────────────
@@ -189,6 +190,11 @@ class AiAutopilotPane extends SimGlassBase {
                 this.commandQueue.clear();
             }
             this._render();
+        });
+
+        // SimBrief import
+        this.elements.simbriefImport?.addEventListener('click', () => {
+            this._importSimBrief();
         });
 
         // Advisory ask button
@@ -808,6 +814,75 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
             this._dbg('cmd', `SimBrief plan: cruise <span class="val">${plan.cruiseAltitude}ft</span>`);
         }
+    }
+
+    async _importSimBrief() {
+        const btn = this.elements.simbriefImport;
+        if (!btn || btn.classList.contains('loading')) return;
+
+        let pilotId = localStorage.getItem('simbrief-pilot-id');
+        if (!pilotId) {
+            pilotId = prompt('Enter SimBrief Pilot ID or Username:');
+            if (!pilotId) return;
+            localStorage.setItem('simbrief-pilot-id', pilotId.trim());
+        }
+
+        btn.classList.add('loading');
+        btn.textContent = '... LOADING';
+
+        try {
+            const isNumeric = /^\d+$/.test(pilotId);
+            const param = isNumeric ? 'userid' : 'username';
+            const res = await fetch(`/api/simbrief/ofp?${param}=${encodeURIComponent(pilotId)}`);
+            if (!res.ok) throw new Error('Failed to fetch OFP');
+            const ofp = await res.json();
+            if (ofp.fetch?.status === 'Error') throw new Error(ofp.fetch.error || 'No plan found');
+
+            const navlog = ofp.navlog?.fix || [];
+            const waypoints = navlog.map(fix => ({
+                ident: fix.ident, name: fix.name, type: fix.type,
+                lat: parseFloat(fix.pos_lat), lng: parseFloat(fix.pos_long),
+                altitude: parseInt(fix.altitude_feet) || 0,
+                distanceFromPrev: parseInt(fix.distance) || 0,
+                ete: parseInt(fix.time_leg) || 0
+            }));
+
+            const planData = {
+                departure: ofp.origin?.icao_code,
+                arrival: ofp.destination?.icao_code,
+                waypoints,
+                totalDistance: parseInt(ofp.general?.route_distance) || 0,
+                cruiseAltitude: parseInt(ofp.general?.initial_altitude) || 0,
+                route: ofp.general?.route || '',
+                source: 'simbrief'
+            };
+
+            // Feed into local AI autopilot
+            this._onSimbriefPlan(planData);
+
+            // Store on server for other panes
+            fetch('/api/ai-pilot/shared-state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'nav', data: { simbriefPlan: planData } })
+            }).catch(() => {});
+
+            // Broadcast to other panes
+            if (this.syncChannel) {
+                this.syncChannel.postMessage({ type: 'simbrief-plan', data: planData });
+            }
+
+            this._dbg('api', `SimBrief loaded: ${planData.departure}→${planData.arrival}, ${waypoints.length} wps`);
+            btn.textContent = '\u2714 LOADED';
+            setTimeout(() => { btn.textContent = '\u2708 FPL'; }, 2000);
+        } catch (e) {
+            console.error('[AI-AP] SimBrief import failed:', e);
+            this._dbg('api', `SimBrief import failed: ${e.message}`);
+            btn.textContent = '\u2718 FAILED';
+            localStorage.removeItem('simbrief-pilot-id');
+            setTimeout(() => { btn.textContent = '\u2708 FPL'; }, 2000);
+        }
+        btn.classList.remove('loading');
     }
 
     _startSyncBroadcast() {

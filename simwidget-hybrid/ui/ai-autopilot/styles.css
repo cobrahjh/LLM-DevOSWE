@@ -47,6 +47,19 @@
     opacity: 1;
 }
 
+.simbrief-import-btn {
+    padding: 3px 8px;
+    border: 1px solid rgba(0, 150, 255, 0.4);
+    border-radius: 3px;
+    background: rgba(0, 150, 255, 0.15);
+    color: #66bbff;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.simbrief-import-btn:hover { background: rgba(0, 150, 255, 0.3); }
+.simbrief-import-btn.loading { opacity: 0.5; pointer-events: none; }
+
 .ai-master-toggle {
     padding: 3px 12px;
     border: 1px solid #555;
