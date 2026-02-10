@@ -173,11 +173,21 @@ class RuleEngine {
                     this._cmdValue('AP_HDG_VAR_SET', Math.round(d.heading || 0), 'HDG ' + Math.round(d.heading || 0));
                     this._cmd('AP_HDG_HOLD', true, 'HDG hold');
                 }
-                // Set climb VS — do NOT engage ALT hold during climb (it captures current alt)
-                // ALT hold engages in CRUISE when we reach target altitude
-                if (phaseChanged || !apState.vsHold) {
-                    this._cmd('AP_VS_HOLD', true, 'VS hold for climb');
-                    this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate, 'VS +' + p.climb.normalRate);
+                // Set climb VS — adapts to available speed margin.
+                // At higher altitudes, power decreases — VS must be reduced to maintain airspeed.
+                // Skip entirely when stall protection is active — let it push nose down.
+                if (!this._speedCorrectionActive) {
+                    const ias = d.speed || 0;
+                    const stallMargin = ias - ((speeds.Vs1 || 53) + 10);  // margin above stall+10
+                    let climbVS = p.climb.normalRate;  // default 700
+                    if (stallMargin < 15) {
+                        // Low margin — reduce climb rate proportionally (min 200fpm)
+                        climbVS = Math.max(200, Math.round(climbVS * Math.max(0.3, stallMargin / 15)));
+                    }
+                    if (phaseChanged || !apState.vsHold) {
+                        this._cmd('AP_VS_HOLD', true, 'VS hold for climb');
+                    }
+                    this._cmdValue('AP_VS_VAR_SET', climbVS, 'VS +' + climbVS);
                 }
                 if (phaseChanged) {
                     this._cmdValue('AP_ALT_VAR_SET', this._getCruiseAlt(), 'ALT ' + this._getCruiseAlt());
