@@ -69,7 +69,10 @@ class GTNFlightPlan {
             const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/flightplan`);
             if (response.ok) {
                 const data = await response.json();
-                if (data?.waypoints?.length > 0) {
+                // Re-check after await — SimBrief plan may have been set during fetch
+                if (data?.waypoints?.length > 0 &&
+                    this.flightPlan?.source !== 'simbrief' &&
+                    this.flightPlan?.source !== 'manual') {
                     this.flightPlan = data;
                     this.notifyChanged();
                 }
