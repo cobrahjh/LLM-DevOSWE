@@ -25,7 +25,8 @@ const COCKPIT_FX_PROFILES = {
             ground: 1.0,
             mechanical: 0.7,
             environment: 0.5,
-            warning: 1.0
+            warning: 1.0,
+            systems: 0.6
         }
     },
     'ga-twin-piston': {
@@ -48,7 +49,8 @@ const COCKPIT_FX_PROFILES = {
             ground: 0.9,
             mechanical: 0.8,
             environment: 0.5,
-            warning: 1.0
+            warning: 1.0,
+            systems: 0.5
         }
     },
     'turboprop': {
@@ -70,7 +72,8 @@ const COCKPIT_FX_PROFILES = {
             ground: 0.8,
             mechanical: 0.8,
             environment: 0.6,
-            warning: 1.0
+            warning: 1.0,
+            systems: 0.4
         }
     },
     'jet': {
@@ -92,7 +95,8 @@ const COCKPIT_FX_PROFILES = {
             ground: 0.9,
             mechanical: 0.9,
             environment: 0.5,
-            warning: 1.0
+            warning: 1.0,
+            systems: 0.3
         }
     }
 };

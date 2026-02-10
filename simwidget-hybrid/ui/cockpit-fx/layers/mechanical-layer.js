@@ -12,6 +12,7 @@ class MechanicalLayer {
 
         // Previous frame values for change detection
         this._prevGear = [null, null, null];
+        this._wasLocked = [true, true, true]; // track locked state for door-open thunks
         this._prevFlap = null;
         this._prevTrim = null;
         this._prevAP = null;
@@ -33,6 +34,21 @@ class MechanicalLayer {
         this._flapMotorGain = null;
         this._trimSrc = null;
         this._trimGain = null;
+
+        // Hydraulic whine: narrow resonant tone during gear transit
+        this.hydraulicOsc = this.ctx.createOscillator();
+        this.hydraulicOsc.type = 'sawtooth';
+        this.hydraulicOsc.frequency.value = 180;
+        this._hydraulicFilter = this.ctx.createBiquadFilter();
+        this._hydraulicFilter.type = 'bandpass';
+        this._hydraulicFilter.frequency.value = 200;
+        this._hydraulicFilter.Q.value = 4;
+        this.hydraulicGain = this.ctx.createGain();
+        this.hydraulicGain.gain.value = 0;
+        this.hydraulicOsc.connect(this._hydraulicFilter);
+        this._hydraulicFilter.connect(this.hydraulicGain);
+        this.hydraulicGain.connect(this.output);
+        this.hydraulicOsc.start();
 
         // Oscillator fallbacks (only created if no samples)
         this.gearOsc = null;
@@ -88,15 +104,25 @@ class MechanicalLayer {
                 const inTransit = pos > 0.01 && pos < 0.99;
                 if (inTransit) gearMoving = true;
 
+                const isLocked = pos <= 0.01 || pos >= 0.99;
+
+                // Door-open thunk: detect transit START (leaving locked position)
+                if (this._wasLocked[i] && inTransit) {
+                    this._triggerDoorThunk();
+                }
+                this._wasLocked[i] = isLocked;
+
                 // Gear lock thunk: position just reached 0 or 1
                 if (this._prevGear[i] !== null) {
                     const wasTransit = this._prevGear[i] > 0.01 && this._prevGear[i] < 0.99;
-                    const nowLocked = pos <= 0.01 || pos >= 0.99;
-                    if (wasTransit && nowLocked) this._triggerThunk();
+                    if (wasTransit && isLocked) this._triggerThunk();
                 }
                 this._prevGear[i] = pos;
             }
         }
+
+        // Hydraulic whine: ramp up during gear transit, silence otherwise
+        this.hydraulicGain.gain.setTargetAtTime(gearMoving ? 0.08 : 0, t, tau);
 
         if (this._hasFlapsMotor) {
             // Sample-based gear motor
@@ -210,6 +236,21 @@ class MechanicalLayer {
 
     // --- One-shot triggers ---
 
+    /** Door-open thunk: heavier, lower-frequency than lock thunk */
+    _triggerDoorThunk() {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 50; // lower than lock thunk (80Hz)
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15); // longer decay than lock (100ms)
+        osc.connect(gain);
+        gain.connect(this.output);
+        osc.start(t);
+        osc.stop(t + 0.17);
+    }
+
     _triggerThunk() {
         if (this._hasFlapsClick) {
             this.engine.playOneShot('flaps-click', this.output, 0.5);
@@ -262,6 +303,7 @@ class MechanicalLayer {
     destroy() {
         if (this.gearOsc) try { this.gearOsc.stop(); } catch (e) {}
         if (this.flapOsc) try { this.flapOsc.stop(); } catch (e) {}
+        if (this.hydraulicOsc) try { this.hydraulicOsc.stop(); } catch (e) {}
         this._stopGearMotor();
         this._stopFlapMotor();
         this._stopTrimServo();

@@ -73,6 +73,26 @@ class EngineLayer {
             this.propOsc.start();
         }
 
+        // Prop blade-pass thump: low-frequency pressure pulse (visceral sub-bass)
+        this.propThumpOsc = null;
+        this.propThumpGain = null;
+        this._propThumpFilter = null;
+        if (this.profile.propBlades > 0) {
+            this.propThumpOsc = this.ctx.createOscillator();
+            this.propThumpOsc.type = 'sine';
+            this.propThumpOsc.frequency.value = 0;
+            this._propThumpFilter = this.ctx.createBiquadFilter();
+            this._propThumpFilter.type = 'lowpass';
+            this._propThumpFilter.frequency.value = 60;
+            this._propThumpFilter.Q.value = 1.5;
+            this.propThumpGain = this.ctx.createGain();
+            this.propThumpGain.gain.value = 0;
+            this.propThumpOsc.connect(this._propThumpFilter);
+            this._propThumpFilter.connect(this.propThumpGain);
+            this.propThumpGain.connect(this.output);
+            this.propThumpOsc.start();
+        }
+
         // Turbine whine (turboprop overlay — synthetic, no samples)
         this.turbineOsc = null;
         this.turbineGain = null;
@@ -195,6 +215,15 @@ class EngineLayer {
             this.propGain.gain.setTargetAtTime(masterAmp * throttle * propVol, t, tau);
         }
 
+        // Prop blade-pass thump: deep sub-bass pressure pulse
+        // LP filter at 60Hz attenuates higher BPFs (cruise) → realistic fade at speed
+        if (this.propThumpOsc) {
+            const bpf = (rpm / 60) * this.profile.propBlades;
+            this.propThumpOsc.frequency.setTargetAtTime(Math.max(bpf, 0.01), t, tau);
+            const thumpAmp = masterAmp * 0.18 * Math.min(1, rpm / 1200);
+            this.propThumpGain.gain.setTargetAtTime(thumpAmp, t, tau);
+        }
+
         // Turbine whine
         if (this.turbineOsc) {
             const whineFreq = 400 + throttle * 400;
@@ -272,6 +301,7 @@ class EngineLayer {
         if (this._idleSrc) try { this._idleSrc.stop(); } catch (e) {}
         if (this._cruiseSrc) try { this._cruiseSrc.stop(); } catch (e) {}
         if (this.propOsc) try { this.propOsc.stop(); } catch (e) {}
+        if (this.propThumpOsc) try { this.propThumpOsc.stop(); } catch (e) {}
         if (this.turbineOsc) try { this.turbineOsc.stop(); } catch (e) {}
         if (this.n1Osc) try { this.n1Osc.stop(); } catch (e) {}
         if (this.starterNoise) this._stopStarterMotor();

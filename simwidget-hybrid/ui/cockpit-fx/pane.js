@@ -11,13 +11,13 @@ class CockpitFxPane extends SimGlassBase {
         this.enabled = false;
         this.profile = localStorage.getItem('cockpit-fx-profile') || 'ga-single-piston';
         this._layers = {};
-        this._layerNames = ['engine', 'aero', 'ground', 'mechanical', 'environment', 'warning'];
-        this._layerVols = { engine: 70, aero: 60, ground: 70, mechanical: 55, environment: 40, warning: 100 };
-        this._layerBass = { engine: 0, aero: 0, ground: 0, mechanical: 0, environment: 0, warning: 0 };
-        this._layerEnabled = { engine: true, aero: true, ground: true, mechanical: true, environment: true, warning: true };
-        // LYRS selection: -1 = MSTR, 0-5 = individual layers
+        this._layerNames = ['engine', 'aero', 'ground', 'mechanical', 'environment', 'warning', 'systems'];
+        this._layerVols = { engine: 70, aero: 60, ground: 70, mechanical: 55, environment: 40, warning: 100, systems: 50 };
+        this._layerBass = { engine: 0, aero: 0, ground: 0, mechanical: 0, environment: 0, warning: 0, systems: 0 };
+        this._layerEnabled = { engine: true, aero: true, ground: true, mechanical: true, environment: true, warning: true, systems: true };
+        // LYRS selection: -1 = MSTR, 0-6 = individual layers
         this._selectedLayerIdx = -1;
-        this._layerShort = ['ENG', 'AERO', 'GND', 'MECH', 'ENV', 'WARN'];
+        this._layerShort = ['ENG', 'AERO', 'GND', 'MECH', 'ENV', 'WARN', 'SYS'];
         this._lastData = {};
         this._masterVol = 80;
         this._bassVol = 0;
@@ -81,6 +81,7 @@ class CockpitFxPane extends SimGlassBase {
             lbMech: document.getElementById('cfx-lb-mech'),
             lbEnv: document.getElementById('cfx-lb-env'),
             lbWarn: document.getElementById('cfx-lb-warn'),
+            lbSys: document.getElementById('cfx-lb-sys'),
         };
     }
 
@@ -333,9 +334,9 @@ class CockpitFxPane extends SimGlassBase {
 
         // Layers softkey — click cycles selection, right-click toggles on/off
         this.el.skLayers.addEventListener('click', () => {
-            // Cycle: MSTR(-1) → ENG(0) → AERO(1) → ... → WARN(5) → MSTR(-1)
+            // Cycle: MSTR(-1) → ENG(0) → AERO(1) → ... → SYS(6) → MSTR(-1)
             this._selectedLayerIdx++;
-            if (this._selectedLayerIdx > 5) this._selectedLayerIdx = -1;
+            if (this._selectedLayerIdx > 6) this._selectedLayerIdx = -1;
             this._updateSliders();
             const label = this._selectedLayerIdx === -1 ? 'MSTR' : this._layerShort[this._selectedLayerIdx];
             this.el.skLayers.textContent = label;
@@ -465,8 +466,9 @@ class CockpitFxPane extends SimGlassBase {
         this._layers.mechanical = new MechanicalLayer(this.audioEngine, p);
         this._layers.environment = new EnvironmentLayer(this.audioEngine, p);
         this._layers.warning = new WarningLayer(this.audioEngine, p);
+        this._layers.systems = new SystemsLayer(this.audioEngine, p);
 
-        const layerPan = { engine: 0, aero: 0, ground: 0, mechanical: 0.15, environment: -0.1, warning: 0 };
+        const layerPan = { engine: 0, aero: 0, ground: 0, mechanical: 0.15, environment: -0.1, warning: 0, systems: 0 };
         for (const name in this._layers) {
             this.audioEngine.addLayer(name, this._layers[name], layerPan[name] || 0);
             this._layers[name].setVolume(this._layerVols[name] / 100);
@@ -585,6 +587,10 @@ class CockpitFxPane extends SimGlassBase {
         // Warning: any active warnings
         const warn = (d.stallWarning || d.overspeedWarning || ((d.throttle || 100) < 15 && !d.gearDown && (d.altitudeAGL || 999) < 500)) ? 1 : 0;
         this._setLBar(this.el.lbWarn, warn, this._layerEnabled.warning);
+
+        // Systems: avionics hum + radio static (active when engine running)
+        const sys = d.engineRunning ? 0.5 : 0;
+        this._setLBar(this.el.lbSys, sys, this._layerEnabled.systems);
     }
 
     _setLBar(el, intensity, enabled) {
