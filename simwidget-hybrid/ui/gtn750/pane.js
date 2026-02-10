@@ -235,7 +235,6 @@ class GTN750Pane extends SimGlassBase {
             }
         });
 
-        this.flightPlanManager.fetchFlightPlan();
         this.loadedModules.flightPlan = true;
     }
 
@@ -651,6 +650,10 @@ class GTN750Pane extends SimGlassBase {
         // Lazy load flight plan module when FPL page accessed
         if (pageId === 'fpl' && !this.flightPlanManager) {
             await this.loadFlightPlan();
+            // Start server poll if no SimBrief plan is active
+            if (this.flightPlanManager && this.flightPlanManager.flightPlan?.source !== 'simbrief') {
+                this.flightPlanManager.fetchFlightPlan();
+            }
         }
 
         // Lazy load page-specific modules
@@ -1093,18 +1096,25 @@ class GTN750Pane extends SimGlassBase {
      * Check server for a stored SimBrief plan (handles cross-machine and late-join)
      */
     async _fetchStoredPlan() {
+        let simbriefLoaded = false;
         try {
             const res = await fetch('/api/ai-pilot/shared-state/nav');
-            if (!res.ok) return;
-            const json = await res.json();
-            const plan = json.nav?.simbriefPlan;
-            if (plan && plan.waypoints?.length) {
-                GTNCore.log('[GTN750] Found stored SimBrief plan on server, loading...');
-                if (!this.flightPlanManager) await this.loadFlightPlan();
-                this.flightPlanManager?.handleSyncMessage('simbrief-plan', plan);
+            if (res.ok) {
+                const json = await res.json();
+                const plan = json.nav?.simbriefPlan;
+                if (plan && plan.waypoints?.length) {
+                    GTNCore.log('[GTN750] Found stored SimBrief plan on server, loading...');
+                    if (!this.flightPlanManager) await this.loadFlightPlan();
+                    this.flightPlanManager?.handleSyncMessage('simbrief-plan', plan);
+                    simbriefLoaded = true;
+                }
             }
         } catch (e) {
             // Server not available, no stored plan — ignore
+        }
+        // Only start server polling if no SimBrief plan was loaded
+        if (!simbriefLoaded && this.flightPlanManager) {
+            this.flightPlanManager.fetchFlightPlan();
         }
     }
 
