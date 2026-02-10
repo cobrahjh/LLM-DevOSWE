@@ -19,6 +19,7 @@ class AiAutopilotPane extends SimGlassBase {
         // AI state
         this.aiEnabled = false;
         this._lastFlightData = null;
+        this.copilotStatus = null;
 
         // Aircraft profile
         this.profileKey = localStorage.getItem('ai-ap-profile') || DEFAULT_PROFILE;
@@ -74,6 +75,9 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Override detection timer
         this._overrideCheckTimer = setInterval(() => this._checkOverrideExpiry(), 5000);
+
+        // Fetch copilot config status
+        this._fetchCopilotStatus();
 
         // Initial render
         this._render();
@@ -439,6 +443,188 @@ class AiAutopilotPane extends SimGlassBase {
         // Let the command queue clean up expired overrides
         const overrides = this.commandQueue.getActiveOverrides();
         this._renderOverrides(overrides);
+    }
+
+    // ── Copilot Status & Settings ─────────────────────────
+
+    async _fetchCopilotStatus() {
+        try {
+            const res = await fetch('/api/copilot/status');
+            if (res.ok) {
+                this.copilotStatus = await res.json();
+                this._renderConfigBanner();
+            }
+        } catch (e) {
+            console.warn('[AI-AP] Could not fetch copilot status:', e.message);
+        }
+    }
+
+    _renderConfigBanner() {
+        const existing = document.querySelector('.ai-config-banner');
+        if (existing) existing.remove();
+
+        if (this.copilotStatus?.licensed && this.copilotStatus?.hasApiKey) return;
+
+        const banner = document.createElement('div');
+        banner.className = 'ai-config-banner';
+        banner.innerHTML = '<strong>AI not configured</strong> — Open Settings to add your license key and API key.';
+        const phase = document.getElementById('phase-section');
+        if (phase) phase.before(banner);
+    }
+
+    /**
+     * Register the AI Configuration settings section.
+     * Called from index.html after SettingsPanel is created.
+     */
+    registerSettingsSection(settingsPanel) {
+        const self = this;
+
+        const MODELS = {
+            openai: [
+                { id: 'gpt-4o', name: 'GPT-4o' },
+                { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
+            ],
+            anthropic: [
+                { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5' },
+                { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5' }
+            ]
+        };
+
+        settingsPanel.registerSection('ai-config', {
+            title: 'AI Configuration',
+            icon: '',
+            render: () => {
+                const status = self.copilotStatus || {};
+                const provider = status.provider || 'openai';
+                const model = status.model || 'gpt-4o';
+
+                const modelOptions = (p) => MODELS[p].map(m =>
+                    `<option value="${m.id}" ${m.id === model ? 'selected' : ''}>${m.name}</option>`
+                ).join('');
+
+                return `
+                    <div class="ai-settings">
+                        <div class="as-row">
+                            <label>License Key</label>
+                            <div class="as-input-group">
+                                <input type="text" id="as-license-key" placeholder="SW-XXXXX-XXXXX-XXXXX-XXXXX" value="${status.licensed ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : ''}">
+                                <button class="btn-small" id="as-validate-btn">Validate</button>
+                            </div>
+                            <div class="as-status" id="as-license-status">${status.licensed ? '<span class="as-ok">Licensed (' + (status.tier || 'pro') + ')</span>' : '<span class="as-warn">Not licensed</span>'}</div>
+                        </div>
+                        <div class="as-row">
+                            <label>Provider</label>
+                            <select id="as-provider">
+                                <option value="openai" ${provider === 'openai' ? 'selected' : ''}>OpenAI</option>
+                                <option value="anthropic" ${provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
+                            </select>
+                        </div>
+                        <div class="as-row">
+                            <label>Model</label>
+                            <select id="as-model">${modelOptions(provider)}</select>
+                        </div>
+                        <div class="as-row">
+                            <label>API Key</label>
+                            <input type="password" id="as-api-key" placeholder="${status.hasApiKey ? 'Key saved (enter new to replace)' : 'Enter your API key'}">
+                        </div>
+                        <div class="as-row">
+                            <label class="toggle-item">
+                                <input type="checkbox" id="as-memory-only" ${status.apiKeyMemoryOnly ? 'checked' : ''}>
+                                <span>Memory only (not saved to disk)</span>
+                            </label>
+                        </div>
+                        <div class="as-row">
+                            <button class="btn btn-primary" id="as-save-btn">Save Configuration</button>
+                        </div>
+                        <div class="as-status" id="as-save-status"></div>
+                    </div>
+                `;
+            },
+            onMount: (container) => {
+                const providerSelect = container.querySelector('#as-provider');
+                const modelSelect = container.querySelector('#as-model');
+
+                providerSelect.addEventListener('change', () => {
+                    const p = providerSelect.value;
+                    modelSelect.innerHTML = MODELS[p].map(m =>
+                        `<option value="${m.id}">${m.name}</option>`
+                    ).join('');
+                });
+
+                container.querySelector('#as-validate-btn').addEventListener('click', async () => {
+                    const key = container.querySelector('#as-license-key').value.trim();
+                    const statusEl = container.querySelector('#as-license-status');
+                    if (!key || key.includes('\u2022')) {
+                        statusEl.innerHTML = '<span class="as-warn">Enter a license key to validate</span>';
+                        return;
+                    }
+                    try {
+                        const res = await fetch('/api/copilot/validate-key', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ key })
+                        });
+                        const result = await res.json();
+                        if (result.valid) {
+                            statusEl.innerHTML = '<span class="as-ok">Valid key (' + (result.tier || 'pro') + ')</span>';
+                        } else {
+                            statusEl.innerHTML = '<span class="as-err">' + (result.error || 'Invalid key') + '</span>';
+                        }
+                    } catch (e) {
+                        statusEl.innerHTML = '<span class="as-err">Server error</span>';
+                    }
+                });
+
+                container.querySelector('#as-save-btn').addEventListener('click', async () => {
+                    const saveStatus = container.querySelector('#as-save-status');
+                    const licenseKey = container.querySelector('#as-license-key').value.trim();
+                    const body = {
+                        provider: providerSelect.value,
+                        model: modelSelect.value,
+                        apiKeyMemoryOnly: container.querySelector('#as-memory-only').checked
+                    };
+
+                    if (licenseKey && !licenseKey.includes('\u2022')) {
+                        body.licenseKey = licenseKey;
+                    }
+
+                    const apiKey = container.querySelector('#as-api-key').value.trim();
+                    if (apiKey) {
+                        body.apiKey = apiKey;
+                    }
+
+                    try {
+                        const res = await fetch('/api/copilot/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
+                        const result = await res.json();
+                        if (result.success) {
+                            saveStatus.innerHTML = '<span class="as-ok">Saved! ' +
+                                (result.licensed ? 'Licensed.' : 'License invalid.') +
+                                (result.hasApiKey ? ' API key set.' : '') + '</span>';
+                            self.copilotStatus = {
+                                licensed: result.licensed,
+                                tier: result.tier,
+                                provider: body.provider,
+                                model: body.model,
+                                hasApiKey: result.hasApiKey,
+                                apiKeyMemoryOnly: body.apiKeyMemoryOnly
+                            };
+                            const banner = document.querySelector('.ai-config-banner');
+                            if (banner && result.licensed && result.hasApiKey) {
+                                banner.remove();
+                            }
+                        } else {
+                            saveStatus.innerHTML = '<span class="as-err">Save failed</span>';
+                        }
+                    } catch (e) {
+                        saveStatus.innerHTML = '<span class="as-err">Server error</span>';
+                    }
+                });
+            }
+        });
     }
 
     // ── Lifecycle ──────────────────────────────────────────

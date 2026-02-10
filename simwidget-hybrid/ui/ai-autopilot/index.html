@@ -135,6 +135,7 @@
 
         const settings = new SettingsPanel();
         settings.registerThemeSection();
+        window.widget.registerSettingsSection(settings);
         const customizer = new WidgetCustomizer({ widgetId: 'ai-autopilot', settingsPanel: settings });
         document.getElementById('settings-btn')?.addEventListener('click', () => settings.toggle());
     </script>

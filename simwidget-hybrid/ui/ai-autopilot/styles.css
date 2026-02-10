@@ -412,6 +412,122 @@
     margin-left: auto;
 }
 
+/* Config Banner */
+.ai-config-banner {
+    padding: 8px 12px;
+    background: #2a1a00;
+    border-bottom: 1px solid #554400;
+    color: #f59e0b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ai-config-banner strong {
+    color: #fbbf24;
+}
+
+/* Settings: AI Configuration */
+.ai-settings {
+    padding: 8px 0;
+}
+
+.ai-settings .as-row {
+    margin-bottom: 10px;
+}
+
+.ai-settings label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8899aa;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ai-settings input[type="text"],
+.ai-settings input[type="password"],
+.ai-settings select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #0d1117;
+    color: #c0c8d8;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.ai-settings input:focus,
+.ai-settings select:focus {
+    border-color: #4fc3f7;
+    outline: none;
+}
+
+.ai-settings .as-input-group {
+    display: flex;
+    gap: 6px;
+}
+
+.ai-settings .as-input-group input {
+    flex: 1;
+}
+
+.ai-settings .as-status {
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.ai-settings .as-ok { color: #22c55e; }
+.ai-settings .as-warn { color: #f59e0b; }
+.ai-settings .as-err { color: #ef4444; }
+
+.ai-settings .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    text-transform: none;
+    font-weight: 400;
+}
+
+.ai-settings .toggle-item input[type="checkbox"] {
+    width: auto;
+}
+
+.ai-settings .btn-small {
+    padding: 4px 10px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #1a1a2e;
+    color: #4fc3f7;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ai-settings .btn-small:hover {
+    background: #222a3e;
+    border-color: #4fc3f7;
+}
+
+.ai-settings .btn-primary {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #4fc3f7;
+    border-radius: 3px;
+    background: #0d2840;
+    color: #4fc3f7;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ai-settings .btn-primary:hover {
+    background: #163a5c;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 4px;
