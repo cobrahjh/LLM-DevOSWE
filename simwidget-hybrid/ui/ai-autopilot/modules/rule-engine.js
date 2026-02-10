@@ -80,7 +80,8 @@ class RuleEngine {
         // ── Parking brake safety ──
         // Release parking brake whenever AI has controls and throttle is above idle.
         // This catches cases where onGround data is wrong or phase skips TAKEOFF.
-        if (d.parkingBrake && (d.throttle > 20 || phase === 'TAKEOFF')) {
+        if (d.parkingBrake && (d.throttle > 20 || phase === 'TAKEOFF') && phase !== 'LANDING') {
+            delete this._lastCommands['PARKING_BRAKES'];
             this._cmd('PARKING_BRAKES', true, 'Release parking brake (safety)');
         }
 
@@ -223,59 +224,131 @@ class RuleEngine {
                 break;
             }
 
-            case 'DESCENT':
+            case 'DESCENT': {
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for descent');
                 }
                 if (phaseChanged) {
-                    this._cmd('AP_VS_HOLD', true, 'VS hold for descent');
-                    this._cmdValue('AP_VS_VAR_SET', p.descent.normalRate, 'VS ' + p.descent.normalRate);
                     this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.DESCENT, 'SPD ' + p.phaseSpeeds.DESCENT);
                     this._cmd('AP_NAV1_HOLD', true, 'NAV tracking');
                 }
+                // Continuously enforce VS descent (dedup prevents spam)
+                this._cmd('AP_VS_HOLD', true, 'VS hold for descent');
+                this._cmdValue('AP_VS_VAR_SET', p.descent.normalRate, 'VS ' + p.descent.normalRate);
+                // Descent throttle: keep power high until speed builds from gravity.
+                // Pitching nose-down in descent adds speed via gravity — don't cut throttle
+                // until speed is above descent target, or stall protection will fight descent.
+                const desIas = d.speed || 0;
+                const desTarget = p.phaseSpeeds.DESCENT || 100;
+                let desThrottle;
+                if (desIas < desTarget - 10) desThrottle = 75;    // below target — maintain power
+                else if (desIas < desTarget + 5) desThrottle = 55; // near target — moderate power
+                else if (desIas < desTarget + 15) desThrottle = 40; // above target — reduce
+                else desThrottle = 25;                              // well above target — pull back
+                this._cmdValue('THROTTLE_SET', desThrottle, 'Descent throttle ' + desThrottle + '%');
                 break;
+            }
 
-            case 'APPROACH':
+            case 'APPROACH': {
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for approach');
                 }
+                const aprAgl = d.altitudeAGL || 0;
                 if (phaseChanged) {
                     this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.APPROACH, 'SPD ' + p.phaseSpeeds.APPROACH);
+                    this._cmd('AP_VS_HOLD', true, 'VS hold for approach');
+                    this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
+                }
+                // Progressive flap deployment (use notch # as value to bypass dedup)
+                const flaps = d.flapsIndex || 0;
+                if (flaps < 1) {
+                    this._cmd('FLAPS_DOWN', 1, 'Flaps 1 for approach');
+                } else if (aprAgl < 800 && flaps < 2) {
+                    this._cmd('FLAPS_DOWN', 2, 'Flaps 2 below 800 AGL');
+                } else if (aprAgl < 400 && flaps < 3) {
+                    this._cmd('FLAPS_DOWN', 3, 'Full flaps below 400 AGL');
                 }
                 // Use nav data from GTN750 for smarter approach mode selection
                 if (this._navState) {
                     const nav = this._navState;
                     if (nav.cdi?.gsValid && nav.approach?.hasGlideslope) {
-                        // Glideslope available — engage APR for coupled approach
                         if (!apState.aprHold || phaseChanged) {
                             this._cmd('AP_APR_HOLD', true, 'APR mode (GS valid)');
                         }
                     } else if (nav.approach?.mode) {
-                        // Approach active but no glideslope — APR for lateral only
                         if (!apState.aprHold || phaseChanged) {
                             this._cmd('AP_APR_HOLD', true, 'APR mode (lateral)');
-                            this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
-                        }
-                    } else {
-                        // No approach loaded — NAV hold + VS descent
-                        if (phaseChanged) {
-                            this._cmd('AP_NAV1_HOLD', true, 'NAV hold (no approach)');
-                            this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
                         }
                     }
-                } else if (phaseChanged) {
-                    // No GTN750 nav data — default behavior
-                    this._cmd('AP_APR_HOLD', true, 'APR mode');
-                    this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
                 }
+                // Fixed approach power with flaps — speed settles to ~75kts.
+                // Only intervene near stall or overspeed.
+                const aprIas = d.speed || 0;
+                let aprThrottle = 40;                           // base approach power (with flaps)
+                if (aprIas < (speeds.Vs0 || 48) + 10) aprThrottle = 55;  // stall margin — add power
+                else if (aprIas > (speeds.Vfe || 85) - 5) aprThrottle = 25;  // flap overspeed — pull back
+                this._cmdValue('THROTTLE_SET', aprThrottle, 'Approach throttle ' + aprThrottle + '%');
                 break;
+            }
 
-            case 'LANDING':
-                // Disengage AP for manual landing
-                if (apState.master && d.altitudeAGL < 100) {
-                    this._cmd('AP_MASTER', false, 'Disengage AP for landing');
+            case 'LANDING': {
+                const lndAgl = d.altitudeAGL || 0;
+                const lndGs = d.groundSpeed || 0;
+                const lndOnGround = lndAgl < 10 && d.onGround !== false;
+                // Ensure full flaps (use notch 4 to bypass dedup from approach flaps)
+                if ((d.flapsIndex || 0) < 3) {
+                    this._cmd('FLAPS_DOWN', 4, 'Full flaps for landing');
+                }
+                if (!lndOnGround) {
+                    // ── Airborne: progressive VS reduction for gentle touchdown ──
+                    if (lndAgl > 100) {
+                        // High on final — normal descent
+                        if (!apState.master) this._cmd('AP_MASTER', true, 'AP for final');
+                        this._cmd('AP_VS_HOLD', true, 'VS hold final');
+                        this._cmdValue('AP_VS_VAR_SET', -300, 'VS -300 (final)');
+                        this._cmdValue('THROTTLE_SET', 35, 'Final throttle');
+                    } else if (lndAgl > 50) {
+                        // Short final — gentle
+                        if (apState.master) {
+                            this._cmdValue('AP_VS_VAR_SET', -200, 'VS -200 (short final)');
+                        }
+                        this._cmdValue('THROTTLE_SET', 25, 'Short final throttle');
+                    } else if (lndAgl > 20) {
+                        // Pre-flare — very gentle
+                        if (apState.master) {
+                            this._cmdValue('AP_VS_VAR_SET', -100, 'VS -100 (pre-flare)');
+                        }
+                        this._cmdValue('THROTTLE_SET', 15, 'Pre-flare throttle');
+                    } else {
+                        // Below 20ft — disengage AP, idle power, slight nose up
+                        if (apState.master) {
+                            delete this._lastCommands['AP_MASTER'];
+                            this._cmd('AP_MASTER', false, 'AP off — flare');
+                        }
+                        this._cmdValue('THROTTLE_SET', 0, 'Idle for flare');
+                        this._cmdValue('AXIS_ELEVATOR_SET', -30, 'Nose up for flare');
+                    }
+                } else {
+                    // ── On ground: rollout ──
+                    if (apState.master) {
+                        delete this._lastCommands['AP_MASTER'];
+                        this._cmd('AP_MASTER', false, 'AP off — on ground');
+                    }
+                    this._cmdValue('THROTTLE_SET', 0, 'Idle on rollout');
+                    this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release elevator');
+                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder');
+                    this._cmdValue('AXIS_AILERONS_SET', 0, 'Center ailerons');
+                    // Retract flaps on ground
+                    if ((d.flapsIndex || 0) > 0) {
+                        this._cmd('FLAPS_UP', true, 'Retract flaps after landing');
+                    }
+                    if (lndGs < 40 && lndGs > 5 && !d.parkingBrake) {
+                        delete this._lastCommands['PARKING_BRAKES'];
+                        this._cmd('PARKING_BRAKES', true, 'Braking');
+                    }
                 }
                 break;
+            }
         }
     }
 
