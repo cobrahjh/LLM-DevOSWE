@@ -88,12 +88,14 @@ class EnvironmentLayer {
     }
 
     setVolume(v) {
+        this._vol = v;
         this.output.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
     }
 
     setEnabled(b) {
         this._enabled = b;
-        if (!b) this.output.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+        const t = this.ctx.currentTime;
+        this.output.gain.setTargetAtTime(b ? (this._vol || 1) : 0, t, 0.05);
     }
 
     destroy() {
