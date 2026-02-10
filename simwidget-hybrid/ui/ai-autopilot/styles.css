@@ -210,6 +210,59 @@
     color: #4fc3f7;
 }
 
+/* Airport/Runway Bar */
+.airport-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 12px;
+    background: rgba(0, 200, 83, 0.06);
+    border-bottom: 1px solid var(--border-color, #1e2a3a);
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.airport-icao {
+    font-weight: 700;
+    color: #4fc3f7;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.airport-name {
+    color: #8899aa;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+.airport-rwy {
+    padding: 1px 8px;
+    border-radius: 3px;
+    background: rgba(0, 200, 83, 0.15);
+    color: #00c853;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.airport-rwy.no-runway {
+    background: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+}
+
+.airport-elev {
+    color: #667;
+    font-size: 11px;
+}
+
+.airport-dist {
+    color: #667;
+    font-size: 11px;
+}
+
 /* Flight Plan Report */
 .fpl-report {
     border-bottom: 1px solid var(--border-color, #1e2a3a);

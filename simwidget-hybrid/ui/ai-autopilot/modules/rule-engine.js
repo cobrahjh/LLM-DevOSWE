@@ -26,6 +26,10 @@ class RuleEngine {
         // Nav state from GTN750 (via SafeChannel)
         this._navState = null;
         this._externalTerrainAlert = null;  // from GTN750 TAWS: null | 'CAUTION' | 'WARNING'
+
+        // Airport/runway awareness
+        this._airportData = null;  // { icao, name, elevation, runways[], distance, bearing }
+        this._activeRunway = null; // { id, heading, length } — best match for current heading+wind
     }
 
     /**
@@ -192,9 +196,13 @@ class RuleEngine {
             case 'ROLL':
                 // Full throttle
                 this._cmdValue('THROTTLE_SET', 100, 'Full throttle');
-                // Capture runway heading for later HDG hold
+                // Use known runway heading if available, else capture from aircraft heading
                 if (!this._runwayHeading) {
-                    this._runwayHeading = Math.round(d.heading || 0);
+                    if (this._activeRunway?.heading) {
+                        this._runwayHeading = this._activeRunway.heading;
+                    } else {
+                        this._runwayHeading = Math.round(d.heading || 0);
+                    }
                 }
                 // Transition to ROTATE at Vr
                 if (ias >= (speeds.Vr || 55)) {
@@ -406,6 +414,27 @@ class RuleEngine {
         this._externalTerrainAlert = level || null;
     }
 
+    /** Set nearest airport data and determine active runway */
+    setAirportData(airport) {
+        this._airportData = airport || null;
+        this._activeRunway = null;
+    }
+
+    /** Set the active runway (best match for heading + wind) */
+    setActiveRunway(runway) {
+        this._activeRunway = runway || null;
+    }
+
+    /** Get current airport data (for debug/display) */
+    getAirportData() {
+        return this._airportData;
+    }
+
+    /** Get current active runway (for debug/display) */
+    getActiveRunway() {
+        return this._activeRunway;
+    }
+
     /** Reset command dedup tracking (e.g., on AI toggle) */
     reset() {
         this._lastCommands = {};
@@ -414,6 +443,8 @@ class RuleEngine {
         this._runwayHeading = null;
         this._navState = null;
         this._externalTerrainAlert = null;
+        this._airportData = null;
+        this._activeRunway = null;
     }
 
     /** Update aircraft profile */

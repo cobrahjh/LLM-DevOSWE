@@ -16,7 +16,7 @@ const TERRAIN_BIN = path.join(__dirname, '..', 'ui', 'shared', 'data', 'terrain-
 let _terrainGrid = null; // { width, height, latMin, latMax, lonMin, lonMax, cellDeg, data: Int16Array }
 
 // Shared state for cross-machine pane sync (AI Autopilot ↔ GTN750)
-const _sharedState = { autopilot: null, nav: null, lastUpdate: 0 };
+const _sharedState = { autopilot: null, nav: null, airport: null, lastUpdate: 0 };
 
 function loadTerrainGrid() {
     if (_terrainGrid) return _terrainGrid;
@@ -120,7 +120,7 @@ CURRENT FLIGHT STATE:
 - Mixture: ${Math.round(fd.mixture || 0)}%, Throttle: ${Math.round(fd.throttle || 0)}%
 - Engine RPM: ${Math.round(fd.engineRpm || 0)}
 - Lat/Lon: ${(fd.latitude || 0).toFixed(4)}, ${(fd.longitude || 0).toFixed(4)}
-${buildTerrainContext(fd)}${buildNavContext()}`;
+${buildTerrainContext(fd)}${buildNavContext()}${buildAirportContext()}`;
 }
 
 function buildTerrainContext(fd) {
@@ -163,6 +163,26 @@ function buildNavContext() {
     }
     if (nav.destDistNm != null) {
         ctx += `\n- Remaining: ${nav.destDistNm.toFixed(0)} nm`;
+    }
+    return ctx;
+}
+
+function buildAirportContext() {
+    const aptData = _sharedState.airport;
+    if (!aptData) return '';
+    const apt = aptData.airport;
+    const rwy = aptData.activeRunway;
+    if (!apt) return '';
+    let ctx = '\nAIRPORT/RUNWAY:';
+    ctx += `\n- Nearest: ${apt.icao || '?'} (${apt.name || '?'})`;
+    ctx += `\n- Distance: ${apt.distance?.toFixed(1) || '?'} nm, Bearing: ${apt.bearing?.toFixed(0) || '?'}°`;
+    ctx += `\n- Field Elevation: ${apt.elevation || '?'} ft MSL`;
+    if (apt.runways?.length) {
+        ctx += `\n- Runways: ${apt.runways.map(r => `${r.id}(${r.length || '?'}ft)`).join(', ')}`;
+    }
+    if (rwy) {
+        ctx += `\n- Active Runway: ${rwy.id}, Heading ${rwy.heading}°, Length ${rwy.length || '?'} ft`;
+        ctx += `\n- USE THIS RUNWAY HEADING (${rwy.heading}°) for takeoff/approach alignment`;
     }
     return ctx;
 }
@@ -521,6 +541,7 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
         res.json({
             autopilot: _sharedState.autopilot,
             nav: _sharedState.nav,
+            airport: _sharedState.airport,
             lastUpdate: _sharedState.lastUpdate
         });
     });

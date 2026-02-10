@@ -71,6 +71,12 @@ class AiAutopilotPane extends SimGlassBase {
         this._navState = null;
         this._navStateTimestamp = 0;
 
+        // Airport/runway awareness
+        this._nearestAirport = null;
+        this._activeRunway = null;
+        this._airportPollTimer = null;
+        this._lastAirportPoll = 0;
+
         // SafeChannel for cross-pane sync
         this.syncChannel = typeof SafeChannel !== 'undefined' ? new SafeChannel('SimGlass-sync') : null;
         this._syncBroadcastTimer = null;
@@ -123,6 +129,9 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Check for stored flight plan (late-join scenario)
         this._fetchStoredPlan();
+
+        // Airport polling — fetch nearest airport every 15s when near ground
+        this._airportPollTimer = setInterval(() => this._pollNearestAirport(), 15000);
 
         // Initial render
         this._render();
@@ -180,6 +189,14 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.dsCmd = document.getElementById('ds-cmd');
         this.elements.dsLlmRt = document.getElementById('ds-llm-rt');
         this.elements.simbriefImport = document.getElementById('simbrief-import');
+
+        // Airport bar
+        this.elements.airportBar = document.getElementById('airport-bar');
+        this.elements.airportIcao = document.getElementById('airport-icao');
+        this.elements.airportName = document.getElementById('airport-name');
+        this.elements.airportRwy = document.getElementById('airport-rwy');
+        this.elements.airportElev = document.getElementById('airport-elev');
+        this.elements.airportDist = document.getElementById('airport-dist');
 
         // Flight plan report
         this.elements.fplReport = document.getElementById('fpl-report');
@@ -919,6 +936,110 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         btn.classList.remove('loading');
     }
 
+    // ── Airport/Runway Awareness ────────────────────────────
+
+    async _pollNearestAirport() {
+        const d = this._lastFlightData;
+        if (!d || !d.latitude || !d.longitude) return;
+
+        // Only poll when below 10000 AGL (relevant for takeoff/approach/landing)
+        const agl = d.altitudeAGL || 0;
+        if (agl > 10000) {
+            if (this._nearestAirport) {
+                this._nearestAirport = null;
+                this._activeRunway = null;
+                this.ruleEngine.setAirportData(null);
+                this.ruleEngine.setActiveRunway(null);
+                this._renderAirportInfo();
+            }
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/nearby/airports?lat=${d.latitude}&lon=${d.longitude}&radius=15`);
+            if (!res.ok) return;
+            const airports = await res.json();
+            if (!airports?.length) return;
+
+            // Pick closest airport
+            const apt = airports[0];
+            const changed = !this._nearestAirport || this._nearestAirport.icao !== apt.icao;
+            this._nearestAirport = apt;
+
+            // Set field elevation for AGL calculations
+            if (apt.elevation != null) {
+                this.flightPhase.setFieldElevation(apt.elevation);
+            }
+
+            // Determine active runway
+            this._activeRunway = this._detectActiveRunway(apt, d);
+
+            // Feed to rule engine
+            this.ruleEngine.setAirportData(apt);
+            this.ruleEngine.setActiveRunway(this._activeRunway);
+
+            // Store on server for LLM context
+            fetch('/api/ai-pilot/shared-state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'airport', data: { airport: apt, activeRunway: this._activeRunway } })
+            }).catch(() => {});
+
+            if (changed) {
+                this._dbg('api', `Airport: <span class="val">${apt.icao}</span> ${this._esc(apt.name || '')} <span class="dim">${apt.distance?.toFixed(1) || '?'}nm elev:${apt.elevation || '?'}ft</span>`);
+            }
+            if (this._activeRunway) {
+                this._dbg('api', `Runway: <span class="val">${this._activeRunway.id}</span> hdg ${this._activeRunway.heading}° len ${this._activeRunway.length || '?'}ft`);
+            }
+
+            this._renderAirportInfo();
+        } catch (e) {
+            // API not available — continue without airport data
+        }
+    }
+
+    _detectActiveRunway(airport, d) {
+        if (!airport?.runways?.length) return null;
+
+        const hdg = d.heading || 0;
+        const windDir = d.windDirection || 0;
+        const windSpd = d.windSpeed || 0;
+
+        // Parse runway IDs into heading values
+        const parsed = airport.runways.map(rwy => {
+            const match = rwy.id?.match(/^(\d{1,2})([LRC]?)$/);
+            if (!match) return null;
+            const rwyHdg = parseInt(match[1]) * 10;
+            const suffix = match[2] || '';
+            return { id: rwy.id, heading: rwyHdg, length: rwy.length || 0, suffix };
+        }).filter(Boolean);
+
+        if (!parsed.length) return null;
+
+        // Score each runway: prefer into wind + closest to aircraft heading
+        let best = null;
+        let bestScore = -Infinity;
+
+        for (const rwy of parsed) {
+            // Headwind component (positive = headwind, negative = tailwind)
+            const windAngle = ((windDir - rwy.heading + 540) % 360) - 180;
+            const headwind = windSpd * Math.cos(windAngle * Math.PI / 180);
+
+            // Alignment with aircraft heading (0 = perfect alignment)
+            const hdgDiff = Math.abs(((hdg - rwy.heading + 540) % 360) - 180);
+
+            // Score: headwind bonus + heading alignment bonus + length bonus
+            const score = headwind * 2 + (180 - hdgDiff) + (rwy.length / 1000);
+
+            if (score > bestScore) {
+                bestScore = score;
+                best = rwy;
+            }
+        }
+
+        return best;
+    }
+
     async _fetchStoredPlan() {
         try {
             const res = await fetch('/api/ai-pilot/shared-state/nav');
@@ -932,6 +1053,32 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     }
 
     // ── Flight Plan Report ─────────────────────────────────
+
+    _renderAirportInfo() {
+        const apt = this._nearestAirport;
+        const rwy = this._activeRunway;
+
+        if (!apt || !this.elements.airportBar) {
+            if (this.elements.airportBar) this.elements.airportBar.style.display = 'none';
+            return;
+        }
+
+        this.elements.airportBar.style.display = '';
+        if (this.elements.airportIcao) this.elements.airportIcao.textContent = apt.icao || '----';
+        if (this.elements.airportName) this.elements.airportName.textContent = apt.name || '';
+        if (this.elements.airportElev) this.elements.airportElev.textContent = `${apt.elevation || '---'} ft`;
+        if (this.elements.airportDist) this.elements.airportDist.textContent = `${apt.distance?.toFixed(1) || '--.-'} nm`;
+
+        if (this.elements.airportRwy) {
+            if (rwy) {
+                this.elements.airportRwy.textContent = `RWY ${rwy.id} (${rwy.heading}\u00B0)`;
+                this.elements.airportRwy.classList.remove('no-runway');
+            } else {
+                this.elements.airportRwy.textContent = 'RWY --';
+                this.elements.airportRwy.classList.add('no-runway');
+            }
+        }
+    }
 
     _renderFplReport() {
         const plan = this._currentPlan;
@@ -1056,6 +1203,17 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     apr: this.ap.aprHold
                 },
                 terrainAlert: this.ruleEngine.getTerrainAlert(),
+                airport: this._nearestAirport ? {
+                    icao: this._nearestAirport.icao,
+                    name: this._nearestAirport.name,
+                    elevation: this._nearestAirport.elevation,
+                    distance: this._nearestAirport.distance
+                } : null,
+                activeRunway: this._activeRunway ? {
+                    id: this._activeRunway.id,
+                    heading: this._activeRunway.heading,
+                    length: this._activeRunway.length
+                } : null,
                 lastCommand: lastCmd ? {
                     type: lastCmd.type,
                     value: lastCmd.value,
@@ -1816,6 +1974,10 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         if (this._wsRateTimer) {
             clearInterval(this._wsRateTimer);
             this._wsRateTimer = null;
+        }
+        if (this._airportPollTimer) {
+            clearInterval(this._airportPollTimer);
+            this._airportPollTimer = null;
         }
         if (this._syncBroadcastTimer) {
             clearInterval(this._syncBroadcastTimer);
