@@ -46,6 +46,46 @@
             </div>
         </div>
 
+        <!-- Flight Plan Report (shown after SimBrief import) -->
+        <div class="fpl-report" id="fpl-report" style="display:none">
+            <div class="fpl-report-header" id="fpl-report-toggle">
+                <span class="fpl-report-icon">&#9992;</span>
+                <span class="fpl-report-title">FLIGHT PLAN</span>
+                <span class="fpl-report-route" id="fpl-report-route">----</span>
+                <span class="fpl-report-chevron" id="fpl-report-chevron">&#9660;</span>
+            </div>
+            <div class="fpl-report-body" id="fpl-report-body">
+                <div class="fpl-report-summary">
+                    <div class="fpl-report-field">
+                        <span class="fpl-field-label">CRUISE</span>
+                        <span class="fpl-field-value" id="fpl-rpt-alt">---</span>
+                    </div>
+                    <div class="fpl-report-field">
+                        <span class="fpl-field-label">DISTANCE</span>
+                        <span class="fpl-field-value" id="fpl-rpt-dist">---</span>
+                    </div>
+                    <div class="fpl-report-field">
+                        <span class="fpl-field-label">WAYPOINTS</span>
+                        <span class="fpl-field-value" id="fpl-rpt-wps">---</span>
+                    </div>
+                    <div class="fpl-report-field">
+                        <span class="fpl-field-label">SOURCE</span>
+                        <span class="fpl-field-value" id="fpl-rpt-source">---</span>
+                    </div>
+                </div>
+                <div class="fpl-report-route-string" id="fpl-rpt-route-str"></div>
+                <div class="fpl-report-waypoints" id="fpl-rpt-wps-list"></div>
+                <div class="fpl-report-commands">
+                    <div class="fpl-cmd-label">AI INSTRUCTIONS</div>
+                    <div class="fpl-cmd-row">
+                        <input type="text" class="fpl-cmd-input" id="fpl-cmd-input" placeholder="e.g. Fly at FL180, avoid KDEN airspace, descend early..." autocomplete="off">
+                        <button class="fpl-cmd-send" id="fpl-cmd-send">SEND</button>
+                    </div>
+                    <div class="fpl-cmd-history" id="fpl-cmd-history"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content: AP Status + Command Log -->
         <div class="main-content">
             <!-- AP Status Column -->

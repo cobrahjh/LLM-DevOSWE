@@ -69,7 +69,8 @@ Object.assign(CHECKLISTS, {
         ],
         takeoff: [
             { text: 'Runup', action: 'COMPLETE' },
-            { text: 'Flaps', action: '0-10°' },
+            { text: 'Brakes', action: 'RELEASE' },
+            { text: 'Flaps', action: '0-10ï¿½' },
             { text: 'Trim', action: 'TAKEOFF' },
             { text: 'Transponder', action: 'ALT' },
             { text: 'Lights', action: 'ON' }
@@ -113,7 +114,7 @@ Object.assign(CHECKLISTS, {
             { text: 'Oil Pressure', action: 'GREEN' }
         ],
         taxi: [
-            { text: 'Flaps', action: '20°' },
+            { text: 'Flaps', action: '20ï¿½' },
             { text: 'Trims', action: 'SET' },
             { text: 'Flight Instruments', action: 'CHECK' },
             { text: 'Brakes', action: 'CHECK' }
@@ -216,7 +217,7 @@ Object.assign(CHECKLISTS, {
             { text: 'Generators', action: 'ON' }
         ],
         taxi: [
-            { text: 'Flaps', action: '15°' },
+            { text: 'Flaps', action: '15ï¿½' },
             { text: 'Speedbrakes', action: 'RETRACT' },
             { text: 'Trims', action: 'SET' },
             { text: 'Flight Controls', action: 'CHECK' },
@@ -240,7 +241,7 @@ Object.assign(CHECKLISTS, {
             { text: 'Approach Briefing', action: 'COMPLETE' },
             { text: 'Speedbrakes', action: 'ARM' },
             { text: 'Gear', action: 'DOWN' },
-            { text: 'Flaps', action: '35°' },
+            { text: 'Flaps', action: '35ï¿½' },
             { text: 'Speed', action: 'Vref + 5' }
         ],
         shutdown: [

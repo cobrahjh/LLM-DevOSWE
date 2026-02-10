@@ -210,6 +210,241 @@
     color: #4fc3f7;
 }
 
+/* Flight Plan Report */
+.fpl-report {
+    border-bottom: 1px solid var(--border-color, #1e2a3a);
+    flex-shrink: 0;
+}
+
+.fpl-report-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    background: rgba(0, 150, 255, 0.06);
+    cursor: pointer;
+    user-select: none;
+}
+
+.fpl-report-header:hover {
+    background: rgba(0, 150, 255, 0.1);
+}
+
+.fpl-report-icon {
+    font-size: 13px;
+    color: #4fc3f7;
+}
+
+.fpl-report-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: #667;
+    letter-spacing: 1.5px;
+}
+
+.fpl-report-route {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 700;
+    color: #e0e0e0;
+    font-family: 'Consolas', monospace;
+    letter-spacing: 0.5px;
+}
+
+.fpl-report-chevron {
+    font-size: 10px;
+    color: #556;
+    transition: transform 0.2s;
+}
+
+.fpl-report.collapsed .fpl-report-chevron {
+    transform: rotate(-90deg);
+}
+
+.fpl-report.collapsed .fpl-report-body {
+    display: none;
+}
+
+.fpl-report-body {
+    padding: 8px 12px;
+    background: var(--bg-secondary, #111820);
+}
+
+.fpl-report-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.fpl-report-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fpl-field-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #556;
+    letter-spacing: 1px;
+}
+
+.fpl-field-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #c0c8d8;
+    font-family: 'Consolas', monospace;
+}
+
+.fpl-report-route-string {
+    padding: 5px 8px;
+    margin-bottom: 8px;
+    background: #0a0e14;
+    border-radius: 3px;
+    font-family: 'Consolas', monospace;
+    font-size: 10px;
+    color: #8899aa;
+    line-height: 1.5;
+    word-break: break-all;
+    max-height: 36px;
+    overflow-y: auto;
+}
+
+.fpl-report-route-string:empty {
+    display: none;
+}
+
+.fpl-report-waypoints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-bottom: 8px;
+    max-height: 54px;
+    overflow-y: auto;
+}
+
+.fpl-report-waypoints:empty {
+    display: none;
+}
+
+.fpl-wp-tag {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-family: 'Consolas', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    background: #1a2030;
+    color: #8899aa;
+}
+
+.fpl-wp-tag.airport {
+    color: #4fc3f7;
+    background: rgba(79, 195, 247, 0.1);
+}
+
+.fpl-wp-tag.active {
+    color: #00e5ff;
+    background: rgba(0, 229, 255, 0.15);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.fpl-wp-tag.passed {
+    color: #445;
+    background: #0d1117;
+}
+
+.fpl-report-commands {
+    border-top: 1px solid #1a2030;
+    padding-top: 8px;
+}
+
+.fpl-cmd-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #556;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.fpl-cmd-row {
+    display: flex;
+    gap: 6px;
+}
+
+.fpl-cmd-input {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #0d1117;
+    color: #e0e0e0;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+}
+
+.fpl-cmd-input:focus {
+    border-color: #4fc3f7;
+}
+
+.fpl-cmd-send {
+    padding: 4px 12px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #0d2840;
+    color: #4fc3f7;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fpl-cmd-send:hover {
+    background: #163a5c;
+    border-color: #4fc3f7;
+}
+
+.fpl-cmd-history {
+    margin-top: 6px;
+    max-height: 60px;
+    overflow-y: auto;
+    font-size: 11px;
+}
+
+.fpl-cmd-history:empty {
+    display: none;
+}
+
+.fpl-cmd-entry {
+    padding: 3px 0;
+    display: flex;
+    gap: 6px;
+    color: #8899aa;
+    border-bottom: 1px solid #0d1117;
+}
+
+.fpl-cmd-entry .cmd-time {
+    color: #445;
+    font-family: 'Consolas', monospace;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.fpl-cmd-entry .cmd-text {
+    color: #c0c8d8;
+}
+
+.fpl-cmd-entry .cmd-status {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 10px;
+}
+
+.fpl-cmd-entry .cmd-status.sent { color: #4fc3f7; }
+.fpl-cmd-entry .cmd-status.accepted { color: #00c853; }
+
 /* Main Content */
 .main-content {
     display: flex;

@@ -121,6 +121,9 @@ class AiAutopilotPane extends SimGlassBase {
         this._initSyncListener();
         this._startSyncBroadcast();
 
+        // Check for stored flight plan (late-join scenario)
+        this._fetchStoredPlan();
+
         // Initial render
         this._render();
     }
@@ -177,6 +180,22 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.dsCmd = document.getElementById('ds-cmd');
         this.elements.dsLlmRt = document.getElementById('ds-llm-rt');
         this.elements.simbriefImport = document.getElementById('simbrief-import');
+
+        // Flight plan report
+        this.elements.fplReport = document.getElementById('fpl-report');
+        this.elements.fplReportToggle = document.getElementById('fpl-report-toggle');
+        this.elements.fplReportBody = document.getElementById('fpl-report-body');
+        this.elements.fplReportRoute = document.getElementById('fpl-report-route');
+        this.elements.fplReportChevron = document.getElementById('fpl-report-chevron');
+        this.elements.fplRptAlt = document.getElementById('fpl-rpt-alt');
+        this.elements.fplRptDist = document.getElementById('fpl-rpt-dist');
+        this.elements.fplRptWps = document.getElementById('fpl-rpt-wps');
+        this.elements.fplRptSource = document.getElementById('fpl-rpt-source');
+        this.elements.fplRptRouteStr = document.getElementById('fpl-rpt-route-str');
+        this.elements.fplRptWpsList = document.getElementById('fpl-rpt-wps-list');
+        this.elements.fplCmdInput = document.getElementById('fpl-cmd-input');
+        this.elements.fplCmdSend = document.getElementById('fpl-cmd-send');
+        this.elements.fplCmdHistory = document.getElementById('fpl-cmd-history');
     }
 
     // ── Event Setup ────────────────────────────────────────
@@ -195,6 +214,19 @@ class AiAutopilotPane extends SimGlassBase {
         // SimBrief import
         this.elements.simbriefImport?.addEventListener('click', () => {
             this._importSimBrief();
+        });
+
+        // Flight plan report collapse toggle
+        this.elements.fplReportToggle?.addEventListener('click', () => {
+            this.elements.fplReport?.classList.toggle('collapsed');
+        });
+
+        // Flight plan command input
+        this.elements.fplCmdSend?.addEventListener('click', () => {
+            this._sendFplCommand();
+        });
+        this.elements.fplCmdInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); this._sendFplCommand(); }
         });
 
         // Advisory ask button
@@ -809,11 +841,13 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
     _onSimbriefPlan(plan) {
         if (!plan) return;
+        this._currentPlan = plan;
         if (plan.cruiseAltitude && plan.cruiseAltitude > 0) {
             this.flightPhase.targetCruiseAlt = plan.cruiseAltitude;
             this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
             this._dbg('cmd', `SimBrief plan: cruise <span class="val">${plan.cruiseAltitude}ft</span>`);
         }
+        this._renderFplReport();
     }
 
     async _importSimBrief() {
@@ -883,6 +917,112 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             setTimeout(() => { btn.textContent = '\u2708 FPL'; }, 2000);
         }
         btn.classList.remove('loading');
+    }
+
+    async _fetchStoredPlan() {
+        try {
+            const res = await fetch('/api/ai-pilot/shared-state/nav');
+            if (!res.ok) return;
+            const json = await res.json();
+            const plan = json.nav?.simbriefPlan;
+            if (plan && plan.waypoints?.length && !this._currentPlan) {
+                this._onSimbriefPlan(plan);
+            }
+        } catch (e) { /* server may not be ready */ }
+    }
+
+    // ── Flight Plan Report ─────────────────────────────────
+
+    _renderFplReport() {
+        const plan = this._currentPlan;
+        if (!plan || !this.elements.fplReport) return;
+
+        this.elements.fplReport.style.display = '';
+        this.elements.fplReport.classList.remove('collapsed');
+
+        // Route header
+        const dep = plan.departure || '----';
+        const arr = plan.arrival || '----';
+        if (this.elements.fplReportRoute) {
+            this.elements.fplReportRoute.textContent = `${dep} \u2192 ${arr}`;
+        }
+
+        // Summary fields
+        if (this.elements.fplRptAlt) {
+            const alt = plan.cruiseAltitude || 0;
+            this.elements.fplRptAlt.textContent = alt >= 18000 ? `FL${Math.round(alt / 100)}` : `${alt.toLocaleString()} ft`;
+        }
+        if (this.elements.fplRptDist) {
+            this.elements.fplRptDist.textContent = plan.totalDistance ? `${plan.totalDistance} nm` : '---';
+        }
+        if (this.elements.fplRptWps) {
+            this.elements.fplRptWps.textContent = plan.waypoints?.length || 0;
+        }
+        if (this.elements.fplRptSource) {
+            this.elements.fplRptSource.textContent = (plan.source || 'unknown').toUpperCase();
+        }
+
+        // Route string
+        if (this.elements.fplRptRouteStr) {
+            this.elements.fplRptRouteStr.textContent = plan.route || '';
+        }
+
+        // Waypoint tags
+        if (this.elements.fplRptWpsList && plan.waypoints?.length) {
+            this.elements.fplRptWpsList.textContent = '';
+            const activeIdx = this._navState?.activeWaypoint?.index ?? -1;
+            plan.waypoints.forEach((wp, i) => {
+                const tag = document.createElement('span');
+                tag.className = 'fpl-wp-tag';
+                if (i === 0 || i === plan.waypoints.length - 1) tag.classList.add('airport');
+                if (i === activeIdx) tag.classList.add('active');
+                if (wp.passed) tag.classList.add('passed');
+                tag.textContent = wp.ident || `WP${i + 1}`;
+                tag.title = wp.altitude ? `${wp.altitude.toLocaleString()} ft` : '';
+                this.elements.fplRptWpsList.appendChild(tag);
+            });
+        }
+    }
+
+    _sendFplCommand() {
+        const input = this.elements.fplCmdInput;
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+
+        // Add to command history
+        if (this.elements.fplCmdHistory) {
+            const entry = document.createElement('div');
+            entry.className = 'fpl-cmd-entry';
+            const time = new Date();
+            const ts = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
+            entry.innerHTML = `<span class="cmd-time">${ts}</span><span class="cmd-text">${this._esc(text)}</span><span class="cmd-status sent">SENT</span>`;
+            this.elements.fplCmdHistory.prepend(entry);
+        }
+
+        // Store as AI instruction
+        if (!this._fplInstructions) this._fplInstructions = [];
+        this._fplInstructions.push(text);
+
+        // Send to LLM advisor as context
+        if (this.llmAdvisor && !this.llmAdvisor.isRateLimited()) {
+            const plan = this._currentPlan;
+            const planCtx = plan ? `Current plan: ${plan.departure}->${plan.arrival}, cruise ${plan.cruiseAltitude}ft, ${plan.waypoints?.length || 0} wps.` : '';
+            this.llmAdvisor.requestAdvisory(
+                `Pilot instruction: "${text}". ${planCtx} Phase: ${this.flightPhase.phase}. Interpret and advise on execution.`,
+                this._lastFlightData
+            );
+        }
+
+        this._dbg('cmd', `Pilot instruction: <span class="val">${this._esc(text)}</span>`);
+
+        // Store on server for cross-machine access
+        fetch('/api/ai-pilot/shared-state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'instructions', data: { commands: this._fplInstructions } })
+        }).catch(() => {});
     }
 
     _startSyncBroadcast() {
