@@ -359,6 +359,36 @@
     flex: 1;
 }
 
+.advisory-mic {
+    padding: 2px 8px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #1a1a2e;
+    color: #667;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.advisory-mic:hover {
+    background: #222a3e;
+    border-color: #4fc3f7;
+    color: #4fc3f7;
+}
+
+.advisory-mic.listening {
+    background: #2a0d0d;
+    border-color: #ef5350;
+    color: #ef5350;
+    animation: pulse-mic 1s infinite;
+}
+
+@keyframes pulse-mic {
+    0%, 100% { box-shadow: 0 0 4px rgba(239, 83, 80, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(239, 83, 80, 0.6); }
+}
+
 .advisory-ask {
     padding: 2px 10px;
     border: 1px solid #334;
@@ -378,6 +408,49 @@
 .advisory-ask.loading {
     color: #556;
     pointer-events: none;
+}
+
+.advisory-input-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.advisory-text-input {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #0d1117;
+    color: #e0e0e0;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+}
+
+.advisory-text-input:focus {
+    border-color: #4fc3f7;
+}
+
+.advisory-text-input.voice-active {
+    border-color: #ef5350;
+    background: #1a0d0d;
+}
+
+.advisory-send {
+    padding: 4px 10px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #1a1a2e;
+    color: #4fc3f7;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.advisory-send:hover {
+    background: #222a3e;
+    border-color: #4fc3f7;
 }
 
 .advisory-content {
@@ -600,11 +673,46 @@
 .debug-panel {
     display: flex;
     flex-direction: column;
-    max-height: 240px;
-    min-height: 120px;
+    max-height: 70vh;
+    min-height: 80px;
+    height: 200px;
     flex-shrink: 0;
     border-top: 1px solid #4fc3f7;
     background: #060a10;
+    position: relative;
+}
+
+.debug-resize-handle {
+    height: 5px;
+    cursor: ns-resize;
+    background: transparent;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    transition: background 0.15s;
+}
+
+.debug-resize-handle:hover,
+.debug-resize-handle.dragging {
+    background: rgba(79, 195, 247, 0.4);
+}
+
+.debug-popout {
+    padding: 1px 6px;
+    border: 1px solid #333;
+    border-radius: 2px;
+    background: transparent;
+    color: #556;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.debug-popout:hover {
+    color: #4fc3f7;
+    border-color: #4fc3f7;
 }
 
 .debug-header {

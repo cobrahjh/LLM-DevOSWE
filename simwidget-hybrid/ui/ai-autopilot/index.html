@@ -91,7 +91,12 @@
             <div class="advisory-header">
                 <span class="advisory-icon">&#9432;</span>
                 <span class="advisory-title">AI Advisory</span>
+                <button class="advisory-mic" id="advisory-mic" title="Speak to AI">&#127908;</button>
                 <button class="advisory-ask" id="advisory-ask" title="Request advisory">Ask AI</button>
+            </div>
+            <div class="advisory-input-row" id="advisory-input-row" style="display:none">
+                <input type="text" class="advisory-text-input" id="advisory-text-input" placeholder="Ask the AI anything..." autocomplete="off">
+                <button class="advisory-send" id="advisory-send" title="Send">&#9654;</button>
             </div>
             <div class="advisory-content" id="advisory-content">
                 <span class="advisory-idle">No active advisories</span>
@@ -104,15 +109,17 @@
 
         <!-- Debug Panel -->
         <div class="debug-panel" id="debug-panel" style="display:none">
+            <div class="debug-resize-handle" id="debug-resize-handle" title="Drag to resize"></div>
             <div class="debug-header">
                 <span class="debug-title">DEBUG</span>
                 <div class="debug-filters">
                     <button class="debug-filter active" data-filter="all">ALL</button>
-                    <button class="debug-filter" data-filter="api">API</button>
-                    <button class="debug-filter" data-filter="ws">WS</button>
-                    <button class="debug-filter" data-filter="llm">LLM</button>
-                    <button class="debug-filter" data-filter="cmd">CMD</button>
+                    <button class="debug-filter active" data-filter="api">API</button>
+                    <button class="debug-filter active" data-filter="ws">WS</button>
+                    <button class="debug-filter active" data-filter="llm">LLM</button>
+                    <button class="debug-filter active" data-filter="cmd">CMD</button>
                 </div>
+                <button class="debug-popout" id="debug-popout" title="Open in new window">&#8599;</button>
                 <button class="debug-clear" id="debug-clear">CLEAR</button>
             </div>
             <div class="debug-log" id="debug-log"></div>
@@ -120,6 +127,7 @@
                 <span>API: <span id="ds-api">0</span></span>
                 <span>WS: <span id="ds-ws">0</span>/s</span>
                 <span>LLM: <span id="ds-llm">0</span></span>
+                <span>RT: <span id="ds-llm-rt">--</span>ms</span>
                 <span>CMD: <span id="ds-cmd">0</span></span>
             </div>
         </div>
@@ -142,6 +150,7 @@
     <script src="/ui/shared/platform-utils.js"></script>
     <script src="/ui/shared/telemetry.js"></script>
     <script src="/ui/shared/feedback-section.js"></script>
+    <script src="/ui/shared/voice-announcer.js"></script>
     <script src="/ui/shared/widget-base.js"></script>
     <!-- AI Autopilot Modules -->
     <script src="data/aircraft-profiles.js"></script>

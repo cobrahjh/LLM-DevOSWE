@@ -70,11 +70,16 @@ class AiAutopilotPane extends SimGlassBase {
         // Debug log
         this._debugLog = [];
         this._debugMaxEntries = 200;
-        this._debugFilter = 'all';
+        this._debugFilters = new Set(['api', 'ws', 'llm', 'cmd']);  // all active = show all
         this._debugVisible = false;
         this._debugStats = { api: 0, ws: 0, llm: 0, cmd: 0 };
         this._wsPerSec = 0;
         this._wsCount = 0;
+        this._llmLastRt = null;  // last LLM response time in ms
+
+        // Voice announcer for AI advisory TTS
+        this._voice = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer({ rate: 0.95, pitch: 1.0 }) : null;
+        this._ttsEnabled = localStorage.getItem('ai-ap-tts') !== 'false';
 
         // Cache DOM elements
         this.elements = {};
@@ -137,6 +142,10 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.advisoryContent = document.getElementById('advisory-content');
         this.elements.advisoryActions = document.getElementById('advisory-actions');
         this.elements.advisoryAsk = document.getElementById('advisory-ask');
+        this.elements.advisoryMic = document.getElementById('advisory-mic');
+        this.elements.advisoryInputRow = document.getElementById('advisory-input-row');
+        this.elements.advisoryTextInput = document.getElementById('advisory-text-input');
+        this.elements.advisorySend = document.getElementById('advisory-send');
         this.elements.advisoryAccept = document.getElementById('advisory-accept');
         this.elements.advisoryDismiss = document.getElementById('advisory-dismiss');
         this.elements.aircraftName = document.getElementById('aircraft-name');
@@ -146,10 +155,13 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.debugPanel = document.getElementById('debug-panel');
         this.elements.debugLog = document.getElementById('debug-log');
         this.elements.debugClear = document.getElementById('debug-clear');
+        this.elements.debugResize = document.getElementById('debug-resize-handle');
+        this.elements.debugPopout = document.getElementById('debug-popout');
         this.elements.dsApi = document.getElementById('ds-api');
         this.elements.dsWs = document.getElementById('ds-ws');
         this.elements.dsLlm = document.getElementById('ds-llm');
         this.elements.dsCmd = document.getElementById('ds-cmd');
+        this.elements.dsLlmRt = document.getElementById('ds-llm-rt');
     }
 
     // ── Event Setup ────────────────────────────────────────
@@ -183,6 +195,24 @@ class AiAutopilotPane extends SimGlassBase {
             this._dismissAdvisory();
         });
 
+        // Mic button — toggle voice input
+        this.elements.advisoryMic?.addEventListener('click', () => {
+            this._toggleVoiceInput();
+        });
+
+        // Text input — send on Enter
+        this.elements.advisoryTextInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this._sendTextQuery();
+            }
+        });
+
+        // Send button
+        this.elements.advisorySend?.addEventListener('click', () => {
+            this._sendTextQuery();
+        });
+
         // AI Has Controls toggle
         this.elements.autoControlsBtn?.addEventListener('click', () => {
             if (!this.aiEnabled) {
@@ -202,6 +232,146 @@ class AiAutopilotPane extends SimGlassBase {
         });
     }
 
+    // ── Voice Input ─────────────────────────────────────────
+
+    _toggleVoiceInput() {
+        // If already listening, stop
+        if (this._recognition) {
+            this._recognition.stop();
+            return;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            this._renderAdvisory({ text: 'Speech recognition not supported in this browser.', commands: [], error: true });
+            return;
+        }
+
+        // Show input row
+        if (this.elements.advisoryInputRow) {
+            this.elements.advisoryInputRow.style.display = 'flex';
+        }
+
+        this._recognition = new SpeechRecognition();
+        this._recognition.continuous = false;
+        this._recognition.interimResults = true;
+        this._recognition.lang = 'en-US';
+
+        this.elements.advisoryMic?.classList.add('listening');
+        this.elements.advisoryTextInput?.classList.add('voice-active');
+        if (this.elements.advisoryTextInput) {
+            this.elements.advisoryTextInput.placeholder = 'Listening...';
+            this.elements.advisoryTextInput.value = '';
+        }
+        this._dbg('llm', '<span class="dim">&#127908; Listening...</span>');
+
+        this._recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+            if (this.elements.advisoryTextInput) {
+                this.elements.advisoryTextInput.value = transcript;
+            }
+        };
+
+        this._recognition.onend = () => {
+            this.elements.advisoryMic?.classList.remove('listening');
+            this.elements.advisoryTextInput?.classList.remove('voice-active');
+
+            const text = this.elements.advisoryTextInput?.value?.trim();
+            this._recognition = null;
+
+            if (text) {
+                if (this.elements.advisoryTextInput) {
+                    this.elements.advisoryTextInput.placeholder = 'Ask the AI anything...';
+                }
+                this._dbg('llm', `<span class="dim">&#127908;</span> <span class="val">${this._esc(text)}</span>`);
+                this._askAI(text);
+            } else {
+                if (this.elements.advisoryTextInput) {
+                    this.elements.advisoryTextInput.placeholder = 'Ask the AI anything...';
+                }
+            }
+        };
+
+        this._recognition.onerror = (event) => {
+            this.elements.advisoryMic?.classList.remove('listening');
+            this.elements.advisoryTextInput?.classList.remove('voice-active');
+            if (this.elements.advisoryTextInput) {
+                this.elements.advisoryTextInput.placeholder = 'Ask the AI anything...';
+            }
+            this._recognition = null;
+
+            if (event.error !== 'no-speech' && event.error !== 'aborted') {
+                this._dbg('llm', `<span class="err">&#127908; ${this._esc(event.error)}</span>`);
+            }
+        };
+
+        this._recognition.start();
+    }
+
+    _sendTextQuery() {
+        const text = this.elements.advisoryTextInput?.value?.trim();
+        if (!text) return;
+
+        this._dbg('llm', `<span class="dim">&rarr;</span> <span class="val">${this._esc(text)}</span>`);
+        this._askAI(text);
+        if (this.elements.advisoryTextInput) {
+            this.elements.advisoryTextInput.value = '';
+        }
+    }
+
+    async _askAI(question) {
+        this._onAdvisoryLoading(true);
+
+        try {
+            const res = await fetch('/api/ai-pilot/auto-advise', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: question })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `Error ${res.status}`);
+            }
+
+            const result = await res.json();
+
+            if (result.advisory) {
+                const displayText = result.advisory.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
+                this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
+
+                // Speak response
+                const speakText = displayText.replace(/RECOMMEND:\s*/g, '').trim();
+                if (this._ttsEnabled && this._voice && speakText) {
+                    this._voice.speak(speakText);
+                }
+            }
+
+            // Log executed commands
+            if (result.commands) {
+                for (const cmd of result.commands) {
+                    const entry = {
+                        time: Date.now(),
+                        type: cmd.command,
+                        value: cmd.value,
+                        description: `AI: ${cmd.command}${cmd.value ? ' \u2192 ' + cmd.value : ''} ${cmd.executed ? '\u2713' : '(queued)'}`
+                    };
+                    this.commandQueue._log.unshift(entry);
+                    if (this.commandQueue._log.length > this.commandQueue._maxLog) this.commandQueue._log.pop();
+                }
+                this._renderCommandLog();
+            }
+
+        } catch (err) {
+            this._renderAdvisory({ text: err.message, commands: [], error: true });
+        } finally {
+            this._onAdvisoryLoading(false);
+        }
+    }
+
     // ── Debug Panel ─────────────────────────────────────────
 
     _setupDebug() {
@@ -215,15 +385,43 @@ class AiAutopilotPane extends SimGlassBase {
             this._toggleDebug();
         }
 
-        // Filter buttons
+        // Filter buttons — multi-select; ALL toggles everything
+        const allCats = ['api', 'ws', 'llm', 'cmd'];
+        const syncFilterButtons = () => {
+            const allActive = allCats.every(c => this._debugFilters.has(c));
+            document.querySelectorAll('.debug-filter').forEach(b => {
+                const f = b.dataset.filter;
+                if (f === 'all') {
+                    b.classList.toggle('active', allActive);
+                } else {
+                    b.classList.toggle('active', this._debugFilters.has(f));
+                }
+            });
+        };
+
         document.querySelectorAll('.debug-filter').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.debug-filter').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this._debugFilter = btn.dataset.filter;
+                const f = btn.dataset.filter;
+                if (f === 'all') {
+                    // Toggle: if all active → clear all; otherwise → select all
+                    const allActive = allCats.every(c => this._debugFilters.has(c));
+                    if (allActive) {
+                        this._debugFilters.clear();
+                    } else {
+                        allCats.forEach(c => this._debugFilters.add(c));
+                    }
+                } else {
+                    if (this._debugFilters.has(f)) {
+                        this._debugFilters.delete(f);
+                    } else {
+                        this._debugFilters.add(f);
+                    }
+                }
+                syncFilterButtons();
                 this._renderDebugLog();
             });
         });
+        syncFilterButtons();
 
         // Clear button
         this.elements.debugClear?.addEventListener('click', () => {
@@ -231,6 +429,37 @@ class AiAutopilotPane extends SimGlassBase {
             this._debugStats = { api: 0, ws: 0, llm: 0, cmd: 0 };
             this._renderDebugLog();
             this._renderDebugStats();
+        });
+
+        // Resize handle — drag to resize debug panel height
+        if (this.elements.debugResize && this.elements.debugPanel) {
+            this._debugResizeHandler = (e) => {
+                e.preventDefault();
+                const panel = this.elements.debugPanel;
+                const startY = e.clientY;
+                const startH = panel.offsetHeight;
+                const handle = this.elements.debugResize;
+                handle.classList.add('dragging');
+
+                const onMove = (ev) => {
+                    const delta = startY - ev.clientY;
+                    const newH = Math.max(80, Math.min(window.innerHeight * 0.7, startH + delta));
+                    panel.style.height = newH + 'px';
+                };
+                const onUp = () => {
+                    handle.classList.remove('dragging');
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            };
+            this.elements.debugResize.addEventListener('mousedown', this._debugResizeHandler);
+        }
+
+        // Popout button — open debug in new window
+        this.elements.debugPopout?.addEventListener('click', () => {
+            this._popoutDebug();
         });
 
         // Intercept fetch for API logging
@@ -245,6 +474,147 @@ class AiAutopilotPane extends SimGlassBase {
             this.elements.debugPanel.style.display = this._debugVisible ? 'flex' : 'none';
         }
         if (this._debugVisible) this._renderDebugLog();
+    }
+
+    _popoutDebug() {
+        if (this._debugWindow && !this._debugWindow.closed) {
+            this._debugWindow.focus();
+            return;
+        }
+
+        const w = window.open('', 'ai-autopilot-debug', 'width=700,height=500,resizable=yes,scrollbars=yes');
+        if (!w) return;
+        this._debugWindow = w;
+
+        w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>AI Autopilot Debug</title>
+<style>
+body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monospace; font-size:11px; }
+.dbg-toolbar { display:flex; gap:6px; padding:6px 10px; background:#0a1018; border-bottom:1px solid #1a2030; align-items:center; position:sticky; top:0; z-index:1; }
+.dbg-toolbar .title { font-size:11px; font-weight:700; color:#4fc3f7; letter-spacing:1.5px; margin-right:8px; }
+.dbg-toolbar button { padding:2px 8px; border:1px solid #222; border-radius:2px; background:transparent; color:#556; font-size:10px; font-weight:700; font-family:'Consolas',monospace; cursor:pointer; }
+.dbg-toolbar button:hover { color:#889; border-color:#445; }
+.dbg-toolbar button.active { color:#4fc3f7; border-color:#4fc3f7; background:rgba(79,195,247,0.08); }
+.dbg-toolbar .clear { margin-left:auto; }
+.dbg-toolbar .clear:hover { color:#ef5350; border-color:#ef5350; }
+.dbg-stats { display:flex; gap:14px; padding:4px 10px; font-size:10px; color:#445; background:#0a1018; border-bottom:1px solid #1a2030; }
+.dbg-stats span span { color:#667; }
+.dbg-log { padding:6px 10px; overflow-y:auto; flex:1; }
+.dbg-entry { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:1px 0; line-height:1.7; }
+.dbg-time { color:#334; margin-right:4px; }
+.dbg-tag { display:inline-block; width:28px; text-align:center; font-weight:700; font-size:9px; margin-right:4px; border-radius:2px; padding:0 2px; }
+.dbg-tag.api { color:#66bb6a; background:rgba(102,187,106,0.1); }
+.dbg-tag.ws { color:#78909c; background:rgba(120,144,156,0.1); }
+.dbg-tag.llm { color:#ba68c8; background:rgba(186,104,200,0.1); }
+.dbg-tag.cmd { color:#ffb74d; background:rgba(255,183,77,0.1); }
+.dbg-text { color:#8899aa; }
+.dbg-text .ok { color:#66bb6a; } .dbg-text .err { color:#ef5350; } .dbg-text .dim { color:#445; }
+.dbg-text .url { color:#4fc3f7; } .dbg-text .val { color:#e0e0e0; } .dbg-text .dur { color:#ffa726; }
+::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#223; border-radius:2px; }
+</style></head><body>
+<div class="dbg-toolbar">
+  <span class="title">DEBUG</span>
+  <button class="active" data-filter="all">ALL</button>
+  <button class="active" data-filter="api">API</button>
+  <button class="active" data-filter="ws">WS</button>
+  <button class="active" data-filter="llm">LLM</button>
+  <button class="active" data-filter="cmd">CMD</button>
+  <button class="clear" id="pw-clear">CLEAR</button>
+</div>
+<div class="dbg-stats" id="pw-stats">
+  <span>API: <span id="pw-api">0</span></span>
+  <span>WS: <span id="pw-ws">0</span>/s</span>
+  <span>LLM: <span id="pw-llm">0</span></span>
+  <span>RT: <span id="pw-rt">--</span>ms</span>
+  <span>CMD: <span id="pw-cmd">0</span></span>
+</div>
+<div class="dbg-log" id="pw-log"></div>
+</body></html>`);
+        w.document.close();
+
+        // Wire filter buttons — multi-select, same as inline panel
+        const popFilters = new Set(['api', 'ws', 'llm', 'cmd']);
+        const popCats = ['api', 'ws', 'llm', 'cmd'];
+        const syncPopButtons = () => {
+            const allActive = popCats.every(c => popFilters.has(c));
+            w.document.querySelectorAll('[data-filter]').forEach(b => {
+                const f = b.dataset.filter;
+                if (f === 'all') {
+                    b.classList.toggle('active', allActive);
+                } else {
+                    b.classList.toggle('active', popFilters.has(f));
+                }
+            });
+        };
+        w.document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const f = btn.dataset.filter;
+                if (f === 'all') {
+                    const allActive = popCats.every(c => popFilters.has(c));
+                    if (allActive) { popFilters.clear(); } else { popCats.forEach(c => popFilters.add(c)); }
+                } else {
+                    if (popFilters.has(f)) { popFilters.delete(f); } else { popFilters.add(f); }
+                }
+                syncPopButtons();
+                renderPopout();
+            });
+        });
+        syncPopButtons();
+
+        w.document.getElementById('pw-clear')?.addEventListener('click', () => {
+            this._debugLog = [];
+            this._debugStats = { api: 0, ws: 0, llm: 0, cmd: 0 };
+            renderPopout();
+            if (this._debugVisible) {
+                this._renderDebugLog();
+                this._renderDebugStats();
+            }
+        });
+
+        const self = this;
+        function renderPopout() {
+            const logEl = w.document.getElementById('pw-log');
+            if (!logEl) return;
+
+            const entries = popFilters.size === 0
+                ? []
+                : self._debugLog.filter(e => popFilters.has(e.cat)).slice(0, 100);
+
+            if (entries.length === 0) {
+                logEl.innerHTML = '<div style="color:#334;padding:8px;font-style:italic">No debug entries</div>';
+            } else {
+                logEl.innerHTML = entries.map(e =>
+                    `<div class="dbg-entry"><span class="dbg-time">${e.ts}</span>` +
+                    `<span class="dbg-tag ${e.cat}">${e.cat.toUpperCase()}</span>` +
+                    `<span class="dbg-text">${e.html}</span></div>`
+                ).join('');
+            }
+
+            const s = self._debugStats;
+            const api = w.document.getElementById('pw-api');
+            const ws = w.document.getElementById('pw-ws');
+            const llm = w.document.getElementById('pw-llm');
+            const rt = w.document.getElementById('pw-rt');
+            const cmd = w.document.getElementById('pw-cmd');
+            if (api) api.textContent = s.api;
+            if (ws) ws.textContent = self._wsPerSec;
+            if (llm) llm.textContent = s.llm;
+            if (rt) rt.textContent = self._llmLastRt !== null ? self._llmLastRt : '--';
+            if (cmd) cmd.textContent = s.cmd;
+        }
+
+        // Refresh popout every 500ms
+        this._debugPopoutTimer = setInterval(() => {
+            if (w.closed) {
+                clearInterval(this._debugPopoutTimer);
+                this._debugPopoutTimer = null;
+                this._debugWindow = null;
+                return;
+            }
+            renderPopout();
+        }, 500);
+
+        renderPopout();
     }
 
     _interceptFetch(url, opts = {}) {
@@ -277,6 +647,12 @@ class AiAutopilotPane extends SimGlassBase {
             const statusClass = status < 400 ? 'ok' : 'err';
 
             this._dbg('api', `${method} <span class="url">${this._esc(shortUrl)}</span> <span class="${statusClass}">${status}</span> <span class="dur">${dur}ms</span>`);
+
+            // Track LLM response time
+            if (isLlm && status < 400) {
+                this._llmLastRt = parseInt(dur);
+                if (this._debugVisible) this._renderDebugStats();
+            }
 
             // For LLM endpoints, clone and read response for logging
             if (isLlm && status < 400) {
@@ -332,10 +708,10 @@ class AiAutopilotPane extends SimGlassBase {
 
     _renderDebugLog() {
         if (!this.elements.debugLog) return;
-        const filter = this._debugFilter;
-        const entries = filter === 'all'
-            ? this._debugLog.slice(0, 60)
-            : this._debugLog.filter(e => e.cat === filter).slice(0, 60);
+        const filters = this._debugFilters;
+        const entries = filters.size === 0
+            ? []
+            : this._debugLog.filter(e => filters.has(e.cat)).slice(0, 60);
 
         if (entries.length === 0) {
             this.elements.debugLog.innerHTML = '<div style="color:#334;padding:8px;font-style:italic">No debug entries</div>';
@@ -353,6 +729,7 @@ class AiAutopilotPane extends SimGlassBase {
         if (this.elements.dsApi) this.elements.dsApi.textContent = this._debugStats.api;
         if (this.elements.dsWs) this.elements.dsWs.textContent = this._wsPerSec;
         if (this.elements.dsLlm) this.elements.dsLlm.textContent = this._debugStats.llm;
+        if (this.elements.dsLlmRt) this.elements.dsLlmRt.textContent = this._llmLastRt !== null ? this._llmLastRt : '--';
         if (this.elements.dsCmd) this.elements.dsCmd.textContent = this._debugStats.cmd;
     }
 
@@ -483,6 +860,11 @@ class AiAutopilotPane extends SimGlassBase {
             if (advisory.execCommands?.length) {
                 this._dbg('cmd', `parsed: ${advisory.execCommands.map(c => c.command + (c.value !== undefined ? '=' + c.value : '')).join(', ')}`);
             }
+            // Speak advisory via TTS
+            if (this._ttsEnabled && this._voice && advisory.text) {
+                const speakText = advisory.text.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').replace(/RECOMMEND:\s*/g, '').trim();
+                if (speakText) this._voice.speak(speakText);
+            }
         }
         this._renderAdvisory(advisory);
         // Auto-accept when AI has controls
@@ -532,6 +914,7 @@ class AiAutopilotPane extends SimGlassBase {
 
         this._autoAdviseInFlight = true;
         this._onAdvisoryLoading(true);
+        const _adviseStart = performance.now();
 
         try {
             const phase = this.flightPhase.phase;
@@ -554,6 +937,11 @@ class AiAutopilotPane extends SimGlassBase {
             if (result.advisory) {
                 const displayText = result.advisory.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
+                // Speak via TTS
+                const speakText = displayText.replace(/RECOMMEND:\s*/g, '').trim();
+                if (this._ttsEnabled && this._voice && speakText) {
+                    this._voice.speak(speakText);
+                }
             }
 
             // Log executed commands
@@ -763,13 +1151,28 @@ class AiAutopilotPane extends SimGlassBase {
         const existing = document.querySelector('.ai-config-banner');
         if (existing) existing.remove();
 
-        if (this.copilotStatus?.licensed && this.copilotStatus?.hasApiKey) return;
+        const status = this.copilotStatus;
+        if (!status) return;
+
+        const provider = status.provider || '';
+        const isLocal = provider.startsWith('ollama') || provider.startsWith('lmstudio');
+
+        // No banner needed if licensed and has key (or is local)
+        if (status.licensed && (status.hasApiKey || isLocal)) return;
 
         const banner = document.createElement('div');
         banner.className = 'ai-config-banner';
-        banner.innerHTML = '<strong>AI not configured</strong> — Open Settings to add your license key and API key.';
-        const phase = document.getElementById('phase-section');
-        if (phase) phase.before(banner);
+
+        if (!status.licensed) {
+            banner.innerHTML = '<strong>AI not configured</strong> \u2014 Open Settings to add your license key.';
+        } else if (!isLocal && !status.hasApiKey) {
+            banner.innerHTML = '<strong>AI not configured</strong> \u2014 Open Settings to add your API key.';
+        }
+
+        if (banner.innerHTML) {
+            const phase = document.getElementById('phase-section');
+            if (phase) phase.before(banner);
+        }
     }
 
     /**
@@ -982,6 +1385,21 @@ class AiAutopilotPane extends SimGlassBase {
         // Restore original fetch
         if (this._origFetch) {
             window.fetch = this._origFetch;
+        }
+        if (this._debugPopoutTimer) {
+            clearInterval(this._debugPopoutTimer);
+            this._debugPopoutTimer = null;
+        }
+        if (this._debugWindow && !this._debugWindow.closed) {
+            this._debugWindow.close();
+        }
+        if (this._recognition) {
+            this._recognition.abort();
+            this._recognition = null;
+        }
+        if (this._voice) {
+            this._voice.destroy();
+            this._voice = null;
         }
         this.commandQueue.destroy();
         this.llmAdvisor.destroy();
