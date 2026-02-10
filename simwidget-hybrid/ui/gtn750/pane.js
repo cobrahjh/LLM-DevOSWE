@@ -734,10 +734,18 @@ class GTN750Pane extends SimGlassBase {
     }
 
     resizeCanvas() {
-        if (!this.canvas) return;
-        const rect = this.canvas.parentElement.getBoundingClientRect();
-        this.canvas.width = rect.width;
-        this.canvas.height = rect.height;
+        const resizeOne = (canvas) => {
+            if (!canvas || !canvas.parentElement) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+        };
+        resizeOne(this.canvas);
+        resizeOne(this.elements.terrainCanvas);
+        resizeOne(this.elements.trafficCanvas);
+        resizeOne(this.elements.wxCanvas);
     }
 
     // ===== PAGE RENDERING (terrain, traffic, weather) =====
@@ -1118,6 +1126,21 @@ class GTN750Pane extends SimGlassBase {
     // ===== EVENT BINDING =====
 
     bindEvents() {
+        // Collapsible section toggles
+        document.querySelectorAll('.section-toggle').forEach(btn => {
+            const targetId = btn.dataset.target;
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            const key = 'gtn750-collapsed-' + targetId;
+            if (localStorage.getItem(key) === '1') el.classList.add('collapsed');
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                el.classList.toggle('collapsed');
+                localStorage.setItem(key, el.classList.contains('collapsed') ? '1' : '0');
+                setTimeout(() => this.resizeCanvas(), 300);
+            });
+        });
+
         this.elements.btnHome?.addEventListener('click', () => this.pageManager.goHome());
 
         const homeButtonsContainer = document.getElementById('home-buttons');

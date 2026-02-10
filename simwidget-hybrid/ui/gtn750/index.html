@@ -25,7 +25,8 @@
 
     <div class="gtn750" id="gtn750">
         <!-- Frequency Bar (Top) - GTN 750 Style -->
-        <div class="freq-bar">
+        <div class="freq-bar" id="freq-bar">
+            <button class="section-toggle" data-target="freq-bar" title="Collapse frequencies">&#9650;</button>
             <!-- COM Section -->
             <div class="freq-section com-section">
                 <div class="freq-header">
@@ -94,6 +95,7 @@
 
         <!-- Home Page Buttons -->
         <div class="home-buttons" id="home-buttons">
+            <button class="section-toggle" data-target="home-buttons" title="Collapse navigation">&#9650;</button>
             <button class="home-btn active" data-page="map">
                 <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
                 <span>Map</span>
@@ -506,7 +508,8 @@
         </div>
 
         <!-- CDI Bar -->
-        <div class="cdi-container">
+        <div class="cdi-container" id="cdi-container">
+            <button class="section-toggle" data-target="cdi-container" title="Collapse CDI">&#9650;</button>
             <!-- Navigation Source Selector -->
             <div class="cdi-nav-source">
                 <button class="nav-src-btn active" id="nav-source-gps">GPS</button>
