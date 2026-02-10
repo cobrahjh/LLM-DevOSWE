@@ -275,3 +275,149 @@
     font-size: 16px;
     font-weight: 600;
 }
+
+/* ── Compact Toggle Button ────────────────────────────── */
+.compact-toggle {
+    background: transparent;
+    border: 1px solid var(--sg-border-subtle, rgba(255,255,255,0.1));
+    color: var(--sg-text-secondary, #888);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    margin-right: 4px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.compact-toggle:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--sg-text-primary, #fff);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #22c55e);
+    color: var(--sg-bg-deep, #0a0a1a);
+    border-color: var(--sg-accent-green, #22c55e);
+}
+
+/* ── Full / Compact Layout Switching ──────────────────── */
+.cl-full {
+    display: block;
+}
+
+.cl-compact {
+    display: none;
+}
+
+.widget-container.compact-mode {
+    min-width: 280px;
+    max-width: 280px;
+    padding: 10px 12px;
+}
+
+.widget-container.compact-mode .cl-full {
+    display: none;
+}
+
+.widget-container.compact-mode .cl-compact {
+    display: block;
+}
+
+.widget-container.compact-mode .widget-header {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+}
+
+.widget-container.compact-mode .widget-title {
+    font-size: 11px;
+}
+
+/* ── Compact Layout Elements ──────────────────────────── */
+.cl-compact-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--sg-accent-green, #22c55e);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.cl-compact-item {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sg-text-primary, #fff);
+    background: var(--sg-bg-panel, rgba(255,255,255,0.05));
+    border-radius: 6px;
+    padding: 8px 10px;
+    min-height: 20px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cl-compact-action {
+    font-size: 10px;
+    color: var(--sg-accent-green, #22c55e);
+    padding: 2px 10px 0;
+    min-height: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cl-compact-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.cl-compact-btn {
+    background: var(--sg-bg-panel, rgba(255,255,255,0.05));
+    border: 1px solid var(--sg-border-subtle, rgba(255,255,255,0.1));
+    color: var(--sg-text-primary, #fff);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 10px;
+    transition: background 0.15s, border-color 0.15s;
+    line-height: 1;
+}
+
+.cl-compact-btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--sg-accent-green, #22c55e);
+}
+
+.cl-compact-check {
+    flex: 1;
+    background: var(--sg-accent-green, #22c55e);
+    color: var(--sg-bg-deep, #0a0a1a);
+    border-color: var(--sg-accent-green, #22c55e);
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 10px;
+}
+
+.cl-compact-check:hover {
+    filter: brightness(1.15);
+    background: var(--sg-accent-green, #22c55e);
+}
+
+.cl-compact-check.cl-all-done {
+    background: var(--sg-bg-panel, rgba(255,255,255,0.05));
+    color: var(--sg-accent-green, #22c55e);
+    border-color: var(--sg-accent-green, #22c55e);
+    font-size: 12px;
+}
+
+.cl-compact-progress {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sg-text-secondary, #888);
+    font-family: 'Courier New', monospace;
+    min-width: 32px;
+    text-align: center;
+}

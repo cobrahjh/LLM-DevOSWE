@@ -31,6 +31,7 @@ class ChecklistPane extends SimGlassBase {
         this.audioEnabled = true;
         this.synth = window.speechSynthesis;
         this.loadingAircraft = false;
+        this.compactMode = localStorage.getItem('checklist-widget-compact') === 'true';
 
         // Async initialization
         this.init();
@@ -42,6 +43,7 @@ class ChecklistPane extends SimGlassBase {
         this.initAircraftSelector();
         this.initTabs();
         this.initControls();
+        this.setupCompactToggle();
         this.renderChecklist();
     }
 
@@ -246,6 +248,7 @@ class ChecklistPane extends SimGlassBase {
 
         this.updateProgress();
         this.renderTabs();
+        this.updateCompact();
     }
 
     toggleItem(index) {
@@ -326,6 +329,87 @@ class ChecklistPane extends SimGlassBase {
         if (newIndex >= keys.length) newIndex = 0;
 
         this.switchChecklist(keys[newIndex]);
+    }
+
+    // ── Compact Mode ──────────────────────────────────────
+
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        const container = document.querySelector('.widget-container');
+
+        // Apply saved state
+        if (this.compactMode) {
+            container.classList.add('compact-mode');
+            toggle.classList.add('active');
+        }
+
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            localStorage.setItem('checklist-widget-compact', this.compactMode ? 'true' : 'false');
+            container.classList.toggle('compact-mode', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+            this.updateCompact();
+        });
+
+        // Compact check button
+        document.getElementById('cl-check').addEventListener('click', () => {
+            this.checkNextItem();
+            this.updateCompact();
+        });
+
+        // Compact prev/next checklist buttons
+        document.getElementById('cl-prev').addEventListener('click', () => {
+            this.navigateChecklist(-1);
+        });
+
+        document.getElementById('cl-next').addEventListener('click', () => {
+            this.navigateChecklist(1);
+        });
+
+        this.updateCompact();
+    }
+
+    updateCompact() {
+        if (!this.compactMode) return;
+
+        const checklist = this.checklists[this.currentChecklist];
+        if (!checklist) return;
+
+        const itemKey = this.currentAircraft + '_' + this.currentChecklist;
+        const checked = this.checkedItems[itemKey] || [];
+        const total = checklist.items.length;
+        const completed = checked.length;
+        const allDone = completed === total;
+
+        // Update checklist name
+        document.getElementById('cl-checklist-name').textContent = checklist.name;
+
+        // Update progress
+        document.getElementById('cl-progress').textContent = completed + '/' + total;
+
+        // Find next unchecked item
+        const checkBtn = document.getElementById('cl-check');
+        if (allDone) {
+            document.getElementById('cl-item-text').textContent = 'All complete!';
+            document.getElementById('cl-item-action').textContent = '';
+            checkBtn.innerHTML = '&#10003;';
+            checkBtn.classList.add('cl-all-done');
+        } else {
+            let nextIdx = -1;
+            for (let i = 0; i < total; i++) {
+                if (!checked.includes(i)) {
+                    nextIdx = i;
+                    break;
+                }
+            }
+            if (nextIdx >= 0) {
+                const item = checklist.items[nextIdx];
+                document.getElementById('cl-item-text').textContent = item.text;
+                document.getElementById('cl-item-action').textContent = item.action || '';
+            }
+            checkBtn.innerHTML = '&#10003;';
+            checkBtn.classList.remove('cl-all-done');
+        }
     }
 
     // Voice control integration

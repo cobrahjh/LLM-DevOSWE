@@ -15,8 +15,12 @@ class HoldingCalculator extends SimGlassBase {
         this.ctx = this.canvas.getContext('2d');
         this.synth = window.speechSynthesis;
 
+        // Compact mode state
+        this.compactMode = localStorage.getItem('holding-calc-compact') === 'true';
+
         this.initElements();
         this.initEvents();
+        this.setupCompactToggle();
         this.calculate();
     }
 
@@ -114,9 +118,11 @@ class HoldingCalculator extends SimGlassBase {
         this.drawHoldingPattern(inboundCourse, outboundCourse, turnRight, currentHeading, entryType);
 
         this.lastCalc = {
-            entryType, inboundCourse, outboundCourse, inboundHeading, outboundHeading,
+            entryType, entryClass, inboundCourse, outboundCourse, inboundHeading, outboundHeading,
             windCorrection, outboundTime, turnRight
         };
+
+        this.updateCompact();
     }
 
     drawHoldingPattern(inbound, outbound, turnRight, currentHdg, entryType) {
@@ -207,6 +213,53 @@ class HoldingCalculator extends SimGlassBase {
         // Turn direction indicator
         ctx.fillStyle = '#667eea';
         ctx.fillText(turnRight ? 'RIGHT TURNS' : 'LEFT TURNS', cx, 15);
+    }
+
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        const root = document.getElementById('widget-root');
+        if (!toggle || !root) return;
+
+        // Apply saved compact mode on load
+        if (this.compactMode) {
+            root.classList.add('compact');
+            toggle.classList.add('active');
+        }
+
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            localStorage.setItem('holding-calc-compact', this.compactMode);
+            root.classList.toggle('compact', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+            this.updateCompact();
+        });
+    }
+
+    updateCompact() {
+        if (!this.compactMode || !this.lastCalc) return;
+
+        const c = this.lastCalc;
+
+        const entryEl = document.getElementById('hc-entry');
+        const inboundEl = document.getElementById('hc-inbound');
+        const turnEl = document.getElementById('hc-turn');
+        const obHdgEl = document.getElementById('hc-ob-hdg');
+        const obTimeEl = document.getElementById('hc-ob-time');
+        const windCorrEl = document.getElementById('hc-wind-corr');
+
+        if (entryEl) {
+            entryEl.textContent = c.entryType;
+            entryEl.className = 'val ' + c.entryClass;
+        }
+        if (inboundEl) inboundEl.textContent = c.inboundCourse + '\u00B0';
+        if (turnEl) turnEl.textContent = c.turnRight ? 'R' : 'L';
+        if (obHdgEl) obHdgEl.textContent = c.outboundHeading + '\u00B0';
+        if (obTimeEl) {
+            const mins = Math.floor(c.outboundTime / 60);
+            const secs = (c.outboundTime % 60).toString().padStart(2, '0');
+            obTimeEl.textContent = mins + ':' + secs;
+        }
+        if (windCorrEl) windCorrEl.textContent = (c.windCorrection >= 0 ? '+' : '') + c.windCorrection + '\u00B0';
     }
 
     speakEntry() {

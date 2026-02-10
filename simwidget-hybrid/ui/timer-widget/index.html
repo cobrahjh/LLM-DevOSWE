@@ -18,46 +18,60 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
-    <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">⏱️ Timer</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-sound" title="Toggle Sound">🔔</button>
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
+
+    <div class="widget-container" id="widget-root">
+        <!-- ============ FULL LAYOUT ============ -->
+        <div class="tw-full" id="tw-full">
+            <div class="widget-header">
+                <span class="widget-title">⏱️ Timer</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-sound" title="Toggle Sound">🔔</button>
+                </div>
+            </div>
+
+            <div class="timer-tabs">
+                <button class="tab active" data-mode="stopwatch">Stopwatch</button>
+                <button class="tab" data-mode="countdown">Countdown</button>
+            </div>
+
+            <div class="timer-display" id="timer-display">00:00:00</div>
+
+            <div class="countdown-setup" id="countdown-setup">
+                <div class="time-input-group">
+                    <input type="number" id="hours-input" min="0" max="23" value="0" placeholder="H">
+                    <span>:</span>
+                    <input type="number" id="minutes-input" min="0" max="59" value="5" placeholder="M">
+                    <span>:</span>
+                    <input type="number" id="seconds-input" min="0" max="59" value="0" placeholder="S">
+                </div>
+                <div class="preset-buttons">
+                    <button class="preset" data-seconds="60">1m</button>
+                    <button class="preset" data-seconds="180">3m</button>
+                    <button class="preset" data-seconds="300">5m</button>
+                    <button class="preset" data-seconds="600">10m</button>
+                    <button class="preset" data-seconds="900">15m</button>
+                </div>
+            </div>
+
+            <div class="timer-controls">
+                <button class="btn btn-primary" id="btn-start">▶ Start</button>
+                <button class="btn btn-secondary" id="btn-reset">↺ Reset</button>
+            </div>
+
+            <div class="lap-times" id="lap-times">
+                <div class="lap-header">Lap Times</div>
+                <div class="lap-list" id="lap-list"></div>
             </div>
         </div>
 
-        <div class="timer-tabs">
-            <button class="tab active" data-mode="stopwatch">Stopwatch</button>
-            <button class="tab" data-mode="countdown">Countdown</button>
-        </div>
-
-        <div class="timer-display" id="timer-display">00:00:00</div>
-
-        <div class="countdown-setup" id="countdown-setup">
-            <div class="time-input-group">
-                <input type="number" id="hours-input" min="0" max="23" value="0" placeholder="H">
-                <span>:</span>
-                <input type="number" id="minutes-input" min="0" max="59" value="5" placeholder="M">
-                <span>:</span>
-                <input type="number" id="seconds-input" min="0" max="59" value="0" placeholder="S">
+        <!-- ============ COMPACT TIMER LAYOUT ============ -->
+        <div class="tw-compact" id="tw-compact">
+            <div class="tw-cell tw-time-cell">
+                <span class="val" id="tw-time">00:00</span>
             </div>
-            <div class="preset-buttons">
-                <button class="preset" data-seconds="60">1m</button>
-                <button class="preset" data-seconds="180">3m</button>
-                <button class="preset" data-seconds="300">5m</button>
-                <button class="preset" data-seconds="600">10m</button>
-                <button class="preset" data-seconds="900">15m</button>
-            </div>
-        </div>
-
-        <div class="timer-controls">
-            <button class="btn btn-primary" id="btn-start">▶ Start</button>
-            <button class="btn btn-secondary" id="btn-reset">↺ Reset</button>
-        </div>
-
-        <div class="lap-times" id="lap-times">
-            <div class="lap-header">Lap Times</div>
-            <div class="lap-list" id="lap-list"></div>
+            <button class="tw-btn tw-btn-start" id="tw-start">&#9654;</button>
+            <button class="tw-btn tw-btn-reset" id="tw-reset">&#8634;</button>
         </div>
     </div>
 

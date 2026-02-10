@@ -243,3 +243,112 @@
     color: var(--sg-accent-green);
     font-size: 10px;
 }
+
+/* ============================================
+   COMPACT TOGGLE BUTTON
+   ============================================ */
+.compact-toggle {
+    position: fixed;
+    top: 8px;
+    left: 36px;
+    z-index: 999;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: var(--sg-text-muted, #a1a1aa);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+.compact-toggle:hover { color: var(--sg-text-primary, #e4e4e7); }
+.compact-toggle.active { color: var(--sg-accent-green, #22c55e); }
+
+/* ============================================
+   COMPACT MODE — Layout switching
+   ============================================ */
+
+/* Default: full visible, compact hidden */
+.tw-full { display: block; }
+.tw-compact { display: none; }
+
+/* Compact mode: swap visibility */
+.widget-container.compact .tw-full { display: none; }
+.widget-container.compact .tw-compact { display: flex; }
+
+/* Compact mode: shrink container */
+.widget-container.compact {
+    max-width: 220px;
+    min-width: 180px;
+    padding: 3px;
+}
+
+/* ============================================
+   COMPACT TIMER LAYOUT (~220 x 60px)
+   ============================================ */
+.tw-compact {
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    background: var(--sg-bg-header, rgba(16, 32, 56, 0.8));
+    border: 1px solid var(--sg-border-subtle, #3f3f46);
+    border-radius: 5px;
+    user-select: none;
+}
+
+/* Time display cell */
+.tw-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 38px;
+}
+.tw-time-cell .val {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'Courier New', var(--sg-font-data, 'Monaco', monospace);
+    color: var(--sg-text-primary, #e4e4e7);
+    letter-spacing: 1px;
+    line-height: 1;
+}
+.tw-time-cell.warning .val {
+    color: var(--sg-accent-amber, #f59e0b);
+    animation: pulse 1s infinite;
+}
+.tw-time-cell.danger .val {
+    color: var(--sg-accent-red, #ef4444);
+    animation: pulse 0.5s infinite;
+}
+.tw-time-cell.running .val {
+    color: var(--sg-accent-green, #22c55e);
+}
+
+/* Compact buttons */
+.tw-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--sg-border-subtle, #3f3f46);
+    border-radius: 4px;
+    background: var(--sg-bg-card, #27272a);
+    color: var(--sg-text-primary, #e4e4e7);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.tw-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.tw-btn-start.running {
+    background: var(--sg-accent-amber, #f59e0b);
+    border-color: var(--sg-accent-amber, #f59e0b);
+    color: #000;
+}

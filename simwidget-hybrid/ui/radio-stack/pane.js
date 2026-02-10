@@ -20,6 +20,10 @@ class RadioStack extends SimGlassBase {
             com2: { active: '121.500', standby: '122.800' },
             nav1: { active: '110.00', standby: '108.00' }
         };
+
+        // Compact mode
+        this.compactMode = localStorage.getItem('radio-stack-compact') === 'true';
+
         this.init();
     }
 
@@ -34,6 +38,7 @@ class RadioStack extends SimGlassBase {
             });
         });
 
+        this.setupCompactToggle();
         this.renderPresets();
         this._syncInterval = setInterval(() => this.sync(), 5000);
     }
@@ -43,6 +48,63 @@ class RadioStack extends SimGlassBase {
         [r.active, r.standby] = [r.standby, r.active];
         document.getElementById(radio + '-active').textContent = r.active;
         document.getElementById(radio + '-standby').value = r.standby;
+        this.updateCompact();
+    }
+
+    /**
+     * Setup compact mode toggle button
+     */
+    setupCompactToggle() {
+        const toggleBtn = document.getElementById('compact-toggle');
+        const root = document.getElementById('widget-root');
+        if (!toggleBtn || !root) return;
+
+        // Wire compact swap buttons
+        document.querySelectorAll('.rs-compact-swap').forEach(btn => {
+            btn.addEventListener('click', () => this.swap(btn.dataset.radio));
+        });
+
+        // Apply saved state
+        if (this.compactMode) {
+            root.classList.add('compact');
+            toggleBtn.classList.add('active');
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            root.classList.toggle('compact', this.compactMode);
+            toggleBtn.classList.toggle('active', this.compactMode);
+            localStorage.setItem('radio-stack-compact', this.compactMode);
+            this.updateCompact();
+        });
+    }
+
+    /**
+     * Update compact mode display elements
+     */
+    updateCompact() {
+        if (!this.compactMode) return;
+
+        const el = (id) => document.getElementById(id);
+
+        // COM1 active/standby
+        const rsCom1Active = el('rs-com1-active');
+        if (rsCom1Active) rsCom1Active.textContent = this.radios.com1.active;
+        const rsCom1Standby = el('rs-com1-standby');
+        if (rsCom1Standby) rsCom1Standby.textContent = this.radios.com1.standby;
+
+        // NAV1 active/standby
+        const rsNav1Active = el('rs-nav1-active');
+        if (rsNav1Active) rsNav1Active.textContent = this.radios.nav1.active;
+        const rsNav1Standby = el('rs-nav1-standby');
+        if (rsNav1Standby) rsNav1Standby.textContent = this.radios.nav1.standby;
+
+        // Transponder code
+        const rsXpdrCode = el('rs-xpdr-code');
+        const xpdrInput = el('xpdr-code');
+        if (rsXpdrCode && xpdrInput) {
+            rsXpdrCode.textContent = xpdrInput.value;
+        }
     }
 
     renderPresets() {
@@ -65,6 +127,7 @@ class RadioStack extends SimGlassBase {
                     this.radios.com1.active = d.COM_ACTIVE_FREQUENCY_1.toFixed(3);
                     document.getElementById('com1-active').textContent = this.radios.com1.active;
                 }
+                this.updateCompact();
             }
         } catch (e) {
             if (window.telemetry) {

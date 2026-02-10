@@ -15,48 +15,79 @@
     <script src="/ui/shared/widget-base.js"></script>
 </head>
 <body>
-    <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">📻 Radio Stack</span>
-            <button class="btn-icon" id="btn-sync" title="Sync">🔄</button>
-        </div>
-        <div class="radio-section">
-            <div class="radio-label">COM 1</div>
-            <div class="radio-display">
-                <div class="freq-active" id="com1-active">118.000</div>
-                <button class="btn-swap" data-radio="com1">⇄</button>
-                <input type="text" id="com1-standby" value="121.500" class="freq-standby">
+    <!-- Compact Toggle -->
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
+
+    <div class="widget-container" id="widget-root">
+        <!-- Full mode content -->
+        <div class="rs-full">
+            <div class="widget-header">
+                <span class="widget-title">📻 Radio Stack</span>
+                <button class="btn-icon" id="btn-sync" title="Sync">🔄</button>
             </div>
-        </div>
-        <div class="radio-section">
-            <div class="radio-label">COM 2</div>
-            <div class="radio-display">
-                <div class="freq-active" id="com2-active">121.500</div>
-                <button class="btn-swap" data-radio="com2">⇄</button>
-                <input type="text" id="com2-standby" value="122.800" class="freq-standby">
-            </div>
-        </div>
-        <div class="radio-section nav">
-            <div class="radio-label">NAV 1</div>
-            <div class="radio-display">
-                <div class="freq-active" id="nav1-active">110.00</div>
-                <button class="btn-swap" data-radio="nav1">⇄</button>
-                <input type="text" id="nav1-standby" value="108.00" class="freq-standby">
-            </div>
-        </div>
-        <div class="radio-section xpdr">
-            <div class="radio-label">XPDR</div>
-            <div class="xpdr-display">
-                <input type="text" id="xpdr-code" value="1200" maxlength="4">
-                <div class="xpdr-btns">
-                    <button data-code="1200">VFR</button>
-                    <button data-code="7700">EMERG</button>
+            <div class="radio-section">
+                <div class="radio-label">COM 1</div>
+                <div class="radio-display">
+                    <div class="freq-active" id="com1-active">118.000</div>
+                    <button class="btn-swap" data-radio="com1">⇄</button>
+                    <input type="text" id="com1-standby" value="121.500" class="freq-standby">
                 </div>
             </div>
+            <div class="radio-section">
+                <div class="radio-label">COM 2</div>
+                <div class="radio-display">
+                    <div class="freq-active" id="com2-active">121.500</div>
+                    <button class="btn-swap" data-radio="com2">⇄</button>
+                    <input type="text" id="com2-standby" value="122.800" class="freq-standby">
+                </div>
+            </div>
+            <div class="radio-section nav">
+                <div class="radio-label">NAV 1</div>
+                <div class="radio-display">
+                    <div class="freq-active" id="nav1-active">110.00</div>
+                    <button class="btn-swap" data-radio="nav1">⇄</button>
+                    <input type="text" id="nav1-standby" value="108.00" class="freq-standby">
+                </div>
+            </div>
+            <div class="radio-section xpdr">
+                <div class="radio-label">XPDR</div>
+                <div class="xpdr-display">
+                    <input type="text" id="xpdr-code" value="1200" maxlength="4">
+                    <div class="xpdr-btns">
+                        <button data-code="1200">VFR</button>
+                        <button data-code="7700">EMERG</button>
+                    </div>
+                </div>
+            </div>
+            <div class="presets-section">
+                <div class="presets-header">Quick Tune</div>
+                <div class="presets-grid" id="presets-grid"></div>
+            </div>
         </div>
-        <div class="presets-section">
-            <div class="presets-header">Quick Tune</div>
-            <div class="presets-grid" id="presets-grid"></div>
+
+        <!-- Compact mode content -->
+        <div class="rs-compact" id="rs-compact">
+            <div class="rs-compact-header">
+                <span class="rs-compact-title">RADIO</span>
+            </div>
+            <div class="rs-compact-grid">
+                <div class="rs-compact-row">
+                    <span class="rs-compact-label">C1</span>
+                    <span class="rs-compact-freq rs-compact-active" id="rs-com1-active">118.000</span>
+                    <button class="rs-compact-swap" data-radio="com1">⇄</button>
+                    <span class="rs-compact-freq rs-compact-standby" id="rs-com1-standby">121.500</span>
+                </div>
+                <div class="rs-compact-row">
+                    <span class="rs-compact-label rs-compact-label-nav">N1</span>
+                    <span class="rs-compact-freq rs-compact-active rs-compact-nav" id="rs-nav1-active">110.00</span>
+                    <button class="rs-compact-swap" data-radio="nav1">⇄</button>
+                    <span class="rs-compact-freq rs-compact-standby" id="rs-nav1-standby">108.00</span>
+                </div>
+                <div class="rs-compact-row">
+                    <span class="rs-compact-label rs-compact-label-xpdr">XP</span>
+                    <span class="rs-compact-freq rs-compact-xpdr" id="rs-xpdr-code">1200</span>
+                </div>
+            </div>
         </div>
     </div>
     <script src="pane.js"></script>

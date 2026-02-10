@@ -16,96 +16,129 @@
     <script src="/ui/shared/widget-base.js"></script>
 </head>
 <body>
-    <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">🔄 Holding Calculator</span>
-        </div>
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
 
-        <!-- Holding Fix Info -->
-        <div class="section">
-            <label class="section-label">Holding Pattern</label>
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Inbound Course</label>
-                    <input type="number" id="inbound-course" value="360" min="1" max="360">
-                    <span class="unit">°</span>
-                </div>
-                <div class="input-group">
-                    <label>Turn Direction</label>
-                    <select id="turn-direction">
-                        <option value="right">Right (Standard)</option>
-                        <option value="left">Left</option>
-                    </select>
+    <div class="widget-container" id="widget-root">
+        <!-- ============ FULL LAYOUT ============ -->
+        <div class="hc-full" id="hc-full">
+            <div class="widget-header">
+                <span class="widget-title">🔄 Holding Calculator</span>
+            </div>
+
+            <!-- Holding Fix Info -->
+            <div class="section">
+                <label class="section-label">Holding Pattern</label>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Inbound Course</label>
+                        <input type="number" id="inbound-course" value="360" min="1" max="360">
+                        <span class="unit">°</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Turn Direction</label>
+                        <select id="turn-direction">
+                            <option value="right">Right (Standard)</option>
+                            <option value="left">Left</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Aircraft Heading -->
-        <div class="section">
-            <label class="section-label">Your Position</label>
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Current Heading</label>
-                    <input type="number" id="current-heading" value="180" min="1" max="360">
-                    <span class="unit">°</span>
-                </div>
-                <div class="input-group">
-                    <label>Ground Speed</label>
-                    <input type="number" id="ground-speed" value="120" min="0">
-                    <span class="unit">kt</span>
+            <!-- Aircraft Heading -->
+            <div class="section">
+                <label class="section-label">Your Position</label>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Current Heading</label>
+                        <input type="number" id="current-heading" value="180" min="1" max="360">
+                        <span class="unit">°</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Ground Speed</label>
+                        <input type="number" id="ground-speed" value="120" min="0">
+                        <span class="unit">kt</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Wind -->
-        <div class="section">
-            <label class="section-label">Wind</label>
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Direction</label>
-                    <input type="number" id="wind-direction" value="270" min="1" max="360">
-                    <span class="unit">°</span>
-                </div>
-                <div class="input-group">
-                    <label>Speed</label>
-                    <input type="number" id="wind-speed" value="15" min="0">
-                    <span class="unit">kt</span>
+            <!-- Wind -->
+            <div class="section">
+                <label class="section-label">Wind</label>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Direction</label>
+                        <input type="number" id="wind-direction" value="270" min="1" max="360">
+                        <span class="unit">°</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Speed</label>
+                        <input type="number" id="wind-speed" value="15" min="0">
+                        <span class="unit">kt</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Entry Graphic -->
-        <div class="entry-display">
-            <canvas id="holding-canvas" width="260" height="200"></canvas>
-        </div>
-
-        <!-- Results -->
-        <div class="results-panel">
-            <div class="entry-result">
-                <span class="entry-label">Recommended Entry</span>
-                <span class="entry-type" id="entry-type">DIRECT</span>
+            <!-- Entry Graphic -->
+            <div class="entry-display">
+                <canvas id="holding-canvas" width="260" height="200"></canvas>
             </div>
-            <div class="details-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Outbound Heading</span>
-                    <span class="detail-value" id="outbound-heading">--°</span>
+
+            <!-- Results -->
+            <div class="results-panel">
+                <div class="entry-result">
+                    <span class="entry-label">Recommended Entry</span>
+                    <span class="entry-type" id="entry-type">DIRECT</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Outbound Time</span>
-                    <span class="detail-value" id="outbound-time">1:00</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Wind Correction</span>
-                    <span class="detail-value" id="wind-correction">--°</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Inbound Heading</span>
-                    <span class="detail-value" id="inbound-heading">--°</span>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Outbound Heading</span>
+                        <span class="detail-value" id="outbound-heading">--°</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Outbound Time</span>
+                        <span class="detail-value" id="outbound-time">1:00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Wind Correction</span>
+                        <span class="detail-value" id="wind-correction">--°</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Inbound Heading</span>
+                        <span class="detail-value" id="inbound-heading">--°</span>
+                    </div>
                 </div>
             </div>
+
+            <button class="btn-primary" id="btn-speak">🔊 Read Entry</button>
         </div>
 
-        <button class="btn-primary" id="btn-speak">🔊 Read Entry</button>
+        <!-- ============ COMPACT HOLDING LAYOUT ============ -->
+        <div class="hc-compact" id="hc-compact">
+            <div class="hc-cell hc-entry-cell">
+                <span class="lbl">ENTRY</span>
+                <span class="val" id="hc-entry">DIRECT</span>
+            </div>
+            <div class="hc-cell">
+                <span class="lbl">INBND</span>
+                <span class="val" id="hc-inbound">360°</span>
+            </div>
+            <div class="hc-cell">
+                <span class="lbl">TURN</span>
+                <span class="val" id="hc-turn">R</span>
+            </div>
+            <div class="hc-cell">
+                <span class="lbl">OB HDG</span>
+                <span class="val" id="hc-ob-hdg">--°</span>
+            </div>
+            <div class="hc-cell">
+                <span class="lbl">OB TIME</span>
+                <span class="val" id="hc-ob-time">1:00</span>
+            </div>
+            <div class="hc-cell">
+                <span class="lbl">WIND</span>
+                <span class="val" id="hc-wind-corr">--°</span>
+            </div>
+        </div>
     </div>
 
     <script src="pane.js"></script>

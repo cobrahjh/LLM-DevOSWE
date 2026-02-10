@@ -20,8 +20,12 @@ class TimerPane extends SimGlassBase {
         this.soundEnabled = true;
         this.audioCtx = null;
 
+        // Compact mode state
+        this.compactMode = localStorage.getItem('timer-widget-compact') === 'true';
+
         this.initElements();
         this.initEvents();
+        this.setupCompactToggle();
         this.loadState();
         this.updateDisplay();
     }
@@ -284,6 +288,81 @@ class TimerPane extends SimGlassBase {
 
     updateDisplay() {
         this.display.textContent = this.formatTime(this.elapsed);
+        this.updateCompact();
+    }
+
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        const root = document.getElementById('widget-root');
+        if (!toggle || !root) return;
+
+        // Apply saved compact mode on load
+        if (this.compactMode) {
+            root.classList.add('compact');
+            toggle.classList.add('active');
+        }
+
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            localStorage.setItem('timer-widget-compact', this.compactMode);
+            root.classList.toggle('compact', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+            this.updateCompact();
+        });
+
+        // Compact start/stop button
+        const twStart = document.getElementById('tw-start');
+        if (twStart) {
+            twStart.addEventListener('click', () => this.toggleTimer());
+        }
+
+        // Compact reset button
+        const twReset = document.getElementById('tw-reset');
+        if (twReset) {
+            twReset.addEventListener('click', () => this.reset());
+        }
+    }
+
+    updateCompact() {
+        if (!this.compactMode) return;
+
+        const timeEl = document.getElementById('tw-time');
+        const timeCell = timeEl?.closest('.tw-cell');
+        const startBtn = document.getElementById('tw-start');
+
+        // Update time display
+        if (timeEl) {
+            timeEl.textContent = this.formatTime(this.elapsed);
+        }
+
+        // Update time cell state classes
+        if (timeCell) {
+            timeCell.classList.remove('warning', 'danger', 'running');
+            if (this.running) {
+                timeCell.classList.add('running');
+            }
+            // Countdown warning/danger states
+            if (this.mode === 'countdown' && this.running) {
+                if (this.elapsed <= 10000 && this.elapsed > 0) {
+                    timeCell.classList.remove('running');
+                    timeCell.classList.add('danger');
+                } else if (this.elapsed <= 30000 && this.elapsed > 10000) {
+                    timeCell.classList.remove('running');
+                    timeCell.classList.add('warning');
+                }
+            }
+        }
+
+        // Update start/stop button appearance
+        if (startBtn) {
+            if (this.running) {
+                startBtn.innerHTML = '&#9646;&#9646;'; // pause icon
+                startBtn.classList.add('running');
+            } else {
+                startBtn.innerHTML = '&#9654;'; // play icon
+                startBtn.classList.remove('running');
+            }
+        }
     }
 
     saveState() {

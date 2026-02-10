@@ -25,9 +25,11 @@ class NotepadPane extends SimGlassBase {
         });
 
         this.savedItems = [];
+        this.compactMode = localStorage.getItem('notepad-widget-compact') === 'true';
         this.loadState();
         this.initElements();
         this.initEvents();
+        this.setupCompactToggle();
         this.renderSaved();
         this.initSyncListener();
     }
@@ -66,6 +68,7 @@ class NotepadPane extends SimGlassBase {
 
         this.notesArea.value = current.substring(0, start) + prefix + text + current.substring(end);
         this.notesArea.focus();
+        this.syncCompactTextarea();
         this.saveState();
     }
 
@@ -89,6 +92,7 @@ class NotepadPane extends SimGlassBase {
         document.getElementById('btn-clear').addEventListener('click', () => {
             if (this.notesArea.value && confirm('Clear all notes?')) {
                 this.notesArea.value = '';
+                this.syncCompactTextarea();
                 this.saveState();
             }
         });
@@ -139,6 +143,7 @@ class NotepadPane extends SimGlassBase {
             this.notesArea.setSelectionRange(blankPos, blankPos + 3);
         }
 
+        this.syncCompactTextarea();
         this.saveState();
     }
 
@@ -231,6 +236,7 @@ class NotepadPane extends SimGlassBase {
         }
         this.notesArea.value = item.text;
         this.notesArea.focus();
+        this.syncCompactTextarea();
         this.saveState();
     }
 
@@ -267,6 +273,9 @@ class NotepadPane extends SimGlassBase {
                 setTimeout(() => {
                     if (state.notes) {
                         document.getElementById('notes').value = state.notes;
+                        const compactNotes = document.getElementById('np-compact-notes');
+                        if (compactNotes) compactNotes.value = state.notes;
+                        this.updateCompact();
                     }
                 }, 0);
             }
@@ -278,6 +287,77 @@ class NotepadPane extends SimGlassBase {
                     storage: 'localStorage'
                 });
             }
+        }
+    }
+
+    syncCompactTextarea() {
+        const compactNotes = document.getElementById('np-compact-notes');
+        if (compactNotes) {
+            compactNotes.value = this.notesArea.value;
+            this.updateCompact();
+        }
+    }
+
+    setupCompactToggle() {
+        const btn = document.getElementById('compact-toggle');
+        const compactNotes = document.getElementById('np-compact-notes');
+
+        if (this.compactMode) {
+            document.body.classList.add('compact-mode');
+            btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', () => {
+            const nowCompact = document.body.classList.toggle('compact-mode');
+            btn.classList.toggle('active', nowCompact);
+            localStorage.setItem('notepad-widget-compact', nowCompact);
+            this.compactMode = nowCompact;
+
+            if (nowCompact) {
+                // Sync full -> compact
+                compactNotes.value = this.notesArea.value;
+                this.updateCompact();
+            } else {
+                // Sync compact -> full
+                this.notesArea.value = compactNotes.value;
+                this.saveState();
+            }
+        });
+
+        // Sync compact textarea input back to full textarea
+        compactNotes.addEventListener('input', () => {
+            this.notesArea.value = compactNotes.value;
+            this.saveState();
+            this.updateCompact();
+        });
+
+        // Also sync full textarea to compact when full textarea changes
+        this.notesArea.addEventListener('input', () => {
+            compactNotes.value = this.notesArea.value;
+            this.updateCompact();
+        });
+
+        // Initial sync
+        if (this.compactMode) {
+            setTimeout(() => {
+                compactNotes.value = this.notesArea.value;
+                this.updateCompact();
+            }, 10);
+        }
+    }
+
+    updateCompact() {
+        const statsEl = document.getElementById('np-stats');
+        if (!statsEl) return;
+
+        const text = this.notesArea.value || '';
+        const chars = text.length;
+        const lines = text ? text.split('\n').length : 0;
+
+        if (chars === 0) {
+            statsEl.textContent = '0 chars';
+        } else {
+            statsEl.textContent = chars + ' ch / ' + lines + ' ln';
         }
     }
 

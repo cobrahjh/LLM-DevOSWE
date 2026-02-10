@@ -186,6 +186,121 @@
     border-radius: 2px;
 }
 
+/* ── Compact Toggle Button ── */
+.compact-toggle {
+    position: fixed;
+    top: 6px;
+    right: 36px;
+    z-index: 1001;
+    background: var(--sg-bg-panel, #1e1e2e);
+    border: 1px solid var(--sg-border-subtle, #333);
+    border-radius: var(--sg-radius-sm, 4px);
+    color: var(--sg-text-secondary, #aaa);
+    font-size: 14px;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.compact-toggle:hover {
+    border-color: var(--sg-accent-green, #22c55e);
+    color: var(--sg-text-primary, #fff);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #22c55e);
+    color: #fff;
+    border-color: var(--sg-accent-green, #22c55e);
+}
+
+/* ── Full / Compact Visibility ── */
+.np-full {
+    display: block;
+}
+
+.np-compact {
+    display: none;
+}
+
+body.compact-mode .np-full {
+    display: none;
+}
+
+body.compact-mode .np-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    max-width: 260px;
+    min-height: 80px;
+}
+
+body.compact-mode .notepad-widget {
+    min-width: unset;
+    max-width: unset;
+    width: 260px;
+    padding: 4px;
+}
+
+body.compact-mode .settings-btn {
+    display: none;
+}
+
+/* ── Compact Layout Styles ── */
+.np-compact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.np-title {
+    font-family: var(--sg-font-data, monospace);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sg-text-primary, #fff);
+    letter-spacing: 0.5px;
+}
+
+.np-stats {
+    font-family: var(--sg-font-data, monospace);
+    font-size: 9px;
+    color: var(--sg-text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.np-compact-textarea {
+    width: 100%;
+    height: 48px;
+    padding: 6px 8px;
+    background: var(--sg-bg-header, #0d0d1a);
+    border: 1px solid var(--sg-border-subtle, #333);
+    border-radius: var(--sg-radius-sm, 4px);
+    color: var(--sg-text-primary, #e0e0e0);
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    resize: none;
+    box-sizing: border-box;
+}
+
+.np-compact-textarea:focus {
+    outline: none;
+    border-color: var(--sg-accent-green, #22c55e);
+}
+
+.np-compact-textarea::placeholder {
+    color: var(--sg-text-muted, #555);
+    font-size: 10px;
+}
+
 /* Copy feedback */
 .copy-feedback {
     position: fixed;

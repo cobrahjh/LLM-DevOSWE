@@ -24,68 +24,83 @@
         <div class="widget-header">
             <span class="widget-title">✅ Checklist</span>
             <div class="header-controls">
+                <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
                 <div id="voice-control-container" class="voice-control-compact"></div>
                 <button class="btn-icon" id="btn-audio" title="Toggle Audio">🔊</button>
                 <button class="btn-icon" id="btn-reset" title="Reset Current">↺</button>
             </div>
         </div>
 
-        <div class="aircraft-selector">
-            <select id="aircraft-select">
-                <optgroup label="General Aviation">
-                    <option value="generic">Generic GA</option>
-                    <option value="c172">Cessna 172</option>
-                    <option value="c208">Cessna 208 Caravan</option>
-                    <option value="da40">Diamond DA40</option>
-                    <option value="da62">Diamond DA62</option>
-                    <option value="sr22">Cirrus SR22</option>
-                </optgroup>
-                <optgroup label="Turboprop">
-                    <option value="tbm930">TBM 930</option>
-                    <option value="pc12">Pilatus PC-12</option>
-                    <option value="kingair">King Air 350</option>
-                    <option value="atr72">ATR 72-600</option>
-                </optgroup>
-                <optgroup label="Business Jets">
-                    <option value="cj4">Cessna CJ4</option>
-                    <option value="longitude">Cessna Longitude</option>
-                </optgroup>
-                <optgroup label="Regional Jets">
-                    <option value="crj700">Bombardier CRJ-700</option>
-                </optgroup>
-                <optgroup label="Airliners">
-                    <option value="a320">Airbus A320</option>
-                    <option value="a320neo">Airbus A320neo</option>
-                    <option value="b737">Boeing 737</option>
-                    <option value="b747">Boeing 747</option>
-                    <option value="b7478">Boeing 747-8</option>
-                    <option value="b787">Boeing 787</option>
-                </optgroup>
-            </select>
+        <div class="cl-full">
+            <div class="aircraft-selector">
+                <select id="aircraft-select">
+                    <optgroup label="General Aviation">
+                        <option value="generic">Generic GA</option>
+                        <option value="c172">Cessna 172</option>
+                        <option value="c208">Cessna 208 Caravan</option>
+                        <option value="da40">Diamond DA40</option>
+                        <option value="da62">Diamond DA62</option>
+                        <option value="sr22">Cirrus SR22</option>
+                    </optgroup>
+                    <optgroup label="Turboprop">
+                        <option value="tbm930">TBM 930</option>
+                        <option value="pc12">Pilatus PC-12</option>
+                        <option value="kingair">King Air 350</option>
+                        <option value="atr72">ATR 72-600</option>
+                    </optgroup>
+                    <optgroup label="Business Jets">
+                        <option value="cj4">Cessna CJ4</option>
+                        <option value="longitude">Cessna Longitude</option>
+                    </optgroup>
+                    <optgroup label="Regional Jets">
+                        <option value="crj700">Bombardier CRJ-700</option>
+                    </optgroup>
+                    <optgroup label="Airliners">
+                        <option value="a320">Airbus A320</option>
+                        <option value="a320neo">Airbus A320neo</option>
+                        <option value="b737">Boeing 737</option>
+                        <option value="b747">Boeing 747</option>
+                        <option value="b7478">Boeing 747-8</option>
+                        <option value="b787">Boeing 787</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="checklist-tabs" id="checklist-tabs">
+                <button class="tab active" data-checklist="preflight">Pre-Flight</button>
+                <button class="tab" data-checklist="startup">Startup</button>
+                <button class="tab" data-checklist="taxi">Taxi</button>
+                <button class="tab" data-checklist="takeoff">Takeoff</button>
+                <button class="tab" data-checklist="cruise">Cruise</button>
+                <button class="tab" data-checklist="landing">Landing</button>
+                <button class="tab" data-checklist="shutdown">Shutdown</button>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+                <span class="progress-text" id="progress-text">0/0</span>
+            </div>
+
+            <div class="checklist-container" id="checklist-container">
+                <!-- Items populated by JS -->
+            </div>
+
+            <div class="checklist-footer">
+                <button class="btn btn-secondary" id="btn-prev">← Prev</button>
+                <button class="btn btn-primary" id="btn-next">Next →</button>
+            </div>
         </div>
 
-        <div class="checklist-tabs" id="checklist-tabs">
-            <button class="tab active" data-checklist="preflight">Pre-Flight</button>
-            <button class="tab" data-checklist="startup">Startup</button>
-            <button class="tab" data-checklist="taxi">Taxi</button>
-            <button class="tab" data-checklist="takeoff">Takeoff</button>
-            <button class="tab" data-checklist="cruise">Cruise</button>
-            <button class="tab" data-checklist="landing">Landing</button>
-            <button class="tab" data-checklist="shutdown">Shutdown</button>
-        </div>
-
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
-            <span class="progress-text" id="progress-text">0/0</span>
-        </div>
-
-        <div class="checklist-container" id="checklist-container">
-            <!-- Items populated by JS -->
-        </div>
-
-        <div class="checklist-footer">
-            <button class="btn btn-secondary" id="btn-prev">← Prev</button>
-            <button class="btn btn-primary" id="btn-next">Next →</button>
+        <div class="cl-compact" id="cl-compact">
+            <div class="cl-compact-name" id="cl-checklist-name">Pre-Flight</div>
+            <div class="cl-compact-item" id="cl-item-text">---</div>
+            <div class="cl-compact-action" id="cl-item-action"></div>
+            <div class="cl-compact-controls">
+                <button class="cl-compact-btn cl-compact-prev" id="cl-prev" title="Previous checklist">&#9664;</button>
+                <button class="cl-compact-btn cl-compact-check" id="cl-check" title="Check item">&#10003;</button>
+                <span class="cl-compact-progress" id="cl-progress">0/0</span>
+                <button class="cl-compact-btn cl-compact-next" id="cl-next" title="Next checklist">&#9654;</button>
+            </div>
         </div>
     </div>
 
