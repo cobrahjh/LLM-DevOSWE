@@ -598,8 +598,20 @@ body {
     flex: 1;
 }
 
+.terrain-ft-label {
+    font-size: 8px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 2px;
+    font-family: var(--gtn-mono);
+}
+
 .terrain-red {
     background: linear-gradient(180deg, #ff0000 0%, #cc0000 100%);
+}
+
+.terrain-orange {
+    background: linear-gradient(180deg, #ff6600 0%, #cc5500 100%);
 }
 
 .terrain-yellow {
