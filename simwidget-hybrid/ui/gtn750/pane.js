@@ -1303,6 +1303,11 @@ class GTN750Pane extends SimGlassBase {
 
         switch (action) {
             case 'go-back':
+                // If FPL page has cursor selected, deselect first
+                if (this.fplPage && this.fplPage.cursorIndex >= 0 && this.pageManager?.getCurrentPageId() === 'fpl') {
+                    this.fplPage.setCursor(-1);
+                    break;
+                }
                 if (!this.pageManager.goBack()) this.pageManager.goHome();
                 break;
             case 'toggle-terrain': this.map.showTerrain = detail.active; break;
