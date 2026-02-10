@@ -1406,9 +1406,29 @@ body {
 .gtn-fpl-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 8px 12px;
     background: var(--gtn-bg-light);
     border-bottom: 1px solid var(--gtn-border);
+}
+.fpl-import-btn {
+    background: rgba(0, 150, 255, 0.2);
+    color: #66bbff;
+    border: 1px solid rgba(0, 150, 255, 0.4);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--gtn-mono);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.fpl-import-btn:hover {
+    background: rgba(0, 150, 255, 0.35);
+}
+.fpl-import-btn.loading {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .fpl-route {

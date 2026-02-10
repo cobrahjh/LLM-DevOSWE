@@ -33,7 +33,8 @@ class FlightPlanPage {
             fplArr: document.getElementById('fpl-arr'),
             fplDist: document.getElementById('fpl-dist'),
             fplEte: document.getElementById('fpl-ete'),
-            fplProgress: document.getElementById('fpl-progress')
+            fplProgress: document.getElementById('fpl-progress'),
+            importBtn: document.getElementById('fpl-import-btn')
         };
     }
 
@@ -47,6 +48,88 @@ class FlightPlanPage {
                 }
             });
         }
+
+        // Import SimBrief plan
+        if (this.elements.importBtn) {
+            this.elements.importBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.importSimBrief();
+            });
+        }
+    }
+
+    async importSimBrief() {
+        const btn = this.elements.importBtn;
+        if (!btn || btn.classList.contains('loading')) return;
+
+        // Check for saved pilot ID
+        let pilotId = localStorage.getItem('simbrief-pilot-id');
+        if (!pilotId) {
+            pilotId = prompt('Enter SimBrief Pilot ID or Username:');
+            if (!pilotId) return;
+            localStorage.setItem('simbrief-pilot-id', pilotId.trim());
+        }
+
+        btn.classList.add('loading');
+        btn.textContent = '... LOADING';
+
+        try {
+            const isNumeric = /^\d+$/.test(pilotId);
+            const param = isNumeric ? 'userid' : 'username';
+            const res = await fetch(`/api/simbrief/ofp?${param}=${encodeURIComponent(pilotId)}`);
+            if (!res.ok) throw new Error('Failed to fetch OFP');
+            const ofp = await res.json();
+            if (ofp.fetch?.status === 'Error') throw new Error(ofp.fetch.error || 'No plan found');
+
+            const navlog = ofp.navlog?.fix || [];
+            const waypoints = navlog.map(fix => ({
+                ident: fix.ident,
+                name: fix.name,
+                type: fix.type,
+                lat: parseFloat(fix.pos_lat),
+                lng: parseFloat(fix.pos_long),
+                altitude: parseInt(fix.altitude_feet) || 0,
+                distanceFromPrev: parseInt(fix.distance) || 0,
+                ete: parseInt(fix.time_leg) || 0
+            }));
+
+            const planData = {
+                departure: ofp.origin?.icao_code,
+                arrival: ofp.destination?.icao_code,
+                waypoints,
+                totalDistance: parseInt(ofp.general?.route_distance) || 0,
+                route: ofp.general?.route || '',
+                altitude: ofp.general?.initial_altitude || 0,
+                source: 'simbrief'
+            };
+
+            // Load into flight plan manager
+            if (this.flightPlanManager) {
+                this.flightPlanManager.handleSyncMessage('simbrief-plan', planData);
+            }
+
+            // Store on server for other panes
+            fetch('/api/ai-pilot/shared-state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'nav', data: { simbriefPlan: planData } })
+            }).catch(() => {});
+
+            // Broadcast to other panes
+            const ch = new SafeChannel('SimGlass-sync');
+            ch.postMessage({ type: 'simbrief-plan', data: planData });
+            ch.close();
+
+            btn.textContent = '\u2714 LOADED';
+            setTimeout(() => { btn.textContent = '\u2708 IMPORT'; }, 2000);
+        } catch (e) {
+            console.error('[FPL] SimBrief import failed:', e);
+            btn.textContent = '\u2718 FAILED';
+            // Clear saved ID on failure so user can re-enter
+            localStorage.removeItem('simbrief-pilot-id');
+            setTimeout(() => { btn.textContent = '\u2708 IMPORT'; }, 2000);
+        }
+        btn.classList.remove('loading');
     }
 
     // ===== RENDERING =====
