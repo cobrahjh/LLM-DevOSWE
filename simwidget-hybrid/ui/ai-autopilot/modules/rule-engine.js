@@ -92,8 +92,9 @@ class RuleEngine {
 
         switch (phase) {
             case 'PREFLIGHT':
-                // No AP during preflight
+                // No AP during preflight — force-clear dedup (toggle can be stale)
                 if (apState.master) {
+                    delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
                 // Prepare aircraft for taxi: mixture rich, release brake, idle-up throttle
@@ -116,8 +117,9 @@ class RuleEngine {
                 break;
 
             case 'TAXI':
-                // Disengage AP on ground
+                // Disengage AP on ground — force-clear dedup (toggle can be stale)
                 if (apState.master) {
+                    delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
@@ -280,7 +282,10 @@ class RuleEngine {
         }
 
         // Ensure AP is off during takeoff — manual controls only until INITIAL_CLIMB
+        // Force-clear dedup cache because AP_MASTER is a toggle — the sim can re-engage
+        // independently, making our cached 'false' stale.
         if (apState.master && this._takeoffSubPhase !== 'INITIAL_CLIMB' && this._takeoffSubPhase !== 'DEPARTURE') {
+            delete this._lastCommands['AP_MASTER'];
             this._cmd('AP_MASTER', false, 'AP off for takeoff');
         }
 

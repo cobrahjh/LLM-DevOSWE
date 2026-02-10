@@ -412,8 +412,8 @@ class AiAutopilotPane extends SimGlassBase {
                 const displayText = result.advisory.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
 
-                // Speak response
-                const speakText = displayText.replace(/RECOMMEND:\s*/g, '').trim();
+                // Speak response (humanized for natural TTS)
+                const speakText = this._humanizeSpeech(displayText.replace(/RECOMMEND:\s*/g, '').trim());
                 if (this._ttsEnabled && this._voice && speakText) {
                     this._voice.speak(speakText);
                 }
@@ -1362,9 +1362,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             if (advisory.execCommands?.length) {
                 this._dbg('cmd', `parsed: ${advisory.execCommands.map(c => c.command + (c.value !== undefined ? '=' + c.value : '')).join(', ')}`);
             }
-            // Speak advisory via TTS
+            // Speak advisory via TTS (humanized for natural speech)
             if (this._ttsEnabled && this._voice && advisory.text) {
-                const speakText = advisory.text.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').replace(/RECOMMEND:\s*/g, '').trim();
+                const speakText = this._humanizeSpeech(advisory.text.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').replace(/RECOMMEND:\s*/g, '').trim());
                 if (speakText) this._voice.speak(speakText);
             }
         }
@@ -1439,8 +1439,8 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             if (result.advisory) {
                 const displayText = result.advisory.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
-                // Speak via TTS
-                const speakText = displayText.replace(/RECOMMEND:\s*/g, '').trim();
+                // Speak via TTS (humanized for natural speech)
+                const speakText = this._humanizeSpeech(displayText.replace(/RECOMMEND:\s*/g, '').trim());
                 if (this._ttsEnabled && this._voice && speakText) {
                     this._voice.speak(speakText);
                 }
@@ -1963,6 +1963,57 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     }
 
     // ── Lifecycle ──────────────────────────────────────────
+
+    /** Replace technical command/var names with natural speech */
+    _humanizeSpeech(text) {
+        if (!text) return text;
+        const map = {
+            'AP_MASTER': 'autopilot',
+            'AP_HDG_HOLD': 'heading hold',
+            'AP_HDG_VAR_SET': 'heading bug',
+            'AP_ALT_HOLD': 'altitude hold',
+            'AP_ALT_VAR_SET': 'target altitude',
+            'AP_VS_HOLD': 'vertical speed hold',
+            'AP_VS_VAR_SET': 'vertical speed',
+            'AP_SPD_VAR_SET': 'target speed',
+            'AP_NAV1_HOLD': 'navigation tracking',
+            'AP_APR_HOLD': 'approach mode',
+            'THROTTLE_SET': 'throttle',
+            'MIXTURE_SET': 'mixture',
+            'FLAPS_UP': 'flaps up',
+            'FLAPS_DOWN': 'flaps down',
+            'PARKING_BRAKES': 'parking brake',
+            'HEADING_BUG_SET': 'heading bug',
+            'AXIS_ELEVATOR_SET': 'elevator',
+            'AXIS_RUDDER_SET': 'rudder',
+            'AXIS_AILERONS_SET': 'ailerons',
+            'XPNDR_IDENT_ON': 'transponder ident',
+            'LANDING_LIGHTS_TOGGLE': 'landing lights',
+            'IAS': 'airspeed',
+            'Vr': 'rotation speed',
+            'Vy': 'best climb speed',
+            'Vs0': 'stall speed flaps down',
+            'Vs1': 'stall speed clean',
+            'Vno': 'max cruise speed',
+            'Vne': 'never exceed speed',
+            'Va': 'maneuvering speed',
+            'VS': 'vertical speed',
+            'GS': 'ground speed',
+            'HDG': 'heading',
+            'ALT': 'altitude',
+            'AGL': 'above ground',
+            'TOD': 'top of descent',
+            'TAWS': 'terrain warning',
+            'fpm': 'feet per minute'
+        };
+        let result = text;
+        for (const [key, val] of Object.entries(map)) {
+            result = result.replace(new RegExp('\\b' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g'), val);
+        }
+        // Clean up remaining underscored terms (e.g. AP_WING_LEVELER → AP WING LEVELER)
+        result = result.replace(/([A-Z])_([A-Z])/g, '$1 $2');
+        return result;
+    }
 
     destroy() {
         if (this._overrideCheckTimer) {
