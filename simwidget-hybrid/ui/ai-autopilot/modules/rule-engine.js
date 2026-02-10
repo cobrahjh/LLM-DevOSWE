@@ -199,12 +199,10 @@ class RuleEngine {
                 }
                 break;
 
-            case 'CRUISE':
+            case 'CRUISE': {
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for cruise');
                 }
-                // Cruise power — reduce from climb
-                this._cmdValue('THROTTLE_SET', p.cruise?.throttle || 75, 'Cruise power');
                 if (phaseChanged) {
                     // Level off
                     this._cmd('AP_ALT_HOLD', true, 'ALT hold at cruise');
@@ -212,7 +210,18 @@ class RuleEngine {
                     this._cmdValue('AP_SPD_VAR_SET', speeds.Vcruise, 'SPD ' + speeds.Vcruise + ' (cruise)');
                     this._cmd('AP_NAV1_HOLD', true, 'NAV tracking');
                 }
+                // Speed-maintaining throttle: no auto-throttle in C172 AP,
+                // so rule engine must manage throttle to reach target speed.
+                const ias = d.speed || 0;
+                const spdDiff = speeds.Vcruise - ias;
+                let cruiseThrottle;
+                if (spdDiff > 15) cruiseThrottle = 100;       // way below target — full power
+                else if (spdDiff > 5) cruiseThrottle = 90;    // building speed
+                else if (spdDiff > -5) cruiseThrottle = 80;   // near target
+                else cruiseThrottle = 70;                      // above target — reduce
+                this._cmdValue('THROTTLE_SET', cruiseThrottle, 'Cruise throttle ' + cruiseThrottle + '%');
                 break;
+            }
 
             case 'DESCENT':
                 if (!apState.master) {

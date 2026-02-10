@@ -1997,14 +1997,21 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             'Vno': 'max cruise speed',
             'Vne': 'never exceed speed',
             'Va': 'maneuvering speed',
+            'AP': 'autopilot',
             'VS': 'vertical speed',
             'GS': 'ground speed',
             'HDG': 'heading',
             'ALT': 'altitude',
             'AGL': 'above ground',
+            'NAV': 'navigation',
+            'APR': 'approach',
+            'SPD': 'speed',
             'TOD': 'top of descent',
             'TAWS': 'terrain warning',
-            'fpm': 'feet per minute'
+            'XPDR': 'transponder',
+            'fpm': 'feet per minute',
+            'kts': 'knots',
+            'NM': 'nautical miles'
         };
         let result = text;
         for (const [key, val] of Object.entries(map)) {
