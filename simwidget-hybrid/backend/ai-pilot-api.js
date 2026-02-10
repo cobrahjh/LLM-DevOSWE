@@ -9,6 +9,63 @@ const fs = require('fs');
 
 const CONFIG_PATH = path.join(__dirname, '..', 'config.json');
 
+// ── Backend Terrain Grid Loader ──────────────────────────────────────
+// Loads the 10km binary terrain grid for server-side elevation lookups
+// Used in LLM prompts and terrain API endpoint
+const TERRAIN_BIN = path.join(__dirname, '..', 'ui', 'shared', 'data', 'terrain-grid-10km.bin');
+let _terrainGrid = null; // { width, height, latMin, latMax, lonMin, lonMax, cellDeg, data: Int16Array }
+
+function loadTerrainGrid() {
+    if (_terrainGrid) return _terrainGrid;
+    try {
+        if (!fs.existsSync(TERRAIN_BIN)) return null;
+        const buf = fs.readFileSync(TERRAIN_BIN);
+        const magic = buf.toString('ascii', 0, 4);
+        if (magic !== 'TGRD') return null;
+        _terrainGrid = {
+            width:  buf.readUInt16LE(6),
+            height: buf.readUInt16LE(8),
+            latMin: buf.readInt32LE(10) / 1000,
+            latMax: buf.readInt32LE(14) / 1000,
+            lonMin: buf.readInt32LE(18) / 1000,
+            lonMax: buf.readInt32LE(22) / 1000,
+            cellDeg: buf.readInt32LE(26) / 100000,
+            data: new Int16Array(buf.buffer, buf.byteOffset + 32, buf.readUInt16LE(6) * buf.readUInt16LE(8))
+        };
+        console.log(`[AI-Pilot] Terrain grid loaded: ${_terrainGrid.width}x${_terrainGrid.height}, ${(_terrainGrid.cellDeg * 111.12).toFixed(1)}km/cell`);
+        return _terrainGrid;
+    } catch (e) {
+        console.warn('[AI-Pilot] Terrain grid load failed:', e.message);
+        return null;
+    }
+}
+
+function getTerrainElevFt(lat, lon) {
+    const tg = loadTerrainGrid();
+    if (!tg) return 0;
+    const row = Math.floor((tg.latMax - lat) / tg.cellDeg);
+    const col = Math.floor((lon - tg.lonMin) / tg.cellDeg);
+    if (row < 0 || row >= tg.height || col < 0 || col >= tg.width) return 0;
+    return Math.round(tg.data[row * tg.width + col] * 3.28084);
+}
+
+function getTerrainAhead(lat, lon, hdg, distNm) {
+    const tg = loadTerrainGrid();
+    if (!tg) return [];
+    const cosLat = Math.cos(lat * Math.PI / 180);
+    const hdgRad = hdg * Math.PI / 180;
+    const points = [];
+    for (const d of [2, 5, 10, 20]) {
+        if (d > distNm) break;
+        const dLat = (d / 60) * Math.cos(hdgRad);
+        const dLon = (d / 60) * Math.sin(hdgRad) / cosLat;
+        const elevFt = getTerrainElevFt(lat + dLat, lon + dLon);
+        points.push({ distNm: d, elevFt });
+    }
+    return points;
+}
+// ─────────────────────────────────────────────────────────────────────
+
 // Load copilot config (reuses same license/API key)
 function getCopilotConfig() {
     try {
@@ -58,7 +115,29 @@ CURRENT FLIGHT STATE:
 - Fuel: ${Math.round(fd.fuelTotal || 0)} gal, Flow: ${(fd.fuelFlow || 0).toFixed(1)} gph
 - Gear: ${fd.gearDown ? 'DOWN' : 'UP'}, Flaps: ${fd.flapsIndex || 0}
 - Mixture: ${Math.round(fd.mixture || 0)}%, Throttle: ${Math.round(fd.throttle || 0)}%
-- Engine RPM: ${Math.round(fd.engineRpm || 0)}`;
+- Engine RPM: ${Math.round(fd.engineRpm || 0)}
+- Lat/Lon: ${(fd.latitude || 0).toFixed(4)}, ${(fd.longitude || 0).toFixed(4)}
+${buildTerrainContext(fd)}`;
+}
+
+function buildTerrainContext(fd) {
+    const lat = fd.latitude, lon = fd.longitude, hdg = fd.heading;
+    if (!lat || !lon) return '';
+    const here = getTerrainElevFt(lat, lon);
+    const ahead = getTerrainAhead(lat, lon, hdg || 0, 20);
+    if (!ahead.length && here <= 0) return '';
+    let ctx = `\nTERRAIN (max elevation per ~10km cell):
+- Below aircraft: ${here} ft MSL`;
+    for (const p of ahead) {
+        if (p.elevFt > 0) ctx += `\n- ${p.distNm}nm ahead: ${p.elevFt} ft MSL`;
+    }
+    const alt = fd.altitude || 0;
+    const worstAhead = ahead.reduce((max, p) => p.elevFt > max ? p.elevFt : max, 0);
+    if (worstAhead > 0 && alt > 0) {
+        const clearance = Math.round(alt - worstAhead);
+        ctx += `\n- Min clearance ahead: ${clearance} ft ${clearance < 1000 ? '⚠ LOW' : ''}`;
+    }
+    return ctx;
 }
 
 /** Scale API-level values to SimConnect axis range (0-16383 or -16383 to +16383) */
@@ -374,6 +453,29 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
         res.json({
             profiles: ['C172'],
             default: 'C172'
+        });
+    });
+
+    // ── Terrain API ──────────────────────────────────────────────────
+    app.get('/api/ai-pilot/terrain', (req, res) => {
+        const fd = getFlightData();
+        const lat = parseFloat(req.query.lat) || fd.latitude;
+        const lon = parseFloat(req.query.lon) || fd.longitude;
+        const hdg = parseFloat(req.query.hdg) || fd.heading || 0;
+        const range = parseFloat(req.query.range) || 20;
+
+        if (!lat || !lon) return res.json({ error: 'No position data', terrain: null });
+
+        const here = getTerrainElevFt(lat, lon);
+        const ahead = getTerrainAhead(lat, lon, hdg, range);
+        const clearance = fd.altitude ? Math.round(fd.altitude - here) : null;
+
+        res.json({
+            position: { lat, lon, hdg },
+            terrainBelow: here,
+            clearance,
+            ahead,
+            gridLoaded: !!_terrainGrid
         });
     });
 }

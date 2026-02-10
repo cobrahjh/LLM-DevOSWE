@@ -19,6 +19,11 @@ class TerrainOverlay {
         this.arcAngle = 120; // degrees for arc mode
         this.range = 10; // NM range for terrain page
 
+        // Real terrain grid (shared singleton loaded by terrain-grid.js)
+        this._terrainGrid = window._terrainGrid || null;
+        this._terrainGridLoading = false;
+        this._loadTerrainGrid();
+
         // TAWS configuration
         this.taws = {
             enabled: true,
@@ -48,6 +53,21 @@ class TerrainOverlay {
 
         // Always show terrain mode (shows terrain colors relative to altitude)
         this.alwaysShowTerrain = true;
+    }
+
+    /**
+     * Load the shared terrain grid (non-blocking)
+     */
+    _loadTerrainGrid() {
+        if (!this._terrainGrid || this._terrainGrid.loaded || this._terrainGridLoading) return;
+        this._terrainGridLoading = true;
+        this._terrainGrid.load().then(ok => {
+            this._terrainGridLoading = false;
+            if (ok) {
+                this.cache.clear(); // Invalidate cached simulated grids
+                console.log('[TerrainOverlay] Real terrain data loaded');
+            }
+        });
     }
 
     /**
@@ -144,11 +164,12 @@ class TerrainOverlay {
 
     /**
      * Get terrain grid for current position
-     * Grid regenerates as aircraft moves for smooth terrain scrolling
+     * Uses real EarthEnv elevation data when loaded, falls back to simulated
      */
     getTerrainGrid(lat, lon, range) {
         // More granular cache key - regenerate every ~1nm of movement
-        const cacheKey = `${Math.round(lat * 60)}_${Math.round(lon * 60)}_${range}`;
+        const src = (this._terrainGrid && this._terrainGrid.loaded) ? 'r' : 's';
+        const cacheKey = `${src}_${Math.round(lat * 60)}_${Math.round(lon * 60)}_${range}`;
         const cached = this.cache.get(cacheKey);
 
         // Shorter cache timeout for smoother updates (5 seconds)
@@ -156,9 +177,10 @@ class TerrainOverlay {
             return cached.grid;
         }
 
-        // Generate simulated terrain grid
-        // In production, this would fetch from Open-Elevation API or local terrain DB
-        const grid = this.generateSimulatedTerrain(lat, lon, range);
+        // Use real terrain data if loaded, otherwise fall back to simulated
+        const grid = (this._terrainGrid && this._terrainGrid.loaded)
+            ? this._terrainGrid.getAreaGrid(lat, lon, range, this.gridSize)
+            : this.generateSimulatedTerrain(lat, lon, range);
 
         // Clear old cache entries to prevent memory growth
         if (this.cache.size > 20) {
@@ -248,10 +270,10 @@ class TerrainOverlay {
 
     /**
      * Render terrain grid on canvas
-     * Uses real ground elevation from MSFS to calculate terrain variation
+     * With real terrain data, elevation values are already in feet MSL
      */
-    renderTerrainGrid(ctx, grid, aircraft, mapSettings, groundElevation = 0, realAGL = null) {
-        const { latitude, longitude, altitude, heading } = aircraft;
+    renderTerrainGrid(ctx, grid, aircraft, mapSettings) {
+        const { altitude, heading } = aircraft;
         const { range, orientation, width, height } = mapSettings;
 
         const cx = width / 2;
@@ -262,9 +284,6 @@ class TerrainOverlay {
         const cellsPerSide = grid.length;
         const cellPixelSize = (range * 2 * pixelsPerNm) / cellsPerSide;
 
-        // Use real AGL if available, otherwise fall back to calculated clearance
-        const useRealAGL = realAGL !== null && realAGL > 0;
-
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(-rotation * Math.PI / 180);
@@ -273,23 +292,8 @@ class TerrainOverlay {
         for (let row = 0; row < cellsPerSide; row++) {
             for (let col = 0; col < cellsPerSide; col++) {
                 const cell = grid[row][col];
-
-                // Calculate terrain clearance:
-                // If we have real AGL, use ground elevation + simulated terrain variation
-                // This creates terrain that matches real-world elevation at aircraft position
-                let clearance;
-                if (useRealAGL) {
-                    // Use real ground elevation as base, add simulated variation
-                    const simVariation = cell.elevation - this.getSimulatedElevation(latitude, longitude);
-                    const terrainElev = groundElevation + simVariation;
-                    clearance = altitude - terrainElev;
-                } else {
-                    clearance = altitude - cell.elevation;
-                }
-
+                const clearance = altitude - cell.elevation;
                 const color = this.getClearanceColor(clearance, cell.elevation);
-
-                // All cells rendered (black for terrain well below aircraft)
 
                 const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
                 const y = cy - cell.nmY * pixelsPerNm - cellPixelSize / 2;
@@ -306,10 +310,9 @@ class TerrainOverlay {
 
     /**
      * Render terrain grid with Arc view (forward 120 degree only)
-     * Uses real ground elevation from MSFS when available
      */
-    renderTerrainGridArc(ctx, grid, aircraft, width, height, groundElevation = 0, realAGL = null) {
-        const { altitude, latitude, longitude } = aircraft;
+    renderTerrainGridArc(ctx, grid, aircraft, width, height) {
+        const { altitude } = aircraft;
         const range = this.range;
         const cx = width / 2;
         const cy = height * 0.85;
@@ -317,9 +320,6 @@ class TerrainOverlay {
         const cellsPerSide = grid.length;
         const cellPixelSize = (range * 2 * pixelsPerNm) / cellsPerSide;
         const halfArc = (this.arcAngle / 2) * Math.PI / 180;
-
-        // Use real AGL if available
-        const useRealAGL = realAGL !== null && realAGL > 0;
 
         ctx.save();
         ctx.beginPath();
@@ -336,18 +336,8 @@ class TerrainOverlay {
                 const distance = Math.sqrt(cell.nmX * cell.nmX + cell.nmY * cell.nmY);
                 if (distance > range) continue;
 
-                // Calculate clearance using real ground elevation if available
-                let clearance;
-                if (useRealAGL) {
-                    const simVariation = cell.elevation - this.getSimulatedElevation(latitude, longitude);
-                    const terrainElev = groundElevation + simVariation;
-                    clearance = altitude - terrainElev;
-                } else {
-                    clearance = altitude - cell.elevation;
-                }
-
+                const clearance = altitude - cell.elevation;
                 const color = this.getClearanceColor(clearance, cell.elevation);
-                // All cells rendered (black for terrain well below)
                 const x = cx + cell.nmX * pixelsPerNm - cellPixelSize / 2;
                 const y = cy + cell.nmY * pixelsPerNm - cellPixelSize / 2;
                 ctx.fillStyle = color;
@@ -495,17 +485,13 @@ class TerrainOverlay {
     renderTerrainPage(ctx, aircraft, width, height) {
         const terrainGrid = this.getTerrainGrid(aircraft.latitude, aircraft.longitude, this.range);
 
-        // Use real AGL from MSFS if available
-        const realAGL = aircraft.altitudeAGL || aircraft.altitude;
-        const groundElevation = aircraft.altitude - realAGL;
-
         // Clear background
         ctx.fillStyle = '#0a1520';
         ctx.fillRect(0, 0, width, height);
 
         if (this.viewMode === 'arc') {
             // Arc view - forward 120 only, aircraft at bottom
-            this.renderTerrainGridArc(ctx, terrainGrid, aircraft, width, height, groundElevation, realAGL);
+            this.renderTerrainGridArc(ctx, terrainGrid, aircraft, width, height);
 
             // Draw aircraft at bottom center
             const cx = width / 2;
@@ -531,7 +517,7 @@ class TerrainOverlay {
                 orientation: 'track',
                 width,
                 height
-            }, groundElevation, realAGL);
+            });
 
             // Draw aircraft symbol at center
             const cx = width / 2;
@@ -580,8 +566,11 @@ class TerrainOverlay {
         ctx.textAlign = 'right';
         ctx.fillText(this.range + ' NM', width - 10, 20);
 
-        // Return real AGL as clearance (actual terrain clearance at aircraft position)
-        return Math.round(realAGL);
+        // Return terrain clearance at aircraft position
+        const terrainElevAtAircraft = (this._terrainGrid && this._terrainGrid.loaded)
+            ? this._terrainGrid.getElevationFeet(aircraft.latitude, aircraft.longitude)
+            : 0;
+        return Math.round(aircraft.altitude - terrainElevAtAircraft);
     }
 
     /**

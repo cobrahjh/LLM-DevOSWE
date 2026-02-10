@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "chokidar": "^5.0.0",
+    "geotiff": "^3.0.1",
     "node-windows": "^1.0.0-beta.8",
     "serve-index": "^1.9.1"
   },

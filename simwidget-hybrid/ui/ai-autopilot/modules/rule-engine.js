@@ -17,6 +17,11 @@ class RuleEngine {
         this._lastCommands = {};  // track what we last commanded per axis
         this._takeoffSubPhase = null;
         this._runwayHeading = null;  // captured at takeoff roll start
+
+        // Terrain awareness (uses shared singleton from terrain-grid.js)
+        this._terrainGrid = (typeof window !== 'undefined' && window._terrainGrid) || null;
+        this._terrainAlert = null;     // current terrain alert: null | 'CAUTION' | 'WARNING'
+        this._lastTerrainCheck = 0;
     }
 
     /**
@@ -38,6 +43,11 @@ class RuleEngine {
         if (phaseChanged && phase !== 'TAKEOFF') {
             this._takeoffSubPhase = null;
             this._runwayHeading = null;
+        }
+
+        // Terrain awareness check for airborne phases
+        if (phase !== 'PREFLIGHT' && phase !== 'TAXI') {
+            this._checkTerrain(d, apState, phase);
         }
 
         switch (phase) {
@@ -214,6 +224,92 @@ class RuleEngine {
     /** Get the current takeoff sub-phase (for debug display) */
     getTakeoffSubPhase() {
         return this._takeoffSubPhase;
+    }
+
+    /** Get current terrain alert level (for debug display) */
+    getTerrainAlert() {
+        return this._terrainAlert;
+    }
+
+    /**
+     * Check terrain ahead and react if necessary.
+     * Called from evaluate() during airborne phases.
+     * Uses look-ahead along current heading to detect rising terrain.
+     * @param {Object} d - flightData
+     * @param {Object} apState - autopilot state
+     * @param {string} phase - current flight phase
+     */
+    _checkTerrain(d, apState, phase) {
+        if (!this._terrainGrid || !this._terrainGrid.loaded) return;
+
+        // Throttle checks to once per 2 seconds (terrain doesn't change fast)
+        const now = Date.now();
+        if (now - this._lastTerrainCheck < 2000) return;
+        this._lastTerrainCheck = now;
+
+        const lat = d.latitude;
+        const lon = d.longitude;
+        const hdg = d.heading || 0;
+        const alt = d.altitude || 0;         // MSL feet
+        const vs = d.verticalSpeed || 0;     // fpm
+        const gs = d.groundSpeed || 0;       // knots
+
+        if (!lat || !lon || alt < 100) return; // Skip on ground or no position
+
+        // Look ahead along current heading
+        // Check at 2nm, 5nm, and 10nm ahead
+        const lookAheadDistances = [2, 5, 10]; // NM
+        const cosLat = Math.cos(lat * Math.PI / 180);
+        const hdgRad = hdg * Math.PI / 180;
+
+        let worstClearance = Infinity;
+        let worstDist = 0;
+        let worstElev = 0;
+
+        for (const dist of lookAheadDistances) {
+            const dLat = (dist / 60) * Math.cos(hdgRad);
+            const dLon = (dist / 60) * Math.sin(hdgRad) / cosLat;
+            const checkLat = lat + dLat;
+            const checkLon = lon + dLon;
+
+            const terrainFt = this._terrainGrid.getElevationFeet(checkLat, checkLon);
+            if (terrainFt <= 0) continue; // Ocean or no data
+
+            // Predict altitude at that distance given current VS and GS
+            const timeToReachMin = gs > 30 ? (dist / gs) * 60 : 0; // minutes
+            const predictedAlt = alt + (vs * timeToReachMin / 60); // feet at that point
+            const clearance = predictedAlt - terrainFt;
+
+            if (clearance < worstClearance) {
+                worstClearance = clearance;
+                worstDist = dist;
+                worstElev = terrainFt;
+            }
+        }
+
+        // Determine alert level based on predicted clearance
+        const prevAlert = this._terrainAlert;
+
+        if (worstClearance < 500) {
+            // WARNING: Predicted terrain conflict within 500ft
+            this._terrainAlert = 'WARNING';
+
+            if (phase !== 'TAKEOFF' && phase !== 'LANDING') {
+                // Climb immediately to clear terrain
+                const safeAlt = worstElev + 1500; // 1500ft above highest terrain ahead
+                if (apState.master) {
+                    this._cmdValue('AP_ALT_VAR_SET', safeAlt, `TERRAIN: climb to ${safeAlt}ft (terrain ${worstElev}ft at ${worstDist}nm)`);
+                    this._cmd('AP_VS_HOLD', true, 'TERRAIN: VS hold for climb');
+                    this._cmdValue('AP_VS_VAR_SET', 1000, 'TERRAIN: max climb');
+                }
+            }
+        } else if (worstClearance < 1500) {
+            // CAUTION: Terrain within 1500ft clearance
+            this._terrainAlert = 'CAUTION';
+            // Advisory only — no automatic action, let pilot/LLM decide
+        } else {
+            this._terrainAlert = null;
+        }
     }
 
     /**
