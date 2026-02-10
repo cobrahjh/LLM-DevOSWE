@@ -135,16 +135,47 @@ class LLMAdvisor {
             text: text,
             trigger: trigger,
             timestamp: Date.now(),
-            commands: [],
+            commands: [],       // human-readable strings
+            execCommands: [],   // { command, value } objects for execution
             error: false
         };
 
-        // Extract "RECOMMEND:" lines
+        // Try JSON format: COMMANDS_JSON: [...]
+        const jsonMatch = text.match(/COMMANDS_JSON:\s*(\[[\s\S]*?\])/);
+        if (jsonMatch) {
+            try {
+                const parsed = JSON.parse(jsonMatch[1]);
+                if (Array.isArray(parsed)) {
+                    advisory.execCommands = parsed;
+                    advisory.commands = parsed.map(c => `${c.command}${c.value !== undefined ? ' ' + c.value : ''}`);
+                    // Clean JSON block from display text
+                    advisory.text = text.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
+                    return advisory;
+                }
+            } catch (e) { /* fall through */ }
+        }
+
+        // Fallback: parse COMMAND VALUE lines and RECOMMEND: lines
         const lines = text.split('\n');
         for (const line of lines) {
-            const match = line.match(/RECOMMEND:\s*(.+)/i);
-            if (match) {
-                advisory.commands.push(match[1].trim());
+            const trimmed = line.replace(/^[-*\s]+/, '').trim();
+
+            // Structured: HEADING_BUG_SET 300
+            const cmdMatch = trimmed.match(/^((?:AP_|HEADING_|TOGGLE_|YAW_)\w+)[\s:]+(\d+|ON|OFF)?$/i);
+            if (cmdMatch) {
+                const cmd = { command: cmdMatch[1].toUpperCase() };
+                if (cmdMatch[2] && cmdMatch[2] !== 'ON' && cmdMatch[2] !== 'OFF') {
+                    cmd.value = parseInt(cmdMatch[2]);
+                }
+                advisory.execCommands.push(cmd);
+                advisory.commands.push(trimmed);
+                continue;
+            }
+
+            // Legacy: RECOMMEND: free text
+            const recMatch = line.match(/RECOMMEND:\s*(.+)/i);
+            if (recMatch) {
+                advisory.commands.push(recMatch[1].trim());
             }
         }
 

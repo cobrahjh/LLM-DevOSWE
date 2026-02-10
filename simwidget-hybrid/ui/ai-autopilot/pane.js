@@ -18,6 +18,10 @@ class AiAutopilotPane extends SimGlassBase {
 
         // AI state
         this.aiEnabled = false;
+        this._autoControlsEnabled = false;  // "AI Has Controls" mode
+        this._autoAdviseTimer = null;
+        this._autoAdviseInFlight = false;
+        this._autoAdviseInterval = 60000;   // 60s between auto-advise cycles
         this._lastFlightData = null;
         this.copilotStatus = null;
 
@@ -118,6 +122,7 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.advisoryDismiss = document.getElementById('advisory-dismiss');
         this.elements.aircraftName = document.getElementById('aircraft-name');
         this.elements.overrideCount = document.getElementById('override-count');
+        this.elements.autoControlsBtn = document.getElementById('auto-controls-btn');
     }
 
     // ── Event Setup ────────────────────────────────────────
@@ -149,6 +154,24 @@ class AiAutopilotPane extends SimGlassBase {
         });
         this.elements.advisoryDismiss?.addEventListener('click', () => {
             this._dismissAdvisory();
+        });
+
+        // AI Has Controls toggle
+        this.elements.autoControlsBtn?.addEventListener('click', () => {
+            if (!this.aiEnabled) {
+                this.aiEnabled = true;
+            }
+            this._autoControlsEnabled = !this._autoControlsEnabled;
+            if (this._autoControlsEnabled) {
+                this._autoAdvise();  // immediate first run
+                this._autoAdviseTimer = setInterval(() => this._autoAdvise(), this._autoAdviseInterval);
+            } else {
+                if (this._autoAdviseTimer) {
+                    clearInterval(this._autoAdviseTimer);
+                    this._autoAdviseTimer = null;
+                }
+            }
+            this._render();
         });
     }
 
@@ -261,6 +284,10 @@ class AiAutopilotPane extends SimGlassBase {
 
     _onAdvisory(advisory) {
         this._renderAdvisory(advisory);
+        // Auto-accept when AI has controls
+        if (this._autoControlsEnabled && advisory && !advisory.error && advisory.execCommands?.length > 0) {
+            this._acceptAdvisory();
+        }
     }
 
     _onAdvisoryLoading(loading) {
@@ -271,10 +298,20 @@ class AiAutopilotPane extends SimGlassBase {
     }
 
     _acceptAdvisory() {
-        // Mark advisory as accepted, log it
         const adv = this.llmAdvisor.getCurrentAdvisory();
-        if (adv && adv.commands.length > 0) {
-            // Log acceptance
+        if (!adv) return this._dismissAdvisory();
+
+        // Execute parsed commands through the command queue
+        if (adv.execCommands && adv.execCommands.length > 0) {
+            for (const cmd of adv.execCommands) {
+                this.commandQueue.enqueue({
+                    type: cmd.command,
+                    value: cmd.value || 0,
+                    description: `AI: ${cmd.command}${cmd.value !== undefined ? ' → ' + cmd.value : ''}`
+                });
+            }
+        } else if (adv.commands.length > 0) {
+            // Log as text-only advisory
             this.commandQueue.enqueue({
                 type: 'ADVISORY_ACCEPTED',
                 value: true,
@@ -282,6 +319,63 @@ class AiAutopilotPane extends SimGlassBase {
             });
         }
         this._dismissAdvisory();
+    }
+
+    /**
+     * Auto-advise via server-side endpoint: asks AI, parses, executes in one call.
+     * Used when "AI Has Controls" is active.
+     */
+    async _autoAdvise() {
+        if (this._destroyed || !this.aiEnabled || !this._autoControlsEnabled) return;
+        if (this._autoAdviseInFlight) return;
+
+        this._autoAdviseInFlight = true;
+        this._onAdvisoryLoading(true);
+
+        try {
+            const phase = this.flightPhase.phase;
+            const res = await fetch(`/api/ai-pilot/auto-advise`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: `Phase: ${phase}. Recommend optimal AP settings for current conditions.`
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `Error ${res.status}`);
+            }
+
+            const result = await res.json();
+
+            // Show advisory text
+            if (result.advisory) {
+                const displayText = result.advisory.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
+                this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
+            }
+
+            // Log executed commands
+            if (result.commands) {
+                for (const cmd of result.commands) {
+                    const entry = {
+                        time: Date.now(),
+                        type: cmd.command,
+                        value: cmd.value,
+                        description: `AI auto: ${cmd.command}${cmd.value ? ' → ' + cmd.value : ''} ${cmd.executed ? '✓' : '(queued)'}`
+                    };
+                    this.commandQueue._log.unshift(entry);
+                    if (this.commandQueue._log.length > this.commandQueue._maxLog) this.commandQueue._log.pop();
+                }
+                this._renderCommandLog();
+            }
+
+        } catch (err) {
+            this._renderAdvisory({ text: err.message, commands: [], error: true });
+        } finally {
+            this._autoAdviseInFlight = false;
+            this._onAdvisoryLoading(false);
+        }
     }
 
     _dismissAdvisory() {
@@ -309,6 +403,11 @@ class AiAutopilotPane extends SimGlassBase {
         if (!this.elements.aiToggle) return;
         this.elements.aiToggle.textContent = this.aiEnabled ? 'ON' : 'OFF';
         this.elements.aiToggle.classList.toggle('active', this.aiEnabled);
+
+        if (this.elements.autoControlsBtn) {
+            this.elements.autoControlsBtn.textContent = this._autoControlsEnabled ? 'AI HAS CONTROLS' : 'AI CONTROLS';
+            this.elements.autoControlsBtn.classList.toggle('active', this._autoControlsEnabled);
+        }
     }
 
     _renderPhase() {
@@ -633,6 +732,10 @@ class AiAutopilotPane extends SimGlassBase {
         if (this._overrideCheckTimer) {
             clearInterval(this._overrideCheckTimer);
             this._overrideCheckTimer = null;
+        }
+        if (this._autoAdviseTimer) {
+            clearInterval(this._autoAdviseTimer);
+            this._autoAdviseTimer = null;
         }
         this.commandQueue.destroy();
         this.llmAdvisor.destroy();

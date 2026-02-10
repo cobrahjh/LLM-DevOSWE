@@ -158,40 +158,7 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
             return res.status(403).json({ error: 'Valid copilot license required for AI advisory' });
         }
 
-        // Get API key (reuse copilot's encrypted key logic)
-        let getApiKey;
-        try {
-            // Import the getApiKey function by requiring copilot-api internals
-            // Since copilot-api doesn't export getApiKey, we replicate the logic
-            const crypto = require('crypto');
-            const os = require('os');
-            const SALT = 'SimGlass-Copilot-KeyStore';
-            const ENCRYPTION_ALGO = 'aes-256-cbc';
-
-            function getEncryptionKey() {
-                return crypto.createHash('sha256').update(os.hostname() + SALT).digest();
-            }
-
-            getApiKey = function(copilotCfg) {
-                if (copilotCfg.apiKeyEncrypted) {
-                    try {
-                        const key = getEncryptionKey();
-                        const [ivHex, encrypted] = copilotCfg.apiKeyEncrypted.split(':');
-                        const decipher = crypto.createDecipheriv(ENCRYPTION_ALGO, key, Buffer.from(ivHex, 'hex'));
-                        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-                        decrypted += decipher.final('utf8');
-                        return decrypted;
-                    } catch (e) {
-                        return '';
-                    }
-                }
-                return '';
-            };
-        } catch (e) {
-            return res.status(500).json({ error: 'Crypto module error' });
-        }
-
-        const apiKey = getApiKey(cfg);
+        const apiKey = decryptApiKey(cfg);
         if (!apiKey) {
             return res.status(400).json({ error: 'No API key configured' });
         }
@@ -226,6 +193,106 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
             if (!res.headersSent) {
                 res.status(502).json({ error: err.message });
             }
+        }
+    });
+
+    // Auto-advise endpoint — asks AI, parses commands, executes them in one call
+    app.post('/api/ai-pilot/auto-advise', express_json_guard, async (req, res) => {
+        const cfg = getCopilotConfig();
+
+        let validateKey;
+        try {
+            validateKey = require('./copilot-license').validateKey;
+        } catch (e) {
+            return res.status(500).json({ error: 'License module not available' });
+        }
+
+        const licenseResult = validateKey(cfg.licenseKey);
+        if (!licenseResult.valid) {
+            return res.status(403).json({ error: 'Valid license required' });
+        }
+
+        const apiKey = decryptApiKey(cfg);
+        if (!apiKey) {
+            return res.status(400).json({ error: 'No API key configured' });
+        }
+
+        const { message } = req.body;
+        const flightData = getFlightData();
+        const fd = flightData || {};
+
+        const systemPrompt = buildAiPilotPrompt(flightData) + `\n
+IMPORTANT: After your brief advice, output a JSON block with the exact AP commands to execute.
+Use this exact format on its own line:
+COMMANDS_JSON: [{"command":"COMMAND_NAME","value":NUMBER}, ...]
+
+Valid commands and value ranges:
+- HEADING_BUG_SET (0-360)
+- AP_ALT_VAR_SET (0-45000, altitude in feet)
+- AP_VS_VAR_SET (-6000 to 6000, fpm)
+- AP_SPD_VAR_SET (40-500, knots)
+- AP_HDG_HOLD (no value, toggles heading hold)
+- AP_ALT_HOLD (no value, toggles altitude hold)
+- AP_VS_HOLD (no value, toggles VS hold)
+- AP_MASTER (no value, toggles AP master)
+
+For toggle commands, omit the value field. Only include commands that need to CHANGE from current state.`;
+
+        const userMsg = message || `Current phase of flight: altitude ${Math.round(fd.altitude||0)}ft, speed ${Math.round(fd.speed||0)}kt, heading ${Math.round(fd.heading||0)}. Recommend optimal AP settings.`;
+
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMsg.slice(0, 2000) }
+        ];
+
+        const provider = cfg.provider || 'openai';
+        const model = cfg.model || (provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20250929');
+        const abortController = new AbortController();
+        const timeoutId = setTimeout(() => abortController.abort(), 30000);
+
+        try {
+            // Get non-streaming response for parsing
+            let fullText = '';
+            if (provider === 'anthropic') {
+                fullText = await fetchAnthropic(apiKey, model, messages, abortController);
+            } else {
+                fullText = await fetchOpenAI(apiKey, model, messages, abortController);
+            }
+            clearTimeout(timeoutId);
+
+            // Parse commands from response
+            const commands = parseCommandsFromText(fullText);
+            const executed = [];
+            const sc = getSimConnect ? getSimConnect() : null;
+
+            for (const cmd of commands) {
+                if (!COMMAND_TO_EVENT[cmd.command]) continue;
+                const simEventName = COMMAND_TO_EVENT[cmd.command];
+                const simValue = Math.round(cmd.value || 0);
+
+                if (sc && eventMap && eventMap[simEventName] !== undefined) {
+                    try {
+                        sc.transmitClientEvent(0, eventMap[simEventName], simValue, 1, 16);
+                        executed.push({ command: cmd.command, simEvent: simEventName, value: simValue, executed: true });
+                        console.log(`[AI-Pilot Auto] ${cmd.command} → ${simEventName} = ${simValue}`);
+                    } catch (e) {
+                        executed.push({ command: cmd.command, simEvent: simEventName, value: simValue, executed: false, error: e.message });
+                    }
+                } else {
+                    executed.push({ command: cmd.command, simEvent: simEventName, value: simValue, executed: false });
+                }
+            }
+
+            res.json({
+                success: true,
+                advisory: fullText,
+                commands: executed,
+                simConnected: !!sc
+            });
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+            res.status(502).json({ error: err.message });
         }
     });
 
@@ -356,6 +423,85 @@ async function proxyAnthropic(apiKey, model, messages, res, abortController) {
         throw e;
     }
     res.end();
+}
+
+// Decrypt API key helper (reused across endpoints)
+function decryptApiKey(cfg) {
+    if (!cfg.apiKeyEncrypted) return '';
+    try {
+        const crypto = require('crypto');
+        const os = require('os');
+        const SALT = 'SimGlass-Copilot-KeyStore';
+        const key = crypto.createHash('sha256').update(os.hostname() + SALT).digest();
+        const [ivHex, encrypted] = cfg.apiKeyEncrypted.split(':');
+        const decipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(ivHex, 'hex'));
+        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+    } catch (e) {
+        return '';
+    }
+}
+
+// Non-streaming OpenAI fetch (for auto-advise parsing)
+async function fetchOpenAI(apiKey, model, messages, abortController) {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ model, messages, max_tokens: 300 }),
+        signal: abortController.signal
+    });
+    if (!response.ok) throw new Error(`OpenAI error (${response.status})`);
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+}
+
+// Non-streaming Anthropic fetch (for auto-advise parsing)
+async function fetchAnthropic(apiKey, model, messages, abortController) {
+    const systemMsg = messages.find(m => m.role === 'system');
+    const chatMessages = messages.filter(m => m.role !== 'system').map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content
+    }));
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model, system: systemMsg?.content || '', messages: chatMessages, max_tokens: 300 }),
+        signal: abortController.signal
+    });
+    if (!response.ok) throw new Error(`Anthropic error (${response.status})`);
+    const data = await response.json();
+    return data.content?.[0]?.text || '';
+}
+
+// Parse AP commands from LLM response text
+function parseCommandsFromText(text) {
+    const commands = [];
+
+    // Try JSON format first: COMMANDS_JSON: [...]
+    const jsonMatch = text.match(/COMMANDS_JSON:\s*(\[[\s\S]*?\])/);
+    if (jsonMatch) {
+        try {
+            const parsed = JSON.parse(jsonMatch[1]);
+            if (Array.isArray(parsed)) return parsed;
+        } catch (e) { /* fall through to line parsing */ }
+    }
+
+    // Fallback: parse COMMAND VALUE lines
+    const lines = text.split('\n');
+    for (const line of lines) {
+        const trimmed = line.replace(/^[-*\s]+/, '').trim();
+        // Match patterns like: HEADING_BUG_SET 300, HEADING_BUG_SET: 300, AP_HDG_HOLD ON
+        const match = trimmed.match(/^((?:AP_|HEADING_|TOGGLE_|YAW_)\w+)[\s:]+(\d+|ON|OFF)?$/i);
+        if (match) {
+            const cmd = { command: match[1].toUpperCase() };
+            if (match[2] && match[2] !== 'ON' && match[2] !== 'OFF') {
+                cmd.value = parseInt(match[2]);
+            }
+            commands.push(cmd);
+        }
+    }
+
+    return commands;
 }
 
 // Middleware guard
