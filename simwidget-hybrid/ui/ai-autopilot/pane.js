@@ -67,6 +67,15 @@ class AiAutopilotPane extends SimGlassBase {
             onLoading: (loading) => this._onAdvisoryLoading(loading)
         });
 
+        // Debug log
+        this._debugLog = [];
+        this._debugMaxEntries = 200;
+        this._debugFilter = 'all';
+        this._debugVisible = false;
+        this._debugStats = { api: 0, ws: 0, llm: 0, cmd: 0 };
+        this._wsPerSec = 0;
+        this._wsCount = 0;
+
         // Cache DOM elements
         this.elements = {};
         this._cacheElements();
@@ -74,11 +83,21 @@ class AiAutopilotPane extends SimGlassBase {
         // Setup UI event listeners
         this._setupEvents();
 
+        // Setup debug panel
+        this._setupDebug();
+
         // Build phase dots
         this._buildPhaseDots();
 
         // Override detection timer
         this._overrideCheckTimer = setInterval(() => this._checkOverrideExpiry(), 5000);
+
+        // WS rate counter (messages per second)
+        this._wsRateTimer = setInterval(() => {
+            this._wsPerSec = this._wsCount;
+            this._wsCount = 0;
+            if (this._debugVisible) this._renderDebugStats();
+        }, 1000);
 
         // Fetch copilot config status
         this._fetchCopilotStatus();
@@ -123,6 +142,14 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.aircraftName = document.getElementById('aircraft-name');
         this.elements.overrideCount = document.getElementById('override-count');
         this.elements.autoControlsBtn = document.getElementById('auto-controls-btn');
+        this.elements.debugToggle = document.getElementById('debug-toggle');
+        this.elements.debugPanel = document.getElementById('debug-panel');
+        this.elements.debugLog = document.getElementById('debug-log');
+        this.elements.debugClear = document.getElementById('debug-clear');
+        this.elements.dsApi = document.getElementById('ds-api');
+        this.elements.dsWs = document.getElementById('ds-ws');
+        this.elements.dsLlm = document.getElementById('ds-llm');
+        this.elements.dsCmd = document.getElementById('ds-cmd');
     }
 
     // ── Event Setup ────────────────────────────────────────
@@ -175,6 +202,151 @@ class AiAutopilotPane extends SimGlassBase {
         });
     }
 
+    // ── Debug Panel ─────────────────────────────────────────
+
+    _setupDebug() {
+        // Toggle button
+        this.elements.debugToggle?.addEventListener('click', () => {
+            this._debugVisible = !this._debugVisible;
+            this.elements.debugToggle.classList.toggle('active', this._debugVisible);
+            if (this.elements.debugPanel) {
+                this.elements.debugPanel.style.display = this._debugVisible ? 'flex' : 'none';
+            }
+            if (this._debugVisible) this._renderDebugLog();
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.debug-filter').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.debug-filter').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this._debugFilter = btn.dataset.filter;
+                this._renderDebugLog();
+            });
+        });
+
+        // Clear button
+        this.elements.debugClear?.addEventListener('click', () => {
+            this._debugLog = [];
+            this._debugStats = { api: 0, ws: 0, llm: 0, cmd: 0 };
+            this._renderDebugLog();
+            this._renderDebugStats();
+        });
+
+        // Intercept fetch for API logging
+        this._origFetch = window.fetch;
+        window.fetch = (...args) => this._interceptFetch(...args);
+    }
+
+    _interceptFetch(url, opts = {}) {
+        const urlStr = typeof url === 'string' ? url : url.url || '';
+        // Only log ai-pilot and copilot API calls
+        if (!urlStr.includes('/api/ai-pilot') && !urlStr.includes('/api/copilot')) {
+            return this._origFetch(url, opts);
+        }
+
+        const method = (opts.method || 'GET').toUpperCase();
+        const shortUrl = urlStr.replace(/^https?:\/\/[^/]+/, '');
+        const startTime = performance.now();
+
+        // Parse request body for LLM calls
+        let reqBody = null;
+        if (opts.body) {
+            try { reqBody = JSON.parse(opts.body); } catch (e) { /* not json */ }
+        }
+
+        // Log outgoing request
+        const isLlm = urlStr.includes('/advisory') || urlStr.includes('/auto-advise');
+        if (isLlm && reqBody?.message) {
+            const msg = reqBody.message.length > 80 ? reqBody.message.slice(0, 80) + '...' : reqBody.message;
+            this._dbg('llm', `<span class="dim">&rarr;</span> <span class="val">${this._esc(msg)}</span>`);
+        }
+
+        return this._origFetch(url, opts).then(response => {
+            const dur = (performance.now() - startTime).toFixed(0);
+            const status = response.status;
+            const statusClass = status < 400 ? 'ok' : 'err';
+
+            this._dbg('api', `${method} <span class="url">${this._esc(shortUrl)}</span> <span class="${statusClass}">${status}</span> <span class="dur">${dur}ms</span>`);
+
+            // For LLM endpoints, clone and read response for logging
+            if (isLlm && status < 400) {
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('json')) {
+                    const clone = response.clone();
+                    clone.json().then(data => {
+                        if (data.advisory) {
+                            const text = data.advisory.replace(/COMMANDS_JSON:[\s\S]*$/, '').trim();
+                            const preview = text.length > 100 ? text.slice(0, 100) + '...' : text;
+                            this._dbg('llm', `<span class="dim">&larr;</span> <span class="val">${this._esc(preview)}</span>`);
+                        }
+                        if (data.commands?.length) {
+                            const cmds = data.commands.map(c =>
+                                `${c.command}${c.value !== undefined ? '=' + c.value : ''} ${c.executed ? '<span class="ok">OK</span>' : '<span class="err">SKIP</span>'}`
+                            ).join(', ');
+                            this._dbg('cmd', cmds);
+                        }
+                    }).catch(() => {});
+                }
+            }
+
+            return response;
+        }).catch(err => {
+            const dur = (performance.now() - startTime).toFixed(0);
+            this._dbg('api', `${method} <span class="url">${this._esc(shortUrl)}</span> <span class="err">ERR</span> <span class="dur">${dur}ms</span> ${this._esc(err.message)}`);
+            throw err;
+        });
+    }
+
+    /** Add a debug log entry */
+    _dbg(category, html) {
+        const now = new Date();
+        const ts = now.getHours().toString().padStart(2, '0') + ':' +
+                   now.getMinutes().toString().padStart(2, '0') + ':' +
+                   now.getSeconds().toString().padStart(2, '0') + '.' +
+                   String(now.getMilliseconds()).padStart(3, '0');
+
+        this._debugLog.unshift({ ts, cat: category, html });
+        if (this._debugLog.length > this._debugMaxEntries) this._debugLog.pop();
+        this._debugStats[category] = (this._debugStats[category] || 0) + 1;
+
+        if (this._debugVisible) {
+            this._renderDebugLog();
+            this._renderDebugStats();
+        }
+    }
+
+    /** Escape HTML for safe display */
+    _esc(str) {
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    _renderDebugLog() {
+        if (!this.elements.debugLog) return;
+        const filter = this._debugFilter;
+        const entries = filter === 'all'
+            ? this._debugLog.slice(0, 60)
+            : this._debugLog.filter(e => e.cat === filter).slice(0, 60);
+
+        if (entries.length === 0) {
+            this.elements.debugLog.innerHTML = '<div style="color:#334;padding:8px;font-style:italic">No debug entries</div>';
+            return;
+        }
+
+        this.elements.debugLog.innerHTML = entries.map(e =>
+            `<div class="dbg-entry"><span class="dbg-time">${e.ts}</span>` +
+            `<span class="dbg-tag ${e.cat}">${e.cat.toUpperCase()}</span>` +
+            `<span class="dbg-text">${e.html}</span></div>`
+        ).join('');
+    }
+
+    _renderDebugStats() {
+        if (this.elements.dsApi) this.elements.dsApi.textContent = this._debugStats.api;
+        if (this.elements.dsWs) this.elements.dsWs.textContent = this._wsPerSec;
+        if (this.elements.dsLlm) this.elements.dsLlm.textContent = this._debugStats.llm;
+        if (this.elements.dsCmd) this.elements.dsCmd.textContent = this._debugStats.cmd;
+    }
+
     // ── Phase Dots ─────────────────────────────────────────
 
     _buildPhaseDots() {
@@ -192,8 +364,18 @@ class AiAutopilotPane extends SimGlassBase {
     // ── WebSocket Integration ──────────────────────────────
 
     onMessage(msg) {
+        this._wsCount++;
         if (msg.type === 'flightData' && msg.data) {
+            // Throttle WS debug logging to 1 per 5 seconds (avoid flooding)
+            const now = Date.now();
+            if (!this._lastWsLog || now - this._lastWsLog > 5000) {
+                this._lastWsLog = now;
+                const d = msg.data;
+                this._dbg('ws', `flightData <span class="dim">alt:</span><span class="val">${Math.round(d.altitude||0)}</span> <span class="dim">spd:</span><span class="val">${Math.round(d.speed||0)}</span> <span class="dim">hdg:</span><span class="val">${Math.round(d.heading||0)}</span> <span class="dim">vs:</span><span class="val">${Math.round(d.verticalSpeed||0)}</span> <span class="dim">gnd:</span><span class="val">${d.onGround ? 'Y' : 'N'}</span>`);
+            }
             this._onSimData(msg.data);
+        } else {
+            this._dbg('ws', `${this._esc(msg.type || 'unknown')} <span class="dim">${JSON.stringify(msg).slice(0, 80)}</span>`);
         }
     }
 
@@ -261,14 +443,17 @@ class AiAutopilotPane extends SimGlassBase {
 
         if (typeof cmd === 'string') {
             this.ws.send(JSON.stringify({ type: 'command', command: cmd }));
+            this._dbg('cmd', `<span class="dim">&rarr; WS</span> ${this._esc(cmd)}`);
         } else if (cmd && cmd.command) {
             this.ws.send(JSON.stringify({ type: 'command', command: cmd.command, value: cmd.value }));
+            this._dbg('cmd', `<span class="dim">&rarr; WS</span> ${this._esc(cmd.command)}${cmd.value !== undefined ? ' <span class="val">= ' + cmd.value + '</span>' : ''}`);
         }
     }
 
     // ── Module Callbacks ───────────────────────────────────
 
     _onPhaseChange(newPhase, oldPhase) {
+        this._dbg('cmd', `Phase: <span class="dim">${this._esc(oldPhase)}</span> <span class="dim">&rarr;</span> <span class="val">${this._esc(newPhase)}</span>`);
         // Sync cruise alt to rule engine
         this.ruleEngine.setTargetCruiseAlt(this.flightPhase.targetCruiseAlt);
         this._render();
@@ -283,6 +468,13 @@ class AiAutopilotPane extends SimGlassBase {
     }
 
     _onAdvisory(advisory) {
+        if (advisory && !advisory.error) {
+            const preview = (advisory.text || '').slice(0, 80);
+            this._dbg('llm', `<span class="dim">&larr; stream</span> <span class="val">${this._esc(preview)}${advisory.text?.length > 80 ? '...' : ''}</span>`);
+            if (advisory.execCommands?.length) {
+                this._dbg('cmd', `parsed: ${advisory.execCommands.map(c => c.command + (c.value !== undefined ? '=' + c.value : '')).join(', ')}`);
+            }
+        }
         this._renderAdvisory(advisory);
         // Auto-accept when AI has controls
         if (this._autoControlsEnabled && advisory && !advisory.error && advisory.execCommands?.length > 0) {
@@ -747,6 +939,14 @@ class AiAutopilotPane extends SimGlassBase {
         if (this._autoAdviseTimer) {
             clearInterval(this._autoAdviseTimer);
             this._autoAdviseTimer = null;
+        }
+        if (this._wsRateTimer) {
+            clearInterval(this._wsRateTimer);
+            this._wsRateTimer = null;
+        }
+        // Restore original fetch
+        if (this._origFetch) {
+            window.fetch = this._origFetch;
         }
         this.commandQueue.destroy();
         this.llmAdvisor.destroy();

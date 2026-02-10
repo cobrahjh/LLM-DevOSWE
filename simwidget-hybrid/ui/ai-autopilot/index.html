@@ -23,6 +23,7 @@
                 <button class="settings-btn header-settings" id="settings-btn" title="Settings">&#9881;</button>
                 <button class="ai-master-toggle" id="ai-toggle">OFF</button>
                 <button class="ai-auto-controls" id="auto-controls-btn">AI CONTROLS</button>
+                <button class="debug-toggle" id="debug-toggle" title="Debug Panel">DBG</button>
                 <span class="connection-status" id="conn-status" title="Connection status"></span>
             </div>
         </div>
@@ -98,6 +99,28 @@
             <div class="advisory-actions" id="advisory-actions" style="display:none">
                 <button class="advisory-btn accept" id="advisory-accept">Accept</button>
                 <button class="advisory-btn dismiss" id="advisory-dismiss">Dismiss</button>
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div class="debug-panel" id="debug-panel" style="display:none">
+            <div class="debug-header">
+                <span class="debug-title">DEBUG</span>
+                <div class="debug-filters">
+                    <button class="debug-filter active" data-filter="all">ALL</button>
+                    <button class="debug-filter" data-filter="api">API</button>
+                    <button class="debug-filter" data-filter="ws">WS</button>
+                    <button class="debug-filter" data-filter="llm">LLM</button>
+                    <button class="debug-filter" data-filter="cmd">CMD</button>
+                </div>
+                <button class="debug-clear" id="debug-clear">CLEAR</button>
+            </div>
+            <div class="debug-log" id="debug-log"></div>
+            <div class="debug-stats" id="debug-stats">
+                <span>API: <span id="ds-api">0</span></span>
+                <span>WS: <span id="ds-ws">0</span>/s</span>
+                <span>LLM: <span id="ds-llm">0</span></span>
+                <span>CMD: <span id="ds-cmd">0</span></span>
             </div>
         </div>
 
