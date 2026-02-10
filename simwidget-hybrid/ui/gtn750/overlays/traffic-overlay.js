@@ -103,7 +103,7 @@ class TrafficOverlay {
             const toRemove = sortedTargets.slice(0, this.targets.size - this.MAX_TARGETS);
             toRemove.forEach(([id]) => this.targets.delete(id));
 
-            console.log(`[TrafficOverlay] Removed ${toRemove.length} old targets (max: ${this.MAX_TARGETS})`);
+            GTNCore.log(`[TrafficOverlay] Removed ${toRemove.length} old targets (max: ${this.MAX_TARGETS})`);
         }
     }
 

@@ -240,10 +240,10 @@ class GTNCdi {
                 this.obs.course = this.cdi.dtk || state.data.heading || 0;
             }
             this.obs.suspended = true;
-            console.log(`[GTN750] OBS mode ON - Course: ${this.obs.course}°`);
+            GTNCore.log(`[GTN750] OBS mode ON - Course: ${this.obs.course}°`);
         } else {
             this.obs.suspended = false;
-            console.log('[GTN750] OBS mode OFF - Resuming leg mode');
+            GTNCore.log('[GTN750] OBS mode OFF - Resuming leg mode');
         }
 
         this.updateFromSource(state);
@@ -254,7 +254,7 @@ class GTNCdi {
         if (!this.obs.active) return;
 
         this.obs.course = (this.obs.course + delta + 360) % 360;
-        console.log(`[GTN750] OBS course: ${this.obs.course}°`);
+        GTNCore.log(`[GTN750] OBS course: ${this.obs.course}°`);
         this.updateFromSource(state);
         this.updateObsDisplay();
     }
@@ -312,9 +312,9 @@ class GTNCdi {
                 this.toggleObs(state);
             }
             this.obs.entryType = this.calculateHoldingEntry(state.data);
-            console.log(`[GTN750] Holding pattern ON - Entry: ${this.obs.entryType}, Turn: ${this.obs.turnDirection}`);
+            GTNCore.log(`[GTN750] Holding pattern ON - Entry: ${this.obs.entryType}, Turn: ${this.obs.turnDirection}`);
         } else {
-            console.log('[GTN750] Holding pattern OFF');
+            GTNCore.log('[GTN750] Holding pattern OFF');
         }
     }
 

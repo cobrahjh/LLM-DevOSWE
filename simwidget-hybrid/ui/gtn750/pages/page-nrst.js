@@ -86,7 +86,7 @@ class NearestPage {
                 return;
             }
         } catch (e) {
-            console.log(`[GTN750] Nearby ${this.activeType} fetch failed:`, e.message);
+            GTNCore.log(`[GTN750] Nearby ${this.activeType} fetch failed:`, e.message);
         }
 
         // Generate sample data for VOR/NDB/FIX (not implemented in API yet)
@@ -239,6 +239,10 @@ class NearestPage {
      * Select an item
      */
     selectItem(index) {
+        if (this.selectedItem === index) {
+            this.directTo();
+            return;
+        }
         this.selectedItem = index;
         this.renderList();
         this.onItemSelect(this.items[index], this.activeType);
@@ -259,7 +263,7 @@ class NearestPage {
         const item = this.getSelectedItem();
         if (item) {
             this.onDirectTo(item);
-            console.log(`[GTN750] Direct-To: ${item.icao || item.id}`);
+            GTNCore.log(`[GTN750] Direct-To: ${item.icao || item.id}`);
         }
     }
 
@@ -269,7 +273,7 @@ class NearestPage {
     showOnMap() {
         const item = this.getSelectedItem();
         if (item) {
-            console.log(`[GTN750] Show on map: ${item.icao || item.id} at ${item.lat}, ${item.lon}`);
+            GTNCore.log(`[GTN750] Show on map: ${item.icao || item.id} at ${item.lat}, ${item.lon}`);
             return { lat: item.lat, lon: item.lon, item };
         }
         return null;

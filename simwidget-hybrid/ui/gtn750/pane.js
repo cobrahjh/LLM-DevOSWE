@@ -158,7 +158,7 @@ class GTN750Pane extends SimGlassBase {
             // Load overlays
             await this.loadOverlays();
 
-            console.log('[GTN750] Deferred modules loaded');
+            GTNCore.log('[GTN750] Deferred modules loaded');
         } catch (error) {
             console.error('[GTN750] Failed to load deferred modules:', error);
             if (this.telemetry) {
@@ -261,7 +261,7 @@ class GTN750Pane extends SimGlassBase {
 
         await this.moduleLoader.load(modulePath);
         this.loadedModules[moduleKey] = true;
-        console.log(`[GTN750] Loaded page module: ${pageId}`);
+        GTNCore.log(`[GTN750] Loaded page module: ${pageId}`);
     }
 
     /**
@@ -455,10 +455,20 @@ class GTN750Pane extends SimGlassBase {
                 },
                 onPan: (offset) => { this.panOffset = offset; },
                 onDataFieldTap: (position, type) => {
-                    console.log(`[GTN750] Data field ${position} changed to ${type.type}`);
+                    try {
+                        const saved = JSON.parse(localStorage.getItem('gtn750-map-datafields') || '{}');
+                        saved[position] = type.type;
+                        localStorage.setItem('gtn750-map-datafields', JSON.stringify(saved));
+                    } catch (e) { /* ignore */ }
                 }
             });
             this.mapControls.setRange(this.map.range);
+
+            // Restore saved data field selections
+            try {
+                const saved = JSON.parse(localStorage.getItem('gtn750-map-datafields') || '{}');
+                Object.entries(saved).forEach(([pos, type]) => this.mapControls.setDataField(pos, type));
+            } catch (e) { /* ignore */ }
         }
     }
 
@@ -485,7 +495,7 @@ class GTN750Pane extends SimGlassBase {
                 if (!this.chartsPage && typeof ChartsPage !== 'undefined') {
                     this.chartsPage = new ChartsPage({
                         core: this.core, serverPort: this.serverPort,
-                        onChartSelect: (chart) => console.log(`[GTN750] Chart selected: ${chart.name}`)
+                        onChartSelect: (chart) => GTNCore.log(`[GTN750] Chart selected: ${chart.name}`)
                     });
                 }
                 break;
@@ -493,7 +503,7 @@ class GTN750Pane extends SimGlassBase {
                 if (!this.nearestPage && typeof NearestPage !== 'undefined') {
                     this.nearestPage = new NearestPage({
                         core: this.core, serverPort: this.serverPort,
-                        onItemSelect: (item, type) => console.log(`[GTN750] Nearest ${type} selected: ${item.icao || item.id}`),
+                        onItemSelect: (item, type) => {},
                         onDirectTo: (item) => this.flightPlanManager?.directTo(item)
                     });
                     this.flightPlanManager?.setNearestPage(this.nearestPage);
@@ -522,11 +532,11 @@ class GTN750Pane extends SimGlassBase {
 
     handleProcedureSelect(proc, type, waypoints) {
         this.procedurePreview = { procedure: proc, type, waypoints };
-        console.log(`[GTN750] Procedure selected: ${proc.name}`);
+        GTNCore.log(`[GTN750] Procedure selected: ${proc.name}`);
     }
 
     handleProcedureLoad(proc, type, waypoints) {
-        console.log(`[GTN750] Loading procedure: ${proc.name}`);
+        GTNCore.log(`[GTN750] Loading procedure: ${proc.name}`);
         this.syncChannel.postMessage({
             type: 'procedure-load',
             data: { procedure: proc, procedureType: type, waypoints }
@@ -912,7 +922,7 @@ class GTN750Pane extends SimGlassBase {
     }
 
     async setWeatherPreset(preset) {
-        console.log('[GTN750] Setting weather preset:', preset);
+        GTNCore.log('[GTN750] Setting weather preset:', preset);
         try {
             const response = await fetch(`http://${window.location.hostname}:${this.serverPort}/api/weather/preset`, {
                 method: 'POST',
@@ -1296,7 +1306,7 @@ class GTN750Pane extends SimGlassBase {
                 const newTime = prompt('Enter holding leg time (30-240 seconds):', this.cdiManager.obs.legTime);
                 if (newTime) this.cdiManager.setHoldingLegTime(parseInt(newTime));
                 break;
-            default: console.log(`[GTN750] Unhandled soft key action: ${action}`);
+            default: GTNCore.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
     }
 

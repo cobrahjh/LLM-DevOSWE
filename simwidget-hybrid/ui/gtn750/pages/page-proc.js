@@ -119,7 +119,7 @@ class ProceduresPage {
                 this.procedures = this.generateSampleProcedures(icao);
             }
         } catch (e) {
-            console.log(`[GTN750] Using sample procedures for ${icao}`);
+            GTNCore.log(`[GTN750] Using sample procedures for ${icao}`);
             this.procedures = this.generateSampleProcedures(icao);
         }
 

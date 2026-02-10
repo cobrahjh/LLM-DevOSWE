@@ -40,7 +40,7 @@ class GTNSimVarHandler {
             return;
         }
 
-        console.log('[GTN750-SV] SimVar connected, starting poll loop');
+        GTNCore.log('[GTN750-SV] SimVar connected, starting poll loop');
         if (this.elements.conn) this.elements.conn.classList.add('connected');
         if (this.elements.sysGpsStatus) this.elements.sysGpsStatus.textContent = '3D FIX';
 
@@ -242,7 +242,7 @@ class GTNSimVarHandler {
         const event = events[radio];
         if (event) {
             SimVar.SetSimVarValue(event, 'Number', 1);
-            console.log(`[GTN750-SV] Swapped ${radio}`);
+            GTNCore.log(`[GTN750-SV] Swapped ${radio}`);
         }
     }
 

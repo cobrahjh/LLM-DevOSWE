@@ -176,7 +176,7 @@ class AuxPage {
      * Timer alarm callback
      */
     timerAlarm() {
-        console.log('[GTN750] Timer alarm!');
+        GTNCore.log('[GTN750] Timer alarm!');
         // Could trigger audio or visual alert
     }
 

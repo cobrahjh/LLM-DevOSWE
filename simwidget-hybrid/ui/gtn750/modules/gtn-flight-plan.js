@@ -65,7 +65,7 @@ class GTNFlightPlan {
                 }
             }
         } catch (e) {
-            console.log('[GTN750] No flight plan');
+            GTNCore.log('[GTN750] No flight plan');
         }
         this._fetchTimer = setTimeout(() => this.fetchFlightPlan(), this.FETCH_INTERVAL_MS);
     }
@@ -269,14 +269,14 @@ class GTNFlightPlan {
         const passedWp = this.flightPlan.waypoints[this.activeWaypointIndex];
         if (passedWp) {
             passedWp.passed = true;
-            console.log(`[GTN750] Sequenced past ${passedWp.ident}, advancing to next waypoint`);
+            GTNCore.log(`[GTN750] Sequenced past ${passedWp.ident}, advancing to next waypoint`);
         }
 
         this.activeWaypointIndex++;
 
         if (this.activeWaypointIndex < this.flightPlan.waypoints.length) {
             const nextWp = this.flightPlan.waypoints[this.activeWaypointIndex];
-            console.log(`[GTN750] Active waypoint: ${nextWp?.ident}`);
+            GTNCore.log(`[GTN750] Active waypoint: ${nextWp?.ident}`);
 
             this.activeWaypoint = {
                 ident: nextWp.ident,
@@ -298,7 +298,7 @@ class GTNFlightPlan {
 
             this.playSequenceChime();
         } else {
-            console.log('[GTN750] Arrived at final waypoint');
+            GTNCore.log('[GTN750] Arrived at final waypoint');
             this.activeWaypoint = null;
         }
 
@@ -450,7 +450,7 @@ class GTNFlightPlan {
     activateDirectTo() {
         if (!this.dtoTarget) return;
 
-        console.log(`[GTN750] Direct-To activated: ${this.dtoTarget.ident}`);
+        GTNCore.log(`[GTN750] Direct-To activated: ${this.dtoTarget.ident}`);
 
         this.activeWaypoint = this.dtoTarget;
 
@@ -527,7 +527,7 @@ class GTNFlightPlan {
             this.activeWaypointIndex = 0;
             this.renderFlightPlan();
             if (this.onWaypointChanged) this.onWaypointChanged();
-            console.log(`[GTN750] SimBrief flight plan loaded: ${data.departure} -> ${data.arrival} (${data.waypoints.length} waypoints)`);
+            GTNCore.log(`[GTN750] SimBrief flight plan loaded: ${data.departure} -> ${data.arrival} (${data.waypoints.length} waypoints)`);
         }
         if (type === 'waypoint-select') {
             this.selectWaypoint(data.index);

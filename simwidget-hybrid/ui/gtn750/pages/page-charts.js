@@ -123,7 +123,7 @@ class ChartsPage {
                 const data = await response.json();
                 this.charts = data.charts || [];
                 this.chartSource = data.source || 'unknown';
-                console.log(`[GTN750] Loaded ${this.charts.length} charts from ${this.chartSource}`);
+                GTNCore.log(`[GTN750] Loaded ${this.charts.length} charts from ${this.chartSource}`);
 
                 // If no real charts found, generate samples
                 if (this.charts.length === 0 || (this.charts.length === 1 && this.charts[0].type === 'ALL')) {
@@ -136,7 +136,7 @@ class ChartsPage {
                 this.chartSource = 'sample';
             }
         } catch (e) {
-            console.log(`[GTN750] Using sample charts for ${this.selectedAirport}`);
+            GTNCore.log(`[GTN750] Using sample charts for ${this.selectedAirport}`);
             this.charts = this.generateSampleCharts(this.selectedAirport);
             this.chartSource = 'sample';
         }
@@ -287,7 +287,7 @@ class ChartsPage {
         this.selectedChart = chart;
         this.renderChartList();
         this.onChartSelect(chart);
-        console.log(`[GTN750] Chart selected: ${chart.name}`);
+        GTNCore.log(`[GTN750] Chart selected: ${chart.name}`);
     }
 
     /**
@@ -301,7 +301,7 @@ class ChartsPage {
 
         // Get best available URL
         const url = this.getChartUrl(this.selectedChart);
-        console.log(`[GTN750] Opening chart: ${this.selectedChart.name} - ${url}`);
+        GTNCore.log(`[GTN750] Opening chart: ${this.selectedChart.name} - ${url}`);
 
         // Open in new window/tab
         window.open(url, '_blank', 'width=900,height=1100,scrollbars=yes');

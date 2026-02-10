@@ -1262,7 +1262,7 @@ class WeatherOverlay {
                 const latest = this.radarFrames[this.radarFrames.length - 1];
                 this.radarTimestamp = latest.time;
                 this.radarAge = Math.round((Date.now() / 1000 - latest.time) / 60);
-                console.log(`[GTN750] Radar data loaded: ${this.radarFrames.length} frames, ${this.radarAge}min old`);
+                GTNCore.log(`[GTN750] Radar data loaded: ${this.radarFrames.length} frames, ${this.radarAge}min old`);
             }
         } catch (e) {
             console.warn('[GTN750] Failed to fetch radar data:', e);
@@ -1309,7 +1309,7 @@ class WeatherOverlay {
                     });
                 });
                 this.lastMetarFetch = Date.now();
-                console.log(`[GTN750] Loaded ${data.metars.length} METARs (parsed)`);
+                GTNCore.log(`[GTN750] Loaded ${data.metars.length} METARs (parsed)`);
             }
         } catch (e) {
             console.warn('[GTN750] Failed to fetch nearby METARs:', e);

@@ -33,7 +33,7 @@ class GTNDataHandler {
         this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-            console.log('[GTN750] Connected');
+            GTNCore.log('[GTN750] Connected');
             if (this.elements.conn) this.elements.conn.classList.add('connected');
             if (this.elements.sysGpsStatus) {
                 this.elements.sysGpsStatus.textContent = '3D FIX';

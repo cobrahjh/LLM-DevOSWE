@@ -221,7 +221,7 @@ class SystemPage {
         this.settings[key] = value;
         this.saveSettings();
         this.onSettingChange(key, value);
-        console.log(`[GTN750] Setting ${key} = ${value}`);
+        GTNCore.log(`[GTN750] Setting ${key} = ${value}`);
     }
 
     getSetting(key) {
@@ -397,7 +397,7 @@ class SystemPage {
         };
         this.saveSettings();
         this.updateUI();
-        console.log('[GTN750] Settings reset to defaults');
+        GTNCore.log('[GTN750] Settings reset to defaults');
     }
 
     /**

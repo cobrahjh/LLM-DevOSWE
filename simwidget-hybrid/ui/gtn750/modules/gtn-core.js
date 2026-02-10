@@ -330,6 +330,9 @@ class GTNCore {
     }
 }
 
+GTNCore.DEBUG = localStorage.getItem('gtn750-debug') === 'true';
+GTNCore.log = function(...args) { if (GTNCore.DEBUG) console.log(...args); };
+
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = GTNCore;
