@@ -98,6 +98,7 @@
     padding: 8px 12px;
     background: var(--bg-secondary, #111820);
     border-bottom: 1px solid var(--border-color, #1e2a3a);
+    flex-shrink: 0;
 }
 
 .phase-row {
@@ -334,6 +335,7 @@
     background: var(--bg-secondary, #111820);
     border-bottom: 1px solid var(--border-color, #1e2a3a);
     min-height: 60px;
+    flex-shrink: 0;
 }
 
 .advisory-header {
@@ -440,6 +442,7 @@
     font-size: 11px;
     color: #556;
     background: var(--bg-secondary, #111820);
+    flex-shrink: 0;
 }
 
 .footer-item {
@@ -598,6 +601,8 @@
     display: flex;
     flex-direction: column;
     max-height: 240px;
+    min-height: 120px;
+    flex-shrink: 0;
     border-top: 1px solid #4fc3f7;
     background: #060a10;
 }

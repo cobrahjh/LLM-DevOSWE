@@ -207,13 +207,13 @@ class AiAutopilotPane extends SimGlassBase {
     _setupDebug() {
         // Toggle button
         this.elements.debugToggle?.addEventListener('click', () => {
-            this._debugVisible = !this._debugVisible;
-            this.elements.debugToggle.classList.toggle('active', this._debugVisible);
-            if (this.elements.debugPanel) {
-                this.elements.debugPanel.style.display = this._debugVisible ? 'flex' : 'none';
-            }
-            if (this._debugVisible) this._renderDebugLog();
+            this._toggleDebug();
         });
+
+        // Auto-open via URL hash: #debug
+        if (window.location.hash === '#debug') {
+            this._toggleDebug();
+        }
 
         // Filter buttons
         document.querySelectorAll('.debug-filter').forEach(btn => {
@@ -234,8 +234,17 @@ class AiAutopilotPane extends SimGlassBase {
         });
 
         // Intercept fetch for API logging
-        this._origFetch = window.fetch;
+        this._origFetch = window.fetch.bind(window);
         window.fetch = (...args) => this._interceptFetch(...args);
+    }
+
+    _toggleDebug() {
+        this._debugVisible = !this._debugVisible;
+        this.elements.debugToggle?.classList.toggle('active', this._debugVisible);
+        if (this.elements.debugPanel) {
+            this.elements.debugPanel.style.display = this._debugVisible ? 'flex' : 'none';
+        }
+        if (this._debugVisible) this._renderDebugLog();
     }
 
     _interceptFetch(url, opts = {}) {
