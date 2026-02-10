@@ -3101,6 +3101,14 @@ async function initSimConnect() {
             'PROP_PITCH_SET',
             'MIXTURE_SET',
             'MIXTURE1_SET',
+            // Engine start events
+            'TOGGLE_STARTER1',
+            'SET_STARTER1_HELD',
+            'MAGNETO1_OFF',
+            'MAGNETO1_RIGHT',
+            'MAGNETO1_LEFT',
+            'MAGNETO1_BOTH',
+            'MAGNETO1_START',
             // Slew mode for flight recorder playback
             'SLEW_TOGGLE',
             'SLEW_ON',

@@ -107,6 +107,12 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
         'FLAPS_DOWN': 'FLAPS_DOWN',
         'AXIS_ELEVATOR_SET': 'AXIS_ELEVATOR_SET',
         'PARKING_BRAKES': 'PARKING_BRAKES',
+        // Engine start
+        'TOGGLE_STARTER1': 'TOGGLE_STARTER1',
+        'SET_STARTER1_HELD': 'SET_STARTER1_HELD',
+        'MAGNETO1_OFF': 'MAGNETO1_OFF',
+        'MAGNETO1_BOTH': 'MAGNETO1_BOTH',
+        'MAGNETO1_START': 'MAGNETO1_START',
         'LANDING_LIGHTS_TOGGLE': 'LANDING_LIGHTS_TOGGLE'
     };
 
