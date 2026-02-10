@@ -63,7 +63,7 @@ CURRENT FLIGHT STATE:
 
 /** Scale API-level values to SimConnect axis range (0-16383 or -16383 to +16383) */
 function scaleSimValue(command, value) {
-    if (command === 'THROTTLE_SET' || command === 'MIXTURE_SET' || command === 'PROP_PITCH_SET') {
+    if (command === 'THROTTLE_SET' || command === 'MIXTURE_SET' || command === 'MIXTURE1_SET' || command === 'PROP_PITCH_SET') {
         return Math.round((value / 100) * 16383);  // 0-100% → 0-16383
     }
     if (command === 'AXIS_ELEVATOR_SET') {
@@ -101,7 +101,7 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
         'AP_SPD_VAR_SET': 'AP_SPD_VAR_SET',
         // Flight control commands
         'THROTTLE_SET': 'THROTTLE_SET',
-        'MIXTURE_SET': 'MIXTURE_SET',
+        'MIXTURE_SET': 'MIXTURE1_SET',
         'PROP_PITCH_SET': 'PROP_PITCH_SET',
         'FLAPS_UP': 'FLAPS_UP',
         'FLAPS_DOWN': 'FLAPS_DOWN',

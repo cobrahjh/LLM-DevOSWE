@@ -2738,7 +2738,7 @@ function executeCommand(command, value) {
             let simValue = 0;
             
             // Handle different command types
-            if (command === 'THROTTLE_SET' || command === 'PROP_PITCH_SET' || command === 'MIXTURE_SET') {
+            if (command === 'THROTTLE_SET' || command === 'PROP_PITCH_SET' || command === 'MIXTURE_SET' || command === 'MIXTURE1_SET') {
                 // 0-100% → 0-16383
                 simValue = Math.round((value / 100) * 16383);
             } else if (command === 'HEADING_BUG_SET') {
@@ -3100,6 +3100,7 @@ async function initSimConnect() {
             'THROTTLE_SET',
             'PROP_PITCH_SET',
             'MIXTURE_SET',
+            'MIXTURE1_SET',
             // Slew mode for flight recorder playback
             'SLEW_TOGGLE',
             'SLEW_ON',
