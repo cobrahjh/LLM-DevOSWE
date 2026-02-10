@@ -1336,7 +1336,10 @@ class GTN750Pane extends SimGlassBase {
                 }
                 break;
             case 'invert-plan': this.flightPlanManager?.invertFlightPlan(); break;
-            case 'direct-to': this.flightPlanManager?.showDirectTo(); break;
+            case 'direct-to':
+                if (this.pageManager) this.pageManager.switchPage('map');
+                this.flightPlanManager?.showDirectTo();
+                break;
             case 'fpl-delete': if (this.fplPage) this.fplPage.onDelete(); break;
             case 'fpl-insert': if (this.fplPage) this.fplPage.onInsert(); break;
             case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
