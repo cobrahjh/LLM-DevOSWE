@@ -1249,6 +1249,10 @@ class GTN750Pane extends SimGlassBase {
 
         el.className = 'gtn-ap-status' + alertClass;
         el.innerHTML = `<span class="ap-phase">${ap.phase || '---'}</span><span class="ap-modes">${modes.join(' ') || 'AP'}</span>`;
+        if (!el._clickBound) {
+            el.addEventListener('click', () => window.open('/ui/ai-autopilot/', '_blank'));
+            el._clickBound = true;
+        }
     }
 
     // ===== DOM CACHE =====
