@@ -729,6 +729,7 @@ class GTN750Pane extends SimGlassBase {
         if (this.weatherOverlay) {
             this.weatherOverlay.fetchRadarData();
             this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
+            this.weatherOverlay.fetchTaf(this.data.latitude, this.data.longitude, this.weatherRange || 50);
         }
     }
 
@@ -771,6 +772,8 @@ class GTN750Pane extends SimGlassBase {
             this.weatherOverlay.setEnabled(true);
             this.weatherOverlay.setLayer('nexrad', true);
             this.weatherOverlay.setLayer('metar', true);
+            this.weatherOverlay.setLayer('taf', true);
+            if (this.elements.wxTaf) this.elements.wxTaf.checked = true;
         }
         const renderLoop = () => {
             if (!this.weatherPageRenderActive) { this._weatherRafId = null; return; }
@@ -848,6 +851,14 @@ class GTN750Pane extends SimGlassBase {
                 this.elements.wxMetarText.textContent = nearest ? (nearest.raw || `${nearest.icao}: ${nearest.category}`) : 'No METAR data';
             } else {
                 this.elements.wxMetarText.textContent = 'Fetching weather...';
+            }
+        }
+
+        // TAF summary in METAR text area (append if TAF layer active)
+        if (this.elements.wxMetarText && this.weatherOverlay.layers.taf) {
+            const tafSummary = this.weatherOverlay.getNearestTafSummary(this.data.latitude, this.data.longitude);
+            if (tafSummary) {
+                this.elements.wxMetarText.textContent += ' | TAF: ' + tafSummary;
             }
         }
 
@@ -1057,7 +1068,9 @@ class GTN750Pane extends SimGlassBase {
             wxCanvas: document.getElementById('wx-canvas'),
             wxSimRadar: document.getElementById('wx-sim-radar'),
             wxNexrad: document.getElementById('wx-nexrad'),
+            wxSatellite: document.getElementById('wx-satellite'),
             wxMetar: document.getElementById('wx-metar'),
+            wxTaf: document.getElementById('wx-taf'),
             wxMetarText: document.getElementById('wx-metar-text'),
             wxAnimate: document.getElementById('wx-animate'),
             wxRadarTime: document.getElementById('wx-radar-time'),
@@ -1194,6 +1207,15 @@ class GTN750Pane extends SimGlassBase {
         document.getElementById('wx-metar')?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('metar', e.target.checked); });
         document.getElementById('wx-winds')?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('winds', e.target.checked); });
         document.getElementById('wx-lightning')?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('lightning', e.target.checked); });
+        this.elements.wxSatellite?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('satellite', e.target.checked); });
+        this.elements.wxTaf?.addEventListener('change', (e) => { if (this.weatherOverlay) this.weatherOverlay.setLayer('taf', e.target.checked); });
+
+        // METAR popup on canvas tap
+        this.elements.wxCanvas?.addEventListener('click', (e) => {
+            if (!this.weatherOverlay) return;
+            const rect = e.target.getBoundingClientRect();
+            this.weatherOverlay.handleCanvasTap(e.clientX - rect.left, e.clientY - rect.top);
+        });
 
         // Terrain range/view
         this.elements.terrainZoomIn?.addEventListener('click', () => this.changeTerrainRange(-1));
@@ -1282,7 +1304,7 @@ class GTN750Pane extends SimGlassBase {
             case 'aux-calc': if (this.auxPage) this.auxPage.showSubpage('calc'); break;
             case 'traffic-operate': case 'traffic-standby': case 'traffic-test':
                 this.setTrafficMode(action.split('-')[1]); break;
-            case 'wx-simRadar': case 'wx-nexrad': case 'wx-metar': case 'wx-taf': case 'wx-winds': case 'wx-lightning':
+            case 'wx-simRadar': case 'wx-nexrad': case 'wx-metar': case 'wx-taf': case 'wx-satellite': case 'wx-winds': case 'wx-lightning':
                 this.toggleWeatherLayer(action.split('-')[1]); break;
             case 'view-chart': if (this.chartsPage) this.chartsPage.viewChart(); break;
             case 'open-chartfox': if (this.chartsPage) this.chartsPage.openChartFox(); break;
