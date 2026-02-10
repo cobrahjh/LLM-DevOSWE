@@ -2,10 +2,8 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-serif; }
 
-/* === Main 320x200 grid === */
+/* === Main 320x200 container === */
 .cfx {
-    display: grid;
-    grid-template-rows: 22px 1fr 20px 24px;
     width: 320px;
     height: 200px;
     background: rgba(6,14,28,0.96);
@@ -181,7 +179,7 @@ body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-ser
     font-weight: 700;
     font-family: 'B612 Mono', 'Consolas', monospace;
     font-size: 9px;
-    min-width: 24px;
+    min-width: 16px;
 }
 .cfx-strip-sep {
     width: 1px;
@@ -192,7 +190,7 @@ body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-ser
 .cfx-strip-slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 50px;
+    width: 36px;
     height: 3px;
     border-radius: 1px;
     background: rgba(255,255,255,0.08);
@@ -257,8 +255,8 @@ body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-ser
 .compact-toggle:hover { color:var(--sg-text-primary); }
 .compact-toggle.active { color:var(--sg-accent-green); }
 
-/* Full / Compact visibility */
-.cfx-full { display:block; }
+/* Full mode — grid layout for 4 rows */
+.cfx-full { display:grid; grid-template-rows:22px 1fr 20px 24px; width:100%; height:100%; }
 .cfx-compact { display:none; }
 .cfx.compact .cfx-full { display:none; }
 .cfx.compact .cfx-compact { display:grid; }
