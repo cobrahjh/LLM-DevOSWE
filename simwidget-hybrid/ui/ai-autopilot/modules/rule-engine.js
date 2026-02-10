@@ -163,19 +163,19 @@ class RuleEngine {
                     this._cmdValue('AXIS_RUDDER_SET', 0, 'Release rudder for AP');
                     this._cmdValue('AXIS_AILERONS_SET', 0, 'Release ailerons for AP');
                 }
+                // Climb power — full throttle until cruise
+                this._cmdValue('THROTTLE_SET', 100, 'Climb power');
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
                     // Set heading bug to current heading for HDG hold
                     this._cmdValue('AP_HDG_VAR_SET', Math.round(d.heading || 0), 'HDG ' + Math.round(d.heading || 0));
                     this._cmd('AP_HDG_HOLD', true, 'HDG hold');
                 }
-                // Set climb VS and speed
+                // Set climb VS — do NOT engage ALT hold during climb (it captures current alt)
+                // ALT hold engages in CRUISE when we reach target altitude
                 if (phaseChanged || !apState.vsHold) {
                     this._cmd('AP_VS_HOLD', true, 'VS hold for climb');
                     this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate, 'VS +' + p.climb.normalRate);
-                }
-                if (phaseChanged || !apState.altitudeHold) {
-                    this._cmd('AP_ALT_HOLD', true, 'ALT hold target');
                 }
                 if (phaseChanged) {
                     this._cmdValue('AP_ALT_VAR_SET', this._getCruiseAlt(), 'ALT ' + this._getCruiseAlt());
@@ -191,6 +191,8 @@ class RuleEngine {
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for cruise');
                 }
+                // Cruise power — reduce from climb
+                this._cmdValue('THROTTLE_SET', p.cruise?.throttle || 75, 'Cruise power');
                 if (phaseChanged) {
                     // Level off
                     this._cmd('AP_ALT_HOLD', true, 'ALT hold at cruise');
@@ -277,9 +279,9 @@ class RuleEngine {
             this._takeoffSubPhase = 'BEFORE_ROLL';
         }
 
-        // Ensure AP is off during ground roll
-        if (onGround && apState.master) {
-            this._cmd('AP_MASTER', false, 'AP off for takeoff roll');
+        // Ensure AP is off during takeoff — manual controls only until INITIAL_CLIMB
+        if (apState.master && this._takeoffSubPhase !== 'INITIAL_CLIMB' && this._takeoffSubPhase !== 'DEPARTURE') {
+            this._cmd('AP_MASTER', false, 'AP off for takeoff');
         }
 
         switch (this._takeoffSubPhase) {
@@ -316,17 +318,10 @@ class RuleEngine {
 
             case 'ROTATE':
                 this._cmdValue('THROTTLE_SET', 100, 'Full power');
-                {
-                    // Progressive back pressure — ramps smoothly over 3 seconds
-                    // Like a pilot smoothly pulling back the yoke after Vr
-                    const elapsed = (Date.now() - (this._rotateStartTime || Date.now())) / 1000;
-                    const maxPull = 50;  // max elevator authority (% of full)
-                    const pullBack = Math.min(maxPull, elapsed * 18);  // ramps to max in ~2.8s
-                    this._cmdValue('AXIS_ELEVATOR_SET', -pullBack,
-                        `Rotate: ${pullBack.toFixed(0)}% back (${elapsed.toFixed(1)}s)`);
-                }
+                // Target 8° pitch with very low authority — feedback prevents over-rotation
+                this._targetPitch(d, 8, 10);
                 // Wings level — prevent bank buildup during rotation and liftoff
-                this._targetBank(d, 0, 50);
+                this._targetBank(d, 0, 10);
                 this._groundSteer(d, this._runwayHeading);
                 // Airborne — transition
                 if (!onGround) {
@@ -335,22 +330,21 @@ class RuleEngine {
                 break;
 
             case 'LIFTOFF':
-                // POH: Full power climb — pitch to 10° nose up for initial climb
+                // POH: Full power climb — pitch to 8° nose up for initial climb
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Fixed climb pitch: like a real pilot, pitch to ~10° after liftoff
-                // then transition to pitch-for-speed once established (AGL > 100)
+                // Gentle pitch target — C172 overshoots easily, max 10% authority
                 if (agl < 100) {
-                    this._targetPitch(d, 10, 50);  // 10° nose up — positive climb
+                    this._targetPitch(d, 8, 10);
                 } else {
-                    this._pitchForSpeed(d, speeds.Vy || 74, 50);
+                    this._pitchForSpeed(d, speeds.Vy || 74, 10);
                 }
                 // Wings level — counter P-factor/torque roll
-                this._targetBank(d, 0, 50);
+                this._targetBank(d, 0, 10);
                 // Coordinated rudder — track runway heading
-                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 40);
+                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 10);
                 // Stall protection: if near stall, push nose down immediately
                 if (d.stallWarning || ias < (speeds.Vs1 || 53)) {
-                    this._cmdValue('AXIS_ELEVATOR_SET', 15, 'STALL: nose down');
+                    this._cmdValue('AXIS_ELEVATOR_SET', 10, 'STALL: nose down');
                 }
                 // Advance when climbing and at safe altitude
                 if (vs > 100 && agl > (tk.initialClimbAgl || 200)) {
@@ -361,14 +355,14 @@ class RuleEngine {
             case 'INITIAL_CLIMB':
                 // Continue full power Vy climb until AP handoff
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Pitch for Vy
-                this._pitchForSpeed(d, speeds.Vy || 74, 40);
+                // Pitch for Vy — gentle authority (max 10%)
+                this._pitchForSpeed(d, speeds.Vy || 74, 10);
                 // Wings level + coordinated rudder
-                this._targetBank(d, 0, 40);
-                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 30);
+                this._targetBank(d, 0, 10);
+                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 10);
                 // Stall protection
                 if (d.stallWarning || ias < (speeds.Vs1 || 53)) {
-                    this._cmdValue('AXIS_ELEVATOR_SET', 15, 'STALL: nose down');
+                    this._cmdValue('AXIS_ELEVATOR_SET', 10, 'STALL: nose down');
                 }
                 // Engage AP when speed is safe and altitude sufficient
                 {
@@ -396,9 +390,10 @@ class RuleEngine {
                 this._cmd('FLAPS_UP', true, 'Retract flaps');
                 this._cmdValue('AP_SPD_VAR_SET', speeds.Vy, 'SPD ' + speeds.Vy + ' (Vy climb)');
                 this._cmdValue('AP_ALT_VAR_SET', this._getCruiseAlt(), 'ALT ' + this._getCruiseAlt());
-                this._cmd('AP_ALT_HOLD', true, 'ALT hold target');
+                // Do NOT engage AP_ALT_HOLD here — it captures current alt (~800ft)
+                // and prevents the CLIMB phase from commanding VS climb to cruise
                 this._cmd('LANDING_LIGHTS_TOGGLE', true, 'Lights off after departure');
-                // Sub-phase complete — flight-phase.js will transition to CLIMB at 200+ AGL
+                // Sub-phase complete — flight-phase.js will transition to CLIMB at 500+ AGL
                 break;
         }
     }
@@ -446,12 +441,13 @@ class RuleEngine {
         let alert = null;
 
         // ── BANK ANGLE PROTECTION ──
-        // Tighter limits during takeoff/initial climb (below 1000 AGL)
-        // C172 shouldn't bank more than 15° below 1000 AGL
+        // When AP is actively managing heading/nav, trust it — only intervene at extreme angles.
+        // Without AP, use tighter limits especially at low altitude.
+        const apManagingBank = apState.master && (apState.headingHold || apState.navHold);
         const lowAlt = agl < 1000;
-        const maxBank = lowAlt ? 15 : (limits.maxBank || 25);
-        const dangerBank = lowAlt ? 20 : (limits.dangerBank || 35);
-        const criticalBank = lowAlt ? 30 : (limits.criticalBank || 45);
+        const maxBank = apManagingBank ? (limits.maxBank || 25) : (lowAlt ? 15 : (limits.maxBank || 25));
+        const dangerBank = apManagingBank ? (limits.dangerBank || 35) : (lowAlt ? 20 : (limits.dangerBank || 35));
+        const criticalBank = apManagingBank ? (limits.criticalBank || 45) : (lowAlt ? 30 : (limits.criticalBank || 45));
 
         if (absBank > criticalBank) {
             // Emergency: extreme bank — wings level immediately
@@ -481,11 +477,8 @@ class RuleEngine {
                 }
             }
             this._bankCorrectionActive = true;
-        } else if (absBank > maxBank && apState.master) {
-            // Slightly over limit — AP should be handling it, just log
-            if (now - this._lastEnvelopeLog > 5000) {
-                this._lastEnvelopeLog = now;
-            }
+        } else if (absBank > maxBank && !apManagingBank) {
+            // Slightly over limit without AP — flag but don't spam commands
             this._bankCorrectionActive = true;
         } else {
             this._bankCorrectionActive = false;

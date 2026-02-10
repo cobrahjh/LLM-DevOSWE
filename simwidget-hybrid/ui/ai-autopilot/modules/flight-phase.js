@@ -47,7 +47,9 @@ class FlightPhase {
 
         switch (this.phase) {
             case 'PREFLIGHT':
-                if (engineRunning && gs > 2 && onGround) {
+                // Transition to TAXI when engine is running, or when on ground with any throttle
+                // (AI autopilot sets throttle before engineRunning is detected)
+                if ((engineRunning || d.throttle > 10) && onGround) {
                     this._setPhase('TAXI');
                 }
                 break;
