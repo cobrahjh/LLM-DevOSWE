@@ -34,7 +34,7 @@ class CommandQueue {
 
     /**
      * Add a command to the queue
-     * @param {Object} cmd - { type, value, description }
+     * @param {Object} cmd - { type, value, description, priority }
      */
     enqueue(cmd) {
         if (this._destroyed) return;
@@ -46,10 +46,32 @@ class CommandQueue {
         const axis = this._commandToAxis(cmd.type);
         if (axis && this._isOverridden(axis)) return;
 
-        // Dedup against current AP state
+        // ── Axis controls (AXIS_*) bypass queue — send immediately ──
+        // Flight control surfaces need instant response, not 500ms rate limiting.
+        // Queuing elevator/rudder/aileron causes fatal delays during takeoff.
+        const isAxisControl = cmd.type.startsWith('AXIS_');
+        if (isAxisControl) {
+            // Dedup with tight tolerance (0.1)
+            const current = this._currentApState[cmd.type];
+            if (current !== undefined && Math.abs(current - cmd.value) < 0.1) return;
+            this._execute(cmd);
+            return;
+        }
+
+        // Dedup against current AP state (for non-axis commands)
         if (this._isDuplicate(cmd)) return;
 
-        this._queue.push(cmd);
+        // Collapse: replace any queued command of the same type with the new one
+        const existIdx = this._queue.findIndex(q => q.type === cmd.type);
+        if (existIdx >= 0) {
+            this._queue[existIdx] = cmd;  // update value in place
+        } else {
+            // Cap queue size to prevent runaway buildup
+            if (this._queue.length >= 50) {
+                this._queue.shift();  // drop oldest
+            }
+            this._queue.push(cmd);
+        }
         this._scheduleDrain();
     }
 
@@ -57,10 +79,10 @@ class CommandQueue {
      * Process queued commands respecting rate limit
      */
     _drain() {
-        if (this._destroyed || this._queue.length === 0) {
-            this._drainTimer = null;
-            return;
-        }
+        // Clear timer ref — the timeout already fired to get here
+        this._drainTimer = null;
+
+        if (this._destroyed || this._queue.length === 0) return;
 
         const now = Date.now();
         const elapsed = now - this._lastExecTime;
@@ -73,8 +95,6 @@ class CommandQueue {
 
         if (this._queue.length > 0) {
             this._scheduleDrain();
-        } else {
-            this._drainTimer = null;
         }
     }
 
@@ -137,6 +157,11 @@ class CommandQueue {
             'FLAPS_UP':              'FLAPS_UP',
             'FLAPS_DOWN':            'FLAPS_DOWN',
             'AXIS_ELEVATOR_SET':     'AXIS_ELEVATOR_SET',
+            'AXIS_RUDDER_SET':       'AXIS_RUDDER_SET',
+            'AXIS_AILERONS_SET':     'AXIS_AILERONS_SET',
+            'AXIS_MIXTURE_SET':      'AXIS_MIXTURE_SET',
+            'MIXTURE_RICH':          'MIXTURE_RICH',
+            'MIXTURE_LEAN':          'MIXTURE_LEAN',
             'PARKING_BRAKES':        'PARKING_BRAKES',
             'LANDING_LIGHTS_TOGGLE': 'LANDING_LIGHTS_TOGGLE'
         };
@@ -148,8 +173,8 @@ class CommandQueue {
             'AP_MASTER', 'TOGGLE_FLIGHT_DIRECTOR', 'YAW_DAMPER_TOGGLE',
             'AP_HDG_HOLD', 'AP_ALT_HOLD', 'AP_VS_HOLD', 'AP_PANEL_SPEED_HOLD',
             'AP_NAV1_HOLD', 'AP_APR_HOLD', 'AP_BC_HOLD', 'AP_VNAV',
-            'HEADING_BUG_SET',
-            'FLAPS_UP', 'FLAPS_DOWN', 'PARKING_BRAKES', 'LANDING_LIGHTS_TOGGLE'
+            'FLAPS_UP', 'FLAPS_DOWN', 'PARKING_BRAKES', 'LANDING_LIGHTS_TOGGLE',
+            'MIXTURE_RICH', 'MIXTURE_LEAN'
         ];
 
         if (toggleCmds.includes(command)) {
@@ -160,7 +185,9 @@ class CommandQueue {
         const valueCmds = [
             'AP_ALT_VAR_SET_ENGLISH', 'AP_VS_VAR_SET_ENGLISH',
             'AP_SPD_VAR_SET', 'HEADING_BUG_SET',
-            'THROTTLE_SET', 'MIXTURE_SET', 'PROP_PITCH_SET', 'AXIS_ELEVATOR_SET'
+            'THROTTLE_SET', 'MIXTURE_SET', 'PROP_PITCH_SET',
+            'AXIS_ELEVATOR_SET', 'AXIS_RUDDER_SET', 'AXIS_AILERONS_SET',
+            'AXIS_MIXTURE_SET'
         ];
 
         if (valueCmds.includes(command)) {
@@ -217,8 +244,7 @@ class CommandQueue {
             cmd.value = Math.max(0, Math.min(100, cmd.value));
         }
         if (cmd.type === 'AXIS_ELEVATOR_SET') {
-            // Prevent extreme pitch angles — clamp to +/- 50%
-            cmd.value = Math.max(-50, Math.min(50, cmd.value));
+            cmd.value = Math.max(-80, Math.min(80, cmd.value));
         }
 
         return true;

@@ -40,7 +40,13 @@ class SimGlassBase {
         
         // Telemetry config
         this.telemetryConfig = options.telemetry || {};
-        
+
+        // Prevent browser from freezing background tabs (Chrome 133+, Edge)
+        // Holding a Web Lock exempts the tab from Energy Saver freezing
+        if (typeof navigator !== 'undefined' && navigator.locks) {
+            navigator.locks.request('simglass-active-' + (options.widgetName || 'widget'), () => new Promise(() => {}));
+        }
+
         // Initialize telemetry
         this.initTelemetry();
         

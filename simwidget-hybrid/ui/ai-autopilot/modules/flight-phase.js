@@ -36,10 +36,9 @@ class FlightPhase {
         const gs = d.groundSpeed || 0;
         const ias = d.speed || 0;
         const vs = d.verticalSpeed || 0;
-        // Use AGL + groundSpeed as fallback when SimConnect onGround is unreliable
-        // MSFS 2024 sometimes reports onGround=false while parked (AGL < 10ft, GS < 5kt)
-        const simOnGround = d.onGround !== undefined ? d.onGround : true;
-        const onGround = simOnGround || (agl < 10 && gs < 5);
+        // MSFS 2024: onGround SimVar sometimes false on the ground, but reliable when airborne.
+        // Use AGL < 10 as primary, with SimVar as tiebreaker.
+        const onGround = agl < 10 && d.onGround !== false;
         const gearDown = d.gearDown !== undefined ? d.gearDown : true;
         const engineRunning = d.engineRunning || false;
 
@@ -54,7 +53,8 @@ class FlightPhase {
                 break;
 
             case 'TAXI':
-                if (gs > 40 && onGround) {
+                // Transition to TAKEOFF early — TAKEOFF ROLL handles full power
+                if (gs > 25 && onGround) {
                     this._setPhase('TAKEOFF');
                 } else if (gs < 1 && !engineRunning) {
                     this._setPhase('PREFLIGHT');
@@ -62,7 +62,7 @@ class FlightPhase {
                 break;
 
             case 'TAKEOFF':
-                if (!onGround && agl > 200) {
+                if (!onGround && agl > 500) {
                     this._setPhase('CLIMB');
                 } else if (gs < 10 && onGround) {
                     this._setPhase('TAXI');

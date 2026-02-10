@@ -2765,7 +2765,54 @@ function executeCommand(command, value) {
     }
     
     if (!simConnectConnection) return;
-    
+
+    // MSFS 2024 InputEvents for mixture — legacy events/SimVar writes don't work
+    if ((command === 'MIXTURE_SET' || command === 'MIXTURE_RICH' || command === 'MIXTURE_LEAN' || command === 'AXIS_MIXTURE_SET') && global.inputEventHashes?.FUEL_MIXTURE_1) {
+        try {
+            let percent;
+            if (command === 'MIXTURE_RICH') percent = 100;
+            else if (command === 'MIXTURE_LEAN') percent = 0;
+            else percent = Math.max(0, Math.min(100, value || 0));
+            // InputEvent FUEL_MIXTURE_1 uses 0.0 to 1.0 range
+            const normalized = percent / 100;
+            simConnectConnection.setInputEvent(global.inputEventHashes.FUEL_MIXTURE_1, normalized);
+            console.log(`[Mixture] InputEvent: ${percent}% (${normalized}) via FUEL_MIXTURE_1`);
+        } catch (e) {
+            console.error(`[Mixture] InputEvent error: ${e.message}`);
+        }
+        return;
+    }
+
+    // MSFS 2024 flight controls — use legacy *_SET events via transmitClientEvent
+    // InputEvents (UNKNOWN_*) only animate visual model, don't affect flight dynamics
+    // Legacy ELEVATOR_SET/RUDDER_SET/AILERON_SET work like THROTTLE_SET
+    // Sign convention: rule engine uses positive=nose-down, MSFS uses positive=stick-back=nose-up
+    // So elevator and ailerons are NEGATED to match MSFS convention
+    if (command === 'AXIS_ELEVATOR_SET') {
+        const elevEventId = eventMap['ELEVATOR_SET'];
+        if (elevEventId !== undefined) {
+            const simValue = -Math.round((value || 0) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, elevEventId, simValue, 1, 16);
+        }
+        return;
+    }
+    if (command === 'AXIS_RUDDER_SET') {
+        const rudderEventId = eventMap['RUDDER_SET'];
+        if (rudderEventId !== undefined) {
+            const simValue = Math.round((value || 0) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, rudderEventId, simValue, 1, 16);
+        }
+        return;
+    }
+    if (command === 'AXIS_AILERONS_SET') {
+        const ailEventId = eventMap['AILERON_SET'];
+        if (ailEventId !== undefined) {
+            const simValue = -Math.round((value || 0) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, ailEventId, simValue, 1, 16);
+        }
+        return;
+    }
+
     const eventId = eventMap[command];
     if (eventId !== undefined) {
         try {
@@ -2799,9 +2846,12 @@ function executeCommand(command, value) {
             } else if (command === 'PAUSE_TOGGLE' || command === 'SLEW_TOGGLE' || command === 'REPAIR_AND_REFUEL') {
                 // Toggle commands - no value needed
                 simValue = 0;
-            } else if (command === 'AXIS_AILERONS_SET' || command === 'AXIS_ELEVATOR_SET' || command === 'AXIS_RUDDER_SET') {
-                // Flight controls: -100 to 100 → -16383 to 16383
+            } else if (command === 'AXIS_MIXTURE_SET') {
+                // Axis control: -100 to 100 → -16383 to 16383
                 simValue = Math.round((value / 100) * 16383);
+            } else if (command === 'MIXTURE_RICH' || command === 'MIXTURE_LEAN') {
+                // Toggle commands - no value needed
+                simValue = 0;
             } else if (command === 'AXIS_SLEW_AHEAD_SET' || command === 'AXIS_SLEW_ALTIT_SET') {
                 // Slew axis: -100 to 100 → -16383 to 16383
                 simValue = Math.round((value / 100) * 16383);
@@ -3128,16 +3178,24 @@ async function initSimConnect() {
             'AP_SPD_VAR_SET',
             // View toggle
             'VIEW_MODE',
-            // Flight controls
+            // Flight controls (AXIS_ + non-AXIS variants — MSFS 2024 may ignore one or the other)
             'AXIS_AILERONS_SET',
             'AXIS_ELEVATOR_SET',
             'AXIS_RUDDER_SET',
+            'RUDDER_SET',
+            'ELEVATOR_SET',
+            'ELEV_TRIM_DN',
+            'ELEV_TRIM_UP',
+            'AILERON_SET',
             'CENTER_AILER_RUDDER',
             // Engine control events
             'THROTTLE_SET',
             'PROP_PITCH_SET',
             'MIXTURE_SET',
             'MIXTURE1_SET',
+            'MIXTURE_RICH',
+            'MIXTURE_LEAN',
+            'AXIS_MIXTURE_SET',
             // Engine start events
             'TOGGLE_STARTER1',
             'SET_STARTER1_HELD',
@@ -3370,7 +3428,15 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL1 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'FUEL TANK EXTERNAL2 CAPACITY', 'gallons', SimConnectDataType.FLOAT64, 0);
 
-        console.log('[SimConnect] Registered 126 SimVars for MSFS 2024');
+        // Control Surface Positions (6 vars) — for AI autopilot mapping
+        handle.addToDataDefinition(0, 'ELEVATOR POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AILERON POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RUDDER POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'YOKE Y POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'YOKE X POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RUDDER PEDAL POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+
+        console.log('[SimConnect] Registered 132 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -3416,6 +3482,46 @@ async function initSimConnect() {
         handle.addToDataDefinition(12, 'PLANE BANK DEGREES', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(12, 'AIRSPEED INDICATED', 'knots', SimConnectDataType.FLOAT64, 0);
         console.log('[Recorder] Registered writable position definition (ID 12)');
+
+        // MSFS 2024 InputEvents — mixture lever uses B: variables, not legacy SimConnect events.
+        // Enumerate input events to find FUEL_MIXTURE_1 hash for setInputEvent().
+        global.inputEventHashes = {};
+        handle.on('inputEventsList', recv => {
+            const events = recv.inputEventDescriptors;
+            console.log(`[InputEvents] Received ${events.length} input events`);
+            // Dump all names for debugging flight control mapping
+            const allNames = events.map(e => e.name).sort();
+            console.log(`[InputEvents] ALL names: ${allNames.join(', ')}`);
+            for (const e of events) {
+                // Store hashes for key controls
+                if (e.name === 'FUEL_MIXTURE_1') {
+                    global.inputEventHashes.FUEL_MIXTURE_1 = e.inputEventIdHash;
+                    console.log(`[InputEvents] FUEL_MIXTURE_1 hash: ${e.inputEventIdHash}`);
+                }
+                if (e.name === 'ENGINE_THROTTLE_1') {
+                    global.inputEventHashes.ENGINE_THROTTLE_1 = e.inputEventIdHash;
+                }
+                // Flight control surfaces — MSFS 2024 requires InputEvents
+                if (e.name === 'UNKNOWN_TAIL_ELEVATOR') {
+                    global.inputEventHashes.UNKNOWN_TAIL_ELEVATOR = e.inputEventIdHash;
+                    console.log(`[InputEvents] UNKNOWN_TAIL_ELEVATOR hash: ${e.inputEventIdHash}`);
+                }
+                if (e.name === 'UNKNOWN_RUDDER') {
+                    global.inputEventHashes.UNKNOWN_RUDDER = e.inputEventIdHash;
+                    console.log(`[InputEvents] UNKNOWN_RUDDER hash: ${e.inputEventIdHash}`);
+                }
+                if (e.name === 'UNKNOWN_AILERON_LEFT') {
+                    global.inputEventHashes.UNKNOWN_AILERON_LEFT = e.inputEventIdHash;
+                    console.log(`[InputEvents] UNKNOWN_AILERON_LEFT hash: ${e.inputEventIdHash}`);
+                }
+                if (e.name === 'UNKNOWN_AILERON_RIGHT') {
+                    global.inputEventHashes.UNKNOWN_AILERON_RIGHT = e.inputEventIdHash;
+                    console.log(`[InputEvents] UNKNOWN_AILERON_RIGHT hash: ${e.inputEventIdHash}`);
+                }
+            }
+        });
+        handle.enumerateInputEvents(0);
+        console.log('[InputEvents] Enumeration requested');
         
         // Request data every 100ms
         handle.requestDataOnSimObject(0, 0, 0, 3, 0); // Period = SIM_FRAME
@@ -3497,14 +3603,7 @@ async function initSimConnect() {
                     fd.fuelTankLeftTip = rf(); fd.fuelTankRightTip = rf();
                     fd.fuelTankExternal1 = rf(); fd.fuelTankExternal2 = rf();
 
-                    // Individual Fuel Tank Capacities (11 vars)
-                    fd.fuelTankLeftMainCap = rf(); fd.fuelTankRightMainCap = rf();
-                    fd.fuelTankLeftAuxCap = rf(); fd.fuelTankRightAuxCap = rf();
-                    fd.fuelTankCenterCap = rf(); fd.fuelTankCenter2Cap = rf(); fd.fuelTankCenter3Cap = rf();
-                    fd.fuelTankLeftTipCap = rf(); fd.fuelTankRightTipCap = rf();
-                    fd.fuelTankExternal1Cap = rf(); fd.fuelTankExternal2Cap = rf();
-
-                    // Immersion / CockpitFX (15 vars)
+                    // Immersion / CockpitFX (15 vars) — must match definition order
                     fd.accelX = rf(); fd.accelY = rf(); fd.accelZ = rf();
                     fd.angleOfAttack = rf(); fd.sideslip = rf();
                     fd.onGround = rb(); fd.surfaceType = ri();
@@ -3512,9 +3611,22 @@ async function initSimConnect() {
                     fd.gearPos0 = rf(); fd.gearPos1 = rf(); fd.gearPos2 = rf();
                     fd.flapPercent = rf();
                     fd.rotVelX = rf(); fd.rotVelZ = rf();
+
+                    // Doors / canopy (5 vars)
                     fd.canopyOpen = rf();
                     fd.exitOpen0 = rf(); fd.exitOpen1 = rf();
                     fd.exitOpen2 = rf(); fd.exitOpen3 = rf();
+
+                    // Individual Fuel Tank Capacities (11 vars)
+                    fd.fuelTankLeftMainCap = rf(); fd.fuelTankRightMainCap = rf();
+                    fd.fuelTankLeftAuxCap = rf(); fd.fuelTankRightAuxCap = rf();
+                    fd.fuelTankCenterCap = rf(); fd.fuelTankCenter2Cap = rf(); fd.fuelTankCenter3Cap = rf();
+                    fd.fuelTankLeftTipCap = rf(); fd.fuelTankRightTipCap = rf();
+                    fd.fuelTankExternal1Cap = rf(); fd.fuelTankExternal2Cap = rf();
+
+                    // Control Surface Positions (6 vars)
+                    fd.elevatorPos = rf(); fd.aileronPos = rf(); fd.rudderPos = rf();
+                    fd.yokeY = rf(); fd.yokeX = rf(); fd.rudderPedal = rf();
                 } catch (e) {
                     if (!this._loggedReadError) {
                         console.error('[SimConnect] Data read partial at buffer offset, got', Object.keys(fd).length, 'vars. Error:', e.message);
