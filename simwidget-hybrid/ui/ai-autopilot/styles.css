@@ -34,6 +34,19 @@
     gap: 8px;
 }
 
+.header-settings {
+    position: static;
+    width: auto;
+    height: auto;
+    font-size: 15px;
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.header-settings:hover {
+    opacity: 1;
+}
+
 .ai-master-toggle {
     padding: 3px 12px;
     border: 1px solid #555;

@@ -14,15 +14,13 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Settings -->
-    <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
-
     <div class="widget-container" id="widget-root">
 
         <!-- Header -->
         <div class="widget-header">
             <span class="widget-title">AI AUTOPILOT</span>
             <div class="header-controls">
+                <button class="settings-btn header-settings" id="settings-btn" title="Settings">&#9881;</button>
                 <button class="ai-master-toggle" id="ai-toggle">OFF</button>
                 <span class="connection-status" id="conn-status" title="Connection status"></span>
             </div>
@@ -134,8 +132,8 @@
         window.addEventListener('beforeunload', () => window.widget?.destroy());
 
         const settings = new SettingsPanel();
-        settings.registerThemeSection();
         window.widget.registerSettingsSection(settings);
+        settings.registerThemeSection();
         const customizer = new WidgetCustomizer({ widgetId: 'ai-autopilot', settingsPanel: settings });
         document.getElementById('settings-btn')?.addEventListener('click', () => settings.toggle());
     </script>
