@@ -1,53 +1,17 @@
 # Hive Intel Briefing
-**Generated**: 2/8/2026, 9:08:21 PM
-**Period**: Last 7 days (34 approved items)
+**Generated**: 2/9/2026, 8:00:01 AM
+**Period**: Last 7 days (33 approved items)
 
 ---
 
 ## Executive Summary
 
-- **Other**: 28 items
-- **Libraries & SDKs**: 4 items
-- **Software Releases**: 2 items
-
-⭐ **6 high-priority items** (relevance ≥ 80)
+- **Libraries & SDKs**: 1 items
+- **Other**: 32 items
 
 ---
 
 ## Libraries & SDKs
-
-### 🔴 jamiepine/voicebox
-**Source**: GitHub Trending | **Relevance**: 85/100
-
-voicebox is an open-source voice synthesis studio using Qwen3-TTS.
-
-**Analysis**: Voice control and accessibility are key capabilities for Hive. Integrating voicebox could enhance Hive's ability to provide hands-free interactions, making it more user-friendly and accessible for users with disabilities or those who prefer voice commands.
-
-**URL**: https://github.com/jamiepine/voicebox
-
----
-
-### 🔴 MoonshotAI/Kimi-K2.5
-**Source**: GitHub Trending | **Relevance**: 85/100
-
-MoonshotAI/Kimi-K2.5 is a powerful AI model designed to enhance natural language processing capabilities.
-
-**Analysis**: Kimi-K2.5 could be highly useful for Hive's AI agent orchestration, providing advanced language understanding and generation that could improve the performance of Claude Code and other local LLMs like Ollama/LM Studio.
-
-**URL**: https://github.com/MoonshotAI/Kimi-K2.5
-
----
-
-### 🔴 devstral small is faster and better than glm 4.7 flash for local agentic coding.
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
-
-Devstral Small is a faster and more efficient local agent coding library compared to glm 4.7 flash.
-
-**Analysis**: This library could significantly enhance Hive's AI agent orchestration capabilities, particularly for Claude Code and other local LLMs like Ollama/LM Studio. Its improved performance would likely lead to better real-time dashboards, faster response times in voice control, and more efficient use of m
-
-**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1qttq5w/devstral_small_is_faster_and_better_than_glm_47/
-
----
 
 ### 🟡 agno-agi/dash
 **Source**: GitHub Trending | **Relevance**: 75/100
@@ -60,42 +24,7 @@ agno-agi/dash is a self-learning data agent that provides context-based response
 
 ---
 
-## Software Releases
-
-### 🔴 GLM-5 Coming in February! It's confirmed.
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
-
-GLM-5 is a new local LLM release expected in February.
-
-**Analysis**: The GLM-5 update could enhance Hive's AI agent orchestration capabilities, potentially improving the performance and functionality of Claude Code and other local LLMs like Ollama/LM Studio.
-
-**URL**: https://i.redd.it/rq0meza173hg1.jpeg
-
----
-
-### 🔴 128GB devices have a new local LLM king: Step-3.5-Flash-int4
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
-
-A new local LLM model called Step-3.5-Flash-int4 is available for devices with at least 128GB of storage.
-
-**Analysis**: This release could be highly useful for Hive's AI agent orchestration capabilities, as it provides a more powerful and efficient local language model that can enhance the performance and functionality of Claude Code and other LLM-based agents within the ecosystem.
-
-**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1qtvo4r/128gb_devices_have_a_new_local_llm_king/
-
----
-
 ## Other
-
-### 🔴 1186258278/OpenClawChineseTranslation
-**Source**: GitHub Trending | **Relevance**: 90/100
-
-🦞 OpenClaw (Clawdbot/Moltbot) 汉化版 - 开源个人 AI 助手中文版 | Claude/ChatGPT LLM 接入 | WhatsApp/Telegram/Discord 多平台 | 每小时自动同步 | CLI + Dashboard 全中文 | 全流程搭建教程，以及排错指南！
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/1186258278/OpenClawChineseTranslation
-
----
 
 ### 🟡 Anthropic built a C compiler using a "team of parallel agents", has problems compiling hello world.
 **Source**: r/programming | **Relevance**: 70/100
@@ -394,12 +323,63 @@ Matchlock – Secures AI agent workloads with a Linux-based sandbox
 
 ---
 
+### 🟢 I built a rough .gguf LLM visualizer
+**Source**: r/LocalLLaMA | **Relevance**: 55/100
+
+I built a rough .gguf LLM visualizer
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://www.reddit.com/gallery/1qzjbw2
+
+---
+
+### 🟢 GitHub Agentic Workflows
+**Source**: Hacker News | **Relevance**: 55/100
+
+GitHub Agentic Workflows
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.github.io/gh-aw/
+
+---
+
+### 🟢 ollama/ollama v0.15.6
+**Source**: GitHub Release | **Relevance**: 55/100
+
+v0.15.6
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/ollama/ollama/releases/tag/v0.15.6
+
+---
+
+### 🟢 anthropics/anthropic-sdk-python v0.78.0
+**Source**: GitHub Release | **Relevance**: 50/100
+
+v0.78.0
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/anthropics/anthropic-sdk-python/releases/tag/v0.78.0
+
+---
+
+### 🟢 anthropics/anthropic-sdk-python v0.79.0
+**Source**: GitHub Release | **Relevance**: 50/100
+
+v0.79.0
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/anthropics/anthropic-sdk-python/releases/tag/v0.79.0
+
+---
+
 ## Recommended Actions
 
-**Queue for Implementation** (7 items):
-- [ ] 1186258278/OpenClawChineseTranslation (relevance: 90)
-- [ ] jamiepine/voicebox (relevance: 85)
-- [ ] GLM-5 Coming in February! It's confirmed. (relevance: 85)
-- [ ] MoonshotAI/Kimi-K2.5 (relevance: 85)
-- [ ] 128GB devices have a new local LLM king: Step-3.5-Flash-int4 (relevance: 85)
+**Queue for Implementation** (1 items):
+- [ ] agno-agi/dash (relevance: 75)
 

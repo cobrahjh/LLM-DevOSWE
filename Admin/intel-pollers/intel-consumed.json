@@ -19,6 +19,15 @@
         "release"
       ],
       "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
+    },
+    {
+      "timestamp": "2026-02-09T13:00:01.856Z",
+      "itemCount": 33,
+      "categories": [
+        "library",
+        "other"
+      ],
+      "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
     }
   ],
   "queued": [
@@ -40,6 +49,6 @@
     "reddit-1qtvo4r",
     "reddit-1qttq5w"
   ],
-  "lastBriefing": "2026-02-09T02:08:21.434Z",
+  "lastBriefing": "2026-02-09T13:00:01.856Z",
   "lastAutoQueue": "2026-02-09T02:45:07.595Z"
 }
