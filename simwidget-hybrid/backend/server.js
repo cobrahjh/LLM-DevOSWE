@@ -2768,6 +2768,9 @@ function executeCommand(command, value) {
             } else if (command === 'AXIS_AILERONS_SET' || command === 'AXIS_ELEVATOR_SET' || command === 'AXIS_RUDDER_SET') {
                 // Flight controls: -100 to 100 → -16383 to 16383
                 simValue = Math.round((value / 100) * 16383);
+            } else if (command === 'AXIS_SLEW_AHEAD_SET' || command === 'AXIS_SLEW_ALTIT_SET') {
+                // Slew axis: -100 to 100 → -16383 to 16383
+                simValue = Math.round((value / 100) * 16383);
             }
             
             simConnectConnection.transmitClientEvent(
@@ -3113,6 +3116,15 @@ async function initSimConnect() {
             'SLEW_TOGGLE',
             'SLEW_ON',
             'SLEW_OFF',
+            'SLEW_ALTIT_UP_FAST',
+            'SLEW_ALTIT_UP_SLOW',
+            'SLEW_ALTIT_DN_FAST',
+            'SLEW_ALTIT_DN_SLOW',
+            'SLEW_ALTIT_FREEZE',
+            'SLEW_AHEAD_PLUS',
+            'SLEW_AHEAD_MINUS',
+            'AXIS_SLEW_AHEAD_SET',
+            'AXIS_SLEW_ALTIT_SET',
             // Environment controls
             'ZULU_HOURS_SET',
             'ZULU_MINUTES_SET',
