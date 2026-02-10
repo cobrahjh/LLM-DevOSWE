@@ -11,7 +11,7 @@
     max-width: 340px;
     margin: 0 auto;
     padding: 16px;
-    font-family: var(--font-ui, 'B612', sans-serif);
+    font-family: var(--sg-font-ui);
 }
 
 /* Header */
@@ -21,14 +21,14 @@
     align-items: center;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, #333);
+    border-bottom: 1px solid var(--sg-border-subtle);
 }
 
 .widget-title {
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: var(--text-primary, #fff);
+    color: var(--sg-text-primary);
 }
 
 .engine-status {
@@ -36,13 +36,13 @@
     border-radius: 10px;
     font-size: 10px;
     font-weight: 700;
-    background: var(--color-danger, #ff4444);
+    background: var(--sg-accent-red);
     color: #fff;
     margin-right: 8px;
 }
 
 .engine-status.running {
-    background: var(--color-success, #00cc00);
+    background: var(--sg-accent-green);
 }
 
 /* RPM Gauge Section */
@@ -75,14 +75,14 @@
     display: block;
     font-size: 28px;
     font-weight: 700;
-    font-family: var(--font-data, 'B612 Mono', monospace);
-    color: var(--color-success, #00ff00);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-green);
     line-height: 1;
 }
 
 .rpm-unit {
     font-size: 10px;
-    color: var(--text-muted, #888);
+    color: var(--sg-text-secondary);
     letter-spacing: 1px;
 }
 
@@ -95,11 +95,11 @@
 }
 
 .data-grid.primary .data-item {
-    background: var(--bg-secondary, rgba(255,255,255,0.05));
+    background: var(--sg-bg-panel);
 }
 
 .data-item {
-    background: var(--bg-tertiary, rgba(255,255,255,0.03));
+    background: var(--sg-bg-card);
     border-radius: 6px;
     padding: 10px;
     text-align: center;
@@ -108,7 +108,7 @@
 .data-label {
     display: block;
     font-size: 9px;
-    color: var(--text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 2px;
@@ -118,30 +118,30 @@
     display: block;
     font-size: 18px;
     font-weight: 600;
-    color: var(--text-primary, #fff);
-    font-family: var(--font-data, 'B612 Mono', monospace);
+    color: var(--sg-text-primary);
+    font-family: var(--sg-font-data);
     line-height: 1.2;
 }
 
 .data-unit {
     display: block;
     font-size: 9px;
-    color: var(--text-muted, #666);
+    color: var(--sg-text-secondary);
 }
 
-.data-value.warning { color: var(--color-warning, #ffcc00); }
-.data-value.critical { color: var(--color-danger, #ff4444); }
-.data-value.good { color: var(--color-success, #00ff00); }
+.data-value.warning { color: var(--sg-accent-yellow); }
+.data-value.critical { color: var(--sg-accent-red); }
+.data-value.good { color: var(--sg-accent-green); }
 
 /* Section Title */
 .section-title {
     font-size: 10px;
-    color: var(--text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
     padding-bottom: 4px;
-    border-bottom: 1px solid var(--border-color, #333);
+    border-bottom: 1px solid var(--sg-border-subtle);
 }
 
 /* Temperature Bars */
@@ -159,14 +159,14 @@
 .temp-label {
     width: 32px;
     font-size: 10px;
-    color: var(--text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
 }
 
 .temp-bar-container {
     flex: 1;
     height: 12px;
-    background: var(--bg-tertiary, #0a1520);
+    background: var(--sg-bg-card);
     border-radius: 2px;
     overflow: hidden;
     position: relative;
@@ -181,11 +181,11 @@
     right: 0;
     bottom: 0;
     background: linear-gradient(90deg,
-        var(--color-info, #00d4ff) 0%,
-        var(--color-success, #00ff00) 30%,
-        var(--color-success, #00ff00) 60%,
-        var(--color-warning, #ffcc00) 80%,
-        var(--color-danger, #ff4444) 100%
+        var(--sg-accent-cyan) 0%,
+        var(--sg-accent-green) 30%,
+        var(--sg-accent-green) 60%,
+        var(--sg-accent-yellow) 80%,
+        var(--sg-accent-red) 100%
     );
     opacity: 0.2;
 }
@@ -193,10 +193,10 @@
 .temp-bar {
     height: 100%;
     background: linear-gradient(90deg,
-        var(--color-info, #00d4ff) 0%,
-        var(--color-success, #00ff00) 50%,
-        var(--color-warning, #ffcc00) 80%,
-        var(--color-danger, #ff4444) 100%
+        var(--sg-accent-cyan) 0%,
+        var(--sg-accent-green) 50%,
+        var(--sg-accent-yellow) 80%,
+        var(--sg-accent-red) 100%
     );
     border-radius: 2px;
     width: 0%;
@@ -208,8 +208,8 @@
 .temp-value {
     width: 50px;
     font-size: 12px;
-    font-family: var(--font-data, 'B612 Mono', monospace);
-    color: var(--text-primary, #fff);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-primary);
     text-align: right;
 }
 
@@ -228,7 +228,7 @@
 .control-label {
     display: block;
     font-size: 9px;
-    color: var(--text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     margin-bottom: 4px;
 }
@@ -237,7 +237,7 @@
     height: 60px;
     width: 24px;
     margin: 0 auto;
-    background: var(--bg-tertiary, #0a1520);
+    background: var(--sg-bg-card);
     border-radius: 3px;
     position: relative;
     overflow: hidden;
@@ -253,22 +253,22 @@
 }
 
 .control-bar.throttle {
-    background: linear-gradient(180deg, var(--color-success, #00ff00), #006600);
+    background: linear-gradient(180deg, var(--sg-accent-green), #006600);
 }
 
 .control-bar.mixture {
-    background: linear-gradient(180deg, var(--color-danger, #ff4444), #660000);
+    background: linear-gradient(180deg, var(--sg-accent-red), #660000);
 }
 
 .control-bar.prop {
-    background: linear-gradient(180deg, var(--color-info, #00d4ff), #006688);
+    background: linear-gradient(180deg, var(--sg-accent-cyan), #006688);
 }
 
 .control-value {
     display: block;
     font-size: 11px;
-    font-family: var(--font-data, 'B612 Mono', monospace);
-    color: var(--text-primary, #fff);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-primary);
     margin-top: 4px;
 }
 
@@ -293,24 +293,24 @@
 }
 
 .btn-secondary {
-    background: var(--bg-secondary, rgba(255,255,255,0.1));
-    color: var(--text-primary, #e0e0e0);
-    border: 1px solid var(--border-color, #444);
+    background: var(--sg-bg-panel);
+    color: var(--sg-text-primary);
+    border: 1px solid var(--sg-border-subtle);
 }
 
 .btn-secondary:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.15));
-    border-color: var(--accent-color, #4a9eff);
+    background: rgba(0, 230, 118, 0.08);
+    border-color: var(--sg-accent-blue);
 }
 
 .btn-danger {
     background: rgba(255, 68, 68, 0.2);
-    color: var(--color-danger, #ff4444);
-    border: 1px solid var(--color-danger, #ff4444);
+    color: var(--sg-accent-red);
+    border: 1px solid var(--sg-accent-red);
 }
 
 .btn-danger:hover {
-    background: var(--color-danger, #ff4444);
+    background: var(--sg-accent-red);
     color: #fff;
 }
 
@@ -325,13 +325,13 @@
     justify-content: space-between;
     align-items: center;
     font-size: 10px;
-    color: var(--text-muted, #666);
+    color: var(--sg-text-secondary);
     padding-top: 8px;
-    border-top: 1px solid var(--border-color, #222);
+    border-top: 1px solid var(--sg-border-subtle);
 }
 
 .hobbs {
-    font-family: var(--font-data, 'B612 Mono', monospace);
+    font-family: var(--sg-font-data);
 }
 
 /* Responsive */

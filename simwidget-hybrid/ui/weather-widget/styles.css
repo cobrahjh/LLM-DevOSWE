@@ -1,7 +1,7 @@
 /* Weather Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 16px;
     min-width: 300px;
@@ -19,7 +19,7 @@
 .widget-title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .btn-icon {
@@ -55,22 +55,22 @@
 .search-bar input {
     flex: 1;
     padding: 10px 12px;
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
     border-radius: 8px;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     font-size: 14px;
     text-transform: uppercase;
 }
 
 .search-bar input:focus {
     outline: none;
-    border-color: var(--widget-accent, #667eea);
+    border-color: var(--sg-accent-green);
 }
 
 .btn-search {
     padding: 10px 16px;
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border: none;
     border-radius: 8px;
     color: #fff;
@@ -85,7 +85,7 @@
 
 /* Weather Content */
 .weather-content {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 10px;
     padding: 16px;
     margin-bottom: 12px;
@@ -94,7 +94,7 @@
 .placeholder {
     text-align: center;
     padding: 20px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .placeholder-icon {
@@ -113,18 +113,18 @@
 .airport-code {
     font-size: 24px;
     font-weight: 700;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .metar-time {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .metar-raw {
     font-family: 'Courier New', monospace;
     font-size: 11px;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     background: rgba(0,0,0,0.3);
     padding: 8px;
     border-radius: 6px;
@@ -146,7 +146,7 @@
 
 .weather-label {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
@@ -155,7 +155,7 @@
 .weather-value {
     font-size: 18px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .weather-value.wind {
@@ -176,7 +176,7 @@
 
 .weather-unit {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     font-weight: normal;
 }
 
@@ -205,7 +205,7 @@
 
 .recent-label {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .recent-list {
@@ -215,9 +215,9 @@
 }
 
 .recent-btn {
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
-    color: var(--widget-text, #fff);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    color: var(--sg-text-primary);
     padding: 4px 10px;
     border-radius: 4px;
     font-size: 11px;
@@ -226,7 +226,7 @@
 }
 
 .recent-btn:hover {
-    border-color: var(--widget-accent, #667eea);
+    border-color: var(--sg-accent-green);
 }
 
 /* Error state */
@@ -250,9 +250,9 @@
 
 .btn-action {
     flex: 1;
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
-    color: var(--widget-text, #fff);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    color: var(--sg-text-primary);
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
@@ -261,8 +261,8 @@
 }
 
 .btn-action:hover {
-    background: var(--widget-accent, #667eea);
-    border-color: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
+    border-color: var(--sg-accent-green);
 }
 
 /* Toast notification */
@@ -271,7 +271,7 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     color: #fff;
     padding: 10px 20px;
     border-radius: 6px;
@@ -288,7 +288,7 @@
 /* Speaking indicator */
 .btn-icon.speaking {
     animation: pulse-speak 1s infinite;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 @keyframes pulse-speak {

@@ -1,7 +1,7 @@
 /* Weight & Balance Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 14px;
     min-width: 300px;
@@ -19,7 +19,7 @@
 .widget-title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .btn-icon {
@@ -42,16 +42,16 @@
 .section select {
     width: 100%;
     padding: 10px;
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
     border-radius: 6px;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     font-size: 13px;
 }
 
 /* Weight Inputs */
 .weight-inputs {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 8px;
     padding: 10px;
     margin-bottom: 12px;
@@ -62,7 +62,7 @@
     align-items: center;
     gap: 8px;
     padding: 8px 0;
-    border-bottom: 1px solid var(--widget-border, rgba(255,255,255,0.05));
+    border-bottom: 1px solid var(--sg-border-subtle);
 }
 
 .weight-row:last-child {
@@ -72,16 +72,16 @@
 .weight-label {
     flex: 1;
     font-size: 12px;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .weight-input {
     width: 70px;
     padding: 6px 8px;
     background: rgba(0,0,0,0.3);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    border: 1px solid var(--sg-border-subtle);
     border-radius: 4px;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     font-size: 14px;
     font-family: 'Courier New', monospace;
     text-align: right;
@@ -89,7 +89,7 @@
 
 .weight-input:focus {
     outline: none;
-    border-color: var(--widget-accent, #667eea);
+    border-color: var(--sg-accent-green);
 }
 
 .weight-input[readonly] {
@@ -98,18 +98,18 @@
 
 .weight-unit {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     width: 30px;
 }
 
 .weight-row input[type="range"] {
     flex: 1;
-    accent-color: var(--widget-accent, #667eea);
+    accent-color: var(--sg-accent-green);
 }
 
 .weight-value {
     font-size: 12px;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     font-family: 'Courier New', monospace;
     width: 50px;
     text-align: right;
@@ -117,7 +117,7 @@
 
 /* Envelope Container */
 .envelope-container {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 8px;
     padding: 10px;
     margin-bottom: 12px;
@@ -138,7 +138,7 @@
 
 .legend-item {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -162,7 +162,7 @@
 }
 
 .result-box {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     padding: 10px;
     border-radius: 8px;
     text-align: center;
@@ -171,7 +171,7 @@
 .result-box .result-label {
     display: block;
     font-size: 9px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     margin-bottom: 4px;
 }
@@ -180,14 +180,14 @@
     display: block;
     font-size: 16px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     font-family: 'Courier New', monospace;
 }
 
 .result-box .result-limit {
     display: block;
     font-size: 9px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     margin-top: 2px;
 }
 
@@ -205,7 +205,7 @@
 .btn-primary {
     width: 100%;
     padding: 12px;
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border: none;
     border-radius: 8px;
     color: #fff;

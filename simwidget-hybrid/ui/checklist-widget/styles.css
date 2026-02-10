@@ -1,7 +1,7 @@
 /* Checklist Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 12px;
     min-width: 320px;
@@ -14,14 +14,14 @@
     justify-content: space-between;
     align-items: center;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    border-bottom: 1px solid var(--sg-border-subtle);
     margin-bottom: 10px;
 }
 
 .widget-title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .header-controls {
@@ -44,7 +44,7 @@
 }
 
 .btn-icon.active {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
 }
 
 /* Aircraft Selector */
@@ -55,17 +55,17 @@
 .aircraft-selector select {
     width: 100%;
     padding: 8px 12px;
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
     border-radius: 6px;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     font-size: 13px;
     cursor: pointer;
 }
 
 .aircraft-selector select:focus {
     outline: none;
-    border-color: var(--widget-accent, #667eea);
+    border-color: var(--sg-accent-green);
 }
 
 /* Tabs */
@@ -77,9 +77,9 @@
 }
 
 .tab {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border: none;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     padding: 6px 10px;
     border-radius: 6px;
     font-size: 11px;
@@ -89,11 +89,11 @@
 
 .tab:hover {
     background: rgba(255,255,255,0.1);
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .tab.active {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     color: #fff;
 }
 
@@ -104,7 +104,7 @@
 
 /* Progress Bar */
 .progress-bar {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 8px;
     height: 24px;
     position: relative;
@@ -113,7 +113,7 @@
 }
 
 .progress-fill {
-    background: linear-gradient(90deg, var(--widget-accent, #667eea), #22c55e);
+    background: linear-gradient(90deg, var(--sg-accent-green), #22c55e);
     height: 100%;
     width: 0%;
     transition: width 0.3s ease;
@@ -127,7 +127,7 @@
     transform: translate(-50%, -50%);
     font-size: 11px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 /* Checklist Items */
@@ -142,7 +142,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 8px;
     margin-bottom: 6px;
     cursor: pointer;
@@ -152,7 +152,7 @@
 
 .checklist-item:hover {
     background: rgba(255,255,255,0.05);
-    border-color: var(--widget-accent, #667eea);
+    border-color: var(--sg-accent-green);
 }
 
 .checklist-item.checked {
@@ -166,7 +166,7 @@
 .item-checkbox {
     width: 22px;
     height: 22px;
-    border: 2px solid var(--widget-accent, #667eea);
+    border: 2px solid var(--sg-accent-green);
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -198,13 +198,13 @@
 }
 
 .item-text {
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     font-size: 13px;
     font-weight: 500;
 }
 
 .item-action {
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     font-size: 11px;
     margin-top: 2px;
 }
@@ -228,7 +228,7 @@
 }
 
 .btn-primary {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     color: #fff;
 }
 
@@ -237,8 +237,8 @@
 }
 
 .btn-secondary {
-    background: var(--widget-bg-secondary, #16213e);
-    color: var(--widget-text, #fff);
+    background: var(--sg-bg-panel);
+    color: var(--sg-text-primary);
 }
 
 .btn-secondary:hover {
@@ -255,7 +255,7 @@
 }
 
 .checklist-container::-webkit-scrollbar-thumb {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border-radius: 3px;
 }
 

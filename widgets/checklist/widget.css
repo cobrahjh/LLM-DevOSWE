@@ -5,8 +5,8 @@
 .cl-progress {
     font-size: 11px;
     font-weight: 600;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
 }
 
 /* Phase Selector */
@@ -22,37 +22,37 @@
     padding: 6px 10px;
     font-size: 9px;
     font-weight: 600;
-    color: var(--sw-text-muted);
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
+    color: var(--sg-text-muted);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
     white-space: nowrap;
 }
 
 .cl-phase:hover {
-    border-color: var(--sw-border-medium);
-    color: var(--sw-text-primary);
+    border-color: var(--sg-border-medium);
+    color: var(--sg-text-primary);
 }
 
 .cl-phase.active {
     background: rgba(0, 212, 255, 0.15);
-    border-color: var(--sw-accent-cyan);
-    color: var(--sw-accent-cyan);
+    border-color: var(--sg-accent-cyan);
+    color: var(--sg-accent-cyan);
 }
 
 .cl-phase.complete {
     background: rgba(0, 255, 136, 0.15);
-    border-color: var(--sw-accent-green);
-    color: var(--sw-accent-green);
+    border-color: var(--sg-accent-green);
+    color: var(--sg-accent-green);
 }
 
 /* Checklist Items */
 .cl-list {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     max-height: 240px;
     overflow-y: auto;
     margin-bottom: 12px;
@@ -63,9 +63,9 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border-bottom: 1px solid var(--sw-border-subtle);
+    border-bottom: 1px solid var(--sg-border-subtle);
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .cl-item:last-child {
@@ -87,27 +87,27 @@
 .cl-checkbox {
     width: 18px;
     height: 18px;
-    border: 2px solid var(--sw-border-medium);
+    border: 2px solid var(--sg-border-medium);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
     flex-shrink: 0;
 }
 
 .cl-item.checked .cl-checkbox {
-    background: var(--sw-accent-green);
-    border-color: var(--sw-accent-green);
+    background: var(--sg-accent-green);
+    border-color: var(--sg-accent-green);
 }
 
 .cl-checkbox::after {
     content: '✓';
-    color: var(--sw-bg-primary);
+    color: var(--sg-bg-deep);
     font-size: 12px;
     font-weight: 700;
     opacity: 0;
-    transition: opacity var(--sw-transition-fast);
+    transition: opacity var(--sg-transition-fast);
 }
 
 .cl-item.checked .cl-checkbox::after {
@@ -121,13 +121,13 @@
 .cl-action {
     font-size: 11px;
     font-weight: 500;
-    color: var(--sw-text-primary);
+    color: var(--sg-text-primary);
 }
 
 .cl-response {
     font-size: 10px;
     font-weight: 600;
-    color: var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
     text-transform: uppercase;
 }
 
@@ -141,7 +141,7 @@
     font-size: 8px;
     padding: 2px 5px;
     background: rgba(0, 255, 136, 0.2);
-    color: var(--sw-accent-green);
+    color: var(--sg-accent-green);
     border-radius: 3px;
 }
 
@@ -165,6 +165,6 @@
 }
 
 .cl-list::-webkit-scrollbar-thumb {
-    background: var(--sw-border-medium);
+    background: var(--sg-border-medium);
     border-radius: 2px;
 }

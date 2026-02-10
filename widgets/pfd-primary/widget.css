@@ -10,66 +10,66 @@
 
 /* Flight Phase Badge */
 .pfd-flight-phase {
-    font-size: var(--sw-text-xs);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
-    font-family: var(--sw-font-mono);
+    font-family: var(--sg-font-data);
     padding: 2px 8px;
-    border-radius: var(--sw-radius-sm);
-    background: var(--sw-bg-tertiary);
-    color: var(--sw-text-muted);
-    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    background: var(--sg-bg-card);
+    color: var(--sg-text-muted);
+    border: 1px solid var(--sg-border-subtle);
 }
 
 .pfd-flight-phase.airborne {
     background: rgba(0, 212, 255, 0.15);
-    color: var(--sw-accent-cyan);
-    border-color: var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
+    border-color: var(--sg-accent-cyan);
 }
 
 /* Layout */
 .pfd-row {
     display: flex;
-    gap: var(--sw-space-sm);
-    margin-bottom: var(--sw-space-sm);
+    gap: var(--sg-space-sm);
+    margin-bottom: var(--sg-space-sm);
 }
 
 /* Instrument Card */
 .pfd-inst {
     flex: 1;
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
-    padding: var(--sw-space-sm);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
+    padding: var(--sg-space-sm);
     text-align: center;
 }
 
 .pfd-inst-label {
-    font-size: var(--sw-text-xs);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 2px;
 }
 
 .pfd-inst-value {
-    font-size: var(--sw-text-2xl);
+    font-size: var(--sg-text-2xl);
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
     line-height: 1.1;
 }
 
 .pfd-inst-unit {
-    font-size: var(--sw-text-xs);
-    color: var(--sw-text-muted);
+    font-size: var(--sg-text-xs);
+    color: var(--sg-text-muted);
     margin-top: 2px;
 }
 
 /* Speed Arc */
 .pfd-speed-arc {
     height: 30px;
-    margin-top: var(--sw-space-xs);
+    margin-top: var(--sg-space-xs);
 }
 
 .pfd-speed-arc svg {
@@ -79,19 +79,19 @@
 
 .pfd-arc-bg {
     fill: none;
-    stroke: var(--sw-border-subtle);
+    stroke: var(--sg-border-subtle);
     stroke-width: 6;
     stroke-linecap: round;
 }
 
 .pfd-arc-fill {
     fill: none;
-    stroke: var(--sw-accent-cyan);
+    stroke: var(--sg-accent-cyan);
     stroke-width: 6;
     stroke-linecap: round;
     stroke-dasharray: 126;
     stroke-dashoffset: 126;
-    transition: stroke-dashoffset var(--sw-transition-normal);
+    transition: stroke-dashoffset var(--sg-transition-normal);
 }
 
 .pfd-speed-trend,
@@ -100,29 +100,29 @@
     justify-content: center;
     align-items: baseline;
     gap: 4px;
-    margin-top: var(--sw-space-xs);
-    padding-top: var(--sw-space-xs);
-    border-top: 1px solid var(--sw-border-subtle);
+    margin-top: var(--sg-space-xs);
+    padding-top: var(--sg-space-xs);
+    border-top: 1px solid var(--sg-border-subtle);
 }
 
 .pfd-trend-label {
-    font-size: var(--sw-text-xs);
-    color: var(--sw-text-dim);
+    font-size: var(--sg-text-xs);
+    color: var(--sg-text-dim);
 }
 
 .pfd-trend-value {
-    font-size: var(--sw-text-sm);
+    font-size: var(--sg-text-sm);
     font-weight: 600;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-secondary);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-secondary);
 }
 
 /* Altitude Tape */
 .pfd-alt-tape {
     height: 36px;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: var(--sw-radius-sm);
-    margin-top: var(--sw-space-xs);
+    border-radius: var(--sg-radius-sm);
+    margin-top: var(--sg-space-xs);
     position: relative;
     overflow: hidden;
 }
@@ -139,7 +139,7 @@
 .pfd-tape-marks span {
     width: 30%;
     height: 1px;
-    background: var(--sw-border-subtle);
+    background: var(--sg-border-subtle);
     margin-left: auto;
 }
 
@@ -148,17 +148,17 @@
     left: 10%;
     right: 10%;
     height: 3px;
-    background: var(--sw-accent-cyan);
+    background: var(--sg-accent-cyan);
     border-radius: 2px;
     top: 50%;
     transform: translateY(-50%);
-    transition: top var(--sw-transition-normal);
-    box-shadow: 0 0 8px var(--sw-accent-cyan);
+    transition: top var(--sg-transition-normal);
+    box-shadow: 0 0 8px var(--sg-accent-cyan);
 }
 
 /* Heading Section */
 .pfd-heading {
-    margin-bottom: var(--sw-space-sm);
+    margin-bottom: var(--sg-space-sm);
 }
 
 .pfd-hdg-display {
@@ -166,28 +166,28 @@
     justify-content: center;
     align-items: baseline;
     gap: 2px;
-    margin-bottom: var(--sw-space-xs);
+    margin-bottom: var(--sg-space-xs);
 }
 
 .pfd-hdg-value {
-    font-size: var(--sw-text-xl);
+    font-size: var(--sg-text-xl);
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
 }
 
 .pfd-hdg-unit {
-    font-size: var(--sw-text-sm);
-    color: var(--sw-text-muted);
+    font-size: var(--sg-text-sm);
+    color: var(--sg-text-muted);
 }
 
 /* Compass */
 .pfd-compass {
     position: relative;
     height: 60px;
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     overflow: hidden;
 }
 
@@ -207,13 +207,13 @@
     width: 200%;
     height: 100%;
     transform: translate(-50%, -50%);
-    transition: transform var(--sw-transition-normal);
+    transition: transform var(--sg-transition-normal);
 }
 
 .pfd-compass-rose span {
     position: absolute;
     top: 50%;
-    font-size: var(--sw-text-sm);
+    font-size: var(--sg-text-sm);
     font-weight: 700;
     transform: translateY(-50%);
 }
@@ -221,25 +221,25 @@
 .pfd-compass-n {
     left: 50%;
     transform: translate(-50%, -50%);
-    color: var(--sw-accent-red);
+    color: var(--sg-accent-red);
 }
 
 .pfd-compass-e {
     left: 75%;
     transform: translate(-50%, -50%);
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
 }
 
 .pfd-compass-s {
     left: 100%;
     transform: translate(-50%, -50%);
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
 }
 
 .pfd-compass-w {
     left: 25%;
     transform: translate(-50%, -50%);
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
 }
 
 .pfd-compass-needle {
@@ -248,7 +248,7 @@
     left: 50%;
     width: 2px;
     height: 100%;
-    background: var(--sw-accent-yellow);
+    background: var(--sg-accent-yellow);
     transform: translateX(-50%);
     z-index: 2;
 }
@@ -259,9 +259,9 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 16px;
-    color: var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
     z-index: 3;
-    text-shadow: 0 0 10px var(--sw-accent-cyan);
+    text-shadow: 0 0 10px var(--sg-accent-cyan);
 }
 
 /* Vertical Speed Gauge */
@@ -269,7 +269,7 @@
     display: flex;
     gap: 4px;
     height: 60px;
-    margin-top: var(--sw-space-xs);
+    margin-top: var(--sg-space-xs);
 }
 
 .pfd-vs-scale {
@@ -277,8 +277,8 @@
     flex-direction: column;
     justify-content: space-between;
     font-size: 8px;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-dim);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-dim);
     text-align: right;
     padding: 2px 0;
 }
@@ -286,7 +286,7 @@
 .pfd-vs-bar-container {
     flex: 1;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: var(--sw-radius-sm);
+    border-radius: var(--sg-radius-sm);
     position: relative;
     overflow: hidden;
 }
@@ -296,13 +296,13 @@
     left: 20%;
     right: 20%;
     height: 0;
-    background: var(--sw-accent-green);
+    background: var(--sg-accent-green);
     border-radius: 2px;
-    transition: all var(--sw-transition-normal);
+    transition: all var(--sg-transition-normal);
 }
 
 .pfd-vs-bar.descend {
-    background: var(--sw-accent-red);
+    background: var(--sg-accent-red);
 }
 
 .pfd-vs-zero {
@@ -311,14 +311,14 @@
     left: 10%;
     right: 10%;
     height: 1px;
-    background: var(--sw-text-muted);
+    background: var(--sg-text-muted);
 }
 
 /* Flight Data */
 .pfd-data {
     display: flex;
     flex-direction: column;
-    gap: var(--sw-space-xs);
+    gap: var(--sg-space-xs);
     justify-content: center;
 }
 
@@ -326,19 +326,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 var(--sw-space-xs);
+    padding: 0 var(--sg-space-xs);
 }
 
 .pfd-data-label {
-    font-size: var(--sw-text-xs);
-    color: var(--sw-text-dim);
+    font-size: var(--sg-text-xs);
+    color: var(--sg-text-dim);
 }
 
 .pfd-data-value {
-    font-size: var(--sw-text-sm);
+    font-size: var(--sg-text-sm);
     font-weight: 600;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-secondary);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-secondary);
 }
 
 /* ===========================================
@@ -351,10 +351,10 @@
         flex-direction: column;
     }
     .pfd-inst-value {
-        font-size: var(--sw-text-lg);
+        font-size: var(--sg-text-lg);
     }
     .pfd-hdg-value {
-        font-size: var(--sw-text-lg);
+        font-size: var(--sg-text-lg);
     }
     .pfd-compass {
         height: 50px;
@@ -371,17 +371,17 @@
 /* Small (250px - 319px) */
 @container widget (min-width: 250px) and (max-width: 319px) {
     .pfd-inst-value {
-        font-size: var(--sw-text-xl);
+        font-size: var(--sg-text-xl);
     }
 }
 
 /* Large (380px+) */
 @container widget (min-width: 380px) {
     .pfd-inst-value {
-        font-size: var(--sw-text-3xl);
+        font-size: var(--sg-text-3xl);
     }
     .pfd-hdg-value {
-        font-size: var(--sw-text-2xl);
+        font-size: var(--sg-text-2xl);
     }
     .pfd-compass {
         height: 80px;

@@ -1,7 +1,7 @@
 /* Timer Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 16px;
     min-width: 280px;
@@ -19,7 +19,7 @@
 .widget-title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .btn-icon {
@@ -36,7 +36,7 @@
 }
 
 .btn-icon.active {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
 }
 
 /* Tabs */
@@ -48,9 +48,9 @@
 
 .tab {
     flex: 1;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border: none;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
@@ -63,7 +63,7 @@
 }
 
 .tab.active {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     color: #fff;
 }
 
@@ -73,9 +73,9 @@
     font-weight: 700;
     text-align: center;
     font-family: 'Courier New', monospace;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     padding: 20px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 12px;
     margin-bottom: 16px;
     letter-spacing: 2px;
@@ -120,20 +120,20 @@
     text-align: center;
     font-size: 18px;
     font-family: 'Courier New', monospace;
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
     border-radius: 6px;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .time-input-group input:focus {
     outline: none;
-    border-color: var(--widget-accent, #667eea);
+    border-color: var(--sg-accent-green);
 }
 
 .time-input-group span {
     font-size: 24px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .preset-buttons {
@@ -143,9 +143,9 @@
 }
 
 .preset {
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
-    color: var(--widget-text, #fff);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    color: var(--sg-text-primary);
     padding: 6px 12px;
     border-radius: 6px;
     font-size: 11px;
@@ -154,8 +154,8 @@
 }
 
 .preset:hover {
-    background: var(--widget-accent, #667eea);
-    border-color: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
+    border-color: var(--sg-accent-green);
 }
 
 /* Controls */
@@ -177,7 +177,7 @@
 }
 
 .btn-primary {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     color: #fff;
 }
 
@@ -190,8 +190,8 @@
 }
 
 .btn-secondary {
-    background: var(--widget-bg-secondary, #16213e);
-    color: var(--widget-text, #fff);
+    background: var(--sg-bg-panel);
+    color: var(--sg-text-primary);
 }
 
 .btn-secondary:hover {
@@ -209,7 +209,7 @@
 
 .lap-header {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -224,22 +224,22 @@
     display: flex;
     justify-content: space-between;
     padding: 6px 10px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 4px;
     margin-bottom: 4px;
     font-size: 12px;
 }
 
 .lap-number {
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .lap-time {
     font-family: 'Courier New', monospace;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .lap-diff {
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     font-size: 10px;
 }

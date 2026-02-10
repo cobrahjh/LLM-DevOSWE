@@ -16,21 +16,21 @@
     font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
 }
 
 .fp-value {
     font-size: 11px;
     font-weight: 600;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
 }
 
 /* Next Waypoint */
 .fp-next {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     padding: 12px;
     margin-bottom: 12px;
 }
@@ -50,8 +50,8 @@
 .fp-waypoint-name {
     font-size: 24px;
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
     margin-bottom: 8px;
 }
 
@@ -69,26 +69,26 @@
 .fp-info-label {
     font-size: 8px;
     font-weight: 600;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     text-transform: uppercase;
 }
 
 .fp-info-value {
     font-size: 14px;
     font-weight: 600;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-primary);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-primary);
 }
 
 .fp-info-value.green {
-    color: var(--sw-accent-green);
+    color: var(--sg-accent-green);
 }
 
 /* Waypoint List */
 .fp-list {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     margin-bottom: 12px;
     overflow: hidden;
 }
@@ -101,7 +101,7 @@
     background: rgba(0, 0, 0, 0.2);
     font-size: 8px;
     font-weight: 600;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     text-transform: uppercase;
 }
 
@@ -116,10 +116,10 @@
     gap: 8px;
     padding: 6px 10px;
     font-size: 11px;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-secondary);
-    border-bottom: 1px solid var(--sw-border-subtle);
-    transition: all var(--sw-transition-fast);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-secondary);
+    border-bottom: 1px solid var(--sg-border-subtle);
+    transition: all var(--sg-transition-fast);
 }
 
 .fp-list-item:last-child {
@@ -132,19 +132,19 @@
 
 .fp-list-item.active {
     background: rgba(0, 212, 255, 0.1);
-    color: var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
 }
 
 .fp-list-item.passed {
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     opacity: 0.6;
 }
 
 /* Destination */
 .fp-destination {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-medium);
-    border-radius: var(--sw-radius-md);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-medium);
+    border-radius: var(--sg-radius);
     padding: 10px 12px;
 }
 
@@ -161,8 +161,8 @@
 .fp-dest-icao {
     font-size: 18px;
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-green);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-green);
 }
 
 /* Scrollbar */
@@ -175,6 +175,6 @@
 }
 
 .fp-list-body::-webkit-scrollbar-thumb {
-    background: var(--sw-border-medium);
+    background: var(--sg-border-medium);
     border-radius: 2px;
 }

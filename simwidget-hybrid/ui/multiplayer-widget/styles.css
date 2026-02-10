@@ -1,7 +1,7 @@
 /* Multiplayer Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 14px;
     min-width: 300px;
@@ -19,7 +19,7 @@
 .widget-title {
     font-size: 14px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .header-controls {
@@ -30,10 +30,10 @@
 
 .header-controls select {
     padding: 4px 8px;
-    background: var(--widget-bg-secondary, #16213e);
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.1));
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
     border-radius: 4px;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     font-size: 11px;
 }
 
@@ -56,7 +56,7 @@
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 6px;
     margin-bottom: 10px;
     font-size: 11px;
@@ -79,24 +79,24 @@
 }
 
 .conn-text {
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     flex: 1;
 }
 
 .last-update {
-    color: var(--widget-text-muted, #666);
+    color: var(--sg-text-secondary);
     font-size: 10px;
 }
 
 .traffic-route {
     font-size: 9px;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     margin-top: 2px;
 }
 
 /* My Position */
 .my-position {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 12px;
@@ -105,7 +105,7 @@
 
 .pos-label {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     margin-bottom: 4px;
 }
@@ -114,7 +114,7 @@
     font-size: 14px;
     font-weight: 600;
     font-family: 'Courier New', monospace;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 /* Traffic List */
@@ -126,7 +126,7 @@
 
 .loading {
     text-align: center;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     font-size: 12px;
     padding: 20px;
 }
@@ -135,7 +135,7 @@
     display: flex;
     align-items: center;
     padding: 10px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 8px;
     margin-bottom: 6px;
     cursor: pointer;
@@ -149,7 +149,7 @@
 .traffic-icon {
     width: 32px;
     height: 32px;
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -169,12 +169,12 @@
 .traffic-callsign {
     font-size: 13px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .traffic-details {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .traffic-distance {
@@ -185,17 +185,17 @@
     font-size: 14px;
     font-weight: 600;
     font-family: 'Courier New', monospace;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 .distance-bearing {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .empty-traffic {
     text-align: center;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     font-size: 12px;
     padding: 30px;
 }
@@ -209,7 +209,7 @@
 
 .traffic-stats .stat {
     flex: 1;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     padding: 10px;
     border-radius: 8px;
     text-align: center;
@@ -220,12 +220,12 @@
     font-size: 20px;
     font-weight: 700;
     font-family: 'Courier New', monospace;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 .stat-label {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
 }
 
@@ -238,18 +238,18 @@
 
 .range-control label {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .range-control input[type="range"] {
     flex: 1;
-    accent-color: var(--widget-accent, #667eea);
+    accent-color: var(--sg-accent-green);
 }
 
 #range-value {
     font-size: 12px;
     font-weight: 600;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     min-width: 50px;
     text-align: right;
 }
@@ -260,6 +260,6 @@
 }
 
 .traffic-list::-webkit-scrollbar-thumb {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border-radius: 2px;
 }

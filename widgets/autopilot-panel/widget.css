@@ -10,19 +10,19 @@
 
 /* FD Status in Header */
 .ap-fd-status {
-    font-size: var(--sw-text-xs);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
     padding: 2px 8px;
-    border-radius: var(--sw-radius-sm);
-    background: var(--sw-bg-tertiary);
-    color: var(--sw-text-muted);
-    border: 1px solid var(--sw-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    background: var(--sg-bg-card);
+    color: var(--sg-text-muted);
+    border: 1px solid var(--sg-border-subtle);
 }
 
 .ap-fd-status.active {
     background: rgba(0, 212, 255, 0.15);
-    color: var(--sw-accent-cyan);
-    border-color: var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
+    border-color: var(--sg-accent-cyan);
 }
 
 /* AP Master Button */
@@ -30,21 +30,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--sw-space-sm);
+    gap: var(--sg-space-sm);
     width: 100%;
-    min-height: var(--sw-touch-min);
-    padding: var(--sw-space-sm) var(--sw-space-md);
-    background: var(--sw-bg-tertiary);
-    border: 2px solid var(--sw-accent-red);
-    border-radius: var(--sw-radius-md);
+    min-height: var(--sg-touch-min);
+    padding: var(--sg-space-sm) var(--sg-space-md);
+    background: var(--sg-bg-card);
+    border: 2px solid var(--sg-accent-red);
+    border-radius: var(--sg-radius);
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
-    margin-bottom: var(--sw-space-sm);
+    transition: all var(--sg-transition-fast);
+    margin-bottom: var(--sg-space-sm);
 }
 
 .ap-master:hover {
     transform: translateY(-1px);
-    box-shadow: var(--sw-shadow-glow-red);
+    box-shadow: 0 0 20px rgba(255, 23, 68, 0.3);
 }
 
 .ap-master:active {
@@ -53,37 +53,37 @@
 
 .ap-master.engaged {
     background: rgba(0, 255, 136, 0.15);
-    border-color: var(--sw-accent-green);
-    box-shadow: var(--sw-shadow-glow-green);
+    border-color: var(--sg-accent-green);
+    box-shadow: 0 0 20px rgba(0, 230, 118, 0.3);
 }
 
 .ap-master-label {
-    font-size: var(--sw-text-lg);
+    font-size: var(--sg-text-lg);
     font-weight: 700;
-    color: var(--sw-text-primary);
+    color: var(--sg-text-primary);
 }
 
 .ap-master-status {
-    font-size: var(--sw-text-lg);
+    font-size: var(--sg-text-lg);
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-red);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-red);
 }
 
 .ap-master.engaged .ap-master-status {
-    color: var(--sw-accent-green);
+    color: var(--sg-accent-green);
 }
 
 /* Section Labels */
 .ap-section {
-    margin-bottom: var(--sw-space-sm);
+    margin-bottom: var(--sg-space-sm);
 }
 
 .ap-section-label {
     display: block;
-    font-size: var(--sw-text-xs);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
@@ -92,7 +92,7 @@
 /* Mode Button Row */
 .ap-mode-row {
     display: flex;
-    gap: var(--sw-space-xs);
+    gap: var(--sg-space-xs);
 }
 
 /* Mode Buttons */
@@ -103,17 +103,17 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    min-height: var(--sw-touch-min);
-    padding: var(--sw-space-xs);
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
+    min-height: var(--sg-touch-min);
+    padding: var(--sg-space-xs);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .ap-mode-btn:hover {
-    border-color: var(--sw-border-medium);
+    border-color: var(--sg-border-medium);
     transform: translateY(-1px);
 }
 
@@ -123,7 +123,7 @@
 
 .ap-mode-btn.active {
     background: rgba(0, 255, 136, 0.15);
-    border-color: var(--sw-accent-green);
+    border-color: var(--sg-accent-green);
 }
 
 /* Mode Indicator */
@@ -131,30 +131,30 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--sw-text-dim);
-    transition: all var(--sw-transition-normal);
+    background: var(--sg-text-dim);
+    transition: all var(--sg-transition-normal);
 }
 
 .ap-mode-btn.active .ap-mode-ind {
-    background: var(--sw-accent-green);
-    box-shadow: var(--sw-shadow-glow-green);
+    background: var(--sg-accent-green);
+    box-shadow: 0 0 20px rgba(0, 230, 118, 0.3);
 }
 
 .ap-mode-label {
-    font-size: var(--sw-text-sm);
+    font-size: var(--sg-text-sm);
     font-weight: 600;
-    color: var(--sw-text-primary);
+    color: var(--sg-text-primary);
 }
 
 /* Settings Display */
 .ap-settings {
     display: flex;
-    gap: var(--sw-space-xs);
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
-    padding: var(--sw-space-sm);
-    margin-bottom: var(--sw-space-sm);
+    gap: var(--sg-space-xs);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
+    padding: var(--sg-space-sm);
+    margin-bottom: var(--sg-space-sm);
 }
 
 .ap-setting {
@@ -170,27 +170,27 @@
 }
 
 .ap-setting-label {
-    font-size: var(--sw-text-xs);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     text-transform: uppercase;
 }
 
 .ap-setting-value {
-    font-size: var(--sw-text-lg);
+    font-size: var(--sg-text-lg);
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-green);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-green);
     line-height: 1.1;
 }
 
 .ap-setting-value.cyan {
-    color: var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
 }
 
 .ap-setting-unit {
-    font-size: var(--sw-text-xs);
-    color: var(--sw-text-muted);
+    font-size: var(--sg-text-xs);
+    color: var(--sg-text-muted);
 }
 
 /* Scrollable Settings */
@@ -198,8 +198,8 @@
     position: relative;
     cursor: ns-resize;
     user-select: none;
-    border-radius: var(--sw-radius-sm);
-    transition: all var(--sw-transition-fast);
+    border-radius: var(--sg-radius-sm);
+    transition: all var(--sg-transition-fast);
 }
 
 .ap-scrollable:hover {
@@ -207,8 +207,8 @@
 }
 
 .ap-scrollable:hover .ap-setting-value {
-    color: var(--sw-accent-cyan);
-    text-shadow: 0 0 10px var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
+    text-shadow: 0 0 10px var(--sg-accent-cyan);
 }
 
 .ap-scrollable.scrolling {
@@ -224,9 +224,9 @@
     top: 2px;
     right: 2px;
     font-size: 8px;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     opacity: 0;
-    transition: opacity var(--sw-transition-fast);
+    transition: opacity var(--sg-transition-fast);
 }
 
 .ap-scrollable:hover .ap-scroll-hint {
@@ -236,18 +236,18 @@
 /* Speed Row */
 .ap-speed-row {
     display: flex;
-    gap: var(--sw-space-sm);
+    gap: var(--sg-space-sm);
     align-items: stretch;
 }
 
 .ap-speed-row .ap-setting {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
-    padding: var(--sw-space-sm);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
+    padding: var(--sg-space-sm);
     flex-direction: row;
     justify-content: center;
-    gap: var(--sw-space-xs);
+    gap: var(--sg-space-xs);
 }
 
 .ap-spd-btn {
@@ -256,26 +256,26 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    min-width: var(--sw-touch-min);
-    min-height: var(--sw-touch-min);
-    padding: var(--sw-space-xs);
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
+    min-width: var(--sg-touch-min);
+    min-height: var(--sg-touch-min);
+    padding: var(--sg-space-xs);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
-    font-size: var(--sw-text-xs);
+    transition: all var(--sg-transition-fast);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
-    color: var(--sw-text-primary);
+    color: var(--sg-text-primary);
 }
 
 .ap-spd-btn:hover {
-    border-color: var(--sw-border-medium);
+    border-color: var(--sg-border-medium);
 }
 
 .ap-spd-btn.active {
     background: rgba(0, 255, 136, 0.15);
-    border-color: var(--sw-accent-green);
+    border-color: var(--sg-accent-green);
 }
 
 .ap-spd-btn .ap-mode-ind {
@@ -295,7 +295,7 @@
     }
     .ap-master-label,
     .ap-master-status {
-        font-size: var(--sw-text-md);
+        font-size: var(--sg-text-md);
     }
     .ap-mode-row {
         flex-wrap: wrap;
@@ -317,20 +317,20 @@
 /* Small (220px - 279px) */
 @container widget (min-width: 220px) and (max-width: 279px) {
     .ap-setting-value {
-        font-size: var(--sw-text-md);
+        font-size: var(--sg-text-md);
     }
 }
 
 /* Large (320px+) */
 @container widget (min-width: 320px) {
     .ap-master {
-        padding: var(--sw-space-md);
+        padding: var(--sg-space-md);
     }
     .ap-master-label,
     .ap-master-status {
-        font-size: var(--sw-text-xl);
+        font-size: var(--sg-text-xl);
     }
     .ap-setting-value {
-        font-size: var(--sw-text-xl);
+        font-size: var(--sg-text-xl);
     }
 }

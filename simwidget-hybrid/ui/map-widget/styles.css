@@ -1,7 +1,7 @@
 /* Map Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 12px;
     min-width: 320px;
@@ -19,7 +19,7 @@
 .widget-title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .header-controls {
@@ -41,7 +41,7 @@
 }
 
 .btn-icon.active {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
 }
 
 /* Radar Controls */
@@ -51,7 +51,7 @@
     gap: 8px;
     padding: 6px 10px;
     margin-bottom: 8px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 6px;
 }
 
@@ -61,7 +61,7 @@
 
 .radar-label {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     white-space: nowrap;
 }
 
@@ -79,7 +79,7 @@
     -webkit-appearance: none;
     width: 14px;
     height: 14px;
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border-radius: 50%;
     cursor: pointer;
 }
@@ -87,7 +87,7 @@
 .radar-controls input[type="range"]::-moz-range-thumb {
     width: 14px;
     height: 14px;
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border-radius: 50%;
     cursor: pointer;
     border: none;
@@ -108,13 +108,13 @@
 }
 
 .leaflet-control-zoom a {
-    background: var(--widget-bg-secondary, #16213e) !important;
-    color: var(--widget-text, #fff) !important;
-    border-color: var(--widget-border, rgba(255,255,255,0.1)) !important;
+    background: var(--sg-bg-panel) !important;
+    color: var(--sg-text-primary) !important;
+    border-color: var(--sg-border-subtle) !important;
 }
 
 .leaflet-control-zoom a:hover {
-    background: var(--widget-accent, #667eea) !important;
+    background: var(--sg-accent-green) !important;
 }
 
 .leaflet-control-attribution {
@@ -124,7 +124,7 @@
 }
 
 .leaflet-control-attribution a {
-    color: var(--widget-accent, #667eea) !important;
+    color: var(--sg-accent-green) !important;
 }
 
 /* Flight Info Bar */
@@ -135,7 +135,7 @@
 }
 
 .info-item {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     padding: 8px;
     border-radius: 6px;
     text-align: center;
@@ -144,7 +144,7 @@
 .info-label {
     display: block;
     font-size: 9px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 2px;
@@ -154,7 +154,7 @@
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     font-family: 'Courier New', monospace;
 }
 
@@ -173,7 +173,7 @@
 
 /* Track line */
 .leaflet-overlay-pane svg path.track-line {
-    stroke: var(--widget-accent, #667eea);
+    stroke: var(--sg-accent-green);
     stroke-width: 2;
     stroke-opacity: 0.7;
     fill: none;
@@ -198,7 +198,7 @@
 }
 
 .connection-overlay .text {
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     font-size: 12px;
 }
 
@@ -219,7 +219,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border: 2px solid #22c55e;
     border-radius: 50%;
     color: #22c55e;
@@ -237,9 +237,9 @@
 }
 
 .waypoint-marker.active .wp-icon {
-    border-color: var(--widget-accent, #667eea);
+    border-color: var(--sg-accent-green);
     background: rgba(102, 126, 234, 0.3);
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
     animation: pulse 2s infinite;
 }
 
@@ -310,7 +310,7 @@
     text-shadow:
         0 0 3px rgba(0,0,0,0.8),
         0 0 6px rgba(102, 126, 234, 0.6);
-    filter: drop-shadow(0 0 2px rgba(102, 126, 234, 0.8));
+    filter: drop-shadow(0 0 2px rgba(102, 126, 234, 0.8);
 }
 
 .traffic-label {

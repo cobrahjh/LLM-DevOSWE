@@ -1,7 +1,7 @@
 /* Flight Log Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 14px;
     min-width: 300px;
@@ -19,7 +19,7 @@
 .widget-title {
     font-size: 14px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .header-controls {
@@ -42,7 +42,7 @@
 
 /* Current Flight */
 .current-flight {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 14px;
@@ -56,7 +56,7 @@
 
 .flight-status {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 4px;
@@ -70,7 +70,7 @@
     font-size: 32px;
     font-weight: 700;
     font-family: 'Courier New', monospace;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
     margin-bottom: 12px;
 }
 
@@ -87,7 +87,7 @@
 .stat-label {
     display: block;
     font-size: 9px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     margin-bottom: 2px;
 }
 
@@ -95,7 +95,7 @@
     font-size: 12px;
     font-weight: 600;
     font-family: 'Courier New', monospace;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 /* Log Section */
@@ -105,7 +105,7 @@
 
 .section-title {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 8px;
@@ -120,7 +120,7 @@
     display: flex;
     align-items: center;
     padding: 10px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 8px;
     margin-bottom: 6px;
 }
@@ -132,17 +132,17 @@
 .log-airports {
     font-size: 14px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .log-airports .arrow {
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     margin: 0 6px;
 }
 
 .log-date {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     margin-top: 2px;
 }
 
@@ -154,17 +154,17 @@
     font-size: 13px;
     font-weight: 600;
     font-family: 'Courier New', monospace;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 .log-distance {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .empty-log {
     text-align: center;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     font-size: 12px;
     padding: 20px;
 }
@@ -177,7 +177,7 @@
 }
 
 .total-item {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     padding: 10px;
     border-radius: 8px;
     text-align: center;
@@ -188,12 +188,12 @@
     font-size: 18px;
     font-weight: 700;
     font-family: 'Courier New', monospace;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 .total-label {
     font-size: 9px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
 }
 
@@ -203,6 +203,6 @@
 }
 
 .log-list::-webkit-scrollbar-thumb {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     border-radius: 2px;
 }

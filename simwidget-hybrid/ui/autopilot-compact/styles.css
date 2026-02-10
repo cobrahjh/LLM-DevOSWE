@@ -1,0 +1,166 @@
+/**
+ * Autopilot Compact Strip Styles
+ * Type: control | Category: flight
+ * Path: ui/autopilot-compact/styles.css
+ *
+ * Horizontal strip overlay (~640x80px)
+ * Same design language as ui/autopilot/styles.css
+ */
+
+.compact-strip {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    padding: 8px;
+    max-width: 640px;
+    margin: 0 auto;
+    font-family: var(--sg-font-ui);
+}
+
+/* AP Master Button */
+.btn-ap-master {
+    width: 48px;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--sg-border-subtle);
+    border-radius: 6px;
+    background: var(--sg-bg-card);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.btn-ap-master .btn-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--sg-text-primary);
+    letter-spacing: 1px;
+}
+
+.btn-ap-master:hover {
+    border-color: var(--sg-accent-blue);
+    background: rgba(0, 230, 118, 0.08);
+}
+
+.btn-ap-master.active {
+    border-color: var(--sg-accent-green);
+    background: rgba(0, 204, 0, 0.3);
+    box-shadow: 0 0 10px rgba(0, 204, 0, 0.4);
+}
+
+.btn-ap-master.active .btn-label {
+    color: var(--sg-accent-green);
+}
+
+/* Mode Buttons with Values */
+.mode-btn-compact {
+    flex: 1;
+    min-width: 72px;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: 6px;
+    background: var(--sg-bg-card);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mode-btn-compact .btn-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--sg-text-secondary);
+    letter-spacing: 1px;
+}
+
+.mode-btn-compact .btn-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--sg-accent-cyan);
+    font-family: var(--sg-font-data);
+    line-height: 1.2;
+}
+
+.mode-btn-compact:hover {
+    border-color: var(--sg-accent-blue);
+    background: rgba(0, 230, 118, 0.08);
+}
+
+.mode-btn-compact:hover .btn-label {
+    color: var(--sg-text-primary);
+}
+
+.mode-btn-compact.active {
+    border-color: var(--sg-accent-green);
+    background: rgba(0, 204, 0, 0.2);
+}
+
+.mode-btn-compact.active .btn-label {
+    color: var(--sg-accent-green);
+}
+
+/* Secondary Mode Buttons (NAV, APR) */
+.mode-btn-secondary {
+    width: 56px;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: 6px;
+    background: var(--sg-bg-card);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.mode-btn-secondary .btn-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sg-text-secondary);
+    letter-spacing: 1px;
+}
+
+.mode-btn-secondary:hover {
+    border-color: var(--sg-accent-blue);
+    background: rgba(0, 230, 118, 0.08);
+}
+
+.mode-btn-secondary:hover .btn-label {
+    color: var(--sg-text-primary);
+}
+
+.mode-btn-secondary.active {
+    background: var(--sg-accent-cyan);
+    border-color: var(--sg-accent-cyan);
+}
+
+.mode-btn-secondary.active .btn-label {
+    color: #000;
+}
+
+/* VS value coloring */
+.btn-value.positive {
+    color: var(--sg-accent-green);
+}
+
+.btn-value.negative {
+    color: var(--sg-accent-yellow);
+}
+
+/* Responsive: wrap at narrow widths */
+@media (max-width: 600px) {
+    .compact-strip {
+        flex-wrap: wrap;
+    }
+
+    .mode-btn-compact {
+        min-width: 60px;
+    }
+}

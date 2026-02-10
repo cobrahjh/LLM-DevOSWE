@@ -6,8 +6,8 @@
 .wx-mode-toggle {
     display: flex;
     gap: 2px;
-    background: var(--sw-bg-tertiary);
-    border-radius: var(--sw-radius-sm);
+    background: var(--sg-bg-card);
+    border-radius: var(--sg-radius-sm);
     padding: 2px;
 }
 
@@ -15,29 +15,29 @@
     padding: 4px 10px;
     font-size: 9px;
     font-weight: 600;
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
     background: transparent;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .wx-mode:hover {
-    color: var(--sw-text-primary);
+    color: var(--sg-text-primary);
 }
 
 .wx-mode.active {
-    background: var(--sw-accent-cyan);
-    color: var(--sw-bg-primary);
+    background: var(--sg-accent-cyan);
+    color: var(--sg-bg-deep);
 }
 
 /* Radar Display */
 .wx-radar {
     position: relative;
     background: rgba(0, 20, 40, 0.9);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     overflow: hidden;
     margin-bottom: 10px;
 }
@@ -62,8 +62,8 @@
     top: 8px;
     right: 8px;
     font-size: 10px;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
     background: rgba(0, 0, 0, 0.5);
     padding: 2px 6px;
     border-radius: 4px;
@@ -75,8 +75,8 @@
     left: 50%;
     transform: translateX(-50%);
     font-size: 16px;
-    color: var(--sw-accent-cyan);
-    text-shadow: 0 0 10px var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
+    text-shadow: 0 0 10px var(--sg-accent-cyan);
 }
 
 .wx-radar-rings {
@@ -105,7 +105,7 @@
     align-items: center;
     gap: 4px;
     font-size: 9px;
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
 }
 
 .wx-color {
@@ -121,9 +121,9 @@
 
 /* METAR */
 .wx-metar {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     padding: 10px;
     margin-bottom: 10px;
 }
@@ -138,21 +138,21 @@
 .wx-label {
     font-size: 9px;
     font-weight: 600;
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
     text-transform: uppercase;
 }
 
 .wx-icao {
     font-size: 12px;
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
 }
 
 .wx-metar-text {
     font-size: 10px;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-secondary);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-secondary);
     line-height: 1.4;
     word-break: break-all;
 }
@@ -168,8 +168,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--sw-bg-tertiary);
-    border-radius: var(--sw-radius-sm);
+    background: var(--sg-bg-card);
+    border-radius: var(--sg-radius-sm);
     padding: 8px;
 }
 
@@ -185,13 +185,13 @@
 .wx-cond-label {
     font-size: 8px;
     font-weight: 600;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
     text-transform: uppercase;
 }
 
 .wx-cond-value {
     font-size: 12px;
     font-weight: 600;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-primary);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-primary);
 }

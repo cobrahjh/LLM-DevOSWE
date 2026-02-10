@@ -1,7 +1,7 @@
 /* Performance Widget Styles */
 
 .widget-container {
-    background: var(--widget-bg, #1a1a2e);
+    background: var(--sg-bg-deep);
     border-radius: 12px;
     padding: 14px;
     min-width: 260px;
@@ -19,7 +19,7 @@
 .widget-title {
     font-size: 14px;
     font-weight: 600;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 .btn-icon {
@@ -44,7 +44,7 @@
 }
 
 .perf-card {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     padding: 12px;
     border-radius: 8px;
     text-align: center;
@@ -52,7 +52,7 @@
 
 .perf-icon {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 4px;
@@ -91,7 +91,7 @@
 
 /* Frame Timing */
 .frame-timing {
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     padding: 12px;
     border-radius: 8px;
     margin-bottom: 10px;
@@ -99,7 +99,7 @@
 
 .timing-header {
     font-size: 10px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 8px;
@@ -118,14 +118,14 @@
 
 .timing-label {
     font-size: 11px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
 }
 
 .timing-value {
     font-size: 12px;
     font-weight: 600;
     font-family: 'Courier New', monospace;
-    color: var(--widget-text, #fff);
+    color: var(--sg-text-primary);
 }
 
 /* Sim Stats */
@@ -139,14 +139,14 @@
     flex: 1;
     text-align: center;
     padding: 8px;
-    background: var(--widget-bg-secondary, #16213e);
+    background: var(--sg-bg-panel);
     border-radius: 6px;
 }
 
 .stat-label {
     display: block;
     font-size: 9px;
-    color: var(--widget-text-muted, #888);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     margin-bottom: 4px;
 }
@@ -155,7 +155,7 @@
     font-size: 12px;
     font-weight: 600;
     font-family: 'Courier New', monospace;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 /* Warning states */

@@ -14,31 +14,31 @@
     gap: 4px;
     padding: 0 12px;
     margin-bottom: 12px;
-    border-bottom: 1px solid var(--widget-border);
+    border-bottom: 1px solid var(--sg-border-subtle);
     padding-bottom: 12px;
 }
 
 .kb-tab {
     flex: 1;
     padding: 8px 12px;
-    background: var(--widget-bg-secondary);
+    background: var(--sg-bg-panel);
     border: none;
-    border-radius: var(--widget-radius-sm) var(--widget-radius-sm) 0 0;
-    color: var(--widget-text-muted);
+    border-radius: var(--sg-radius-sm) var(--sg-radius-sm) 0 0;
+    color: var(--sg-text-secondary);
     font-size: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .kb-tab:hover {
-    color: var(--widget-text);
-    background: var(--widget-bg-tertiary);
+    color: var(--sg-text-primary);
+    background: var(--sg-bg-header);
 }
 
 .kb-tab.active {
-    color: var(--widget-accent);
-    background: var(--widget-bg-tertiary);
-    border-bottom: 2px solid var(--widget-accent);
+    color: var(--sg-accent-green);
+    background: var(--sg-bg-header);
+    border-bottom: 2px solid var(--sg-accent-green);
 }
 
 /* Panels */
@@ -64,18 +64,18 @@
     width: 100%;
     min-height: 200px;
     padding: 12px;
-    background: var(--widget-bg-tertiary);
-    border: 1px solid var(--widget-border);
-    border-radius: var(--widget-radius-sm);
-    color: var(--widget-text);
-    font-family: var(--font-mono);
+    background: var(--sg-bg-header);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-primary);
+    font-family: var(--sg-font-data);
     font-size: 14px;
     line-height: 1.6;
     resize: none;
 }
 
 #notes-area::placeholder {
-    color: var(--widget-text-dim);
+    color: var(--sg-text-muted);
 }
 
 .notes-templates {
@@ -86,18 +86,18 @@
 
 .template-btn {
     padding: 6px 12px;
-    background: var(--widget-bg-secondary);
-    border: 1px solid var(--widget-border);
-    border-radius: var(--widget-radius-sm);
-    color: var(--widget-text-muted);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-secondary);
     font-size: 11px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .template-btn:hover {
-    border-color: var(--widget-accent);
-    color: var(--widget-text);
+    border-color: var(--sg-accent-green);
+    color: var(--sg-text-primary);
 }
 
 /* Frequencies Panel */
@@ -112,36 +112,36 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 12px;
-    background: var(--widget-bg-secondary);
-    border-radius: var(--widget-radius-sm);
+    background: var(--sg-bg-panel);
+    border-radius: var(--sg-radius-sm);
     margin-bottom: 6px;
 }
 
 .freq-name {
     font-size: 12px;
-    color: var(--widget-text-muted);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .freq-value {
-    font-family: var(--font-mono);
+    font-family: var(--sg-font-data);
     font-size: 18px;
     font-weight: bold;
-    color: var(--widget-accent);
+    color: var(--sg-accent-green);
 }
 
 .freq-delete {
     background: none;
     border: none;
-    color: var(--widget-text-dim);
+    color: var(--sg-text-muted);
     cursor: pointer;
     padding: 4px;
     font-size: 12px;
 }
 
 .freq-delete:hover {
-    color: var(--widget-danger);
+    color: var(--sg-status-critical);
 }
 
 .freq-add {
@@ -152,15 +152,15 @@
 .freq-add input {
     flex: 1;
     padding: 8px 10px;
-    background: var(--widget-bg-tertiary);
-    border: 1px solid var(--widget-border);
-    border-radius: var(--widget-radius-sm);
-    color: var(--widget-text);
+    background: var(--sg-bg-header);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-primary);
     font-size: 13px;
 }
 
 .freq-add input::placeholder {
-    color: var(--widget-text-dim);
+    color: var(--sg-text-muted);
 }
 
 #freq-name {
@@ -169,14 +169,14 @@
 
 #freq-value {
     max-width: 80px;
-    font-family: var(--font-mono);
+    font-family: var(--sg-font-data);
 }
 
 .btn-add-freq {
     padding: 8px 14px;
-    background: var(--widget-accent);
+    background: var(--sg-accent-green);
     border: none;
-    border-radius: var(--widget-radius-sm);
+    border-radius: var(--sg-radius-sm);
     color: white;
     font-size: 16px;
     font-weight: bold;
@@ -185,14 +185,14 @@
 }
 
 .btn-add-freq:hover {
-    background: var(--widget-accent-hover);
+    background: var(--sg-accent-blue);
 }
 
 /* Timer Panel */
 .timer-section {
     text-align: center;
     padding: 15px 0;
-    border-bottom: 1px solid var(--widget-border);
+    border-bottom: 1px solid var(--sg-border-subtle);
 }
 
 .timer-section:last-child {
@@ -201,33 +201,33 @@
 
 .timer-label {
     font-size: 11px;
-    color: var(--widget-text-muted);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
 }
 
 .timer-display {
-    font-family: var(--font-display);
+    font-family: var(--sg-font-display);
     font-size: 32px;
     font-weight: bold;
     letter-spacing: 2px;
 }
 
 .timer-display.zulu {
-    color: var(--widget-accent);
+    color: var(--sg-accent-green);
 }
 
 .timer-display.flight {
-    color: var(--widget-success);
+    color: var(--sg-status-ok);
 }
 
 .timer-display.countdown {
-    color: var(--widget-warning);
+    color: var(--sg-status-caution);
 }
 
 .timer-display.countdown.warning {
-    color: var(--widget-danger);
+    color: var(--sg-status-critical);
     animation: timer-blink 0.5s ease-in-out infinite;
 }
 
@@ -245,17 +245,17 @@
 
 .timer-btn {
     padding: 6px 14px;
-    background: var(--widget-bg-secondary);
-    border: 1px solid var(--widget-border);
-    border-radius: var(--widget-radius-sm);
-    color: var(--widget-text);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-primary);
     font-size: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .timer-btn:hover {
-    border-color: var(--widget-accent);
+    border-color: var(--sg-accent-green);
 }
 
 .countdown-setup {
@@ -268,10 +268,10 @@
 .countdown-setup input {
     width: 60px;
     padding: 6px 8px;
-    background: var(--widget-bg-tertiary);
-    border: 1px solid var(--widget-border);
-    border-radius: var(--widget-radius-sm);
-    color: var(--widget-text);
+    background: var(--sg-bg-header);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-primary);
     font-size: 14px;
     text-align: center;
 }
@@ -288,12 +288,12 @@
 
 .ref-title {
     font-size: 12px;
-    color: var(--widget-text-muted);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 10px;
     padding-bottom: 6px;
-    border-bottom: 1px solid var(--widget-border);
+    border-bottom: 1px solid var(--sg-border-subtle);
 }
 
 .ref-grid {
@@ -306,22 +306,22 @@
     display: flex;
     flex-direction: column;
     padding: 8px;
-    background: var(--widget-bg-secondary);
-    border-radius: var(--widget-radius-sm);
+    background: var(--sg-bg-panel);
+    border-radius: var(--sg-radius-sm);
     text-align: center;
 }
 
 .ref-label {
     font-size: 10px;
-    color: var(--widget-text-muted);
+    color: var(--sg-text-secondary);
     text-transform: uppercase;
     margin-bottom: 2px;
 }
 
 .ref-value {
-    font-family: var(--font-mono);
+    font-family: var(--sg-font-data);
     font-size: 14px;
-    color: var(--widget-text);
+    color: var(--sg-text-primary);
     font-weight: bold;
 }
 

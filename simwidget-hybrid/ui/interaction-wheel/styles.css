@@ -9,8 +9,8 @@
 
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: radial-gradient(ellipse at center, var(--widget-bg, #1a1a2e) 0%, #0d0d1a 100%);
-    color: var(--widget-text, #e0e0e0);
+    background: radial-gradient(ellipse at center, var(--sg-bg-deep) 0%, #0d0d1a 100%);
+    color: var(--sg-text-primary);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -25,8 +25,8 @@ body {
     right: 15px;
     width: 44px;
     height: 44px;
-    background: var(--widget-bg-secondary, rgba(255,255,255,0.1));
-    border: 1px solid var(--widget-border, rgba(255,255,255,0.2));
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
     border-radius: 50%;
     font-size: 20px;
     cursor: pointer;
@@ -35,7 +35,7 @@ body {
 }
 
 .settings-btn:hover {
-    background: var(--widget-accent, #667eea);
+    background: var(--sg-accent-green);
     transform: rotate(45deg);
 }
 
@@ -128,7 +128,7 @@ body {
     background: linear-gradient(135deg, rgba(62, 62, 82, 0.95) 0%, rgba(42, 42, 62, 0.95) 100%);
     border-color: var(--segment-color, #00d4ff);
     transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 0 20px var(--segment-glow, rgba(0, 212, 255, 0.4));
+    box-shadow: 0 0 20px var(--segment-glow, rgba(0, 212, 255, 0.4);
 }
 
 .wheel-segment:active .segment-content {

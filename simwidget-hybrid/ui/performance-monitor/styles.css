@@ -2,8 +2,8 @@
 
 .widget-container {
     padding: 15px;
-    background: var(--widget-bg, #1a1a2e);
-    color: var(--widget-text, #e0e0e0);
+    background: var(--sg-bg-deep);
+    color: var(--sg-text-primary);
     min-height: 100vh;
 }
 
@@ -13,13 +13,13 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 2px solid var(--widget-accent, #667eea);
+    border-bottom: 2px solid var(--sg-accent-green);
 }
 
 .widget-title {
     font-size: 18px;
     font-weight: bold;
-    color: var(--widget-accent, #667eea);
+    color: var(--sg-accent-green);
 }
 
 .btn-reset {

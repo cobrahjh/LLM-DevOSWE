@@ -5,7 +5,7 @@
 
 #acw-root .acw {
     font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(145deg, rgba(15,23,42,0.97), rgba(30,41,59,0.95));
+    background: linear-gradient(145deg, rgba(15,23,42,0.97), rgba(30,41,59,0.95);
     border: 1px solid rgba(100,200,255,0.2);
     border-radius: 10px;
     padding: 14px;
@@ -566,7 +566,7 @@
 }
 
 #acw-root .designer-save-btn {
-    background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(234,88,12,0.3));
+    background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(234,88,12,0.3);
     border: 1px solid rgba(245,158,11,0.5);
     color: #fcd34d;
     padding: 10px 24px;
@@ -576,7 +576,7 @@
     cursor: pointer;
 }
 #acw-root .designer-save-btn:hover {
-    background: linear-gradient(135deg, rgba(245,158,11,0.5), rgba(234,88,12,0.5));
+    background: linear-gradient(135deg, rgba(245,158,11,0.5), rgba(234,88,12,0.5);
     border-color: rgba(245,158,11,0.8);
 }
 

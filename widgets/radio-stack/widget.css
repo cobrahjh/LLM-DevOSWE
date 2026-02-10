@@ -9,19 +9,19 @@
 
 /* Radio Section */
 .rs-radio {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
-    padding: var(--sw-space-sm);
-    margin-bottom: var(--sw-space-sm);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
+    padding: var(--sg-space-sm);
+    margin-bottom: var(--sg-space-sm);
 }
 
 .rs-radio:last-of-type {
-    margin-bottom: var(--sw-space-sm);
+    margin-bottom: var(--sg-space-sm);
 }
 
 .rs-nav {
-    border-left: 3px solid var(--sw-accent-green);
+    border-left: 3px solid var(--sg-accent-green);
 }
 
 /* Radio Header */
@@ -29,13 +29,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--sw-space-xs);
+    margin-bottom: var(--sg-space-xs);
 }
 
 .rs-radio-label {
-    font-size: var(--sw-text-sm);
+    font-size: var(--sg-text-sm);
     font-weight: 700;
-    color: var(--sw-accent-cyan);
+    color: var(--sg-accent-cyan);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -43,19 +43,19 @@
 .rs-swap-btn {
     width: 32px;
     height: 24px;
-    background: var(--sw-bg-secondary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
-    color: var(--sw-text-primary);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-primary);
     font-size: 14px;
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .rs-swap-btn:hover {
-    background: var(--sw-accent-cyan);
-    color: var(--sw-bg-primary);
-    border-color: var(--sw-accent-cyan);
+    background: var(--sg-accent-cyan);
+    color: var(--sg-bg-deep);
+    border-color: var(--sg-accent-cyan);
 }
 
 .rs-swap-btn:active {
@@ -65,46 +65,46 @@
 /* Frequency Row */
 .rs-freq-row {
     display: flex;
-    gap: var(--sw-space-sm);
-    margin-bottom: var(--sw-space-xs);
+    gap: var(--sg-space-sm);
+    margin-bottom: var(--sg-space-xs);
 }
 
 .rs-freq {
     flex: 1;
     text-align: center;
-    padding: var(--sw-space-xs);
-    border-radius: var(--sw-radius-sm);
+    padding: var(--sg-space-xs);
+    border-radius: var(--sg-radius-sm);
     background: rgba(0, 0, 0, 0.3);
 }
 
 .rs-freq.active {
     background: rgba(0, 255, 136, 0.1);
-    border: 1px solid var(--sw-accent-green);
+    border: 1px solid var(--sg-accent-green);
 }
 
 .rs-freq.standby {
     background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--sw-border-subtle);
+    border: 1px solid var(--sg-border-subtle);
 }
 
 .rs-freq-value {
     display: block;
-    font-size: var(--sw-text-xl);
+    font-size: var(--sg-text-xl);
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-primary);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-primary);
     letter-spacing: 1px;
 }
 
 .rs-freq.active .rs-freq-value {
-    color: var(--sw-accent-green);
-    text-shadow: 0 0 10px var(--sw-accent-green);
+    color: var(--sg-accent-green);
+    text-shadow: 0 0 10px var(--sg-accent-green);
 }
 
 .rs-freq-label {
     display: block;
-    font-size: var(--sw-text-xs);
-    color: var(--sw-text-dim);
+    font-size: var(--sg-text-xs);
+    color: var(--sg-text-dim);
     margin-top: 2px;
 }
 
@@ -112,7 +112,7 @@
 .rs-tuner {
     display: flex;
     justify-content: center;
-    gap: var(--sw-space-md);
+    gap: var(--sg-space-md);
 }
 
 .rs-tune-group {
@@ -125,18 +125,18 @@
 .rs-tune-btn {
     width: 36px;
     height: 28px;
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
-    color: var(--sw-text-primary);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-primary);
     font-size: 12px;
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .rs-tune-btn:hover {
-    border-color: var(--sw-accent-cyan);
-    color: var(--sw-accent-cyan);
+    border-color: var(--sg-accent-cyan);
+    color: var(--sg-accent-cyan);
 }
 
 .rs-tune-btn:active {
@@ -145,8 +145,8 @@
 }
 
 .rs-tune-label {
-    font-size: var(--sw-text-xs);
-    color: var(--sw-text-dim);
+    font-size: var(--sg-text-xs);
+    color: var(--sg-text-dim);
     text-transform: uppercase;
 }
 
@@ -155,21 +155,21 @@
    =========================================== */
 
 .rs-xpdr {
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
-    padding: var(--sw-space-sm);
-    border-left: 3px solid var(--sw-accent-yellow);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
+    padding: var(--sg-space-sm);
+    border-left: 3px solid var(--sg-accent-yellow);
 }
 
 .rs-xpdr .rs-radio-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--sw-space-xs);
+    gap: var(--sg-space-xs);
 }
 
 .rs-xpdr .rs-radio-label {
-    color: var(--sw-accent-yellow);
+    color: var(--sg-accent-yellow);
 }
 
 /* Mode Buttons */
@@ -182,32 +182,32 @@
 .rs-mode-btn {
     flex: 1;
     padding: 6px 8px;
-    background: var(--sw-bg-secondary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
-    color: var(--sw-text-secondary);
-    font-size: var(--sw-text-xs);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-secondary);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .rs-mode-btn:hover {
-    border-color: var(--sw-text-dim);
+    border-color: var(--sg-text-dim);
 }
 
 .rs-mode-btn.active {
     background: rgba(234, 179, 8, 0.2);
-    border-color: var(--sw-accent-yellow);
-    color: var(--sw-accent-yellow);
+    border-color: var(--sg-accent-yellow);
+    color: var(--sg-accent-yellow);
 }
 
 /* Code Digits */
 .rs-xpdr-code {
     display: flex;
     justify-content: center;
-    gap: var(--sw-space-xs);
-    margin: var(--sw-space-sm) 0;
+    gap: var(--sg-space-xs);
+    margin: var(--sg-space-sm) 0;
 }
 
 .rs-code-digit {
@@ -220,18 +220,18 @@
 .rs-code-btn {
     width: 36px;
     height: 24px;
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
-    color: var(--sw-text-primary);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-primary);
     font-size: 10px;
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .rs-code-btn:hover {
-    border-color: var(--sw-accent-yellow);
-    color: var(--sw-accent-yellow);
+    border-color: var(--sg-accent-yellow);
+    color: var(--sg-accent-yellow);
 }
 
 .rs-code-btn:active {
@@ -239,16 +239,16 @@
 }
 
 .rs-code-val {
-    font-size: var(--sw-text-2xl);
+    font-size: var(--sg-text-2xl);
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-yellow);
-    text-shadow: 0 0 8px var(--sw-accent-yellow);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-yellow);
+    text-shadow: 0 0 8px var(--sg-accent-yellow);
     min-width: 36px;
     text-align: center;
     padding: 4px 0;
     background: rgba(0, 0, 0, 0.4);
-    border-radius: var(--sw-radius-sm);
+    border-radius: var(--sg-radius-sm);
 }
 
 /* Presets */
@@ -260,34 +260,34 @@
 .rs-preset-btn {
     flex: 1;
     padding: 8px 4px;
-    background: var(--sw-bg-secondary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
-    color: var(--sw-text-secondary);
-    font-size: var(--sw-text-xs);
+    background: var(--sg-bg-panel);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-secondary);
+    font-size: var(--sg-text-xs);
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .rs-preset-btn:hover {
-    border-color: var(--sw-text-dim);
-    color: var(--sw-text-primary);
+    border-color: var(--sg-text-dim);
+    color: var(--sg-text-primary);
 }
 
 .rs-preset-btn[data-code="7500"]:hover {
-    border-color: var(--sw-accent-orange);
-    color: var(--sw-accent-orange);
+    border-color: var(--sg-accent-amber);
+    color: var(--sg-accent-amber);
 }
 
 .rs-preset-btn[data-code="7600"]:hover {
-    border-color: var(--sw-accent-cyan);
-    color: var(--sw-accent-cyan);
+    border-color: var(--sg-accent-cyan);
+    color: var(--sg-accent-cyan);
 }
 
 .rs-preset-btn[data-code="7700"]:hover {
-    border-color: var(--sw-accent-red);
-    color: var(--sw-accent-red);
+    border-color: var(--sg-accent-red);
+    color: var(--sg-accent-red);
     background: rgba(239, 68, 68, 0.1);
 }
 
@@ -297,14 +297,14 @@
 
 @container widget (max-width: 280px) {
     .rs-freq-value {
-        font-size: var(--sw-text-lg);
+        font-size: var(--sg-text-lg);
     }
     .rs-tune-btn {
         width: 30px;
         height: 24px;
     }
     .rs-code-val {
-        font-size: var(--sw-text-xl);
+        font-size: var(--sg-text-xl);
         min-width: 30px;
     }
     .rs-code-btn {
@@ -314,7 +314,7 @@
 
 @container widget (min-width: 360px) {
     .rs-freq-value {
-        font-size: var(--sw-text-2xl);
+        font-size: var(--sg-text-2xl);
     }
     .rs-tune-btn {
         width: 44px;

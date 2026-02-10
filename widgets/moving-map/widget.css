@@ -12,31 +12,31 @@
     padding: 2px 6px;
     font-size: 9px;
     font-weight: 600;
-    color: var(--sw-text-muted);
+    color: var(--sg-text-muted);
     background: transparent;
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .mm-range-btn:hover {
-    color: var(--sw-text-primary);
-    border-color: var(--sw-border-medium);
+    color: var(--sg-text-primary);
+    border-color: var(--sg-border-medium);
 }
 
 .mm-range-btn.active {
     background: rgba(0, 212, 255, 0.15);
-    border-color: var(--sw-accent-cyan);
-    color: var(--sw-accent-cyan);
+    border-color: var(--sg-accent-cyan);
+    color: var(--sg-accent-cyan);
 }
 
 /* Map Container */
 .mm-map-container {
     position: relative;
     background: rgba(0, 20, 40, 0.9);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     overflow: hidden;
     margin-bottom: 10px;
 }
@@ -55,20 +55,20 @@
     padding: 2px 8px;
     font-size: 12px;
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-accent-cyan);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-cyan);
     background: rgba(0, 20, 40, 0.8);
-    border: 1px solid var(--sw-accent-cyan);
-    border-radius: var(--sw-radius-sm);
+    border: 1px solid var(--sg-accent-cyan);
+    border-radius: var(--sg-radius-sm);
 }
 
 /* Info Bar */
 .mm-info-bar {
     display: flex;
     justify-content: space-around;
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-md);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius);
     padding: 8px;
     margin-bottom: 10px;
 }
@@ -82,19 +82,19 @@
 .mm-info-label {
     font-size: 9px;
     font-weight: 600;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
 }
 
 .mm-info-value {
     font-size: 14px;
     font-weight: 700;
-    font-family: var(--sw-font-mono);
-    color: var(--sw-text-primary);
+    font-family: var(--sg-font-data);
+    color: var(--sg-text-primary);
 }
 
 .mm-info-unit {
     font-size: 9px;
-    color: var(--sw-text-dim);
+    color: var(--sg-text-dim);
 }
 
 /* Mode Buttons */
@@ -109,21 +109,21 @@
     padding: 6px 12px;
     font-size: 10px;
     font-weight: 600;
-    color: var(--sw-text-muted);
-    background: var(--sw-bg-tertiary);
-    border: 1px solid var(--sw-border-subtle);
-    border-radius: var(--sw-radius-sm);
+    color: var(--sg-text-muted);
+    background: var(--sg-bg-card);
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
     cursor: pointer;
-    transition: all var(--sw-transition-fast);
+    transition: all var(--sg-transition-fast);
 }
 
 .mm-mode-btn:hover {
-    color: var(--sw-text-primary);
-    border-color: var(--sw-border-medium);
+    color: var(--sg-text-primary);
+    border-color: var(--sg-border-medium);
 }
 
 .mm-mode-btn.active {
     background: rgba(0, 212, 255, 0.15);
-    border-color: var(--sw-accent-cyan);
-    color: var(--sw-accent-cyan);
+    border-color: var(--sg-accent-cyan);
+    color: var(--sg-accent-cyan);
 }
