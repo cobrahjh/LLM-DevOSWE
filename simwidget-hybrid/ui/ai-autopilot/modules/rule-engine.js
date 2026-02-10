@@ -30,6 +30,12 @@ class RuleEngine {
         // Airport/runway awareness
         this._airportData = null;  // { icao, name, elevation, runways[], distance, bearing }
         this._activeRunway = null; // { id, heading, length } — best match for current heading+wind
+
+        // Flight envelope monitoring
+        this._envelopeAlert = null;   // null | 'BANK' | 'STALL' | 'OVERSPEED' | 'PITCH'
+        this._lastEnvelopeLog = 0;    // throttle debug logging
+        this._bankCorrectionActive = false;
+        this._speedCorrectionActive = false;
     }
 
     /**
@@ -53,8 +59,9 @@ class RuleEngine {
             this._runwayHeading = null;
         }
 
-        // Terrain awareness check for airborne phases
+        // Continuous flight envelope monitoring (every frame, not just phase changes)
         if (phase !== 'PREFLIGHT' && phase !== 'TAXI') {
+            this._monitorFlightEnvelope(d, apState, phase);
             this._checkTerrain(d, apState, phase);
         }
 
@@ -268,6 +275,169 @@ class RuleEngine {
     }
 
     /**
+     * Continuous flight envelope monitoring — runs EVERY evaluation cycle.
+     * Monitors bank angle, airspeed, pitch, VS, and altitude deviations.
+     * C172-specific limits applied from aircraft profile.
+     */
+    _monitorFlightEnvelope(d, apState, phase) {
+        if (!this.profile) return;
+        const p = this.profile;
+        const speeds = p.speeds;
+        const limits = p.limits || {};
+
+        const bank = d.bank || 0;           // degrees (positive = right)
+        const pitch = d.pitch || 0;         // degrees (positive = nose up)
+        const ias = d.speed || 0;           // KIAS
+        const vs = d.verticalSpeed || 0;    // fpm
+        const alt = d.altitude || 0;        // MSL
+        const agl = d.altitudeAGL || 0;
+        const onGround = d.onGround !== false;
+        const absBank = Math.abs(bank);
+
+        // Skip ground phases
+        if (onGround) return;
+
+        const now = Date.now();
+        let alert = null;
+
+        // ── BANK ANGLE PROTECTION ──
+        // C172 AP max bank: 20° (from profile). Anything over 25° is dangerous.
+        // Over 30° = immediate correction. Over 45° = emergency wings-level.
+        const maxBank = limits.maxBank || 25;
+        const dangerBank = limits.dangerBank || 35;
+        const criticalBank = limits.criticalBank || 45;
+
+        if (absBank > criticalBank) {
+            // Emergency: extreme bank — wings level immediately
+            alert = 'BANK';
+            if (apState.master) {
+                // AP is on but failing to hold wings level — re-command heading
+                this._cmdValue('HEADING_BUG_SET', Math.round(d.heading || 0), `BANK ${Math.round(bank)}° — wings level`);
+                this._cmd('AP_HDG_HOLD', true, 'HDG hold — bank recovery');
+                // Reduce VS if in a steep descending turn
+                if (vs < -500) {
+                    this._cmdValue('AP_VS_VAR_SET', 0, 'Level off — bank recovery');
+                }
+            }
+            this._bankCorrectionActive = true;
+        } else if (absBank > dangerBank) {
+            // Dangerous bank — command shallower turn
+            alert = 'BANK';
+            if (apState.master && apState.headingHold) {
+                // AP heading hold is allowing too much bank — nudge heading bug closer to current heading
+                const targetHdg = d.apHdgSet || d.heading || 0;
+                const currentHdg = d.heading || 0;
+                const hdgDiff = ((targetHdg - currentHdg + 540) % 360) - 180;
+                // Reduce the heading change to limit bank angle
+                if (Math.abs(hdgDiff) > 10) {
+                    const reducedHdg = (currentHdg + hdgDiff * 0.5 + 360) % 360;
+                    this._cmdValue('HEADING_BUG_SET', Math.round(reducedHdg), `Reduce turn — bank ${Math.round(absBank)}°`);
+                }
+            }
+            this._bankCorrectionActive = true;
+        } else if (absBank > maxBank && apState.master) {
+            // Slightly over limit — AP should be handling it, just log
+            if (now - this._lastEnvelopeLog > 5000) {
+                this._lastEnvelopeLog = now;
+            }
+            this._bankCorrectionActive = true;
+        } else {
+            this._bankCorrectionActive = false;
+        }
+
+        // ── AIRSPEED PROTECTION ──
+        // Stall margin: warn at Vs1+10, protect at Vs1+5
+        // Overspeed: warn at Vno, protect at Vne-5
+        const stallClean = speeds.Vs1 || 53;
+        const stallFlaps = speeds.Vs0 || 48;
+        const stallSpeed = (d.flapsIndex > 0) ? stallFlaps : stallClean;
+        const stallWarn = stallSpeed + 10;     // warning threshold
+        const stallProtect = stallSpeed + 5;   // hard protection
+        const vno = speeds.Vno || 129;
+        const vne = speeds.Vne || 163;
+
+        if (ias > 0 && ias < stallProtect && !onGround && phase !== 'TAKEOFF') {
+            // Stall protection — pitch down and add power
+            alert = 'STALL';
+            this._cmdValue('THROTTLE_SET', 100, `STALL: full power (IAS ${Math.round(ias)} < ${stallProtect})`);
+            if (apState.master) {
+                // Reduce pitch / lower nose
+                this._cmdValue('AP_VS_VAR_SET', -200, 'STALL: nose down');
+                this._cmd('AP_VS_HOLD', true, 'STALL: VS hold recovery');
+            }
+            this._speedCorrectionActive = true;
+        } else if (ias > 0 && ias < stallWarn && !onGround && phase !== 'TAKEOFF') {
+            // Approaching stall — increase power, reduce VS
+            if (vs < -300) {
+                this._cmdValue('AP_VS_VAR_SET', Math.min(vs + 200, 0), `Low IAS ${Math.round(ias)} — reduce descent`);
+            }
+            this._speedCorrectionActive = true;
+        } else if (ias > vne - 5) {
+            // Near Vne — reduce power and increase pitch
+            alert = 'OVERSPEED';
+            this._cmdValue('THROTTLE_SET', 50, `OVERSPEED: reduce power (IAS ${Math.round(ias)} near Vne ${vne})`);
+            if (apState.master && vs < -200) {
+                this._cmdValue('AP_VS_VAR_SET', Math.min(vs + 500, 0), 'OVERSPEED: reduce descent rate');
+            }
+            this._speedCorrectionActive = true;
+        } else if (ias > vno && phase !== 'DESCENT') {
+            // Over Vno in non-descent phase — reduce power
+            this._cmdValue('THROTTLE_SET', 70, `IAS ${Math.round(ias)} > Vno ${vno} — reduce power`);
+            this._speedCorrectionActive = true;
+        } else {
+            this._speedCorrectionActive = false;
+        }
+
+        // ── PITCH MONITORING ──
+        const maxPitchUp = limits.maxPitchUp || 20;
+        const maxPitchDown = limits.maxPitchDown || -15;
+
+        if (pitch > maxPitchUp && !onGround) {
+            // Excessive nose-up — risk of stall
+            alert = alert || 'PITCH';
+            if (apState.master) {
+                this._cmdValue('AP_VS_VAR_SET', Math.min(vs, 500), `Pitch ${Math.round(pitch)}° — reduce climb`);
+            }
+        } else if (pitch < maxPitchDown && !onGround) {
+            // Excessive nose-down — risk of overspeed/CFIT
+            alert = alert || 'PITCH';
+            if (apState.master) {
+                this._cmdValue('AP_VS_VAR_SET', Math.max(vs, -300), `Pitch ${Math.round(pitch)}° — reduce descent`);
+            }
+        }
+
+        // ── VS LIMITS ──
+        // C172 should not sustain extreme vertical speeds
+        const maxVs = limits.maxVs || 1000;
+        const minVs = limits.minVs || -1500;
+
+        if (vs > maxVs + 200 && apState.master && phase !== 'TAKEOFF') {
+            this._cmdValue('AP_VS_VAR_SET', maxVs, `VS ${Math.round(vs)} > max ${maxVs} — limiting`);
+        } else if (vs < minVs - 200 && apState.master) {
+            this._cmdValue('AP_VS_VAR_SET', minVs, `VS ${Math.round(vs)} < min ${minVs} — limiting`);
+        }
+
+        // ── ALTITUDE DEVIATION (when AP ALT hold should be active) ──
+        if (apState.master && apState.altitudeHold && phase === 'CRUISE') {
+            const targetAlt = d.apAltSet || this._getCruiseAlt();
+            const altDev = Math.abs(alt - targetAlt);
+            if (altDev > 200) {
+                // Drifting off target altitude — re-engage
+                const correctVs = alt < targetAlt ? 300 : -300;
+                this._cmdValue('AP_VS_VAR_SET', correctVs, `ALT deviation ${Math.round(altDev)}ft — correcting`);
+                this._cmd('AP_VS_HOLD', true, 'ALT correction VS hold');
+            }
+        }
+
+        this._envelopeAlert = alert;
+    }
+
+    /** Get current envelope alert (for display) */
+    getEnvelopeAlert() {
+        return this._envelopeAlert;
+    }
+
+    /**
      * Check terrain ahead and react if necessary.
      * Called from evaluate() during airborne phases.
      * Uses look-ahead along current heading to detect rising terrain.
@@ -445,6 +615,9 @@ class RuleEngine {
         this._externalTerrainAlert = null;
         this._airportData = null;
         this._activeRunway = null;
+        this._envelopeAlert = null;
+        this._bankCorrectionActive = false;
+        this._speedCorrectionActive = false;
     }
 
     /** Update aircraft profile */

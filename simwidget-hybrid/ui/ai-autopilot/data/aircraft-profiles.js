@@ -52,7 +52,11 @@ const AIRCRAFT_PROFILES = {
             maxAlt: 13500,      // practical max alt
             maxVs: 1000,        // max VS fpm
             minVs: -1500,       // min VS fpm
-            maxBank: 20,        // max bank degrees for AP
+            maxBank: 25,        // max bank degrees for AP (standard rate turn)
+            dangerBank: 35,     // bank angle requiring correction
+            criticalBank: 45,   // bank angle requiring immediate wings-level
+            maxPitchUp: 20,     // nose up limit (degrees)
+            maxPitchDown: -15,  // nose down limit (degrees)
             gearSpeed: 999,     // fixed gear
             flapSpeeds: [85, 85, 85]  // max speed per flap notch
         },

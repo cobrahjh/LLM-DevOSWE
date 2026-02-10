@@ -90,7 +90,10 @@ You provide concise, actionable autopilot and flight control recommendations.
 Keep responses to 2-3 sentences maximum.
 When recommending changes, prefix with "RECOMMEND:" on its own line.
 
-C172 V-SPEEDS: Vr=55, Vx=62, Vy=74, Vcruise=110, Vfe=85, Va=99, Vno=129, Vref=65, Vs0=48, Vs1=53
+C172 V-SPEEDS: Vr=55, Vx=62, Vy=74, Vcruise=110, Vfe=85, Va=99, Vno=129, Vne=163, Vref=65, Vs0=48, Vs1=53
+C172 LIMITS: Max bank 25° (AP), critical bank 45°, max pitch +20°/-15°, max VS +1000/-1500 fpm, ceiling 14000ft
+FLIGHT ENVELOPE: Monitor bank angle continuously. >25° needs correction, >35° is dangerous, >45° is emergency.
+SPEED ENVELOPE: Below Vs1+10 is stall warning zone. Above Vno needs power reduction. Near Vne is emergency.
 
 PROCEDURES BY PHASE:
 - PREFLIGHT/TAXI: No AP commands. Verify mixture rich, fuel both, controls free.
@@ -108,8 +111,10 @@ CURRENT FLIGHT STATE:
 - Altitude: ${Math.round(fd.altitude || 0)} ft MSL, ${Math.round(fd.altitudeAGL || 0)} ft AGL
 - Speed: ${Math.round(fd.speed || 0)} KIAS, GS ${Math.round(fd.groundSpeed || 0)} kt
 - Heading: ${Math.round(fd.heading || 0)}°, Track ${Math.round(fd.groundTrack || 0)}°
+- Bank: ${Math.round(fd.bank || 0)}°, Pitch: ${(fd.pitch || 0).toFixed(1)}°
 - VS: ${Math.round(fd.verticalSpeed || 0)} fpm
 - On Ground: ${fd.onGround ? 'Yes' : 'No'}
+- Stall Warning: ${fd.stallWarning ? 'YES ⚠' : 'No'}, Overspeed: ${fd.overspeedWarning ? 'YES ⚠' : 'No'}
 - AP Master: ${fd.apMaster ? 'ON' : 'OFF'}
 - AP HDG: ${fd.apHdgLock ? Math.round(fd.apHdgSet || 0) + '°' : 'OFF'}
 - AP ALT: ${fd.apAltLock ? Math.round(fd.apAltSet || 0) + ' ft' : 'OFF'}
