@@ -1,7 +1,8 @@
 /**
- * CockpitFX Pane v2.0.0 — Compact avionics-style (320x200)
+ * CockpitFX Pane v2.2.0 — Compact avionics-style (320x200)
  * Canvas G-force ball, corner overlays, softkey controls.
- * Audio layers unchanged from v1.
+ * v2.1: Async sample loading for engine/mechanical/ground layers.
+ * v2.2: Per-layer volume/bass — LYRS selects layer, sliders follow.
  */
 class CockpitFxPane extends SimGlassBase {
     constructor() {
@@ -12,9 +13,14 @@ class CockpitFxPane extends SimGlassBase {
         this._layers = {};
         this._layerNames = ['engine', 'aero', 'ground', 'mechanical', 'environment', 'warning'];
         this._layerVols = { engine: 70, aero: 60, ground: 70, mechanical: 55, environment: 40, warning: 100 };
+        this._layerBass = { engine: 0, aero: 0, ground: 0, mechanical: 0, environment: 0, warning: 0 };
         this._layerEnabled = { engine: true, aero: true, ground: true, mechanical: true, environment: true, warning: true };
-        this._layerCycleIdx = 0;
+        // LYRS selection: -1 = MSTR, 0-5 = individual layers
+        this._selectedLayerIdx = -1;
+        this._layerShort = ['ENG', 'AERO', 'GND', 'MECH', 'ENV', 'WARN'];
         this._lastData = {};
+        this._masterVol = 80;
+        this._bassVol = 0;
         this._bassFreq = 120;
         this._raf = null;
         this._prevGS = undefined;
@@ -49,8 +55,10 @@ class CockpitFxPane extends SimGlassBase {
             yaw: document.getElementById('cfx-yaw'),
             turb: document.getElementById('cfx-turb'),
             profileBadge: document.getElementById('cfx-profile-badge'),
+            volLabel: document.querySelector('.cfx-strip .cfx-strip-lbl'),
             masterSlider: document.getElementById('fx-master-vol'),
             masterPct: document.getElementById('fx-master-pct'),
+            bassLblEl: document.querySelectorAll('.cfx-strip .cfx-strip-lbl')[1],
             bassVolSlider: document.getElementById('fx-bass-vol'),
             bassVolLabel: document.getElementById('fx-bass-vol-val'),
             bassSlider: document.getElementById('fx-bass-freq'),
@@ -243,9 +251,22 @@ class CockpitFxPane extends SimGlassBase {
 
     // --- UI bindings ---
     _bindUI() {
-        // Power softkey
-        this.el.skPower.addEventListener('click', () => {
-            if (!this.audioEngine) this._initAudio();
+        // Power softkey (async — samples need to load on first click)
+        this._audioLoading = false;
+        this.el.skPower.addEventListener('click', async () => {
+            if (this._audioLoading) return; // ignore clicks while loading
+            if (!this.audioEngine) {
+                this._audioLoading = true;
+                this.el.skPower.textContent = 'LOAD';
+                this.el.skPower.classList.add('loading');
+                try {
+                    await this._initAudio();
+                } catch (e) {
+                    console.warn('[CockpitFX] Audio init failed:', e);
+                }
+                this._audioLoading = false;
+                this.el.skPower.classList.remove('loading');
+            }
             this.enabled = !this.enabled;
             this.el.skPower.textContent = this.enabled ? 'ON' : 'OFF';
             this.el.skPower.classList.toggle('active', this.enabled);
@@ -279,16 +300,24 @@ class CockpitFxPane extends SimGlassBase {
             this._saveSettings();
         });
 
-        // Layers softkey — cycle through layers toggling on/off
+        // Layers softkey — click cycles selection, right-click toggles on/off
         this.el.skLayers.addEventListener('click', () => {
-            const name = this._layerNames[this._layerCycleIdx];
+            // Cycle: MSTR(-1) → ENG(0) → AERO(1) → ... → WARN(5) → MSTR(-1)
+            this._selectedLayerIdx++;
+            if (this._selectedLayerIdx > 5) this._selectedLayerIdx = -1;
+            this._updateSliders();
+            const label = this._selectedLayerIdx === -1 ? 'MSTR' : this._layerShort[this._selectedLayerIdx];
+            this.el.skLayers.textContent = label;
+        });
+        this.el.skLayers.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (this._selectedLayerIdx < 0) return; // can't toggle master
+            const name = this._layerNames[this._selectedLayerIdx];
             this._layerEnabled[name] = !this._layerEnabled[name];
             if (this._layers[name]) this._layers[name].setEnabled(this._layerEnabled[name]);
-            // Flash the softkey text to show which layer was toggled
-            const short = ['ENG', 'AERO', 'GND', 'MECH', 'ENV', 'WARN'][this._layerCycleIdx];
+            const short = this._layerShort[this._selectedLayerIdx];
             this.el.skLayers.textContent = short + (this._layerEnabled[name] ? '+' : '-');
-            this._layerCycleIdx = (this._layerCycleIdx + 1) % this._layerNames.length;
-            setTimeout(() => { this.el.skLayers.textContent = 'LYRS'; }, 800);
+            setTimeout(() => { this.el.skLayers.textContent = short; }, 600);
             this._saveSettings();
         });
 
@@ -315,21 +344,61 @@ class CockpitFxPane extends SimGlassBase {
             this._saveSettings();
         });
 
-        // Master volume slider
+        // VOL slider — controls master or selected layer
         this.el.masterSlider.addEventListener('input', () => {
-            const v = this.el.masterSlider.value / 100;
-            this.el.masterPct.textContent = this.el.masterSlider.value;
-            if (this.audioEngine) this.audioEngine.setMasterVolume(v);
+            const val = parseInt(this.el.masterSlider.value);
+            this.el.masterPct.textContent = val;
+            if (this._selectedLayerIdx === -1) {
+                // Master mode
+                if (this.audioEngine) this.audioEngine.setMasterVolume(val / 100);
+                this._masterVol = val;
+            } else {
+                // Per-layer mode
+                const name = this._layerNames[this._selectedLayerIdx];
+                this._layerVols[name] = val;
+                if (this._layers[name]) this._layers[name].setVolume(val / 100);
+            }
             this._saveSettings();
         });
 
-        // Bass volume slider
+        // BASS slider — controls bass shaker or selected layer bass
         this.el.bassVolSlider.addEventListener('input', () => {
-            const v = this.el.bassVolSlider.value / 100;
-            this.el.bassVolLabel.textContent = this.el.bassVolSlider.value;
-            if (this.audioEngine) this.audioEngine.setBassVolume(v);
+            const val = parseInt(this.el.bassVolSlider.value);
+            this.el.bassVolLabel.textContent = val;
+            if (this._selectedLayerIdx === -1) {
+                // Master bass shaker
+                if (this.audioEngine) this.audioEngine.setBassVolume(val / 100);
+                this._bassVol = val;
+            } else {
+                // Per-layer bass
+                const name = this._layerNames[this._selectedLayerIdx];
+                this._layerBass[name] = val;
+            }
             this._saveSettings();
         });
+    }
+
+    /** Update sliders and labels to reflect selected layer or master */
+    _updateSliders() {
+        if (this._selectedLayerIdx === -1) {
+            // Master mode
+            if (this.el.volLabel) this.el.volLabel.textContent = 'VOL';
+            if (this.el.bassLblEl) this.el.bassLblEl.textContent = 'BASS';
+            this.el.masterSlider.value = this._masterVol !== undefined ? this._masterVol : this.el.masterSlider.value;
+            this.el.masterPct.textContent = this.el.masterSlider.value;
+            this.el.bassVolSlider.value = this._bassVol !== undefined ? this._bassVol : this.el.bassVolSlider.value;
+            this.el.bassVolLabel.textContent = this.el.bassVolSlider.value;
+        } else {
+            // Per-layer mode
+            const name = this._layerNames[this._selectedLayerIdx];
+            const short = this._layerShort[this._selectedLayerIdx];
+            if (this.el.volLabel) this.el.volLabel.textContent = short;
+            if (this.el.bassLblEl) this.el.bassLblEl.textContent = short + ' B';
+            this.el.masterSlider.value = this._layerVols[name];
+            this.el.masterPct.textContent = this._layerVols[name];
+            this.el.bassVolSlider.value = this._layerBass[name];
+            this.el.bassVolLabel.textContent = this._layerBass[name];
+        }
     }
 
     _updateProfileBadge() {
@@ -338,9 +407,25 @@ class CockpitFxPane extends SimGlassBase {
         if (this.el.skProfile) this.el.skProfile.textContent = this._profileShort[this.profile] || 'PROF';
     }
 
-    // --- Audio Init ---
-    _initAudio() {
+    // --- Audio Init (async — loads samples before creating layers) ---
+    async _initAudio() {
         this.audioEngine = new AudioEngine();
+
+        // Load samples (non-blocking — layers fall back to synthesis if any fail)
+        await this.audioEngine.loadSamples({
+            'engine':         'samples/engine.ogg',
+            'engine-idle':    'samples/engine-idle.ogg',
+            'engine-start':   'samples/engine-start.ogg',
+            'engine-crank':   'samples/engine-crank.ogg',
+            'flaps-motor':    'samples/flaps-motor.ogg',
+            'flaps-click':    'samples/flaps-click.ogg',
+            'trim':           'samples/trim.ogg',
+            'tires-asphalt':  'samples/tires-rolling-asphalt.ogg',
+            'tires-gravel':   'samples/tires-rolling-gravel.ogg',
+            'tire-screech':   'samples/tires-screech-asphalt.ogg',
+            'ap-disconnect':  'samples/kap140-disengage.ogg'
+        });
+
         const p = COCKPIT_FX_PROFILES[this.profile] || COCKPIT_FX_PROFILES['ga-single-piston'];
 
         this._layers.engine = new EngineLayer(this.audioEngine, p);
@@ -356,9 +441,9 @@ class CockpitFxPane extends SimGlassBase {
             this._layers[name].setEnabled(this._layerEnabled[name]);
         }
 
-        this.audioEngine.setMasterVolume(this.el.masterSlider.value / 100);
+        this.audioEngine.setMasterVolume(this._masterVol / 100);
         this.audioEngine.setBassFrequency(this._bassFreq);
-        this.audioEngine.setBassVolume(this.el.bassVolSlider.value / 100);
+        this.audioEngine.setBassVolume(this._bassVol / 100);
     }
 
     _applyProfile() {
@@ -470,10 +555,11 @@ class CockpitFxPane extends SimGlassBase {
     // --- Settings Persistence ---
     _saveSettings() {
         const s = {
-            masterVol: this.el.masterSlider.value,
+            masterVol: this._masterVol !== undefined ? this._masterVol : 80,
             bassFreq: this._bassFreq,
-            bassVol: this.el.bassVolSlider.value,
+            bassVol: this._bassVol !== undefined ? this._bassVol : 0,
             layerVols: this._layerVols,
+            layerBass: this._layerBass,
             layerEnabled: this._layerEnabled,
             profile: this.profile,
             shakeEnabled: this.shakeEngine ? this.shakeEngine.enabled : false,
@@ -487,19 +573,22 @@ class CockpitFxPane extends SimGlassBase {
         if (!raw) return;
         try {
             const s = JSON.parse(raw);
-            if (s.masterVol) {
-                this.el.masterSlider.value = s.masterVol;
-                this.el.masterPct.textContent = s.masterVol;
+            if (s.masterVol !== undefined) {
+                this._masterVol = parseInt(s.masterVol);
+                this.el.masterSlider.value = this._masterVol;
+                this.el.masterPct.textContent = this._masterVol;
             }
             if (s.bassFreq) {
                 this._bassFreq = s.bassFreq;
                 this.el.bassFreqLabel.textContent = s.bassFreq;
             }
-            if (s.bassVol) {
-                this.el.bassVolSlider.value = s.bassVol;
-                this.el.bassVolLabel.textContent = s.bassVol;
+            if (s.bassVol !== undefined) {
+                this._bassVol = parseInt(s.bassVol);
+                this.el.bassVolSlider.value = this._bassVol;
+                this.el.bassVolLabel.textContent = this._bassVol;
             }
             if (s.layerVols) Object.assign(this._layerVols, s.layerVols);
+            if (s.layerBass) Object.assign(this._layerBass, s.layerBass);
             if (s.layerEnabled) Object.assign(this._layerEnabled, s.layerEnabled);
             if (s.profile) this.profile = s.profile;
             if (this.shakeEngine) {

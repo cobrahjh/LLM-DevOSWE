@@ -1,19 +1,30 @@
 /**
- * CockpitFX AudioEngine v1.0.0
+ * CockpitFX AudioEngine v2.0.0
  * Web Audio API graph manager — creates AudioContext, routes layers through
- * master gain and optional bass-shaker low-pass filter.
+ * dynamics compressor, master gain and optional bass-shaker low-pass filter.
+ * v2.0: Sample loading, decoding, playback (OGG with WAV fallback).
  */
 class AudioEngine {
     constructor() {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         this._destroyed = false;
+        this._samples = {};
 
         // Master gain
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = 0.8;
 
-        // Full-range output → destination
-        this.masterGain.connect(this.ctx.destination);
+        // Dynamics compressor before destination to prevent clipping
+        this._compressor = this.ctx.createDynamicsCompressor();
+        this._compressor.threshold.value = -12;
+        this._compressor.knee.value = 10;
+        this._compressor.ratio.value = 4;
+        this._compressor.attack.value = 0.003;
+        this._compressor.release.value = 0.15;
+
+        // Full-range output → compressor → destination
+        this.masterGain.connect(this._compressor);
+        this._compressor.connect(this.ctx.destination);
 
         // Bass shaker chain: master → LP filter → bass gain → destination
         this.bassFilter = this.ctx.createBiquadFilter();
@@ -24,7 +35,7 @@ class AudioEngine {
         this.bassGain.gain.value = 0; // Off by default
         this.masterGain.connect(this.bassFilter);
         this.bassFilter.connect(this.bassGain);
-        this.bassGain.connect(this.ctx.destination);
+        this.bassGain.connect(this._compressor);
 
         // Layer registry
         this.layers = {};
@@ -78,6 +89,59 @@ class AudioEngine {
     /** Set bass LP filter cutoff (Hz) */
     setBassFrequency(f) {
         this.bassFilter.frequency.setTargetAtTime(f, this.ctx.currentTime, 0.02);
+    }
+
+    /** Check OGG Vorbis support */
+    _canPlayOGG() {
+        if (this._oggSupport !== undefined) return this._oggSupport;
+        const a = document.createElement('audio');
+        this._oggSupport = !!(a.canPlayType && a.canPlayType('audio/ogg; codecs="vorbis"'));
+        return this._oggSupport;
+    }
+
+    /**
+     * Load audio samples from a manifest.
+     * @param {Object} manifest — { name: 'samples/file.ogg', ... }
+     * @returns {Promise} resolves when all samples decoded
+     */
+    async loadSamples(manifest) {
+        const ext = this._canPlayOGG() ? '.ogg' : '.wav';
+        const entries = Object.entries(manifest);
+        const results = await Promise.allSettled(entries.map(async ([name, basePath]) => {
+            const url = basePath.replace(/\.ogg$/, ext);
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`${url}: ${resp.status}`);
+            const buf = await resp.arrayBuffer();
+            this._samples[name] = await this.ctx.decodeAudioData(buf);
+        }));
+        const failed = results.filter(r => r.status === 'rejected');
+        if (failed.length) console.warn('[AudioEngine] Failed to load', failed.length, 'samples:', failed.map(r => r.reason.message));
+        return results;
+    }
+
+    /** Get a decoded AudioBuffer by name */
+    getSample(name) { return this._samples[name] || null; }
+
+    /** Create a BufferSource node from a named sample */
+    createSampleSource(name, loop = false) {
+        const buf = this._samples[name];
+        if (!buf) return null;
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = loop;
+        return src;
+    }
+
+    /** Fire-and-forget one-shot sample playback */
+    playOneShot(name, outputNode, volume = 1.0) {
+        const src = this.createSampleSource(name);
+        if (!src) return null;
+        const gain = this.ctx.createGain();
+        gain.gain.value = volume;
+        src.connect(gain);
+        gain.connect(outputNode);
+        src.start();
+        return src;
     }
 
     /** Resume AudioContext (required after user gesture) */

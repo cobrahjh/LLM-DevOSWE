@@ -1,10 +1,14 @@
 /**
- * CockpitFX Aircraft Profiles v1.0.0
- * Per-aircraft tuning presets for immersion layers
+ * CockpitFX Aircraft Profiles v2.0.0
+ * Per-aircraft tuning presets for immersion layers.
+ * v2.0: sampleSet field — which prerecorded audio set to use.
+ *       'c172' = FlightGear C172P samples (piston GA)
+ *       null = pure synthesis (turboprop/jet)
  */
 const COCKPIT_FX_PROFILES = {
     'ga-single-piston': {
         name: 'GA Single Piston (C172/PA28)',
+        sampleSet: 'c172',
         engine: {
             harmonics: 4,
             propBlades: 2,
@@ -26,6 +30,7 @@ const COCKPIT_FX_PROFILES = {
     },
     'ga-twin-piston': {
         name: 'GA Twin Piston (PA34/BE58)',
+        sampleSet: 'c172',
         engine: {
             harmonics: 4,
             propBlades: 3,
@@ -48,6 +53,7 @@ const COCKPIT_FX_PROFILES = {
     },
     'turboprop': {
         name: 'Turboprop (TBM/King Air)',
+        sampleSet: null,
         engine: {
             harmonics: 3,
             propBlades: 4,
@@ -69,6 +75,7 @@ const COCKPIT_FX_PROFILES = {
     },
     'jet': {
         name: 'Jet (CJ4/A320)',
+        sampleSet: null,
         engine: {
             harmonics: 0,
             propBlades: 0,
