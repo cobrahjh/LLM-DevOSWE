@@ -118,36 +118,50 @@ class CommandQueue {
 
     /**
      * Convert our command format to the WebSocket command string
-     * matching the autopilot pane's command vocabulary
+     * matching the server.js eventMap names (SimConnect event registration).
+     *
+     * IMPORTANT: The server eventMap registers AP_ALT_VAR_SET_ENGLISH and
+     * AP_VS_VAR_SET_ENGLISH (with _ENGLISH suffix). The rule engine uses
+     * short names — this method translates them.
      */
     _buildWsCommand(cmd) {
+        // Map API-friendly names to actual SimConnect event names in server eventMap
+        const EVENT_MAP = {
+            'AP_ALT_VAR_SET':   'AP_ALT_VAR_SET_ENGLISH',
+            'AP_VS_VAR_SET':    'AP_VS_VAR_SET_ENGLISH',
+            'AP_AIRSPEED_HOLD': 'AP_PANEL_SPEED_HOLD'
+        };
+
+        const command = EVENT_MAP[cmd.type] || cmd.type;
+
         // Toggle commands: send the command name directly
         const toggleCmds = [
             'AP_MASTER', 'TOGGLE_FLIGHT_DIRECTOR', 'YAW_DAMPER_TOGGLE',
-            'AP_HDG_HOLD', 'AP_ALT_HOLD', 'AP_VS_HOLD', 'AP_AIRSPEED_HOLD',
+            'AP_HDG_HOLD', 'AP_ALT_HOLD', 'AP_VS_HOLD', 'AP_PANEL_SPEED_HOLD',
             'AP_NAV1_HOLD', 'AP_APR_HOLD', 'AP_BC_HOLD', 'AP_VNAV',
             'HEADING_BUG_SET'
         ];
 
-        if (toggleCmds.includes(cmd.type)) {
-            return cmd.type;
+        if (toggleCmds.includes(command)) {
+            return command;
         }
 
         // Value-set commands: send as command with value
         const valueCmds = [
-            'AP_ALT_VAR_SET', 'AP_VS_VAR_SET', 'AP_SPD_VAR_SET', 'HEADING_BUG_SET'
+            'AP_ALT_VAR_SET_ENGLISH', 'AP_VS_VAR_SET_ENGLISH',
+            'AP_SPD_VAR_SET', 'HEADING_BUG_SET'
         ];
 
-        if (valueCmds.includes(cmd.type)) {
-            return { command: cmd.type, value: cmd.value };
+        if (valueCmds.includes(command)) {
+            return { command, value: cmd.value };
         }
 
         // Inc/Dec commands for gradual adjustment
-        if (cmd.type.includes('_INC') || cmd.type.includes('_DEC')) {
-            return cmd.type;
+        if (command.includes('_INC') || command.includes('_DEC')) {
+            return command;
         }
 
-        return cmd.type;
+        return command;
     }
 
     /**
