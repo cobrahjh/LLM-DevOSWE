@@ -141,13 +141,6 @@ class AutopilotPane extends SimGlassBase {
 
             // Handle repeat for +/- buttons
             if (btn.dataset.repeat === 'true') {
-                btn.addEventListener('mousedown', () => {
-                    const repeatInterval = setInterval(() => {
-                        this.sendCommand(btn.dataset.cmd);
-                    }, 150);
-                    this.repeatIntervals.set(btn, repeatInterval);
-                });
-
                 const clearRepeat = () => {
                     const interval = this.repeatIntervals.get(btn);
                     if (interval) {
@@ -156,8 +149,26 @@ class AutopilotPane extends SimGlassBase {
                     }
                 };
 
+                btn.addEventListener('mousedown', () => {
+                    const repeatInterval = setInterval(() => {
+                        this.sendCommand(btn.dataset.cmd);
+                    }, 150);
+                    this.repeatIntervals.set(btn, repeatInterval);
+                });
+
                 btn.addEventListener('mouseup', clearRepeat);
                 btn.addEventListener('mouseleave', clearRepeat);
+
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const repeatInterval = setInterval(() => {
+                        this.sendCommand(btn.dataset.cmd);
+                    }, 150);
+                    this.repeatIntervals.set(btn, repeatInterval);
+                }, { passive: false });
+
+                btn.addEventListener('touchend', clearRepeat);
+                btn.addEventListener('touchcancel', clearRepeat);
             }
         });
     }
@@ -235,6 +246,9 @@ class AutopilotPane extends SimGlassBase {
                 break;
             case 'AP_SPD_VAR_DEC':
                 this.setValues.speed = Math.max(this.setValues.speed - 1, 50);
+                break;
+            case 'HEADING_BUG_SET':
+                this.setValues.heading = this.current.heading;
                 break;
         }
 
@@ -406,5 +420,5 @@ class AutopilotPane extends SimGlassBase {
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AutopilotWidget;
+    module.exports = AutopilotPane;
 }

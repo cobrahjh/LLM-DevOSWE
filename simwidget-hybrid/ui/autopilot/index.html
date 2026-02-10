@@ -56,6 +56,7 @@
                     <span class="value-unit">&deg;</span>
                 </div>
                 <button class="adjust-btn" data-cmd="HEADING_BUG_INC" data-repeat="true">+</button>
+                <button class="sync-btn" data-cmd="HEADING_BUG_SET" title="Sync heading bug to current heading">SYNC</button>
             </div>
             <div class="current-value">
                 <span class="current-label">Current:</span>
@@ -70,12 +71,12 @@
                 <button class="mode-btn" id="btn-alt" data-cmd="AP_ALT_HOLD">ALT</button>
             </div>
             <div class="value-control">
-                <button class="adjust-btn" data-cmd="AP_ALT_VAR_DEC">-</button>
+                <button class="adjust-btn" data-cmd="AP_ALT_VAR_DEC" data-repeat="true">-</button>
                 <div class="value-display">
                     <span class="value-main" id="alt-value">10000</span>
                     <span class="value-unit">ft</span>
                 </div>
-                <button class="adjust-btn" data-cmd="AP_ALT_VAR_INC">+</button>
+                <button class="adjust-btn" data-cmd="AP_ALT_VAR_INC" data-repeat="true">+</button>
             </div>
             <div class="current-value">
                 <span class="current-label">Current:</span>
@@ -90,12 +91,12 @@
                 <button class="mode-btn" id="btn-vs" data-cmd="AP_VS_HOLD">VS</button>
             </div>
             <div class="value-control">
-                <button class="adjust-btn" data-cmd="AP_VS_VAR_DEC">-</button>
+                <button class="adjust-btn" data-cmd="AP_VS_VAR_DEC" data-repeat="true">-</button>
                 <div class="value-display">
                     <span class="value-main vs-value" id="vs-value">0</span>
                     <span class="value-unit">fpm</span>
                 </div>
-                <button class="adjust-btn" data-cmd="AP_VS_VAR_INC">+</button>
+                <button class="adjust-btn" data-cmd="AP_VS_VAR_INC" data-repeat="true">+</button>
             </div>
             <div class="current-value">
                 <span class="current-label">Current:</span>
@@ -110,12 +111,12 @@
                 <button class="mode-btn" id="btn-spd" data-cmd="AP_AIRSPEED_HOLD">IAS</button>
             </div>
             <div class="value-control">
-                <button class="adjust-btn" data-cmd="AP_SPD_VAR_DEC">-</button>
+                <button class="adjust-btn" data-cmd="AP_SPD_VAR_DEC" data-repeat="true">-</button>
                 <div class="value-display">
                     <span class="value-main" id="spd-value">200</span>
                     <span class="value-unit">kt</span>
                 </div>
-                <button class="adjust-btn" data-cmd="AP_SPD_VAR_INC">+</button>
+                <button class="adjust-btn" data-cmd="AP_SPD_VAR_INC" data-repeat="true">+</button>
             </div>
             <div class="current-value">
                 <span class="current-label">Current:</span>
@@ -160,7 +161,7 @@
     <script src="pane.js"></script>
     <script>
         // Initialize widget
-        window.widget = new AutopilotWidget();
+        window.widget = new AutopilotPane();
         window.addEventListener('beforeunload', () => window.widget?.destroy());
 
         // Settings panel
