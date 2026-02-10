@@ -108,46 +108,42 @@ class AudioEngine {
         this.bassFilter.frequency.setTargetAtTime(f, this.ctx.currentTime, 0.02);
     }
 
-    /** Set perspective: 'inside' (muffled cabin) or 'outside' (full spectrum) */
-    setPerspective(p) {
-        this._perspective = p;
-        // Apply with current openness
-        this._applyCabinFilter(this._openness || 0);
+    /**
+     * Set cabin level (0 = outside/flat, 1 = fully sealed inside).
+     * Continuous blend — replaces binary inside/outside toggle.
+     * Door/canopy openness reduces effective level automatically.
+     */
+    setCabinLevel(v) {
+        this._cabinLevel = Math.max(0, Math.min(1, v));
+        this._applyCabinFilter();
     }
 
-    /** Get current perspective */
-    getPerspective() { return this._perspective; }
+    /** Get current cabin level (0-1) */
+    getCabinLevel() { return this._cabinLevel || 0; }
 
     /**
-     * Set cabin openness (0 = sealed, 1 = fully open).
-     * Blends the cabin filter: when inside + open, highs leak through.
-     * Has no effect in outside mode (already flat).
+     * Set cabin openness from doors/canopy (0 = sealed, 1 = fully open).
+     * Reduces effective cabin level — open doors let highs leak through.
      */
     setCabinOpenness(v) {
         this._openness = Math.max(0, Math.min(1, v));
-        if (this._perspective === 'inside') {
-            this._applyCabinFilter(this._openness);
-        }
+        this._applyCabinFilter();
     }
 
-    /** Apply cabin filter with openness blend */
-    _applyCabinFilter(openness) {
+    /** Apply cabin filter — blends cabin level with door openness */
+    _applyCabinFilter() {
         const t = this.ctx.currentTime;
         const tau = 0.08;
-        if (this._perspective === 'inside') {
-            // Sealed cabin: LP 2800 Hz, resonance +4 dB
-            // Fully open: LP 12000 Hz, resonance +1 dB (still some cabin effect)
-            const lpFreq = 2800 + openness * 9200;
-            const resGain = 4 - openness * 3;
-            this._cabinLP.frequency.setTargetAtTime(lpFreq, t, tau);
-            this._cabinLP.Q.setTargetAtTime(0.7 - openness * 0.2, t, tau);
-            this._cabinRes.gain.setTargetAtTime(resGain, t, tau);
-        } else {
-            // Outside: flat
-            this._cabinLP.frequency.setTargetAtTime(20000, t, tau);
-            this._cabinLP.Q.setTargetAtTime(0.5, t, tau);
-            this._cabinRes.gain.setTargetAtTime(0, t, tau);
-        }
+        // Effective level: cabin slider reduced by door openness
+        const level = (this._cabinLevel || 0) * (1 - (this._openness || 0) * 0.6);
+        // 0 = flat (outside): LP 20000 Hz, Q 0.5, resonance 0 dB
+        // 1 = sealed inside:  LP 2800 Hz, Q 0.7, resonance +4 dB
+        const lpFreq = 20000 - level * 17200;
+        const lpQ = 0.5 + level * 0.2;
+        const resGain = level * 4;
+        this._cabinLP.frequency.setTargetAtTime(lpFreq, t, tau);
+        this._cabinLP.Q.setTargetAtTime(lpQ, t, tau);
+        this._cabinRes.gain.setTargetAtTime(resGain, t, tau);
     }
 
     /** Check OGG Vorbis support */

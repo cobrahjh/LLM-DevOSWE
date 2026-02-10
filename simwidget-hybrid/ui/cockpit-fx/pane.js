@@ -22,7 +22,7 @@ class CockpitFxPane extends SimGlassBase {
         this._masterVol = 80;
         this._bassVol = 0;
         this._bassFreq = 120;
-        this._perspective = 'outside';
+        this._cabinLevel = 0; // 0 = outside, 100 = fully sealed inside
         this._raf = null;
         this._prevGS = undefined;
 
@@ -64,6 +64,9 @@ class CockpitFxPane extends SimGlassBase {
             bassVolLabel: document.getElementById('fx-bass-vol-val'),
             bassSlider: document.getElementById('fx-bass-freq'),
             bassFreqLabel: document.getElementById('fx-bass-freq-val'),
+            cabinSlider: document.getElementById('fx-cabin-slider'),
+            cabinVal: document.getElementById('fx-cabin-val'),
+            cabinLbl: document.getElementById('fx-cabin-lbl'),
             skPower: document.getElementById('cfx-sk-power'),
             skProfile: document.getElementById('cfx-sk-profile'),
             skBassUp: document.getElementById('cfx-sk-bass-up'),
@@ -292,12 +295,24 @@ class CockpitFxPane extends SimGlassBase {
             this._saveSettings();
         });
 
-        // Perspective toggle (INT/EXT) — replaces LP+ softkey
+        // Perspective quick toggle (INT/EXT) — snaps cabin slider to 0 or 100
         this.el.skBassUp.addEventListener('click', () => {
-            this._perspective = this._perspective === 'outside' ? 'inside' : 'outside';
-            this.el.skBassUp.textContent = this._perspective === 'inside' ? 'INT' : 'EXT';
-            this.el.skBassUp.classList.toggle('active', this._perspective === 'inside');
-            if (this.audioEngine) this.audioEngine.setPerspective(this._perspective);
+            this._cabinLevel = this._cabinLevel > 50 ? 0 : 100;
+            this.el.cabinSlider.value = this._cabinLevel;
+            this.el.cabinVal.textContent = this._cabinLevel;
+            this.el.skBassUp.textContent = this._cabinLevel > 50 ? 'INT' : 'EXT';
+            this.el.skBassUp.classList.toggle('active', this._cabinLevel > 50);
+            if (this.audioEngine) this.audioEngine.setCabinLevel(this._cabinLevel / 100);
+            this._saveSettings();
+        });
+
+        // Cabin slider — continuous inside/outside blend
+        this.el.cabinSlider.addEventListener('input', () => {
+            this._cabinLevel = parseInt(this.el.cabinSlider.value);
+            this.el.cabinVal.textContent = this._cabinLevel;
+            this.el.skBassUp.textContent = this._cabinLevel > 50 ? 'INT' : 'EXT';
+            this.el.skBassUp.classList.toggle('active', this._cabinLevel > 50);
+            if (this.audioEngine) this.audioEngine.setCabinLevel(this._cabinLevel / 100);
             this._saveSettings();
         });
 
@@ -460,7 +475,7 @@ class CockpitFxPane extends SimGlassBase {
         this.audioEngine.setMasterVolume(this._masterVol / 100);
         this.audioEngine.setBassFrequency(this._bassFreq);
         this.audioEngine.setBassVolume(this._bassVol / 100);
-        this.audioEngine.setPerspective(this._perspective);
+        this.audioEngine.setCabinLevel(this._cabinLevel / 100);
     }
 
     _applyProfile() {
@@ -584,7 +599,7 @@ class CockpitFxPane extends SimGlassBase {
             masterVol: this._masterVol !== undefined ? this._masterVol : 80,
             bassFreq: this._bassFreq,
             bassVol: this._bassVol !== undefined ? this._bassVol : 0,
-            perspective: this._perspective,
+            cabinLevel: this._cabinLevel,
             layerVols: this._layerVols,
             layerBass: this._layerBass,
             layerEnabled: this._layerEnabled,
@@ -617,10 +632,19 @@ class CockpitFxPane extends SimGlassBase {
             if (s.layerVols) Object.assign(this._layerVols, s.layerVols);
             if (s.layerBass) Object.assign(this._layerBass, s.layerBass);
             if (s.layerEnabled) Object.assign(this._layerEnabled, s.layerEnabled);
-            if (s.perspective) {
-                this._perspective = s.perspective;
-                this.el.skBassUp.textContent = this._perspective === 'inside' ? 'INT' : 'EXT';
-                this.el.skBassUp.classList.toggle('active', this._perspective === 'inside');
+            if (s.cabinLevel !== undefined) {
+                this._cabinLevel = parseInt(s.cabinLevel);
+                this.el.cabinSlider.value = this._cabinLevel;
+                this.el.cabinVal.textContent = this._cabinLevel;
+                this.el.skBassUp.textContent = this._cabinLevel > 50 ? 'INT' : 'EXT';
+                this.el.skBassUp.classList.toggle('active', this._cabinLevel > 50);
+            } else if (s.perspective) {
+                // Migrate old binary setting
+                this._cabinLevel = s.perspective === 'inside' ? 100 : 0;
+                this.el.cabinSlider.value = this._cabinLevel;
+                this.el.cabinVal.textContent = this._cabinLevel;
+                this.el.skBassUp.textContent = this._cabinLevel > 50 ? 'INT' : 'EXT';
+                this.el.skBassUp.classList.toggle('active', this._cabinLevel > 50);
             }
             if (s.profile) this.profile = s.profile;
             if (this.shakeEngine) {
