@@ -62,6 +62,19 @@ class RuleEngine {
             this._runwayHeading = null;
         }
 
+        // ── Parking brake safety ──
+        // Release parking brake whenever AI has controls and throttle is above idle.
+        // This catches cases where onGround data is wrong or phase skips TAKEOFF.
+        if (d.parkingBrake && (d.throttle > 20 || phase === 'TAKEOFF')) {
+            // Use direct enqueue to bypass dedup (toggle events need to fire every time)
+            this.commandQueue.enqueue({
+                type: 'PARKING_BRAKES',
+                value: true,
+                description: 'Release parking brake (safety)'
+            });
+            this._lastCommands['PARKING_BRAKES'] = undefined; // clear dedup for toggle
+        }
+
         // Continuous flight envelope monitoring (every frame, not just phase changes)
         if (phase !== 'PREFLIGHT' && phase !== 'TAXI') {
             this._monitorFlightEnvelope(d, apState, phase);
@@ -182,8 +195,10 @@ class RuleEngine {
         const tk = p.takeoff || {};
         const ias = d.speed || 0;
         const agl = d.altitudeAGL || 0;
+        const gs = d.groundSpeed || 0;
         const vs = d.verticalSpeed || 0;
-        const onGround = d.onGround !== false;
+        // AGL fallback: MSFS 2024 sometimes reports onGround=false while parked
+        const onGround = d.onGround !== false || (agl < 10 && gs < 5);
 
         // Initialize sub-phase on entry
         if (phaseChanged || !this._takeoffSubPhase) {
@@ -302,7 +317,8 @@ class RuleEngine {
         const vs = d.verticalSpeed || 0;    // fpm
         const alt = d.altitude || 0;        // MSL
         const agl = d.altitudeAGL || 0;
-        const onGround = d.onGround !== false;
+        const gs = d.groundSpeed || 0;
+        const onGround = d.onGround !== false || (agl < 10 && gs < 5);
         const absBank = Math.abs(bank);
 
         // Skip ground phases

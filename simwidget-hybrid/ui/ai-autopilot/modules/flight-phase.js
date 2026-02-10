@@ -36,7 +36,10 @@ class FlightPhase {
         const gs = d.groundSpeed || 0;
         const ias = d.speed || 0;
         const vs = d.verticalSpeed || 0;
-        const onGround = d.onGround !== undefined ? d.onGround : true;
+        // Use AGL + groundSpeed as fallback when SimConnect onGround is unreliable
+        // MSFS 2024 sometimes reports onGround=false while parked (AGL < 10ft, GS < 5kt)
+        const simOnGround = d.onGround !== undefined ? d.onGround : true;
+        const onGround = simOnGround || (agl < 10 && gs < 5);
         const gearDown = d.gearDown !== undefined ? d.gearDown : true;
         const engineRunning = d.engineRunning || false;
 
