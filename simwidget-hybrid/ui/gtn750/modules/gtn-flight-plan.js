@@ -61,6 +61,11 @@ class GTNFlightPlan {
 
     async fetchFlightPlan() {
         try {
+            // Don't overwrite a SimBrief or manually-loaded plan
+            if (this.flightPlan?.source === 'simbrief' || this.flightPlan?.source === 'manual') {
+                this._fetchTimer = setTimeout(() => this.fetchFlightPlan(), this.FETCH_INTERVAL_MS);
+                return;
+            }
             const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/flightplan`);
             if (response.ok) {
                 const data = await response.json();
