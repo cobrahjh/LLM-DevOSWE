@@ -199,11 +199,19 @@ class RuleEngine {
             case 'BEFORE_ROLL':
                 // Verify configuration: mixture rich, correct flaps
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
-                // Advance to ROLL — the flight phase already detected takeoff roll (gs > 40)
+                // Release parking brake if set
+                if (d.parkingBrake) {
+                    this._cmd('PARKING_BRAKES', true, 'Release parking brake');
+                }
+                // Advance to ROLL
                 this._takeoffSubPhase = 'ROLL';
                 break;
 
             case 'ROLL':
+                // Release parking brake if still set (redundant safety check)
+                if (d.parkingBrake) {
+                    this._cmd('PARKING_BRAKES', true, 'Release parking brake');
+                }
                 // Full throttle
                 this._cmdValue('THROTTLE_SET', 100, 'Full throttle');
                 // Use known runway heading if available, else capture from aircraft heading
