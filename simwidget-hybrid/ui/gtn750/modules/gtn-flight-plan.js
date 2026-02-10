@@ -548,8 +548,11 @@ class GTNFlightPlan {
      */
     handleSyncMessage(type, data) {
         if (type === 'route-update' && data.waypoints) {
-            this.flightPlan = data;
-            this.notifyChanged();
+            // Don't overwrite a SimBrief plan with a route-update
+            if (this.flightPlan?.source !== 'simbrief') {
+                this.flightPlan = data;
+                this.notifyChanged();
+            }
         }
         if (type === 'simbrief-plan' && data.waypoints) {
             this.flightPlan = {
