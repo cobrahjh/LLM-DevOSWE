@@ -263,3 +263,89 @@
     background: var(--sg-accent-green);
     border-radius: 2px;
 }
+
+/* Compact Mode Toggle */
+.compact-toggle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    background: transparent;
+    border: none;
+    color: var(--sg-text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    transition: all 0.2s;
+}
+
+.compact-toggle:hover {
+    color: var(--sg-text-primary);
+    background: rgba(255,255,255,0.1);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green);
+    color: #000;
+}
+
+/* Compact Mode Layout */
+.mp-full {
+    display: block;
+}
+
+.mp-compact {
+    display: none;
+}
+
+.widget-container.compact .mp-full {
+    display: none;
+}
+
+.widget-container.compact .mp-compact {
+    display: grid;
+}
+
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+    min-width: 260px;
+}
+
+/* Compact Grid */
+.mp-compact {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 6px;
+}
+
+.compact-cell {
+    background: var(--sg-bg-panel);
+    padding: 8px 6px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.compact-cell .lbl {
+    font-size: 8px;
+    text-transform: uppercase;
+    color: var(--sg-text-muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+
+.compact-cell .val {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--sg-font-data, 'Courier New', monospace);
+    color: var(--sg-accent-green);
+}

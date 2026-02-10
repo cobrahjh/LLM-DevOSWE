@@ -32,9 +32,13 @@ class HealthDashboardPane extends SimGlassBase {
         this.MAX_ERRORS = 5;
         this.refreshInterval = null;
 
+        this.isCompact = false;
+        this.lastHealthData = null;
+
         this.initElements();
         this.initWidgetsGrid();
         this.initEventListeners();
+        this.initCompactMode();
         this.fetchHealth();
         this.startAutoRefresh();
     }
@@ -58,7 +62,12 @@ class HealthDashboardPane extends SimGlassBase {
             widgetsGrid: document.getElementById('widgets-grid'),
             errorList: document.getElementById('error-list'),
             btnClearErrors: document.getElementById('btn-clear-errors'),
-            lastUpdate: document.getElementById('last-update')
+            lastUpdate: document.getElementById('last-update'),
+            compactToggle: document.getElementById('compact-toggle'),
+            container: document.querySelector('.widget-container'),
+            compactStatus: document.getElementById('compact-status'),
+            compactServices: document.getElementById('compact-services'),
+            compactUptime: document.getElementById('compact-uptime')
         };
     }
 
@@ -80,6 +89,12 @@ class HealthDashboardPane extends SimGlassBase {
         this.elements.btnClearErrors.addEventListener('click', () => {
             this.errors = [];
             this.renderErrors();
+        });
+
+        this.elements.compactToggle.addEventListener('click', () => {
+            this.isCompact = !this.isCompact;
+            localStorage.setItem('health-dashboard-compact', this.isCompact ? '1' : '0');
+            this.applyCompactMode();
         });
 
         // Capture console errors
@@ -137,6 +152,8 @@ class HealthDashboardPane extends SimGlassBase {
     }
 
     updateDashboard(data) {
+        this.lastHealthData = data;
+
         // System stats
         this.elements.uptime.textContent = data.uptimeFormatted || this.formatUptime(data.uptime);
         this.elements.memory.textContent = data.memory?.heapUsed || '--';
@@ -162,6 +179,11 @@ class HealthDashboardPane extends SimGlassBase {
 
         // Plugins
         this.updatePlugins(data.plugins?.list || []);
+
+        // Update compact view if active
+        if (this.isCompact) {
+            this.updateCompact();
+        }
     }
 
     updatePlugins(plugins) {
@@ -328,6 +350,55 @@ class HealthDashboardPane extends SimGlassBase {
             clearInterval(this.refreshInterval);
             this.refreshInterval = null;
         }
+    }
+
+    initCompactMode() {
+        this.isCompact = localStorage.getItem('health-dashboard-compact') === '1';
+        this.applyCompactMode();
+    }
+
+    applyCompactMode() {
+        this.elements.container.classList.toggle('compact', this.isCompact);
+        this.elements.compactToggle.classList.toggle('active', this.isCompact);
+        if (this.isCompact) {
+            this.updateCompact();
+        }
+    }
+
+    updateCompact() {
+        if (!this.lastHealthData) return;
+        const data = this.lastHealthData;
+
+        // Overall status
+        const simOk = data.simconnect?.connected || data.simconnect?.mock;
+        const wsOk = this.ws && this.ws.readyState === WebSocket.OPEN;
+        const cameraState = data.camera?.system?.state || 'unknown';
+        const cameraOk = cameraState !== 'error' && cameraState !== 'unknown';
+
+        let overallClass = 'ok';
+        let overallText = 'OK';
+        if (!simOk && !wsOk) {
+            overallClass = 'crit';
+            overallText = 'DOWN';
+        } else if (!simOk || !wsOk || !cameraOk) {
+            overallClass = 'warn';
+            overallText = 'WARN';
+        }
+        this.elements.compactStatus.textContent = overallText;
+        this.elements.compactStatus.className = 'val ' + overallClass;
+
+        // Services count
+        let up = 0;
+        let total = 3; // simconnect, websocket, camera
+        if (simOk) up++;
+        if (wsOk) up++;
+        if (cameraOk) up++;
+        const svcText = up + '/' + total;
+        this.elements.compactServices.textContent = svcText;
+        this.elements.compactServices.className = 'val ' + (up === total ? 'ok' : (up === 0 ? 'crit' : 'warn'));
+
+        // Uptime
+        this.elements.compactUptime.textContent = data.uptimeFormatted || this.formatUptime(data.uptime) || '--';
     }
 
     destroy() {

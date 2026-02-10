@@ -586,6 +586,15 @@ class AiAutopilotPane extends SimGlassBase {
             anthropic: [
                 { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5' },
                 { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5' }
+            ],
+            ollama: [
+                { id: 'qwen2.5-coder:32b', name: 'Qwen 2.5 Coder 32B' },
+                { id: 'qwen3-coder:latest', name: 'Qwen3 Coder' },
+                { id: 'llama3:8b', name: 'Llama 3 8B' },
+                { id: 'qwen2.5-coder:14b', name: 'Qwen 2.5 Coder 14B' }
+            ],
+            lmstudio: [
+                { id: 'local-model', name: 'Currently Loaded Model' }
             ]
         };
 
@@ -616,6 +625,8 @@ class AiAutopilotPane extends SimGlassBase {
                             <select id="as-provider">
                                 <option value="openai" ${provider === 'openai' ? 'selected' : ''}>OpenAI</option>
                                 <option value="anthropic" ${provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
+                                <option value="ollama" ${provider === 'ollama' ? 'selected' : ''}>Ollama (Local)</option>
+                                <option value="lmstudio" ${provider === 'lmstudio' ? 'selected' : ''}>LM Studio (Local)</option>
                             </select>
                         </div>
                         <div class="as-row">

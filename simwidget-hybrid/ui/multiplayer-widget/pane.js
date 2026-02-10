@@ -16,8 +16,10 @@ class MultiplayerPane extends SimGlassBase {
         this.searchRadius = 50;
         this.selectedNetwork = 'all';
         this.refreshInterval = null;
+        this.closestTraffic = null;
 
         this.initElements();
+        this.initCompactMode();
         this.initEvents();
         this.startRefresh();
     }
@@ -35,6 +37,37 @@ class MultiplayerPane extends SimGlassBase {
         this.connDot = document.getElementById('conn-dot');
         this.connText = document.getElementById('conn-text');
         this.lastUpdate = document.getElementById('last-update');
+
+        // Compact mode elements
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.widgetContainer = document.querySelector('.widget-container');
+        this.compactNearby = document.getElementById('compact-nearby');
+        this.compactRange = document.getElementById('compact-range');
+        this.compactStatus = document.getElementById('compact-status');
+        this.compactClosest = document.getElementById('compact-closest');
+        this.compactDistance = document.getElementById('compact-distance');
+        this.compactNetwork = document.getElementById('compact-network');
+    }
+
+    initCompactMode() {
+        const isCompact = localStorage.getItem('multiplayer-widget-compact') === 'true';
+        if (isCompact) {
+            this.widgetContainer.classList.add('compact');
+            this.compactToggle.classList.add('active');
+        }
+
+        this.compactToggle.addEventListener('click', () => {
+            const nowCompact = !this.widgetContainer.classList.contains('compact');
+            if (nowCompact) {
+                this.widgetContainer.classList.add('compact');
+                this.compactToggle.classList.add('active');
+            } else {
+                this.widgetContainer.classList.remove('compact');
+                this.compactToggle.classList.remove('active');
+            }
+            localStorage.setItem('multiplayer-widget-compact', nowCompact.toString());
+            this.updateCompact();
+        });
     }
 
     initEvents() {
@@ -187,8 +220,10 @@ class MultiplayerPane extends SimGlassBase {
         .filter(t => t.distance <= this.searchRadius)
         .sort((a, b) => a.distance - b.distance);
 
+        this.closestTraffic = filtered.length > 0 ? filtered[0] : null;
         this.nearbyCountEl.textContent = filtered.length;
         this.renderTraffic(filtered);
+        this.updateCompact();
     }
 
     renderTraffic(traffic) {
@@ -302,6 +337,48 @@ class MultiplayerPane extends SimGlassBase {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         const index = Math.round(bearing / 45) % 8;
         return directions[index] + ' ' + Math.round(bearing) + '\u00B0';
+    }
+
+    updateCompact() {
+        if (!this.widgetContainer.classList.contains('compact')) return;
+
+        // Nearby count
+        if (this.compactNearby) {
+            this.compactNearby.textContent = this.nearbyCountEl.textContent;
+        }
+
+        // Range
+        if (this.compactRange) {
+            this.compactRange.textContent = this.searchRadius + 'nm';
+        }
+
+        // Status (from connection)
+        if (this.compactStatus) {
+            const connected = this.connDot && this.connDot.classList.contains('connected');
+            this.compactStatus.textContent = connected ? 'LIVE' : 'OFF';
+        }
+
+        // Closest traffic
+        if (this.compactClosest && this.compactDistance) {
+            if (this.closestTraffic) {
+                this.compactClosest.textContent = this.closestTraffic.callsign;
+                this.compactDistance.textContent = Math.round(this.closestTraffic.distance) + 'nm';
+            } else {
+                this.compactClosest.textContent = '---';
+                this.compactDistance.textContent = '---';
+            }
+        }
+
+        // Network filter
+        if (this.compactNetwork) {
+            const networkMap = {
+                'all': 'ALL',
+                'vatsim': 'VATSIM',
+                'ivao': 'IVAO',
+                'msfs': 'MSFS'
+            };
+            this.compactNetwork.textContent = networkMap[this.selectedNetwork] || 'ALL';
+        }
     }
 }
 

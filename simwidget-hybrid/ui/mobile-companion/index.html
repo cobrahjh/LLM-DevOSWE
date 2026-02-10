@@ -12,6 +12,9 @@
 </head>
 <body>
     <div class="widget-container">
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
+
+    <div class="mc-full">
     <div class="mobile-header">
         <h1>SimGlass Mobile</h1>
         <div class="status" id="status">Connecting...</div>
@@ -85,6 +88,34 @@
         <button class="nav-btn" data-section="radio">&#128251;<span>Radio</span></button>
         <button class="nav-btn" data-section="map">&#128506;<span>Map</span></button>
     </nav>
+    </div>
+
+    <div class="mc-compact">
+        <div class="compact-cell">
+            <span class="lbl">Altitude</span>
+            <span class="val" id="compact-altitude">---</span>
+        </div>
+        <div class="compact-cell">
+            <span class="lbl">Speed</span>
+            <span class="val" id="compact-speed">---</span>
+        </div>
+        <div class="compact-cell">
+            <span class="lbl">Heading</span>
+            <span class="val" id="compact-heading">---</span>
+        </div>
+        <div class="compact-cell">
+            <span class="lbl">V/S</span>
+            <span class="val" id="compact-vs">---</span>
+        </div>
+        <div class="compact-cell">
+            <span class="lbl">Status</span>
+            <span class="val" id="compact-status">---</span>
+        </div>
+        <div class="compact-cell">
+            <span class="lbl">Fuel</span>
+            <span class="val" id="compact-fuel">---</span>
+        </div>
+    </div>
     </div>
 
     <script src="/ui/shared/safe-channel.js"></script>

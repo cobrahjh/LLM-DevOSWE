@@ -392,6 +392,101 @@ body {
     border-radius: 2px;
 }
 
+/* ========================================
+   COMPACT MODE
+   ======================================== */
+
+/* Toggle button */
+.compact-toggle {
+    background: none;
+    border: 1px solid var(--sg-border-subtle, rgba(255, 255, 255, 0.08));
+    color: var(--sg-text-muted, #607080);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 3px 7px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.compact-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--sg-text-primary, #fff);
+    border-color: var(--sg-border-medium, rgba(255, 255, 255, 0.22));
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-cyan, #00D4FF);
+    color: var(--sg-bg-deep, #081222);
+    border-color: var(--sg-accent-cyan, #00D4FF);
+}
+
+/* Full/Compact visibility */
+.hd-full { display: block; }
+.hd-compact { display: none; }
+
+.widget-container.compact .hd-full { display: none; }
+.widget-container.compact .hd-compact { display: block; }
+
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+.widget-container.compact .widget-header {
+    padding: 8px 10px;
+}
+
+.widget-container.compact .widget-header h1 {
+    font-size: 13px;
+}
+
+/* Compact grid */
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 8px 10px;
+}
+
+.compact-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    background: var(--sg-bg-card, #0f1419);
+    border: 1px solid var(--sg-border-subtle, #2a2a3e);
+    border-radius: 4px;
+}
+
+.compact-cell .lbl {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--sg-text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.compact-cell .val {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sg-text-primary, #fff);
+    font-family: var(--sg-font-data, 'Consolas', monospace);
+}
+
+.compact-cell .val.ok {
+    color: var(--sg-accent-green, #22c55e);
+}
+
+.compact-cell .val.warn {
+    color: var(--sg-accent-yellow, #FFD600);
+}
+
+.compact-cell .val.crit {
+    color: var(--sg-accent-red, #FF1744);
+}
+
 /* Responsive */
 @media (max-width: 420px) {
     body {

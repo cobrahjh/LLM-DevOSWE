@@ -221,3 +221,102 @@
 .btn-primary:hover {
     filter: brightness(1.1);
 }
+
+/* ── Compact Mode Toggle ───────────────────────────────────── */
+
+.compact-toggle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: 1px solid var(--sg-border-subtle);
+    color: var(--sg-text-secondary);
+    font-size: 14px;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+    padding: 0;
+}
+
+.compact-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--sg-text-primary);
+}
+
+.widget-container {
+    position: relative;
+}
+
+/* ── Full / Compact visibility ─────────────────────────────── */
+
+.fpln-compact {
+    display: none;
+}
+
+.fpln-full {
+    display: block;
+}
+
+.widget-container.compact .fpln-compact {
+    display: block;
+}
+
+.widget-container.compact .fpln-full {
+    display: none;
+}
+
+/* ── Compact container overrides ───────────────────────────── */
+
+.widget-container.compact {
+    max-width: 280px;
+    min-width: auto;
+    padding: 3px;
+    padding-top: 30px;
+}
+
+/* ── Compact grid ──────────────────────────────────────────── */
+
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.compact-cell {
+    background: var(--sg-bg-panel);
+    border-radius: 6px;
+    padding: 6px 4px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.compact-cell .lbl {
+    font-size: 8px;
+    color: var(--sg-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.compact-cell .val {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sg-text-primary);
+    font-family: 'Courier New', monospace;
+    line-height: 1.2;
+}
+
+.compact-cell .unit {
+    font-size: 8px;
+    color: var(--sg-text-secondary);
+    position: static;
+}

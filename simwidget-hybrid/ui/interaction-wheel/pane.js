@@ -25,6 +25,8 @@ class InteractionWheel extends SimGlassBase {
         });
 
         this.apiUrl = 'http://' + window.location.host;
+        this.flightData = {}; // Store latest flight data for compact mode
+        this.initCompactMode();
         this.createWheel();
     }
 
@@ -32,10 +34,14 @@ class InteractionWheel extends SimGlassBase {
     onMessage(msg) {
         // Server sends { type: 'flightData', data: {...} }
         if (msg.type === 'flightData' && msg.data) {
+            this.flightData = msg.data;
             this.updateSegmentStates(msg.data);
+            this.updateCompact();
         } else if (msg.gearDown !== undefined) {
             // Fallback for direct data format
+            this.flightData = msg;
             this.updateSegmentStates(msg);
+            this.updateCompact();
         }
     }
 
@@ -171,6 +177,81 @@ class InteractionWheel extends SimGlassBase {
         const tooltip = document.getElementById('tooltip');
         if (tooltip) {
             tooltip.classList.remove('visible');
+        }
+    }
+
+    // Initialize compact mode
+    initCompactMode() {
+        const container = document.querySelector('.widget-container');
+        const toggleBtn = document.getElementById('compact-toggle');
+
+        // Load saved compact mode preference
+        const isCompact = localStorage.getItem('interaction-wheel-compact') === 'true';
+        if (isCompact && container) {
+            container.classList.add('compact');
+            if (toggleBtn) toggleBtn.classList.add('active');
+        }
+
+        // Toggle handler
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const nowCompact = container.classList.toggle('compact');
+                toggleBtn.classList.toggle('active', nowCompact);
+                localStorage.setItem('interaction-wheel-compact', nowCompact);
+                this.updateCompact(); // Refresh compact display
+            });
+        }
+    }
+
+    // Update compact mode display
+    updateCompact() {
+        const container = document.querySelector('.widget-container');
+        if (!container || !container.classList.contains('compact')) return;
+
+        const data = this.flightData;
+
+        // Gear
+        const gearEl = document.getElementById('compact-gear');
+        if (gearEl) {
+            gearEl.textContent = data.gearDown ? 'DOWN' : 'UP';
+            gearEl.className = 'val ' + (data.gearDown ? 'active' : 'inactive');
+        }
+
+        // Flaps (placeholder - add flaps data when available)
+        const flapsEl = document.getElementById('compact-flaps');
+        if (flapsEl) {
+            const flaps = data.flapsPercent !== undefined ? Math.round(data.flapsPercent) + '%' : '-';
+            flapsEl.textContent = flaps;
+            flapsEl.className = 'val ' + (data.flapsPercent > 0 ? 'active' : 'inactive');
+        }
+
+        // Brake
+        const brakeEl = document.getElementById('compact-brake');
+        if (brakeEl) {
+            brakeEl.textContent = data.parkingBrake ? 'ON' : 'OFF';
+            brakeEl.className = 'val ' + (data.parkingBrake ? 'active' : 'inactive');
+        }
+
+        // Autopilot
+        const apEl = document.getElementById('compact-ap');
+        if (apEl) {
+            apEl.textContent = data.apMaster ? 'ON' : 'OFF';
+            apEl.className = 'val ' + (data.apMaster ? 'active' : 'inactive');
+        }
+
+        // Nav lights
+        const navEl = document.getElementById('compact-nav');
+        if (navEl) {
+            navEl.textContent = data.navLight ? 'ON' : 'OFF';
+            navEl.className = 'val ' + (data.navLight ? 'active' : 'inactive');
+        }
+
+        // Spoilers (placeholder - add spoiler data when available)
+        const spoilEl = document.getElementById('compact-spoil');
+        if (spoilEl) {
+            const spoilers = data.spoilersArmed !== undefined ? (data.spoilersArmed ? 'ARM' : 'OFF') : '-';
+            spoilEl.textContent = spoilers;
+            spoilEl.className = 'val ' + (data.spoilersArmed ? 'active' : 'inactive');
         }
     }
 

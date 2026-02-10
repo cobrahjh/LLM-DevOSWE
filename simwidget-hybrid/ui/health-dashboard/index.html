@@ -12,6 +12,7 @@
         <header class="widget-header">
             <h1>System Health</h1>
             <div class="header-controls">
+                <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
                 <label class="auto-refresh">
                     <input type="checkbox" id="auto-refresh" checked>
                     <span>Auto</span>
@@ -21,83 +22,104 @@
             </div>
         </header>
 
-        <div class="widget-content">
-            <!-- System Overview -->
-            <section class="section">
-                <div class="section-label">SYSTEM</div>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-label">Uptime</span>
-                        <span class="stat-value" id="uptime">--</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Memory</span>
-                        <span class="stat-value" id="memory">--</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Version</span>
-                        <span class="stat-value" id="version">--</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">WS Clients</span>
-                        <span class="stat-value" id="ws-clients">--</span>
-                    </div>
+        <!-- Compact View -->
+        <div class="hd-compact" style="display:none;">
+            <div class="compact-grid">
+                <div class="compact-cell">
+                    <span class="lbl">Status</span>
+                    <span class="val" id="compact-status">--</span>
                 </div>
-            </section>
-
-            <!-- Connection Status -->
-            <section class="section">
-                <div class="section-label">CONNECTIONS</div>
-                <div class="status-grid">
-                    <div class="status-item" id="status-simconnect">
-                        <span class="status-indicator"></span>
-                        <span class="status-name">SimConnect</span>
-                        <span class="status-detail" id="simconnect-detail">--</span>
-                    </div>
-                    <div class="status-item" id="status-websocket">
-                        <span class="status-indicator"></span>
-                        <span class="status-name">WebSocket</span>
-                        <span class="status-detail" id="websocket-detail">--</span>
-                    </div>
-                    <div class="status-item" id="status-camera">
-                        <span class="status-indicator"></span>
-                        <span class="status-name">Camera System</span>
-                        <span class="status-detail" id="camera-detail">--</span>
-                    </div>
+                <div class="compact-cell">
+                    <span class="lbl">Services</span>
+                    <span class="val" id="compact-services">--</span>
                 </div>
-            </section>
-
-            <!-- Plugins -->
-            <section class="section">
-                <div class="section-label">PLUGINS</div>
-                <div class="plugins-grid" id="plugins-grid">
-                    <div class="plugin-placeholder">Loading...</div>
+                <div class="compact-cell">
+                    <span class="lbl">Uptime</span>
+                    <span class="val" id="compact-uptime">--</span>
                 </div>
-            </section>
-
-            <!-- Widget Status -->
-            <section class="section">
-                <div class="section-label">WIDGETS</div>
-                <div class="widgets-grid" id="widgets-grid">
-                    <!-- Populated by JS -->
-                </div>
-            </section>
-
-            <!-- Recent Errors -->
-            <section class="section">
-                <div class="section-label">
-                    RECENT ERRORS
-                    <button class="btn-clear" id="btn-clear-errors" title="Clear">Clear</button>
-                </div>
-                <div class="error-list" id="error-list">
-                    <div class="no-errors">No errors recorded</div>
-                </div>
-            </section>
+            </div>
         </div>
 
-        <footer class="widget-footer">
-            <span class="last-update" id="last-update">Last update: --</span>
-        </footer>
+        <!-- Full View -->
+        <div class="hd-full">
+            <div class="widget-content">
+                <!-- System Overview -->
+                <section class="section">
+                    <div class="section-label">SYSTEM</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Uptime</span>
+                            <span class="stat-value" id="uptime">--</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Memory</span>
+                            <span class="stat-value" id="memory">--</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Version</span>
+                            <span class="stat-value" id="version">--</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">WS Clients</span>
+                            <span class="stat-value" id="ws-clients">--</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Connection Status -->
+                <section class="section">
+                    <div class="section-label">CONNECTIONS</div>
+                    <div class="status-grid">
+                        <div class="status-item" id="status-simconnect">
+                            <span class="status-indicator"></span>
+                            <span class="status-name">SimConnect</span>
+                            <span class="status-detail" id="simconnect-detail">--</span>
+                        </div>
+                        <div class="status-item" id="status-websocket">
+                            <span class="status-indicator"></span>
+                            <span class="status-name">WebSocket</span>
+                            <span class="status-detail" id="websocket-detail">--</span>
+                        </div>
+                        <div class="status-item" id="status-camera">
+                            <span class="status-indicator"></span>
+                            <span class="status-name">Camera System</span>
+                            <span class="status-detail" id="camera-detail">--</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Plugins -->
+                <section class="section">
+                    <div class="section-label">PLUGINS</div>
+                    <div class="plugins-grid" id="plugins-grid">
+                        <div class="plugin-placeholder">Loading...</div>
+                    </div>
+                </section>
+
+                <!-- Widget Status -->
+                <section class="section">
+                    <div class="section-label">WIDGETS</div>
+                    <div class="widgets-grid" id="widgets-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Recent Errors -->
+                <section class="section">
+                    <div class="section-label">
+                        RECENT ERRORS
+                        <button class="btn-clear" id="btn-clear-errors" title="Clear">Clear</button>
+                    </div>
+                    <div class="error-list" id="error-list">
+                        <div class="no-errors">No errors recorded</div>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="widget-footer">
+                <span class="last-update" id="last-update">Last update: --</span>
+            </footer>
+        </div>
     </div>
 
     <!-- SimGlassBase Dependencies -->

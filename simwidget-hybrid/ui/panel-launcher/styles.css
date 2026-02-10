@@ -461,6 +461,102 @@ body {
     color: #ff6b6b;
 }
 
+/* Compact Mode Toggle Button */
+.compact-toggle {
+    position: fixed;
+    top: 12px;
+    right: 56px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: var(--sg-text-muted, #888);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.compact-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--sg-accent, #00d4ff);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #00ff88);
+    color: #000;
+    border-color: var(--sg-accent-green, #00ff88);
+}
+
+/* Compact/Full View Toggle */
+.pl-full {
+    display: block;
+}
+
+.pl-compact {
+    display: none;
+}
+
+.widget-container.compact .pl-full {
+    display: none;
+}
+
+.widget-container.compact .pl-compact {
+    display: grid;
+}
+
+/* Compact Mode Container Adjustments */
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+/* Compact View Grid */
+.pl-compact {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 8px;
+}
+
+.compact-cell {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.compact-cell:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 212, 255, 0.3);
+}
+
+.compact-cell .lbl {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--sg-text-muted, #888);
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.compact-cell .val {
+    font-size: 14px;
+    font-weight: bold;
+    font-family: var(--sg-font-data, 'Consolas', 'Monaco', monospace);
+    color: var(--sg-accent-green, #00ff88);
+}
+
 /* Responsive */
 @media (max-width: 440px) {
     body {
@@ -480,6 +576,10 @@ body {
     }
 
     .preset-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pl-compact {
         grid-template-columns: repeat(2, 1fr);
     }
 }

@@ -27,9 +27,39 @@ class MobileCompanionPane extends SimGlassBase {
         this.iframe = document.getElementById('pane-iframe');
         this.sections = document.querySelectorAll('.section');
         this.navBtns = document.querySelectorAll('.nav-btn');
+
+        // Compact mode elements
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.widgetContainer = document.querySelector('.widget-container');
+        this.compactAltEl = document.getElementById('compact-altitude');
+        this.compactSpdEl = document.getElementById('compact-speed');
+        this.compactHdgEl = document.getElementById('compact-heading');
+        this.compactVsEl = document.getElementById('compact-vs');
+        this.compactStatusEl = document.getElementById('compact-status');
+        this.compactFuelEl = document.getElementById('compact-fuel');
+
+        // Initialize compact mode from localStorage
+        this.isCompact = localStorage.getItem('mobile-companion-compact') === 'true';
+        if (this.isCompact) {
+            this.widgetContainer.classList.add('compact');
+            this.compactToggle.classList.add('active');
+        }
     }
 
     initEvents() {
+        // Compact mode toggle
+        this.compactToggle.addEventListener('click', () => {
+            this.isCompact = !this.isCompact;
+            localStorage.setItem('mobile-companion-compact', this.isCompact);
+            this.widgetContainer.classList.toggle('compact', this.isCompact);
+            this.compactToggle.classList.toggle('active', this.isCompact);
+
+            // Update compact view immediately if toggled on
+            if (this.isCompact && this.lastData) {
+                this.updateCompact(this.lastData);
+            }
+        });
+
         // Quick action buttons
         document.querySelectorAll('.quick-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -117,10 +147,30 @@ class MobileCompanionPane extends SimGlassBase {
     }
 
     updateFlightData(d) {
+        this.lastData = d; // Store for compact mode updates
         this.altEl.textContent = Math.round(d.PLANE_ALTITUDE || d.altitude || 0);
         this.spdEl.textContent = Math.round(d.AIRSPEED_INDICATED || d.airspeed || 0);
         this.hdgEl.textContent = Math.round(d.PLANE_HEADING_DEGREES_TRUE || d.heading || 0);
         this.vsEl.textContent = Math.round(d.VERTICAL_SPEED || d.verticalSpeed || 0);
+
+        // Update compact mode if active
+        if (this.isCompact) {
+            this.updateCompact(d);
+        }
+    }
+
+    updateCompact(d) {
+        const alt = Math.round(d.PLANE_ALTITUDE || d.altitude || 0);
+        const spd = Math.round(d.AIRSPEED_INDICATED || d.airspeed || 0);
+        const hdg = Math.round(d.PLANE_HEADING_DEGREES_TRUE || d.heading || 0);
+        const vs = Math.round(d.VERTICAL_SPEED || d.verticalSpeed || 0);
+
+        this.compactAltEl.textContent = alt + 'ft';
+        this.compactSpdEl.textContent = spd + 'kt';
+        this.compactHdgEl.textContent = hdg + '°';
+        this.compactVsEl.textContent = (vs >= 0 ? '+' : '') + vs;
+        this.compactStatusEl.textContent = this.connected ? '✓' : '✗';
+        this.compactFuelEl.textContent = '---'; // Add fuel data if available
     }
 
     destroy() {

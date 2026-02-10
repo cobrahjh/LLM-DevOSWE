@@ -19,6 +19,7 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
     <div class="widget-container kneeboard">
         <div class="widget-header">
             <span class="widget-title">📋 Kneeboard</span>
@@ -27,6 +28,36 @@
             </div>
         </div>
 
+        <!-- Compact Mode View -->
+        <div class="kb-compact">
+            <div class="compact-cell">
+                <span class="lbl">Zulu</span>
+                <span class="val" id="compact-zulu">--:--Z</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Flight</span>
+                <span class="val" id="compact-flight">00:00</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Notes</span>
+                <span class="val" id="compact-notes">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Freq 1</span>
+                <span class="val" id="compact-freq1">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Freq 2</span>
+                <span class="val" id="compact-freq2">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Freq 3</span>
+                <span class="val" id="compact-freq3">---</span>
+            </div>
+        </div>
+
+        <!-- Full Mode View -->
+        <div class="kb-full">
         <div class="kneeboard-tabs" id="kneeboard-tabs">
             <button class="kb-tab active" data-tab="notes">Notes</button>
             <button class="kb-tab" data-tab="frequencies">Freqs</button>
@@ -102,6 +133,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 

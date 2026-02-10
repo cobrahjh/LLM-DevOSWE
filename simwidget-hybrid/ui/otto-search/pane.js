@@ -74,17 +74,22 @@ class OttoSearch extends SimGlassBase {
         this.selectedIndex = 0;
         this.filteredCommands = [];
         this.currentCategory = 'all';
+        this.isCompact = false;
+        this.currentQuery = '';
 
         this.initUI();
+        this.initCompactMode();
     }
 
     // SimGlassBase lifecycle hooks
     onConnect() {
         this.updateStatus(true, 'Connected');
+        this.updateCompact();
     }
 
     onDisconnect() {
         this.updateStatus(false, 'Disconnected');
+        this.updateCompact();
     }
 
     initUI() {
@@ -94,14 +99,16 @@ class OttoSearch extends SimGlassBase {
         this.renderResults(this.filterCommands(''), '');
 
         searchInput.addEventListener('input', (e) => {
+            this.currentQuery = e.target.value;
             this.renderResults(this.filterCommands(e.target.value), e.target.value);
+            this.updateCompact();
         });
 
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown') { e.preventDefault(); this.updateSelection(this.selectedIndex + 1); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); this.updateSelection(this.selectedIndex - 1); }
             else if (e.key === 'Enter') { e.preventDefault(); this.executeCommand(this.selectedIndex); }
-            else if (e.key === 'Escape') { searchInput.value = ''; this.renderResults(this.filterCommands(''), ''); }
+            else if (e.key === 'Escape') { searchInput.value = ''; this.currentQuery = ''; this.renderResults(this.filterCommands(''), ''); this.updateCompact(); }
         });
 
         categoryBar.addEventListener('click', (e) => {
@@ -110,6 +117,7 @@ class OttoSearch extends SimGlassBase {
                 e.target.classList.add('active');
                 this.currentCategory = e.target.dataset.category;
                 this.renderResults(this.filterCommands(searchInput.value), searchInput.value);
+                this.updateCompact();
             }
         });
     }
@@ -177,6 +185,7 @@ class OttoSearch extends SimGlassBase {
             noResults.appendChild(icon);
             noResults.appendChild(text);
             container.appendChild(noResults);
+            this.updateCompact();
             return;
         }
 
@@ -214,6 +223,7 @@ class OttoSearch extends SimGlassBase {
             item.addEventListener('click', () => this.executeCommand(index));
             container.appendChild(item);
         });
+        this.updateCompact();
     }
 
     async executeCommand(index) {
@@ -235,6 +245,51 @@ class OttoSearch extends SimGlassBase {
         items[newIndex].classList.add('selected');
         items[newIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         this.selectedIndex = newIndex;
+        this.updateCompact();
+    }
+
+    initCompactMode() {
+        const compactToggle = document.getElementById('compact-toggle');
+        const widgetContainer = document.querySelector('.widget-container');
+
+        // Read compact mode preference from localStorage
+        const savedCompact = localStorage.getItem('otto-search-compact');
+        if (savedCompact === 'true') {
+            this.isCompact = true;
+            widgetContainer.classList.add('compact');
+            compactToggle.classList.add('active');
+        }
+
+        // Toggle handler
+        compactToggle.addEventListener('click', () => {
+            this.isCompact = !this.isCompact;
+            widgetContainer.classList.toggle('compact');
+            compactToggle.classList.toggle('active');
+            localStorage.setItem('otto-search-compact', this.isCompact);
+            this.updateCompact();
+        });
+
+        this.updateCompact();
+    }
+
+    updateCompact() {
+        if (!this.isCompact) return;
+
+        const statusText = document.getElementById('statusText')?.textContent || 'Unknown';
+        const selectedCmd = this.filteredCommands[this.selectedIndex];
+
+        // Update compact cells
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
+
+        setVal('compact-total', COMMANDS.length);
+        setVal('compact-category', this.currentCategory.charAt(0).toUpperCase() + this.currentCategory.slice(1));
+        setVal('compact-status', statusText);
+        setVal('compact-filter', this.currentQuery || 'None');
+        setVal('compact-results', this.filteredCommands.length);
+        setVal('compact-selected', selectedCmd ? selectedCmd.name : '-');
     }
 
     // Cleanup - extends SimGlassBase.destroy()

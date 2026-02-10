@@ -16,9 +16,9 @@
   },
   "copilot": {
     "licenseKey": "SW-SYSZ4-Q6V49-76LKE-XGA8A",
-    "provider": "openai",
-    "model": "gpt-4o",
-    "apiKeyEncrypted": "",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:32b",
+    "apiKeyEncrypted": "e7c37353a8f058dd428ab60d4e8f9f4b:4ea8a9a61128bd945f340db9e2265890acc66eab3fe979b6b935f7d9bd8def2a4465c8703a84bb787042f37ac42ec5fc",
     "apiKeyMemoryOnly": false,
     "ttsVoice": "fable"
   }

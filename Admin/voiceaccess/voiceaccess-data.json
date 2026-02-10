@@ -60,40 +60,5 @@
     }
   },
   "macros": [],
-  "history": [
-    {
-      "id": "ml2l1stogfle",
-      "text": "Status",
-      "parsed": {
-        "type": "intent",
-        "action": "status",
-        "target": "orchestrator",
-        "tier": 0
-      },
-      "result": {
-        "success": false,
-        "response": "Could not reach Orchestrator."
-      },
-      "persona": "heather",
-      "source": "admin",
-      "timestamp": "2026-01-31T17:25:27.468Z"
-    },
-    {
-      "id": "ml2l1vgkh0gx",
-      "text": "Status",
-      "parsed": {
-        "type": "intent",
-        "action": "status",
-        "target": "orchestrator",
-        "tier": 0
-      },
-      "result": {
-        "success": false,
-        "response": "Could not reach Orchestrator."
-      },
-      "persona": "heather",
-      "source": "admin",
-      "timestamp": "2026-01-31T17:25:30.884Z"
-    }
-  ]
+  "history": []
 }

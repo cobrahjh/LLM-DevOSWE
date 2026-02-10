@@ -153,3 +153,78 @@ body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-thumb { background: #667eea; border-radius: 2px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Compact Mode Toggle */
+.compact-toggle {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    color: #888;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compact-toggle:hover {
+    color: #667eea;
+    border-color: #667eea;
+}
+
+.compact-toggle.active {
+    background: #4ade80;
+    color: #fff;
+    border-color: #4ade80;
+}
+
+/* Compact Mode Layout */
+.mc-full { display: block; }
+.mc-compact { display: none; }
+
+.widget-container.compact .mc-full { display: none; }
+.widget-container.compact .mc-compact { display: grid; }
+
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+    margin: 0 auto;
+}
+
+/* Compact Grid */
+.mc-compact {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 8px;
+}
+
+.compact-cell {
+    background: #16213e;
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.compact-cell .lbl {
+    font-size: 8px;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.5px;
+}
+
+.compact-cell .val {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Consolas', 'Monaco', monospace;
+    color: #4ade80;
+}

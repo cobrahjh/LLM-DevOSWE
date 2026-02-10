@@ -278,3 +278,111 @@ body {
         font-size: 8px;
     }
 }
+
+/* Compact Mode Toggle Button */
+.compact-toggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: 6px;
+    font-size: 16px;
+    color: var(--sg-text-muted);
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compact-toggle:hover {
+    color: var(--sg-accent-green);
+    border-color: var(--sg-accent-green);
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green);
+    color: #000;
+    border-color: var(--sg-accent-green);
+}
+
+/* Mode Visibility */
+.iw-full {
+    display: block;
+}
+
+.iw-compact {
+    display: none;
+}
+
+.widget-container.compact .iw-full {
+    display: none;
+}
+
+.widget-container.compact .iw-compact {
+    display: grid;
+}
+
+/* Compact Mode Layout */
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+/* Compact Grid */
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+}
+
+.compact-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(42, 42, 62, 0.8) 0%, rgba(26, 26, 46, 0.8) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 8px;
+    min-height: 60px;
+    transition: all 0.2s ease;
+}
+
+.compact-cell:hover {
+    background: linear-gradient(135deg, rgba(62, 62, 82, 0.9) 0%, rgba(42, 42, 62, 0.9) 100%);
+    border-color: var(--sg-accent-green);
+}
+
+.compact-cell .lbl {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--sg-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.compact-cell .val {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-green);
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+}
+
+.compact-cell .val.active {
+    color: #00ff88;
+    text-shadow: 0 0 12px rgba(0, 255, 136, 0.6);
+}
+
+.compact-cell .val.inactive {
+    color: #666;
+    text-shadow: none;
+}

@@ -282,3 +282,105 @@ body {
         -webkit-overflow-scrolling: touch;
     }
 }
+
+/* Compact Mode Toggle */
+.compact-toggle {
+    position: fixed;
+    top: 12px;
+    right: 50px;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--sg-text-muted, #666);
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.compact-toggle:hover {
+    color: var(--sg-accent-green, #00ff88);
+    border-color: var(--sg-accent-green, #00ff88);
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green, #00ff88);
+    color: #0d0d1a;
+    border-color: var(--sg-accent-green, #00ff88);
+}
+
+/* Compact Mode Layout */
+.os-full {
+    display: block;
+}
+
+.os-compact {
+    display: none;
+}
+
+.widget-container.compact .os-full {
+    display: none;
+}
+
+.widget-container.compact .os-compact {
+    display: grid;
+}
+
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+/* Compact Grid */
+.os-compact {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 8px;
+}
+
+.compact-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 8px;
+    text-align: center;
+    min-height: 50px;
+    transition: all 0.2s ease;
+}
+
+.compact-cell:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(0, 212, 255, 0.4);
+}
+
+.compact-cell .lbl {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--sg-text-muted, #666);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.compact-cell .val {
+    font-size: 14px;
+    font-weight: bold;
+    font-family: var(--sg-font-data, 'Consolas', monospace);
+    color: var(--sg-accent-green, #00ff88);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}

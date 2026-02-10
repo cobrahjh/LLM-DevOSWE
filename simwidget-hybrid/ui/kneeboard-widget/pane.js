@@ -19,8 +19,10 @@ class KneeboardPane extends SimGlassBase {
         this.flightTimerElapsed = 0;
         this.countdownRunning = false;
         this.countdownEnd = null;
+        this.compactMode = false;
 
         this.loadState();
+        this.initCompactMode();
         this.initTabs();
         this.initNotes();
         this.initFrequencies();
@@ -29,7 +31,12 @@ class KneeboardPane extends SimGlassBase {
 
         // Start clock updates
         this.updateZuluTime();
-        this._clockInterval = setInterval(() => this.updateZuluTime(), 1000);
+        this._clockInterval = setInterval(() => {
+            this.updateZuluTime();
+            if (this.compactMode) {
+                this.updateCompact();
+            }
+        }, 1000);
     }
 
     loadState() {
@@ -41,6 +48,10 @@ class KneeboardPane extends SimGlassBase {
                 this.frequencies = state.frequencies || [];
                 this.flightTimerElapsed = state.flightTimerElapsed || 0;
             }
+
+            // Load compact mode preference
+            const compactPref = localStorage.getItem('kneeboard-widget-compact');
+            this.compactMode = compactPref === 'true';
         } catch (e) {
             console.error('[Kneeboard] Failed to load state:', e);
         }
@@ -53,8 +64,86 @@ class KneeboardPane extends SimGlassBase {
                 frequencies: this.frequencies,
                 flightTimerElapsed: this.flightTimerElapsed
             }));
+
+            // Save compact mode preference
+            localStorage.setItem('kneeboard-widget-compact', this.compactMode.toString());
         } catch (e) {
             console.error('[Kneeboard] Failed to save state:', e);
+        }
+    }
+
+    // Compact Mode
+    initCompactMode() {
+        const toggleBtn = document.getElementById('compact-toggle');
+        const container = document.querySelector('.widget-container');
+
+        // Apply saved compact mode state
+        if (this.compactMode) {
+            container.classList.add('compact');
+            toggleBtn.classList.add('active');
+            this.updateCompact();
+        }
+
+        // Toggle handler
+        toggleBtn.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            container.classList.toggle('compact', this.compactMode);
+            toggleBtn.classList.toggle('active', this.compactMode);
+            this.saveState();
+
+            if (this.compactMode) {
+                this.updateCompact();
+            }
+        });
+    }
+
+    updateCompact() {
+        if (!this.compactMode) return;
+
+        // Update Zulu time
+        const now = new Date();
+        const hours = String(now.getUTCHours()).padStart(2, '0');
+        const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+        document.getElementById('compact-zulu').textContent = hours + ':' + minutes + 'Z';
+
+        // Update flight timer
+        let flightTime = '00:00';
+        if (this.flightTimerRunning) {
+            const elapsed = this.flightTimerElapsed + (Date.now() - this.flightTimerStart);
+            const totalSeconds = Math.floor(elapsed / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            if (hours > 0) {
+                flightTime = hours + ':' + minutes;
+            } else {
+                const seconds = String(totalSeconds % 60).padStart(2, '0');
+                flightTime = minutes + ':' + seconds;
+            }
+        } else if (this.flightTimerElapsed > 0) {
+            const totalSeconds = Math.floor(this.flightTimerElapsed / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            if (hours > 0) {
+                flightTime = hours + ':' + minutes;
+            } else {
+                const seconds = String(totalSeconds % 60).padStart(2, '0');
+                flightTime = minutes + ':' + seconds;
+            }
+        }
+        document.getElementById('compact-flight').textContent = flightTime;
+
+        // Update notes count
+        const noteLines = this.notes.split('\n').filter(l => l.trim()).length;
+        document.getElementById('compact-notes').textContent = noteLines > 0 ? noteLines + ' lines' : 'Empty';
+
+        // Update frequencies
+        for (let i = 0; i < 3; i++) {
+            const elem = document.getElementById('compact-freq' + (i + 1));
+            if (this.frequencies[i]) {
+                elem.textContent = this.frequencies[i].value;
+            } else {
+                elem.textContent = '---';
+            }
         }
     }
 
@@ -90,6 +179,7 @@ class KneeboardPane extends SimGlassBase {
         textarea.addEventListener('input', () => {
             this.notes = textarea.value;
             this.saveState();
+            this.updateCompact();
         });
 
         // Templates
@@ -188,6 +278,7 @@ class KneeboardPane extends SimGlassBase {
         this.frequencies.push({ name, value });
         this.saveState();
         this.renderFrequencies();
+        this.updateCompact();
 
         nameInput.value = '';
         valueInput.value = '';
@@ -198,6 +289,7 @@ class KneeboardPane extends SimGlassBase {
         this.frequencies.splice(index, 1);
         this.saveState();
         this.renderFrequencies();
+        this.updateCompact();
     }
 
     // Timers

@@ -17,43 +17,75 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
     <div class="widget-container">
     <div class="otto-container">
-        <!-- Search Bar -->
-        <div class="search-wrapper">
-            <div class="search-icon">&#128269;</div>
-            <input type="text"
-                   id="searchInput"
-                   class="search-input"
-                   placeholder="Type a command... (e.g., gear, flaps, autopilot)"
-                   autocomplete="off"
-                   autofocus>
-            <div class="search-hint">
-                <kbd>Enter</kbd> to execute &bull; <kbd>Esc</kbd> to clear
+        <!-- Full Mode -->
+        <div class="os-full">
+            <!-- Search Bar -->
+            <div class="search-wrapper">
+                <div class="search-icon">&#128269;</div>
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="Type a command... (e.g., gear, flaps, autopilot)"
+                       autocomplete="off"
+                       autofocus>
+                <div class="search-hint">
+                    <kbd>Enter</kbd> to execute &bull; <kbd>Esc</kbd> to clear
+                </div>
+            </div>
+
+            <!-- Results List -->
+            <div class="results-container" id="results">
+                <!-- Results will be populated by JS -->
+            </div>
+
+            <!-- Category Filter -->
+            <div class="category-bar" id="categoryBar">
+                <button class="category-btn active" data-category="all">All</button>
+                <button class="category-btn" data-category="flight">Flight</button>
+                <button class="category-btn" data-category="lights">Lights</button>
+                <button class="category-btn" data-category="autopilot">Autopilot</button>
+                <button class="category-btn" data-category="engine">Engine</button>
+                <button class="category-btn" data-category="camera">Camera</button>
+                <button class="category-btn" data-category="radio">Radio</button>
+            </div>
+
+            <!-- Status -->
+            <div class="status-bar">
+                <span class="status-dot" id="status"></span>
+                <span class="status-text" id="statusText">Connecting...</span>
+                <span class="result-count" id="resultCount"></span>
             </div>
         </div>
 
-        <!-- Results List -->
-        <div class="results-container" id="results">
-            <!-- Results will be populated by JS -->
-        </div>
-
-        <!-- Category Filter -->
-        <div class="category-bar" id="categoryBar">
-            <button class="category-btn active" data-category="all">All</button>
-            <button class="category-btn" data-category="flight">Flight</button>
-            <button class="category-btn" data-category="lights">Lights</button>
-            <button class="category-btn" data-category="autopilot">Autopilot</button>
-            <button class="category-btn" data-category="engine">Engine</button>
-            <button class="category-btn" data-category="camera">Camera</button>
-            <button class="category-btn" data-category="radio">Radio</button>
-        </div>
-
-        <!-- Status -->
-        <div class="status-bar">
-            <span class="status-dot" id="status"></span>
-            <span class="status-text" id="statusText">Connecting...</span>
-            <span class="result-count" id="resultCount"></span>
+        <!-- Compact Mode -->
+        <div class="os-compact">
+            <div class="compact-cell">
+                <span class="lbl">Commands</span>
+                <span class="val" id="compact-total">0</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Category</span>
+                <span class="val" id="compact-category">All</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Status</span>
+                <span class="val" id="compact-status">...</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Filter</span>
+                <span class="val" id="compact-filter">None</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Results</span>
+                <span class="val" id="compact-results">0</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Selected</span>
+                <span class="val" id="compact-selected">-</span>
+            </div>
         </div>
     </div>
     </div>

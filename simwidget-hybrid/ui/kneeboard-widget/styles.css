@@ -343,3 +343,88 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Compact Mode Toggle Button */
+.compact-toggle {
+    position: fixed;
+    top: 10px;
+    right: 50px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--sg-border-subtle);
+    border-radius: var(--sg-radius-sm);
+    color: var(--sg-text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.2s ease;
+}
+
+.compact-toggle:hover {
+    color: var(--sg-text-primary);
+    border-color: var(--sg-text-primary);
+}
+
+.compact-toggle.active {
+    background: var(--sg-accent-green);
+    color: white;
+    border-color: var(--sg-accent-green);
+}
+
+/* Compact Mode Layout */
+.kb-full {
+    display: block;
+}
+
+.kb-compact {
+    display: none;
+}
+
+.widget-container.compact .kb-full {
+    display: none;
+}
+
+.widget-container.compact .kb-compact {
+    display: grid;
+}
+
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+.kb-compact {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 8px;
+}
+
+.compact-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 4px;
+    background: var(--sg-bg-panel);
+    border-radius: var(--sg-radius-sm);
+    text-align: center;
+}
+
+.compact-cell .lbl {
+    font-size: 8px;
+    color: var(--sg-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.compact-cell .val {
+    font-family: var(--sg-font-data);
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--sg-accent-green);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}

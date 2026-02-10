@@ -16,82 +16,102 @@
     <script src="/ui/shared/widget-base.js"></script>
 </head>
 <body>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">◧</button>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <h1>🎬 Flight Recorder</h1>
-            <div class="header-controls">
-                <button id="btn-transparency" class="btn-icon" title="Toggle Transparency">👁</button>
-                <button id="btn-settings" class="btn-icon" title="Settings">⚙️</button>
+        <div class="frec-full">
+            <div class="widget-header">
+                <h1>🎬 Flight Recorder</h1>
+                <div class="header-controls">
+                    <button id="btn-transparency" class="btn-icon" title="Toggle Transparency">👁</button>
+                    <button id="btn-settings" class="btn-icon" title="Settings">⚙️</button>
+                </div>
             </div>
-        </div>
 
-        <div class="status-section">
-            <div id="rec-status" class="rec-status">
-                <div class="rec-indicator" id="rec-indicator"></div>
-                <div class="status-info">
-                    <div class="status-label" id="status-label">Ready</div>
-                    <div class="status-duration" id="status-duration">00:00:00</div>
+            <div class="status-section">
+                <div id="rec-status" class="rec-status">
+                    <div class="rec-indicator" id="rec-indicator"></div>
+                    <div class="status-info">
+                        <div class="status-label" id="status-label">Ready</div>
+                        <div class="status-duration" id="status-duration">00:00:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <button id="btn-record" class="btn btn-record">⏺ Record</button>
+                <button id="btn-pause" class="btn btn-pause" disabled>⏸ Pause</button>
+                <button id="btn-stop" class="btn btn-stop" disabled>⏹ Stop</button>
+                <button id="btn-play" class="btn btn-play" disabled>▶ Play</button>
+            </div>
+
+            <div class="stats-section">
+                <div class="stat-row">
+                    <span class="stat-label">Data Points</span>
+                    <span class="stat-value" id="stat-points">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">File Size</span>
+                    <span class="stat-value" id="stat-size">0 KB</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Interval</span>
+                    <span class="stat-value" id="stat-interval">100ms</span>
+                </div>
+            </div>
+
+            <div class="current-data">
+                <div class="section-header">Current Position</div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <span class="data-label">ALT</span>
+                        <span class="data-value" id="data-alt">0 ft</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">SPD</span>
+                        <span class="data-value" id="data-spd">0 kts</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">HDG</span>
+                        <span class="data-value" id="data-hdg">0°</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">VS</span>
+                        <span class="data-value" id="data-vs">0 fpm</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sessions-section">
+                <div class="section-header">
+                    Saved Sessions
+                    <span id="session-count" class="count"></span>
+                </div>
+                <div id="sessions-list" class="sessions-list">
+                    <div class="no-sessions">No saved sessions</div>
+                </div>
+                <div class="session-actions">
+                    <button id="btn-export" class="btn btn-small" disabled>📤 Export</button>
+                    <button id="btn-import" class="btn btn-small">📥 Import</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
             </div>
         </div>
 
-        <div class="controls-section">
-            <button id="btn-record" class="btn btn-record">⏺ Record</button>
-            <button id="btn-pause" class="btn btn-pause" disabled>⏸ Pause</button>
-            <button id="btn-stop" class="btn btn-stop" disabled>⏹ Stop</button>
-            <button id="btn-play" class="btn btn-play" disabled>▶ Play</button>
-        </div>
-
-        <div class="stats-section">
-            <div class="stat-row">
-                <span class="stat-label">Data Points</span>
-                <span class="stat-value" id="stat-points">0</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">File Size</span>
-                <span class="stat-value" id="stat-size">0 KB</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">Interval</span>
-                <span class="stat-value" id="stat-interval">100ms</span>
-            </div>
-        </div>
-
-        <div class="current-data">
-            <div class="section-header">Current Position</div>
-            <div class="data-grid">
-                <div class="data-item">
-                    <span class="data-label">ALT</span>
-                    <span class="data-value" id="data-alt">0 ft</span>
+        <div class="frec-compact">
+            <div class="compact-grid">
+                <div class="compact-cell">
+                    <span class="lbl">Status</span>
+                    <span class="val" id="compact-status">STOP</span>
                 </div>
-                <div class="data-item">
-                    <span class="data-label">SPD</span>
-                    <span class="data-value" id="data-spd">0 kts</span>
+                <div class="compact-cell">
+                    <span class="lbl">Duration</span>
+                    <span class="val" id="compact-duration">00:00:00</span>
                 </div>
-                <div class="data-item">
-                    <span class="data-label">HDG</span>
-                    <span class="data-value" id="data-hdg">0°</span>
+                <div class="compact-cell">
+                    <span class="lbl">Points</span>
+                    <span class="val" id="compact-points">0</span>
                 </div>
-                <div class="data-item">
-                    <span class="data-label">VS</span>
-                    <span class="data-value" id="data-vs">0 fpm</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="sessions-section">
-            <div class="section-header">
-                Saved Sessions
-                <span id="session-count" class="count"></span>
-            </div>
-            <div id="sessions-list" class="sessions-list">
-                <div class="no-sessions">No saved sessions</div>
-            </div>
-            <div class="session-actions">
-                <button id="btn-export" class="btn btn-small" disabled>📤 Export</button>
-                <button id="btn-import" class="btn btn-small">📥 Import</button>
-                <input type="file" id="import-file" accept=".json" style="display: none;">
             </div>
         </div>
     </div>

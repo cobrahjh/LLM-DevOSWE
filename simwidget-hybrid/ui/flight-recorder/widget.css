@@ -475,3 +475,104 @@ body.transparent .widget-container {
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+/* ============================================
+   COMPACT MODE
+   ============================================ */
+
+.compact-toggle {
+    position: fixed;
+    top: 4px;
+    right: 4px;
+    z-index: 100;
+    background: var(--sg-bg-card, rgba(16, 32, 56, 0.80));
+    border: 1px solid var(--sg-border-subtle, rgba(255, 255, 255, 0.1));
+    color: var(--sg-text-secondary, #A8B8CC);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.compact-toggle:hover {
+    background: var(--sg-bg-panel, rgba(12, 24, 44, 0.90));
+    border-color: var(--sg-border-medium, rgba(255, 255, 255, 0.22));
+}
+
+/* Full / Compact visibility */
+.frec-full {
+    display: block;
+}
+
+.frec-compact {
+    display: none;
+}
+
+.widget-container.compact .frec-full {
+    display: none;
+}
+
+.widget-container.compact .frec-compact {
+    display: block;
+}
+
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+/* Compact grid layout */
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+.compact-cell {
+    background: var(--sg-bg-card, rgba(16, 32, 56, 0.80));
+    border-radius: 6px;
+    padding: 6px 8px;
+    text-align: center;
+    border: 1px solid var(--sg-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.compact-cell .lbl {
+    display: block;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--sg-text-muted, #607080);
+    margin-bottom: 2px;
+}
+
+.compact-cell .val {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: var(--sg-text-primary, #F0F4F8);
+}
+
+.compact-cell .val.recording {
+    color: var(--sg-accent-red, #FF1744);
+    animation: compact-pulse 1s infinite;
+}
+
+.compact-cell .val.playing {
+    color: var(--sg-accent-green, #00E676);
+}
+
+.compact-cell .val.paused {
+    color: var(--sg-accent-amber, #FF9100);
+}
+
+@keyframes compact-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}

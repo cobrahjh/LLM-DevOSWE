@@ -19,7 +19,12 @@
     <!-- Settings Button -->
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
 
+    <!-- Compact Mode Toggle -->
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
+
     <div class="widget-container">
+    <!-- Full Mode -->
+    <div class="iw-full">
     <div class="wheel-container">
         <!-- Radial Menu -->
         <div class="wheel" id="wheel">
@@ -43,6 +48,37 @@
 
     <!-- Action Tooltip -->
     <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <!-- Compact Mode -->
+    <div class="iw-compact">
+        <div class="compact-grid">
+            <div class="compact-cell">
+                <span class="lbl">GEAR</span>
+                <span class="val" id="compact-gear">-</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">FLAPS</span>
+                <span class="val" id="compact-flaps">-</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">BRAKE</span>
+                <span class="val" id="compact-brake">-</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">A/P</span>
+                <span class="val" id="compact-ap">-</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">NAV</span>
+                <span class="val" id="compact-nav">-</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">SPOIL</span>
+                <span class="val" id="compact-spoil">-</span>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script src="/ui/shared/settings-panel.js"></script>

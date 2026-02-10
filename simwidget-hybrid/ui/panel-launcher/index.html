@@ -73,7 +73,38 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
     <div class="widget-container">
+        <!-- Compact View -->
+        <div class="pl-compact">
+            <div class="compact-cell">
+                <span class="lbl">Power</span>
+                <span class="val" id="compact-power">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Avionics</span>
+                <span class="val" id="compact-avionics">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Status</span>
+                <span class="val" id="compact-status">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Widgets</span>
+                <span class="val" id="compact-widgets">11</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Presets</span>
+                <span class="val" id="compact-presets">4</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Theme</span>
+                <span class="val" id="compact-theme">---</span>
+            </div>
+        </div>
+
+        <!-- Full View -->
+        <div class="pl-full">
         <header class="widget-header">
             <h1>Panel Launcher</h1>
             <div class="header-controls">
@@ -320,6 +351,7 @@
             </div>
             <p class="import-status" id="import-status"></p>
         </section>
+        </div>
     </div>
 
     <script src="/ui/shared/settings-panel.js"></script>

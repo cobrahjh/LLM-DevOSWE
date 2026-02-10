@@ -58,6 +58,7 @@ class MapPane extends SimGlassBase {
         this.initMap();
         this.initControls();
         this.initRadarControls();
+        this.initCompactMode();
         this.pollPosition();
         this.loadFlightPlan();
     }
@@ -404,13 +405,69 @@ class MapPane extends SimGlassBase {
             if (this.followMode) {
                 this.centerOnAircraft();
             }
+            this.updateCompact();
         });
 
         // Disable follow on manual pan
         this.map.on('dragstart', () => {
             this.followMode = false;
             document.getElementById('btn-follow').classList.remove('active');
+            this.updateCompact();
         });
+    }
+
+    initCompactMode() {
+        // Read compact mode state from localStorage
+        const isCompact = localStorage.getItem('map-widget-compact') === 'true';
+        const container = document.querySelector('.widget-container');
+        const toggleBtn = document.getElementById('compact-toggle');
+
+        if (isCompact) {
+            container.classList.add('compact');
+            toggleBtn.classList.add('active');
+        }
+
+        // Toggle handler
+        toggleBtn.addEventListener('click', () => {
+            const nowCompact = container.classList.toggle('compact');
+            toggleBtn.classList.toggle('active', nowCompact);
+            localStorage.setItem('map-widget-compact', nowCompact);
+
+            // Update compact view with current data
+            if (nowCompact) {
+                this.updateCompact();
+            }
+        });
+    }
+
+    updateCompact() {
+        // Update compact mode cells with current state
+        const posEl = document.getElementById('compact-pos-val');
+        const altEl = document.getElementById('compact-alt-val');
+        const hdgEl = document.getElementById('compact-hdg-val');
+        const spdEl = document.getElementById('compact-spd-val');
+        const trkEl = document.getElementById('compact-trk-val');
+        const modeEl = document.getElementById('compact-mode-val');
+
+        if (posEl) {
+            posEl.textContent = this.formatCoord(this.position.lat, 'lat') + ' ' +
+                               this.formatCoord(this.position.lng, 'lng');
+        }
+        if (altEl) {
+            altEl.textContent = Math.round(this.altitude).toLocaleString() + ' ft';
+        }
+        if (hdgEl) {
+            hdgEl.textContent = Math.round(this.heading) + '°';
+        }
+        if (spdEl) {
+            spdEl.textContent = Math.round(this.speed) + ' kt';
+        }
+        if (trkEl) {
+            trkEl.textContent = this.trackPoints.length.toString();
+        }
+        if (modeEl) {
+            modeEl.textContent = this.followMode ? 'ON' : 'OFF';
+        }
     }
 
     // SimGlassBase lifecycle hook
@@ -494,6 +551,7 @@ class MapPane extends SimGlassBase {
 
             // Update info display
             this.updateInfoDisplay();
+            this.updateCompact();
 
             // Broadcast position to other widgets
             this.syncChannel.postMessage({

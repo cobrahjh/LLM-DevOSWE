@@ -30,3 +30,70 @@
 .total { background: #16213e; padding: 10px; border-radius: 6px; text-align: center; }
 .total span:first-child { display: block; font-size: 9px; color: #888; text-transform: uppercase; }
 .total span:last-child { display: block; font-size: 16px; font-weight: 600; color: #22c55e; font-family: monospace; }
+
+/* ── Compact toggle button ── */
+.compact-toggle {
+    position: fixed;
+    top: 8px;
+    left: 36px;
+    z-index: 999;
+    background: var(--sg-bg-header, #16213e);
+    border: 1px solid var(--sg-border-subtle, rgba(255,255,255,0.1));
+    color: var(--sg-text-muted, #888);
+    font-size: 16px;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+}
+.compact-toggle:hover { color: #fff; }
+.compact-toggle.active {
+    background: var(--sg-accent-green, #22c55e);
+    color: #000;
+}
+
+/* ── Full / compact visibility ── */
+.flog-full  { display: block; }
+.flog-compact { display: none; }
+
+.widget-container.compact .flog-full  { display: none; }
+.widget-container.compact .flog-compact { display: grid; }
+
+/* ── Compact layout ── */
+.widget-container.compact {
+    max-width: 280px;
+    padding: 3px;
+}
+
+.flog-compact {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+.compact-cell {
+    background: var(--sg-bg-header, #16213e);
+    border: 1px solid var(--sg-border-subtle, rgba(255,255,255,0.08));
+    border-radius: 6px;
+    padding: 6px 4px;
+    text-align: center;
+}
+.compact-cell .lbl {
+    display: block;
+    font-size: 8px;
+    text-transform: uppercase;
+    color: var(--sg-text-muted, #888);
+    margin-bottom: 2px;
+}
+.compact-cell .val {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--sg-font-data, monospace);
+    color: var(--sg-accent-green, #22c55e);
+}

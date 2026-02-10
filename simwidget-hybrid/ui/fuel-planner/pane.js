@@ -38,6 +38,8 @@ class FuelPlanner extends SimGlassBase {
         this.fuelLoadSlider = document.getElementById('fuel-load');
         this.calculateBtn = document.getElementById('btn-calculate');
         this.notepadBtn = document.getElementById('btn-to-notepad');
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.container = document.querySelector('.widget-container');
     }
 
     initEvents() {
@@ -45,12 +47,18 @@ class FuelPlanner extends SimGlassBase {
         this.calculateBtn.addEventListener('click', () => this.calculate());
         this.notepadBtn.addEventListener('click', () => this.sendToNotepad());
         this.fuelLoadSlider.addEventListener('input', () => this.updateFuelLoad());
+        this.compactToggle.addEventListener('click', () => this.toggleCompact());
 
         // Auto-calculate on input change
         [this.distanceInput, this.cruiseSpeedInput, this.windSpeedInput,
          this.windComponentSelect, this.fuelBurnInput, this.taxiFuelInput].forEach(el => {
             el.addEventListener('change', () => this.calculate());
         });
+
+        // Restore compact preference
+        if (localStorage.getItem('fuel-planner-compact') === 'true') {
+            this.container.classList.add('compact');
+        }
     }
 
     onAircraftChange() {
@@ -107,6 +115,7 @@ class FuelPlanner extends SimGlassBase {
 
         this.updateFuelLoad();
         this.lastCalc = { tripFuel, reserveFuel, alternateFuel, totalFuel, flightTimeMins, groundSpeed, enduranceHrs, range };
+        this.updateCompact();
     }
 
     formatTime(mins) {
@@ -133,6 +142,23 @@ class FuelPlanner extends SimGlassBase {
             statusEl.textContent = 'LOW';
             statusEl.className = 'fuel-status critical';
         }
+    }
+
+    toggleCompact() {
+        const isCompact = this.container.classList.toggle('compact');
+        localStorage.setItem('fuel-planner-compact', isCompact);
+        if (isCompact) this.updateCompact();
+    }
+
+    updateCompact() {
+        if (!this.lastCalc) return;
+        const c = this.lastCalc;
+        const fuelLoad = parseFloat(this.fuelLoadSlider.value) || 0;
+
+        document.getElementById('c-total-fuel').textContent = c.totalFuel.toFixed(1);
+        document.getElementById('c-onboard-fuel').textContent = Math.round(fuelLoad);
+        document.getElementById('c-reserve-fuel').textContent = c.reserveFuel.toFixed(1);
+        document.getElementById('c-endurance').textContent = this.formatTime(Math.round(c.enduranceHrs * 60));
     }
 
     sendToNotepad() {

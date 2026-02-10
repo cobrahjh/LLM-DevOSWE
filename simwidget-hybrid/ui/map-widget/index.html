@@ -21,39 +21,69 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">🗺️ Map</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-radar" title="Weather Radar">🌧️</button>
-                <button class="btn-icon" id="btn-center" title="Center on Aircraft">🎯</button>
-                <button class="btn-icon" id="btn-follow" title="Follow Aircraft">📍</button>
+        <div class="map-full">
+            <div class="widget-header">
+                <span class="widget-title">🗺️ Map</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-radar" title="Weather Radar">🌧️</button>
+                    <button class="btn-icon" id="btn-center" title="Center on Aircraft">🎯</button>
+                    <button class="btn-icon" id="btn-follow" title="Follow Aircraft">📍</button>
+                </div>
+            </div>
+
+            <div class="radar-controls" id="radar-controls">
+                <label class="radar-label">Radar Opacity</label>
+                <input type="range" id="radar-opacity" min="0.3" max="0.8" step="0.05" value="0.5">
+            </div>
+
+            <div class="map-container" id="map"></div>
+
+            <div class="flight-info" id="flight-info">
+                <div class="info-item">
+                    <span class="info-label">Position</span>
+                    <span class="info-value" id="info-position">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Altitude</span>
+                    <span class="info-value" id="info-altitude">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Heading</span>
+                    <span class="info-value" id="info-heading">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Speed</span>
+                    <span class="info-value" id="info-speed">--</span>
+                </div>
             </div>
         </div>
 
-        <div class="radar-controls" id="radar-controls">
-            <label class="radar-label">Radar Opacity</label>
-            <input type="range" id="radar-opacity" min="0.3" max="0.8" step="0.05" value="0.5">
-        </div>
-
-        <div class="map-container" id="map"></div>
-
-        <div class="flight-info" id="flight-info">
-            <div class="info-item">
-                <span class="info-label">Position</span>
-                <span class="info-value" id="info-position">--</span>
+        <div class="map-compact">
+            <div class="compact-cell">
+                <span class="lbl" id="compact-pos-lbl">POSITION</span>
+                <span class="val" id="compact-pos-val">--</span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Altitude</span>
-                <span class="info-value" id="info-altitude">--</span>
+            <div class="compact-cell">
+                <span class="lbl" id="compact-alt-lbl">ALTITUDE</span>
+                <span class="val" id="compact-alt-val">--</span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Heading</span>
-                <span class="info-value" id="info-heading">--</span>
+            <div class="compact-cell">
+                <span class="lbl" id="compact-hdg-lbl">HEADING</span>
+                <span class="val" id="compact-hdg-val">--</span>
             </div>
-            <div class="info-item">
-                <span class="info-label">Speed</span>
-                <span class="info-value" id="info-speed">--</span>
+            <div class="compact-cell">
+                <span class="lbl" id="compact-spd-lbl">SPEED</span>
+                <span class="val" id="compact-spd-val">--</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl" id="compact-trk-lbl">TRACK PTS</span>
+                <span class="val" id="compact-trk-val">--</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl" id="compact-mode-lbl">FOLLOW</span>
+                <span class="val" id="compact-mode-val">--</span>
             </div>
         </div>
     </div>

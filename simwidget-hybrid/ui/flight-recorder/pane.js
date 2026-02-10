@@ -70,6 +70,9 @@ class FlightRecorderPane extends SimGlassBase {
             document.body.classList.add('transparent');
         }
 
+        // Load compact mode preference
+        this.initCompactMode();
+
         // Expose methods to window for inline handlers
         window.exportSessionByIndex = (index) => this.exportSessionByIndex(index);
         window.deleteSession = (index) => this.deleteSession(index);
@@ -475,6 +478,10 @@ class FlightRecorderPane extends SimGlassBase {
         const elapsed = this.getElapsedTime();
         const durationEl = document.getElementById('status-duration');
         if (durationEl) durationEl.textContent = this.formatDuration(elapsed);
+
+        // Keep compact duration in sync
+        const compactDur = document.getElementById('compact-duration');
+        if (compactDur) compactDur.textContent = this.formatDuration(elapsed);
     }
 
     formatDuration(ms) {
@@ -532,6 +539,8 @@ class FlightRecorderPane extends SimGlassBase {
         }
 
         if (statInterval) statInterval.textContent = this.settings.interval + 'ms';
+
+        this.updateCompact();
     }
 
     updateStats() {
@@ -546,6 +555,8 @@ class FlightRecorderPane extends SimGlassBase {
 
         if (ptsEl) ptsEl.textContent = points.toLocaleString();
         if (sizeEl) sizeEl.textContent = sizeKB + ' KB';
+
+        this.updateCompact();
     }
 
     // ============================================
@@ -817,6 +828,71 @@ class FlightRecorderPane extends SimGlassBase {
     toggleTransparency() {
         document.body.classList.toggle('transparent');
         localStorage.setItem('recorder_transparent', document.body.classList.contains('transparent'));
+    }
+
+    // ============================================
+    // COMPACT MODE
+    // ============================================
+
+    initCompactMode() {
+        const isCompact = localStorage.getItem('flight-recorder-compact') === 'true';
+        const container = document.querySelector('.widget-container');
+        if (isCompact && container) {
+            container.classList.add('compact');
+        }
+
+        const toggleBtn = document.getElementById('compact-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => this.toggleCompact());
+        }
+
+        this.updateCompact();
+    }
+
+    toggleCompact() {
+        const container = document.querySelector('.widget-container');
+        if (!container) return;
+
+        container.classList.toggle('compact');
+        const isCompact = container.classList.contains('compact');
+        localStorage.setItem('flight-recorder-compact', isCompact);
+        this.updateCompact();
+    }
+
+    updateCompact() {
+        const statusEl = document.getElementById('compact-status');
+        const durationEl = document.getElementById('compact-duration');
+        const pointsEl = document.getElementById('compact-points');
+
+        if (!statusEl || !durationEl || !pointsEl) return;
+
+        // Determine status text and style class
+        let statusText = 'STOP';
+        let statusClass = 'val';
+
+        if (this.isPlaying) {
+            statusText = 'PLAY';
+            statusClass = 'val playing';
+        } else if (this.isRecording) {
+            if (this.isPaused) {
+                statusText = 'PAUSE';
+                statusClass = 'val paused';
+            } else {
+                statusText = 'REC';
+                statusClass = 'val recording';
+            }
+        }
+
+        statusEl.textContent = statusText;
+        statusEl.className = statusClass;
+
+        // Duration
+        const elapsed = this.getElapsedTime();
+        durationEl.textContent = this.formatDuration(elapsed);
+
+        // Data points count
+        const points = this.currentSession ? this.currentSession.dataPoints.length : 0;
+        pointsEl.textContent = points.toLocaleString();
     }
 
     // ============================================

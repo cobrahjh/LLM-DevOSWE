@@ -31,6 +31,7 @@ class NavigraphPane extends SimGlassBase {
 
         this.initElements();
         this.initEvents();
+        this.initCompactMode();
         this.showReadyMessage();
     }
 
@@ -49,6 +50,9 @@ class NavigraphPane extends SimGlassBase {
         this.chartImage = document.getElementById('chart-image');
         this.zoomInBtn = document.getElementById('btn-zoom-in');
         this.zoomOutBtn = document.getElementById('btn-zoom-out');
+
+        this.compactToggle = document.getElementById('compact-toggle');
+        this.widgetContainer = document.querySelector('.widget-container');
     }
 
     initEvents() {
@@ -76,6 +80,8 @@ class NavigraphPane extends SimGlassBase {
         this.backBtn.addEventListener('click', () => this.closeViewer());
         this.zoomInBtn.addEventListener('click', () => this.zoom(0.2));
         this.zoomOutBtn.addEventListener('click', () => this.zoom(-0.2));
+
+        this.compactToggle.addEventListener('click', () => this.toggleCompact());
     }
 
     showReadyMessage() {
@@ -150,6 +156,7 @@ class NavigraphPane extends SimGlassBase {
             this.charts = data.charts;
             this.renderAirport(data);
             this.renderCharts();
+            this.updateCompact();
 
         } catch (error) {
             this.showError(error.message || 'Airport not found');
@@ -468,6 +475,40 @@ class NavigraphPane extends SimGlassBase {
         if (this.currentAirport) {
             this.searchAirport();
         }
+    }
+
+    initCompactMode() {
+        const isCompact = localStorage.getItem('navigraph-widget-compact') === 'true';
+        if (isCompact) {
+            this.widgetContainer.classList.add('compact');
+            this.compactToggle.classList.add('active');
+        }
+        this.updateCompact();
+    }
+
+    toggleCompact() {
+        const isCompact = this.widgetContainer.classList.toggle('compact');
+        this.compactToggle.classList.toggle('active');
+        localStorage.setItem('navigraph-widget-compact', isCompact);
+        this.updateCompact();
+    }
+
+    updateCompact() {
+        if (!this.widgetContainer.classList.contains('compact')) return;
+
+        const icao = this.currentAirport ? this.currentAirport.icao : '--';
+        const elev = this.currentAirport ? this.currentAirport.elevation : '--';
+        const rwy = this.currentAirport ? this.currentAirport.runways.split(',')[0] : '--';
+        const charts = this.charts.length > 0 ? this.charts.length.toString() : '--';
+        const source = this.currentAirport ? this.currentAirport.source : '--';
+        const status = this.currentAirport ? 'Loaded' : 'Ready';
+
+        document.getElementById('compact-icao').textContent = icao;
+        document.getElementById('compact-elev').textContent = elev;
+        document.getElementById('compact-rwy').textContent = rwy;
+        document.getElementById('compact-charts').textContent = charts;
+        document.getElementById('compact-source').textContent = source;
+        document.getElementById('compact-status').textContent = status;
     }
 
     destroy() {

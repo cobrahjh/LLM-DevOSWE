@@ -18,47 +18,77 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">⚙️</button>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">🗺️ Navigraph Charts</span>
-            <div class="header-controls">
-                <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
-            </div>
-        </div>
-
-        <div class="airport-search">
-            <input type="text" id="airport-input" placeholder="Enter ICAO (e.g., KJFK)" maxlength="4">
-            <button class="btn-search" id="btn-search">Search</button>
-        </div>
-
-        <div class="chart-tabs" id="chart-tabs">
-            <button class="tab-btn active" data-type="all">All</button>
-            <button class="tab-btn" data-type="apt">Airport</button>
-            <button class="tab-btn" data-type="sid">SID</button>
-            <button class="tab-btn" data-type="star">STAR</button>
-            <button class="tab-btn" data-type="app">Approach</button>
-        </div>
-
-        <div class="charts-content" id="charts-content">
-            <div class="ready-notice" id="auth-notice">
-                <div class="notice-icon">&#128506;&#65039;</div>
-                <div class="notice-title">Enter an ICAO code to search charts</div>
-                <div class="notice-text">Free charts from FAA DTPP (US), SkyVector, and ChartFox. No subscription required.</div>
-                <button class="btn-connect" id="btn-connect">View Chart Sources</button>
-            </div>
-        </div>
-
-        <div class="chart-viewer" id="chart-viewer" style="display: none;">
-            <div class="viewer-header">
-                <button class="btn-back" id="btn-back">← Back</button>
-                <span class="chart-title" id="chart-title">Chart</span>
-                <div class="viewer-controls">
-                    <button class="btn-zoom" id="btn-zoom-out">−</button>
-                    <button class="btn-zoom" id="btn-zoom-in">+</button>
+        <div class="nav-full">
+            <div class="widget-header">
+                <span class="widget-title">🗺️ Navigraph Charts</span>
+                <div class="header-controls">
+                    <button class="btn-icon" id="btn-refresh" title="Refresh">🔄</button>
                 </div>
             </div>
-            <div class="viewer-content" id="viewer-content">
-                <img id="chart-image" src="" alt="Chart">
+
+            <div class="airport-search">
+                <input type="text" id="airport-input" placeholder="Enter ICAO (e.g., KJFK)" maxlength="4">
+                <button class="btn-search" id="btn-search">Search</button>
+            </div>
+
+            <div class="chart-tabs" id="chart-tabs">
+                <button class="tab-btn active" data-type="all">All</button>
+                <button class="tab-btn" data-type="apt">Airport</button>
+                <button class="tab-btn" data-type="sid">SID</button>
+                <button class="tab-btn" data-type="star">STAR</button>
+                <button class="tab-btn" data-type="app">Approach</button>
+            </div>
+
+            <div class="charts-content" id="charts-content">
+                <div class="ready-notice" id="auth-notice">
+                    <div class="notice-icon">&#128506;&#65039;</div>
+                    <div class="notice-title">Enter an ICAO code to search charts</div>
+                    <div class="notice-text">Free charts from FAA DTPP (US), SkyVector, and ChartFox. No subscription required.</div>
+                    <button class="btn-connect" id="btn-connect">View Chart Sources</button>
+                </div>
+            </div>
+
+            <div class="chart-viewer" id="chart-viewer" style="display: none;">
+                <div class="viewer-header">
+                    <button class="btn-back" id="btn-back">← Back</button>
+                    <span class="chart-title" id="chart-title">Chart</span>
+                    <div class="viewer-controls">
+                        <button class="btn-zoom" id="btn-zoom-out">−</button>
+                        <button class="btn-zoom" id="btn-zoom-in">+</button>
+                    </div>
+                </div>
+                <div class="viewer-content" id="viewer-content">
+                    <img id="chart-image" src="" alt="Chart">
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-compact">
+            <div class="compact-cell">
+                <span class="lbl">ICAO</span>
+                <span class="val" id="compact-icao">--</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">ELEVATION</span>
+                <span class="val" id="compact-elev">--</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">RUNWAYS</span>
+                <span class="val" id="compact-rwy">--</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">CHARTS</span>
+                <span class="val" id="compact-charts">--</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">SOURCE</span>
+                <span class="val" id="compact-source">--</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">STATUS</span>
+                <span class="val" id="compact-status">Ready</span>
             </div>
         </div>
     </div>

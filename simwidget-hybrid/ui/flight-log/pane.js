@@ -19,9 +19,46 @@ class FlightLog extends SimGlassBase {
         document.getElementById('btn-record').onclick = () => this.startRecording();
         document.getElementById('btn-stop').onclick = () => this.stopRecording();
         document.getElementById('btn-export').onclick = () => this.exportLog();
+
+        // Compact mode toggle
+        this._root = document.querySelector('.widget-container');
+        this._compactBtn = document.getElementById('compact-toggle');
+        if (localStorage.getItem('flight-log-compact') === 'true') {
+            this._root.classList.add('compact');
+            this._compactBtn.classList.add('active');
+        }
+        this._compactBtn.onclick = () => this.toggleCompact();
+
         this.renderHistory();
         this.updateTotals();
+        this.updateCompact();
         this._updateInterval = setInterval(() => this.update(), 1000);
+    }
+
+    toggleCompact() {
+        const isCompact = this._root.classList.toggle('compact');
+        this._compactBtn.classList.toggle('active', isCompact);
+        localStorage.setItem('flight-log-compact', isCompact);
+        this.updateCompact();
+    }
+
+    updateCompact() {
+        const durEl = document.getElementById('compact-duration');
+        const distEl = document.getElementById('compact-distance');
+        const routeEl = document.getElementById('compact-route');
+        if (!durEl) return;
+
+        if (this.recording && this.startTime) {
+            const elapsed = Math.round((Date.now() - this.startTime) / 1000);
+            const m = Math.floor(elapsed / 60), s = elapsed % 60;
+            durEl.textContent = m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0');
+        } else {
+            durEl.textContent = document.getElementById('duration').textContent;
+        }
+        distEl.textContent = document.getElementById('distance').textContent;
+        const dep = document.getElementById('departure').value.toUpperCase() || '----';
+        const arr = document.getElementById('arrival').value.toUpperCase() || '----';
+        routeEl.textContent = dep + ' \u2192 ' + arr;
     }
 
     startRecording() {
@@ -55,6 +92,7 @@ class FlightLog extends SimGlassBase {
     }
 
     async update() {
+        this.updateCompact();
         if (!this.recording) return;
         const elapsed = Math.round((Date.now() - this.startTime) / 1000);
         const m = Math.floor(elapsed / 60), s = elapsed % 60;

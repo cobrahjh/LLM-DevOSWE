@@ -10,49 +10,80 @@
 </head>
 <body>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">Nearby Traffic</span>
-            <div class="header-controls">
-                <select id="network-select">
-                    <option value="all">All Networks</option>
-                    <option value="vatsim">VATSIM</option>
-                    <option value="ivao">IVAO</option>
-                    <option value="msfs">MSFS MP</option>
-                </select>
-                <button class="btn-icon" id="btn-refresh" title="Refresh">↺</button>
+        <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">&#9639;</button>
+
+        <div class="mp-full">
+            <div class="widget-header">
+                <span class="widget-title">Nearby Traffic</span>
+                <div class="header-controls">
+                    <select id="network-select">
+                        <option value="all">All Networks</option>
+                        <option value="vatsim">VATSIM</option>
+                        <option value="ivao">IVAO</option>
+                        <option value="msfs">MSFS MP</option>
+                    </select>
+                    <button class="btn-icon" id="btn-refresh" title="Refresh">↺</button>
+                </div>
+            </div>
+
+            <div class="my-position">
+                <div class="pos-label">Your Position</div>
+                <div class="pos-coords" id="my-coords">---, ---</div>
+            </div>
+
+            <div class="connection-bar">
+                <span class="conn-dot" id="conn-dot"></span>
+                <span class="conn-text" id="conn-text">Connecting...</span>
+                <span class="last-update" id="last-update">--</span>
+            </div>
+
+            <div class="traffic-list" id="traffic-list">
+                <div class="loading" id="traffic-loading">Searching for traffic...</div>
+            </div>
+
+            <div class="traffic-stats">
+                <div class="stat">
+                    <span class="stat-value" id="nearby-count">0</span>
+                    <span class="stat-label">Nearby</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="range">50</span>
+                    <span class="stat-label">nm Range</span>
+                </div>
+            </div>
+
+            <div class="range-control">
+                <label>Search Radius</label>
+                <input type="range" id="range-slider" min="10" max="200" value="50" step="10">
+                <span id="range-value">50 nm</span>
             </div>
         </div>
 
-        <div class="my-position">
-            <div class="pos-label">Your Position</div>
-            <div class="pos-coords" id="my-coords">---, ---</div>
-        </div>
-
-        <div class="connection-bar">
-            <span class="conn-dot" id="conn-dot"></span>
-            <span class="conn-text" id="conn-text">Connecting...</span>
-            <span class="last-update" id="last-update">--</span>
-        </div>
-
-        <div class="traffic-list" id="traffic-list">
-            <div class="loading" id="traffic-loading">Searching for traffic...</div>
-        </div>
-
-        <div class="traffic-stats">
-            <div class="stat">
-                <span class="stat-value" id="nearby-count">0</span>
-                <span class="stat-label">Nearby</span>
+        <div class="mp-compact">
+            <div class="compact-cell">
+                <span class="lbl">NEARBY</span>
+                <span class="val" id="compact-nearby">0</span>
             </div>
-            <div class="stat">
-                <span class="stat-value" id="range">50</span>
-                <span class="stat-label">nm Range</span>
+            <div class="compact-cell">
+                <span class="lbl">RANGE</span>
+                <span class="val" id="compact-range">50nm</span>
             </div>
-        </div>
-
-        <div class="range-control">
-            <label>Search Radius</label>
-            <input type="range" id="range-slider" min="10" max="200" value="50" step="10">
-            <span id="range-value">50 nm</span>
+            <div class="compact-cell">
+                <span class="lbl">STATUS</span>
+                <span class="val" id="compact-status">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">CLOSEST</span>
+                <span class="val" id="compact-closest">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">DISTANCE</span>
+                <span class="val" id="compact-distance">---</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">NETWORK</span>
+                <span class="val" id="compact-network">ALL</span>
+            </div>
         </div>
     </div>
 

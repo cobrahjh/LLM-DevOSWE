@@ -15,37 +15,54 @@
     <script src="/ui/shared/widget-base.js"></script>
 </head>
 <body>
+    <button id="compact-toggle" class="compact-toggle" title="Toggle compact mode">◧</button>
     <div class="widget-container">
-        <div class="widget-header">
-            <span class="widget-title">📒 Flight Log</span>
-            <button class="btn-icon" id="btn-export">💾</button>
-        </div>
-        <div class="current-flight" id="current-flight">
-            <div class="flight-status" id="flight-status">NOT RECORDING</div>
-            <div class="flight-stats">
-                <div class="stat"><span class="stat-label">Duration</span><span class="stat-value" id="duration">00:00</span></div>
-                <div class="stat"><span class="stat-label">Distance</span><span class="stat-value" id="distance">0 nm</span></div>
-                <div class="stat"><span class="stat-label">Max Alt</span><span class="stat-value" id="max-alt">0 ft</span></div>
-                <div class="stat"><span class="stat-label">Landings</span><span class="stat-value" id="landings">0</span></div>
+        <div class="flog-full">
+            <div class="widget-header">
+                <span class="widget-title">📒 Flight Log</span>
+                <button class="btn-icon" id="btn-export">💾</button>
             </div>
-            <div class="flight-route">
-                <input type="text" id="departure" placeholder="DEP" maxlength="4">
-                <span class="route-arrow">→</span>
-                <input type="text" id="arrival" placeholder="ARR" maxlength="4">
+            <div class="current-flight" id="current-flight">
+                <div class="flight-status" id="flight-status">NOT RECORDING</div>
+                <div class="flight-stats">
+                    <div class="stat"><span class="stat-label">Duration</span><span class="stat-value" id="duration">00:00</span></div>
+                    <div class="stat"><span class="stat-label">Distance</span><span class="stat-value" id="distance">0 nm</span></div>
+                    <div class="stat"><span class="stat-label">Max Alt</span><span class="stat-value" id="max-alt">0 ft</span></div>
+                    <div class="stat"><span class="stat-label">Landings</span><span class="stat-value" id="landings">0</span></div>
+                </div>
+                <div class="flight-route">
+                    <input type="text" id="departure" placeholder="DEP" maxlength="4">
+                    <span class="route-arrow">→</span>
+                    <input type="text" id="arrival" placeholder="ARR" maxlength="4">
+                </div>
+                <div class="flight-controls">
+                    <button class="btn-record" id="btn-record">● Start Recording</button>
+                    <button class="btn-stop" id="btn-stop" disabled>■ Stop</button>
+                </div>
             </div>
-            <div class="flight-controls">
-                <button class="btn-record" id="btn-record">● Start Recording</button>
-                <button class="btn-stop" id="btn-stop" disabled>■ Stop</button>
+            <div class="log-history">
+                <div class="history-header">Recent Flights</div>
+                <div class="history-list" id="history-list"></div>
+            </div>
+            <div class="log-totals">
+                <div class="total"><span>Total Flights</span><span id="total-flights">0</span></div>
+                <div class="total"><span>Total Time</span><span id="total-time">0:00</span></div>
+                <div class="total"><span>Total Distance</span><span id="total-distance">0 nm</span></div>
             </div>
         </div>
-        <div class="log-history">
-            <div class="history-header">Recent Flights</div>
-            <div class="history-list" id="history-list"></div>
-        </div>
-        <div class="log-totals">
-            <div class="total"><span>Total Flights</span><span id="total-flights">0</span></div>
-            <div class="total"><span>Total Time</span><span id="total-time">0:00</span></div>
-            <div class="total"><span>Total Distance</span><span id="total-distance">0 nm</span></div>
+        <div class="flog-compact">
+            <div class="compact-cell">
+                <span class="lbl">Duration</span>
+                <span class="val" id="compact-duration">00:00</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Distance</span>
+                <span class="val" id="compact-distance">0 nm</span>
+            </div>
+            <div class="compact-cell">
+                <span class="lbl">Route</span>
+                <span class="val" id="compact-route">---- → ----</span>
+            </div>
         </div>
     </div>
     <script src="pane.js"></script>

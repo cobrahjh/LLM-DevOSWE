@@ -158,7 +158,10 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
             return res.status(403).json({ error: 'Valid copilot license required for AI advisory' });
         }
 
-        const apiKey = decryptApiKey(cfg);
+        const provider = cfg.provider || 'openai';
+        const isLocal = provider === 'ollama' || provider === 'lmstudio';
+
+        const apiKey = isLocal ? 'not-needed' : decryptApiKey(cfg);
         if (!apiKey) {
             return res.status(400).json({ error: 'No API key configured' });
         }
@@ -176,16 +179,16 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
             { role: 'user', content: message.slice(0, 2000) }
         ];
 
-        const provider = cfg.provider || 'openai';
-        const model = cfg.model || (provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20250929');
+        const model = cfg.model || getDefaultModel(provider);
         const abortController = new AbortController();
-        const timeoutId = setTimeout(() => abortController.abort(), 30000);
+        const timeoutId = setTimeout(() => abortController.abort(), 60000);
 
         try {
             if (provider === 'anthropic') {
                 await proxyAnthropic(apiKey, model, messages, res, abortController);
             } else {
-                await proxyOpenAI(apiKey, model, messages, res, abortController);
+                const baseUrl = getProviderBaseUrl(provider);
+                await proxyOpenAI(apiKey, model, messages, res, abortController, baseUrl);
             }
             clearTimeout(timeoutId);
         } catch (err) {
@@ -212,7 +215,10 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
             return res.status(403).json({ error: 'Valid license required' });
         }
 
-        const apiKey = decryptApiKey(cfg);
+        const provider = cfg.provider || 'openai';
+        const isLocal = provider === 'ollama' || provider === 'lmstudio';
+
+        const apiKey = isLocal ? 'not-needed' : decryptApiKey(cfg);
         if (!apiKey) {
             return res.status(400).json({ error: 'No API key configured' });
         }
@@ -245,10 +251,9 @@ For toggle commands, omit the value field. Only include commands that need to CH
             { role: 'user', content: userMsg.slice(0, 2000) }
         ];
 
-        const provider = cfg.provider || 'openai';
-        const model = cfg.model || (provider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20250929');
+        const model = cfg.model || getDefaultModel(provider);
         const abortController = new AbortController();
-        const timeoutId = setTimeout(() => abortController.abort(), 30000);
+        const timeoutId = setTimeout(() => abortController.abort(), 60000);
 
         try {
             // Get non-streaming response for parsing
@@ -256,7 +261,8 @@ For toggle commands, omit the value field. Only include commands that need to CH
             if (provider === 'anthropic') {
                 fullText = await fetchAnthropic(apiKey, model, messages, abortController);
             } else {
-                fullText = await fetchOpenAI(apiKey, model, messages, abortController);
+                const baseUrl = getProviderBaseUrl(provider);
+                fullText = await fetchOpenAI(apiKey, model, messages, abortController, baseUrl);
             }
             clearTimeout(timeoutId);
 
@@ -306,20 +312,40 @@ For toggle commands, omit the value field. Only include commands that need to CH
     });
 }
 
-// Simplified OpenAI streaming proxy
-async function proxyOpenAI(apiKey, model, messages, res, abortController) {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+// Provider base URL mapping
+function getProviderBaseUrl(provider) {
+    switch (provider) {
+        case 'ollama': return 'http://localhost:11434/v1';
+        case 'lmstudio': return 'http://localhost:1234/v1';
+        case 'openai': default: return 'https://api.openai.com/v1';
+    }
+}
+
+// Default model per provider
+function getDefaultModel(provider) {
+    switch (provider) {
+        case 'ollama': return 'qwen2.5-coder:32b';
+        case 'lmstudio': return 'local-model';
+        case 'anthropic': return 'claude-sonnet-4-5-20250929';
+        case 'openai': default: return 'gpt-4o';
+    }
+}
+
+// OpenAI-compatible streaming proxy (works for OpenAI, Ollama, LM Studio)
+async function proxyOpenAI(apiKey, model, messages, res, abortController, baseUrl) {
+    const url = (baseUrl || 'https://api.openai.com/v1') + '/chat/completions';
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey && apiKey !== 'not-needed') headers['Authorization'] = `Bearer ${apiKey}`;
+
+    const response = await fetch(url, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({ model, messages, stream: true, max_tokens: 256 }),
+        headers,
+        body: JSON.stringify({ model, messages, stream: true, max_tokens: 300 }),
         signal: abortController.signal
     });
 
     if (!response.ok) {
-        throw new Error(`OpenAI error (${response.status})`);
+        throw new Error(`LLM error (${response.status}) from ${url}`);
     }
 
     res.writeHead(200, {
@@ -443,15 +469,19 @@ function decryptApiKey(cfg) {
     }
 }
 
-// Non-streaming OpenAI fetch (for auto-advise parsing)
-async function fetchOpenAI(apiKey, model, messages, abortController) {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+// Non-streaming OpenAI-compatible fetch (for auto-advise parsing)
+async function fetchOpenAI(apiKey, model, messages, abortController, baseUrl) {
+    const url = (baseUrl || 'https://api.openai.com/v1') + '/chat/completions';
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey && apiKey !== 'not-needed') headers['Authorization'] = `Bearer ${apiKey}`;
+
+    const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        headers,
         body: JSON.stringify({ model, messages, max_tokens: 300 }),
         signal: abortController.signal
     });
-    if (!response.ok) throw new Error(`OpenAI error (${response.status})`);
+    if (!response.ok) throw new Error(`LLM error (${response.status}) from ${url}`);
     const data = await response.json();
     return data.choices?.[0]?.message?.content || '';
 }
