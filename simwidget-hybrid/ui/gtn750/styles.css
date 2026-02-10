@@ -2088,6 +2088,399 @@ body {
     }
 }
 
+/* ============================================
+   COMPACT TOGGLE BUTTON
+   ============================================ */
+.compact-toggle {
+    position: fixed;
+    top: 8px;
+    left: 36px;
+    z-index: 999;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+.compact-toggle:hover { color: #fff; }
+.compact-toggle.active { color: var(--gtn-green); }
+
+/* ============================================
+   COMPACT MODE — Layout switching
+   ============================================ */
+
+/* Full mode container (inherits gtn750 flex-column) */
+.gtn-full {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Default: full visible, compact hidden */
+.gtn-compact { display: none; }
+
+/* Compact mode: swap visibility */
+.gtn750.compact .gtn-full { display: none; }
+.gtn750.compact .gtn-compact { display: grid; }
+
+/* Compact mode: shrink container */
+.gtn750.compact {
+    width: 320px;
+    height: 200px;
+    align-self: flex-start;
+}
+
+/* ============================================
+   COMPACT GTN750 GRID (~320 x 200px)
+   ============================================ */
+.gtn-compact {
+    grid-template-rows: 22px 1fr 20px 24px;
+    background: rgba(6,14,28,0.96);
+    border: 1px solid rgba(0,230,118,0.12);
+    border-radius: 5px;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* === Compact Freq bar === */
+.gc-freq {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 0 3px;
+    background: rgba(4,10,22,0.95);
+    font-size: 9px;
+    font-family: var(--gtn-mono);
+}
+.gc-freq-grp {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.gc-freq-lbl {
+    font-size: 7px;
+    font-weight: 700;
+    color: #607080;
+    letter-spacing: 0.5px;
+}
+.gc-freq-act {
+    color: #00ff00;
+    font-weight: 700;
+    font-size: 10px;
+    cursor: pointer;
+}
+.gc-freq-stby {
+    color: #607080;
+    font-size: 9px;
+    cursor: pointer;
+}
+.gc-freq-stby:hover { color: #A8B8CC; }
+.gc-freq-sep {
+    width: 1px;
+    height: 12px;
+    background: rgba(255,255,255,0.08);
+    margin: 0 4px;
+}
+.gc-xpdr {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.gc-xpdr-code {
+    color: #00ff00;
+    font-weight: 700;
+    font-size: 10px;
+}
+.gc-xpdr-mode {
+    font-size: 7px;
+    color: #00ff00;
+    background: rgba(0,255,0,0.15);
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+
+/* === Compact Main display === */
+.gc-main {
+    position: relative;
+    background: #050e1a;
+    overflow: hidden;
+}
+.gc-map-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Compact Corner data overlays */
+.gc-corner {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    padding: 2px 4px;
+    background: rgba(4,10,22,0.75);
+    border-radius: 2px;
+}
+.gc-corner.tl { top: 2px; left: 2px; }
+.gc-corner.tr { top: 2px; right: 2px; text-align: right; }
+.gc-corner.bl { bottom: 2px; left: 2px; }
+.gc-corner.br { bottom: 2px; right: 2px; text-align: right; }
+
+.gc-corner-lbl {
+    font-size: 7px;
+    font-weight: 700;
+    color: #607080;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+.gc-corner-val {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--gtn-mono);
+    color: #00ff00;
+    line-height: 1.2;
+}
+
+/* Compact Waypoint info overlay */
+.gc-wpt {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px;
+    background: rgba(4,10,22,0.80);
+    border-radius: 3px;
+    border: 1px solid rgba(255,0,255,0.3);
+}
+.gc-wpt-id {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--gtn-mono);
+    color: var(--gtn-magenta);
+}
+.gc-wpt-dtk {
+    font-size: 9px;
+    color: var(--gtn-magenta);
+}
+.gc-wpt-dis {
+    font-size: 9px;
+    color: #A8B8CC;
+}
+
+/* Compact Range control */
+.gc-range {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 4px;
+    background: rgba(4,10,22,0.80);
+    border-radius: 2px;
+}
+.gc-range-btn {
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #A8B8CC;
+    cursor: pointer;
+    background: rgba(16,32,56,0.8);
+    border-radius: 2px;
+}
+.gc-range-btn:hover { color: #fff; background: rgba(16,32,56,1); }
+.gc-range-val {
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--gtn-mono);
+    color: var(--gtn-cyan);
+    min-width: 20px;
+    text-align: center;
+}
+.gc-range-unit {
+    font-size: 7px;
+    color: #607080;
+}
+
+/* === Compact CDI bar === */
+.gc-cdi {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+    background: rgba(4,10,22,0.90);
+    font-size: 8px;
+}
+.gc-cdi-src {
+    font-weight: 700;
+    color: var(--gtn-magenta);
+    letter-spacing: 0.5px;
+}
+.gc-cdi-to {
+    color: var(--gtn-green);
+    font-weight: 700;
+}
+.gc-cdi-dtk {
+    color: #A8B8CC;
+    font-family: var(--gtn-mono);
+}
+.gc-cdi-bar {
+    flex: 1;
+    height: 8px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gc-cdi-dots {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.gc-cdi-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #3A4A5C;
+}
+.gc-cdi-needle {
+    width: 2px;
+    height: 10px;
+    background: var(--gtn-magenta);
+    border-radius: 1px;
+    position: absolute;
+}
+.gc-cdi-xtk {
+    color: #607080;
+    font-family: var(--gtn-mono);
+    margin-left: auto;
+}
+
+/* GPS status dot */
+.gc-gps-status {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 7px;
+    color: var(--gtn-green);
+    font-weight: 700;
+}
+.gc-gps-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gtn-green);
+    box-shadow: 0 0 4px var(--gtn-green);
+}
+
+/* === Compact Softkeys === */
+.gc-softkeys {
+    display: flex;
+    gap: 1px;
+    padding: 1px;
+    background: rgba(4,10,22,0.95);
+}
+.gc-sk {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    font-size: 8px;
+    font-weight: 700;
+    color: #A8B8CC;
+    background: rgba(16,32,56,0.8);
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+.gc-sk:hover { color: #fff; background: rgba(16,32,56,1); }
+.gc-sk.active {
+    color: #000;
+    background: var(--gtn-cyan);
+}
+
+/* === Compact Page tabs === */
+.gc-tabs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 1px;
+    padding: 1px;
+    z-index: 2;
+    display: none;
+}
+.gc-tabs.visible { display: flex; }
+.gc-tab {
+    flex: 1;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    font-weight: 700;
+    color: #607080;
+    background: rgba(6,14,28,0.90);
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+.gc-tab.active {
+    color: var(--gtn-cyan);
+    background: rgba(0,255,255,0.12);
+    border-bottom: 1px solid var(--gtn-cyan);
+}
+
+/* === Compact FPL view === */
+.gc-fpl {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: none;
+    flex-direction: column;
+    padding: 2px;
+    padding-top: 18px;
+    overflow-y: auto;
+    background: rgba(6,14,28,0.98);
+}
+.gc-fpl.visible { display: flex; }
+.gc-fpl-row {
+    display: flex;
+    align-items: center;
+    padding: 2px 4px;
+    font-size: 9px;
+    font-family: var(--gtn-mono);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.gc-fpl-row.active { background: rgba(255,0,255,0.08); }
+.gc-fpl-wpt {
+    width: 44px;
+    font-weight: 700;
+    color: var(--gtn-cyan);
+}
+.gc-fpl-row.active .gc-fpl-wpt { color: var(--gtn-magenta); }
+.gc-fpl-dtk { width: 36px; color: #A8B8CC; font-size: 8px; }
+.gc-fpl-dis { width: 36px; color: #A8B8CC; font-size: 8px; }
+.gc-fpl-alt { color: var(--gtn-green); font-size: 8px; margin-left: auto; }
+
 /* ===== NIGHT MODE ===== */
 .night-mode {
     --gtn-green: #006600;

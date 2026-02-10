@@ -22,8 +22,10 @@
 </head>
 <body>
     <button class="settings-btn" id="settings-btn" title="Settings">&#9881;</button>
+    <button class="compact-toggle" id="compact-toggle" title="Toggle compact mode">&#9638;</button>
 
     <div class="gtn750" id="gtn750">
+        <div class="gtn-full">
         <!-- Frequency Bar (Top) - GTN 750 Style -->
         <div class="freq-bar" id="freq-bar">
             <button class="section-toggle" data-target="freq-bar" title="Collapse frequencies">&#9650;</button>
@@ -574,6 +576,110 @@
             </div>
             <div class="status-right">
                 <span class="status-time" id="utc-time">00:00:00Z</span>
+            </div>
+        </div>
+        </div><!-- /gtn-full -->
+
+        <!-- Compact Mode Layout (320x200) -->
+        <div class="gtn-compact" id="gtn-compact">
+            <!-- Freq bar -->
+            <div class="gc-freq">
+                <div class="gc-freq-grp">
+                    <span class="gc-freq-lbl">COM</span>
+                    <span class="gc-freq-act" id="gc-com1">118.00</span>
+                    <span class="gc-freq-stby" id="gc-com1-stby">124.85</span>
+                </div>
+                <div class="gc-freq-sep"></div>
+                <div class="gc-freq-grp">
+                    <span class="gc-freq-lbl">NAV</span>
+                    <span class="gc-freq-act" id="gc-nav1">108.00</span>
+                    <span class="gc-freq-stby" id="gc-nav1-stby">113.90</span>
+                </div>
+                <div class="gc-freq-sep"></div>
+                <div class="gc-xpdr">
+                    <span class="gc-freq-lbl">XP</span>
+                    <span class="gc-xpdr-code" id="gc-xpdr">1200</span>
+                    <span class="gc-xpdr-mode" id="gc-xpdr-mode">ON</span>
+                </div>
+            </div>
+
+            <!-- Main display -->
+            <div class="gc-main" id="gc-main">
+                <canvas class="gc-map-canvas" id="gc-map"></canvas>
+
+                <!-- Waypoint info -->
+                <div class="gc-wpt">
+                    <span class="gc-wpt-id" id="gc-wpt-id">----</span>
+                    <span class="gc-wpt-dtk" id="gc-wpt-dtk">---&deg;</span>
+                    <span class="gc-wpt-dis" id="gc-wpt-dis">--.-nm</span>
+                </div>
+
+                <!-- Corner data -->
+                <div class="gc-corner tl">
+                    <span class="gc-corner-lbl">TRK</span>
+                    <span class="gc-corner-val" id="gc-trk">000&deg;</span>
+                </div>
+                <div class="gc-corner tr">
+                    <span class="gc-corner-lbl">GS</span>
+                    <span class="gc-corner-val" id="gc-gs">0kt</span>
+                </div>
+                <div class="gc-corner bl">
+                    <span class="gc-corner-lbl">ALT</span>
+                    <span class="gc-corner-val" id="gc-alt">0</span>
+                </div>
+                <div class="gc-corner br">
+                    <span class="gc-corner-lbl">ETE</span>
+                    <span class="gc-corner-val" id="gc-ete">--:--</span>
+                </div>
+
+                <!-- Range -->
+                <div class="gc-range">
+                    <span class="gc-range-btn" id="gc-zoom-out">-</span>
+                    <span class="gc-range-val" id="gc-range">10</span>
+                    <span class="gc-range-unit">nm</span>
+                    <span class="gc-range-btn" id="gc-zoom-in">+</span>
+                </div>
+
+                <!-- Page tabs (toggle via MENU softkey) -->
+                <div class="gc-tabs" id="gc-tabs">
+                    <div class="gc-tab active" data-page="map">MAP</div>
+                    <div class="gc-tab" data-page="fpl">FPL</div>
+                    <div class="gc-tab" data-page="proc">PROC</div>
+                    <div class="gc-tab" data-page="nrst">NRST</div>
+                    <div class="gc-tab" data-page="wx">WX</div>
+                </div>
+
+                <!-- FPL compact view (hidden by default) -->
+                <div class="gc-fpl" id="gc-fpl"></div>
+            </div>
+
+            <!-- CDI bar -->
+            <div class="gc-cdi">
+                <span class="gc-gps-status"><span class="gc-gps-dot" id="gc-gps-dot"></span><span id="gc-gps-lbl">3D</span></span>
+                <span class="gc-cdi-src" id="gc-cdi-src">GPS</span>
+                <span class="gc-cdi-to" id="gc-cdi-to">TO</span>
+                <span class="gc-cdi-dtk">DTK <span id="gc-cdi-dtk">---</span>&deg;</span>
+                <div class="gc-cdi-bar">
+                    <div class="gc-cdi-dots">
+                        <span class="gc-cdi-dot"></span>
+                        <span class="gc-cdi-dot"></span>
+                        <span class="gc-cdi-dot"></span>
+                        <span class="gc-cdi-needle" id="gc-cdi-needle"></span>
+                        <span class="gc-cdi-dot"></span>
+                        <span class="gc-cdi-dot"></span>
+                    </div>
+                </div>
+                <span class="gc-cdi-xtk" id="gc-cdi-xtk">0.0</span>
+            </div>
+
+            <!-- Softkeys -->
+            <div class="gc-softkeys" id="gc-softkeys">
+                <div class="gc-sk" id="gc-sk-menu">MENU</div>
+                <div class="gc-sk" id="gc-sk-ter">TER</div>
+                <div class="gc-sk" id="gc-sk-tfc">TFC</div>
+                <div class="gc-sk" id="gc-sk-dto">D&rarr;</div>
+                <div class="gc-sk" id="gc-sk-cdi">CDI</div>
+                <div class="gc-sk" id="gc-sk-back">BACK</div>
             </div>
         </div>
     </div>

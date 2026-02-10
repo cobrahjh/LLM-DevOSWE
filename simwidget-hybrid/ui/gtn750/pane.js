@@ -113,6 +113,11 @@ class GTN750Pane extends SimGlassBase {
         // Soft key retry counter
         this._softKeyRetries = 0;
 
+        // Compact mode
+        this.compactMode = localStorage.getItem('gtn750-compact') === 'true';
+        this._compactRafId = null;
+        this.gcCompactPage = 'map';
+
         // cross-pane sync
         this.syncChannel = new SafeChannel('SimGlass-sync');
 
@@ -142,6 +147,7 @@ class GTN750Pane extends SimGlassBase {
         this.bindTawsAlerts();
         this.dataFieldsManager.loadConfig();
         this.mapRenderer.start();
+        this.setupCompactToggle();
 
         // Defer non-critical modules (500ms after initial render)
         this.deferredInit();
@@ -1144,7 +1150,26 @@ class GTN750Pane extends SimGlassBase {
             swapNav1: document.getElementById('swap-nav1'),
             xpdr: document.getElementById('xpdr'),
             utcTime: document.getElementById('utc-time'),
-            tabs: document.querySelectorAll('.gtn-tab')
+            tabs: document.querySelectorAll('.gtn-tab'),
+            // Compact mode elements
+            gcCom1: document.getElementById('gc-com1'),
+            gcCom1Stby: document.getElementById('gc-com1-stby'),
+            gcNav1: document.getElementById('gc-nav1'),
+            gcNav1Stby: document.getElementById('gc-nav1-stby'),
+            gcXpdr: document.getElementById('gc-xpdr'),
+            gcTrk: document.getElementById('gc-trk'),
+            gcGs: document.getElementById('gc-gs'),
+            gcAlt: document.getElementById('gc-alt'),
+            gcEte: document.getElementById('gc-ete'),
+            gcWptId: document.getElementById('gc-wpt-id'),
+            gcWptDtk: document.getElementById('gc-wpt-dtk'),
+            gcWptDis: document.getElementById('gc-wpt-dis'),
+            gcCdiSrc: document.getElementById('gc-cdi-src'),
+            gcCdiTo: document.getElementById('gc-cdi-to'),
+            gcCdiDtk: document.getElementById('gc-cdi-dtk'),
+            gcCdiXtk: document.getElementById('gc-cdi-xtk'),
+            gcCdiNeedle: document.getElementById('gc-cdi-needle'),
+            gcRange: document.getElementById('gc-range')
         };
     }
 
@@ -1581,10 +1606,330 @@ class GTN750Pane extends SimGlassBase {
         }
     }
 
+    // ===== COMPACT MODE =====
+
+    setupCompactToggle() {
+        const toggle = document.getElementById('compact-toggle');
+        if (!toggle) return;
+
+        const root = document.getElementById('gtn750');
+        if (this.compactMode) {
+            root?.classList.add('compact');
+            toggle.classList.add('active');
+            this.startCompactRender();
+        }
+
+        toggle.addEventListener('click', () => {
+            this.compactMode = !this.compactMode;
+            localStorage.setItem('gtn750-compact', this.compactMode);
+            root?.classList.toggle('compact', this.compactMode);
+            toggle.classList.toggle('active', this.compactMode);
+
+            if (this.compactMode) {
+                this.startCompactRender();
+            } else {
+                this.stopCompactRender();
+                this.resizeCanvas();
+            }
+        });
+
+        this.bindCompactEvents();
+    }
+
+    setupCompactCanvas() {
+        this.gcCanvas = document.getElementById('gc-map');
+        if (!this.gcCanvas) return;
+        this.gcCtx = this.gcCanvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = this.gcCanvas.parentElement.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        this.gcCanvas.width = rect.width * dpr;
+        this.gcCanvas.height = rect.height * dpr;
+        this.gcCtx.scale(dpr, dpr);
+        this.gcCanvasW = rect.width;
+        this.gcCanvasH = rect.height;
+    }
+
+    startCompactRender() {
+        // Delay setup slightly to let layout settle
+        setTimeout(() => {
+            this.setupCompactCanvas();
+            if (this._compactRafId) cancelAnimationFrame(this._compactRafId);
+            const loop = () => {
+                if (!this.compactMode) { this._compactRafId = null; return; }
+                this.renderCompactMap();
+                this.updateCompact();
+                this._compactRafId = requestAnimationFrame(loop);
+            };
+            this._compactRafId = requestAnimationFrame(loop);
+        }, 50);
+    }
+
+    stopCompactRender() {
+        if (this._compactRafId) {
+            cancelAnimationFrame(this._compactRafId);
+            this._compactRafId = null;
+        }
+    }
+
+    renderCompactMap() {
+        if (!this.gcCtx || !this.gcCanvasW) {
+            this.setupCompactCanvas();
+            if (!this.gcCtx || !this.gcCanvasW) return;
+        }
+        const ctx = this.gcCtx;
+        const w = this.gcCanvasW;
+        const h = this.gcCanvasH;
+
+        // Dark background
+        ctx.fillStyle = '#050e1a';
+        ctx.fillRect(0, 0, w, h);
+
+        // Grid
+        ctx.strokeStyle = 'rgba(0,212,255,0.06)';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < w; i += 30) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+        for (let j = 0; j < h; j += 30) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(w, j); ctx.stroke(); }
+
+        // Range ring
+        const ringR = Math.min(w, h) * 0.3;
+        ctx.beginPath();
+        ctx.arc(w / 2, h * 0.65, ringR, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0,212,255,0.12)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // Aircraft position (center-lower)
+        const ax = w / 2, ay = h * 0.65;
+
+        // Draw flight plan line if available
+        const fpl = this.flightPlanManager?.flightPlan;
+        if (fpl?.waypoints?.length > 1 && this.data.latitude) {
+            const nmPerPx = this.map.range / ringR;
+            const rotation = this.map.orientation === 'north' ? 0 : -(this.data.track || this.data.heading || 0) * Math.PI / 180;
+
+            ctx.save();
+            ctx.translate(ax, ay);
+            ctx.rotate(rotation);
+
+            ctx.beginPath();
+            let started = false;
+            fpl.waypoints.forEach(wp => {
+                if (!wp.lat || !wp.lng) return;
+                const dlat = (wp.lat - this.data.latitude) * 60;
+                const dlon = (wp.lng - this.data.longitude) * 60 * Math.cos(this.data.latitude * Math.PI / 180);
+                const px = dlon / nmPerPx;
+                const py = -dlat / nmPerPx;
+                if (!started) { ctx.moveTo(px, py); started = true; }
+                else ctx.lineTo(px, py);
+            });
+            ctx.strokeStyle = '#FF44CC';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Waypoint diamonds and labels
+            const activeIdx = this.flightPlanManager?.activeWaypointIndex || 0;
+            fpl.waypoints.forEach((wp, i) => {
+                if (!wp.lat || !wp.lng) return;
+                const dlat = (wp.lat - this.data.latitude) * 60;
+                const dlon = (wp.lng - this.data.longitude) * 60 * Math.cos(this.data.latitude * Math.PI / 180);
+                const px = dlon / nmPerPx;
+                const py = -dlat / nmPerPx;
+                if (Math.abs(px) > w && Math.abs(py) > h) return;
+
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.rotate(Math.PI / 4);
+                ctx.fillStyle = i === activeIdx ? '#FF44CC' : '#00D4FF';
+                ctx.fillRect(-3, -3, 6, 6);
+                ctx.restore();
+
+                ctx.font = '700 8px Consolas, monospace';
+                ctx.fillStyle = '#00D4FF';
+                ctx.fillText(wp.ident || '', px + 6, py - 2);
+            });
+
+            ctx.restore();
+        }
+
+        // Aircraft symbol
+        ctx.beginPath();
+        ctx.moveTo(ax, ay - 6);
+        ctx.lineTo(ax - 5, ay + 4);
+        ctx.lineTo(ax, ay + 1);
+        ctx.lineTo(ax + 5, ay + 4);
+        ctx.closePath();
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+    }
+
+    updateCompact() {
+        const d = this.data;
+        const e = this.elements;
+
+        // Frequencies
+        if (e.gcCom1) e.gcCom1.textContent = (d.com1Active || 118.00).toFixed(3);
+        if (e.gcCom1Stby) e.gcCom1Stby.textContent = (d.com1Standby || 118.00).toFixed(3);
+        if (e.gcNav1) e.gcNav1.textContent = (d.nav1Active || 108.00).toFixed(2);
+        if (e.gcNav1Stby) e.gcNav1Stby.textContent = (d.nav1Standby || 108.00).toFixed(2);
+        if (e.gcXpdr) e.gcXpdr.textContent = String(d.transponder || 1200).padStart(4, '0');
+
+        // Corner data
+        if (e.gcTrk) e.gcTrk.textContent = Math.round(d.track || d.heading || 0).toString().padStart(3, '0') + '\u00B0';
+        if (e.gcGs) e.gcGs.textContent = Math.round(d.groundSpeed || 0) + 'kt';
+        if (e.gcAlt) e.gcAlt.textContent = Math.round(d.altitude || 0).toLocaleString();
+
+        // ETE
+        if (e.gcEte) {
+            const fpm = this.flightPlanManager;
+            if (fpm?.activeWaypoint && d.groundSpeed > 5) {
+                const dist = this.core.calculateDistance(d.latitude, d.longitude, fpm.activeWaypoint.lat, fpm.activeWaypoint.lng);
+                const eteMin = (dist / d.groundSpeed) * 60;
+                e.gcEte.textContent = this.core.formatEte(eteMin);
+            } else {
+                e.gcEte.textContent = '--:--';
+            }
+        }
+
+        // Waypoint
+        if (e.gcWptId) {
+            const wp = this.flightPlanManager?.activeWaypoint;
+            e.gcWptId.textContent = wp?.ident || '----';
+        }
+        if (e.gcWptDtk) {
+            const cdiDtk = this.cdiManager?.cdi?.dtk;
+            e.gcWptDtk.textContent = cdiDtk ? Math.round(cdiDtk).toString().padStart(3, '0') + '\u00B0' : '---\u00B0';
+        }
+        if (e.gcWptDis) {
+            const wp = this.flightPlanManager?.activeWaypoint;
+            if (wp?.lat && d.latitude) {
+                const dist = this.core.calculateDistance(d.latitude, d.longitude, wp.lat, wp.lng);
+                e.gcWptDis.textContent = dist.toFixed(1) + 'nm';
+            } else {
+                e.gcWptDis.textContent = '--.-nm';
+            }
+        }
+
+        // CDI
+        if (e.gcCdiSrc) e.gcCdiSrc.textContent = this.cdiManager?.navSource || 'GPS';
+        if (e.gcCdiTo) {
+            const tf = this.cdiManager?.cdi?.toFrom;
+            e.gcCdiTo.textContent = ['FROM', 'TO', '---'][tf] || '---';
+        }
+        if (e.gcCdiDtk) {
+            const dtk = this.cdiManager?.cdi?.dtk;
+            e.gcCdiDtk.textContent = dtk ? Math.round(dtk).toString().padStart(3, '0') : '---';
+        }
+        if (e.gcCdiXtk) {
+            const xtk = this.cdiManager?.cdi?.xtk;
+            e.gcCdiXtk.textContent = xtk != null ? Math.abs(xtk).toFixed(1) : '0.0';
+        }
+
+        // CDI needle position
+        if (e.gcCdiNeedle) {
+            const needle = this.cdiManager?.cdi?.needle || 0;
+            const offset = Math.max(-30, Math.min(30, needle * 20));
+            e.gcCdiNeedle.style.left = `calc(50% + ${offset}px)`;
+        }
+
+        // Range
+        if (e.gcRange) e.gcRange.textContent = this.map.range;
+    }
+
+    bindCompactEvents() {
+        // Compact range buttons
+        document.getElementById('gc-zoom-in')?.addEventListener('click', () => this.changeRange(-1));
+        document.getElementById('gc-zoom-out')?.addEventListener('click', () => this.changeRange(1));
+
+        // Compact softkeys
+        document.getElementById('gc-sk-menu')?.addEventListener('click', () => {
+            document.getElementById('gc-tabs')?.classList.toggle('visible');
+        });
+        document.getElementById('gc-sk-ter')?.addEventListener('click', () => {
+            this.map.showTerrain = !this.map.showTerrain;
+            document.getElementById('gc-sk-ter')?.classList.toggle('active', this.map.showTerrain);
+        });
+        document.getElementById('gc-sk-tfc')?.addEventListener('click', () => {
+            this.map.showTraffic = !this.map.showTraffic;
+            document.getElementById('gc-sk-tfc')?.classList.toggle('active', this.map.showTraffic);
+        });
+        document.getElementById('gc-sk-dto')?.addEventListener('click', () => {
+            this.flightPlanManager?.showDirectTo();
+        });
+        document.getElementById('gc-sk-cdi')?.addEventListener('click', () => {
+            const sources = ['GPS', 'NAV1', 'NAV2'];
+            const idx = sources.indexOf(this.cdiManager?.navSource || 'GPS');
+            const next = sources[(idx + 1) % sources.length];
+            this.cdiManager.setNavSource(next);
+            this.data.navSource = next;
+            this.cdiManager.updateFromSource(this._getCdiState());
+        });
+        document.getElementById('gc-sk-back')?.addEventListener('click', () => {
+            document.getElementById('gc-tabs')?.classList.remove('visible');
+            document.getElementById('gc-fpl')?.classList.remove('visible');
+            this.gcCompactPage = 'map';
+        });
+
+        // Compact page tabs
+        document.getElementById('gc-tabs')?.addEventListener('click', (e) => {
+            const tab = e.target.closest('.gc-tab');
+            if (!tab) return;
+            const pageId = tab.dataset.page;
+
+            // Update tab active state
+            document.querySelectorAll('#gc-tabs .gc-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Show/hide FPL view
+            if (pageId === 'fpl') {
+                document.getElementById('gc-fpl')?.classList.add('visible');
+                this.gcCompactPage = 'fpl';
+                this.updateCompactFpl();
+            } else {
+                document.getElementById('gc-fpl')?.classList.remove('visible');
+                this.gcCompactPage = pageId;
+            }
+
+            // Also switch the full-size page (for data loading)
+            this.pageManager?.switchPage(pageId, false);
+
+            // Hide tabs after selection
+            document.getElementById('gc-tabs')?.classList.remove('visible');
+        });
+    }
+
+    updateCompactFpl() {
+        const fplEl = document.getElementById('gc-fpl');
+        if (!fplEl) return;
+
+        const plan = this.flightPlanManager?.flightPlan;
+        if (!plan?.waypoints?.length) {
+            fplEl.innerHTML = '<div style="color:#607080;font-size:9px;padding:20px;text-align:center">No flight plan</div>';
+            return;
+        }
+
+        const activeIdx = this.flightPlanManager?.activeWaypointIndex || 0;
+        let html = '';
+        plan.waypoints.forEach((wp, i) => {
+            const isActive = i === activeIdx;
+            const alt = wp.altitude ? (wp.altitude >= 18000 ? 'FL' + Math.round(wp.altitude / 100) : Math.round(wp.altitude)) : '---';
+            html += `<div class="gc-fpl-row${isActive ? ' active' : ''}">`;
+            html += `<span class="gc-fpl-wpt">${wp.ident || '----'}</span>`;
+            html += `<span class="gc-fpl-dtk">${wp.dtk ? Math.round(wp.dtk) + '\u00B0' : '---'}</span>`;
+            html += `<span class="gc-fpl-dis">${wp.distanceFromPrev ? wp.distanceFromPrev.toFixed(0) + 'nm' : '---'}</span>`;
+            html += `<span class="gc-fpl-alt">${alt}</span>`;
+            html += `</div>`;
+        });
+        fplEl.innerHTML = html;
+    }
+
     destroy() {
         if (this.mapRenderer) this.mapRenderer.stop();
         if (this.dataHandler) this.dataHandler.destroy();
         if (this.flightPlanManager) this.flightPlanManager.destroy();
+
+        // Cancel compact render
+        this.stopCompactRender();
 
         // Cancel page render RAF loops
         this.terrainPageRenderActive = false;

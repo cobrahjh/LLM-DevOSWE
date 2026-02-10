@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>GTN750 Proto: Compact</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: rgba(8,18,34,0.95); font-family: 'B612', 'Segoe UI', sans-serif; }
+
+/* === GTN750 COMPACT: ~320 x 200px === */
+.gtn-compact {
+    display: grid;
+    grid-template-rows: 22px 1fr 20px 24px;
+    width: 320px;
+    height: 200px;
+    background: rgba(6,14,28,0.96);
+    border: 1px solid rgba(0,230,118,0.12);
+    border-radius: 5px;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* === ROW 1: Freq bar (COM + NAV inline) === */
+.gc-freq {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 0 3px;
+    background: rgba(4,10,22,0.95);
+    font-size: 9px;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+}
+.gc-freq-grp {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.gc-freq-lbl {
+    font-size: 7px;
+    font-weight: 700;
+    color: #607080;
+    letter-spacing: 0.5px;
+}
+.gc-freq-act {
+    color: #00E676;
+    font-weight: 700;
+    font-size: 10px;
+    cursor: pointer;
+}
+.gc-freq-stby {
+    color: #607080;
+    font-size: 9px;
+    cursor: pointer;
+}
+.gc-freq-stby:hover { color: #A8B8CC; }
+.gc-freq-sep {
+    width: 1px;
+    height: 12px;
+    background: rgba(255,255,255,0.08);
+    margin: 0 4px;
+}
+.gc-xpdr {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.gc-xpdr-code {
+    color: #00E676;
+    font-weight: 700;
+    font-size: 10px;
+}
+.gc-xpdr-mode {
+    font-size: 7px;
+    color: #00E676;
+    background: rgba(0,230,118,0.15);
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+
+/* === ROW 2: Main display (map + nav data overlay) === */
+.gc-main {
+    position: relative;
+    background: #050e1a;
+    overflow: hidden;
+}
+.gc-map-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Corner data overlays */
+.gc-corner {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    padding: 2px 4px;
+    background: rgba(4,10,22,0.75);
+    border-radius: 2px;
+}
+.gc-corner.tl { top: 2px; left: 2px; }
+.gc-corner.tr { top: 2px; right: 2px; text-align: right; }
+.gc-corner.bl { bottom: 2px; left: 2px; }
+.gc-corner.br { bottom: 2px; right: 2px; text-align: right; }
+
+.gc-corner-lbl {
+    font-size: 7px;
+    font-weight: 700;
+    color: #607080;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+.gc-corner-val {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #00E676;
+    line-height: 1.2;
+}
+
+/* Waypoint info overlay (center-top) */
+.gc-wpt {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px;
+    background: rgba(4,10,22,0.80);
+    border-radius: 3px;
+    border: 1px solid rgba(255,68,204,0.3);
+}
+.gc-wpt-id {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #FF44CC;
+}
+.gc-wpt-dtk {
+    font-size: 9px;
+    color: #FF44CC;
+}
+.gc-wpt-dis {
+    font-size: 9px;
+    color: #A8B8CC;
+}
+
+/* Range control */
+.gc-range {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 4px;
+    background: rgba(4,10,22,0.80);
+    border-radius: 2px;
+}
+.gc-range-btn {
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #A8B8CC;
+    cursor: pointer;
+    background: rgba(16,32,56,0.8);
+    border-radius: 2px;
+}
+.gc-range-btn:hover { color: #fff; background: rgba(16,32,56,1); }
+.gc-range-val {
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    color: #00D4FF;
+    min-width: 20px;
+    text-align: center;
+}
+.gc-range-unit {
+    font-size: 7px;
+    color: #607080;
+}
+
+/* === ROW 3: CDI / GPS status bar === */
+.gc-cdi {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+    background: rgba(4,10,22,0.90);
+    font-size: 8px;
+}
+.gc-cdi-src {
+    font-weight: 700;
+    color: #FF44CC;
+    letter-spacing: 0.5px;
+}
+.gc-cdi-to {
+    color: #00E676;
+    font-weight: 700;
+}
+.gc-cdi-dtk {
+    color: #A8B8CC;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+}
+.gc-cdi-bar {
+    flex: 1;
+    height: 8px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gc-cdi-dots {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.gc-cdi-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #3A4A5C;
+}
+.gc-cdi-needle {
+    width: 2px;
+    height: 10px;
+    background: #FF44CC;
+    border-radius: 1px;
+    position: absolute;
+}
+.gc-cdi-xtk {
+    color: #607080;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    margin-left: auto;
+}
+
+/* === ROW 4: Softkeys === */
+.gc-softkeys {
+    display: flex;
+    gap: 1px;
+    padding: 1px;
+    background: rgba(4,10,22,0.95);
+}
+.gc-sk {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    font-size: 8px;
+    font-weight: 700;
+    color: #A8B8CC;
+    background: rgba(16,32,56,0.8);
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+.gc-sk:hover { color: #fff; background: rgba(16,32,56,1); }
+.gc-sk.active {
+    color: #000;
+    background: #00D4FF;
+}
+
+/* === Page tabs (inside main) === */
+.gc-tabs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 1px;
+    padding: 1px;
+    z-index: 2;
+    display: none;  /* hidden by default, shown on MENU */
+}
+.gc-tabs.visible { display: flex; }
+.gc-tab {
+    flex: 1;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    font-weight: 700;
+    color: #607080;
+    background: rgba(6,14,28,0.90);
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+.gc-tab.active {
+    color: #00D4FF;
+    background: rgba(0,212,255,0.12);
+    border-bottom: 1px solid #00D4FF;
+}
+
+/* GPS status dot */
+.gc-gps-status {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 7px;
+    color: #00E676;
+    font-weight: 700;
+}
+.gc-gps-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #00E676;
+    box-shadow: 0 0 4px #00E676;
+}
+
+/* === FPL compact view (shown when on FPL page) === */
+.gc-fpl {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: none;
+    flex-direction: column;
+    padding: 2px;
+    overflow-y: auto;
+    background: rgba(6,14,28,0.98);
+}
+.gc-fpl.visible { display: flex; }
+.gc-fpl-row {
+    display: flex;
+    align-items: center;
+    padding: 2px 4px;
+    font-size: 9px;
+    font-family: 'B612 Mono', 'Consolas', monospace;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.gc-fpl-row.active { background: rgba(255,68,204,0.08); }
+.gc-fpl-wpt {
+    width: 44px;
+    font-weight: 700;
+    color: #00D4FF;
+}
+.gc-fpl-row.active .gc-fpl-wpt { color: #FF44CC; }
+.gc-fpl-dtk { width: 36px; color: #A8B8CC; font-size: 8px; }
+.gc-fpl-dis { width: 36px; color: #A8B8CC; font-size: 8px; }
+.gc-fpl-alt { color: #00E676; font-size: 8px; margin-left: auto; }
+</style>
+</head>
+<body>
+<div style="padding:20px">
+    <div style="color:#607080;font-size:10px;margin-bottom:8px;letter-spacing:1px">GTN750 COMPACT (~320 x 200px) — MAP VIEW</div>
+
+    <div class="gtn-compact">
+        <!-- Freq bar -->
+        <div class="gc-freq">
+            <div class="gc-freq-grp">
+                <span class="gc-freq-lbl">COM</span>
+                <span class="gc-freq-act">118.00</span>
+                <span class="gc-freq-stby">124.85</span>
+            </div>
+            <div class="gc-freq-sep"></div>
+            <div class="gc-freq-grp">
+                <span class="gc-freq-lbl">NAV</span>
+                <span class="gc-freq-act">108.00</span>
+                <span class="gc-freq-stby">113.90</span>
+            </div>
+            <div class="gc-freq-sep"></div>
+            <div class="gc-xpdr">
+                <span class="gc-freq-lbl">XP</span>
+                <span class="gc-xpdr-code">1200</span>
+                <span class="gc-xpdr-mode">ON</span>
+            </div>
+        </div>
+
+        <!-- Main display -->
+        <div class="gc-main">
+            <canvas class="gc-map-canvas" id="gc-map"></canvas>
+
+            <!-- Waypoint info -->
+            <div class="gc-wpt">
+                <span class="gc-wpt-id" id="gc-wpt-id">KORD</span>
+                <span class="gc-wpt-dtk" id="gc-wpt-dtk">275°</span>
+                <span class="gc-wpt-dis" id="gc-wpt-dis">12.4nm</span>
+            </div>
+
+            <!-- Corner data -->
+            <div class="gc-corner tl">
+                <span class="gc-corner-lbl">TRK</span>
+                <span class="gc-corner-val" id="gc-trk">273°</span>
+            </div>
+            <div class="gc-corner tr">
+                <span class="gc-corner-lbl">GS</span>
+                <span class="gc-corner-val" id="gc-gs">265kt</span>
+            </div>
+            <div class="gc-corner bl">
+                <span class="gc-corner-lbl">ALT</span>
+                <span class="gc-corner-val" id="gc-alt">18,400</span>
+            </div>
+            <div class="gc-corner br">
+                <span class="gc-corner-lbl">ETE</span>
+                <span class="gc-corner-val" id="gc-ete">02:48</span>
+            </div>
+
+            <!-- Range -->
+            <div class="gc-range">
+                <span class="gc-range-btn" id="gc-zoom-out">-</span>
+                <span class="gc-range-val" id="gc-range">10</span>
+                <span class="gc-range-unit">nm</span>
+                <span class="gc-range-btn" id="gc-zoom-in">+</span>
+            </div>
+
+            <!-- Page tabs (toggle via MENU) -->
+            <div class="gc-tabs" id="gc-tabs">
+                <div class="gc-tab active" data-page="map">MAP</div>
+                <div class="gc-tab" data-page="fpl">FPL</div>
+                <div class="gc-tab" data-page="proc">PROC</div>
+                <div class="gc-tab" data-page="nrst">NRST</div>
+                <div class="gc-tab" data-page="wx">WX</div>
+            </div>
+
+            <!-- FPL view (hidden by default) -->
+            <div class="gc-fpl" id="gc-fpl">
+                <div class="gc-fpl-row">
+                    <span class="gc-fpl-wpt">KMSP</span>
+                    <span class="gc-fpl-dtk">---</span>
+                    <span class="gc-fpl-dis">---</span>
+                    <span class="gc-fpl-alt">---</span>
+                </div>
+                <div class="gc-fpl-row active">
+                    <span class="gc-fpl-wpt">FRDMM</span>
+                    <span class="gc-fpl-dtk">275°</span>
+                    <span class="gc-fpl-dis">42nm</span>
+                    <span class="gc-fpl-alt">FL240</span>
+                </div>
+                <div class="gc-fpl-row">
+                    <span class="gc-fpl-wpt">DUBUQ</span>
+                    <span class="gc-fpl-dtk">262°</span>
+                    <span class="gc-fpl-dis">87nm</span>
+                    <span class="gc-fpl-alt">FL240</span>
+                </div>
+                <div class="gc-fpl-row">
+                    <span class="gc-fpl-wpt">KORD</span>
+                    <span class="gc-fpl-dtk">248°</span>
+                    <span class="gc-fpl-dis">156nm</span>
+                    <span class="gc-fpl-alt">3000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CDI bar -->
+        <div class="gc-cdi">
+            <span class="gc-gps-status"><span class="gc-gps-dot"></span>3D</span>
+            <span class="gc-cdi-src">GPS</span>
+            <span class="gc-cdi-to">TO</span>
+            <span class="gc-cdi-dtk">DTK 275°</span>
+            <div class="gc-cdi-bar">
+                <div class="gc-cdi-dots">
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-needle" style="left:calc(50% + 4px)"></span>
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-dot"></span>
+                </div>
+            </div>
+            <span class="gc-cdi-xtk">0.3</span>
+        </div>
+
+        <!-- Softkeys -->
+        <div class="gc-softkeys">
+            <div class="gc-sk" id="gc-sk-menu">MENU</div>
+            <div class="gc-sk" id="gc-sk-ter">TER</div>
+            <div class="gc-sk" id="gc-sk-tfc">TFC</div>
+            <div class="gc-sk" id="gc-sk-wx">WX</div>
+            <div class="gc-sk" id="gc-sk-cdi">CDI</div>
+            <div class="gc-sk" id="gc-sk-back">BACK</div>
+        </div>
+    </div>
+</div>
+
+<!-- FPL view demo -->
+<div style="padding:20px">
+    <div style="color:#607080;font-size:10px;margin-bottom:8px;letter-spacing:1px">GTN750 COMPACT — FPL VIEW</div>
+
+    <div class="gtn-compact">
+        <div class="gc-freq">
+            <div class="gc-freq-grp">
+                <span class="gc-freq-lbl">COM</span>
+                <span class="gc-freq-act">118.00</span>
+                <span class="gc-freq-stby">124.85</span>
+            </div>
+            <div class="gc-freq-sep"></div>
+            <div class="gc-freq-grp">
+                <span class="gc-freq-lbl">NAV</span>
+                <span class="gc-freq-act">108.00</span>
+                <span class="gc-freq-stby">113.90</span>
+            </div>
+            <div class="gc-freq-sep"></div>
+            <div class="gc-xpdr">
+                <span class="gc-freq-lbl">XP</span>
+                <span class="gc-xpdr-code">1200</span>
+                <span class="gc-xpdr-mode">ON</span>
+            </div>
+        </div>
+        <div class="gc-main">
+            <div class="gc-tabs visible">
+                <div class="gc-tab" data-page="map">MAP</div>
+                <div class="gc-tab active" data-page="fpl">FPL</div>
+                <div class="gc-tab" data-page="proc">PROC</div>
+                <div class="gc-tab" data-page="nrst">NRST</div>
+                <div class="gc-tab" data-page="wx">WX</div>
+            </div>
+            <div class="gc-fpl visible" style="padding-top:18px">
+                <div class="gc-fpl-row">
+                    <span class="gc-fpl-wpt">KMSP</span>
+                    <span class="gc-fpl-dtk">---</span>
+                    <span class="gc-fpl-dis">---</span>
+                    <span class="gc-fpl-alt">---</span>
+                </div>
+                <div class="gc-fpl-row active">
+                    <span class="gc-fpl-wpt">FRDMM</span>
+                    <span class="gc-fpl-dtk">275°</span>
+                    <span class="gc-fpl-dis">42nm</span>
+                    <span class="gc-fpl-alt">FL240</span>
+                </div>
+                <div class="gc-fpl-row">
+                    <span class="gc-fpl-wpt">DUBUQ</span>
+                    <span class="gc-fpl-dtk">262°</span>
+                    <span class="gc-fpl-dis">87nm</span>
+                    <span class="gc-fpl-alt">FL240</span>
+                </div>
+                <div class="gc-fpl-row">
+                    <span class="gc-fpl-wpt">KORD</span>
+                    <span class="gc-fpl-dtk">248°</span>
+                    <span class="gc-fpl-dis">156nm</span>
+                    <span class="gc-fpl-alt">3000</span>
+                </div>
+                <div class="gc-fpl-row">
+                    <span class="gc-fpl-wpt">ILS25L</span>
+                    <span class="gc-fpl-dtk">248°</span>
+                    <span class="gc-fpl-dis">4nm</span>
+                    <span class="gc-fpl-alt">2800</span>
+                </div>
+            </div>
+        </div>
+        <div class="gc-cdi">
+            <span class="gc-gps-status"><span class="gc-gps-dot"></span>3D</span>
+            <span class="gc-cdi-src">GPS</span>
+            <span class="gc-cdi-to">TO</span>
+            <span class="gc-cdi-dtk">DTK 275°</span>
+            <div class="gc-cdi-bar">
+                <div class="gc-cdi-dots">
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-needle" style="left:calc(50% + 4px)"></span>
+                    <span class="gc-cdi-dot"></span>
+                    <span class="gc-cdi-dot"></span>
+                </div>
+            </div>
+            <span class="gc-cdi-xtk">0.3</span>
+        </div>
+        <div class="gc-softkeys">
+            <div class="gc-sk">MENU</div>
+            <div class="gc-sk">DTO</div>
+            <div class="gc-sk">ACT</div>
+            <div class="gc-sk">INS</div>
+            <div class="gc-sk">INFO</div>
+            <div class="gc-sk">BACK</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mini map renderer (demo)
+const canvas = document.getElementById('gc-map');
+if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.offsetWidth * dpr;
+    canvas.height = canvas.offsetHeight * dpr;
+    ctx.scale(dpr, dpr);
+    const w = canvas.offsetWidth, h = canvas.offsetHeight;
+
+    // Dark background
+    ctx.fillStyle = '#050e1a';
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(0,212,255,0.06)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < w; i += 30) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+    for (let i = 0; i < h; i += 30) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+
+    // Range ring
+    ctx.beginPath();
+    ctx.arc(w/2, h*0.65, 40, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,212,255,0.12)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Flight plan line (magenta)
+    ctx.beginPath();
+    ctx.moveTo(w*0.2, h*0.1);
+    ctx.lineTo(w*0.45, h*0.4);
+    ctx.lineTo(w/2, h*0.65);
+    ctx.lineTo(w*0.7, h*0.95);
+    ctx.strokeStyle = '#FF44CC';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Waypoint diamonds
+    [[w*0.2, h*0.1], [w*0.45, h*0.4], [w*0.7, h*0.95]].forEach(([x, y]) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = '#00D4FF';
+        ctx.fillRect(-3, -3, 6, 6);
+        ctx.restore();
+    });
+
+    // Aircraft symbol (center-bottom area)
+    const ax = w/2, ay = h*0.65;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay - 6);
+    ctx.lineTo(ax - 5, ay + 4);
+    ctx.lineTo(ax, ay + 1);
+    ctx.lineTo(ax + 5, ay + 4);
+    ctx.closePath();
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // Waypoint labels
+    ctx.font = '700 8px "B612 Mono", Consolas, monospace';
+    ctx.fillStyle = '#00D4FF';
+    ctx.fillText('FRDMM', w*0.2 + 6, h*0.1 - 2);
+    ctx.fillText('DUBUQ', w*0.45 + 6, h*0.4 - 2);
+    ctx.fillText('KORD', w*0.7 + 6, h*0.95 - 2);
+}
+
+// MENU toggle tabs
+document.getElementById('gc-sk-menu')?.addEventListener('click', () => {
+    document.getElementById('gc-tabs')?.classList.toggle('visible');
+});
+</script>
+</body>
+</html>
