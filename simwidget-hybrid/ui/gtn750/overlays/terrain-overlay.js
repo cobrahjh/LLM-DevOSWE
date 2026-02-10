@@ -33,6 +33,12 @@ class TerrainOverlay {
             lastAlert: null
         };
 
+        // PULL UP alert state machine:
+        // On entry to red → show for 10s → suppress → wait for exit → reset
+        this._pullUpState = 'IDLE';   // IDLE | ACTIVE | SUPPRESSED
+        this._pullUpStart = 0;        // timestamp when PULL UP started
+        this._pullUpDuration = 10000; // show for 10 seconds
+
         // Alert thresholds (feet) - for TAWS warnings
         this.thresholds = {
             pullUp: 100,
@@ -154,11 +160,35 @@ class TerrainOverlay {
         // Render terrain cells
         this.renderTerrainGrid(ctx, terrainGrid, aircraft, mapSettings);
 
-        // Check for TAWS alerts
-        const alert = this.checkTawsAlert(terrainGrid, aircraft);
-        if (alert.level !== this.taws.alertLevel) {
-            this.taws.alertLevel = alert.level;
-            this.dispatchAlert(alert);
+        // Check for TAWS alerts with PULL UP state machine
+        const rawAlert = this.checkTawsAlert(terrainGrid, aircraft);
+        const inRed = rawAlert.level === 'PULL_UP';
+        const now = Date.now();
+
+        if (inRed) {
+            if (this._pullUpState === 'IDLE') {
+                // Entering red zone — start 10s PULL UP alert
+                this._pullUpState = 'ACTIVE';
+                this._pullUpStart = now;
+                this.taws.alertLevel = 'PULL_UP';
+                this.dispatchAlert(rawAlert);
+            } else if (this._pullUpState === 'ACTIVE' && now - this._pullUpStart >= this._pullUpDuration) {
+                // 10 seconds elapsed — suppress until we leave red
+                this._pullUpState = 'SUPPRESSED';
+                this.taws.alertLevel = 'CLEAR';
+                this.dispatchAlert({ level: 'CLEAR', message: null, color: null });
+            }
+            // ACTIVE within 10s or SUPPRESSED: no new dispatch
+        } else {
+            // Not in red — reset state machine so next entry triggers again
+            if (this._pullUpState !== 'IDLE') {
+                this._pullUpState = 'IDLE';
+            }
+            // Dispatch other alert changes (TERRAIN, CAUTION, etc.)
+            if (rawAlert.level !== this.taws.alertLevel) {
+                this.taws.alertLevel = rawAlert.level;
+                this.dispatchAlert(rawAlert);
+            }
         }
     }
 
