@@ -1071,8 +1071,16 @@ class GTN750Pane extends SimGlassBase {
             if (msg.type === 'autopilot-state') {
                 this._autopilotState = msg.data;
                 this._renderAutopilotStatus();
+            } else if (msg.type === 'simbrief-plan' || msg.type === 'route-update') {
+                // Flight plan messages — ensure module is loaded first
+                if (!this.flightPlanManager) {
+                    this.loadFlightPlan().then(() => {
+                        this.flightPlanManager?.handleSyncMessage(msg.type, msg.data);
+                    });
+                } else {
+                    this.flightPlanManager.handleSyncMessage(msg.type, msg.data);
+                }
             } else {
-                // Forward to flight plan manager for plan sync
                 this.flightPlanManager?.handleSyncMessage(msg.type, msg.data);
             }
         };
