@@ -794,7 +794,23 @@ class AiAutopilotPane extends SimGlassBase {
                 { id: 'llama3:8b', name: 'Llama 3 8B' },
                 { id: 'qwen2.5-coder:14b', name: 'Qwen 2.5 Coder 14B' }
             ],
+            'ollama-aipc': [
+                { id: 'qwen2.5-coder:32b', name: 'Qwen 2.5 Coder 32B' },
+                { id: 'mistral:latest', name: 'Mistral' },
+                { id: 'llama3.2:latest', name: 'Llama 3.2' },
+                { id: 'gemma2:latest', name: 'Gemma 2' }
+            ],
+            'ollama-rockpc': [
+                { id: 'qwen2.5-coder:32b', name: 'Qwen 2.5 Coder 32B' },
+                { id: 'llama3:8b', name: 'Llama 3 8B' }
+            ],
             lmstudio: [
+                { id: 'qwen2.5-7b-instruct', name: 'Qwen 2.5 7B Instruct' }
+            ],
+            'lmstudio-rockpc': [
+                { id: 'qwen2.5-7b-instruct', name: 'Qwen 2.5 7B Instruct' }
+            ],
+            'lmstudio-aipc': [
                 { id: 'local-model', name: 'Currently Loaded Model' }
             ]
         };
@@ -826,8 +842,18 @@ class AiAutopilotPane extends SimGlassBase {
                             <select id="as-provider">
                                 <option value="openai" ${provider === 'openai' ? 'selected' : ''}>OpenAI</option>
                                 <option value="anthropic" ${provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
-                                <option value="ollama" ${provider === 'ollama' ? 'selected' : ''}>Ollama (Local)</option>
-                                <option value="lmstudio" ${provider === 'lmstudio' ? 'selected' : ''}>LM Studio (Local)</option>
+                                <optgroup label="Local">
+                                    <option value="ollama" ${provider === 'ollama' ? 'selected' : ''}>Ollama (Local)</option>
+                                    <option value="lmstudio" ${provider === 'lmstudio' ? 'selected' : ''}>LM Studio (Local)</option>
+                                </optgroup>
+                                <optgroup label="ai-pc (192.168.1.162)">
+                                    <option value="ollama-aipc" ${provider === 'ollama-aipc' ? 'selected' : ''}>Ollama (ai-pc)</option>
+                                    <option value="lmstudio-aipc" ${provider === 'lmstudio-aipc' ? 'selected' : ''}>LM Studio (ai-pc)</option>
+                                </optgroup>
+                                <optgroup label="ROCK-PC (192.168.1.192)">
+                                    <option value="ollama-rockpc" ${provider === 'ollama-rockpc' ? 'selected' : ''}>Ollama (ROCK-PC)</option>
+                                    <option value="lmstudio-rockpc" ${provider === 'lmstudio-rockpc' ? 'selected' : ''}>LM Studio (ROCK-PC)</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div class="as-row">

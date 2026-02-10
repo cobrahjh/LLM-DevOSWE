@@ -159,7 +159,7 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
         }
 
         const provider = cfg.provider || 'openai';
-        const isLocal = provider === 'ollama' || provider === 'lmstudio';
+        const isLocal = provider.startsWith('ollama') || provider.startsWith('lmstudio');
 
         const apiKey = isLocal ? 'not-needed' : decryptApiKey(cfg);
         if (!apiKey) {
@@ -188,7 +188,7 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
             if (provider === 'anthropic') {
                 await proxyAnthropic(apiKey, model, messages, res, abortController);
             } else {
-                const baseUrl = getProviderBaseUrl(provider);
+                const baseUrl = getProviderBaseUrl(provider, cfg);
                 await proxyOpenAI(apiKey, model, messages, res, abortController, baseUrl);
             }
             clearTimeout(timeoutId);
@@ -217,7 +217,7 @@ function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
         }
 
         const provider = cfg.provider || 'openai';
-        const isLocal = provider === 'ollama' || provider === 'lmstudio';
+        const isLocal = provider.startsWith('ollama') || provider.startsWith('lmstudio');
 
         const apiKey = isLocal ? 'not-needed' : decryptApiKey(cfg);
         if (!apiKey) {
@@ -263,7 +263,7 @@ For toggle commands, omit the value field. Only include commands that need to CH
             if (provider === 'anthropic') {
                 fullText = await fetchAnthropic(apiKey, model, messages, abortController);
             } else {
-                const baseUrl = getProviderBaseUrl(provider);
+                const baseUrl = getProviderBaseUrl(provider, cfg);
                 fullText = await fetchOpenAI(apiKey, model, messages, abortController, baseUrl);
             }
             clearTimeout(timeoutId);
@@ -315,19 +315,27 @@ For toggle commands, omit the value field. Only include commands that need to CH
 }
 
 // Provider base URL mapping
-function getProviderBaseUrl(provider) {
+// Supports remote hosts: 'ollama-aipc', 'lmstudio-rockpc', etc.
+function getProviderBaseUrl(provider, cfg) {
+    // Custom base URL from config takes priority
+    if (cfg && cfg.customBaseUrl) return cfg.customBaseUrl;
+
     switch (provider) {
         case 'ollama': return 'http://localhost:11434/v1';
+        case 'ollama-aipc': return 'http://192.168.1.162:11434/v1';
+        case 'ollama-rockpc': return 'http://192.168.1.192:11434/v1';
         case 'lmstudio': return 'http://localhost:1234/v1';
+        case 'lmstudio-rockpc': return 'http://192.168.1.192:1234/v1';
+        case 'lmstudio-aipc': return 'http://192.168.1.162:1234/v1';
         case 'openai': default: return 'https://api.openai.com/v1';
     }
 }
 
 // Default model per provider
 function getDefaultModel(provider) {
+    if (provider.startsWith('ollama')) return 'qwen2.5-coder:32b';
+    if (provider.startsWith('lmstudio')) return 'qwen2.5-7b-instruct';
     switch (provider) {
-        case 'ollama': return 'qwen2.5-coder:32b';
-        case 'lmstudio': return 'local-model';
         case 'anthropic': return 'claude-sonnet-4-5-20250929';
         case 'openai': default: return 'gpt-4o';
     }
