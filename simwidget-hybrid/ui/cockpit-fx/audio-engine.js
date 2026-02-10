@@ -1,9 +1,10 @@
 /**
- * CockpitFX AudioEngine v2.1.0
+ * CockpitFX AudioEngine v2.2.0
  * Web Audio API graph manager — creates AudioContext, routes layers through
  * cabin perspective filter, dynamics compressor, master gain and bass-shaker.
  * v2.0: Sample loading, decoding, playback (OGG with WAV fallback).
  * v2.1: Inside/outside perspective — cabin LP + resonance filter.
+ * v2.2: 20s noise buffers, pink noise generator, stereo panning per layer.
  */
 class AudioEngine {
     constructor() {
@@ -58,7 +59,8 @@ class AudioEngine {
         this.layers = {};
 
         // Shared white noise buffer (reused by multiple layers)
-        this._noiseBuffer = this._createNoiseBuffer(2);
+        this._noiseBuffer = this._createNoiseBuffer(20);
+        this._pinkNoiseBuffer = this._createPinkNoiseBuffer(20);
     }
 
     /** Create a white noise AudioBuffer of given duration in seconds */
@@ -80,9 +82,45 @@ class AudioEngine {
         return src;
     }
 
+    /** Create a pink noise AudioBuffer (-3dB/octave rolloff, Paul Kellet algorithm) */
+    _createPinkNoiseBuffer(duration) {
+        const sr = this.ctx.sampleRate;
+        const len = sr * duration;
+        const buf = this.ctx.createBuffer(1, len, sr);
+        const ch = buf.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < len; i++) {
+            const white = Math.random() * 2 - 1;
+            b0 = 0.99886 * b0 + white * 0.0555179;
+            b1 = 0.99332 * b1 + white * 0.0750759;
+            b2 = 0.96900 * b2 + white * 0.1538520;
+            b3 = 0.86650 * b3 + white * 0.3104856;
+            b4 = 0.55000 * b4 + white * 0.5329522;
+            b5 = -0.7616 * b5 - white * 0.0168980;
+            ch[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+            b6 = white * 0.115926;
+        }
+        return buf;
+    }
+
+    /** Get a looping pink noise source node */
+    createPinkNoiseSource() {
+        const src = this.ctx.createBufferSource();
+        src.buffer = this._pinkNoiseBuffer;
+        src.loop = true;
+        src.start();
+        return src;
+    }
+
     /** Register a layer instance */
-    addLayer(name, layer) {
+    addLayer(name, layer, pan = 0) {
         this.layers[name] = layer;
+        if (pan !== 0 && layer.output) {
+            layer.output.disconnect(this.masterGain);
+            layer._panner = new StereoPannerNode(this.ctx, { pan });
+            layer.output.connect(layer._panner);
+            layer._panner.connect(this.masterGain);
+        }
     }
 
     /** Update all layers with new sim data */

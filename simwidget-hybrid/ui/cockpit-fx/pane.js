@@ -466,8 +466,9 @@ class CockpitFxPane extends SimGlassBase {
         this._layers.environment = new EnvironmentLayer(this.audioEngine, p);
         this._layers.warning = new WarningLayer(this.audioEngine, p);
 
+        const layerPan = { engine: 0, aero: 0, ground: 0, mechanical: 0.15, environment: -0.1, warning: 0 };
         for (const name in this._layers) {
-            this.audioEngine.addLayer(name, this._layers[name]);
+            this.audioEngine.addLayer(name, this._layers[name], layerPan[name] || 0);
             this._layers[name].setVolume(this._layerVols[name] / 100);
             this._layers[name].setEnabled(this._layerEnabled[name]);
         }

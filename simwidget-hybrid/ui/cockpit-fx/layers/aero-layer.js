@@ -1,6 +1,7 @@
 /**
- * CockpitFX AeroLayer v1.0.0
+ * CockpitFX AeroLayer v1.1.0
  * Wind noise (broadband filtered), stall buffet, turbulence shake.
+ * v1.1: Stereo wind split (pink noise L/R), pink turbulence rumble.
  */
 class AeroLayer {
     constructor(engine, profile) {
@@ -13,19 +14,34 @@ class AeroLayer {
         this.output.gain.value = 0;
         this.output.connect(engine.masterGain);
 
-        // Wind noise: white noise → lowpass (cutoff tracks IAS) → gain
-        this.windNoise = engine.createNoiseSource();
-        this.windFilter = this.ctx.createBiquadFilter();
-        this.windFilter.type = 'lowpass';
-        this.windFilter.frequency.value = 50;
-        this.windFilter.Q.value = 0.5;
+        // Wind noise: stereo split — two independent pink noise sources
+        // Slightly different filter cutoffs create natural L/R timbral difference
         this.windGain = this.ctx.createGain();
         this.windGain.gain.value = 0;
-        this.windNoise.connect(this.windFilter);
-        this.windFilter.connect(this.windGain);
+
+        this.windNoiseL = engine.createPinkNoiseSource();
+        this.windFilterL = this.ctx.createBiquadFilter();
+        this.windFilterL.type = 'lowpass';
+        this.windFilterL.frequency.value = 50;
+        this.windFilterL.Q.value = 0.5;
+        this.windPanL = new StereoPannerNode(this.ctx, { pan: -0.6 });
+        this.windNoiseL.connect(this.windFilterL);
+        this.windFilterL.connect(this.windPanL);
+        this.windPanL.connect(this.windGain);
+
+        this.windNoiseR = engine.createPinkNoiseSource();
+        this.windFilterR = this.ctx.createBiquadFilter();
+        this.windFilterR.type = 'lowpass';
+        this.windFilterR.frequency.value = 50;
+        this.windFilterR.Q.value = 0.5;
+        this.windPanR = new StereoPannerNode(this.ctx, { pan: 0.6 });
+        this.windNoiseR.connect(this.windFilterR);
+        this.windFilterR.connect(this.windPanR);
+        this.windPanR.connect(this.windGain);
+
         this.windGain.connect(this.output);
 
-        // Stall buffet: LFO-modulated noise
+        // Stall buffet: LFO-modulated white noise (harsh = intentional alert)
         this.buffetNoise = engine.createNoiseSource();
         this.buffetFilter = this.ctx.createBiquadFilter();
         this.buffetFilter.type = 'lowpass';
@@ -45,8 +61,8 @@ class AeroLayer {
         this.buffetGain.connect(this.output);
         this.buffetLfo.start();
 
-        // Turbulence: low-frequency modulated rumble
-        this.turbNoise = engine.createNoiseSource();
+        // Turbulence: pink noise for warmer low-frequency rumble
+        this.turbNoise = engine.createPinkNoiseSource();
         this.turbFilter = this.ctx.createBiquadFilter();
         this.turbFilter.type = 'lowpass';
         this.turbFilter.frequency.value = 8;
@@ -69,10 +85,11 @@ class AeroLayer {
         const windSpd = data.windSpeed || 0;
         const stallThreshold = (this.profile.stall && this.profile.stall.aoaThreshold) || 16;
 
-        // Wind noise — scales with IAS², only meaningful airborne
+        // Wind noise — scales with IAS², stereo split with ±3% cutoff offset
         const windAmp = onGround ? 0 : Math.min(1.0, Math.pow(ias / 200, 2));
-        const windCutoff = 50 + ias * 2;
-        this.windFilter.frequency.setTargetAtTime(Math.min(windCutoff, 4000), t, tau);
+        const windCutoff = Math.min(50 + ias * 2, 4000);
+        this.windFilterL.frequency.setTargetAtTime(windCutoff * 0.97, t, tau);
+        this.windFilterR.frequency.setTargetAtTime(windCutoff * 1.03, t, tau);
         this.windGain.gain.setTargetAtTime(windAmp * 0.4, t, tau);
 
         // Stall buffet — ramps over 5° AOA range approaching stall
@@ -113,7 +130,8 @@ class AeroLayer {
     setProfile(p) { this.profile = p; }
 
     destroy() {
-        try { this.windNoise.stop(); } catch (e) {}
+        try { this.windNoiseL.stop(); } catch (e) {}
+        try { this.windNoiseR.stop(); } catch (e) {}
         try { this.buffetNoise.stop(); } catch (e) {}
         try { this.buffetLfo.stop(); } catch (e) {}
         try { this.turbNoise.stop(); } catch (e) {}
