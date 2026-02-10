@@ -45,6 +45,21 @@ class FlightPhase {
         const todNm = this.profile ? (this.targetCruiseAlt - alt) / 1000 * (this.profile.descent.todFactor || 3) : 30;
         const prevPhase = this.phase;
 
+        // ── CATCH-UP: detect current flight state on reconnection ──
+        // If we're in PREFLIGHT/TAXI but clearly airborne, jump to the right phase.
+        // This handles page reload or AI enable while already in flight.
+        if ((this.phase === 'PREFLIGHT' || this.phase === 'TAXI') && !onGround && agl > 100 && ias > 50) {
+            if (alt >= this.targetCruiseAlt - 200) {
+                this._setPhase('CRUISE');
+            } else if (vs > 100) {
+                this._setPhase('CLIMB');
+            } else if (agl < 2000) {
+                this._setPhase('APPROACH');
+            } else {
+                this._setPhase('CLIMB');
+            }
+        }
+
         switch (this.phase) {
             case 'PREFLIGHT':
                 // Transition to TAXI when engine is running, or when on ground with any throttle
