@@ -1,53 +1,113 @@
 /**
- * SimGlass Themes
- * Apply themes by adding class to body: theme-default, theme-cockpit, theme-glass, theme-day
+ * SimGlass Themes v2.0.0
+ * Apply themes by adding class to body: theme-default, theme-cockpit, theme-glass, theme-day, etc.
+ *
+ * All themes override --sg-* design tokens from sg-design-tokens.css.
+ * Backward-compatible --widget-* and bare variable aliases are maintained.
  *
  * Font Stack:
  * - B612: Airbus cockpit font, designed for avionics displays
  * - B612 Mono: Monospace variant for data values
- * - Roboto Mono: Fallback monospace
+ * - DSEG7 Classic: 7-segment display font for instrument readouts
  */
 
 /* Google Fonts Import - B612 (Airbus Cockpit Font) */
 @import url('https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&family=Roboto+Mono:wght@400;500;700&display=swap');
 
 /* ========================================
-   DEFAULT THEME (Current dark theme)
+   AVIONICS THEME (Default — green-primary)
+   Green = primary data, cyan = navigation accent
    ======================================== */
 :root,
 .theme-default {
-    --widget-bg: #1a1a2e;
-    --widget-bg-secondary: #16213e;
-    --widget-bg-tertiary: #0f0f1a;
-    --widget-text: #ffffff;
-    --widget-text-muted: #888888;
-    --widget-text-dim: #555555;
-    --widget-accent: #667eea;
-    --widget-accent-hover: #7c8ff5;
-    --widget-success: #22c55e;
-    --widget-warning: #f59e0b;
-    --widget-danger: #ef4444;
-    --widget-border: rgba(255, 255, 255, 0.1);
-    --widget-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    --widget-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+    /* --sg-* tokens (canonical) */
+    --sg-bg-deep:       rgba(8, 18, 34, 0.94);
+    --sg-bg-panel:      rgba(12, 24, 44, 0.90);
+    --sg-bg-header:     rgba(6, 14, 28, 0.95);
+    --sg-bg-card:       rgba(16, 32, 56, 0.80);
+    --sg-bg-input:      rgba(4, 10, 22, 0.95);
+
+    --sg-accent-green:   #00E676;
+    --sg-accent-cyan:    #00D4FF;
+    --sg-accent-magenta: #FF44CC;
+    --sg-accent-white:   #F0F4F8;
+    --sg-accent-yellow:  #FFD600;
+    --sg-accent-amber:   #FF9100;
+    --sg-accent-red:     #FF1744;
+    --sg-accent-blue:    #448AFF;
+
+    --sg-text-primary:   #F0F4F8;
+    --sg-text-secondary: #A8B8CC;
+    --sg-text-muted:     #607080;
+    --sg-text-dim:       #3A4A5C;
+
+    --sg-border-subtle:  rgba(0, 230, 118, 0.10);
+    --sg-border-medium:  rgba(0, 230, 118, 0.22);
+    --sg-border-active:  rgba(0, 230, 118, 0.45);
+    --sg-border-glow:    rgba(0, 230, 118, 0.70);
+
+    /* --widget-* aliases (backward compat) */
+    --widget-bg: #081222;
+    --widget-bg-secondary: #0C182C;
+    --widget-bg-tertiary: #060E1C;
+    --widget-text: #F0F4F8;
+    --widget-text-muted: #A8B8CC;
+    --widget-text-dim: #607080;
+    --widget-accent: #00E676;
+    --widget-accent-hover: #2EFF8E;
+    --widget-success: #00E676;
+    --widget-warning: #FFD600;
+    --widget-danger: #FF1744;
+    --widget-border: rgba(0, 230, 118, 0.10);
+    --widget-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --widget-glow: 0 0 24px rgba(0, 230, 118, 0.25);
     --widget-radius: 12px;
     --widget-radius-sm: 6px;
-    /* Typography - Aviation Style */
+
+    /* Typography (unified B612 stack) */
     --font-ui: 'B612', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'B612 Mono', 'Roboto Mono', 'Consolas', 'Monaco', monospace;
     --font-data: 'B612 Mono', 'Roboto Mono', monospace;
     --font-display: 'DSEG7 Classic', 'B612 Mono', monospace;
+    --sg-font-ui: var(--font-ui);
+    --sg-font-data: var(--font-data);
+    --sg-font-display: var(--font-display);
 }
 
 /* Apply B612 as default body font */
 body {
-    font-family: var(--font-ui);
+    font-family: var(--sg-font-ui);
 }
 
 /* ========================================
-   COCKPIT THEME (Aviation instrument style)
+   COCKPIT THEME (Green monochrome CRT)
    ======================================== */
 .theme-cockpit {
+    --sg-bg-deep:    rgba(26, 31, 22, 0.94);
+    --sg-bg-panel:   rgba(37, 43, 31, 0.90);
+    --sg-bg-header:  rgba(13, 15, 10, 0.95);
+    --sg-bg-card:    rgba(20, 24, 16, 0.80);
+    --sg-bg-input:   rgba(13, 15, 10, 0.95);
+
+    --sg-accent-green:   #00FF00;
+    --sg-accent-cyan:    #00CC00;
+    --sg-accent-magenta: #00FF44;
+    --sg-accent-white:   #00FF00;
+    --sg-accent-yellow:  #FFAA00;
+    --sg-accent-amber:   #FF6600;
+    --sg-accent-red:     #FF3300;
+    --sg-accent-blue:    #00CC00;
+
+    --sg-text-primary:   #00FF00;
+    --sg-text-secondary: #66AA66;
+    --sg-text-muted:     #446644;
+    --sg-text-dim:       #223322;
+
+    --sg-border-subtle:  rgba(0, 255, 0, 0.15);
+    --sg-border-medium:  rgba(0, 255, 0, 0.30);
+    --sg-border-active:  rgba(0, 255, 0, 0.50);
+    --sg-border-glow:    rgba(0, 255, 0, 0.70);
+
     --widget-bg: #1a1f16;
     --widget-bg-secondary: #252b1f;
     --widget-bg-tertiary: #0d0f0a;
@@ -78,7 +138,7 @@ body {
 .theme-cockpit .info-value,
 .theme-cockpit .weather-value,
 .theme-cockpit .airport-code {
-    font-family: var(--font-display);
+    font-family: var(--sg-font-display);
     text-shadow: 0 0 10px currentColor;
     letter-spacing: 2px;
 }
@@ -86,7 +146,7 @@ body {
 .theme-cockpit button,
 .theme-cockpit .btn,
 .theme-cockpit .btn-icon {
-    border: 1px solid var(--widget-accent);
+    border: 1px solid var(--sg-accent-green);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -94,11 +154,11 @@ body {
 .theme-cockpit input,
 .theme-cockpit select {
     background: #0d0f0a;
-    border: 1px solid var(--widget-accent);
-    color: var(--widget-text);
+    border: 1px solid var(--sg-accent-green);
+    color: var(--sg-text-primary);
 }
 
-/* Scanline effect for cockpit */
+/* Scanline effect */
 .theme-cockpit .widget-container::before {
     content: '';
     position: absolute;
@@ -119,9 +179,35 @@ body {
 }
 
 /* ========================================
-   GLASS PANEL THEME (Modern avionics)
+   GLASS THEME (Cyan-primary aesthetic)
+   Keeps original cyan look as alternative
    ======================================== */
 .theme-glass {
+    --sg-bg-deep:    rgba(10, 22, 40, 0.94);
+    --sg-bg-panel:   rgba(15, 40, 71, 0.90);
+    --sg-bg-header:  rgba(6, 18, 32, 0.95);
+    --sg-bg-card:    rgba(10, 28, 50, 0.80);
+    --sg-bg-input:   rgba(6, 12, 24, 0.95);
+
+    --sg-accent-green:   #00FF88;
+    --sg-accent-cyan:    #00AAFF;
+    --sg-accent-magenta: #FF44CC;
+    --sg-accent-white:   #E8F0FF;
+    --sg-accent-yellow:  #FFCC00;
+    --sg-accent-amber:   #FF8800;
+    --sg-accent-red:     #FF4466;
+    --sg-accent-blue:    #00AAFF;
+
+    --sg-text-primary:   #00D4FF;
+    --sg-text-secondary: #5599BB;
+    --sg-text-muted:     #336688;
+    --sg-text-dim:       #1A3344;
+
+    --sg-border-subtle:  rgba(0, 170, 255, 0.15);
+    --sg-border-medium:  rgba(0, 170, 255, 0.30);
+    --sg-border-active:  rgba(0, 170, 255, 0.50);
+    --sg-border-glow:    rgba(0, 170, 255, 0.70);
+
     --widget-bg: #0a1628;
     --widget-bg-secondary: #0f2847;
     --widget-bg-tertiary: #061220;
@@ -153,7 +239,7 @@ body {
 .theme-glass .widget-title,
 .theme-glass .stat-value,
 .theme-glass .info-value {
-    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-family: var(--sg-font-ui);
     font-weight: 300;
     letter-spacing: 1px;
 }
@@ -161,14 +247,14 @@ body {
 .theme-glass .weather-value,
 .theme-glass .airport-code,
 .theme-glass .next-name {
-    font-family: var(--font-mono);
+    font-family: var(--sg-font-data);
     font-weight: 600;
 }
 
 .theme-glass button,
 .theme-glass .btn {
     background: linear-gradient(180deg, rgba(0, 170, 255, 0.2) 0%, rgba(0, 100, 200, 0.3) 100%);
-    border: 1px solid var(--widget-accent);
+    border: 1px solid var(--sg-accent-cyan);
     transition: all 0.2s ease;
 }
 
@@ -179,9 +265,34 @@ body {
 }
 
 /* ========================================
-   DAY THEME (Light mode for bright environments)
+   DAY THEME (Light mode)
    ======================================== */
 .theme-day {
+    --sg-bg-deep:    rgba(245, 247, 250, 0.98);
+    --sg-bg-panel:   rgba(255, 255, 255, 0.95);
+    --sg-bg-header:  rgba(232, 236, 241, 0.98);
+    --sg-bg-card:    rgba(240, 243, 248, 0.90);
+    --sg-bg-input:   rgba(245, 247, 250, 0.95);
+
+    --sg-accent-green:   #16A34A;
+    --sg-accent-cyan:    #0891B2;
+    --sg-accent-magenta: #C026D3;
+    --sg-accent-white:   #1A1A2E;
+    --sg-accent-yellow:  #D97706;
+    --sg-accent-amber:   #C2410C;
+    --sg-accent-red:     #DC2626;
+    --sg-accent-blue:    #4F46E5;
+
+    --sg-text-primary:   #1A1A2E;
+    --sg-text-secondary: #666666;
+    --sg-text-muted:     #999999;
+    --sg-text-dim:       #CCCCCC;
+
+    --sg-border-subtle:  rgba(0, 0, 0, 0.08);
+    --sg-border-medium:  rgba(0, 0, 0, 0.15);
+    --sg-border-active:  rgba(79, 70, 229, 0.40);
+    --sg-border-glow:    rgba(79, 70, 229, 0.60);
+
     --widget-bg: #f5f7fa;
     --widget-bg-secondary: #ffffff;
     --widget-bg-tertiary: #e8ecf1;
@@ -226,6 +337,31 @@ body {
    HIGH CONTRAST THEME (Accessibility)
    ======================================== */
 .theme-highcontrast {
+    --sg-bg-deep:    rgba(0, 0, 0, 1.0);
+    --sg-bg-panel:   rgba(26, 26, 26, 1.0);
+    --sg-bg-header:  rgba(0, 0, 0, 1.0);
+    --sg-bg-card:    rgba(26, 26, 26, 1.0);
+    --sg-bg-input:   rgba(0, 0, 0, 1.0);
+
+    --sg-accent-green:   #00FF00;
+    --sg-accent-cyan:    #00FFFF;
+    --sg-accent-magenta: #FF00FF;
+    --sg-accent-white:   #FFFFFF;
+    --sg-accent-yellow:  #FFFF00;
+    --sg-accent-amber:   #FFAA00;
+    --sg-accent-red:     #FF0000;
+    --sg-accent-blue:    #00AAFF;
+
+    --sg-text-primary:   #FFFFFF;
+    --sg-text-secondary: #CCCCCC;
+    --sg-text-muted:     #888888;
+    --sg-text-dim:       #555555;
+
+    --sg-border-subtle:  #FFFFFF;
+    --sg-border-medium:  #FFFFFF;
+    --sg-border-active:  #FFFF00;
+    --sg-border-glow:    #FFFF00;
+
     --widget-bg: #000000;
     --widget-bg-secondary: #1a1a1a;
     --widget-bg-tertiary: #000000;
@@ -256,9 +392,34 @@ body {
 }
 
 /* ========================================
-   OLED THEME (True black for OLED screens)
+   OLED THEME (True black)
    ======================================== */
 .theme-oled {
+    --sg-bg-deep:    rgba(0, 0, 0, 1.0);
+    --sg-bg-panel:   rgba(10, 10, 10, 0.98);
+    --sg-bg-header:  rgba(0, 0, 0, 1.0);
+    --sg-bg-card:    rgba(14, 14, 14, 0.95);
+    --sg-bg-input:   rgba(0, 0, 0, 1.0);
+
+    --sg-accent-green:   #00E676;
+    --sg-accent-cyan:    #00D4FF;
+    --sg-accent-magenta: #FF44CC;
+    --sg-accent-white:   #F0F4F8;
+    --sg-accent-yellow:  #FFD600;
+    --sg-accent-amber:   #FF9100;
+    --sg-accent-red:     #FF1744;
+    --sg-accent-blue:    #667EEA;
+
+    --sg-text-primary:   #FFFFFF;
+    --sg-text-secondary: #888888;
+    --sg-text-muted:     #555555;
+    --sg-text-dim:       #333333;
+
+    --sg-border-subtle:  rgba(255, 255, 255, 0.06);
+    --sg-border-medium:  rgba(255, 255, 255, 0.12);
+    --sg-border-active:  rgba(102, 126, 234, 0.50);
+    --sg-border-glow:    rgba(102, 126, 234, 0.70);
+
     --widget-bg: #000000;
     --widget-bg-secondary: #0a0a0a;
     --widget-bg-tertiary: #000000;
@@ -267,9 +428,9 @@ body {
     --widget-text-dim: #555555;
     --widget-accent: #667eea;
     --widget-accent-hover: #8b9cf5;
-    --widget-success: #22c55e;
-    --widget-warning: #f59e0b;
-    --widget-danger: #ef4444;
+    --widget-success: #00E676;
+    --widget-warning: #FFD600;
+    --widget-danger: #FF1744;
     --widget-border: rgba(255, 255, 255, 0.08);
     --widget-shadow: none;
     --widget-glow: 0 0 30px rgba(102, 126, 234, 0.2);
@@ -282,9 +443,34 @@ body {
 }
 
 /* ========================================
-   SUNSET THEME (Warm colors for night flying)
+   SUNSET THEME (Warm night flying)
    ======================================== */
 .theme-sunset {
+    --sg-bg-deep:    rgba(26, 15, 10, 0.94);
+    --sg-bg-panel:   rgba(42, 24, 16, 0.90);
+    --sg-bg-header:  rgba(15, 8, 5, 0.95);
+    --sg-bg-card:    rgba(36, 20, 12, 0.80);
+    --sg-bg-input:   rgba(15, 8, 5, 0.95);
+
+    --sg-accent-green:   #7CB342;
+    --sg-accent-cyan:    #FF8C42;
+    --sg-accent-magenta: #FF6B9D;
+    --sg-accent-white:   #FFD4A8;
+    --sg-accent-yellow:  #FFB300;
+    --sg-accent-amber:   #FF8C42;
+    --sg-accent-red:     #FF5252;
+    --sg-accent-blue:    #FF8C42;
+
+    --sg-text-primary:   #FFD4A8;
+    --sg-text-secondary: #B8947A;
+    --sg-text-muted:     #7A5F4D;
+    --sg-text-dim:       #4A3828;
+
+    --sg-border-subtle:  rgba(255, 140, 66, 0.12);
+    --sg-border-medium:  rgba(255, 140, 66, 0.25);
+    --sg-border-active:  rgba(255, 140, 66, 0.45);
+    --sg-border-glow:    rgba(255, 140, 66, 0.70);
+
     --widget-bg: #1a0f0a;
     --widget-bg-secondary: #2a1810;
     --widget-bg-tertiary: #0f0805;
@@ -314,9 +500,34 @@ body {
 }
 
 /* ========================================
-   RETRO THEME (Amber CRT style)
+   RETRO THEME (Amber CRT)
    ======================================== */
 .theme-retro {
+    --sg-bg-deep:    rgba(10, 8, 0, 0.94);
+    --sg-bg-panel:   rgba(20, 16, 0, 0.90);
+    --sg-bg-header:  rgba(5, 4, 0, 0.95);
+    --sg-bg-card:    rgba(16, 12, 0, 0.80);
+    --sg-bg-input:   rgba(5, 4, 0, 0.95);
+
+    --sg-accent-green:   #00FF00;
+    --sg-accent-cyan:    #FF9000;
+    --sg-accent-magenta: #FFB040;
+    --sg-accent-white:   #FFB000;
+    --sg-accent-yellow:  #FFFF00;
+    --sg-accent-amber:   #FF9000;
+    --sg-accent-red:     #FF4000;
+    --sg-accent-blue:    #FF9000;
+
+    --sg-text-primary:   #FFB000;
+    --sg-text-secondary: #B87800;
+    --sg-text-muted:     #785000;
+    --sg-text-dim:       #3C2800;
+
+    --sg-border-subtle:  rgba(255, 176, 0, 0.15);
+    --sg-border-medium:  rgba(255, 176, 0, 0.30);
+    --sg-border-active:  rgba(255, 176, 0, 0.50);
+    --sg-border-glow:    rgba(255, 176, 0, 0.70);
+
     --widget-bg: #0a0800;
     --widget-bg-secondary: #141000;
     --widget-bg-tertiary: #050400;
@@ -345,12 +556,12 @@ body {
 .theme-retro .info-value,
 .theme-retro .weather-value,
 .theme-retro .airport-code {
-    font-family: var(--font-display);
+    font-family: var(--sg-font-display);
     text-shadow: 0 0 8px currentColor;
     letter-spacing: 2px;
 }
 
-/* Phosphor glow effect for retro */
+/* Phosphor glow */
 .theme-retro .widget-container::before {
     content: '';
     position: absolute;
@@ -382,19 +593,20 @@ body {
 }
 
 /* Flight category colors (consistent across themes) */
-.flight-category.vfr { background: var(--widget-success) !important; }
-.flight-category.mvfr { background: #3b82f6 !important; }
-.flight-category.ifr { background: var(--widget-danger) !important; }
-.flight-category.lifr { background: #7c3aed !important; }
+.flight-category.vfr  { background: var(--sg-status-ok) !important; }
+.flight-category.mvfr { background: var(--sg-accent-blue) !important; }
+.flight-category.ifr  { background: var(--sg-status-critical) !important; }
+.flight-category.lifr { background: #7C3AED !important; }
 
-/* Accent text */
-.text-accent { color: var(--widget-accent); }
-.text-success { color: var(--widget-success); }
-.text-warning { color: var(--widget-warning); }
-.text-danger { color: var(--widget-danger); }
-.text-muted { color: var(--widget-text-muted); }
+/* Accent text utilities */
+.text-accent  { color: var(--sg-accent-green); }
+.text-nav     { color: var(--sg-accent-cyan); }
+.text-success { color: var(--sg-status-ok); }
+.text-warning { color: var(--sg-status-caution); }
+.text-danger  { color: var(--sg-status-critical); }
+.text-muted   { color: var(--sg-text-secondary); }
 
 /* Background utilities */
-.bg-primary { background: var(--widget-bg); }
-.bg-secondary { background: var(--widget-bg-secondary); }
-.bg-tertiary { background: var(--widget-bg-tertiary); }
+.bg-primary   { background: var(--sg-bg-deep); }
+.bg-secondary { background: var(--sg-bg-panel); }
+.bg-tertiary  { background: var(--sg-bg-header); }

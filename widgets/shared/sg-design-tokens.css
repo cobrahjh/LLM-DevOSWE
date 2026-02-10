@@ -1,0 +1,410 @@
+/**
+ * SimGlass Design Tokens v1.0.0
+ * Single source of truth for the SimGlass pane design system.
+ *
+ * Color conventions follow real avionics (Garmin G1000/G3000, Collins Proline 21):
+ *   Green   = primary flight data (altitude, speed, heading)
+ *   Cyan    = navigation / tuning accent
+ *   Magenta = GPS active leg, trend vectors
+ *   White   = static labels, section headers
+ *   Yellow  = caution (approaching limits)
+ *   Amber   = warning (out-of-range)
+ *   Red     = alert (critical failures)
+ *
+ * Typography: B612 (Airbus cockpit font) for all SimGlass panes.
+ * Font sizes use container-query inline units (cqi) for pane-responsive scaling.
+ *
+ * REQUIRED in HTML <head>:
+ *   <link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+ */
+
+/* ============================================================
+   1. COLOR TOKENS
+   ============================================================ */
+:root {
+    /* --- Backgrounds --- */
+    --sg-bg-deep:       rgba(8, 18, 34, 0.94);
+    --sg-bg-panel:      rgba(12, 24, 44, 0.90);
+    --sg-bg-header:     rgba(6, 14, 28, 0.95);
+    --sg-bg-card:       rgba(16, 32, 56, 0.80);
+    --sg-bg-input:      rgba(4, 10, 22, 0.95);
+
+    /* --- Accents (avionics-meaningful) --- */
+    --sg-accent-green:   #00E676;   /* PRIMARY: live data values, normal status */
+    --sg-accent-cyan:    #00D4FF;   /* NAVIGATION: selected course, tuning, nav data */
+    --sg-accent-magenta: #FF44CC;   /* GPS: active leg, trend vectors, flight plan */
+    --sg-accent-white:   #F0F4F8;   /* LABELS: static text, section headers */
+    --sg-accent-yellow:  #FFD600;   /* CAUTION: approaching limits */
+    --sg-accent-amber:   #FF9100;   /* WARNING: out-of-range */
+    --sg-accent-red:     #FF1744;   /* ALERT: critical failures */
+    --sg-accent-blue:    #448AFF;   /* UI: buttons, interactive elements */
+
+    /* --- Text --- */
+    --sg-text-primary:   #F0F4F8;
+    --sg-text-secondary: #A8B8CC;
+    --sg-text-muted:     #607080;
+    --sg-text-dim:       #3A4A5C;
+
+    /* --- Borders (green-tinted for avionics theme) --- */
+    --sg-border-subtle:  rgba(0, 230, 118, 0.10);
+    --sg-border-medium:  rgba(0, 230, 118, 0.22);
+    --sg-border-active:  rgba(0, 230, 118, 0.45);
+    --sg-border-glow:    rgba(0, 230, 118, 0.70);
+
+    /* --- Status colors (colorblind-safe: always pair with icon/shape) --- */
+    --sg-status-ok:       #00E676;   /* + checkmark */
+    --sg-status-caution:  #FFD600;   /* + triangle */
+    --sg-status-warning:  #FF9100;   /* + exclamation */
+    --sg-status-critical: #FF1744;   /* + X + pulse animation */
+    --sg-status-info:     #448AFF;   /* + (i) icon */
+    --sg-status-inactive: #4A5568;   /* + dash */
+}
+
+/* ============================================================
+   2. TYPOGRAPHY TOKENS
+   ============================================================ */
+:root {
+    /* --- Font stacks --- */
+    --sg-font-ui:      'B612', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --sg-font-data:    'B612 Mono', 'Roboto Mono', 'Consolas', monospace;
+    --sg-font-display: 'DSEG7 Classic', 'B612 Mono', monospace;
+
+    /* --- Font sizes (container-query responsive) --- */
+    --sg-text-xs:   clamp(10px, 2.2cqi, 11px);
+    --sg-text-sm:   clamp(11px, 2.6cqi, 13px);
+    --sg-text-md:   clamp(13px, 3.0cqi, 15px);
+    --sg-text-lg:   clamp(15px, 3.5cqi, 18px);
+    --sg-text-xl:   clamp(18px, 4.2cqi, 22px);
+    --sg-text-2xl:  clamp(24px, 5.5cqi, 32px);
+    --sg-text-3xl:  clamp(32px, 7.0cqi, 42px);
+
+    /* --- Line height --- */
+    --sg-leading-tight:   1.1;
+    --sg-leading-normal:  1.4;
+    --sg-leading-relaxed: 1.6;
+
+    /* --- Letter spacing --- */
+    --sg-tracking-tight:  0.5px;
+    --sg-tracking-normal: 0.8px;
+    --sg-tracking-wide:   1.5px;
+}
+
+/* ============================================================
+   3. SPACING TOKENS
+   ============================================================ */
+:root {
+    --sg-space-xs:  clamp(4px, 1cqi, 6px);
+    --sg-space-sm:  clamp(8px, 1.8cqi, 10px);
+    --sg-space-md:  clamp(12px, 2.5cqi, 16px);
+    --sg-space-lg:  clamp(16px, 3.2cqi, 24px);
+    --sg-space-xl:  clamp(24px, 4.5cqi, 36px);
+}
+
+/* ============================================================
+   4. GLASS EFFECT TOKENS
+   ============================================================ */
+:root {
+    /* Tiered by content importance */
+    --sg-glass-blur-light:     12px;
+    --sg-glass-opacity-light:  0.78;
+
+    --sg-glass-blur-standard:  16px;
+    --sg-glass-opacity-standard: 0.88;
+
+    --sg-glass-blur-heavy:     20px;
+    --sg-glass-opacity-heavy:  0.94;
+
+    --sg-glass-blur-solid:     0px;
+    --sg-glass-opacity-solid:  0.98;
+}
+
+/* ============================================================
+   5. BORDER & SHADOW TOKENS
+   ============================================================ */
+:root {
+    /* --- Border radius --- */
+    --sg-radius:    clamp(8px, 2cqi, 14px);
+    --sg-radius-sm: clamp(4px, 1cqi, 6px);
+    --sg-radius-lg: clamp(12px, 2.5cqi, 18px);
+
+    /* --- Shadows --- */
+    --sg-shadow-xs:   0 2px 8px rgba(0, 0, 0, 0.2);
+    --sg-shadow-sm:   0 4px 16px rgba(0, 0, 0, 0.3);
+    --sg-shadow-md:   0 8px 32px rgba(0, 0, 0, 0.4);
+    --sg-shadow-lg:   0 12px 48px rgba(0, 0, 0, 0.5);
+    --sg-shadow-glow: 0 0 24px rgba(0, 230, 118, 0.25);
+
+    /* --- Frost line (top-edge inner glow) --- */
+    --sg-frost: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================
+   6. TRANSITION TOKENS
+   ============================================================ */
+:root {
+    --sg-transition-fast:   0.15s ease;
+    --sg-transition-normal: 0.25s ease;
+    --sg-transition-slow:   0.4s ease;
+}
+
+/* ============================================================
+   7. TOUCH & ACCESSIBILITY
+   ============================================================ */
+:root {
+    --sg-touch-min: 44px;  /* WCAG 2.5.8 minimum target */
+}
+
+/* ============================================================
+   8. PANE SIZING
+   ============================================================ */
+:root {
+    /* Compact: timer, holding-calc */
+    --sg-pane-compact-w:     280px;
+    --sg-pane-compact-h:     200px;
+    --sg-pane-compact-min-w: 200px;
+    --sg-pane-compact-min-h: 150px;
+    --sg-pane-compact-max-w: 360px;
+    --sg-pane-compact-max-h: 300px;
+
+    /* Standard: autopilot, fuel, weather */
+    --sg-pane-standard-w:     320px;
+    --sg-pane-standard-h:     360px;
+    --sg-pane-standard-min-w: 260px;
+    --sg-pane-standard-min-h: 280px;
+    --sg-pane-standard-max-w: 420px;
+    --sg-pane-standard-max-h: 480px;
+
+    /* Wide: engine-monitor, checklist */
+    --sg-pane-wide-w:     420px;
+    --sg-pane-wide-h:     320px;
+    --sg-pane-wide-min-w: 320px;
+    --sg-pane-wide-min-h: 260px;
+    --sg-pane-wide-max-w: 560px;
+    --sg-pane-wide-max-h: 420px;
+
+    /* Large: map, charts, GTN750 */
+    --sg-pane-large-w:     480px;
+    --sg-pane-large-h:     520px;
+    --sg-pane-large-min-w: 360px;
+    --sg-pane-large-min-h: 400px;
+    --sg-pane-large-max-w: 640px;
+    --sg-pane-large-max-h: 680px;
+}
+
+/* ============================================================
+   9. DATA DISPLAY PATTERNS
+   ============================================================ */
+
+/* --- Data grid (most common pattern) --- */
+.sg-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sg-space-sm);
+}
+
+/* --- Data cell structure --- */
+.sg-data-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--sg-space-md);
+}
+
+.sg-data-label {
+    font-size: var(--sg-text-xs);
+    font-family: var(--sg-font-ui);
+    text-transform: uppercase;
+    letter-spacing: var(--sg-tracking-wide);
+    color: var(--sg-text-muted);
+    line-height: var(--sg-leading-normal);
+}
+
+.sg-data-value {
+    font-size: var(--sg-text-2xl);
+    font-family: var(--sg-font-data);
+    color: var(--sg-accent-green);
+    line-height: var(--sg-leading-tight);
+    letter-spacing: var(--sg-tracking-tight);
+}
+
+.sg-data-unit {
+    font-size: var(--sg-text-xs);
+    font-family: var(--sg-font-ui);
+    color: var(--sg-text-secondary);
+}
+
+/* --- Divider: fade-in/out gradient --- */
+.sg-divider {
+    height: 1px;
+    border: none;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--sg-border-subtle) 20%,
+        var(--sg-border-subtle) 80%,
+        transparent 100%
+    );
+    margin: var(--sg-space-md) 0;
+}
+
+/* ============================================================
+   10. DENSITY MODES (user toggle via settings)
+   ============================================================ */
+
+/* Comfortable (default) */
+.sg-density-comfortable .sg-data-cell {
+    padding: var(--sg-space-md);
+}
+.sg-density-comfortable .sg-data-value {
+    font-size: var(--sg-text-2xl);
+}
+.sg-density-comfortable .sg-data-label {
+    display: block;
+}
+
+/* Compact */
+.sg-density-compact .sg-data-cell {
+    padding: var(--sg-space-xs);
+}
+.sg-density-compact .sg-data-value {
+    font-size: var(--sg-text-lg);
+}
+.sg-density-compact .sg-data-label {
+    display: none;
+}
+
+/* Expanded */
+.sg-density-expanded .sg-data-cell {
+    padding: var(--sg-space-lg);
+}
+.sg-density-expanded .sg-data-value {
+    font-size: var(--sg-text-3xl);
+}
+
+/* ============================================================
+   11. CONTAINER QUERY RESPONSIVE RULES
+   ============================================================ */
+
+/* Expand data grid at wider pane sizes */
+@container pane (min-width: 400px) {
+    .sg-data-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ============================================================
+   12. STATUS ANIMATIONS
+   ============================================================ */
+@keyframes sg-pulse-critical {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.sg-status-pulse {
+    animation: sg-pulse-critical 1s ease-in-out infinite;
+}
+
+/* ============================================================
+   13. BACKWARD COMPATIBILITY BRIDGE
+   Bridge old --sw-* and --widget-* tokens to new --sg-* tokens.
+   Remove this section after all widgets are migrated.
+   ============================================================ */
+:root {
+    /* --sw-* aliases (glass-theme.css consumers) */
+    --sw-bg-primary:    var(--sg-bg-deep);
+    --sw-bg-secondary:  var(--sg-bg-panel);
+    --sw-bg-tertiary:   var(--sg-bg-card);
+    --sw-bg-glass:      var(--sg-bg-panel);
+
+    --sw-accent-cyan:   var(--sg-accent-cyan);
+    --sw-accent-blue:   var(--sg-accent-blue);
+    --sw-accent-green:  var(--sg-accent-green);
+    --sw-accent-yellow: var(--sg-accent-yellow);
+    --sw-accent-orange: var(--sg-accent-amber);
+    --sw-accent-red:    var(--sg-accent-red);
+    --sw-accent-purple: #AA66FF;
+
+    --sw-text-primary:   var(--sg-text-primary);
+    --sw-text-secondary: var(--sg-text-secondary);
+    --sw-text-muted:     var(--sg-text-muted);
+    --sw-text-dim:       var(--sg-text-dim);
+
+    --sw-border-subtle:  var(--sg-border-subtle);
+    --sw-border-medium:  var(--sg-border-medium);
+    --sw-border-active:  var(--sg-border-active);
+    --sw-border-glow:    var(--sg-border-glow);
+
+    --sw-shadow-soft:       var(--sg-shadow-sm);
+    --sw-shadow-medium:     var(--sg-shadow-md);
+    --sw-shadow-strong:     var(--sg-shadow-lg);
+    --sw-shadow-glow:       var(--sg-shadow-glow);
+    --sw-shadow-glow-green: 0 0 20px rgba(0, 230, 118, 0.3);
+    --sw-shadow-glow-red:   0 0 20px rgba(255, 23, 68, 0.3);
+
+    --sw-blur:         blur(var(--sg-glass-blur-standard));
+    --sw-blur-strong:  blur(40px);
+
+    --sw-radius-sm: var(--sg-radius-sm);
+    --sw-radius-md: var(--sg-radius);
+    --sw-radius-lg: var(--sg-radius);
+    --sw-radius-xl: var(--sg-radius-lg);
+
+    --sw-font-display: var(--sg-font-ui);
+    --sw-font-mono:    var(--sg-font-data);
+
+    --sw-text-xs:  var(--sg-text-xs);
+    --sw-text-sm:  var(--sg-text-sm);
+    --sw-text-md:  var(--sg-text-md);
+    --sw-text-lg:  var(--sg-text-lg);
+    --sw-text-xl:  var(--sg-text-xl);
+    --sw-text-2xl: var(--sg-text-2xl);
+    --sw-text-3xl: var(--sg-text-3xl);
+
+    --sw-space-xs: var(--sg-space-xs);
+    --sw-space-sm: var(--sg-space-sm);
+    --sw-space-md: var(--sg-space-md);
+    --sw-space-lg: var(--sg-space-lg);
+    --sw-space-xl: var(--sg-space-xl);
+
+    --sw-touch-min: var(--sg-touch-min);
+
+    --sw-transition-fast:   var(--sg-transition-fast);
+    --sw-transition-normal: var(--sg-transition-normal);
+    --sw-transition-slow:   var(--sg-transition-slow);
+
+    /* --widget-* aliases (themes.css consumers) */
+    --widget-bg:            var(--sg-bg-deep);
+    --widget-bg-secondary:  var(--sg-bg-panel);
+    --widget-bg-tertiary:   var(--sg-bg-header);
+    --widget-text:          var(--sg-text-primary);
+    --widget-text-muted:    var(--sg-text-secondary);
+    --widget-text-dim:      var(--sg-text-muted);
+    --widget-accent:        var(--sg-accent-green);
+    --widget-accent-hover:  #2EFF8E;
+    --widget-success:       var(--sg-status-ok);
+    --widget-warning:       var(--sg-status-caution);
+    --widget-danger:        var(--sg-status-critical);
+    --widget-border:        var(--sg-border-subtle);
+    --widget-shadow:        var(--sg-shadow-md);
+    --widget-glow:          var(--sg-shadow-glow);
+    --widget-radius:        12px;
+    --widget-radius-sm:     6px;
+
+    /* Bare variable aliases (autopilot pane consumers) */
+    --font-ui:       var(--sg-font-ui);
+    --font-mono:     var(--sg-font-data);
+    --font-data:     var(--sg-font-data);
+    --font-display:  var(--sg-font-display);
+    --border-color:  var(--sg-border-subtle);
+    --text-primary:  var(--sg-text-primary);
+    --text-muted:    var(--sg-text-secondary);
+    --bg-tertiary:   var(--sg-bg-card);
+    --bg-secondary:  var(--sg-bg-panel);
+    --bg-hover:      rgba(0, 230, 118, 0.08);
+    --accent-color:  var(--sg-accent-blue);
+    --color-danger:  var(--sg-accent-red);
+    --color-success: var(--sg-accent-green);
+    --color-warning: var(--sg-accent-yellow);
+    --color-info:    var(--sg-accent-cyan);
+}
