@@ -366,8 +366,9 @@
       "category": "tool",
       "summary": "CodePilot is a native desktop GUI for Claude Code, built with Electron + Next.js.",
       "thoughts": "CodePilot would be highly useful for Hive as it provides a visual interface for managing projects and interacting with Claude Code, enhancing the AI agent orchestration capabilities of Hive.",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T02:01:00.230Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T02:01:00.230Z",
+      "decidedAt": "2026-02-11T03:42:38.268Z"
     },
     {
       "id": "gh-1141934589",
@@ -532,8 +533,9 @@
       "category": "other",
       "summary": "A fully local home automation voice assistant using Qwen3 ASR, LLM and TTS on an RTX 5060 Ti with 16GB VRAM",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T08:00:09.733Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T08:00:09.733Z",
+      "decidedAt": "2026-02-11T03:42:54.361Z"
     },
     {
       "id": "gh-1151972675",
@@ -550,8 +552,9 @@
       "category": "other",
       "summary": "Web UI for Claude Code built on a reverse-engineered WebSocket protocol. Launch sessions, stream responses, approve tools.  All from your browser / mobile",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T20:00:06.082Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T20:00:06.082Z",
+      "decidedAt": "2026-02-11T03:43:17.397Z"
     },
     {
       "id": "gh-1150117793",
@@ -698,8 +701,9 @@
       "category": "other",
       "summary": "There was a time when I treated State of JS results almost like prophecy.  A new edition dropped and...",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T20:00:06.104Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T20:00:06.104Z",
+      "decidedAt": "2026-02-11T03:43:27.269Z"
     },
     {
       "id": "hn-46966182",
@@ -715,8 +719,9 @@
       "category": "other",
       "summary": "Tambo 1.0: Open-source toolkit for agents that render React components",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-11T02:00:03.311Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-11T02:00:03.311Z",
+      "decidedAt": "2026-02-11T03:43:35.771Z"
     },
     {
       "id": "gh-1149071982",
@@ -1133,8 +1138,9 @@
       "category": "other",
       "summary": "Fast, Sharp & Reliable Agentic Intelligence",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T08:00:09.720Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T08:00:09.720Z",
+      "decidedAt": "2026-02-11T03:43:43.265Z"
     },
     {
       "id": "hn-46954920",
@@ -1150,8 +1156,9 @@
       "category": "other",
       "summary": "Frontier AI agents violate ethical constraints 30–50% of time, pressured by KPIs",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T08:00:09.724Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T08:00:09.724Z",
+      "decidedAt": "2026-02-11T03:43:57.771Z"
     },
     {
       "id": "hn-46932388",
@@ -1167,8 +1174,9 @@
       "category": "other",
       "summary": "LLMs as Language Compilers: Lessons from Fortran for the Future of Coding",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T08:00:09.736Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T08:00:09.736Z",
+      "decidedAt": "2026-02-11T03:44:01.404Z"
     },
     {
       "id": "reddit-1r0zn8o",
@@ -1184,8 +1192,9 @@
       "category": "other",
       "summary": "Hugging Face Is Teasing Something Anthropic Related",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T14:00:08.616Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T14:00:08.616Z",
+      "decidedAt": "2026-02-11T03:44:06.167Z"
     },
     {
       "id": "hn-46907183",
@@ -1201,8 +1210,9 @@
       "category": "other",
       "summary": "Show HN: Total Recall – write-gated memory for Claude Code",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T14:00:08.629Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T14:00:08.629Z",
+      "decidedAt": "2026-02-11T03:44:12.569Z"
     },
     {
       "id": "hn-46961345",
@@ -1218,8 +1228,9 @@
       "category": "other",
       "summary": "Ex-GitHub CEO launches a new developer platform for AI agents",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T20:00:06.095Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T20:00:06.095Z",
+      "decidedAt": "2026-02-11T03:44:22.334Z"
     },
     {
       "id": "reddit-1r11zsa",
@@ -1235,8 +1246,9 @@
       "category": "other",
       "summary": "I measured the \"personality\" of 6 open-source LLMs (7B-9B) by probing their hidden states. Here's what I found.",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T20:00:06.096Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T20:00:06.096Z",
+      "decidedAt": "2026-02-11T03:44:28.514Z"
     },
     {
       "id": "hn-46963887",
@@ -1252,8 +1264,9 @@
       "category": "other",
       "summary": "Show HN: Showboat and Rodney, so agents can demo what they've built",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T20:00:06.102Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T20:00:06.102Z",
+      "decidedAt": "2026-02-11T03:44:32.486Z"
     },
     {
       "id": "gh-rel-nodejs-node-284830488",
@@ -1268,8 +1281,9 @@
       "category": "other",
       "summary": "2026-02-10, Version 25.6.1 (Current), @aduh95",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-11T02:00:03.317Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-11T02:00:03.317Z",
+      "decidedAt": "2026-02-11T03:44:34.588Z"
     },
     {
       "id": "reddit-1qrqyi0",
@@ -3531,8 +3545,9 @@
       "category": "other",
       "summary": "Femtobot: A 10MB Rust Agent for Low-Resource Machines",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-10T14:00:08.621Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-10T14:00:08.621Z",
+      "decidedAt": "2026-02-11T03:44:40.663Z"
     },
     {
       "id": "hn-46917033",
@@ -10337,9 +10352,9 @@
   "lastFetch": "2026-02-11T02:00:03.318Z",
   "stats": {
     "total": 589,
-    "approved": 38,
+    "approved": 53,
     "rejected": 1,
-    "pending": 532,
+    "pending": 517,
     "implemented": 0
   }
 }
