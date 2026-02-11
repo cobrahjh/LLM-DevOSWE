@@ -192,9 +192,9 @@ let flightData = {
     aileron: 0,
     elevator: 0,
     rudder: 0,
-    // Position data (for flight recorder)
-    latitude: 0,
-    longitude: 0,
+    // Position data (for flight recorder) — default to KDEN area for navdb browsing
+    latitude: 39.8561,
+    longitude: -104.6737,
     altitudeMSL: 0,
     pitch: 0,
     bank: 0,
@@ -2838,31 +2838,35 @@ function executeCommand(command, value) {
         return;
     }
 
-    // MSFS 2024 flight controls — InputEvents first, legacy fallback
-    // Sign convention: rule engine uses positive=nose-down, MSFS uses positive=stick-back=nose-up
-    // So elevator and ailerons are NEGATED to match MSFS convention
-    // InputEvents use -1.0 to 1.0 range, legacy uses -16383 to 16383
+    // MSFS 2024 flight controls via transmitClientEvent
+    // Sign convention (VERIFIED empirically 2026-02-10):
+    //   Elevator: negative = pull back = nose UP, positive = push forward = nose DOWN ✓
+    //   Ailerons: positive = roll LEFT, negative = roll RIGHT (opposite of joystick intuition!)
+    //   Rudder: positive = yaw LEFT, negative = yaw RIGHT (opposite of joystick intuition!)
+    // Ground steering confirms: drift right → positive rudder → yaw LEFT → corrects
+    // NO negation — pass through directly (scaled to -16383..+16383)
     if (command === 'AXIS_ELEVATOR_SET') {
-        // MSFS 2024: Neither InputEvents (UNKNOWN_TAIL_ELEVATOR) nor legacy ELEVATOR_SET
-        // control the elevator in MSFS 2024. ELEVATOR_SET actually moves the rudder (!).
-        // Direct elevator control is not available — AP handles pitch after liftoff.
-        // Keep the command path for logging/tracking but skip the broken event.
+        const axisEventId = eventMap['AXIS_ELEVATOR_SET'];
+        if (axisEventId !== undefined) {
+            const simValue = Math.round((value || 0) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, axisEventId, simValue, 1, 16);
+        }
         return;
     }
     if (command === 'AXIS_RUDDER_SET') {
-        // MSFS 2024: Legacy RUDDER_SET works for nosewheel steering (ground ops).
-        // The rudderPos SimVar reads zero at low speed (no aerodynamic deflection)
-        // but the nosewheel IS turning. Don't use InputEvents — they only animate.
-        const pct = (value || 0) / 100;
-        const rudderEventId = eventMap['RUDDER_SET'];
+        const rudderEventId = eventMap['AXIS_RUDDER_SET'];
         if (rudderEventId !== undefined) {
-            simConnectConnection.transmitClientEvent(0, rudderEventId, Math.round(pct * 16383), 1, 16);
+            const simValue = Math.round((value || 0) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, rudderEventId, simValue, 1, 16);
         }
         return;
     }
     if (command === 'AXIS_AILERONS_SET') {
-        // MSFS 2024: Neither InputEvents nor legacy events control ailerons.
-        // AP handles roll via HDG/NAV modes. No-op to prevent side effects.
+        const ailEventId = eventMap['AXIS_AILERONS_SET'];
+        if (ailEventId !== undefined) {
+            const simValue = Math.round((value || 0) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, ailEventId, simValue, 1, 16);
+        }
         return;
     }
 
@@ -3698,8 +3702,11 @@ async function initSimConnect() {
                     fd.fuelTankExternal1Cap = rf(); fd.fuelTankExternal2Cap = rf();
 
                     // Control Surface Positions (6 vars)
-                    fd.elevatorPos = rf(); fd.aileronPos = rf(); fd.rudderPos = rf();
-                    fd.yokeY = rf(); fd.yokeX = rf(); fd.rudderPedal = rf();
+                    // MSFS 2024: ELEVATOR POSITION not in buffer, shifts all reads -1
+                    // Verified empirically: joystick fwd/back → slot 3, rudder pedal → slot 2
+                    fd.aileronPos = rf(); fd.rudderPos = rf(); fd.yokeY = rf();
+                    fd.yokeX = rf(); fd.rudderPedal = rf();
+                    fd.elevatorPos = fd.yokeY;  // use yoke Y as elevator proxy
                 } catch (e) {
                     if (!this._loggedReadError) {
                         console.error('[SimConnect] Data read partial at buffer offset, got', Object.keys(fd).length, 'vars. Error:', e.message);

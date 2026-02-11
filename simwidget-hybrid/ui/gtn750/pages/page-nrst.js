@@ -51,6 +51,9 @@ class NearestPage {
      * Update position from flight data
      */
     setPosition(lat, lon) {
+        // If position is outside US coverage (no active flight), keep default US position
+        // FAA navdb only covers US — lat ~24-72, lon ~-180 to -60
+        if (lat < 20 || lat > 75 || lon > -50 || lon < -185) return;
         this.position = { lat, lon };
     }
 
