@@ -451,10 +451,10 @@ class RuleEngine {
 
             case 'ROTATE':
                 this._cmdValue('THROTTLE_SET', 100, 'Full power');
-                // Target 8° pitch with very low authority — feedback prevents over-rotation
-                this._targetPitch(d, 8, 10);
+                // Target 8° pitch — 20% authority handles high-altitude airports (thin air)
+                this._targetPitch(d, 8, 20);
                 // Wings level — prevent bank buildup during rotation and liftoff
-                this._targetBank(d, 0, 10);
+                this._targetBank(d, 0, 15);
                 this._groundSteer(d, this._runwayHeading);
                 // Airborne — transition
                 if (!onGround) {
@@ -465,14 +465,14 @@ class RuleEngine {
             case 'LIFTOFF':
                 // POH: Full power climb — pitch to 8° nose up for initial climb
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Gentle pitch target — C172 overshoots easily, max 10% authority
+                // 20% authority — enough for high-altitude rotation in thin air
                 if (agl < 100) {
-                    this._targetPitch(d, 8, 10);
+                    this._targetPitch(d, 8, 20);
                 } else {
-                    this._pitchForSpeed(d, speeds.Vy || 74, 10);
+                    this._pitchForSpeed(d, speeds.Vy || 74, 20);
                 }
                 // Wings level — counter P-factor/torque roll
-                this._targetBank(d, 0, 10);
+                this._targetBank(d, 0, 15);
                 // Coordinated rudder — track runway heading
                 this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 10);
                 // Stall protection: if near stall, push nose down immediately
@@ -488,11 +488,11 @@ class RuleEngine {
             case 'INITIAL_CLIMB':
                 // Continue full power Vy climb until AP handoff
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Pitch for Vy — gentle authority (max 10%)
-                this._pitchForSpeed(d, speeds.Vy || 74, 10);
+                // Pitch for Vy — 20% authority for high-altitude airports
+                this._pitchForSpeed(d, speeds.Vy || 74, 20);
                 // Wings level + coordinated rudder
-                this._targetBank(d, 0, 10);
-                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 10);
+                this._targetBank(d, 0, 15);
+                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 15);
                 // Stall protection
                 if (d.stallWarning || ias < (speeds.Vs1 || 53)) {
                     this._cmdValue('AXIS_ELEVATOR_SET', 10, 'STALL: nose down');
