@@ -451,10 +451,10 @@ class RuleEngine {
 
             case 'ROTATE':
                 this._cmdValue('THROTTLE_SET', 100, 'Full power');
-                // Target 8° pitch — 20% authority handles high-altitude airports (thin air)
-                this._targetPitch(d, 8, 20);
+                // Target 8° pitch — density compensation in _targetPitch adapts to altitude
+                this._targetPitch(d, 8, 15);
                 // Wings level — prevent bank buildup during rotation and liftoff
-                this._targetBank(d, 0, 15);
+                this._targetBank(d, 0, 12);
                 this._groundSteer(d, this._runwayHeading);
                 // Airborne — transition
                 if (!onGround) {
@@ -465,14 +465,14 @@ class RuleEngine {
             case 'LIFTOFF':
                 // POH: Full power climb — pitch to 8° nose up for initial climb
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // 20% authority — enough for high-altitude rotation in thin air
+                // Density compensation in _targetPitch adapts authority to altitude
                 if (agl < 100) {
-                    this._targetPitch(d, 8, 20);
+                    this._targetPitch(d, 8, 15);
                 } else {
-                    this._pitchForSpeed(d, speeds.Vy || 74, 20);
+                    this._pitchForSpeed(d, speeds.Vy || 74, 15);
                 }
                 // Wings level — counter P-factor/torque roll
-                this._targetBank(d, 0, 15);
+                this._targetBank(d, 0, 12);
                 // Coordinated rudder — track runway heading
                 this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 10);
                 // Stall protection: if near stall, push nose down immediately
@@ -488,11 +488,11 @@ class RuleEngine {
             case 'INITIAL_CLIMB':
                 // Continue full power Vy climb until AP handoff
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Pitch for Vy — 20% authority for high-altitude airports
-                this._pitchForSpeed(d, speeds.Vy || 74, 20);
+                // Density compensation in _targetPitch adapts authority to altitude
+                this._pitchForSpeed(d, speeds.Vy || 74, 15);
                 // Wings level + coordinated rudder
-                this._targetBank(d, 0, 15);
-                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 15);
+                this._targetBank(d, 0, 12);
+                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 12);
                 // Stall protection
                 if (d.stallWarning || ias < (speeds.Vs1 || 53)) {
                     this._cmdValue('AXIS_ELEVATOR_SET', 10, 'STALL: nose down');
@@ -998,7 +998,11 @@ class RuleEngine {
         const pitch = d.pitch || 0;
         const error = targetDeg - pitch;  // positive = need more nose up
         // Sign convention: negative elevator = nose up, positive elevator = nose down
-        const maxDefl = maxDeflection || 30;
+        // Density altitude compensation: thinner air needs more control deflection.
+        // At sea level factor=1.0, at 5000ft ~1.15, at 10000ft ~1.35
+        const altMSL = d.altitude || 0;
+        const densityFactor = 1 + Math.max(0, altMSL) / 30000;
+        const maxDefl = (maxDeflection || 30) * densityFactor;
 
         // Proportional term: gain scales with authority needed
         const gain = maxDefl > 40 ? 3.0 : 1.8;
