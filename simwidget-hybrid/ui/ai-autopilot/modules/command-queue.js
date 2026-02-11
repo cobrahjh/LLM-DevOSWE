@@ -30,6 +30,10 @@ class CommandQueue {
 
         // AP state tracking for dedup
         this._currentApState = {};
+
+        // Axis rate limiting — SimConnect drops events if flooded
+        this._axisLastSend = {};   // { AXIS_*: timestamp }
+        this._axisMinInterval = 150; // ms between same axis command (max ~7/sec)
     }
 
     /**
@@ -46,14 +50,19 @@ class CommandQueue {
         const axis = this._commandToAxis(cmd.type);
         if (axis && this._isOverridden(axis)) return;
 
-        // ── Axis controls (AXIS_*) bypass queue — send immediately ──
-        // Flight control surfaces need instant response, not 500ms rate limiting.
-        // Queuing elevator/rudder/aileron causes fatal delays during takeoff.
+        // ── Axis controls (AXIS_*) bypass queue but are rate-limited ──
+        // SimConnect drops events if flooded (>10/sec per axis).
+        // Rate limit to ~7/sec per axis while keeping responsive.
         const isAxisControl = cmd.type.startsWith('AXIS_');
         if (isAxisControl) {
-            // Dedup with tight tolerance (0.1)
+            // Dedup with tight tolerance
             const current = this._currentApState[cmd.type];
-            if (current !== undefined && Math.abs(current - cmd.value) < 0.1) return;
+            if (current !== undefined && Math.abs(current - cmd.value) < 0.3) return;
+            // Rate limit per axis type
+            const now = Date.now();
+            const lastSend = this._axisLastSend[cmd.type] || 0;
+            if (now - lastSend < this._axisMinInterval) return;
+            this._axisLastSend[cmd.type] = now;
             this._execute(cmd);
             return;
         }
