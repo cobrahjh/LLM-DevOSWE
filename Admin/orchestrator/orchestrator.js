@@ -152,14 +152,14 @@ const SERVICES = {
     keysender: {
         id: 'keysender',
         name: 'KeySender Service',
-        port: null,  // No HTTP port - native Windows service
+        port: 9999,  // TCP port for health check
         dir: path.join(PROJECT_ROOT, 'KeySenderService'),
-        start: null,  // Managed by Windows Service only
-        winService: 'simwidgetkeysender',  // Windows Service ID
-        healthEndpoint: null,  // Health checked via SC query
+        start: null,  // Managed externally
+        winService: 'simwidgetkeysender',
+        healthEndpoint: null,  // No HTTP endpoint - uses TCP port check
         priority: 6,
-        autoRestart: false,  // No start command available - Windows Service only
-        type: 'native'  // Flag for native Windows service (no Node.js)
+        autoRestart: false,
+        type: 'native'
     },
     hivemind: {
         id: 'hivemind',
@@ -179,7 +179,7 @@ const SERVICES = {
         dir: path.join(PROJECT_ROOT, 'Admin', 'terminal-hub'),
         start: 'node terminal-hub-server.js',
         winService: null,  // No Windows Service yet
-        healthEndpoint: '/api/health',
+        healthEndpoint: '/health',
         priority: 8,
         autoRestart: true
     },
@@ -337,7 +337,28 @@ async function checkServiceHealth(serviceId) {
     const svc = SERVICES[serviceId];
     if (!svc) return { healthy: false, error: 'Unknown service' };
 
-    // Native Windows services (no HTTP port) - check via SC query
+    // Native services with TCP port but no HTTP endpoint - check via port
+    if (svc.type === 'native' && svc.port && !svc.healthEndpoint) {
+        return new Promise((resolve) => {
+            const socket = new net.Socket();
+            socket.setTimeout(2000);
+            socket.on('connect', () => {
+                socket.destroy();
+                resolve({ healthy: true, status: 'RUNNING' });
+            });
+            socket.on('timeout', () => {
+                socket.destroy();
+                resolve({ healthy: false, error: 'TCP timeout' });
+            });
+            socket.on('error', () => {
+                socket.destroy();
+                resolve({ healthy: false, error: 'TCP connection failed' });
+            });
+            socket.connect(svc.port, 'localhost');
+        });
+    }
+
+    // Native Windows services (no port) - check via SC query
     if (svc.type === 'native' || !svc.port) {
         return new Promise((resolve) => {
             exec(`sc query "${svc.winService}"`, (error, stdout) => {
@@ -351,13 +372,14 @@ async function checkServiceHealth(serviceId) {
         });
     }
 
-    // HTTP-based health check for Node.js services (2s timeout for speed)
+    // HTTP-based health check for Node.js services
+    const timeout = svc.port === 3002 ? 5000 : 2000; // Oracle needs more time
     return new Promise((resolve) => {
         const req = http.get({
             hostname: 'localhost',
             port: svc.port,
             path: svc.healthEndpoint,
-            timeout: 2000
+            timeout: timeout
         }, (res) => {
             res.resume(); // Drain response body to free connection
             resolve({ healthy: res.statusCode === 200, statusCode: res.statusCode });
