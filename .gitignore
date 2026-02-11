@@ -14,7 +14,9 @@ Desktop.ini
 
 # Logs
 *.log
+*.log.*
 npm-debug.log*
+Admin/agent/logs/
 
 # Build output
 dist/
@@ -54,6 +56,10 @@ tmpclaude-*
 # Windows NUL artifacts
 NUL
 nul
+
+# Screenshots (debug/temp)
+screenshot*.png
+screenshot*.ps1
 
 # Diagnostic/temp text files
 nettest.txt
