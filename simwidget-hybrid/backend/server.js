@@ -2784,32 +2784,61 @@ function executeCommand(command, value) {
         return;
     }
 
-    // MSFS 2024 flight controls — use legacy *_SET events via transmitClientEvent
-    // InputEvents (UNKNOWN_*) only animate visual model, don't affect flight dynamics
-    // Legacy ELEVATOR_SET/RUDDER_SET/AILERON_SET work like THROTTLE_SET
+    // MSFS 2024 flight controls — InputEvents first, legacy fallback
     // Sign convention: rule engine uses positive=nose-down, MSFS uses positive=stick-back=nose-up
     // So elevator and ailerons are NEGATED to match MSFS convention
+    // InputEvents use -1.0 to 1.0 range, legacy uses -16383 to 16383
     if (command === 'AXIS_ELEVATOR_SET') {
-        const elevEventId = eventMap['ELEVATOR_SET'];
-        if (elevEventId !== undefined) {
-            const simValue = -Math.round((value || 0) / 100 * 16383);
-            simConnectConnection.transmitClientEvent(0, elevEventId, simValue, 1, 16);
+        const pct = (value || 0) / 100;
+        const normalized = -pct;  // negate: rule engine positive=nose-down, MSFS positive=nose-up
+        if (global.inputEventHashes?.UNKNOWN_TAIL_ELEVATOR) {
+            try {
+                simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_TAIL_ELEVATOR, normalized);
+            } catch (e) {
+                console.error(`[Elevator] InputEvent error: ${e.message}`);
+            }
+        } else {
+            const elevEventId = eventMap['ELEVATOR_SET'];
+            if (elevEventId !== undefined) {
+                simConnectConnection.transmitClientEvent(0, elevEventId, Math.round(normalized * 16383), 1, 16);
+            }
         }
         return;
     }
     if (command === 'AXIS_RUDDER_SET') {
-        const rudderEventId = eventMap['RUDDER_SET'];
-        if (rudderEventId !== undefined) {
-            const simValue = Math.round((value || 0) / 100 * 16383);
-            simConnectConnection.transmitClientEvent(0, rudderEventId, simValue, 1, 16);
+        const pct = (value || 0) / 100;
+        if (global.inputEventHashes?.UNKNOWN_RUDDER) {
+            try {
+                simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_RUDDER, pct);
+            } catch (e) {
+                console.error(`[Rudder] InputEvent error: ${e.message}`);
+            }
+        } else {
+            const rudderEventId = eventMap['RUDDER_SET'];
+            if (rudderEventId !== undefined) {
+                simConnectConnection.transmitClientEvent(0, rudderEventId, Math.round(pct * 16383), 1, 16);
+            }
         }
         return;
     }
     if (command === 'AXIS_AILERONS_SET') {
-        const ailEventId = eventMap['AILERON_SET'];
-        if (ailEventId !== undefined) {
-            const simValue = -Math.round((value || 0) / 100 * 16383);
-            simConnectConnection.transmitClientEvent(0, ailEventId, simValue, 1, 16);
+        const pct = (value || 0) / 100;
+        const normalized = -pct;  // negate for MSFS convention
+        if (global.inputEventHashes?.UNKNOWN_AILERON_LEFT) {
+            try {
+                // Set both left and right ailerons for coordinated control
+                simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_AILERON_LEFT, normalized);
+                if (global.inputEventHashes.UNKNOWN_AILERON_RIGHT) {
+                    simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_AILERON_RIGHT, -normalized);
+                }
+            } catch (e) {
+                console.error(`[Ailerons] InputEvent error: ${e.message}`);
+            }
+        } else {
+            const ailEventId = eventMap['AILERON_SET'];
+            if (ailEventId !== undefined) {
+                simConnectConnection.transmitClientEvent(0, ailEventId, Math.round(normalized * 16383), 1, 16);
+            }
         }
         return;
     }
