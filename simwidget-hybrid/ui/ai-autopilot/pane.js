@@ -857,6 +857,11 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // Feed nav data to rule engine
         this.ruleEngine.setNavState(nav);
 
+        // Feed destination distance for TOD calculation
+        if (nav.destDistNm != null) {
+            this.flightPhase.setDestinationDist(nav.destDistNm);
+        }
+
         // Update cruise altitude from flight plan if available
         if (nav.flightPlan?.cruiseAltitude && nav.flightPlan.cruiseAltitude > 0) {
             this.flightPhase.targetCruiseAlt = nav.flightPlan.cruiseAltitude;
@@ -1252,6 +1257,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     heading: this._activeRunway.heading,
                     length: this._activeRunway.length
                 } : null,
+                navGuidance: this.ruleEngine.getNavGuidance(),
                 atcPhase: this.atcController ? this.atcController.getPhase() : 'INACTIVE',
                 atcInstruction: this.atcController ? this.atcController.getATCInstruction() : '',
                 atcRoute: this.atcController ? this.atcController.getRoute() : null,
@@ -1591,8 +1597,17 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this.elements.targetSpd.classList.toggle('active', this.aiEnabled);
         }
         if (this.elements.targetHdg) {
-            const hdg = d ? Math.round(d.heading || 0) : 0;
-            this.elements.targetHdg.textContent = 'HDG ' + String(hdg).padStart(3, '0') + '\u00B0';
+            const navG = this.aiEnabled ? this.ruleEngine.getNavGuidance() : null;
+            if (navG && navG.wpIdent) {
+                // Show active waypoint + distance instead of raw heading
+                const distStr = navG.wpDist != null ? ` ${navG.wpDist}nm` : '';
+                this.elements.targetHdg.textContent = navG.wpIdent + distStr;
+                this.elements.targetHdg.title = navG.interceptDesc || '';
+            } else {
+                const hdg = d ? Math.round(d.heading || 0) : 0;
+                this.elements.targetHdg.textContent = 'HDG ' + String(hdg).padStart(3, '0') + '\u00B0';
+                this.elements.targetHdg.title = '';
+            }
             this.elements.targetHdg.classList.toggle('active', this.aiEnabled);
         }
     }
@@ -1606,7 +1621,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             { el: 'Alt', label: 'ALT', engaged: this.ap.altitudeHold, value: this.setValues.altitude.toLocaleString(), axis: 'ALT' },
             { el: 'Vs',  label: 'VS',  engaged: this.ap.vsHold, value: (this.setValues.vs >= 0 ? '+' : '') + this.setValues.vs, axis: 'VS' },
             { el: 'Spd', label: 'SPD', engaged: this.ap.speedHold, value: this.setValues.speed + ' kt', axis: 'SPD' },
-            { el: 'Nav', label: 'NAV', engaged: this.ap.navHold || this.ap.aprHold, value: this.ap.aprHold ? 'APR' : (this.ap.navHold ? 'ON' : 'OFF'), axis: 'NAV' }
+            { el: 'Nav', label: 'NAV', engaged: this.ap.navHold || this.ap.aprHold, value: this.ap.aprHold ? 'APR' : (this.ap.navHold ? (this.ruleEngine.getNavGuidance()?.cdiSource || 'ON') : 'OFF'), axis: 'NAV' }
         ];
 
         for (const row of rows) {

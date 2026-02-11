@@ -190,10 +190,9 @@ class RuleEngine {
                 this._cmdValue('THROTTLE_SET', 100, 'Climb power');
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
-                    // Set heading bug to current heading for HDG hold
-                    this._cmdValue('AP_HDG_VAR_SET', Math.round(d.heading || 0), 'HDG ' + Math.round(d.heading || 0));
-                    this._cmd('AP_HDG_HOLD', true, 'HDG hold');
                 }
+                // Lateral nav — continuous evaluation
+                this._applyLateralNav(d, apState, phaseChanged);
                 // Set climb VS — adapts to available speed margin.
                 // At higher altitudes, power decreases — VS must be reduced to maintain airspeed.
                 // Skip entirely when stall protection is active — let it push nose down.
@@ -214,10 +213,6 @@ class RuleEngine {
                     this._cmdValue('AP_ALT_VAR_SET', this._getCruiseAlt(), 'ALT ' + this._getCruiseAlt());
                     this._cmdValue('AP_SPD_VAR_SET', speeds.Vy, 'SPD ' + speeds.Vy + ' (Vy)');
                 }
-                // Transition from HDG to NAV if available
-                if (d.apNavLock === false && phaseChanged) {
-                    this._cmd('AP_NAV1_HOLD', true, 'NAV tracking');
-                }
                 break;
 
             case 'CRUISE': {
@@ -229,8 +224,9 @@ class RuleEngine {
                     this._cmd('AP_ALT_HOLD', true, 'ALT hold at cruise');
                     this._cmdValue('AP_VS_VAR_SET', 0, 'VS 0 (level)');
                     this._cmdValue('AP_SPD_VAR_SET', speeds.Vcruise, 'SPD ' + speeds.Vcruise + ' (cruise)');
-                    this._cmd('AP_NAV1_HOLD', true, 'NAV tracking');
                 }
+                // Lateral nav — continuous evaluation
+                this._applyLateralNav(d, apState, phaseChanged);
                 // Speed-maintaining throttle: no auto-throttle in C172 AP,
                 // so rule engine must manage throttle to reach target speed.
                 const ias = d.speed || 0;
@@ -250,8 +246,9 @@ class RuleEngine {
                 }
                 if (phaseChanged) {
                     this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.DESCENT, 'SPD ' + p.phaseSpeeds.DESCENT);
-                    this._cmd('AP_NAV1_HOLD', true, 'NAV tracking');
                 }
+                // Lateral nav — continuous evaluation
+                this._applyLateralNav(d, apState, phaseChanged);
                 // Continuously enforce VS descent (dedup prevents spam)
                 this._cmd('AP_VS_HOLD', true, 'VS hold for descent');
                 this._cmdValue('AP_VS_VAR_SET', p.descent.normalRate, 'VS ' + p.descent.normalRate);
@@ -299,7 +296,26 @@ class RuleEngine {
                         if (!apState.aprHold || phaseChanged) {
                             this._cmd('AP_APR_HOLD', true, 'APR mode (lateral)');
                         }
+                    } else {
+                        // No approach mode available — use heading guidance
+                        const navHdg = this._getNavHeading(d);
+                        if (navHdg) {
+                            this._cmdValue('HEADING_BUG_SET', navHdg.heading, navHdg.description);
+                            if (!apState.headingHold || phaseChanged) {
+                                this._cmd('AP_HDG_HOLD', true, 'HDG hold (approach)');
+                            }
+                        } else if (this._activeRunway?.heading != null) {
+                            this._cmdValue('HEADING_BUG_SET', Math.round(this._activeRunway.heading), 'RWY HDG ' + Math.round(this._activeRunway.heading) + '°');
+                            if (!apState.headingHold || phaseChanged) {
+                                this._cmd('AP_HDG_HOLD', true, 'HDG hold (runway)');
+                            }
+                        }
                     }
+                } else if (phaseChanged) {
+                    // No nav state at all — hold runway heading or current
+                    const aprHdg = this._activeRunway?.heading || d.heading || 0;
+                    this._cmdValue('HEADING_BUG_SET', Math.round(aprHdg), 'HDG ' + Math.round(aprHdg) + '°');
+                    this._cmd('AP_HDG_HOLD', true, 'HDG hold (no nav)');
                 }
                 // Fixed approach power with flaps — speed settles to ~75kts.
                 // Only intervene near stall or overspeed.
@@ -1113,6 +1129,148 @@ class RuleEngine {
         const deflection = Math.max(-maxDeflection, Math.min(maxDeflection, error * gain + bias));
         this._cmdValue('AXIS_AILERONS_SET', Math.round(deflection * 10) / 10,
             `Bank ${bank.toFixed(1)}° → ${targetBank.toFixed(1)}° (ail ${deflection > 0 ? '+' : ''}${deflection.toFixed(1)})`);
+    }
+
+    // ── Nav Guidance Methods ─────────────────────────────────
+    // Lateral navigation using GTN750 CDI/waypoint data.
+    // Provides intercept headings, NAV mode decisions, and UI data.
+
+    /**
+     * Compute intercept heading to rejoin desired track.
+     * Uses proportional intercept angle based on cross-track error.
+     * @param {number} dtk - desired track (degrees true)
+     * @param {number} xtrk - cross-track error (NM, positive = right of course)
+     * @param {string} toFrom - 'TO' or 'FROM' flag
+     * @returns {number} intercept heading (degrees)
+     */
+    _computeInterceptHeading(dtk, xtrk, toFrom) {
+        if (toFrom === 'FROM') return dtk; // past waypoint — just track DTK
+
+        const absXtrk = Math.abs(xtrk);
+        let interceptAngle = 0;
+
+        if (absXtrk < 0.1) {
+            interceptAngle = 0;           // on course
+        } else if (absXtrk < 0.3) {
+            interceptAngle = 10;          // slight correction
+        } else if (absXtrk <= 1.0) {
+            // Proportional: 10° at 0.3nm to 30° at 1.0nm
+            interceptAngle = 10 + (absXtrk - 0.3) / 0.7 * 20;
+        } else {
+            interceptAngle = 30;          // max intercept
+        }
+
+        // Apply intercept toward course: if right of course (positive xtrk), turn left
+        const correction = xtrk > 0 ? -interceptAngle : interceptAngle;
+        return ((dtk + correction) % 360 + 360) % 360;
+    }
+
+    /**
+     * Get nav-derived heading for lateral guidance.
+     * Priority: CDI DTK with intercept correction, then active waypoint bearing.
+     * @param {Object} d - flightData
+     * @returns {{ heading: number, source: string, description: string } | null}
+     */
+    _getNavHeading(d) {
+        const nav = this._navState;
+        if (!nav) return null;
+
+        // Priority 1: CDI with valid DTK
+        if (nav.cdi && nav.cdi.dtk != null && nav.cdi.source) {
+            const dtk = nav.cdi.dtk;
+            const xtrk = nav.cdi.xtrk || 0;
+            const toFrom = nav.cdi.toFrom || 'TO';
+            const heading = this._computeInterceptHeading(dtk, xtrk, toFrom);
+            const xtrkDesc = Math.abs(xtrk) < 0.1 ? 'on course' : `${Math.abs(xtrk).toFixed(1)}nm ${xtrk > 0 ? 'R' : 'L'}`;
+            return {
+                heading: Math.round(heading),
+                source: nav.cdi.source,
+                description: `DTK ${Math.round(dtk)}° ${xtrkDesc} → HDG ${Math.round(heading)}°`
+            };
+        }
+
+        // Priority 2: Active waypoint bearing (direct-to fallback)
+        if (nav.activeWaypoint && nav.activeWaypoint.bearing != null) {
+            const bearing = nav.activeWaypoint.bearing;
+            return {
+                heading: Math.round(bearing),
+                source: 'WPT',
+                description: `Direct ${nav.activeWaypoint.ident || '???'} BRG ${Math.round(bearing)}°`
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * Determine if NAV mode should be engaged (vs heading bug fallback).
+     * NAV mode is safe when CDI is valid, cross-track is small, and TO flag is active.
+     * @returns {boolean}
+     */
+    _shouldUseNavMode() {
+        const nav = this._navState;
+        if (!nav || !nav.cdi) return false;
+
+        const hasSource = !!nav.cdi.source;
+        const smallXtrk = Math.abs(nav.cdi.xtrk || 0) < 2.0;
+        const toFlag = nav.cdi.toFrom === 'TO';
+
+        return hasSource && smallXtrk && toFlag;
+    }
+
+    /**
+     * Public getter for nav guidance data (used by UI and broadcast).
+     * @returns {Object|null} nav guidance snapshot
+     */
+    getNavGuidance() {
+        const nav = this._navState;
+        if (!nav) return null;
+
+        const navHdg = this._getNavHeading(null);
+        const wp = nav.activeWaypoint;
+
+        return {
+            wpIdent: wp?.ident || null,
+            wpDist: wp?.distNm != null ? Math.round(wp.distNm * 10) / 10 : null,
+            wpEte: wp?.ete || null,
+            cdiSource: nav.cdi?.source || null,
+            xtrk: nav.cdi?.xtrk != null ? Math.round(nav.cdi.xtrk * 100) / 100 : null,
+            dtk: nav.cdi?.dtk != null ? Math.round(nav.cdi.dtk) : null,
+            navMode: this._shouldUseNavMode(),
+            interceptHdg: navHdg?.heading || null,
+            interceptDesc: navHdg?.description || null,
+            destDist: nav.destDistNm != null ? Math.round(nav.destDistNm * 10) / 10 : null
+        };
+    }
+
+    /**
+     * Apply lateral nav guidance — shared logic for CLIMB/CRUISE/DESCENT phases.
+     * Engages NAV mode when CDI is valid, falls back to heading bug intercept,
+     * or holds current heading if no nav data available.
+     * @param {Object} d - flightData
+     * @param {Object} apState - current AP states
+     * @param {boolean} phaseChanged - true on first tick of new phase
+     */
+    _applyLateralNav(d, apState, phaseChanged) {
+        if (this._shouldUseNavMode()) {
+            // CDI valid, small XTRK, TO flag — let AP NAV mode track
+            if (!apState.navHold || phaseChanged) {
+                this._cmd('AP_NAV1_HOLD', true, 'NAV tracking (CDI valid)');
+            }
+        } else {
+            const navHdg = this._getNavHeading(d);
+            if (navHdg) {
+                // Have DTK/bearing but CDI not suitable for NAV mode — use heading bug
+                this._cmdValue('HEADING_BUG_SET', navHdg.heading, navHdg.description);
+                if (!apState.headingHold || phaseChanged) {
+                    this._cmd('AP_HDG_HOLD', true, 'HDG hold (nav intercept)');
+                }
+            } else if (phaseChanged) {
+                // No nav data at all — hold current heading
+                this._cmdValue('HEADING_BUG_SET', Math.round(d.heading || 0), 'HDG ' + Math.round(d.heading || 0) + '°');
+                this._cmd('AP_HDG_HOLD', true, 'HDG hold (no nav)');
+            }
+        }
     }
 
     _getCruiseAlt() {
