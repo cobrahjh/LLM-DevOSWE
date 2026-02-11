@@ -112,7 +112,7 @@ class ATCController {
         this._setPhase('TAXI_CLEARANCE_PENDING');
 
         try {
-            const base = this._serverPort ? `http://localhost:${this._serverPort}` : '';
+            const base = typeof window !== 'undefined' ? window.location.origin : '';
             const url = `${base}/api/ai-pilot/atc/route?icao=${this._icao}&fromLat=${this._lastLat}&fromLon=${this._lastLon}&toRunway=${runway}`;
             const res = await fetch(url);
             const data = await res.json();

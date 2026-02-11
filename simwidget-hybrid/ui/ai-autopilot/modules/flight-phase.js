@@ -78,7 +78,7 @@ class FlightPhase {
             case 'TAXI':
                 // Transition to TAKEOFF early — TAKEOFF ROLL handles full power
                 // ATC gate: if ATC controller is active, require CLEARED_TAKEOFF phase
-                if (gs > 25 && onGround && (!this._atc || this._atc.getPhase() === 'CLEARED_TAKEOFF')) {
+                if (gs > 25 && onGround && (!this._atc || this._atc.getPhase() === 'INACTIVE' || this._atc.getPhase() === 'CLEARED_TAKEOFF')) {
                     this._setPhase('TAKEOFF');
                 } else if (gs < 1 && !engineRunning) {
                     this._setPhase('PREFLIGHT');

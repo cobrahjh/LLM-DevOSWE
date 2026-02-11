@@ -54,7 +54,7 @@ class LLMAdvisor {
             const systemContext = this._buildContext(flightData);
             const fullPrompt = `${systemContext}\n\nPILOT REQUEST: ${prompt}\n\nRespond concisely (2-3 sentences max). If you recommend an AP change, state it clearly as: "RECOMMEND: [action]"`;
 
-            const response = await fetch(`http://localhost:${this.serverPort}/api/ai-pilot/advisory`, {
+            const response = await fetch(`${window.location.origin}/api/ai-pilot/advisory`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: fullPrompt }),
