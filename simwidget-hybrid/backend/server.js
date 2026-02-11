@@ -2724,6 +2724,16 @@ app.post('/api/debug/camera', (req, res) => {
     res.json({ debug: cameraSystem.debug });
 });
 
+// Debug: InputEvent hashes
+app.get('/api/debug/inputevents', (req, res) => {
+    const hashes = global.inputEventHashes || {};
+    const result = {};
+    for (const [k, v] of Object.entries(hashes)) {
+        result[k] = typeof v === 'bigint' ? v.toString() : v;
+    }
+    res.json(result);
+});
+
 // SimConnect command execution - events mapped during init
 let eventMap = {};
 
@@ -2784,62 +2794,75 @@ function executeCommand(command, value) {
         return;
     }
 
+    // MSFS 2024 elevator trim via HANDLING InputEvent — preferred for takeoff rotation
+    // HANDLING category InputEvents control actual flight dynamics (not cosmetic)
+    if (command === 'ELEV_TRIM_INPUT') {
+        const hash = global.inputEventHashes?.HANDLING_ELEVATORTRIM_WHEEL;
+        if (hash) {
+            try {
+                // value: -100 to 100 → -1.0 to 1.0
+                const normalized = Math.max(-1, Math.min(1, (value || 0) / 100));
+                simConnectConnection.setInputEvent(hash, normalized);
+                console.log(`[ElevTrim] InputEvent: ${value}% (${normalized}) via HANDLING_ELEVATORTRIM_WHEEL`);
+            } catch (e) {
+                console.error(`[ElevTrim] InputEvent error: ${e.message}`);
+            }
+        }
+        return;
+    }
+
+    // MSFS 2024 flaps via HANDLING InputEvent
+    if (command === 'FLAPS_INPUT') {
+        const hash = global.inputEventHashes?.HANDLING_FLAPS;
+        if (hash) {
+            try {
+                // value: 0 to 100 → 0.0 to 1.0
+                const normalized = Math.max(0, Math.min(1, (value || 0) / 100));
+                simConnectConnection.setInputEvent(hash, normalized);
+                console.log(`[Flaps] InputEvent: ${value}% (${normalized}) via HANDLING_FLAPS`);
+            } catch (e) {
+                console.error(`[Flaps] InputEvent error: ${e.message}`);
+            }
+        }
+        return;
+    }
+
+    // Test: AXIS_ELEVATOR_SET through legacy path (bypass InputEvent)
+    if (command === 'AXIS_ELEVATOR_SET_LEGACY') {
+        const axisEventId = eventMap['AXIS_ELEVATOR_SET'];
+        if (axisEventId !== undefined) {
+            const simValue = -Math.round((value || 0) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, axisEventId, simValue, 1, 16);
+            console.log(`[Elevator] Legacy AXIS_ELEVATOR_SET: ${value}% → ${simValue}`);
+        }
+        return;
+    }
+
     // MSFS 2024 flight controls — InputEvents first, legacy fallback
     // Sign convention: rule engine uses positive=nose-down, MSFS uses positive=stick-back=nose-up
     // So elevator and ailerons are NEGATED to match MSFS convention
     // InputEvents use -1.0 to 1.0 range, legacy uses -16383 to 16383
     if (command === 'AXIS_ELEVATOR_SET') {
-        const pct = (value || 0) / 100;
-        const normalized = -pct;  // negate: rule engine positive=nose-down, MSFS positive=nose-up
-        if (global.inputEventHashes?.UNKNOWN_TAIL_ELEVATOR) {
-            try {
-                simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_TAIL_ELEVATOR, normalized);
-            } catch (e) {
-                console.error(`[Elevator] InputEvent error: ${e.message}`);
-            }
-        } else {
-            const elevEventId = eventMap['ELEVATOR_SET'];
-            if (elevEventId !== undefined) {
-                simConnectConnection.transmitClientEvent(0, elevEventId, Math.round(normalized * 16383), 1, 16);
-            }
-        }
+        // MSFS 2024: Neither InputEvents (UNKNOWN_TAIL_ELEVATOR) nor legacy ELEVATOR_SET
+        // control the elevator in MSFS 2024. ELEVATOR_SET actually moves the rudder (!).
+        // Direct elevator control is not available — AP handles pitch after liftoff.
+        // Keep the command path for logging/tracking but skip the broken event.
         return;
     }
     if (command === 'AXIS_RUDDER_SET') {
+        // MSFS 2024: Legacy RUDDER_SET works for nosewheel steering (ground ops).
+        // The rudderPos SimVar reads zero at low speed (no aerodynamic deflection)
+        // but the nosewheel IS turning. Don't use InputEvents — they only animate.
         const pct = (value || 0) / 100;
-        if (global.inputEventHashes?.UNKNOWN_RUDDER) {
-            try {
-                simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_RUDDER, pct);
-            } catch (e) {
-                console.error(`[Rudder] InputEvent error: ${e.message}`);
-            }
-        } else {
-            const rudderEventId = eventMap['RUDDER_SET'];
-            if (rudderEventId !== undefined) {
-                simConnectConnection.transmitClientEvent(0, rudderEventId, Math.round(pct * 16383), 1, 16);
-            }
+        const rudderEventId = eventMap['RUDDER_SET'];
+        if (rudderEventId !== undefined) {
+            simConnectConnection.transmitClientEvent(0, rudderEventId, Math.round(pct * 16383), 1, 16);
         }
         return;
     }
     if (command === 'AXIS_AILERONS_SET') {
-        const pct = (value || 0) / 100;
-        const normalized = -pct;  // negate for MSFS convention
-        if (global.inputEventHashes?.UNKNOWN_AILERON_LEFT) {
-            try {
-                // Set both left and right ailerons for coordinated control
-                simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_AILERON_LEFT, normalized);
-                if (global.inputEventHashes.UNKNOWN_AILERON_RIGHT) {
-                    simConnectConnection.setInputEvent(global.inputEventHashes.UNKNOWN_AILERON_RIGHT, -normalized);
-                }
-            } catch (e) {
-                console.error(`[Ailerons] InputEvent error: ${e.message}`);
-            }
-        } else {
-            const ailEventId = eventMap['AILERON_SET'];
-            if (ailEventId !== undefined) {
-                simConnectConnection.transmitClientEvent(0, ailEventId, Math.round(normalized * 16383), 1, 16);
-            }
-        }
+        // MSFS 2024: Neither InputEvents nor legacy events control ailerons.
+        // AP handles roll via HDG/NAV modes. No-op to prevent side effects.
         return;
     }
 
@@ -2882,6 +2905,12 @@ function executeCommand(command, value) {
             } else if (command === 'MIXTURE_RICH' || command === 'MIXTURE_LEAN') {
                 // Toggle commands - no value needed
                 simValue = 0;
+            } else if (command === 'ELEVATOR_TRIM_SET') {
+                // Elevator trim: -16383 (full nose down) to 16383 (full nose up)
+                simValue = Math.round(Math.max(-16383, Math.min(16383, value)));
+            } else if (command === 'ELEVATOR_SET') {
+                // Direct elevator: -16383 to 16383
+                simValue = Math.round(Math.max(-16383, Math.min(16383, value)));
             } else if (command === 'AXIS_SLEW_AHEAD_SET' || command === 'AXIS_SLEW_ALTIT_SET') {
                 // Slew axis: -100 to 100 → -16383 to 16383
                 simValue = Math.round((value / 100) * 16383);
@@ -3216,6 +3245,7 @@ async function initSimConnect() {
             'ELEVATOR_SET',
             'ELEV_TRIM_DN',
             'ELEV_TRIM_UP',
+            'ELEVATOR_TRIM_SET',
             'AILERON_SET',
             'CENTER_AILER_RUDDER',
             // Engine control events
@@ -3547,6 +3577,19 @@ async function initSimConnect() {
                 if (e.name === 'UNKNOWN_AILERON_RIGHT') {
                     global.inputEventHashes.UNKNOWN_AILERON_RIGHT = e.inputEventIdHash;
                     console.log(`[InputEvents] UNKNOWN_AILERON_RIGHT hash: ${e.inputEventIdHash}`);
+                }
+                // HANDLING category — actual flight dynamics (elevator trim, flaps)
+                if (e.name === 'HANDLING_ELEVATORTRIM_YOKE') {
+                    global.inputEventHashes.HANDLING_ELEVATORTRIM_YOKE = e.inputEventIdHash;
+                    console.log(`[InputEvents] HANDLING_ELEVATORTRIM_YOKE hash: ${e.inputEventIdHash}`);
+                }
+                if (e.name === 'HANDLING_ELEVATORTRIM_WHEEL') {
+                    global.inputEventHashes.HANDLING_ELEVATORTRIM_WHEEL = e.inputEventIdHash;
+                    console.log(`[InputEvents] HANDLING_ELEVATORTRIM_WHEEL hash: ${e.inputEventIdHash}`);
+                }
+                if (e.name === 'HANDLING_FLAPS') {
+                    global.inputEventHashes.HANDLING_FLAPS = e.inputEventIdHash;
+                    console.log(`[InputEvents] HANDLING_FLAPS hash: ${e.inputEventIdHash}`);
                 }
             }
         });

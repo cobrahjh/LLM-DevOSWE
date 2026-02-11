@@ -439,10 +439,10 @@ class RuleEngine {
                 if (!this._runwayHeading) {
                     this._runwayHeading = this._activeRunway?.heading || Math.round(d.heading || 0);
                 }
-                // Neutral elevator — aircraft builds speed on its own
-                this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Neutral elevator');
+                // MSFS 2024: SimConnect cannot control elevator/ailerons directly.
+                // Aircraft rotates naturally at Vr. Ground steering via rudder only.
                 this._groundSteer(d, this._runwayHeading);
-                // POH: Rotate at Vr
+                // POH: Rotate at Vr — aircraft will naturally pitch up
                 if (ias >= (speeds.Vr || 55)) {
                     this._takeoffSubPhase = 'ROTATE';
                     this._rotateStartTime = Date.now();
@@ -450,69 +450,56 @@ class RuleEngine {
                 break;
 
             case 'ROTATE':
+                // MSFS 2024: Let aircraft rotate naturally — no direct elevator control.
+                // Full power + ground steering only. Wait for liftoff.
                 this._cmdValue('THROTTLE_SET', 100, 'Full power');
-                // Target 8° pitch — density compensation in _targetPitch adapts to altitude
-                this._targetPitch(d, 8, 15);
-                // Wings level — prevent bank buildup during rotation and liftoff
-                this._targetBank(d, 0, 12);
                 this._groundSteer(d, this._runwayHeading);
                 // Airborne — transition
                 if (!onGround) {
                     this._takeoffSubPhase = 'LIFTOFF';
                 }
+                // Safety: if stuck on ground past Vr+20 for >10s, something is wrong
+                if (Date.now() - this._rotateStartTime > 10000 && onGround) {
+                    this._takeoffSubPhase = 'LIFTOFF';  // force advance
+                }
                 break;
 
             case 'LIFTOFF':
-                // POH: Full power climb — pitch to 8° nose up for initial climb
+                // MSFS 2024: Engage AP as soon as safely airborne for pitch control.
+                // SimConnect can't control elevator directly, so AP is the only pitch authority.
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Density compensation in _targetPitch adapts authority to altitude
-                if (agl < 100) {
-                    this._targetPitch(d, 8, 15);
-                } else {
-                    this._pitchForSpeed(d, speeds.Vy || 74, 15);
+                // Engage AP immediately when airborne with safe speed
+                if (!apState.master && (vs > 50 || agl > 50)) {
+                    this._cmd('AP_MASTER', true, 'Engage AP (early — no direct elevator)');
+                    const hdg = Math.round(this._runwayHeading || d.heading || 0);
+                    this._cmdValue('HEADING_BUG_SET', hdg, 'HDG ' + hdg + '\u00B0');
                 }
-                // Wings level — counter P-factor/torque roll
-                this._targetBank(d, 0, 12);
-                // Coordinated rudder — track runway heading
-                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 10);
-                // Stall protection: if near stall, push nose down immediately
-                if (d.stallWarning || ias < (speeds.Vs1 || 53)) {
-                    this._cmdValue('AXIS_ELEVATOR_SET', 10, 'STALL: nose down');
+                // Set AP modes for climb
+                if (apState.master) {
+                    this._cmd('AP_HDG_HOLD', true, 'HDG hold');
+                    this._cmd('AP_VS_HOLD', true, 'VS hold');
+                    this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate || 500, 'VS +' + (p.climb.normalRate || 500));
                 }
-                // Advance when climbing and at safe altitude
+                // Advance when climbing steadily
                 if (vs > 100 && agl > (tk.initialClimbAgl || 200)) {
                     this._takeoffSubPhase = 'INITIAL_CLIMB';
                 }
                 break;
 
             case 'INITIAL_CLIMB':
-                // Continue full power Vy climb until AP handoff
+                // AP handles pitch + heading. Full power climb.
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Density compensation in _targetPitch adapts authority to altitude
-                this._pitchForSpeed(d, speeds.Vy || 74, 15);
-                // Wings level + coordinated rudder
-                this._targetBank(d, 0, 12);
-                this._targetHeading(d, this._runwayHeading || d.heading, 'AXIS_RUDDER_SET', 12);
-                // Stall protection
-                if (d.stallWarning || ias < (speeds.Vs1 || 53)) {
-                    this._cmdValue('AXIS_ELEVATOR_SET', 10, 'STALL: nose down');
+                // Ensure AP is engaged
+                if (!apState.master) {
+                    this._cmd('AP_MASTER', true, 'Engage AP');
                 }
-                // Engage AP when speed is safe and altitude sufficient
+                // Set climb rate
+                this._cmd('AP_VS_HOLD', true, 'VS hold');
+                this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate || 500, 'VS +' + (p.climb.normalRate || 500));
+                // Advance to DEPARTURE when at safe altitude + speed
                 {
                     const stallMargin = (speeds.Vs1 || 53) + 15;
                     if (ias >= stallMargin && agl > (tk.flapRetractAgl || 500)) {
-                        // Release manual controls, hand off to AP
-                        this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release for AP');
-                        this._cmdValue('AXIS_RUDDER_SET', 0, 'Release for AP');
-                        this._cmdValue('AXIS_AILERONS_SET', 0, 'Release for AP');
-                        if (!apState.master) {
-                            this._cmd('AP_MASTER', true, 'Engage AP');
-                            const hdg = Math.round(d.heading || this._runwayHeading || 0);
-                            this._cmdValue('HEADING_BUG_SET', hdg, 'HDG ' + hdg + '\u00B0');
-                        }
-                        this._cmd('AP_HDG_HOLD', true, 'HDG hold');
-                        this._cmd('AP_VS_HOLD', true, 'VS hold');
-                        this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate || 500, 'VS +' + (p.climb.normalRate || 500));
                         this._takeoffSubPhase = 'DEPARTURE';
                     }
                 }
