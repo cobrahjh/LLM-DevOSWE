@@ -37,6 +37,9 @@ class RuleEngine {
         this._bankCorrectionActive = false;
         this._speedCorrectionActive = false;
 
+        // ATC controller reference (for taxi waypoint steering)
+        this._atc = null;
+
         // Pitch rate tracking (for derivative term in _targetPitch)
         this._lastPitch = null;
         this._lastPitchTime = null;
@@ -124,29 +127,46 @@ class RuleEngine {
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
-                // Capture runway heading early for ground track
-                if (!this._runwayHeading) {
-                    if (this._activeRunway?.heading) {
-                        this._runwayHeading = this._activeRunway.heading;
-                    } else {
-                        this._runwayHeading = Math.round(d.heading || 0);
+
+                // ATC hold-short gate: if ATC is active and we're at HOLD_SHORT,
+                // stop the aircraft and wait for clearance
+                if (this._atc && (this._atc.getPhase() === 'HOLD_SHORT' || this._atc.getPhase() === 'TAKEOFF_CLEARANCE_PENDING')) {
+                    this._cmdValue('THROTTLE_SET', 0, 'Hold short — awaiting clearance');
+                    if (!d.parkingBrake) {
+                        delete this._lastCommands['PARKING_BRAKES'];
+                        this._cmd('PARKING_BRAKES', true, 'Parking brake — hold short');
                     }
+                    break;
                 }
-                this._groundSteer(d, this._runwayHeading);
+
+                // Use ATC waypoint for steering if available, else runway heading
                 {
+                    let steerTarget;
+                    if (this._atc && this._atc.getPhase() === 'TAXIING') {
+                        const wp = this._atc.getNextWaypoint();
+                        if (wp) steerTarget = wp.bearing;
+                    }
+                    if (steerTarget == null) {
+                        // Capture runway heading early for ground track
+                        if (!this._runwayHeading) {
+                            if (this._activeRunway?.heading) {
+                                this._runwayHeading = this._activeRunway.heading;
+                            } else {
+                                this._runwayHeading = Math.round(d.heading || 0);
+                            }
+                        }
+                        steerTarget = this._runwayHeading;
+                    }
+                    this._groundSteer(d, steerTarget);
+
                     const gs = d.groundSpeed || 0;
                     const hdg = d.heading || 0;
-                    const hdgError = Math.abs(((hdg - this._runwayHeading + 540) % 360) - 180);
+                    const hdgError = Math.abs(((hdg - steerTarget + 540) % 360) - 180);
                     // Heading-aware throttle: align first, then accelerate
-                    // If heading is off by >15°, use minimal throttle to allow steering
-                    // If heading is aligned, accelerate proportionally toward 40kts
                     let thr;
                     if (hdgError > 15) {
-                        // Big heading error — creep forward slowly, let rudder correct
                         thr = Math.max(15, 20 - hdgError * 0.3);
                     } else {
-                        // Aligned — aggressive throttle to reach TAKEOFF transition (25kts)
-                        // Once in TAKEOFF phase, full power takes over
                         const targetGS = 25;
                         const speedError = targetGS - gs;
                         thr = Math.max(25, Math.min(70, 55 + speedError * 0.8));
@@ -1103,6 +1123,11 @@ class RuleEngine {
     /** Set target cruise altitude (called from pane) */
     setTargetCruiseAlt(alt) {
         this._targetCruiseAlt = alt;
+    }
+
+    /** Set ATC controller reference (called from pane.js) */
+    setATCController(atc) {
+        this._atc = atc || null;
     }
 
     /** Set nav state from GTN750 (called from pane via SafeChannel) */

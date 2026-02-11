@@ -20,6 +20,12 @@ class FlightPhase {
         this._lastData = null;
         this._phaseEntryTime = Date.now();
         this._manualPhase = false;
+        this._atc = null;
+    }
+
+    /** Set ATC controller reference (called from pane.js) */
+    setATCController(atc) {
+        this._atc = atc || null;
     }
 
     /**
@@ -71,7 +77,8 @@ class FlightPhase {
 
             case 'TAXI':
                 // Transition to TAKEOFF early — TAKEOFF ROLL handles full power
-                if (gs > 25 && onGround) {
+                // ATC gate: if ATC controller is active, require CLEARED_TAKEOFF phase
+                if (gs > 25 && onGround && (!this._atc || this._atc.getPhase() === 'CLEARED_TAKEOFF')) {
                     this._setPhase('TAKEOFF');
                 } else if (gs < 1 && !engineRunning) {
                     this._setPhase('PREFLIGHT');

@@ -405,6 +405,43 @@ class GTNFlightPlan {
         const info = document.getElementById('dto-info');
         const activateBtn = document.getElementById('dto-activate');
 
+        // Try navdb cross-type search first (airports + VOR + NDB + FIX)
+        try {
+            const navdbResponse = await fetch(`http://${location.hostname}:${this.serverPort}/api/navdb/search/${ident}`);
+            if (navdbResponse.ok) {
+                const data = await navdbResponse.json();
+                if (data.best) {
+                    this.dtoTarget = {
+                        ident: data.best.ident || ident,
+                        name: data.best.name || ident,
+                        lat: data.best.lat,
+                        lon: data.best.lon,
+                        type: data.best.type || 'WAYPOINT'
+                    };
+
+                    const dist = this.core.calculateDistance(
+                        this._currentLat || 0, this._currentLon || 0,
+                        this.dtoTarget.lat, this.dtoTarget.lon
+                    );
+                    const brg = this.core.calculateBearing(
+                        this._currentLat || 0, this._currentLon || 0,
+                        this.dtoTarget.lat, this.dtoTarget.lon
+                    );
+
+                    const extra = data.results?.length > 1 ? ` (+${data.results.length - 1} more)` : '';
+                    info.innerHTML = `
+                        <div class="dto-name">${this.dtoTarget.name}${extra}</div>
+                        <div class="dto-coords">${this.dtoTarget.type} - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
+                    `;
+                    activateBtn.disabled = false;
+                    return;
+                }
+            }
+        } catch (e) {
+            // NavDB unavailable, try legacy
+        }
+
+        // Fallback: legacy waypoint API (aviationapi.com for airports)
         try {
             const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/waypoint/${ident}`);
             if (response.ok) {
@@ -436,7 +473,7 @@ class GTNFlightPlan {
                 }
             }
         } catch (e) {
-            // Fallback
+            // Legacy also failed
         }
 
         // Check nearest page items if provided

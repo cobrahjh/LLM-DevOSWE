@@ -75,86 +75,52 @@ class NearestPage {
     async fetchNearby() {
         this.showLoading();
 
+        // Map tab type to navdb API endpoint
+        const typeMap = {
+            apt: 'airports',
+            vor: 'navaids',
+            ndb: 'ndbs',
+            fix: 'fixes'
+        };
+
+        // Try navdb first (local SQLite), then fall back to legacy API for airports
+        const navdbType = typeMap[this.activeType];
         try {
-            const url = `http://${location.hostname}:${this.serverPort}/api/nearby/${this.activeType === 'apt' ? 'airports' : this.activeType}?lat=${this.position.lat}&lon=${this.position.lon}`;
-            const response = await fetch(url);
+            const navdbUrl = `http://${location.hostname}:${this.serverPort}/api/navdb/nearby/${navdbType}?lat=${this.position.lat}&lon=${this.position.lon}&range=50&limit=25`;
+            const response = await fetch(navdbUrl);
 
             if (response.ok) {
                 const data = await response.json();
-                this.items = data.airports || data.items || [];
+                this.items = data.items || [];
+                // Normalize airport items to match expected format
+                if (this.activeType === 'apt') {
+                    this.items = this.items.map(a => ({ ...a, icao: a.icao || a.id }));
+                }
                 this.renderList();
                 return;
             }
         } catch (e) {
-            GTNCore.log(`[GTN750] Nearby ${this.activeType} fetch failed:`, e.message);
+            GTNCore.log(`[GTN750] NavDB nearby ${this.activeType} failed:`, e.message);
         }
 
-        // Generate sample data for VOR/NDB/FIX (not implemented in API yet)
-        if (this.activeType !== 'apt') {
-            this.items = this.generateSampleNavaids(this.activeType);
-        } else {
-            this.items = [];
-        }
-        this.renderList();
-    }
-
-    /**
-     * Generate sample navaids for demo
-     */
-    generateSampleNavaids(type) {
-        const items = [];
-        const count = 6 + Math.floor(Math.random() * 6);
-        const { lat, lon } = this.position;
-
-        for (let i = 0; i < count; i++) {
-            const bearing = (i * 360 / count) + Math.random() * 30;
-            const distance = 3 + Math.random() * 40;
-            const bearingRad = bearing * Math.PI / 180;
-
-            const itemLat = lat + (distance * Math.cos(bearingRad)) / 60;
-            const itemLon = lon + (distance * Math.sin(bearingRad)) / (60 * Math.cos(lat * Math.PI / 180));
-
-            if (type === 'vor') {
-                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                const id = `${letters[Math.floor(Math.random() * 26)]}${letters[Math.floor(Math.random() * 26)]}${letters[Math.floor(Math.random() * 26)]}`;
-                items.push({
-                    id,
-                    name: `${id} VOR`,
-                    type: Math.random() < 0.3 ? 'VOR/DME' : 'VOR',
-                    freq: (108 + Math.random() * 10).toFixed(2),
-                    lat: itemLat,
-                    lon: itemLon,
-                    distance: Math.round(distance * 10) / 10,
-                    bearing: Math.round(bearing)
-                });
-            } else if (type === 'ndb') {
-                const id = `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`;
-                items.push({
-                    id,
-                    name: `${id} NDB`,
-                    type: 'NDB',
-                    freq: (200 + Math.floor(Math.random() * 200)).toString(),
-                    lat: itemLat,
-                    lon: itemLon,
-                    distance: Math.round(distance * 10) / 10,
-                    bearing: Math.round(bearing)
-                });
-            } else if (type === 'fix') {
-                const fixes = ['ALPHA', 'BRAVO', 'CEDAR', 'DELTA', 'EAGLE', 'FRANK', 'GATOR', 'HAPPY', 'IGLOO', 'JULEP', 'KINGS', 'LEMON'];
-                const id = fixes[Math.floor(Math.random() * fixes.length)] + (i > 0 ? i : '');
-                items.push({
-                    id,
-                    name: id,
-                    type: 'FIX',
-                    lat: itemLat,
-                    lon: itemLon,
-                    distance: Math.round(distance * 10) / 10,
-                    bearing: Math.round(bearing)
-                });
+        // Fallback: legacy airports API (aviationapi.com)
+        if (this.activeType === 'apt') {
+            try {
+                const legacyUrl = `http://${location.hostname}:${this.serverPort}/api/nearby/airports?lat=${this.position.lat}&lon=${this.position.lon}`;
+                const response = await fetch(legacyUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.items = data.airports || data.items || [];
+                    this.renderList();
+                    return;
+                }
+            } catch (e) {
+                GTNCore.log(`[GTN750] Legacy nearby airports failed:`, e.message);
             }
         }
 
-        return items.sort((a, b) => a.distance - b.distance);
+        this.items = [];
+        this.renderList();
     }
 
     /**

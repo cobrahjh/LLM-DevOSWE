@@ -101,11 +101,29 @@ class ProceduresPage {
         this.selectedAirport = icao;
         this.showLoading();
 
+        // Try navdb first (local SQLite), then legacy chart-based API
         try {
-            // Try to fetch from server (SimBrief data or local database)
-            const response = await fetch(
-                `http://${location.hostname}:${this.serverPort}/api/procedures/${icao}`
-            );
+            const navdbUrl = `http://${location.hostname}:${this.serverPort}/api/navdb/procedures/${icao}`;
+            const response = await fetch(navdbUrl);
+
+            if (response.ok) {
+                const data = await response.json();
+                this.procedures = {
+                    departures: data.departures || [],
+                    arrivals: data.arrivals || [],
+                    approaches: data.approaches || []
+                };
+                this.renderProcedureList();
+                return;
+            }
+        } catch (e) {
+            GTNCore.log(`[GTN750] NavDB procedures failed for ${icao}:`, e.message);
+        }
+
+        // Fallback: legacy chart-based API
+        try {
+            const legacyUrl = `http://${location.hostname}:${this.serverPort}/api/procedures/${icao}`;
+            const response = await fetch(legacyUrl);
 
             if (response.ok) {
                 const data = await response.json();
@@ -115,45 +133,14 @@ class ProceduresPage {
                     approaches: data.approaches || []
                 };
             } else {
-                // Generate sample procedures for demonstration
-                this.procedures = this.generateSampleProcedures(icao);
+                this.procedures = { departures: [], arrivals: [], approaches: [] };
             }
         } catch (e) {
-            GTNCore.log(`[GTN750] Using sample procedures for ${icao}`);
-            this.procedures = this.generateSampleProcedures(icao);
+            GTNCore.log(`[GTN750] Legacy procedures failed for ${icao}`);
+            this.procedures = { departures: [], arrivals: [], approaches: [] };
         }
 
         this.renderProcedureList();
-    }
-
-    /**
-     * Generate sample procedures for demonstration
-     */
-    generateSampleProcedures(icao) {
-        const runways = ['01', '19', '09', '27', '04L', '22R'];
-        const fixes = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO'];
-
-        return {
-            departures: [
-                { id: `${icao}1`, name: `${icao.slice(1)}ONE DEPARTURE`, runway: runways[0], transition: fixes[0] },
-                { id: `${icao}2`, name: `${icao.slice(1)}TWO DEPARTURE`, runway: runways[1], transition: fixes[1] },
-                { id: `RNAV1`, name: `RNAV SID RWY ${runways[0]}`, runway: runways[0], transition: 'RADAR' }
-            ],
-            arrivals: [
-                { id: `${fixes[0]}1`, name: `${fixes[0]} ONE ARRIVAL`, runway: 'ALL', transition: fixes[2] },
-                { id: `${fixes[1]}2`, name: `${fixes[1]} TWO ARRIVAL`, runway: runways[1], transition: fixes[3] },
-                { id: `RNAV2`, name: `RNAV STAR`, runway: 'ALL', transition: fixes[4] }
-            ],
-            approaches: [
-                { id: `ILS${runways[0]}`, name: `ILS RWY ${runways[0]}`, runway: runways[0], type: 'ILS', category: 'CAT I' },
-                { id: `ILS${runways[1]}`, name: `ILS OR LOC RWY ${runways[1]}`, runway: runways[1], type: 'ILS', category: 'CAT I' },
-                { id: `RNAV${runways[0]}`, name: `RNAV (GPS) RWY ${runways[0]}`, runway: runways[0], type: 'RNAV', category: 'LPV' },
-                { id: `RNAV${runways[1]}`, name: `RNAV (GPS) RWY ${runways[1]}`, runway: runways[1], type: 'RNAV', category: 'LNAV/VNAV' },
-                { id: `VOR${runways[0]}`, name: `VOR RWY ${runways[0]}`, runway: runways[0], type: 'VOR', category: '' },
-                { id: `NDB${runways[1]}`, name: `NDB RWY ${runways[1]}`, runway: runways[1], type: 'NDB', category: '' },
-                { id: `VISUAL`, name: `VISUAL APPROACH`, runway: 'ALL', type: 'VISUAL', category: '' }
-            ]
-        };
     }
 
     /**
@@ -265,40 +252,31 @@ class ProceduresPage {
     /**
      * Select a procedure
      */
-    selectProcedure(proc) {
+    async selectProcedure(proc) {
         this.selectedProcedure = proc;
         this.renderProcedureList(); // Re-render to show selection
 
-        // Generate preview waypoints
-        this.previewWaypoints = this.generatePreviewWaypoints(proc);
-
-        // Notify listeners
-        this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
-    }
-
-    /**
-     * Generate preview waypoints for map display
-     */
-    generatePreviewWaypoints(proc) {
-        // In production, this would come from navigation database
-        // For now, generate sample waypoints
-        const waypoints = [];
-        const baseLat = 40 + Math.random() * 10;
-        const baseLon = -100 + Math.random() * 20;
-
-        // Generate 4-6 waypoints
-        const count = 4 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < count; i++) {
-            const offset = i * (this.procedureType === 'dep' ? 1 : -1);
-            waypoints.push({
-                ident: `${proc.id.slice(0, 3)}${i + 1}`,
-                lat: baseLat + offset * 0.2,
-                lon: baseLon + offset * 0.3,
-                type: i === 0 ? 'IAF' : (i === count - 1 ? 'FAF' : 'WAYPOINT')
-            });
+        // Fetch real procedure legs from navdb
+        if (proc.id) {
+            try {
+                const url = `http://${location.hostname}:${this.serverPort}/api/navdb/procedure/${proc.id}/legs`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.waypoints?.length > 0) {
+                        this.previewWaypoints = data.waypoints;
+                        this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
+                        return;
+                    }
+                }
+            } catch (e) {
+                GTNCore.log(`[GTN750] Failed to fetch procedure legs for ${proc.id}:`, e.message);
+            }
         }
 
-        return waypoints;
+        // Fallback: empty waypoints if navdb unavailable
+        this.previewWaypoints = [];
+        this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
     }
 
     /**

@@ -67,6 +67,19 @@ class AiAutopilotPane extends SimGlassBase {
             onLoading: (loading) => this._onAdvisoryLoading(loading)
         });
 
+        // ATC Ground Controller
+        this.atcController = typeof ATCController !== 'undefined' ? new ATCController({
+            serverPort: this._serverPort,
+            onInstruction: (text, type) => {
+                this._dbg('cmd', `ATC: <span class="val">${this._esc(text)}</span> <span class="dim">[${type}]</span>`);
+                if (this._voice && this._ttsEnabled) this._voice.speak(text);
+            },
+            onPhaseChange: (from, to) => {
+                this._dbg('cmd', `ATC phase: <span class="dim">${this._esc(from)}</span> → <span class="val">${this._esc(to)}</span>`);
+                this._renderATCPanel();
+            }
+        }) : null;
+
         // Nav state from GTN750 (via SafeChannel)
         this._navState = null;
         this._navStateTimestamp = 0;
@@ -133,6 +146,12 @@ class AiAutopilotPane extends SimGlassBase {
         // Airport polling — fetch nearest airport every 15s when near ground
         this._airportPollTimer = setInterval(() => this._pollNearestAirport(), 15000);
 
+        // Wire ATC controller into rule engine and flight phase
+        if (this.atcController) {
+            this.ruleEngine.setATCController(this.atcController);
+            this.flightPhase.setATCController(this.atcController);
+        }
+
         // Initial render
         this._render();
     }
@@ -197,6 +216,12 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.airportRwy = document.getElementById('airport-rwy');
         this.elements.airportElev = document.getElementById('airport-elev');
         this.elements.airportDist = document.getElementById('airport-dist');
+
+        // ATC panel
+        this.elements.atcPanel = document.getElementById('atc-panel');
+        this.elements.atcPhase = document.getElementById('atc-phase');
+        this.elements.atcInstruction = document.getElementById('atc-instruction');
+        this.elements.atcRoute = document.getElementById('atc-route');
 
         // Flight plan report
         this.elements.fplReport = document.getElementById('fpl-report');
@@ -992,6 +1017,17 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 this._dbg('api', `Runway: <span class="val">${this._activeRunway.id}</span> hdg ${this._activeRunway.heading}° len ${this._activeRunway.length || '?'}ft`);
             }
 
+            // Auto-activate ATC and request taxi clearance when parked
+            if (this.atcController && this.aiEnabled && this._activeRunway && (d.altitudeAGL || 0) < 50) {
+                const atcPhase = this.atcController.getPhase();
+                if (atcPhase === 'INACTIVE') {
+                    this.atcController.activate();
+                }
+                if (atcPhase === 'PARKED' && apt.icao) {
+                    this.atcController.requestTaxiClearance(apt.icao, this._activeRunway.id);
+                }
+            }
+
             this._renderAirportInfo();
         } catch (e) {
             // API not available — continue without airport data
@@ -1216,6 +1252,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     heading: this._activeRunway.heading,
                     length: this._activeRunway.length
                 } : null,
+                atcPhase: this.atcController ? this.atcController.getPhase() : 'INACTIVE',
+                atcInstruction: this.atcController ? this.atcController.getATCInstruction() : '',
+                atcRoute: this.atcController ? this.atcController.getRoute() : null,
                 lastCommand: lastCmd ? {
                     type: lastCmd.type,
                     value: lastCmd.value,
@@ -1283,6 +1322,14 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         if (this.aiEnabled) {
             // Update flight phase
             this.flightPhase.update(data);
+
+            // Update ATC ground controller (only when near ground)
+            if (this.atcController && (data.altitudeAGL || 0) < 100) {
+                this.atcController.updatePosition(
+                    data.latitude, data.longitude,
+                    data.groundSpeed || 0, data.altitudeAGL || 0
+                );
+            }
 
             // Run rule engine
             this.ruleEngine.evaluate(this.flightPhase.phase, data, this.ap);
@@ -1487,6 +1534,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         this._renderTargets();
         this._renderApStatus();
         this._renderCommandLog();
+        this._renderATCPanel();
         this._renderFooter();
     }
 
@@ -2022,7 +2070,43 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         return result;
     }
 
+    _renderATCPanel() {
+        if (!this.atcController || !this.elements.atcPanel) return;
+        const phase = this.atcController.getPhase();
+        const panel = this.elements.atcPanel;
+
+        if (phase === 'INACTIVE') {
+            panel.style.display = 'none';
+            return;
+        }
+
+        panel.style.display = '';
+        const phaseEl = this.elements.atcPhase;
+        if (phaseEl) {
+            phaseEl.textContent = phase.replace(/_/g, ' ');
+            phaseEl.className = 'atc-phase';
+            if (phase === 'TAXIING') phaseEl.classList.add('active');
+            else if (phase === 'HOLD_SHORT' || phase === 'TAKEOFF_CLEARANCE_PENDING') phaseEl.classList.add('hold');
+            else if (phase === 'CLEARED_TAKEOFF') phaseEl.classList.add('cleared');
+        }
+
+        if (this.elements.atcInstruction) {
+            this.elements.atcInstruction.textContent = this.atcController.getATCInstruction();
+        }
+
+        const route = this.atcController.getRoute();
+        if (this.elements.atcRoute && route) {
+            this.elements.atcRoute.textContent = route.taxiways?.length
+                ? `WP ${route.currentWaypoint}/${route.waypointCount} | ${Math.round(route.distance_ft)}ft`
+                : '';
+        }
+    }
+
     destroy() {
+        if (this.atcController) {
+            this.atcController.destroy();
+            this.atcController = null;
+        }
         if (this._overrideCheckTimer) {
             clearInterval(this._overrideCheckTimer);
             this._overrideCheckTimer = null;

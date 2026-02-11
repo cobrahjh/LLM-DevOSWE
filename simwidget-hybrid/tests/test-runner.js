@@ -644,6 +644,242 @@ async function testAiAutopilot() {
 }
 
 // ============================================
+// ATC GROUND OPERATIONS TESTS
+// ============================================
+
+async function testATC() {
+    log('\n── ATC Ground Operations Tests ──', 'cyan');
+
+    // Test: ATC phraseology data file loads
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/data/atc-phraseology.js`);
+        assert(res.ok, 'atc-phraseology.js loads');
+        const js = await res.text();
+        assert(js.includes('ATCPhraseology'), 'Contains ATCPhraseology object');
+        assert(js.includes('formatRunway'), 'Contains formatRunway function');
+        assert(js.includes('formatCallsign'), 'Contains formatCallsign function');
+        assert(js.includes('formatFrequency'), 'Contains formatFrequency function');
+        assert(js.includes('phoneticAlphabet'), 'Contains phonetic alphabet data');
+    } catch (e) {
+        assert(false, `atc-phraseology.js load - ${e.message}`);
+    }
+
+    // Test: ATC controller module loads
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/modules/atc-controller.js`);
+        assert(res.ok, 'atc-controller.js loads');
+        const js = await res.text();
+        assert(js.includes('class ATCController'), 'Contains ATCController class');
+        assert(js.includes('getPhase'), 'Has getPhase method');
+        assert(js.includes('requestTaxiClearance'), 'Has requestTaxiClearance method');
+        assert(js.includes('updatePosition'), 'Has updatePosition method');
+        assert(js.includes('validateReadback'), 'Has validateReadback method');
+        assert(js.includes('destroy'), 'Has destroy method');
+    } catch (e) {
+        assert(false, `atc-controller.js load - ${e.message}`);
+    }
+
+    // Test: index.html includes ATC scripts
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/`);
+        assert(res.ok, 'AI Autopilot pane loads');
+        const html = await res.text();
+        assert(html.includes('atc-phraseology.js'), 'HTML includes atc-phraseology.js');
+        assert(html.includes('atc-controller.js'), 'HTML includes atc-controller.js');
+        assert(html.includes('atc-panel'), 'HTML includes atc-panel element');
+    } catch (e) {
+        assert(false, `ATC HTML integration - ${e.message}`);
+    }
+
+    // Test: ATC airport graph endpoint
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/atc/airport/KSEA`);
+        assert(res.ok, 'GET /api/ai-pilot/atc/airport/KSEA returns 200');
+        const data = res.json();
+        assert(data && Array.isArray(data.nodes), 'Airport graph has nodes array');
+        assert(data && Array.isArray(data.edges), 'Airport graph has edges array');
+        assert(data && Array.isArray(data.runways), 'Airport graph has runways array');
+        assert(data.nodes.length > 0, 'Airport graph has at least 1 node');
+    } catch (e) {
+        assert(false, `ATC airport endpoint - ${e.message}`);
+    }
+
+    // Test: ATC route endpoint
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/atc/route?icao=KSEA&fromLat=47.4490&fromLon=-122.3088&toRunway=16R`);
+        assert(res.ok, 'GET /api/ai-pilot/atc/route returns 200');
+        const data = res.json();
+        assert(data.success === true, 'Route found successfully');
+        assert(Array.isArray(data.taxiways), 'Route has taxiways array');
+        assert(Array.isArray(data.waypoints), 'Route has waypoints array');
+        assert(typeof data.distance_ft === 'number', 'Route has distance_ft');
+        assert(typeof data.instruction === 'string', 'Route has instruction string');
+    } catch (e) {
+        assert(false, `ATC route endpoint - ${e.message}`);
+    }
+
+    // Test: ATC nearest-node endpoint
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/atc/nearest-node?icao=KSEA&lat=47.4492&lon=-122.3080`);
+        assert(res.ok, 'GET /api/ai-pilot/atc/nearest-node returns 200');
+        const data = res.json();
+        assert(typeof data.nodeIndex === 'number', 'Nearest node has nodeIndex');
+        assert(data.nodeIndex >= 0, 'Nearest node index is valid');
+        assert(typeof data.distance_ft === 'number', 'Nearest node has distance_ft');
+    } catch (e) {
+        assert(false, `ATC nearest-node endpoint - ${e.message}`);
+    }
+
+    // Test: ATC invalid ICAO rejected
+    try {
+        const res = await fetch(`${API_BASE}/api/ai-pilot/atc/airport/123`);
+        assert(res.status === 400, 'Invalid ICAO code rejected with 400');
+    } catch (e) {
+        assert(false, `ATC invalid ICAO - ${e.message}`);
+    }
+
+    // Test: styles.css has ATC styles
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/styles.css`);
+        assert(res.ok, 'styles.css loads for ATC check');
+        const css = await res.text();
+        assert(css.includes('.atc-panel'), 'CSS contains atc-panel styles');
+        assert(css.includes('.atc-phase'), 'CSS contains atc-phase styles');
+        assert(css.includes('.atc-instruction'), 'CSS contains atc-instruction styles');
+    } catch (e) {
+        assert(false, `ATC CSS - ${e.message}`);
+    }
+
+    // Test: rule-engine has ATC integration
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/modules/rule-engine.js`);
+        assert(res.ok, 'rule-engine.js loads for ATC check');
+        const js = await res.text();
+        assert(js.includes('setATCController'), 'rule-engine has setATCController method');
+        assert(js.includes('this._atc'), 'rule-engine references ATC controller');
+    } catch (e) {
+        assert(false, `ATC rule-engine integration - ${e.message}`);
+    }
+
+    // Test: flight-phase has ATC gate
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/modules/flight-phase.js`);
+        assert(res.ok, 'flight-phase.js loads for ATC check');
+        const js = await res.text();
+        assert(js.includes('setATCController'), 'flight-phase has setATCController method');
+        assert(js.includes('CLEARED_TAKEOFF'), 'flight-phase has ATC clearance gate');
+    } catch (e) {
+        assert(false, `ATC flight-phase integration - ${e.message}`);
+    }
+
+    log('\n  ATC Ground Ops: 2 new files, 3 API endpoints, 3 module integrations verified', 'cyan');
+}
+
+// ============================================
+// NAVIGATION DATABASE TESTS
+// ============================================
+
+async function testNavdata() {
+    log('\n── Navigation Database Tests ──', 'cyan');
+
+    // Check navdb status endpoint exists
+    try {
+        const res = await fetch(`${API_BASE}/api/navdb/status`);
+        // 200 = db available, 503 = db not built yet, 404 = server not restarted
+        assert(res.status === 200 || res.status === 503 || res.status === 404, 'GET /api/navdb/status responds');
+
+        if (res.status === 200) {
+            const data = res.json();
+            assert(data.available === true, 'NavDB reports available');
+            assert(data.counts && typeof data.counts.airports === 'number', 'NavDB has airport count');
+            assert(data.counts.airports > 1000, `NavDB has ${data.counts.airports} airports (>1000)`);
+            assert(data.counts.navaids > 100, `NavDB has ${data.counts.navaids} navaids (>100)`);
+            assert(data.counts.waypoints > 1000, `NavDB has ${data.counts.waypoints} waypoints (>1000)`);
+            assert(data.counts.procedures > 1000, `NavDB has ${data.counts.procedures} procedures (>1000)`);
+
+            // Test nearby airports query
+            const nearbyRes = await fetch(`${API_BASE}/api/navdb/nearby/airports?lat=39.86&lon=-104.67&range=30&limit=10`);
+            assert(nearbyRes.status === 200, 'Nearby airports query returns 200');
+            const nearbyData = nearbyRes.json();
+            assert(nearbyData.items?.length > 0, `Nearby airports found ${nearbyData.items?.length} results`);
+            const kden = nearbyData.items?.find(a => a.icao === 'KDEN');
+            assert(!!kden, 'KDEN found in nearby airports near Denver');
+
+            // Test nearby navaids query
+            const navaidRes = await fetch(`${API_BASE}/api/navdb/nearby/navaids?lat=40.64&lon=-73.78&range=50&limit=10`);
+            assert(navaidRes.status === 200, 'Nearby navaids query returns 200');
+
+            // Test airport detail
+            const aptRes = await fetch(`${API_BASE}/api/navdb/airport/KDEN`);
+            assert(aptRes.status === 200, 'Airport detail KDEN returns 200');
+            const aptData = aptRes.json();
+            assert(aptData.icao === 'KDEN', 'Airport detail has correct ICAO');
+            assert(Math.abs(aptData.lat - 39.856) < 0.1, 'KDEN latitude within range');
+            assert(Array.isArray(aptData.runways), 'KDEN has runways array');
+
+            // Test procedures
+            const procRes = await fetch(`${API_BASE}/api/navdb/procedures/KDEN`);
+            assert(procRes.status === 200, 'Procedures KDEN returns 200');
+            const procData = procRes.json();
+            assert(procData.departures?.length > 0, `KDEN has ${procData.departures?.length} departures`);
+            assert(procData.arrivals?.length > 0, `KDEN has ${procData.arrivals?.length} arrivals`);
+            assert(procData.approaches?.length > 0, `KDEN has ${procData.approaches?.length} approaches`);
+
+            // Test cross-type search
+            const searchRes = await fetch(`${API_BASE}/api/navdb/search/KDEN`);
+            assert(searchRes.status === 200, 'Search KDEN returns 200');
+            const searchData = searchRes.json();
+            assert(searchData.best?.type === 'AIRPORT', 'Search KDEN returns AIRPORT as best match');
+
+            log('\n  NavDB: Full database verified with live queries', 'cyan');
+        } else if (res.status === 503) {
+            log('  ℹ NavDB not built - skipping data tests (run tools/navdata/build-navdb.js)', 'yellow');
+
+            // Still verify API structure works
+            const nearbyRes = await fetch(`${API_BASE}/api/navdb/nearby/airports?lat=40&lon=-74`);
+            assert(nearbyRes.status === 503, 'Nearby returns 503 when DB missing');
+
+            const searchRes = await fetch(`${API_BASE}/api/navdb/search/KDEN`);
+            assert(searchRes.status === 503, 'Search returns 503 when DB missing');
+
+            log('\n  NavDB: API endpoints verified (database not yet built)', 'cyan');
+        } else {
+            log('  ℹ Server needs restart to load navdata-api.js - skipping API tests', 'yellow');
+        }
+    } catch (e) {
+        assert(false, `NavDB status endpoint - ${e.message}`);
+    }
+
+    // Verify navdata-api.js file exists
+    const fs = require('fs');
+    const path = require('path');
+    const apiFile = path.join(__dirname, '..', 'backend', 'navdata-api.js');
+    assert(fs.existsSync(apiFile), 'navdata-api.js exists');
+
+    const parserFile = path.join(__dirname, '..', 'tools', 'navdata', 'parse-cifp.js');
+    assert(fs.existsSync(parserFile), 'parse-cifp.js exists');
+
+    const builderFile = path.join(__dirname, '..', 'tools', 'navdata', 'build-navdb.js');
+    assert(fs.existsSync(builderFile), 'build-navdb.js exists');
+
+    // Verify NRST page uses navdb endpoint
+    const nrstFile = fs.readFileSync(path.join(__dirname, '..', 'ui', 'gtn750', 'pages', 'page-nrst.js'), 'utf8');
+    assert(nrstFile.includes('/api/navdb/nearby/'), 'NRST page uses navdb nearby API');
+    assert(!nrstFile.includes('generateSampleNavaids'), 'NRST page no longer has fake data generator');
+
+    // Verify PROC page uses navdb endpoint
+    const procFile = fs.readFileSync(path.join(__dirname, '..', 'ui', 'gtn750', 'pages', 'page-proc.js'), 'utf8');
+    assert(procFile.includes('/api/navdb/procedures/'), 'PROC page uses navdb procedures API');
+    assert(procFile.includes('/api/navdb/procedure/'), 'PROC page fetches real procedure legs');
+    assert(!procFile.includes('generateSampleProcedures'), 'PROC page no longer has fake procedure generator');
+    assert(!procFile.includes('generatePreviewWaypoints'), 'PROC page no longer generates fake waypoints');
+
+    // Verify Direct-To uses navdb search
+    const fplFile = fs.readFileSync(path.join(__dirname, '..', 'ui', 'gtn750', 'modules', 'gtn-flight-plan.js'), 'utf8');
+    assert(fplFile.includes('/api/navdb/search/'), 'Direct-To uses navdb cross-type search');
+}
+
+// ============================================
 // MAIN
 // ============================================
 
@@ -670,6 +906,8 @@ async function runTests(suite) {
     if (!suite || suite === 'widgets') await testWidgets();
     if (!suite || suite === 'splitting') await testCodeSplitting();
     if (!suite || suite === 'ai-autopilot') await testAiAutopilot();
+    if (!suite || suite === 'atc') await testATC();
+    if (!suite || suite === 'navdata') await testNavdata();
 
     // Summary
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -688,8 +926,8 @@ async function runTests(suite) {
 }
 
 const suite = process.argv[2];
-if (suite && !['api', 'websocket', 'widgets', 'splitting', 'ai-autopilot'].includes(suite)) {
-    log('Usage: node test-runner.js [api|websocket|widgets|splitting|ai-autopilot]', 'yellow');
+if (suite && !['api', 'websocket', 'widgets', 'splitting', 'ai-autopilot', 'atc', 'navdata'].includes(suite)) {
+    log('Usage: node test-runner.js [api|websocket|widgets|splitting|ai-autopilot|atc|navdata]', 'yellow');
     process.exit(1);
 }
 

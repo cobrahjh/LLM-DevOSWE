@@ -55,6 +55,16 @@
             <span class="airport-dist" id="airport-dist">--.- nm</span>
         </div>
 
+        <!-- ATC Ground Control Panel (auto-shown during ground ops) -->
+        <div class="atc-panel" id="atc-panel" style="display:none">
+            <div class="atc-header">ATC GROUND</div>
+            <div class="atc-body">
+                <span class="atc-phase" id="atc-phase">INACTIVE</span>
+                <span class="atc-instruction" id="atc-instruction"></span>
+                <span class="atc-route" id="atc-route"></span>
+            </div>
+        </div>
+
         <!-- Flight Plan Report (shown after SimBrief import) -->
         <div class="fpl-report" id="fpl-report" style="display:none">
             <div class="fpl-report-header" id="fpl-report-toggle">
@@ -206,10 +216,12 @@
     <!-- AI Autopilot Modules -->
     <script src="data/aircraft-profiles.js"></script>
     <script src="data/flight-procedures.js"></script>
+    <script src="data/atc-phraseology.js"></script>
     <script src="modules/flight-phase.js"></script>
     <script src="modules/rule-engine.js"></script>
     <script src="modules/command-queue.js"></script>
     <script src="modules/llm-advisor.js"></script>
+    <script src="modules/atc-controller.js"></script>
     <!-- Widget Script -->
     <script src="pane.js"></script>
     <script>

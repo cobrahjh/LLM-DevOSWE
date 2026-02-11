@@ -241,7 +241,165 @@ function scaleSimValue(command, value) {
     return Math.round(value || 0);
 }
 
-function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap) {
+// ── A* Pathfinding for Taxi Routing ──────────────────────────────────
+// Binary heap priority queue + haversine-based A* for airport taxi graphs.
+
+function haversineFt(lat1, lon1, lat2, lon2) {
+    const R = 20902231; // Earth radius in feet
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** Find nearest node in graph to a lat/lon position */
+function findNearestNode(graph, lat, lon) {
+    let best = -1, bestDist = Infinity;
+    for (let i = 0; i < graph.nodes.length; i++) {
+        const n = graph.nodes[i];
+        const d = haversineFt(lat, lon, n.lat, n.lon);
+        if (d < bestDist) { bestDist = d; best = i; }
+    }
+    return { nodeIndex: best, distance_ft: Math.round(bestDist) };
+}
+
+/** Find runway hold-short node by runway ident */
+function findRunwayNode(graph, runway) {
+    const rwy = String(runway).toUpperCase();
+    // Try RUNWAY_HOLD first, then RUNWAY_THRESHOLD
+    for (const type of ['RUNWAY_HOLD', 'RUNWAY_THRESHOLD']) {
+        const node = graph.nodes.find(n => n.type === type && graph.runways.some(r =>
+            r.ident.toUpperCase() === rwy && (r.nodeIndex === n.index || r.thresholdIndex === n.index)));
+        if (node) return node.index;
+    }
+    // Fallback: match by runway data
+    const rwyData = graph.runways.find(r => r.ident.toUpperCase() === rwy);
+    return rwyData ? (rwyData.nodeIndex ?? -1) : -1;
+}
+
+/** Build adjacency list from edges (bidirectional) */
+function buildAdjacency(graph) {
+    const adj = new Map();
+    for (const n of graph.nodes) adj.set(n.index, []);
+    for (const e of graph.edges) {
+        adj.get(e.from)?.push({ to: e.to, cost: e.distance_ft || 100, taxiway: e.taxiway });
+        adj.get(e.to)?.push({ to: e.from, cost: e.distance_ft || 100, taxiway: e.taxiway });
+    }
+    return adj;
+}
+
+/**
+ * A* pathfinding on airport taxi graph.
+ * @returns {{ success, nodePath, taxiways, instruction, distance_ft, waypoints }}
+ */
+function aStarRoute(graph, startIdx, goalIdx) {
+    if (startIdx < 0 || goalIdx < 0) return { success: false, error: 'Invalid start or goal node' };
+    if (startIdx === goalIdx) return { success: true, nodePath: [startIdx], taxiways: [], distance_ft: 0, waypoints: [graph.nodes[startIdx]] };
+
+    const adj = buildAdjacency(graph);
+    const goalNode = graph.nodes[goalIdx];
+
+    // Binary heap priority queue (min-heap by f-score)
+    const open = [{ idx: startIdx, f: 0 }];
+    const gScore = new Map([[startIdx, 0]]);
+    const cameFrom = new Map();
+    const closed = new Set();
+
+    const pushHeap = (item) => {
+        open.push(item);
+        let i = open.length - 1;
+        while (i > 0) {
+            const p = (i - 1) >> 1;
+            if (open[p].f <= open[i].f) break;
+            [open[p], open[i]] = [open[i], open[p]];
+            i = p;
+        }
+    };
+    const popHeap = () => {
+        const top = open[0];
+        const last = open.pop();
+        if (open.length > 0) {
+            open[0] = last;
+            let i = 0;
+            while (true) {
+                let smallest = i;
+                const l = 2 * i + 1, r = 2 * i + 2;
+                if (l < open.length && open[l].f < open[smallest].f) smallest = l;
+                if (r < open.length && open[r].f < open[smallest].f) smallest = r;
+                if (smallest === i) break;
+                [open[i], open[smallest]] = [open[smallest], open[i]];
+                i = smallest;
+            }
+        }
+        return top;
+    };
+
+    while (open.length > 0) {
+        const current = popHeap();
+        if (current.idx === goalIdx) {
+            // Reconstruct path
+            const path = [goalIdx];
+            let c = goalIdx;
+            while (cameFrom.has(c)) { c = cameFrom.get(c); path.unshift(c); }
+
+            // Extract taxiway names from edges along path
+            const taxiwaySet = new Set();
+            const taxiwayList = [];
+            for (let i = 0; i < path.length - 1; i++) {
+                const edge = graph.edges.find(e =>
+                    (e.from === path[i] && e.to === path[i + 1]) ||
+                    (e.to === path[i] && e.from === path[i + 1]));
+                if (edge?.taxiway && !taxiwaySet.has(edge.taxiway)) {
+                    taxiwaySet.add(edge.taxiway);
+                    taxiwayList.push(edge.taxiway);
+                }
+            }
+
+            const waypoints = path.map(idx => {
+                const n = graph.nodes[idx];
+                return { lat: n.lat, lon: n.lon, name: n.name, type: n.type, index: idx };
+            });
+
+            // Find target runway ident
+            const goalRwy = graph.runways.find(r => r.nodeIndex === goalIdx || r.thresholdIndex === goalIdx);
+            const rwyIdent = goalRwy?.ident || 'unknown';
+            const instruction = taxiwayList.length > 0
+                ? `taxi to runway ${rwyIdent} via ${taxiwayList.join(', ')}`
+                : `taxi to runway ${rwyIdent}`;
+
+            return {
+                success: true,
+                nodePath: path,
+                taxiways: taxiwayList,
+                instruction,
+                distance_ft: Math.round(gScore.get(goalIdx) || 0),
+                waypoints
+            };
+        }
+
+        closed.add(current.idx);
+        const neighbors = adj.get(current.idx) || [];
+        for (const n of neighbors) {
+            if (closed.has(n.to)) continue;
+            const tentG = (gScore.get(current.idx) || 0) + n.cost;
+            if (tentG < (gScore.get(n.to) ?? Infinity)) {
+                cameFrom.set(n.to, current.idx);
+                gScore.set(n.to, tentG);
+                const nNode = graph.nodes[n.to];
+                const h = haversineFt(nNode.lat, nNode.lon, goalNode.lat, goalNode.lon);
+                pushHeap({ idx: n.to, f: tentG + h });
+            }
+        }
+    }
+
+    return { success: false, error: 'No route found' };
+}
+// ─────────────────────────────────────────────────────────────────────
+
+function setupAiPilotRoutes(app, getFlightData, getSimConnect, eventMap, extras) {
+
+    const getFacilityGraph = extras?.requestFacilityGraph || null;
 
     // Map API command names to actual SimConnect event names
     // (API uses short names, SimConnect uses _ENGLISH suffix for value-set events)
@@ -599,6 +757,115 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
         }
         res.json({ [key]: _sharedState[key], lastUpdate: _sharedState.lastUpdate });
     });
+
+    // ── ATC Ground Operations API ────────────────────────────────────
+
+    /** GET /api/ai-pilot/atc/airport/:icao — Full taxiway graph */
+    app.get('/api/ai-pilot/atc/airport/:icao', async (req, res) => {
+        const icao = req.params.icao?.toUpperCase();
+        if (!icao || !/^[A-Z]{3,4}$/.test(icao)) {
+            return res.status(400).json({ error: 'Invalid ICAO code' });
+        }
+        try {
+            const graph = getFacilityGraph
+                ? await getFacilityGraph(icao)
+                : getMockFacilityGraphFallback(icao);
+            if (!graph) return res.status(404).json({ error: 'No data for ' + icao });
+            res.json(graph);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    });
+
+    /** GET /api/ai-pilot/atc/route — A* taxi routing */
+    app.get('/api/ai-pilot/atc/route', async (req, res) => {
+        const { icao, fromLat, fromLon, toRunway } = req.query;
+        if (!icao || !fromLat || !fromLon || !toRunway) {
+            return res.status(400).json({ error: 'Required: icao, fromLat, fromLon, toRunway' });
+        }
+        try {
+            const graph = getFacilityGraph
+                ? await getFacilityGraph(icao.toUpperCase())
+                : getMockFacilityGraphFallback(icao.toUpperCase());
+            if (!graph) return res.status(404).json({ error: 'No graph for ' + icao });
+
+            const start = findNearestNode(graph, parseFloat(fromLat), parseFloat(fromLon));
+            const goalIdx = findRunwayNode(graph, toRunway);
+
+            if (start.nodeIndex < 0) return res.json({ success: false, error: 'No nearby node found' });
+            if (goalIdx < 0) return res.json({ success: false, error: 'Runway ' + toRunway + ' not found in graph' });
+
+            const route = aStarRoute(graph, start.nodeIndex, goalIdx);
+            res.json(route);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    });
+
+    /** GET /api/ai-pilot/atc/nearest-node — Find nearest graph node */
+    app.get('/api/ai-pilot/atc/nearest-node', async (req, res) => {
+        const { icao, lat, lon } = req.query;
+        if (!icao || !lat || !lon) {
+            return res.status(400).json({ error: 'Required: icao, lat, lon' });
+        }
+        try {
+            const graph = getFacilityGraph
+                ? await getFacilityGraph(icao.toUpperCase())
+                : getMockFacilityGraphFallback(icao.toUpperCase());
+            if (!graph) return res.status(404).json({ error: 'No graph for ' + icao });
+
+            const result = findNearestNode(graph, parseFloat(lat), parseFloat(lon));
+            if (result.nodeIndex >= 0) {
+                const node = graph.nodes[result.nodeIndex];
+                res.json({ nodeIndex: result.nodeIndex, distance_ft: result.distance_ft, name: node.name, type: node.type });
+            } else {
+                res.json({ nodeIndex: -1, distance_ft: -1, name: null, type: null });
+            }
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    });
+
+    /** DELETE /api/ai-pilot/atc/cache/:icao — Clear cached graph */
+    app.delete('/api/ai-pilot/atc/cache/:icao', (req, res) => {
+        const icao = req.params.icao?.toUpperCase();
+        const cachePath = path.join(__dirname, '..', 'data', 'atc-cache', `${icao}.json`);
+        try {
+            if (fs.existsSync(cachePath)) {
+                fs.unlinkSync(cachePath);
+                res.json({ ok: true, deleted: icao });
+            } else {
+                res.json({ ok: true, message: 'No cache for ' + icao });
+            }
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    });
+}
+
+/** Inline mock graph fallback (when server.js doesn't provide requestFacilityGraph) */
+function getMockFacilityGraphFallback(icao) {
+    return {
+        icao,
+        nodes: [
+            { index: 0, lat: 47.4490, lon: -122.3088, name: 'GATE_A1', type: 'PARKING' },
+            { index: 1, lat: 47.4492, lon: -122.3080, name: 'A', type: 'TAXIWAY' },
+            { index: 2, lat: 47.4500, lon: -122.3070, name: 'B', type: 'TAXIWAY' },
+            { index: 3, lat: 47.4510, lon: -122.3060, name: 'C', type: 'TAXIWAY' },
+            { index: 4, lat: 47.4520, lon: -122.3050, name: 'RWY_16R', type: 'RUNWAY_HOLD' },
+            { index: 5, lat: 47.4530, lon: -122.3045, name: '16R_THR', type: 'RUNWAY_THRESHOLD' }
+        ],
+        edges: [
+            { from: 0, to: 1, taxiway: 'Alpha', distance_ft: 250 },
+            { from: 1, to: 2, taxiway: 'Alpha', distance_ft: 400 },
+            { from: 2, to: 3, taxiway: 'Bravo', distance_ft: 350 },
+            { from: 3, to: 4, taxiway: 'Charlie', distance_ft: 300 },
+            { from: 4, to: 5, taxiway: null, distance_ft: 150 }
+        ],
+        parking: [{ name: 'GATE_A1', lat: 47.4490, lon: -122.3088, nodeIndex: 0 }],
+        runways: [{ ident: '16R', lat: 47.4530, lon: -122.3045, heading: 160, nodeIndex: 4, thresholdIndex: 5 }],
+        source: 'mock', cached: false, timestamp: Date.now()
+    };
 }
 
 // Provider base URL mapping

@@ -263,6 +263,69 @@
     font-size: 11px;
 }
 
+/* ATC Ground Control Panel */
+.atc-panel {
+    border-bottom: 1px solid var(--border-color, #1e2a3a);
+    flex-shrink: 0;
+    font-family: 'Consolas', monospace;
+}
+
+.atc-header {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffa726;
+    background: rgba(255, 167, 38, 0.08);
+    letter-spacing: 1px;
+}
+
+.atc-body {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 12px;
+}
+
+.atc-phase {
+    padding: 1px 8px;
+    border-radius: 3px;
+    background: rgba(255, 167, 38, 0.15);
+    color: #ffa726;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.atc-phase.active {
+    background: rgba(0, 200, 83, 0.15);
+    color: #00c853;
+}
+
+.atc-phase.hold {
+    background: rgba(255, 235, 59, 0.15);
+    color: #ffeb3b;
+}
+
+.atc-phase.cleared {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
+.atc-instruction {
+    flex: 1;
+    color: #00e676;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.atc-route {
+    color: #667;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
 /* Flight Plan Report */
 .fpl-report {
     border-bottom: 1px solid var(--border-color, #1e2a3a);
