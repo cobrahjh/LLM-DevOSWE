@@ -185,41 +185,6 @@
         }
         .toast.show { opacity: 1; }
 
-        /* ── Control Log ── */
-        .control-log-section {
-            background: #0d1218; border: 1px solid #1a2030; border-radius: 6px;
-            margin-bottom: 10px; overflow: hidden;
-        }
-        .control-log-header {
-            display: flex; align-items: center; gap: 10px;
-            padding: 6px 14px; cursor: pointer; user-select: none;
-            background: #101820; border-bottom: 1px solid #1a2030;
-        }
-        .control-log-header:hover { background: #152030; }
-        .control-log-title { font-size: 12px; font-weight: 600; color: #4fc3f7; letter-spacing: 0.5px; }
-        .control-log-count { font-size: 10px; color: #506070; font-family: 'Consolas', monospace; }
-        .control-log-chevron { font-size: 10px; color: #506070; margin-left: auto; transition: transform 0.2s; }
-        .control-log-chevron.open { transform: rotate(180deg); }
-        .control-log-actions { display: flex; gap: 6px; margin-left: auto; }
-        .control-log-body {
-            max-height: 250px; overflow-y: auto; display: none;
-        }
-        .control-log-body.open { display: block; }
-        .log-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: 'Consolas', monospace; }
-        .log-table th {
-            position: sticky; top: 0; background: #101820;
-            text-align: left; padding: 3px 8px; font-size: 9px; color: #506070;
-            text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #1a2030;
-        }
-        .log-table td { padding: 2px 8px; border-bottom: 1px solid #0a0e14; white-space: nowrap; }
-        .log-row-cmd td { color: #c0c8d8; }
-        .log-row-phase td { color: #ffab40; font-weight: 600; background: #1a1500; }
-        .log-row-phase.sub td { color: #4fc3f7; background: #001520; }
-        .log-time { color: #506070; }
-        .log-name { color: #e0e8f0; }
-        .log-value { color: #4fc3f7; min-width: 50px; }
-        .log-source { color: #506070; }
-        .log-desc { color: #607080; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
     </style>
 </head>
 <body>
@@ -262,20 +227,6 @@
     </div>
 
     <div class="phases-scroll">
-        <div class="control-log-section">
-            <div class="control-log-header" id="log-header">
-                <span class="control-log-title">CONTROL LOG</span>
-                <span class="control-log-count" id="log-count">0</span>
-                <button class="btn" id="log-clear" style="padding:2px 8px;font-size:10px" onclick="event.stopPropagation()">CLEAR</button>
-                <span class="control-log-chevron" id="log-chevron">&#9660;</span>
-            </div>
-            <div class="control-log-body" id="log-body">
-                <table class="log-table">
-                    <thead><tr><th>Time</th><th>Name</th><th>Value</th><th>Source</th><th>Description</th></tr></thead>
-                    <tbody id="log-tbody"></tbody>
-                </table>
-            </div>
-        </div>
         <div class="phases" id="phases"></div>
     </div>
     <div class="toast" id="toast"></div>
@@ -473,56 +424,6 @@
             if (channel) channel.postMessage({ type: 'takeoff-holds', holds, timestamp: Date.now() });
         }
 
-        // ── Control Log ──
-        let logEntries = [];  // { time, name, value, source, desc, isPhase }
-        const LOG_MAX = 300;
-        let logOpen = false;
-
-        function addLogEntry(entry) {
-            logEntries.push(entry);
-            if (logEntries.length > LOG_MAX) logEntries.splice(0, logEntries.length - LOG_MAX);
-            renderLogRow(entry);
-            setText('log-count', logEntries.length);
-        }
-
-        function renderLogRow(entry) {
-            const tbody = document.getElementById('log-tbody');
-            if (!tbody) return;
-            const tr = document.createElement('tr');
-            tr.className = entry.isPhase ? ('log-row-phase' + (entry.isSub ? ' sub' : '')) : 'log-row-cmd';
-            tr.innerHTML = '<td class="log-time">' + entry.time + '</td>'
-                + '<td class="log-name">' + esc(entry.name) + '</td>'
-                + '<td class="log-value">' + esc(String(entry.value)) + '</td>'
-                + '<td class="log-source">' + esc(entry.source) + '</td>'
-                + '<td class="log-desc">' + esc(entry.desc || '') + '</td>';
-            tbody.appendChild(tr);
-            // Auto-scroll to bottom
-            const body = document.getElementById('log-body');
-            if (body) body.scrollTop = body.scrollHeight;
-        }
-
-        function clearLog() {
-            logEntries = [];
-            const tbody = document.getElementById('log-tbody');
-            if (tbody) tbody.innerHTML = '';
-            setText('log-count', '0');
-        }
-
-        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-        function formatTimeMs(ts) {
-            const d = new Date(ts);
-            return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0') + '.' + String(d.getMilliseconds()).padStart(3,'0');
-        }
-
-        // Wire up log header toggle + clear
-        document.getElementById('log-header').addEventListener('click', function() {
-            logOpen = !logOpen;
-            document.getElementById('log-body').classList.toggle('open', logOpen);
-            document.getElementById('log-chevron').classList.toggle('open', logOpen);
-        });
-        document.getElementById('log-clear').addEventListener('click', clearLog);
-
         // ── SafeChannel ──
         try { channel = new SafeChannel(CHANNEL_NAME); } catch(e) {}
         if (channel) {
@@ -537,31 +438,6 @@
                     fplLoaded = !!msg.data.fplLoaded;
                     updateActivePhase();
                     updateControlButtons();
-                }
-                // Command executed — add to control log
-                if (msg.type === 'command-executed' && msg.data) {
-                    const d = msg.data;
-                    addLogEntry({
-                        time: formatTimeMs(d.time),
-                        name: d.type,
-                        value: d.value != null ? d.value : '',
-                        source: d.subPhase || d.phase || '',
-                        desc: d.description || '',
-                        isPhase: false
-                    });
-                }
-                // Phase change — add to control log as highlighted row
-                if (msg.type === 'phase-change' && msg.data) {
-                    const d = msg.data;
-                    addLogEntry({
-                        time: formatTimeMs(d.time),
-                        name: d.isSubPhase ? 'SUB-PHASE' : 'PHASE',
-                        value: d.newPhase,
-                        source: d.oldPhase ? d.oldPhase + ' \u2192' : '',
-                        desc: '',
-                        isPhase: true,
-                        isSub: !!d.isSubPhase
-                    });
                 }
             };
         }

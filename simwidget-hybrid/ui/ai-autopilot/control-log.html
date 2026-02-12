@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Log - SimGlass</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            background: #0a0e14;
+            color: #c0c8d8;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 13px;
+            display: flex; flex-direction: column;
+        }
+
+        /* ── Header ── */
+        .header {
+            flex-shrink: 0; padding: 10px 16px;
+            display: flex; align-items: center; gap: 14px;
+            border-bottom: 1px solid #1a2030;
+        }
+        .header h1 { font-size: 16px; font-weight: 600; color: #4fc3f7; letter-spacing: 1px; }
+        .header-stats { display: flex; gap: 16px; align-items: center; font-family: 'Consolas', monospace; font-size: 12px; }
+        .stat-label { color: #506070; font-size: 9px; text-transform: uppercase; }
+        .stat-val { color: #e0e8f0; }
+        .stat-val.phase { color: #ffab40; font-weight: 600; }
+        .stat-val.sub { color: #4fc3f7; }
+        .header-actions { margin-left: auto; display: flex; gap: 8px; }
+        .btn {
+            background: #1a2030; color: #c0c8d8; border: 1px solid #2a3040;
+            padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 11px; font-family: inherit; transition: background 0.15s;
+        }
+        .btn:hover { background: #2a3040; }
+        .btn-danger { border-color: #ff5252; color: #ff5252; }
+        .btn-danger:hover { background: #2a1515; }
+        .btn-accent { border-color: #4fc3f7; color: #4fc3f7; }
+        .btn-accent:hover { background: #152a30; }
+
+        /* ── Filters ── */
+        .filter-bar {
+            flex-shrink: 0; padding: 6px 16px;
+            display: flex; gap: 6px; align-items: center;
+            border-bottom: 1px solid #1a2030; background: #0d1218;
+        }
+        .filter-label { font-size: 9px; color: #506070; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+        .filter-btn {
+            background: #1a2030; color: #506070; border: 1px solid #2a3040;
+            padding: 2px 10px; border-radius: 3px; cursor: pointer;
+            font-size: 10px; font-family: inherit; transition: all 0.15s;
+        }
+        .filter-btn.active { color: #4fc3f7; border-color: #4fc3f7; background: #0d1a25; }
+        .filter-btn:hover { background: #2a3040; }
+        .filter-spacer { flex: 1; }
+        .filter-search {
+            background: #0a0e14; border: 1px solid #2a3040; color: #e0e8f0;
+            padding: 3px 8px; border-radius: 3px; font-size: 11px;
+            font-family: 'Consolas', monospace; width: 160px; outline: none;
+        }
+        .filter-search:focus { border-color: #4fc3f7; }
+        .conn-status { font-size: 11px; margin-left: 8px; }
+        .conn-status.connected { color: #66bb6a; }
+        .conn-status.disconnected { color: #ff5252; }
+
+        /* ── Log table ── */
+        .log-container { flex: 1; overflow-y: auto; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: 'Consolas', monospace; }
+        .log-table th {
+            position: sticky; top: 0; z-index: 1; background: #101820;
+            text-align: left; padding: 5px 10px; font-size: 10px; color: #506070;
+            text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #1a2030;
+        }
+        .log-table td { padding: 3px 10px; border-bottom: 1px solid #0d1218; }
+        .log-row-cmd td { color: #c0c8d8; }
+        .log-row-cmd:hover td { background: #101820; }
+        .log-row-phase td { color: #ffab40; font-weight: 600; background: #1a1500; }
+        .log-row-phase.sub td { color: #4fc3f7; font-weight: 600; background: #001520; }
+        .log-time { color: #506070; }
+        .log-name { color: #e0e8f0; }
+        .log-value { color: #4fc3f7; min-width: 60px; }
+        .log-source { color: #ffab40; }
+        .log-desc { color: #607080; max-width: 400px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ── Category colors ── */
+        .log-row-cmd.cat-throttle .log-name { color: #ffab40; }
+        .log-row-cmd.cat-elevator .log-name { color: #ef5350; }
+        .log-row-cmd.cat-rudder .log-name { color: #ab47bc; }
+        .log-row-cmd.cat-aileron .log-name { color: #42a5f5; }
+        .log-row-cmd.cat-ap .log-name { color: #66bb6a; }
+        .log-row-cmd.cat-mixture .log-name { color: #ffa726; }
+        .log-row-cmd.cat-flaps .log-name { color: #26c6da; }
+
+        /* ── Empty state ── */
+        .log-empty {
+            display: flex; align-items: center; justify-content: center;
+            height: 100%; color: #404850; font-size: 14px;
+        }
+
+        /* ── Auto-scroll indicator ── */
+        .auto-scroll-indicator {
+            position: fixed; bottom: 16px; right: 16px;
+            background: #1a2030; border: 1px solid #4fc3f7; color: #4fc3f7;
+            padding: 6px 14px; border-radius: 20px; font-size: 11px;
+            cursor: pointer; opacity: 0; transition: opacity 0.3s;
+            z-index: 10;
+        }
+        .auto-scroll-indicator.visible { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CONTROL LOG</h1>
+        <div class="header-stats">
+            <div><span class="stat-label">PHASE</span> <span class="stat-val phase" id="h-phase">--</span></div>
+            <div><span class="stat-label">SUB</span> <span class="stat-val sub" id="h-sub">--</span></div>
+            <div><span class="stat-label">ENTRIES</span> <span class="stat-val" id="h-count">0</span></div>
+        </div>
+        <div class="header-actions">
+            <button class="btn" id="btn-pause">PAUSE</button>
+            <button class="btn btn-accent" id="btn-export">EXPORT CSV</button>
+            <button class="btn btn-danger" id="btn-clear">CLEAR</button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <span class="filter-label">Show:</span>
+        <button class="filter-btn active" data-filter="all">ALL</button>
+        <button class="filter-btn active" data-filter="throttle">THR</button>
+        <button class="filter-btn active" data-filter="elevator">ELEV</button>
+        <button class="filter-btn active" data-filter="rudder">RUD</button>
+        <button class="filter-btn active" data-filter="aileron">AIL</button>
+        <button class="filter-btn active" data-filter="ap">AP</button>
+        <button class="filter-btn active" data-filter="other">OTHER</button>
+        <button class="filter-btn active" data-filter="phase">PHASES</button>
+        <div class="filter-spacer"></div>
+        <input type="text" class="filter-search" id="search" placeholder="Filter..." autocomplete="off">
+        <span class="conn-status disconnected" id="conn-status">DISCONNECTED</span>
+    </div>
+
+    <div class="log-container" id="log-container">
+        <table class="log-table">
+            <thead><tr>
+                <th style="width:100px">Time</th>
+                <th style="width:180px">Name</th>
+                <th style="width:80px">Value</th>
+                <th style="width:120px">Source</th>
+                <th>Description</th>
+            </tr></thead>
+            <tbody id="log-tbody"></tbody>
+        </table>
+    </div>
+
+    <div class="auto-scroll-indicator" id="scroll-btn">Scroll to bottom</div>
+
+    <script src="/ui/shared/safe-channel.js"></script>
+    <script>
+    (function() {
+        const CHANNEL_NAME = 'SimGlass-sync';
+        const LOG_MAX = 2000;
+
+        let entries = [];
+        let paused = false;
+        let autoScroll = true;
+        let currentPhase = '';
+        let currentSubPhase = '';
+        let channel = null;
+        let searchText = '';
+        let filters = { all: true, throttle: true, elevator: true, rudder: true, aileron: true, ap: true, other: true, phase: true };
+
+        // ── Categorize command ──
+        function categorize(name) {
+            if (name === 'PHASE' || name === 'SUB-PHASE') return 'phase';
+            if (name.includes('THROTTLE') || name === 'MIXTURE_SET') return 'throttle';
+            if (name.includes('ELEVATOR') || name === 'ELEV_TRIM_UP') return 'elevator';
+            if (name.includes('RUDDER')) return 'rudder';
+            if (name.includes('AILERON')) return 'aileron';
+            if (name.startsWith('AP_') || name === 'HEADING_BUG_SET' || name.includes('TOGGLE')) return 'ap';
+            if (name.includes('MIXTURE')) return 'mixture';
+            if (name.includes('FLAPS')) return 'flaps';
+            return 'other';
+        }
+
+        function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+        function formatTimeMs(ts) {
+            const d = new Date(ts);
+            return String(d.getHours()).padStart(2,'0') + ':' +
+                   String(d.getMinutes()).padStart(2,'0') + ':' +
+                   String(d.getSeconds()).padStart(2,'0') + '.' +
+                   String(d.getMilliseconds()).padStart(3,'0');
+        }
+
+        function shouldShow(entry) {
+            const cat = categorize(entry.name);
+            if (!filters[cat] && !filters.all) return false;
+            if (searchText && !entry.name.toLowerCase().includes(searchText) &&
+                !entry.desc.toLowerCase().includes(searchText) &&
+                !entry.source.toLowerCase().includes(searchText)) return false;
+            return true;
+        }
+
+        function addEntry(entry) {
+            entries.push(entry);
+            if (entries.length > LOG_MAX) entries.splice(0, entries.length - LOG_MAX);
+
+            if (!paused && shouldShow(entry)) {
+                renderRow(entry);
+            }
+
+            document.getElementById('h-count').textContent = entries.length;
+        }
+
+        function renderRow(entry) {
+            const tbody = document.getElementById('log-tbody');
+            const tr = document.createElement('tr');
+            const cat = categorize(entry.name);
+            tr.className = entry.isPhase
+                ? ('log-row-phase' + (entry.isSub ? ' sub' : ''))
+                : ('log-row-cmd cat-' + cat);
+            tr.innerHTML =
+                '<td class="log-time">' + esc(entry.time) + '</td>' +
+                '<td class="log-name">' + esc(entry.name) + '</td>' +
+                '<td class="log-value">' + esc(String(entry.value)) + '</td>' +
+                '<td class="log-source">' + esc(entry.source) + '</td>' +
+                '<td class="log-desc">' + esc(entry.desc) + '</td>';
+            tbody.appendChild(tr);
+
+            if (autoScroll) {
+                const container = document.getElementById('log-container');
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function rebuildTable() {
+            const tbody = document.getElementById('log-tbody');
+            tbody.innerHTML = '';
+            entries.forEach(e => {
+                if (shouldShow(e)) renderRow(e);
+            });
+        }
+
+        function clearLog() {
+            entries = [];
+            document.getElementById('log-tbody').innerHTML = '';
+            document.getElementById('h-count').textContent = '0';
+        }
+
+        function exportCSV() {
+            const header = 'Time,Name,Value,Source,Description\n';
+            const rows = entries.map(e =>
+                `"${e.time}","${e.name}","${e.value}","${e.source}","${(e.desc || '').replace(/"/g, '""')}"`
+            ).join('\n');
+            const blob = new Blob([header + rows], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'control-log-' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ── SafeChannel ──
+        try { channel = new SafeChannel(CHANNEL_NAME); } catch(e) {}
+        if (channel) {
+            channel.onmessage = function(event) {
+                const msg = event.data;
+                if (!msg || !msg.type) return;
+
+                if (msg.type === 'autopilot-state' && msg.data) {
+                    currentPhase = msg.data.phase || '';
+                    currentSubPhase = msg.data.takeoffSubPhase || '';
+                    document.getElementById('h-phase').textContent = currentPhase || '--';
+                    document.getElementById('h-sub').textContent = currentSubPhase || '--';
+                    const el = document.getElementById('conn-status');
+                    el.textContent = 'CONNECTED'; el.className = 'conn-status connected';
+                }
+
+                if (msg.type === 'command-executed' && msg.data) {
+                    const d = msg.data;
+                    addEntry({
+                        time: formatTimeMs(d.time),
+                        name: d.type,
+                        value: d.value != null ? d.value : '',
+                        source: d.subPhase || d.phase || '',
+                        desc: d.description || '',
+                        isPhase: false
+                    });
+                }
+
+                if (msg.type === 'phase-change' && msg.data) {
+                    const d = msg.data;
+                    addEntry({
+                        time: formatTimeMs(d.time),
+                        name: d.isSubPhase ? 'SUB-PHASE' : 'PHASE',
+                        value: d.newPhase,
+                        source: d.oldPhase ? d.oldPhase + ' \u2192' : '',
+                        desc: '',
+                        isPhase: true,
+                        isSub: !!d.isSubPhase
+                    });
+                }
+            };
+        }
+
+        // ── UI wiring ──
+        document.getElementById('btn-clear').addEventListener('click', clearLog);
+        document.getElementById('btn-export').addEventListener('click', exportCSV);
+
+        document.getElementById('btn-pause').addEventListener('click', function() {
+            paused = !paused;
+            this.textContent = paused ? 'RESUME' : 'PAUSE';
+            this.style.borderColor = paused ? '#ffab40' : '';
+            this.style.color = paused ? '#ffab40' : '';
+            if (!paused) rebuildTable();
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const f = this.dataset.filter;
+                if (f === 'all') {
+                    const allActive = this.classList.contains('active');
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.toggle('active', !allActive);
+                        filters[b.dataset.filter] = !allActive;
+                    });
+                } else {
+                    this.classList.toggle('active');
+                    filters[f] = this.classList.contains('active');
+                    // Update ALL button
+                    const allOn = Object.keys(filters).filter(k => k !== 'all').every(k => filters[k]);
+                    document.querySelector('[data-filter="all"]').classList.toggle('active', allOn);
+                    filters.all = allOn;
+                }
+                rebuildTable();
+            });
+        });
+
+        // Search
+        document.getElementById('search').addEventListener('input', function() {
+            searchText = this.value.toLowerCase();
+            rebuildTable();
+        });
+
+        // Auto-scroll detection
+        const container = document.getElementById('log-container');
+        const scrollBtn = document.getElementById('scroll-btn');
+        container.addEventListener('scroll', function() {
+            const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+            autoScroll = atBottom;
+            scrollBtn.classList.toggle('visible', !atBottom && entries.length > 20);
+        });
+        scrollBtn.addEventListener('click', function() {
+            container.scrollTop = container.scrollHeight;
+            autoScroll = true;
+            this.classList.remove('visible');
+        });
+    })();
+    </script>
+</body>
+</html>
