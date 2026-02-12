@@ -2219,11 +2219,11 @@ app.post('/api/wasm-camera', (req, res) => {
         
         // Set smoothing if provided
         if (smooth !== undefined) {
-            setLVar('SimGlass_CAM_SMOOTH', Math.max(0, Math.min(100, smooth)));
+            setLVar('SIMWIDGET_CAM_SMOOTH', Math.max(0, Math.min(100, smooth)));
         }
-        
+
         // Send command
-        setLVar('SimGlass_CAM_CMD', cmdValue);
+        setLVar('SIMWIDGET_CAM_CMD', cmdValue);
         
         res.json({ success: true, action, command: cmdValue });
     } catch (e) {
@@ -2284,8 +2284,8 @@ setInterval(checkLorby, 10000);
 // Poll WASM camera status
 setInterval(async () => {
     if (lorbyConnected) {
-        wasmCameraReady = (await getLVar('SimGlass_CAM_READY')) === 1;
-        wasmCameraStatus = await getLVar('SimGlass_CAM_STATUS');
+        wasmCameraReady = (await getLVar('SIMWIDGET_CAM_READY')) === 1;
+        wasmCameraStatus = await getLVar('SIMWIDGET_CAM_STATUS');
     }
 }, 2000);
 
