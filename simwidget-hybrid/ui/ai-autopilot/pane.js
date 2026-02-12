@@ -263,6 +263,17 @@ class AiAutopilotPane extends SimGlassBase {
             this.elements.fplReport?.classList.toggle('collapsed');
         });
 
+        // AI Instructions collapsible toggle
+        document.getElementById('fpl-cmd-toggle')?.addEventListener('click', () => {
+            const content = document.getElementById('fpl-cmd-content');
+            const chevron = document.getElementById('fpl-cmd-chevron');
+            if (content) {
+                const collapsed = content.style.display === 'none';
+                content.style.display = collapsed ? '' : 'none';
+                if (chevron) chevron.innerHTML = collapsed ? '&#9660;' : '&#9654;';
+            }
+        });
+
         // Flight plan command input
         this.elements.fplCmdSend?.addEventListener('click', () => {
             this._sendFplCommand();
@@ -479,6 +490,64 @@ class AiAutopilotPane extends SimGlassBase {
             this._toggleDebug();
         }
 
+        // ── Tuning Panel ──
+        this.elements.tuningToggle = document.getElementById('tuning-toggle');
+        this.elements.tuningPanel = document.getElementById('tuning-panel');
+        this.elements.tuningBody = document.getElementById('tuning-body');
+        this._tuningVisible = false;
+        this._tuningDefaults = null;  // snapshot of defaults for reset
+
+        this.elements.tuningToggle?.addEventListener('click', () => {
+            this._tuningVisible = !this._tuningVisible;
+            this.elements.tuningToggle.classList.toggle('active', this._tuningVisible);
+            if (this.elements.tuningPanel) {
+                this.elements.tuningPanel.style.display = this._tuningVisible ? 'flex' : 'none';
+            }
+            if (this._tuningVisible) this._buildTuningPanel();
+        });
+
+        document.getElementById('tuning-reset')?.addEventListener('click', () => {
+            if (this._tuningDefaults && this.ruleEngine) {
+                Object.assign(this.ruleEngine.tuning, this._tuningDefaults);
+                this._buildTuningPanel();
+            }
+        });
+
+        // Auto-open via URL hash: #tune
+        if (window.location.hash === '#tune') {
+            this.elements.tuningToggle?.click();
+        }
+
+        // ── Main content resize handle (AP Status ↔ Command Log) ──
+        const resizeHandle = document.getElementById('main-resize-handle');
+        const apPanel = document.querySelector('.ap-status-panel');
+        if (resizeHandle && apPanel) {
+            let dragging = false;
+            let startX = 0;
+            let startW = 0;
+            resizeHandle.addEventListener('mousedown', (e) => {
+                dragging = true;
+                startX = e.clientX;
+                startW = apPanel.offsetWidth;
+                resizeHandle.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                const newW = Math.max(60, Math.min(400, startW + (e.clientX - startX)));
+                apPanel.style.width = newW + 'px';
+            });
+            document.addEventListener('mouseup', () => {
+                if (!dragging) return;
+                dragging = false;
+                resizeHandle.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            });
+        }
+
         // Filter buttons — multi-select; ALL toggles everything
         const allCats = ['api', 'ws', 'llm', 'cmd'];
         const syncFilterButtons = () => {
@@ -568,6 +637,205 @@ class AiAutopilotPane extends SimGlassBase {
             this.elements.debugPanel.style.display = this._debugVisible ? 'flex' : 'none';
         }
         if (this._debugVisible) this._renderDebugLog();
+    }
+
+    _buildTuningPanel() {
+        const body = this.elements.tuningBody;
+        if (!body || !this.ruleEngine) return;
+
+        const t = this.ruleEngine.tuning;
+        // Snapshot defaults on first open
+        if (!this._tuningDefaults) {
+            this._tuningDefaults = { ...t };
+        }
+
+        const groups = [
+            { label: 'Authority (% elevator)', keys: [
+                { key: 'rotateAuthority', label: 'Rotate', unit: '%', min: 5, max: 100, step: 5 },
+                { key: 'liftoffAuthority', label: 'Liftoff', unit: '%', min: 5, max: 100, step: 5 },
+                { key: 'initialClimbAuthority', label: 'Init Climb', unit: '%', min: 5, max: 100, step: 5 },
+            ]},
+            { label: 'Pitch Targets', keys: [
+                { key: 'rotatePitch', label: 'Rotate', unit: '\u00B0', min: 2, max: 20, step: 1 },
+                { key: 'liftoffPitch', label: 'Liftoff', unit: '\u00B0', min: 2, max: 20, step: 1 },
+            ]},
+            { label: 'PD Controller', keys: [
+                { key: 'pGain', label: 'P gain (low)', unit: '', min: 0.2, max: 5.0, step: 0.1 },
+                { key: 'pGainHigh', label: 'P gain (high)', unit: '', min: 0.5, max: 8.0, step: 0.1 },
+                { key: 'dGain', label: 'D damping', unit: '', min: 0, max: 4.0, step: 0.1 },
+            ]},
+            { label: 'Lateral Control', keys: [
+                { key: 'rudderAuthority', label: 'Rudder max (yaw)', unit: '%', min: 5, max: 60, step: 5 },
+                { key: 'bankAuthority', label: 'Aileron max (roll)', unit: '%', min: 5, max: 60, step: 5 },
+                { key: 'rudderBias', label: 'Rudder bias (right)', unit: '%', min: 0, max: 30, step: 1 },
+                { key: 'aileronBias', label: 'Aileron bias (right)', unit: '%', min: 0, max: 30, step: 1 },
+            ]},
+            { label: 'Speed Scaling', keys: [
+                { key: 'speedScaleVr', label: 'Vr ref', unit: 'kt', min: 30, max: 120, step: 5 },
+                { key: 'speedScaleFloor', label: 'Min factor', unit: '', min: 0.1, max: 1.0, step: 0.05 },
+                { key: 'speedScaleAgl', label: 'Disable below', unit: 'ft', min: 0, max: 1000, step: 50 },
+            ]},
+            { label: 'Safety (adaptive)', keys: [
+                { key: 'safetyMaxPitch', label: 'Max pitch', unit: '\u00B0', min: 5, max: 30, step: 1 },
+                { key: 'safetyCriticalPitch', label: 'Critical pitch', unit: '\u00B0', min: 10, max: 45, step: 1 },
+                { key: 'safetyStallMarginKt', label: 'Stall margin', unit: 'kt', min: 0, max: 20, step: 1 },
+                { key: 'safetyBaseCorrection', label: 'Base correction', unit: '%', min: 2, max: 40, step: 1 },
+                { key: 'safetyEscalationRate', label: 'Escalation rate', unit: 'x', min: 1.0, max: 3.0, step: 0.1 },
+                { key: 'safetyMaxCorrection', label: 'Max correction', unit: '%', min: 20, max: 100, step: 5 },
+            ]},
+        ];
+
+        body.innerHTML = '';
+        for (const g of groups) {
+            const div = document.createElement('div');
+            div.className = 'tuning-group';
+            div.innerHTML = `<div class="tuning-group-label">${g.label}</div>`;
+            for (const item of g.keys) {
+                const row = document.createElement('div');
+                row.className = 'tuning-row';
+                const val = t[item.key];
+                const decimals = (item.step < 1) ? (item.step < 0.1 ? 2 : 1) : 0;
+                row.innerHTML = `
+                    <span class="tuning-label">${item.label}</span>
+                    <input type="range" class="tuning-slider" min="${item.min}" max="${item.max}" step="${item.step}" value="${val}">
+                    <span class="tuning-readout">${val.toFixed(decimals)}${item.unit}</span>`;
+                const slider = row.querySelector('input');
+                const readout = row.querySelector('.tuning-readout');
+                slider.addEventListener('input', () => {
+                    const v = parseFloat(slider.value);
+                    t[item.key] = v;
+                    readout.textContent = v.toFixed(decimals) + item.unit;
+                });
+                div.appendChild(row);
+            }
+            body.appendChild(div);
+        }
+
+        // Live ghost display — shows computed values in real-time
+        const ghost = document.createElement('div');
+        ghost.className = 'tuning-group';
+        ghost.innerHTML = `<div class="tuning-group-label">LIVE (read-only)</div>`;
+        const liveRows = [
+            { id: 'lv-phase', label: 'Phase' },
+            // ELEVATOR → PITCH
+            { id: 'lv-pitch', label: 'PITCH angle' },
+            { id: 'lv-elevator', label: 'Elevator cmd (pitch)' },
+            { id: 'lv-raw-elev', label: 'Elevator actual' },
+            { id: 'lv-pterm', label: '  P term' },
+            { id: 'lv-dterm', label: '  D term' },
+            { id: 'lv-pitchrate', label: '  Pitch rate' },
+            // AILERONS → ROLL
+            { id: 'lv-bank', label: 'BANK angle' },
+            { id: 'lv-aileron', label: 'Aileron cmd (roll)' },
+            { id: 'lv-raw-ail', label: 'Aileron actual' },
+            // RUDDER → YAW
+            { id: 'lv-hdg', label: 'HDG / target' },
+            { id: 'lv-rudder', label: 'Rudder cmd (yaw)' },
+            { id: 'lv-raw-rud', label: 'Rudder actual' },
+            // ENGINE
+            { id: 'lv-throttle', label: 'Throttle' },
+            // SAFETY
+            { id: 'lv-maxdefl', label: 'Eff. max defl' },
+            { id: 'lv-speedfact', label: 'Speed factor' },
+            { id: 'lv-stallmargin', label: 'Stall margin' },
+            { id: 'lv-safety', label: 'Safety' },
+        ];
+        for (const lr of liveRows) {
+            const row = document.createElement('div');
+            row.className = 'tuning-row';
+            row.innerHTML = `<span class="tuning-label">${lr.label}</span><span class="tuning-live-val" id="${lr.id}">--</span>`;
+            ghost.appendChild(row);
+        }
+        body.appendChild(ghost);
+
+        // Timeline section
+        const tlDiv = document.createElement('div');
+        tlDiv.className = 'tuning-group';
+        tlDiv.innerHTML = `
+            <div class="tuning-group-label" style="display:flex;justify-content:space-between;align-items:center">
+                TIMELINE
+                <button class="tuning-reset" id="tl-clear" style="font-size:8px;padding:1px 6px">CLEAR</button>
+            </div>
+            <div class="timeline-log" id="timeline-log"></div>`;
+        body.appendChild(tlDiv);
+
+        document.getElementById('tl-clear')?.addEventListener('click', () => {
+            if (this.ruleEngine) this.ruleEngine.clearTimeline();
+            const log = document.getElementById('timeline-log');
+            if (log) log.innerHTML = '';
+        });
+
+        // Start/restart live update timer
+        if (this._tuningTimer) clearInterval(this._tuningTimer);
+        this._lastTimelineLen = 0;
+        this._tuningTimer = setInterval(() => {
+            if (!this._tuningVisible || !this.ruleEngine) return;
+            const L = this.ruleEngine.live;
+            const el = (id) => document.getElementById(id);
+            const sub = L.subPhase ? ` / ${L.subPhase}` : '';
+            el('lv-phase').textContent = `${L.phase}${sub}`;
+            // Raw flight data from SimConnect
+            const fd = this._lastFlightData || {};
+            const rawPct = (v) => {
+                if (v == null) return '--';
+                const norm = Math.abs(v) > 2 ? v / 16383 : v;
+                return `${(norm * 100).toFixed(1)}%`;
+            };
+            const sign = (v) => v > 0 ? '+' : '';
+            // ELEVATOR → PITCH
+            el('lv-pitch').textContent = `${L.pitch.toFixed(1)}\u00B0 \u2192 ${L.targetPitch.toFixed(1)}\u00B0`;
+            el('lv-elevator').textContent = `${sign(L.elevator)}${L.elevator.toFixed(1)}%`;
+            el('lv-raw-elev').textContent = rawPct(fd.elevatorPos);
+            el('lv-pterm').textContent = L.pTerm.toFixed(2);
+            el('lv-dterm').textContent = L.dTerm.toFixed(2);
+            el('lv-pitchrate').textContent = `${L.pitchRate.toFixed(1)}\u00B0/s`;
+            // AILERONS → ROLL
+            const bank = fd.bank != null ? fd.bank.toFixed(1) : '--';
+            el('lv-bank').textContent = `${bank}\u00B0`;
+            el('lv-aileron').textContent = `${sign(L.aileron)}${L.aileron.toFixed(1)}%`;
+            el('lv-raw-ail').textContent = rawPct(fd.aileronPos);
+            // RUDDER → YAW
+            const hdg = fd.heading != null ? Math.round(fd.heading) : '--';
+            const tgtHdg = this.ruleEngine._runwayHeading || '--';
+            el('lv-hdg').textContent = `${hdg}\u00B0 \u2192 ${tgtHdg}\u00B0`;
+            el('lv-rudder').textContent = `${sign(L.rudder)}${L.rudder.toFixed(1)}%`;
+            el('lv-raw-rud').textContent = rawPct(fd.rudderPos);
+            // ENGINE
+            el('lv-throttle').textContent = `${Math.round(L.throttle)}%`;
+            // SAFETY
+            el('lv-maxdefl').textContent = `${L.effectiveMaxDefl.toFixed(1)}% (gain ${L.gain.toFixed(1)})`;
+            el('lv-speedfact').textContent = `${L.speedFactor.toFixed(2)} (dens ${L.densityFactor.toFixed(2)})`;
+            el('lv-stallmargin').textContent = `${L.stallMarginKt}kt`;
+            if (L.safetyActive) {
+                el('lv-safety').textContent = `\u26A0 ${L.safetyReason} esc:${L.safetyEscalation} corr:${L.safetyCorrection}%`;
+                el('lv-safety').style.color = L.safetyEscalation > 2 ? '#ef5350' : '#ffb74d';
+            } else {
+                el('lv-safety').textContent = 'OK';
+                el('lv-safety').style.color = '#66bb6a';
+            }
+
+            // Update timeline log (only new entries)
+            const tl = this.ruleEngine.getTimeline();
+            const log = document.getElementById('timeline-log');
+            if (log && tl.length > this._lastTimelineLen) {
+                const newEntries = tl.slice(this._lastTimelineLen);
+                for (const e of newEntries) {
+                    const row = document.createElement('div');
+                    row.className = 'tl-row';
+                    const cmdShort = e.cmd.replace('AXIS_', '').replace('_SET', '').replace('_HOLD', '');
+                    const valStr = typeof e.val === 'number' ? (e.val > 0 ? '+' : '') + e.val : e.val;
+                    const phaseStr = e.sub ? `${e.phase}/${e.sub}` : e.phase;
+                    row.innerHTML = `<span class="tl-t">${e.t}s</span>` +
+                        `<span class="tl-phase">${phaseStr}</span>` +
+                        `<span class="tl-cmd">${cmdShort}</span>` +
+                        `<span class="tl-val">${valStr}</span>` +
+                        `<span class="tl-ctx">p:${e.pitch} ias:${e.ias} agl:${e.agl}</span>`;
+                    log.appendChild(row);
+                }
+                this._lastTimelineLen = tl.length;
+                log.scrollTop = log.scrollHeight;
+            }
+        }, 200);
     }
 
     _popoutDebug() {
@@ -1364,8 +1632,27 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // If AI is not enabled, no overrides to track
         if (!this.aiEnabled) return;
 
-        // Compare what AI last commanded vs what sim reports
-        // If they differ, pilot made a manual change
+        // ── Joystick axis override detection ──
+        // If pilot physically deflects stick/rudder, pause AI axis commands.
+        // yokeY: -1 to 1 (negative = push forward / nose down, positive = pull back / nose up). yokeX: -1 to 1. rudderPos: -1 to 1.
+        const threshold = 0.05;  // 5% deflection = pilot is touching the stick
+        const overrideDuration = 3000;  // pause AI for 3 seconds after pilot releases
+
+        const yokeY = data.yokeY;
+        const yokeX = data.yokeX;
+        const rudder = data.rudderPos;
+
+        if (yokeY != null && Math.abs(yokeY) > threshold) {
+            this.commandQueue.registerOverride('ELEVATOR', overrideDuration);
+        }
+        if (yokeX != null && Math.abs(yokeX) > threshold) {
+            this.commandQueue.registerOverride('AILERONS', overrideDuration);
+        }
+        if (rudder != null && Math.abs(rudder) > threshold) {
+            this.commandQueue.registerOverride('RUDDER', overrideDuration);
+        }
+
+        // ── AP toggle override detection ──
         const overrideMap = {
             'HDG': { sim: data.apHdgLock, ap: this.ap.headingHold },
             'ALT': { sim: data.apAltLock, ap: this.ap.altitudeHold },
@@ -1373,9 +1660,11 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             'SPD': { sim: data.apSpdLock, ap: this.ap.speedHold },
             'NAV': { sim: data.apNavLock, ap: this.ap.navHold }
         };
-
-        // We only detect overrides on toggle changes that weren't commanded by AI
-        // This is a simplified heuristic — real implementation would track command timestamps
+        for (const [axis, check] of Object.entries(overrideMap)) {
+            if (check.sim !== undefined && check.sim !== check.ap) {
+                this.commandQueue.registerOverride(axis, overrideDuration);
+            }
+        }
     }
 
     _sendWsCommand(cmd) {
@@ -2149,6 +2438,10 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // Restore original fetch
         if (this._origFetch) {
             window.fetch = this._origFetch;
+        }
+        if (this._tuningTimer) {
+            clearInterval(this._tuningTimer);
+            this._tuningTimer = null;
         }
         if (this._debugPopoutTimer) {
             clearInterval(this._debugPopoutTimer);
