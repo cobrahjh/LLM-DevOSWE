@@ -99,20 +99,24 @@
             padding: 8px 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
             display: flex; align-items: center; gap: 10px; cursor: default;
         }
-        .phase-header .phase-name-text { flex: 1; }
+        .phase-header .phase-name-text { flex: 1; display: flex; align-items: center; gap: 8px; }
+        .phase-time { font-size: 10px; font-weight: 400; opacity: 0.5; font-family: 'Consolas', monospace; }
+        .phase-card.active .phase-time, .phase-card.completed .phase-time { opacity: 0.8; }
         .phase-header .condition { font-weight: 400; font-size: 10px; opacity: 0.6; flex: 1; text-align: right; }
         .phase-ground .phase-header { background: #1a1500; color: #ffab40; border-left: 3px solid #ffab40; }
         .phase-air .phase-header { background: #001520; color: #4fc3f7; border-left: 3px solid #4fc3f7; }
         .phase-ap .phase-header { background: #001a10; color: #66bb6a; border-left: 3px solid #66bb6a; }
 
-        /* Hold button */
+        /* Go/Hold button */
         .hold-btn {
-            background: none; border: 1px solid currentColor; color: inherit;
-            padding: 2px 8px; border-radius: 3px; cursor: pointer;
+            background: none; border: 1px solid #404850; color: #506070;
+            padding: 2px 10px; border-radius: 3px; cursor: pointer;
             font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
             font-family: inherit; transition: all 0.15s; flex-shrink: 0;
         }
         .hold-btn:hover { opacity: 0.8; }
+        .hold-btn.go { background: #1a3020; border-color: #66bb6a; color: #66bb6a; }
+        .hold-btn.go:hover { background: #1a3a20; }
         .hold-btn.held { background: #ff5252; border-color: #ff5252; color: #fff; }
         .hold-btn.held:hover { background: #e04848; }
 
@@ -159,6 +163,7 @@
             transition: border-color 0.15s;
         }
         .input-group input:focus { border-color: #4fc3f7; }
+        .input-group input::-webkit-inner-spin-button { opacity: 0.3; }
         .input-group .unit { font-size: 9px; color: #404850; }
 
         .checklist { margin-top: 6px; padding-top: 6px; border-top: 1px solid #1a2030; }
@@ -370,6 +375,7 @@
         let wsConnected = false;
         let channel = null;
         let ws = null;
+        let phaseStartTimes = {};  // { phaseId: Date timestamp }
 
         function loadValues() {
             try { const r = localStorage.getItem(STORAGE_KEY); return r ? { ...DEFAULTS, ...JSON.parse(r) } : { ...DEFAULTS }; }
@@ -500,9 +506,21 @@
         // Phase ordering for "completed" detection
         const PHASE_ORDER = PHASES.map(p => p.id);
 
+        function formatTime(date) {
+            const h = String(date.getHours()).padStart(2, '0');
+            const m = String(date.getMinutes()).padStart(2, '0');
+            const s = String(date.getSeconds()).padStart(2, '0');
+            return h + ':' + m + ':' + s;
+        }
+
         function updateActivePhase() {
             const activeId = getActivePhaseId();
             const activeIdx = PHASE_ORDER.indexOf(activeId);
+
+            // Record start time when a phase becomes active for the first time
+            if (activeId && !phaseStartTimes[activeId]) {
+                phaseStartTimes[activeId] = new Date();
+            }
 
             PHASES.forEach((phase, idx) => {
                 const card = document.getElementById('card-' + phase.id);
@@ -512,6 +530,11 @@
                     card.classList.add('active');
                 } else if (activeIdx >= 0 && idx < activeIdx) {
                     card.classList.add('completed');
+                }
+                // Update time display
+                const timeEl = document.getElementById('time-' + phase.id);
+                if (timeEl) {
+                    timeEl.textContent = phaseStartTimes[phase.id] ? formatTime(phaseStartTimes[phase.id]) : '';
                 }
             });
         }
@@ -631,23 +654,51 @@
 
                 const nameSpan = document.createElement('span');
                 nameSpan.className = 'phase-name-text';
-                nameSpan.textContent = phase.name;
+                const nameText = document.createTextNode(phase.name);
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'phase-time';
+                timeSpan.id = 'time-' + phase.id;
+                timeSpan.textContent = phaseStartTimes[phase.id] ? formatTime(phaseStartTimes[phase.id]) : '';
+                nameSpan.appendChild(nameText);
+                nameSpan.appendChild(timeSpan);
 
                 const condSpan = document.createElement('span');
                 condSpan.className = 'condition';
                 condSpan.textContent = phase.condition;
 
-                // Hold/Go button (not for PREFLIGHT or BEFORE_ROLL — they're instant)
+                // Go/Hold button — 3 states: default GO (gray), active GO (green), HOLD (red)
                 const holdBtn = document.createElement('button');
-                holdBtn.className = 'hold-btn' + (holds[phase.id] ? ' held' : '');
-                holdBtn.textContent = holds[phase.id] ? 'HELD' : 'HOLD';
                 holdBtn.id = 'hold-' + phase.id;
+                if (holds[phase.id]) {
+                    holdBtn.className = 'hold-btn held';
+                    holdBtn.textContent = 'HOLD';
+                } else {
+                    holdBtn.className = 'hold-btn';
+                    holdBtn.textContent = 'GO';
+                }
                 holdBtn.addEventListener('click', function() {
-                    holds[phase.id] = !holds[phase.id];
-                    this.classList.toggle('held');
-                    this.textContent = holds[phase.id] ? 'HELD' : 'HOLD';
-                    saveHolds();
-                    showToast(holds[phase.id] ? phase.name + ' HELD' : phase.name + ' RELEASED');
+                    if (holds[phase.id]) {
+                        // HOLD → GO (highlighted): release hold + force-start phase
+                        holds[phase.id] = false;
+                        this.className = 'hold-btn go';
+                        this.textContent = 'GO';
+                        saveHolds();
+                        // Force-start this phase via SafeChannel
+                        if (channel) channel.postMessage({ type: 'tuner-command', command: 'set-phase', phase: phase.id });
+                        showToast(phase.name + ' GO');
+                    } else if (this.classList.contains('go')) {
+                        // GO (highlighted) → HOLD: set hold
+                        holds[phase.id] = true;
+                        this.className = 'hold-btn held';
+                        this.textContent = 'HOLD';
+                        saveHolds();
+                        showToast(phase.name + ' HOLD');
+                    } else {
+                        // GO (gray) → GO (highlighted): activate + force-start phase
+                        this.className = 'hold-btn go';
+                        if (channel) channel.postMessage({ type: 'tuner-command', command: 'set-phase', phase: phase.id });
+                        showToast(phase.name + ' GO');
+                    }
                 });
 
                 header.appendChild(dot);
@@ -676,16 +727,13 @@
                         const label = document.createElement('label');
                         label.textContent = input.label;
                         const inp = document.createElement('input');
-                        inp.type = 'text';
-                        inp.inputMode = 'decimal';
+                        inp.type = 'number';
+                        inp.step = 'any';
                         inp.id = 'input-' + input.key;
                         inp.value = values[input.key] ?? input.default;
-                        inp.addEventListener('change', function() {
+                        inp.addEventListener('input', function() {
                             const v = parseFloat(this.value);
                             if (!isNaN(v)) { values[input.key] = v; saveValues(input.key); }
-                        });
-                        inp.addEventListener('keydown', function(e) {
-                            if (e.key === 'Enter') this.blur();
                         });
                         const unit = document.createElement('div');
                         unit.className = 'unit';
@@ -773,9 +821,9 @@
         document.getElementById('btn-release-all').addEventListener('click', function() {
             holds = {};
             saveHolds();
-            document.querySelectorAll('.hold-btn.held').forEach(btn => {
-                btn.classList.remove('held');
-                btn.textContent = 'HOLD';
+            document.querySelectorAll('.hold-btn').forEach(btn => {
+                btn.className = 'hold-btn';
+                btn.textContent = 'GO';
             });
             showToast('All holds released');
         });

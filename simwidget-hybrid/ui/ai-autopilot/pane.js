@@ -1114,14 +1114,14 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     this._onSimbriefPlan(msg.data);
                     break;
                 case 'tuner-command':
-                    this._onTunerCommand(msg.command);
+                    this._onTunerCommand(msg.command, msg);
                     break;
             }
         };
     }
 
     /** Handle remote commands from takeoff-tuner.html via SafeChannel */
-    _onTunerCommand(command) {
+    _onTunerCommand(command, msg) {
         switch (command) {
             case 'toggle-ai':
                 this.aiEnabled = !this.aiEnabled;
@@ -1148,6 +1148,22 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             case 'import-fpl':
                 this._importSimBrief();
                 break;
+            case 'set-phase': {
+                // Force-start a specific takeoff sub-phase from the tuner
+                const phaseId = msg?.phase;
+                if (!phaseId) break;
+                // Flight-level phases (PREFLIGHT, TAXI, CLIMB) are managed by FlightPhase
+                // Takeoff sub-phases are managed by the rule engine
+                const subPhases = ['BEFORE_ROLL', 'ROLL', 'ROTATE', 'LIFTOFF', 'INITIAL_CLIMB', 'DEPARTURE'];
+                if (subPhases.includes(phaseId)) {
+                    this.ruleEngine._takeoffSubPhase = phaseId;
+                    if (phaseId === 'ROTATE') this.ruleEngine._rotateStartTime = Date.now();
+                } else if (this.flightPhase) {
+                    this.flightPhase.forcePhase(phaseId);
+                }
+                this._render();
+                break;
+            }
         }
     }
 

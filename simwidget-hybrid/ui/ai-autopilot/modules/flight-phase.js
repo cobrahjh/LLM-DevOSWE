@@ -153,6 +153,13 @@ class FlightPhase {
         return Date.now() - this._phaseEntryTime;
     }
 
+    /** Force a specific phase (from takeoff tuner) */
+    forcePhase(phase) {
+        if (this.PHASES.includes(phase)) {
+            this._setPhase(phase);
+        }
+    }
+
     /** Get progress percentage (0-100) through the flight phases */
     getProgress() {
         return Math.round((this.phaseIndex / (this.PHASES.length - 1)) * 100);
