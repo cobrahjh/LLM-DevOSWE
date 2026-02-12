@@ -533,8 +533,12 @@ class RuleEngine {
 
             case 'ROTATE': {
                 this._cmdValue('THROTTLE_SET', tt.rotateThrottle ?? tt.rollThrottle ?? 100, 'Full power');
-                const rotElev = tt.rotateElevator ?? -80;
-                this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${rotElev}`);
+                // Progressive rotation: start gentle (-20%), increase by -15%/sec to max.
+                // Prevents ground-loop from nosewheel unloading too fast.
+                const rotMax = tt.rotateElevator ?? -50;
+                const rotElapsed = (Date.now() - this._rotateStartTime) / 1000;
+                const rotElev = Math.max(rotMax, -20 - rotElapsed * 15);
+                this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${Math.round(rotElev)}`);
                 this._groundSteer(d, this._runwayHeading);
                 this._cmd('ELEV_TRIM_UP', true, 'Trim nose up');
                 if (!onGround && !this._isPhaseHeld('ROTATE')) {
@@ -548,7 +552,7 @@ class RuleEngine {
 
             case 'LIFTOFF': {
                 this._cmdValue('THROTTLE_SET', tt.liftoffThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const loElev = tt.liftoffElevator ?? -70;
+                const loElev = tt.liftoffElevator ?? -40;
                 this._cmdValue('AXIS_ELEVATOR_SET', loElev, `Climb — elevator ${loElev}`);
                 const loAilGain = tt.liftoffAileronGain ?? 2;
                 const loAilMax = tt.liftoffAileronMax ?? 30;
@@ -565,7 +569,7 @@ class RuleEngine {
 
             case 'INITIAL_CLIMB': {
                 this._cmdValue('THROTTLE_SET', tt.climbPhaseThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const icElev = tt.climbElevator ?? -50;
+                const icElev = tt.climbElevator ?? -30;
                 this._cmdValue('AXIS_ELEVATOR_SET', icElev, `Climb — elevator ${icElev}`);
                 const icAilGain = tt.climbAileronGain ?? 2;
                 const icAilMax = tt.climbAileronMax ?? 30;
