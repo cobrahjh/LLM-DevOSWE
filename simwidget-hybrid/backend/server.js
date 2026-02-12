@@ -2794,6 +2794,19 @@ function executeCommand(command, value) {
         return;
     }
 
+    // MSFS 2024 InputEvents for throttle — legacy THROTTLE_SET doesn't work
+    if ((command === 'THROTTLE_SET' || command === 'THROTTLE1_SET') && global.inputEventHashes?.ENGINE_THROTTLE_1) {
+        try {
+            const percent = Math.max(0, Math.min(100, value || 0));
+            const normalized = percent / 100;
+            simConnectConnection.setInputEvent(global.inputEventHashes.ENGINE_THROTTLE_1, normalized);
+            console.log(`[Throttle] InputEvent: ${percent}% (${normalized}) via ENGINE_THROTTLE_1`);
+        } catch (e) {
+            console.error(`[Throttle] InputEvent error: ${e.message}`);
+        }
+        return;
+    }
+
     // MSFS 2024 elevator trim via HANDLING InputEvent — preferred for takeoff rotation
     // HANDLING category InputEvents control actual flight dynamics (not cosmetic)
     if (command === 'ELEV_TRIM_INPUT') {
@@ -2838,18 +2851,39 @@ function executeCommand(command, value) {
         return;
     }
 
-    // MSFS 2024 flight controls via transmitClientEvent
-    // Sign convention (VERIFIED empirically 2026-02-10):
-    //   Elevator: negative = pull back = nose UP, positive = push forward = nose DOWN ✓
-    //   Ailerons: positive = roll LEFT, negative = roll RIGHT (opposite of joystick intuition!)
-    //   Rudder: positive = yaw LEFT, negative = yaw RIGHT (opposite of joystick intuition!)
-    // Ground steering confirms: drift right → positive rudder → yaw LEFT → corrects
-    // NO negation — pass through directly (scaled to -16383..+16383)
+    // ═══════════════════════════════════════════════════════════════════════
+    // MSFS 2024 FLIGHT CONTROLS — LOCKED CONVENTIONS (verified 2026-02-11)
+    // DO NOT CHANGE these values, names, signs, or methods without express
+    // written consent from the user. Each was individually tested in-sim.
+    //
+    // ┌──────────┬────────────┬──────────────────────────────────────────┐
+    // │ Control  │ Method     │ Convention (input -100..+100)            │
+    // ├──────────┼────────────┼──────────────────────────────────────────┤
+    // │ Throttle │ InputEvent │ 0..100 → 0.0..1.0 ENGINE_THROTTLE_1    │
+    // │ Elevator │ InputEvent │ +100=nose DOWN, -100=nose UP (negated)  │
+    // │          │            │ UNKNOWN_TAIL_ELEVATOR                   │
+    // │ Ailerons │ InputEvent │ -100=roll LEFT, +100=roll RIGHT(negated)│
+    // │          │            │ UNKNOWN_AILERON_LEFT/RIGHT (split)      │
+    // │ Rudder   │ Legacy     │ +100=yaw LEFT, -100=yaw RIGHT          │
+    // │          │            │ transmitClientEvent AXIS_RUDDER_SET     │
+    // └──────────┴────────────┴──────────────────────────────────────────┘
+    // ═══════════════════════════════════════════════════════════════════════
     if (command === 'AXIS_ELEVATOR_SET') {
-        const axisEventId = eventMap['AXIS_ELEVATOR_SET'];
-        if (axisEventId !== undefined) {
-            const simValue = Math.round((value || 0) / 100 * 16383);
-            simConnectConnection.transmitClientEvent(0, axisEventId, simValue, 1, 16);
+        const hash = global.inputEventHashes?.UNKNOWN_TAIL_ELEVATOR;
+        if (hash) {
+            try {
+                const normalized = -Math.max(-1, Math.min(1, (value || 0) / 100));
+                simConnectConnection.setInputEvent(hash, normalized);
+                console.log(`[Elevator] InputEvent: ${value}% (${normalized}) via UNKNOWN_TAIL_ELEVATOR`);
+            } catch (e) {
+                console.error(`[Elevator] InputEvent error: ${e.message}`);
+            }
+        } else {
+            const axisEventId = eventMap['AXIS_ELEVATOR_SET'];
+            if (axisEventId !== undefined) {
+                const simValue = Math.round((value || 0) / 100 * 16383);
+                simConnectConnection.transmitClientEvent(0, axisEventId, simValue, 1, 16);
+            }
         }
         return;
     }
@@ -2858,14 +2892,30 @@ function executeCommand(command, value) {
         if (rudderEventId !== undefined) {
             const simValue = Math.round((value || 0) / 100 * 16383);
             simConnectConnection.transmitClientEvent(0, rudderEventId, simValue, 1, 16);
+            console.log(`[Rudder] Legacy: ${value}% → ${simValue}`);
         }
         return;
     }
     if (command === 'AXIS_AILERONS_SET') {
-        const ailEventId = eventMap['AXIS_AILERONS_SET'];
-        if (ailEventId !== undefined) {
-            const simValue = Math.round((value || 0) / 100 * 16383);
-            simConnectConnection.transmitClientEvent(0, ailEventId, simValue, 1, 16);
+        const hashL = global.inputEventHashes?.UNKNOWN_AILERON_LEFT;
+        const hashR = global.inputEventHashes?.UNKNOWN_AILERON_RIGHT;
+        if (hashL && hashR) {
+            try {
+                const pct = -Math.max(-100, Math.min(100, value || 0));
+                const left = pct > 0 ? pct / 100 : 0;
+                const right = pct < 0 ? -pct / 100 : 0;
+                simConnectConnection.setInputEvent(hashL, left);
+                simConnectConnection.setInputEvent(hashR, right);
+                console.log(`[Ailerons] InputEvent: ${value}% → L:${left.toFixed(2)} R:${right.toFixed(2)}`);
+            } catch (e) {
+                console.error(`[Ailerons] InputEvent error: ${e.message}`);
+            }
+        } else {
+            const ailEventId = eventMap['AXIS_AILERONS_SET'];
+            if (ailEventId !== undefined) {
+                const simValue = Math.round((value || 0) / 100 * 16383);
+                simConnectConnection.transmitClientEvent(0, ailEventId, simValue, 1, 16);
+            }
         }
         return;
     }
@@ -3211,6 +3261,7 @@ async function initSimConnect() {
             'LANDING_LIGHTS_TOGGLE',
             'TOGGLE_TAXI_LIGHTS',
             'PARKING_BRAKES',
+            'PARKING_BRAKE_SET',
             'GEAR_TOGGLE',
             'FLAPS_UP',
             'FLAPS_DOWN',

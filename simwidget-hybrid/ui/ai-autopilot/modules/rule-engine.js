@@ -145,8 +145,7 @@ class RuleEngine {
         // Release parking brake whenever AI has controls and throttle is above idle.
         // This catches cases where onGround data is wrong or phase skips TAKEOFF.
         if (d.parkingBrake && (d.throttle > 20 || phase === 'TAKEOFF') && phase !== 'LANDING') {
-            delete this._lastCommands['PARKING_BRAKES'];
-            this._cmd('PARKING_BRAKES', true, 'Release parking brake (safety)');
+            this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake (safety)');
         }
 
         // Continuous flight envelope monitoring (every frame, not just phase changes)
@@ -165,7 +164,7 @@ class RuleEngine {
                 // Prepare aircraft for taxi: mixture rich, release brake, idle-up throttle
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH');
                 if (d.parkingBrake) {
-                    this._cmd('PARKING_BRAKES', true, 'Release parking brake for taxi');
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake for taxi');
                 }
                 this._cmdValue('THROTTLE_SET', 35, 'Idle-up throttle');
                 // Capture heading and start steering immediately — don't wait for TAXI
@@ -194,8 +193,7 @@ class RuleEngine {
                 if (this._atc && (this._atc.getPhase() === 'HOLD_SHORT' || this._atc.getPhase() === 'TAKEOFF_CLEARANCE_PENDING')) {
                     this._cmdValue('THROTTLE_SET', 0, 'Hold short — awaiting clearance');
                     if (!d.parkingBrake) {
-                        delete this._lastCommands['PARKING_BRAKES'];
-                        this._cmd('PARKING_BRAKES', true, 'Parking brake — hold short');
+                        this._cmdValue('PARKING_BRAKE_SET', 1, 'Parking brake — hold short');
                     }
                     break;
                 }
@@ -444,8 +442,7 @@ class RuleEngine {
                         this._cmd('FLAPS_UP', true, 'Retract flaps after landing');
                     }
                     if (lndGs < 40 && lndGs > 5 && !d.parkingBrake) {
-                        delete this._lastCommands['PARKING_BRAKES'];
-                        this._cmd('PARKING_BRAKES', true, 'Braking');
+                        this._cmdValue('PARKING_BRAKE_SET', 1, 'Braking');
                     }
                 }
                 break;
@@ -493,7 +490,7 @@ class RuleEngine {
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
                 // Release parking brake if set
                 if (d.parkingBrake) {
-                    this._cmd('PARKING_BRAKES', true, 'Release parking brake');
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
                 // Advance to ROLL
                 this._takeoffSubPhase = 'ROLL';
@@ -502,7 +499,7 @@ class RuleEngine {
             case 'ROLL':
                 // POH: Full power for takeoff
                 if (d.parkingBrake) {
-                    this._cmd('PARKING_BRAKES', true, 'Release parking brake');
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
                 this._cmdValue('THROTTLE_SET', 100, 'Full power');
                 // Capture runway heading once
