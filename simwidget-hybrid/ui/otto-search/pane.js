@@ -1,5 +1,5 @@
 /**
- * Otto Search Bar - SimGlass v2.0.0
+ * SimGlass Search - v2.1.0
  * Command palette for quick action search
  */
 
@@ -62,11 +62,11 @@ const COMMANDS = [
     { name: 'Sim Rate Down', desc: 'Slow down sim', command: 'SIM_RATE_DECR', category: 'environment', icon: '\u23EA', keywords: ['sim', 'rate', 'slow'] }
 ];
 
-class OttoSearch extends SimGlassBase {
+class SimGlassSearch extends SimGlassBase {
     constructor() {
         super({
-            widgetName: 'otto-search',
-            widgetVersion: '2.0.0',
+            widgetName: 'simglass-search',
+            widgetVersion: '2.1.0',
             autoConnect: true
         });
 
@@ -141,7 +141,7 @@ class OttoSearch extends SimGlassBase {
             if (window.telemetry) {
                 telemetry.captureError(err, {
                     operation: 'sendCommand',
-                    glass: 'otto-search',
+                    glass: 'simglass-search',
                     command
                 });
             }
@@ -253,7 +253,7 @@ class OttoSearch extends SimGlassBase {
         const widgetContainer = document.querySelector('.widget-container');
 
         // Read compact mode preference from localStorage
-        const savedCompact = localStorage.getItem('otto-search-compact');
+        const savedCompact = localStorage.getItem('simglass-search-compact');
         if (savedCompact === 'true') {
             this.isCompact = true;
             widgetContainer.classList.add('compact');
@@ -265,7 +265,7 @@ class OttoSearch extends SimGlassBase {
             this.isCompact = !this.isCompact;
             widgetContainer.classList.toggle('compact');
             compactToggle.classList.toggle('active');
-            localStorage.setItem('otto-search-compact', this.isCompact);
+            localStorage.setItem('simglass-search-compact', this.isCompact);
             this.updateCompact();
         });
 
@@ -300,6 +300,6 @@ class OttoSearch extends SimGlassBase {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.ottoSearch = new OttoSearch();
-    window.addEventListener('beforeunload', () => window.ottoSearch?.destroy());
+    window.simglassSearch = new SimGlassSearch();
+    window.addEventListener('beforeunload', () => window.simglassSearch?.destroy());
 });

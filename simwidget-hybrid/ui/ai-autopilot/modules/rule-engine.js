@@ -1321,7 +1321,7 @@ class RuleEngine {
 
         // Gain: lower at speed (aerodynamic authority increases)
         const baseGain = Math.max(3.0, 8.0 - gs * 0.06);
-        const maxDefl = 60;
+        const maxDefl = this.tuning.rudderAuthority || 20;
 
         // Through server.js: positive RUDDER_SET value → left yaw in MSFS
         // Drifted right (+error) → need LEFT rudder (positive value) to correct

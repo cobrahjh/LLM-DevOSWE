@@ -320,7 +320,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/autopilot/">🎛️ Autopilot</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/panel-launcher/">🎛️ Panel Launcher</a></li>
                 <li><a href="/ui/interaction-wheel/">⚙️ Interaction Wheel</a></li>
-                <li><a href="/ui/otto-search/">🔍 Otto Search</a></li>
+                <li><a href="/ui/otto-search/">🔍 SimGlass Search</a></li>
                 <li><a href="/ui/radio-stack/">📻 Radio Stack</a></li>
                 <li><a href="/ui/environment/">🌤️ Environment</a></li>
                 <li><a href="/ui/gtn750/">🗺️ GTN750</a></li>

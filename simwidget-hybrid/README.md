@@ -62,7 +62,7 @@ Browse to: http://localhost:8080
 |--------|-----|-------------|
 | AI Copilot | `/ui/copilot-widget/` | Intelligent flight assistant |
 | Voice Control | `/ui/voice-control/` | Voice commands |
-| Otto Search | `/ui/otto-search/` | Command palette |
+| SimGlass Search | `/ui/otto-search/` | Command palette |
 
 #### Multiplayer & Network
 
@@ -145,7 +145,7 @@ Browse to: http://localhost:8080
 ### AI & Automation
 - AI Copilot with callouts & suggestions
 - Voice control commands
-- Otto Search command palette
+- SimGlass Search command palette
 
 ### Cross-Widget Communication
 Widgets communicate via BroadcastChannel:
