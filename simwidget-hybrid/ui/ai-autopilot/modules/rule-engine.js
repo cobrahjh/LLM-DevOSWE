@@ -247,8 +247,10 @@ class RuleEngine {
                     this._cmdValue('AXIS_RUDDER_SET', 0, 'Release rudder for AP');
                     this._cmdValue('AXIS_AILERONS_SET', 0, 'Release ailerons for AP');
                 }
-                // Climb power — full throttle until cruise
-                this._cmdValue('THROTTLE_SET', 100, 'Climb power');
+                // Climb power — full throttle unless speed protection is managing throttle
+                if (!this._speedCorrectionActive) {
+                    this._cmdValue('THROTTLE_SET', 100, 'Climb power');
+                }
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
                 }
@@ -297,7 +299,9 @@ class RuleEngine {
                 else if (spdDiff > 5) cruiseThrottle = 90;    // building speed
                 else if (spdDiff > -5) cruiseThrottle = 80;   // near target
                 else cruiseThrottle = 70;                      // above target — reduce
-                this._cmdValue('THROTTLE_SET', cruiseThrottle, 'Cruise throttle ' + cruiseThrottle + '%');
+                if (!this._speedCorrectionActive) {
+                    this._cmdValue('THROTTLE_SET', cruiseThrottle, 'Cruise throttle ' + cruiseThrottle + '%');
+                }
                 break;
             }
 
@@ -862,8 +866,10 @@ class RuleEngine {
             }
             this._speedCorrectionActive = true;
         } else if (ias > vno && phase !== 'DESCENT') {
-            // Over Vno in non-descent phase — reduce power
-            this._cmdValue('THROTTLE_SET', 70, `IAS ${Math.round(ias)} > Vno ${vno} — reduce power`);
+            // Over Vno in non-descent phase — proportional power reduction
+            const excess = ias - vno;
+            const throttle = Math.max(50, Math.round(90 - excess * 2));
+            this._cmdValue('THROTTLE_SET', throttle, `IAS ${Math.round(ias)} > Vno ${vno} — power ${throttle}%`);
             this._speedCorrectionActive = true;
         } else if (ias > vaDynamic && absBank > 20) {
             // Over dynamic Va in a turn — risk of structural damage from turbulence/gust
