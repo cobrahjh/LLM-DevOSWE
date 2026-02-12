@@ -33,7 +33,7 @@ class CommandQueue {
 
         // Axis rate limiting — SimConnect drops events if flooded
         this._axisLastSend = {};   // { AXIS_*: timestamp }
-        this._axisMinInterval = 150; // ms between same axis command (max ~7/sec)
+        this._axisMinInterval = 50; // ms between same axis command (~20/sec, like a joystick)
     }
 
     /**
@@ -51,14 +51,11 @@ class CommandQueue {
         if (axis && this._isOverridden(axis)) return;
 
         // ── Axis controls (AXIS_*) bypass queue but are rate-limited ──
-        // SimConnect drops events if flooded (>10/sec per axis).
-        // Rate limit to ~7/sec per axis while keeping responsive.
+        // SimConnect events are momentary — must resend continuously to hold position.
+        // Rate limit to ~7/sec per axis (SimConnect drops if >10/sec).
+        // NO dedup — same value must be resent every tick.
         const isAxisControl = cmd.type.startsWith('AXIS_');
         if (isAxisControl) {
-            // Dedup with tight tolerance
-            const current = this._currentApState[cmd.type];
-            if (current !== undefined && Math.abs(current - cmd.value) < 0.3) return;
-            // Rate limit per axis type
             const now = Date.now();
             const lastSend = this._axisLastSend[cmd.type] || 0;
             if (now - lastSend < this._axisMinInterval) return;
@@ -273,6 +270,8 @@ class CommandQueue {
         if (type === 'THROTTLE_SET') return 'THROTTLE';
         if (type === 'MIXTURE_SET') return 'MIXTURE';
         if (type === 'AXIS_ELEVATOR_SET') return 'ELEVATOR';
+        if (type === 'AXIS_RUDDER_SET') return 'RUDDER';
+        if (type === 'AXIS_AILERONS_SET') return 'AILERONS';
         if (type.includes('FLAPS')) return 'FLAPS';
         if (type === 'PARKING_BRAKES') return 'BRAKES';
         return null;
@@ -296,8 +295,8 @@ class CommandQueue {
      * Register a pilot override — pauses AI for this axis
      * Called when pilot manually changes an AP setting
      */
-    registerOverride(axis) {
-        this._overrides[axis] = Date.now() + this.OVERRIDE_COOLDOWN;
+    registerOverride(axis, durationMs) {
+        this._overrides[axis] = Date.now() + (durationMs || this.OVERRIDE_COOLDOWN);
         // Remove queued commands for this axis
         this._queue = this._queue.filter(cmd => this._commandToAxis(cmd.type) !== axis);
         this._notifyOverrideChange();

@@ -52,6 +52,64 @@ class RuleEngine {
 
         // Rotation timing — for progressive back pressure
         this._rotateStartTime = null;
+
+        // Live-tunable parameters — change from console: widget.ruleEngine.tuning.xxx = value
+        this.tuning = {
+            rotateAuthority: 15,      // % max elevator deflection during ROTATE
+            liftoffAuthority: 15,     // % max elevator during LIFTOFF
+            initialClimbAuthority: 15,// % max elevator during INITIAL_CLIMB
+            rotatePitch: 8,           // target pitch (deg) during rotation
+            liftoffPitch: 7,          // target pitch (deg) during liftoff <100ft
+            pGain: 1.2,              // proportional gain (low authority)
+            pGainHigh: 2.0,          // proportional gain (high authority, >40% maxDefl)
+            dGain: 0.8,              // derivative damping
+            speedScaleVr: 55,        // reference speed for scaling (kts)
+            speedScaleFloor: 0.5,    // minimum speed factor
+            speedScaleAgl: 200,      // AGL below which speed scaling is disabled
+            // Lateral control during takeoff
+            rudderAuthority: 20,      // % max rudder deflection (yaw)
+            bankAuthority: 25,        // % max aileron deflection (roll)
+            rudderBias: 8,            // constant right-rudder offset (%) to counter P-factor yaw
+            aileronBias: 5,           // constant right-roll offset (%) to counter torque roll
+            // Safety thresholds — Sally reads these to know her limits
+            safetyMaxPitch: 15,       // pitch (deg) where correction starts
+            safetyCriticalPitch: 25,  // pitch (deg) for emergency correction
+            safetyStallMarginKt: 5,   // IAS margin above stall speed (kts)
+            safetyBaseCorrection: 10, // starting elevator correction (%)
+            safetyEscalationRate: 1.5,// multiplier per escalation step
+            safetyMaxCorrection: 60,  // absolute max correction (%)
+        };
+
+        // Adaptive safety state — Sally tracks whether her corrections are working
+        this._safety = {
+            active: false,         // currently intervening
+            reason: null,          // 'PITCH' | 'STALL' | 'BOTH'
+            startTime: 0,          // when intervention started
+            startPitch: 0,         // pitch when intervention began
+            escalation: 0,         // how many times she's had to escalate (0-5)
+            lastCorrection: 0,     // last elevator value she applied
+            lastCheckTime: 0,      // last time she checked if correction is working
+            improving: false,      // is the situation getting better?
+        };
+
+        // Timeline recorder — logs every command with context
+        this.timeline = [];       // array of { t, phase, sub, cmd, val, pitch, ias, agl, vs, desc }
+        this._timelineMax = 500;  // keep last 500 entries
+        this._timelineStart = Date.now();
+
+        // Live computed values — read-only snapshot for UI display
+        this.live = {
+            phase: '', subPhase: '',
+            pitch: 0, targetPitch: 0, pitchError: 0,
+            ias: 0, agl: 0,
+            elevator: 0, pTerm: 0, dTerm: 0,
+            speedFactor: 1, densityFactor: 1, effectiveMaxDefl: 0,
+            rudder: 0, aileron: 0, throttle: 0,
+            gain: 0, pitchRate: 0,
+            // Safety state
+            safetyActive: false, safetyReason: '', safetyEscalation: 0,
+            safetyCorrection: 0, stallMarginKt: 0,
+        };
     }
 
     /**
@@ -68,6 +126,9 @@ class RuleEngine {
         const speeds = p.speeds;
         const phaseChanged = phase !== this._lastPhase;
         this._lastPhase = phase;
+        this.live.phase = phase;
+        this.live.subPhase = this._takeoffSubPhase || '';
+        this.live.throttle = d.throttle || 0;
 
         // Reset takeoff sub-phase when leaving TAKEOFF
         if (phaseChanged && phase !== 'TAKEOFF') {
@@ -400,9 +461,9 @@ class RuleEngine {
         const agl = d.altitudeAGL || 0;
         const gs = d.groundSpeed || 0;
         const vs = d.verticalSpeed || 0;
-        // MSFS 2024: onGround SimVar sometimes false on the ground, but reliable when airborne.
-        // Use AGL < 10 as primary, with SimVar as tiebreaker.
-        const onGround = agl < 10 && d.onGround !== false;
+        // MSFS 2024: onGround SimVar can be unreliable, AGL reads 15-30ft on runway
+        // due to terrain model offset. On ground if SimVar says so OR low AGL + no climb.
+        const onGround = d.onGround || (agl < 50 && Math.abs(vs) < 200);
 
         // Initialize sub-phase on entry
         if (phaseChanged || !this._takeoffSubPhase) {
@@ -416,6 +477,11 @@ class RuleEngine {
             delete this._lastCommands['AP_MASTER'];
             this._cmd('AP_MASTER', false, 'AP off for takeoff');
         }
+
+        // ── Adaptive takeoff safety — Sally reads instruments and reacts ──
+        // FAA stall recovery: reduce AoA (lower nose), full power, level wings.
+        // She starts with a proportional correction and escalates if it's not working.
+        this._evaluateTakeoffSafety(d, ias, agl);
 
         switch (this._takeoffSubPhase) {
             case 'BEFORE_ROLL':
@@ -450,56 +516,71 @@ class RuleEngine {
                 break;
 
             case 'ROTATE':
-                // MSFS 2024: Let aircraft rotate naturally — no direct elevator control.
-                // Full power + ground steering only. Wait for liftoff.
                 this._cmdValue('THROTTLE_SET', 100, 'Full power');
+                // Pitch: safety system has priority — only command elevator if safety isn't active
+                if (!this._safety.active) {
+                    this._targetPitch(d, this.tuning.rotatePitch, this.tuning.rotateAuthority);
+                }
+                this._targetBank(d, 0, this.tuning.bankAuthority || 30);
                 this._groundSteer(d, this._runwayHeading);
+                // Also pump trim nose-up as backup
+                this._cmd('ELEV_TRIM_UP', true, 'Trim nose up');
                 // Airborne — transition
                 if (!onGround) {
                     this._takeoffSubPhase = 'LIFTOFF';
                 }
-                // Safety: if stuck on ground past Vr+20 for >10s, something is wrong
-                if (Date.now() - this._rotateStartTime > 10000 && onGround) {
-                    this._takeoffSubPhase = 'LIFTOFF';  // force advance
+                // Safety: if stuck on ground past 15s, force advance
+                if (Date.now() - this._rotateStartTime > 15000 && onGround) {
+                    this._takeoffSubPhase = 'LIFTOFF';
                 }
                 break;
 
             case 'LIFTOFF':
-                // MSFS 2024: Engage AP as soon as safely airborne for pitch control.
-                // SimConnect can't control elevator directly, so AP is the only pitch authority.
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Engage AP immediately when airborne with safe speed
-                if (!apState.master && (vs > 50 || agl > 50)) {
-                    this._cmd('AP_MASTER', true, 'Engage AP (early — no direct elevator)');
-                    const hdg = Math.round(this._runwayHeading || d.heading || 0);
-                    this._cmdValue('HEADING_BUG_SET', hdg, 'HDG ' + hdg + '\u00B0');
+                // Pitch: safety system has priority
+                if (!this._safety.active) {
+                    if (agl < 100) {
+                        this._targetPitch(d, this.tuning.liftoffPitch, this.tuning.liftoffAuthority);
+                    } else {
+                        this._pitchForSpeed(d, speeds.Vy || 74, this.tuning.liftoffAuthority);
+                    }
                 }
-                // Set AP modes for climb
-                if (apState.master) {
-                    this._cmd('AP_HDG_HOLD', true, 'HDG hold');
-                    this._cmd('AP_VS_HOLD', true, 'VS hold');
-                    this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate || 500, 'VS +' + (p.climb.normalRate || 500));
-                }
-                // Advance when climbing steadily
+                // Airborne: use AILERONS for heading correction (bank toward target heading)
+                // Rudder is only for P-factor bias + coordination
+                this._bankToHeading(d, this._runwayHeading || d.heading, this.tuning.bankAuthority || 30);
+                this._applyRudderBias(d, this.tuning.rudderAuthority || 25);
+                // (stall/pitch safety handled by _evaluateTakeoffSafety above)
+                // Advance when climbing and at safe altitude
                 if (vs > 100 && agl > (tk.initialClimbAgl || 200)) {
                     this._takeoffSubPhase = 'INITIAL_CLIMB';
                 }
                 break;
 
             case 'INITIAL_CLIMB':
-                // AP handles pitch + heading. Full power climb.
                 this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Ensure AP is engaged
-                if (!apState.master) {
-                    this._cmd('AP_MASTER', true, 'Engage AP');
+                // Pitch: safety system has priority
+                if (!this._safety.active) {
+                    this._pitchForSpeed(d, speeds.Vy || 74, this.tuning.initialClimbAuthority);
                 }
-                // Set climb rate
-                this._cmd('AP_VS_HOLD', true, 'VS hold');
-                this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate || 500, 'VS +' + (p.climb.normalRate || 500));
-                // Advance to DEPARTURE when at safe altitude + speed
+                // Airborne: ailerons for heading, rudder for coordination
+                this._bankToHeading(d, this._runwayHeading || d.heading, this.tuning.bankAuthority || 30);
+                this._applyRudderBias(d, this.tuning.rudderAuthority || 25);
+                // (stall/pitch safety handled by _evaluateTakeoffSafety above)
+                // Engage AP when speed is safe and altitude sufficient
                 {
                     const stallMargin = (speeds.Vs1 || 53) + 15;
                     if (ias >= stallMargin && agl > (tk.flapRetractAgl || 500)) {
+                        this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release for AP');
+                        this._cmdValue('AXIS_RUDDER_SET', 0, 'Release for AP');
+                        this._cmdValue('AXIS_AILERONS_SET', 0, 'Release for AP');
+                        if (!apState.master) {
+                            this._cmd('AP_MASTER', true, 'Engage AP');
+                            const hdg = Math.round(d.heading || this._runwayHeading || 0);
+                            this._cmdValue('HEADING_BUG_SET', hdg, 'HDG ' + hdg + '\u00B0');
+                        }
+                        this._cmd('AP_HDG_HOLD', true, 'HDG hold');
+                        this._cmd('AP_VS_HOLD', true, 'VS hold');
+                        this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate || 500, 'VS +' + (p.climb.normalRate || 500));
                         this._takeoffSubPhase = 'DEPARTURE';
                     }
                 }
@@ -516,6 +597,129 @@ class RuleEngine {
                 // Sub-phase complete — flight-phase.js will transition to CLIMB at 500+ AGL
                 break;
         }
+    }
+
+    /**
+     * Adaptive takeoff safety — Sally reads her instruments and reacts.
+     * Follows FAA stall recovery procedure:
+     *   1. Reduce angle of attack (push nose down)
+     *   2. Add full power
+     *   3. Level wings
+     *   4. Minimize altitude loss
+     *
+     * She starts with a proportional correction and ESCALATES if it's not working.
+     * All thresholds come from this.tuning — nothing hardcoded.
+     */
+    _evaluateTakeoffSafety(d, ias, agl) {
+        const t = this.tuning;
+        const pitch = d.pitch || 0;
+        const pitchRate = this.live.pitchRate || 0;  // deg/sec from _targetPitch PD controller
+        const stallWarning = !!d.stallWarning;
+        const vs = d.verticalSpeed || 0;
+
+        // Compute dynamic stall speed (uses weight/bank-adjusted envelope)
+        const env = this._computeEnvelope(d);
+        const stallSpeed = env ? env.vsActive : ((this.profile?.speeds?.Vs1) || 53);
+        const stallMargin = ias - stallSpeed;
+
+        // Update live display
+        this.live.stallMarginKt = Math.round(stallMargin);
+
+        // ── Read instruments: is there a problem? ──
+        const pitchExceeded = pitch > t.safetyMaxPitch;
+        const pitchCritical = pitch > t.safetyCriticalPitch;
+        const stallDanger = stallWarning || (ias > 0 && stallMargin < t.safetyStallMarginKt);
+        const needsIntervention = pitchExceeded || stallDanger;
+
+        if (!needsIntervention) {
+            // All clear — reset safety state if it was active
+            if (this._safety.active) {
+                this._safety.active = false;
+                this._safety.escalation = 0;
+                this._safety.reason = null;
+                this.live.safetyActive = false;
+                this.live.safetyReason = '';
+                this.live.safetyEscalation = 0;
+                this.live.safetyCorrection = 0;
+            }
+            return;
+        }
+
+        // ── Problem detected — intervene ──
+        const now = Date.now();
+
+        if (!this._safety.active) {
+            // Starting new intervention
+            this._safety.active = true;
+            this._safety.startTime = now;
+            this._safety.startPitch = pitch;
+            this._safety.escalation = 0;
+            this._safety.lastCheckTime = now;
+            this._safety.reason = stallDanger ? (pitchExceeded ? 'BOTH' : 'STALL') : 'PITCH';
+        }
+
+        // ── Check if correction is working (every 500ms) ──
+        if (now - this._safety.lastCheckTime > 500) {
+            this._safety.lastCheckTime = now;
+            // Is pitch rate trending nose-down (improving)?
+            this._safety.improving = pitchRate < -0.5;
+
+            // If NOT improving and it's been >1s, escalate
+            if (!this._safety.improving && (now - this._safety.startTime) > 1000) {
+                this._safety.escalation = Math.min(this._safety.escalation + 1, 5);
+            }
+            // If it's getting WORSE (pitch still climbing), escalate faster
+            if (pitchRate > 1.0 && (now - this._safety.startTime) > 500) {
+                this._safety.escalation = Math.min(this._safety.escalation + 1, 5);
+            }
+        }
+
+        // ── Compute correction strength ──
+        // Base: proportional to how far past the limit
+        let correction = t.safetyBaseCorrection;
+
+        if (pitchExceeded) {
+            // Proportional to excess pitch: 1° over = base, 5° over = 3x base, 10° over = 5x base
+            const excess = pitch - t.safetyMaxPitch;
+            correction += excess * (t.safetyBaseCorrection / 2);
+        }
+
+        if (stallDanger) {
+            // Proportional to how deep into stall margin: tighter margin = stronger push
+            const deficit = t.safetyStallMarginKt - stallMargin;
+            correction += Math.max(0, deficit) * 3;
+            // Stall warning horn = immediate stronger response
+            if (stallWarning) correction += t.safetyBaseCorrection;
+        }
+
+        // Escalation multiplier — Sally tries harder each time her correction doesn't work
+        const escalationMultiplier = Math.pow(t.safetyEscalationRate, this._safety.escalation);
+        correction *= escalationMultiplier;
+
+        // Critical pitch = emergency, ignore normal escalation and go straight to max
+        if (pitchCritical) {
+            correction = Math.max(correction, t.safetyMaxCorrection * 0.8);
+        }
+
+        // Clamp to max
+        correction = Math.min(correction, t.safetyMaxCorrection);
+
+        // ── Apply correction (positive elevator = push nose down) ──
+        const reason = [];
+        if (pitchExceeded) reason.push(`pitch ${pitch.toFixed(1)}°`);
+        if (stallDanger) reason.push(`stall margin ${stallMargin.toFixed(0)}kt`);
+        if (stallWarning) reason.push('STALL WARNING');
+        const esc = this._safety.escalation > 0 ? ` [esc ${this._safety.escalation}]` : '';
+        const desc = `SAFETY: ${reason.join(', ')} → ${correction.toFixed(0)}%${esc}`;
+
+        this._cmdValue('AXIS_ELEVATOR_SET', correction, desc);
+        this._safety.lastCorrection = correction;
+
+        // Update live display
+        this.live.safetyActive = true;
+        this.live.safetyReason = this._safety.reason;
+        this.live.safetyEscalation = this._safety.escalation;
+        this.live.safetyCorrection = Math.round(correction);
     }
 
     /** Get the current takeoff sub-phase (for debug display) */
@@ -546,9 +750,9 @@ class RuleEngine {
         const alt = d.altitude || 0;        // MSL
         const agl = d.altitudeAGL || 0;
         const gs = d.groundSpeed || 0;
-        // MSFS 2024: onGround SimVar sometimes false on the ground, but reliable when airborne.
-        // Use AGL < 10 as primary, with SimVar as tiebreaker.
-        const onGround = agl < 10 && d.onGround !== false;
+        // MSFS 2024: onGround SimVar can be unreliable, AGL reads 15-30ft on runway
+        // due to terrain model offset. On ground if SimVar says so OR low AGL + no climb.
+        const onGround = d.onGround || (agl < 50 && Math.abs(vs) < 200);
         const absBank = Math.abs(bank);
 
         // Skip ground phases
@@ -945,6 +1149,7 @@ class RuleEngine {
     _cmd(command, value, description) {
         if (this._lastCommands[command] === value) return; // dedup
         this._lastCommands[command] = value;
+        this._logTimeline(command, value, description);
         this.commandQueue.enqueue({
             type: command,
             value: value,
@@ -957,17 +1162,47 @@ class RuleEngine {
      */
     _cmdValue(command, value, description) {
         const lastVal = this._lastCommands[command];
-        // Tighter dedup for continuous flight controls (AXIS_*) — they need frequent updates
         const isAxis = command.startsWith('AXIS_');
-        const tolerance = isAxis ? 0.1 : 1;
-        if (lastVal !== undefined && Math.abs(lastVal - value) < tolerance) return;
+        // AXIS_* commands are momentary SimConnect events — must send every tick
+        // to maintain deflection. Only dedup non-axis AP commands.
+        if (!isAxis) {
+            if (lastVal !== undefined && Math.abs(lastVal - value) < 1) return;
+        }
         this._lastCommands[command] = value;
+        this._logTimeline(command, value, description);
         this.commandQueue.enqueue({
             type: command,
             value: value,
             description: description || `${command} \u2192 ${value}`,
             priority: isAxis ? 'high' : 'normal'  // axis controls process first
         });
+    }
+
+    _logTimeline(command, value, description) {
+        const L = this.live;
+        this.timeline.push({
+            t: ((Date.now() - this._timelineStart) / 1000).toFixed(2),
+            phase: L.phase,
+            sub: L.subPhase,
+            cmd: command,
+            val: typeof value === 'number' ? Math.round(value * 100) / 100 : value,
+            pitch: L.pitch?.toFixed(1),
+            ias: Math.round(L.ias),
+            agl: Math.round(L.agl),
+            vs: Math.round(this.live.pitchRate || 0),
+            elev: L.elevator?.toFixed(1),
+            desc: description || '',
+        });
+        if (this.timeline.length > this._timelineMax) {
+            this.timeline.splice(0, this.timeline.length - this._timelineMax);
+        }
+    }
+
+    getTimeline() { return this.timeline; }
+
+    clearTimeline() {
+        this.timeline = [];
+        this._timelineStart = Date.now();
     }
 
     // ── Feedback Control Methods ──────────────────────────────────
@@ -989,10 +1224,16 @@ class RuleEngine {
         // At sea level factor=1.0, at 5000ft ~1.15, at 10000ft ~1.35
         const altMSL = d.altitude || 0;
         const densityFactor = 1 + Math.max(0, altMSL) / 30000;
-        const maxDefl = (maxDeflection || 30) * densityFactor;
+        // Speed-based authority scaling: less deflection at higher speeds.
+        // Only applies above speedScaleAgl — during takeoff roll/rotation need full authority.
+        const ias = d.speed || 0;
+        const agl = d.altitudeAGL || 0;
+        const t = this.tuning;
+        const speedFactor = (ias > t.speedScaleVr && agl > t.speedScaleAgl) ? Math.max(t.speedScaleFloor, t.speedScaleVr / ias) : 1.0;
+        const maxDefl = (maxDeflection || 30) * densityFactor * speedFactor;
 
         // Proportional term: gain scales with authority needed
-        const gain = maxDefl > 40 ? 3.0 : 1.8;
+        const gain = maxDefl > 40 ? t.pGainHigh : t.pGain;
         const pTerm = -error * gain;
 
         // Derivative term: strong damping to prevent porpoising
@@ -1002,16 +1243,25 @@ class RuleEngine {
         const pitchRate = (pitch - (this._lastPitch != null ? this._lastPitch : pitch)) / clampedDt; // deg/sec
         this._lastPitch = pitch;
         this._lastPitchTime = now;
-        const dTerm = pitchRate * 1.2;  // strong damping — oppose rapid pitch changes
+        const dTerm = pitchRate * t.dGain;
 
         // Combined: capped at ±maxDefl
         let elevator = Math.max(-maxDefl, Math.min(maxDefl, pTerm + dTerm));
 
-        // Gentle emergency: if pitch > 12°, progressively add nose-down
-        if (pitch > 12) {
-            const emergencyPush = (pitch - 12) * 2.0;  // gentle push, not slam
+        // Progressive nose-down assist when approaching safety threshold (uses tuning)
+        const safetyThresh = this.tuning.safetyMaxPitch - 3;  // start 3° before safety kicks in
+        if (pitch > safetyThresh) {
+            const emergencyPush = (pitch - safetyThresh) * 1.5;
             elevator = Math.max(-maxDefl, Math.min(maxDefl + 20, elevator + emergencyPush));
         }
+
+        // Update live snapshot for UI
+        const L = this.live;
+        L.pitch = pitch; L.targetPitch = targetDeg; L.pitchError = error;
+        L.ias = ias; L.agl = agl;
+        L.elevator = elevator; L.pTerm = pTerm; L.dTerm = dTerm;
+        L.speedFactor = speedFactor; L.densityFactor = densityFactor;
+        L.effectiveMaxDefl = maxDefl; L.gain = gain; L.pitchRate = pitchRate;
 
         this._cmdValue('AXIS_ELEVATOR_SET', Math.round(elevator * 10) / 10,
             `Pitch ${pitch.toFixed(1)}° → ${targetDeg}° (elev ${elevator > 0 ? '+' : ''}${elevator.toFixed(1)})`);
@@ -1036,10 +1286,13 @@ class RuleEngine {
         // Clamped to safe range: -5° (nose down recovery) to +15° (max climb)
         let pitchTarget = speedErr * 0.5;
 
-        // Minimum pitch: don't go negative unless we're dangerously slow
-        // After liftoff, maintain at least a slight climb
+        // During takeoff/liftoff, maintain minimum climb pitch — don't level off just because
+        // IAS is below Vy. A real pilot holds pitch for climb, not dive for speed at 200ft.
+        const isTakeoff = this._takeoffSubPhase === 'LIFTOFF' || this._takeoffSubPhase === 'INITIAL_CLIMB';
+        const minPitch = isTakeoff ? this.tuning.liftoffPitch : 0;
+
         if (ias > (this.profile?.speeds?.Vs1 || 53)) {
-            pitchTarget = Math.max(0, pitchTarget);  // never push nose below horizon if above stall
+            pitchTarget = Math.max(minPitch, pitchTarget);
         }
 
         pitchTarget = Math.max(-5, Math.min(15, pitchTarget));
@@ -1066,23 +1319,27 @@ class RuleEngine {
         const hdg = d.heading || 0;
         const hdgError = ((hdg - targetHdg + 540) % 360) - 180;  // positive = drifted right
 
-        // Deadband: don't correct if error < 0.5°
-        if (Math.abs(hdgError) < 0.5) return;
-
         // Gain: lower at speed (aerodynamic authority increases)
         const baseGain = Math.max(3.0, 8.0 - gs * 0.06);
         const maxDefl = 60;
 
         // Through server.js: positive RUDDER_SET value → left yaw in MSFS
         // Drifted right (+error) → need LEFT rudder (positive value) to correct
-        const rudder = Math.max(-maxDefl, Math.min(maxDefl, hdgError * baseGain));
+        // P-factor bias: full power pulls nose left — apply constant right rudder (negative)
+        // Bias is ALWAYS applied at power — even with zero heading error (proactive, not reactive)
+        const bias = (d.throttle || 0) > 50 ? -(this.tuning.rudderBias || 0) : 0;
+        const correction = Math.abs(hdgError) < 0.5 ? 0 : hdgError * baseGain;  // deadband on correction only
+        const rudder = Math.max(-maxDefl, Math.min(maxDefl, correction + bias));
+        this.live.rudder = rudder;
         this._cmdValue('AXIS_RUDDER_SET', Math.round(rudder),
             `Rudder hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${hdgError > 0 ? '+' : ''}${hdgError.toFixed(1)}°)`);
 
         // Roll bias accumulates for use after liftoff (P-factor compensation)
+        // Positive AXIS_AILERONS_SET = roll LEFT. Left bank (negative) needs right roll (negative bias).
+        // So bias should track same sign as bank: left bank → negative bias → negative deflection → roll right
         const bank = d.bank || 0;
         const powerFactor = Math.max(0.1, (d.throttle || 0) / 100);
-        this._rollBias += -bank * 0.02 * powerFactor;
+        this._rollBias += bank * 0.02 * powerFactor;  // left bank → negative bias → roll right
         this._rollBias *= 0.97;
         this._rollBias = Math.max(-20, Math.min(20, this._rollBias));
     }
@@ -1091,10 +1348,19 @@ class RuleEngine {
         if (targetHdg == null) return;
         const hdg = d.heading || 0;
         const error = ((hdg - targetHdg + 540) % 360) - 180;  // positive = heading right of target
-        const g = gain || 1.5;
+        // Higher gain during takeoff — airborne rudder needs more authority than cruise
+        const g = gain || (this._takeoffSubPhase ? 3.0 : 1.5);
         // Through server.js: positive RUDDER_SET value → left yaw in MSFS
         // Drifted right (+error) → need LEFT rudder (positive value) to correct
-        const deflection = Math.max(-maxDeflection, Math.min(maxDeflection, error * g));
+        let deflection = error * g;
+        // P-factor/torque bias: C172 at full power pulls left — apply constant right rudder
+        // (negative rudder = right yaw). Only during takeoff with power applied.
+        if (axis === 'AXIS_RUDDER_SET' && this._takeoffSubPhase && (d.throttle || 0) > 50) {
+            const bias = -(this.tuning.rudderBias || 0);  // negative = right rudder
+            deflection += bias;
+        }
+        deflection = Math.max(-maxDeflection, Math.min(maxDeflection, deflection));
+        this.live.rudder = deflection;
         this._cmdValue(axis, Math.round(deflection * 10) / 10,
             `${axis === 'AXIS_RUDDER_SET' ? 'Rudder' : 'Aileron'} hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${error > 0 ? '+' : ''}${Math.round(error)}°)`);
     }
@@ -1113,13 +1379,60 @@ class RuleEngine {
         const absError = Math.abs(error);
         const gain = 2.0 + Math.min(absError / 15, 1.0) * 2.0;
 
-        // Apply accumulated roll bias (P-factor/torque compensation learned on ground)
-        const bias = this._rollBias || 0;
+        // Apply accumulated roll bias (adaptive) + torque bias (tunable)
+        let bias = this._rollBias || 0;
+        // Verified empirically: positive AXIS_AILERONS_SET = roll LEFT in MSFS
+        // Torque rolls aircraft left → need right roll → NEGATIVE aileron bias
+        if (this._takeoffSubPhase && (d.throttle || 0) > 50) {
+            bias -= (this.tuning.aileronBias || 0);  // negative = roll right (counter left torque)
+        }
 
-        // Positive AILERON_SET = roll left (opposing right bank). Positive error = banked right → positive aileron.
+        // Positive AXIS_AILERONS_SET = roll LEFT in MSFS (verified by ground steering)
+        // Banked right (+error) → positive aileron → roll left → corrects back to level
         const deflection = Math.max(-maxDeflection, Math.min(maxDeflection, error * gain + bias));
+        this.live.aileron = deflection;
         this._cmdValue('AXIS_AILERONS_SET', Math.round(deflection * 10) / 10,
             `Bank ${bank.toFixed(1)}° → ${targetBank.toFixed(1)}° (ail ${deflection > 0 ? '+' : ''}${deflection.toFixed(1)})`);
+    }
+
+    /**
+     * Airborne heading correction using AILERONS (bank toward target heading).
+     * This is how a real pilot corrects heading in the air: bank, don't kick rudder.
+     * Computes a small target bank angle based on heading error, then delegates to _targetBank.
+     * @param {Object} d - flight data
+     * @param {number} targetHdg - desired heading
+     * @param {number} maxBank - max bank angle to command (degrees of aileron authority)
+     */
+    _bankToHeading(d, targetHdg, maxBank) {
+        if (targetHdg == null) return;
+        const hdg = d.heading || 0;
+        const hdgError = ((hdg - targetHdg + 540) % 360) - 180;  // positive = drifted right of target
+
+        // Convert heading error to bank angle: drift right → bank right to turn back
+        // ~2° bank per 1° heading error, max ±15° (safe at low altitude)
+        // Positive error (drifted right) → positive targetBank (bank right) → turn right...
+        // Wait — drifted RIGHT means need to turn LEFT. So invert:
+        const targetBank = Math.max(-15, Math.min(15, -hdgError * 2));
+
+        this._targetBank(d, targetBank, maxBank);
+    }
+
+    /**
+     * Apply rudder P-factor bias + minimal coordination during airborne takeoff.
+     * NOT for heading correction — that's done by _bankToHeading via ailerons.
+     * @param {Object} d - flight data
+     * @param {number} maxDefl - max rudder deflection
+     */
+    _applyRudderBias(d, maxDefl) {
+        // P-factor bias only (no heading correction — ailerons handle that)
+        let rudder = 0;
+        if ((d.throttle || 0) > 50) {
+            rudder = -(this.tuning.rudderBias || 0);  // negative = right rudder = counter left yaw
+        }
+        rudder = Math.max(-maxDefl, Math.min(maxDefl, rudder));
+        this.live.rudder = rudder;
+        this._cmdValue('AXIS_RUDDER_SET', Math.round(rudder),
+            `Rudder bias ${rudder > 0 ? '+' : ''}${Math.round(rudder)}% (P-factor)`);
     }
 
     // ── Nav Guidance Methods ─────────────────────────────────

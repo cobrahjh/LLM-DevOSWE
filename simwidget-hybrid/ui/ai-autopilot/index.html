@@ -25,9 +25,14 @@
                 <button class="ai-master-toggle" id="ai-toggle">OFF</button>
                 <button class="ai-auto-controls" id="auto-controls-btn">AI CONTROLS</button>
                 <button class="debug-toggle" id="debug-toggle" title="Debug Panel">DBG</button>
+                <button class="tuning-toggle" id="tuning-toggle" title="Tuning Panel">TUNE</button>
                 <span class="connection-status" id="conn-status" title="Connection status"></span>
             </div>
         </div>
+
+        <!-- Two-column layout: main left, tuning right -->
+        <div class="page-body" id="page-body">
+        <div class="page-main" id="page-main">
 
         <!-- Phase Display -->
         <div class="phase-section" id="phase-section">
@@ -95,12 +100,14 @@
                 <div class="fpl-report-route-string" id="fpl-rpt-route-str"></div>
                 <div class="fpl-report-waypoints" id="fpl-rpt-wps-list"></div>
                 <div class="fpl-report-commands">
-                    <div class="fpl-cmd-label">AI INSTRUCTIONS</div>
-                    <div class="fpl-cmd-row">
-                        <input type="text" class="fpl-cmd-input" id="fpl-cmd-input" placeholder="e.g. Fly at FL180, avoid KDEN airspace, descend early..." autocomplete="off">
-                        <button class="fpl-cmd-send" id="fpl-cmd-send">SEND</button>
+                    <div class="fpl-cmd-label" id="fpl-cmd-toggle" style="cursor:pointer">AI INSTRUCTIONS <span id="fpl-cmd-chevron">&#9660;</span></div>
+                    <div class="fpl-cmd-content" id="fpl-cmd-content">
+                        <div class="fpl-cmd-row">
+                            <input type="text" class="fpl-cmd-input" id="fpl-cmd-input" placeholder="e.g. Fly at FL180, avoid KDEN airspace, descend early..." autocomplete="off">
+                            <button class="fpl-cmd-send" id="fpl-cmd-send">SEND</button>
+                        </div>
+                        <div class="fpl-cmd-history" id="fpl-cmd-history"></div>
                     </div>
-                    <div class="fpl-cmd-history" id="fpl-cmd-history"></div>
                 </div>
             </div>
         </div>
@@ -136,6 +143,9 @@
                     <span class="status-check" id="check-nav"></span>
                 </div>
             </div>
+
+            <!-- Resize Handle -->
+            <div class="main-resize-handle" id="main-resize-handle"></div>
 
             <!-- Command Log Column -->
             <div class="command-log-panel">
@@ -191,6 +201,19 @@
                 <span>CMD: <span id="ds-cmd">0</span></span>
             </div>
         </div>
+
+        </div><!-- /page-main -->
+
+        <!-- Tuning Panel (right column) -->
+        <div class="tuning-panel" id="tuning-panel" style="display:none">
+            <div class="tuning-header">
+                <span class="tuning-title">TUNING</span>
+                <button class="tuning-reset" id="tuning-reset" title="Reset to defaults">RESET</button>
+            </div>
+            <div class="tuning-body" id="tuning-body"></div>
+        </div>
+
+        </div><!-- /page-body -->
 
         <!-- Footer -->
         <div class="widget-footer">

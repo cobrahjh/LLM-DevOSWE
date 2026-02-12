@@ -573,8 +573,20 @@
 .ap-status-panel {
     width: 140px;
     flex-shrink: 0;
-    border-right: 1px solid var(--border-color, #1e2a3a);
     padding: 6px 0;
+}
+
+/* Main Resize Handle (between AP Status and Command Log) */
+.main-resize-handle {
+    width: 5px;
+    cursor: col-resize;
+    background: var(--border-color, #1e2a3a);
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.main-resize-handle:hover,
+.main-resize-handle.dragging {
+    background: #ffab40;
 }
 
 .panel-title {
@@ -869,6 +881,123 @@
 .advisory-btn.dismiss:hover {
     background: #252540;
 }
+
+/* Page Body — two-column layout when tuning is open */
+.page-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+.page-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* Tuning Panel */
+.tuning-toggle {
+    padding: 3px 8px;
+    border: 1px solid #334;
+    border-radius: 3px;
+    background: #1a1a2e;
+    color: #556;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+}
+.tuning-toggle:hover { color: #ffab40; border-color: #ffab40; }
+.tuning-toggle.active { background: #1a150d; border-color: #ffab40; color: #ffab40; }
+
+.tuning-panel {
+    display: flex;
+    flex-direction: column;
+    background: #0d0f14;
+    border-left: 1px solid #1a2030;
+    width: 340px;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+.tuning-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: #111820;
+    border-bottom: 1px solid #1a2030;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.tuning-title { font-size: 11px; font-weight: 700; color: #ffab40; letter-spacing: 1px; }
+.tuning-reset {
+    padding: 2px 8px; border: 1px solid #334; border-radius: 3px;
+    background: #1a1a2e; color: #556; font-size: 9px; cursor: pointer;
+}
+.tuning-reset:hover { color: #f44; border-color: #f44; }
+.tuning-body { padding: 6px 10px; }
+.tuning-group {
+    margin-bottom: 8px;
+}
+.tuning-group-label {
+    font-size: 9px; font-weight: 700; color: #556; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 4px;
+}
+.tuning-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 3px 0;
+}
+.tuning-label {
+    width: 110px; flex-shrink: 0; font-size: 11px; color: #8892a4;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tuning-slider {
+    flex: 1; height: 6px; min-width: 60px;
+    -webkit-appearance: none; appearance: none;
+    background: #1a2030; border-radius: 3px; outline: none;
+    cursor: pointer;
+}
+.tuning-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #ffab40; border: 2px solid #0a0e14;
+    cursor: pointer;
+}
+.tuning-slider::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #ffab40; border: 2px solid #0a0e14;
+    cursor: pointer;
+}
+.tuning-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; }
+.tuning-slider::-moz-range-track { height: 6px; border-radius: 3px; background: #1a2030; }
+.tuning-readout {
+    width: 52px; flex-shrink: 0; text-align: right;
+    font-size: 11px; font-family: monospace; color: #ffab40;
+}
+.tuning-live-val {
+    flex: 1; text-align: right;
+    font-size: 11px; font-family: monospace; color: #4fc3f7;
+}
+
+/* Timeline */
+.timeline-log {
+    max-height: 300px; overflow-y: auto;
+    font-family: monospace; font-size: 10px;
+    background: #060a10; border-radius: 3px;
+    padding: 4px;
+}
+.tl-row {
+    display: flex; gap: 4px; padding: 1px 0;
+    white-space: nowrap; border-bottom: 1px solid #0a1018;
+}
+.tl-t { color: #445; width: 45px; flex-shrink: 0; text-align: right; }
+.tl-phase { color: #8b5cf6; width: 65px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
+.tl-cmd { color: #ffab40; width: 55px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
+.tl-val { color: #4fc3f7; width: 40px; flex-shrink: 0; text-align: right; }
+.tl-ctx { color: #334; flex: 1; overflow: hidden; text-overflow: ellipsis; }
 
 /* Footer */
 .widget-footer {
