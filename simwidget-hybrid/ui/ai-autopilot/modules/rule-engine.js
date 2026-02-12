@@ -165,11 +165,14 @@ class RuleEngine {
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
                 // Prepare aircraft for taxi: mixture rich, release brake, idle-up throttle
-                this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH');
-                if (d.parkingBrake) {
-                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake for taxi');
+                {
+                    const tt = this._getTakeoffTuning();
+                    this._cmdValue('MIXTURE_SET', tt.preflightMixture ?? 100, 'Mixture RICH');
+                    if (d.parkingBrake) {
+                        this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake for taxi');
+                    }
+                    this._cmdValue('THROTTLE_SET', tt.preflightThrottle ?? 35, 'Idle-up throttle');
                 }
-                this._cmdValue('THROTTLE_SET', 35, 'Idle-up throttle');
                 // Capture heading and start steering immediately — don't wait for TAXI
                 if (!this._runwayHeading) {
                     if (this._activeRunway?.heading) {
@@ -239,11 +242,11 @@ class RuleEngine {
                     const thrMax = tt.taxiThrottleMax ?? 70;
                     const targetGS = tt.taxiTargetGS ?? 25;
                     let thr;
-                    if (hdgError > 15) {
-                        thr = Math.max(thrMin, 35 - hdgError * 0.3);
+                    if (hdgError > (tt.taxiHdgErrorThreshold ?? 15)) {
+                        thr = Math.max(thrMin, 35 - hdgError * (tt.taxiHdgPenalty ?? 0.3));
                     } else {
                         const speedError = targetGS - gs;
-                        thr = Math.max(thrMin, Math.min(thrMax, 55 + speedError * 0.8));
+                        thr = Math.max(thrMin, Math.min(thrMax, 55 + speedError * (tt.taxiSpeedGain ?? 0.8)));
                     }
                     this._cmdValue('THROTTLE_SET', Math.round(thr), `Taxi (GS ${Math.round(gs)}, hdg err ${Math.round(hdgError)}°)`);
                 }
@@ -504,7 +507,7 @@ class RuleEngine {
 
         switch (this._takeoffSubPhase) {
             case 'BEFORE_ROLL':
-                this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
+                this._cmdValue('MIXTURE_SET', tt.beforeRollMixture ?? 100, 'Mixture RICH for takeoff');
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
@@ -529,7 +532,7 @@ class RuleEngine {
                 break;
 
             case 'ROTATE': {
-                this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power');
+                this._cmdValue('THROTTLE_SET', tt.rotateThrottle ?? tt.rollThrottle ?? 100, 'Full power');
                 const rotElev = tt.rotateElevator ?? -50;
                 this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${rotElev}`);
                 this._groundSteer(d, this._runwayHeading);
@@ -544,31 +547,31 @@ class RuleEngine {
             }
 
             case 'LIFTOFF': {
-                this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power climb');
+                this._cmdValue('THROTTLE_SET', tt.liftoffThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
                 const loElev = tt.liftoffElevator ?? -40;
                 this._cmdValue('AXIS_ELEVATOR_SET', loElev, `Climb — elevator ${loElev}`);
                 const loAilGain = tt.liftoffAileronGain ?? 2;
                 const loAilMax = tt.liftoffAileronMax ?? 30;
                 const bank = d.bank || 0;
-                if (Math.abs(bank) > 3) {
+                if (Math.abs(bank) > (tt.liftoffBankThreshold ?? 3)) {
                     const ailCorr = bank * loAilGain;
                     this._cmdValue('AXIS_AILERONS_SET', Math.max(-loAilMax, Math.min(loAilMax, ailCorr)), `Wings level (bank ${Math.round(bank)}°)`);
                 }
-                if (vs > 100 && agl > (tt.liftoffClimbAgl ?? tk.initialClimbAgl ?? 200) && !this._isPhaseHeld('LIFTOFF')) {
+                if (vs > (tt.liftoffVsThreshold ?? 100) && agl > (tt.liftoffClimbAgl ?? tk.initialClimbAgl ?? 200) && !this._isPhaseHeld('LIFTOFF')) {
                     this._takeoffSubPhase = 'INITIAL_CLIMB';
                 }
                 break;
             }
 
             case 'INITIAL_CLIMB': {
-                this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power climb');
+                this._cmdValue('THROTTLE_SET', tt.climbPhaseThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
                 const icElev = tt.climbElevator ?? -30;
                 this._cmdValue('AXIS_ELEVATOR_SET', icElev, `Climb — elevator ${icElev}`);
                 const icAilGain = tt.climbAileronGain ?? 2;
                 const icAilMax = tt.climbAileronMax ?? 30;
                 {
                     const bank = d.bank || 0;
-                    if (Math.abs(bank) > 3) {
+                    if (Math.abs(bank) > (tt.climbBankThreshold ?? 3)) {
                         const ailCorr = bank * icAilGain;
                         this._cmdValue('AXIS_AILERONS_SET', Math.max(-icAilMax, Math.min(icAilMax, ailCorr)), `Wings level (bank ${Math.round(bank)}°)`);
                     }
@@ -595,16 +598,19 @@ class RuleEngine {
                 break;
             }
 
-            case 'DEPARTURE':
+            case 'DEPARTURE': {
                 // Retract flaps, set climb speed, set cruise alt target
                 this._cmd('FLAPS_UP', true, 'Retract flaps');
-                this._cmdValue('AP_SPD_VAR_SET', speeds.Vy, 'SPD ' + speeds.Vy + ' (Vy climb)');
-                this._cmdValue('AP_ALT_VAR_SET', this._getCruiseAlt(), 'ALT ' + this._getCruiseAlt());
+                const depSpd = tt.departureSpeed ?? speeds.Vy;
+                const depAlt = tt.departureCruiseAlt ?? this._getCruiseAlt();
+                this._cmdValue('AP_SPD_VAR_SET', depSpd, 'SPD ' + depSpd + ' (Vy climb)');
+                this._cmdValue('AP_ALT_VAR_SET', depAlt, 'ALT ' + depAlt);
                 // Do NOT engage AP_ALT_HOLD here — it captures current alt (~800ft)
                 // and prevents the CLIMB phase from commanding VS climb to cruise
                 this._cmd('LANDING_LIGHTS_TOGGLE', true, 'Lights off after departure');
                 // Sub-phase complete — flight-phase.js will transition to CLIMB at 500+ AGL
                 break;
+            }
         }
     }
 
@@ -1331,12 +1337,12 @@ class RuleEngine {
         const hdgError = ((hdg - targetHdg + 540) % 360) - 180;  // positive = drifted right
 
         // Gain: lower at speed (aerodynamic authority increases)
-        const baseGain = Math.max(3.0, 8.0 - gs * 0.06);
+        const ttSteer = this._getTakeoffTuning();
+        const baseGain = Math.max(3.0, (ttSteer.steerGainBase ?? 8.0) - gs * (ttSteer.steerGainDecay ?? 0.06));
         // Ground steering needs much more authority than flight — C172 nosewheel
         // is sluggish at low speeds, full deflection may be needed to hold heading.
         // Scale from full authority at taxi speed down to tuned value at Vr.
         const flightDefl = this.tuning.rudderAuthority || 20;
-        const ttSteer = this._getTakeoffTuning();
         const lowSpeedDefl = ttSteer.taxiRudderMaxLow ?? 60;
         const maxDefl = gs < 30 ? Math.max(flightDefl, lowSpeedDefl) : flightDefl;
 
@@ -1344,8 +1350,9 @@ class RuleEngine {
         // Drifted right (+error) → need LEFT rudder (positive value) to correct
         // P-factor bias: full power pulls nose left — apply constant right rudder (negative)
         // Bias is ALWAYS applied at power — even with zero heading error (proactive, not reactive)
-        const bias = (d.throttle || 0) > 50 ? -(this.tuning.rudderBias || 0) : 0;
-        const correction = Math.abs(hdgError) < 0.5 ? 0 : hdgError * baseGain;  // deadband on correction only
+        const biasVal = ttSteer.rudderBias ?? this.tuning.rudderBias ?? 0;
+        const bias = (d.throttle || 0) > 50 ? -biasVal : 0;
+        const correction = Math.abs(hdgError) < (ttSteer.steerDeadband ?? 0.5) ? 0 : hdgError * baseGain;  // deadband on correction only
         const rudder = Math.max(-maxDefl, Math.min(maxDefl, correction + bias));
         this.live.rudder = rudder;
         this._cmdValue('AXIS_RUDDER_SET', Math.round(rudder),

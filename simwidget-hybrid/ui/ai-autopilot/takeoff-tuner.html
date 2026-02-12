@@ -228,10 +228,14 @@
             {
                 id: 'PREFLIGHT', name: 'PREFLIGHT', type: 'ground',
                 condition: 'On ground, AI enabled',
-                inputs: [],
-                checklist: ['Mixture rich', 'Flaps set', 'Trim set', 'Parking brake ON'],
+                inputs: [
+                    { key: 'preflightMixture', label: 'Mixture', default: 100, unit: '%' },
+                    { key: 'preflightThrottle', label: 'Idle-up throttle', default: 35, unit: '%' },
+                    { key: 'preflightFlaps', label: 'Flaps index', default: 2, unit: 'notch' }
+                ],
+                checklist: ['Mixture rich', 'Flaps set', 'Trim set', 'Parking brake released'],
                 liveFields: ['mixture', 'flaps', 'parkingBrake'],
-                isFlight: true  // flight-level phase (not takeoff sub-phase)
+                isFlight: true
             },
             {
                 id: 'TAXI', name: 'TAXI', type: 'ground',
@@ -240,7 +244,14 @@
                     { key: 'taxiThrottleMax', label: 'Throttle aligned max', default: 70, unit: '%' },
                     { key: 'taxiThrottleMin', label: 'Throttle misaligned min', default: 25, unit: '%' },
                     { key: 'taxiTargetGS', label: 'Target ground speed', default: 25, unit: 'kt' },
-                    { key: 'taxiRudderMaxLow', label: 'Rudder authority (low speed)', default: 60, unit: '%' }
+                    { key: 'taxiRudderMaxLow', label: 'Rudder authority (low speed)', default: 60, unit: '%' },
+                    { key: 'taxiHdgErrorThreshold', label: 'Heading error for throttle cut', default: 15, unit: '°' },
+                    { key: 'taxiSpeedGain', label: 'Speed error gain', default: 0.8, unit: 'x' },
+                    { key: 'taxiHdgPenalty', label: 'Heading penalty gain', default: 0.3, unit: 'x' },
+                    { key: 'steerGainBase', label: 'Steer gain (base)', default: 8.0, unit: 'x' },
+                    { key: 'steerGainDecay', label: 'Steer gain decay /kt', default: 0.06, unit: 'x' },
+                    { key: 'steerDeadband', label: 'Steer deadband', default: 0.5, unit: '°' },
+                    { key: 'rudderBias', label: 'P-factor rudder bias', default: 8, unit: '%' }
                 ],
                 checklist: ['Brake released', 'Heading captured', 'Rudder steering active'],
                 liveFields: ['gs', 'hdgError', 'throttle', 'rudder'],
@@ -249,7 +260,9 @@
             {
                 id: 'BEFORE_ROLL', name: 'BEFORE_ROLL', type: 'ground',
                 condition: 'Phase enters TAKEOFF',
-                inputs: [],
+                inputs: [
+                    { key: 'beforeRollMixture', label: 'Mixture', default: 100, unit: '%' }
+                ],
                 checklist: ['Mixture 100%', 'Parking brake released'],
                 liveFields: ['mixture', 'parkingBrake']
             },
@@ -258,7 +271,8 @@
                 condition: 'After BEFORE_ROLL',
                 inputs: [
                     { key: 'rollThrottle', label: 'Throttle', default: 100, unit: '%' },
-                    { key: 'vrSpeed', label: 'Vr (rotate speed)', default: 55, unit: 'kt' }
+                    { key: 'vrSpeed', label: 'Vr (rotate speed)', default: 55, unit: 'kt' },
+                    { key: 'rollRudderBias', label: 'P-factor rudder bias', default: 8, unit: '%' }
                 ],
                 checklist: ['Full power applied', 'Runway heading locked', 'Rudder steering active'],
                 liveFields: ['ias', 'vrBar', 'throttle', 'rudder']
@@ -268,7 +282,8 @@
                 condition: 'IAS >= Vr',
                 inputs: [
                     { key: 'rotateElevator', label: 'Elevator value', default: -50, unit: '(-) = nose up' },
-                    { key: 'rotateTimeout', label: 'Max rotate time', default: 15, unit: 'sec' }
+                    { key: 'rotateTimeout', label: 'Max rotate time', default: 15, unit: 'sec' },
+                    { key: 'rotateThrottle', label: 'Throttle', default: 100, unit: '%' }
                 ],
                 checklist: ['Elevator applied', 'Trim nose up', 'Waiting for liftoff (onGround=false)'],
                 liveFields: ['ias', 'pitch', 'elevator', 'onGround']
@@ -278,11 +293,14 @@
                 condition: 'Not on ground',
                 inputs: [
                     { key: 'liftoffElevator', label: 'Elevator value', default: -40, unit: '(-) = nose up' },
+                    { key: 'liftoffThrottle', label: 'Throttle', default: 100, unit: '%' },
                     { key: 'liftoffAileronGain', label: 'Aileron gain (prop.)', default: 2, unit: 'x bank deg' },
                     { key: 'liftoffAileronMax', label: 'Max aileron deflection', default: 30, unit: '%' },
+                    { key: 'liftoffBankThreshold', label: 'Wings-level bank threshold', default: 3, unit: '°' },
+                    { key: 'liftoffVsThreshold', label: 'VS threshold for next phase', default: 100, unit: 'fpm' },
                     { key: 'liftoffClimbAgl', label: 'Climb AGL for next phase', default: 200, unit: 'ft AGL' }
                 ],
-                checklist: ['Nose up hold', 'Wings level (proportional)', 'VS > 100 fpm', 'Waiting for AGL threshold'],
+                checklist: ['Nose up hold', 'Wings level (proportional)', 'VS > threshold', 'Waiting for AGL threshold'],
                 liveFields: ['agl', 'aglBar', 'vs', 'bank', 'elevator']
             },
             {
@@ -290,8 +308,10 @@
                 condition: 'VS > 100 AND AGL > climb threshold',
                 inputs: [
                     { key: 'climbElevator', label: 'Elevator value', default: -30, unit: '(-) = nose up' },
+                    { key: 'climbPhaseThrottle', label: 'Throttle', default: 100, unit: '%' },
                     { key: 'climbAileronGain', label: 'Aileron gain (prop.)', default: 2, unit: 'x bank deg' },
                     { key: 'climbAileronMax', label: 'Max aileron deflection', default: 30, unit: '%' },
+                    { key: 'climbBankThreshold', label: 'Wings-level bank threshold', default: 3, unit: '°' },
                     { key: 'handoffAgl', label: 'AP handoff AGL', default: 500, unit: 'ft AGL' },
                     { key: 'handoffSpeedMargin', label: 'Speed margin above Vs1', default: 15, unit: 'kt' }
                 ],
@@ -302,7 +322,9 @@
                 id: 'DEPARTURE', name: 'DEPARTURE', type: 'ap',
                 condition: 'IAS >= Vs1+margin AND AGL > handoff',
                 inputs: [
-                    { key: 'departureVS', label: 'VS rate after AP engage', default: 500, unit: 'fpm' }
+                    { key: 'departureVS', label: 'VS rate after AP engage', default: 500, unit: 'fpm' },
+                    { key: 'departureSpeed', label: 'Climb speed (Vy)', default: 79, unit: 'kt' },
+                    { key: 'departureCruiseAlt', label: 'Cruise altitude', default: 8500, unit: 'ft' }
                 ],
                 checklist: ['AP engaged', 'HDG hold active', 'VS hold active', 'Flaps retracted'],
                 liveFields: ['vs', 'apMaster', 'flaps']
