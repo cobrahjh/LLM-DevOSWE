@@ -103,6 +103,11 @@ const PORT = 8080;
 // Initialize usage metrics
 usageMetrics.init('SimGlass Backend');
 
+// Held axis values — re-applied every SIM_FRAME to override joystick spring-center.
+// InputEvents get overridden each frame by joystick polling; this re-applies our values
+// at the same rate so the AI can hold elevator/aileron deflection during takeoff.
+const _heldAxes = {}; // { key: { hash, value } } — entries set by axis handlers, applied in simObjectData
+
 // Flight data state
 let flightData = {
     altitude: 0,
@@ -2886,6 +2891,12 @@ function executeCommand(command, value) {
         if (hash) {
             try {
                 const normalized = -Math.max(-1, Math.min(1, (value || 0) / 100));
+                // Store for SIM_FRAME re-application (overcomes joystick spring-center)
+                if (value === 0) {
+                    delete _heldAxes.elevator;
+                } else {
+                    _heldAxes.elevator = { hash, value: normalized };
+                }
                 simConnectConnection.setInputEvent(hash, normalized);
                 console.log(`[Elevator] InputEvent: ${value}% (${normalized}) via UNKNOWN_TAIL_ELEVATOR`);
             } catch (e) {
@@ -2917,6 +2928,14 @@ function executeCommand(command, value) {
                 const pct = -Math.max(-100, Math.min(100, value || 0));
                 const left = pct > 0 ? pct / 100 : 0;
                 const right = pct < 0 ? -pct / 100 : 0;
+                // Store for SIM_FRAME re-application (overcomes joystick spring-center)
+                if (value === 0) {
+                    delete _heldAxes.aileronLeft;
+                    delete _heldAxes.aileronRight;
+                } else {
+                    _heldAxes.aileronLeft = { hash: hashL, value: left };
+                    _heldAxes.aileronRight = { hash: hashR, value: right };
+                }
                 simConnectConnection.setInputEvent(hashL, left);
                 simConnectConnection.setInputEvent(hashR, right);
                 console.log(`[Ailerons] InputEvent: ${value}% → L:${left.toFixed(2)} R:${right.toFixed(2)}`);
@@ -3183,6 +3202,20 @@ function handleFuelCommand(action, params) {
         }
     } else {
         console.log(`[Fuel] Unknown action: ${action}`);
+    }
+}
+
+// Re-apply held axis values every SIM_FRAME — overcomes joystick spring-center.
+// MSFS 2024 InputEvents get overridden each frame by joystick hardware polling.
+// By re-applying at the same rate (SIM_FRAME), the AI can sustain elevator/aileron deflection.
+function reapplyHeldAxes() {
+    if (!simConnectConnection) return;
+    for (const held of Object.values(_heldAxes)) {
+        try {
+            simConnectConnection.setInputEvent(held.hash, held.value);
+        } catch (_) {
+            // Silently ignore — will retry next frame
+        }
     }
 }
 
@@ -3786,14 +3819,18 @@ async function initSimConnect() {
                 if (Object.keys(fd).length > 5) {
                     flightData = fd;
                     broadcastFlightData();
+                    // Re-apply held axis values at SIM_FRAME rate to overcome joystick polling
+                    reapplyHeldAxes();
                 }
             }
         });
-        
+
         handle.on('close', () => {
             console.log('[SimConnect] Connection closed');
             isSimConnected = false;
             flightData.connected = false;
+            // Clear held axes — no SimConnect to apply them to
+            for (const key of Object.keys(_heldAxes)) delete _heldAxes[key];
             scheduleSimConnectRetry();
         });
         

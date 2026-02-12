@@ -34,7 +34,7 @@ class CommandQueue {
         // Axis rate limiting — SimConnect drops events if flooded
         this._axisLastSend = {};   // { AXIS_*: timestamp }
         this._axisLastValue = {};  // { AXIS_*: value } for log dedup
-        this._axisMinInterval = 100; // ms between same axis command (~10/sec)
+        this._axisMinInterval = 50; // ms between same axis command (~20/sec)
     }
 
     /**
