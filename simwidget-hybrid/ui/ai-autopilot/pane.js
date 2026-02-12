@@ -1876,13 +1876,21 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         const p = this.profile;
 
         if (this.elements.targetAlt) {
-            const alt = this.aiEnabled ? this.flightPhase.targetCruiseAlt : (d?.altitude || 0);
-            this.elements.targetAlt.textContent = Math.round(alt).toLocaleString() + ' ft';
+            const actual = Math.round(d?.altitude || 0);
+            const target = this.aiEnabled ? this.flightPhase.targetCruiseAlt : null;
+            const altStr = actual.toLocaleString() + ' ft';
+            this.elements.targetAlt.textContent = (target && Math.abs(target - actual) > 100)
+                ? altStr + ' \u2192 ' + Math.round(target).toLocaleString()
+                : altStr;
             this.elements.targetAlt.classList.toggle('active', this.aiEnabled);
         }
         if (this.elements.targetSpd) {
-            const spd = this.aiEnabled && p ? (p.phaseSpeeds[phase] || p.speeds.Vcruise) : (d?.speed || 0);
-            this.elements.targetSpd.textContent = Math.round(spd) + ' kt';
+            const actual = Math.round(d?.speed || 0);
+            const target = this.aiEnabled && p ? Math.round(p.phaseSpeeds[phase] || p.speeds.Vcruise) : null;
+            const spdStr = actual + ' kt';
+            this.elements.targetSpd.textContent = (target && Math.abs(target - actual) > 5)
+                ? spdStr + ' \u2192 ' + target
+                : spdStr;
             this.elements.targetSpd.classList.toggle('active', this.aiEnabled);
         }
         if (this.elements.targetHdg) {
