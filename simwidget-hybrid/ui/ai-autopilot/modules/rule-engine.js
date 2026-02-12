@@ -17,6 +17,7 @@ class RuleEngine {
         this._lastCommands = {};  // track what we last commanded per axis
         this._takeoffSubPhase = null;
         this._runwayHeading = null;  // captured at takeoff roll start
+        this._runwayHeadingLocked = false;
 
         // Terrain awareness (uses shared singleton from terrain-grid.js)
         this._terrainGrid = (typeof window !== 'undefined' && window._terrainGrid) || null;
@@ -134,6 +135,7 @@ class RuleEngine {
         if (phaseChanged && phase !== 'TAKEOFF') {
             this._takeoffSubPhase = null;
             this._runwayHeading = null;
+            this._runwayHeadingLocked = false;
         }
         // Reset adaptive biases on phase regression (crash recovery)
         // Bias learned at full power doesn't apply at taxi power
@@ -148,8 +150,9 @@ class RuleEngine {
             this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake (safety)');
         }
 
-        // Continuous flight envelope monitoring (every frame, not just phase changes)
-        if (phase !== 'PREFLIGHT' && phase !== 'TAXI') {
+        // Continuous flight envelope monitoring — disabled during TAKEOFF for simplicity.
+        // Only active in CLIMB/CRUISE/DESCENT/APPROACH phases.
+        if (phase !== 'PREFLIGHT' && phase !== 'TAXI' && phase !== 'TAKEOFF') {
             this._monitorFlightEnvelope(d, apState, phase);
             this._checkTerrain(d, apState, phase);
         }
@@ -206,12 +209,19 @@ class RuleEngine {
                         if (wp) steerTarget = wp.bearing;
                     }
                     if (steerTarget == null) {
-                        // Capture runway heading early for ground track
+                        // Capture runway heading from current aircraft heading.
+                        // Only recapture if truly stationary (GS < 1) AND we haven't started rolling.
+                        // Once we've moved (GS > 3), lock the heading permanently.
+                        const gs = d.groundSpeed || 0;
+                        const curHdg = Math.round(d.heading || 0);
+                        if (gs > 3) this._runwayHeadingLocked = true;
                         if (!this._runwayHeading) {
-                            if (this._activeRunway?.heading) {
-                                this._runwayHeading = this._activeRunway.heading;
-                            } else {
-                                this._runwayHeading = Math.round(d.heading || 0);
+                            this._runwayHeading = curHdg;
+                        } else if (!this._runwayHeadingLocked && gs < 1) {
+                            // Pre-roll correction only — stale startup data fix
+                            const err = Math.abs(((curHdg - this._runwayHeading + 540) % 360) - 180);
+                            if (err > 45) {
+                                this._runwayHeading = curHdg;
                             }
                         }
                         steerTarget = this._runwayHeading;
@@ -221,14 +231,19 @@ class RuleEngine {
                     const gs = d.groundSpeed || 0;
                     const hdg = d.heading || 0;
                     const hdgError = Math.abs(((hdg - steerTarget + 540) % 360) - 180);
-                    // Heading-aware throttle: align first, then accelerate
+                    // Heading-aware throttle: reduce when misaligned but keep minimum
+                    // for nosewheel steering authority (15% stalls the correction loop)
+                    // Values overridable via takeoff-tuner.html
+                    const tt = this._getTakeoffTuning();
+                    const thrMin = tt.taxiThrottleMin ?? 25;
+                    const thrMax = tt.taxiThrottleMax ?? 70;
+                    const targetGS = tt.taxiTargetGS ?? 25;
                     let thr;
                     if (hdgError > 15) {
-                        thr = Math.max(15, 20 - hdgError * 0.3);
+                        thr = Math.max(thrMin, 35 - hdgError * 0.3);
                     } else {
-                        const targetGS = 25;
                         const speedError = targetGS - gs;
-                        thr = Math.max(25, Math.min(70, 55 + speedError * 0.8));
+                        thr = Math.max(thrMin, Math.min(thrMax, 55 + speedError * 0.8));
                     }
                     this._cmdValue('THROTTLE_SET', Math.round(thr), `Taxi (GS ${Math.round(gs)}, hdg err ${Math.round(hdgError)}°)`);
                 }
@@ -247,7 +262,8 @@ class RuleEngine {
                 }
                 // Climb power — full throttle unless speed protection is managing throttle
                 if (!this._speedCorrectionActive) {
-                    this._cmdValue('THROTTLE_SET', 100, 'Climb power');
+                    const climbTT = this._getTakeoffTuning();
+                    this._cmdValue('THROTTLE_SET', climbTT.climbThrottle ?? 100, 'Climb power');
                 }
                 if (!apState.master) {
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
@@ -260,7 +276,8 @@ class RuleEngine {
                 if (!this._speedCorrectionActive) {
                     const ias = d.speed || 0;
                     const stallMargin = ias - ((speeds.Vs1 || 53) + 10);  // margin above stall+10
-                    let climbVS = p.climb.normalRate;  // default 700
+                    const climbTTvs = this._getTakeoffTuning();
+                    let climbVS = climbTTvs.climbVS ?? p.climb.normalRate;  // default 700
                     if (stallMargin < 15) {
                         // Low margin — reduce climb rate proportionally (min 200fpm)
                         climbVS = Math.max(200, Math.round(climbVS * Math.max(0.3, stallMargin / 15)));
@@ -462,6 +479,8 @@ class RuleEngine {
         const agl = d.altitudeAGL || 0;
         const gs = d.groundSpeed || 0;
         const vs = d.verticalSpeed || 0;
+        // Takeoff tuner overrides (from takeoff-tuner.html via localStorage)
+        const tt = this._getTakeoffTuning();
         // MSFS 2024: onGround SimVar can be unreliable, AGL reads 15-30ft on runway
         // due to terrain model offset. On ground if SimVar says so OR low AGL + no climb.
         const onGround = d.onGround || (agl < 50 && Math.abs(vs) < 200);
@@ -479,98 +498,85 @@ class RuleEngine {
             this._cmd('AP_MASTER', false, 'AP off for takeoff');
         }
 
-        // ── Adaptive takeoff safety — Sally reads instruments and reacts ──
-        // FAA stall recovery: reduce AoA (lower nose), full power, level wings.
-        // She starts with a proportional correction and escalates if it's not working.
-        this._evaluateTakeoffSafety(d, ias, agl);
+        // ── SIMPLIFIED TAKEOFF — no safety systems, just essentials ──
+        // Systems disabled: stall protection, pitch targeting, bank-to-heading, roll/rudder bias
+        // Will be re-enabled one at a time as needed.
 
         switch (this._takeoffSubPhase) {
             case 'BEFORE_ROLL':
-                // Verify configuration: mixture rich, correct flaps
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
-                // Release parking brake if set
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
-                // Advance to ROLL
-                this._takeoffSubPhase = 'ROLL';
+                if (!this._isPhaseHeld('BEFORE_ROLL')) {
+                    this._takeoffSubPhase = 'ROLL';
+                }
                 break;
 
             case 'ROLL':
-                // POH: Full power for takeoff
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
-                this._cmdValue('THROTTLE_SET', 100, 'Full power');
-                // Capture runway heading once
+                this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power');
                 if (!this._runwayHeading) {
                     this._runwayHeading = this._activeRunway?.heading || Math.round(d.heading || 0);
                 }
-                // MSFS 2024: SimConnect cannot control elevator/ailerons directly.
-                // Aircraft rotates naturally at Vr. Ground steering via rudder only.
                 this._groundSteer(d, this._runwayHeading);
-                // POH: Rotate at Vr — aircraft will naturally pitch up
-                if (ias >= (speeds.Vr || 55)) {
+                if (ias >= (tt.vrSpeed ?? speeds.Vr ?? 55) && !this._isPhaseHeld('ROLL')) {
                     this._takeoffSubPhase = 'ROTATE';
                     this._rotateStartTime = Date.now();
                 }
                 break;
 
-            case 'ROTATE':
-                this._cmdValue('THROTTLE_SET', 100, 'Full power');
-                // Pitch: safety system has priority — only command elevator if safety isn't active
-                if (!this._safety.active) {
-                    this._targetPitch(d, this.tuning.rotatePitch, this.tuning.rotateAuthority);
-                }
-                this._targetBank(d, 0, this.tuning.bankAuthority || 30);
+            case 'ROTATE': {
+                this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power');
+                const rotElev = tt.rotateElevator ?? -50;
+                this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${rotElev}`);
                 this._groundSteer(d, this._runwayHeading);
-                // Also pump trim nose-up as backup
                 this._cmd('ELEV_TRIM_UP', true, 'Trim nose up');
-                // Airborne — transition
-                if (!onGround) {
+                if (!onGround && !this._isPhaseHeld('ROTATE')) {
                     this._takeoffSubPhase = 'LIFTOFF';
                 }
-                // Safety: if stuck on ground past 15s, force advance
-                if (Date.now() - this._rotateStartTime > 15000 && onGround) {
+                if (Date.now() - this._rotateStartTime > (tt.rotateTimeout ?? 15) * 1000 && onGround && !this._isPhaseHeld('ROTATE')) {
                     this._takeoffSubPhase = 'LIFTOFF';
                 }
                 break;
+            }
 
-            case 'LIFTOFF':
-                this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Pitch: safety system has priority
-                if (!this._safety.active) {
-                    if (agl < 100) {
-                        this._targetPitch(d, this.tuning.liftoffPitch, this.tuning.liftoffAuthority);
-                    } else {
-                        this._pitchForSpeed(d, speeds.Vy || 74, this.tuning.liftoffAuthority);
-                    }
+            case 'LIFTOFF': {
+                this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power climb');
+                const loElev = tt.liftoffElevator ?? -40;
+                this._cmdValue('AXIS_ELEVATOR_SET', loElev, `Climb — elevator ${loElev}`);
+                const loAilGain = tt.liftoffAileronGain ?? 2;
+                const loAilMax = tt.liftoffAileronMax ?? 30;
+                const bank = d.bank || 0;
+                if (Math.abs(bank) > 3) {
+                    const ailCorr = bank * loAilGain;
+                    this._cmdValue('AXIS_AILERONS_SET', Math.max(-loAilMax, Math.min(loAilMax, ailCorr)), `Wings level (bank ${Math.round(bank)}°)`);
                 }
-                // Airborne: use AILERONS for heading correction (bank toward target heading)
-                // Rudder is only for P-factor bias + coordination
-                this._bankToHeading(d, this._runwayHeading || d.heading, this.tuning.bankAuthority || 30);
-                this._applyRudderBias(d, this.tuning.rudderAuthority || 25);
-                // (stall/pitch safety handled by _evaluateTakeoffSafety above)
-                // Advance when climbing and at safe altitude
-                if (vs > 100 && agl > (tk.initialClimbAgl || 200)) {
+                if (vs > 100 && agl > (tt.liftoffClimbAgl ?? tk.initialClimbAgl ?? 200) && !this._isPhaseHeld('LIFTOFF')) {
                     this._takeoffSubPhase = 'INITIAL_CLIMB';
                 }
                 break;
+            }
 
-            case 'INITIAL_CLIMB':
-                this._cmdValue('THROTTLE_SET', 100, 'Full power climb');
-                // Pitch: safety system has priority
-                if (!this._safety.active) {
-                    this._pitchForSpeed(d, speeds.Vy || 74, this.tuning.initialClimbAuthority);
-                }
-                // Airborne: ailerons for heading, rudder for coordination
-                this._bankToHeading(d, this._runwayHeading || d.heading, this.tuning.bankAuthority || 30);
-                this._applyRudderBias(d, this.tuning.rudderAuthority || 25);
-                // (stall/pitch safety handled by _evaluateTakeoffSafety above)
-                // Engage AP when speed is safe and altitude sufficient
+            case 'INITIAL_CLIMB': {
+                this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power climb');
+                const icElev = tt.climbElevator ?? -30;
+                this._cmdValue('AXIS_ELEVATOR_SET', icElev, `Climb — elevator ${icElev}`);
+                const icAilGain = tt.climbAileronGain ?? 2;
+                const icAilMax = tt.climbAileronMax ?? 30;
                 {
-                    const stallMargin = (speeds.Vs1 || 53) + 15;
-                    if (ias >= stallMargin && agl > (tk.flapRetractAgl || 500)) {
+                    const bank = d.bank || 0;
+                    if (Math.abs(bank) > 3) {
+                        const ailCorr = bank * icAilGain;
+                        this._cmdValue('AXIS_AILERONS_SET', Math.max(-icAilMax, Math.min(icAilMax, ailCorr)), `Wings level (bank ${Math.round(bank)}°)`);
+                    }
+                }
+                // Hand off to AP when safe
+                {
+                    const stallMargin = (speeds.Vs1 || 53) + (tt.handoffSpeedMargin ?? 15);
+                    if (ias >= stallMargin && agl > (tt.handoffAgl ?? tk.flapRetractAgl ?? 500) && !this._isPhaseHeld('INITIAL_CLIMB')) {
                         this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release for AP');
                         this._cmdValue('AXIS_RUDDER_SET', 0, 'Release for AP');
                         this._cmdValue('AXIS_AILERONS_SET', 0, 'Release for AP');
@@ -581,11 +587,13 @@ class RuleEngine {
                         }
                         this._cmd('AP_HDG_HOLD', true, 'HDG hold');
                         this._cmd('AP_VS_HOLD', true, 'VS hold');
-                        this._cmdValue('AP_VS_VAR_SET', p.climb.normalRate || 500, 'VS +' + (p.climb.normalRate || 500));
+                        const depVS = tt.departureVS ?? p.climb.normalRate ?? 500;
+                        this._cmdValue('AP_VS_VAR_SET', depVS, 'VS +' + depVS);
                         this._takeoffSubPhase = 'DEPARTURE';
                     }
                 }
                 break;
+            }
 
             case 'DEPARTURE':
                 // Retract flaps, set climb speed, set cruise alt target
@@ -1324,7 +1332,13 @@ class RuleEngine {
 
         // Gain: lower at speed (aerodynamic authority increases)
         const baseGain = Math.max(3.0, 8.0 - gs * 0.06);
-        const maxDefl = this.tuning.rudderAuthority || 20;
+        // Ground steering needs much more authority than flight — C172 nosewheel
+        // is sluggish at low speeds, full deflection may be needed to hold heading.
+        // Scale from full authority at taxi speed down to tuned value at Vr.
+        const flightDefl = this.tuning.rudderAuthority || 20;
+        const ttSteer = this._getTakeoffTuning();
+        const lowSpeedDefl = ttSteer.taxiRudderMaxLow ?? 60;
+        const maxDefl = gs < 30 ? Math.max(flightDefl, lowSpeedDefl) : flightDefl;
 
         // Through server.js: positive RUDDER_SET value → left yaw in MSFS
         // Drifted right (+error) → need LEFT rudder (positive value) to correct
@@ -1624,6 +1638,28 @@ class RuleEngine {
     /** Get current active runway (for debug/display) */
     getActiveRunway() {
         return this._activeRunway;
+    }
+
+    /** Read takeoff tuner overrides from localStorage (set by takeoff-tuner.html) */
+    _getTakeoffTuning() {
+        try {
+            const raw = localStorage.getItem('simglass-takeoff-tuning');
+            return raw ? JSON.parse(raw) : {};
+        } catch { return {}; }
+    }
+
+    /** Read takeoff phase holds from localStorage (set by takeoff-tuner.html) */
+    _getTakeoffHolds() {
+        try {
+            const raw = localStorage.getItem('simglass-takeoff-holds');
+            return raw ? JSON.parse(raw) : {};
+        } catch { return {}; }
+    }
+
+    /** Check if a sub-phase transition is held */
+    _isPhaseHeld(phaseId) {
+        const holds = this._getTakeoffHolds();
+        return !!holds[phaseId];
     }
 
     /** Reset command dedup tracking (e.g., on AI toggle) */

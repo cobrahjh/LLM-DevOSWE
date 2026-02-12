@@ -1113,8 +1113,42 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 case 'simbrief-plan':
                     this._onSimbriefPlan(msg.data);
                     break;
+                case 'tuner-command':
+                    this._onTunerCommand(msg.command);
+                    break;
             }
         };
+    }
+
+    /** Handle remote commands from takeoff-tuner.html via SafeChannel */
+    _onTunerCommand(command) {
+        switch (command) {
+            case 'toggle-ai':
+                this.aiEnabled = !this.aiEnabled;
+                if (this.aiEnabled) {
+                    this.ruleEngine.reset();
+                    this.commandQueue.clear();
+                }
+                this._render();
+                break;
+            case 'toggle-controls':
+                if (!this.aiEnabled) this.aiEnabled = true;
+                this._autoControlsEnabled = !this._autoControlsEnabled;
+                if (this._autoControlsEnabled) {
+                    this._autoAdvise();
+                    this._autoAdviseTimer = setInterval(() => this._autoAdvise(), this._autoAdviseInterval);
+                } else {
+                    if (this._autoAdviseTimer) {
+                        clearInterval(this._autoAdviseTimer);
+                        this._autoAdviseTimer = null;
+                    }
+                }
+                this._render();
+                break;
+            case 'import-fpl':
+                this._importSimBrief();
+                break;
+        }
     }
 
     _onNavStateReceived(nav) {
@@ -1487,7 +1521,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     }
 
     _broadcastAutopilotState() {
-        if (!this.syncChannel || !this.aiEnabled) return;
+        if (!this.syncChannel) return;
         const lastCmd = this.commandQueue.getLog()[0] || null;
         this.syncChannel.postMessage({
             type: 'autopilot-state',
@@ -1525,6 +1559,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     heading: this._activeRunway.heading,
                     length: this._activeRunway.length
                 } : null,
+                fplLoaded: !!this._currentPlan,
                 navGuidance: this.ruleEngine.getNavGuidance(),
                 atcPhase: this.atcController ? this.atcController.getPhase() : 'INACTIVE',
                 atcInstruction: this.atcController ? this.atcController.getATCInstruction() : '',
@@ -1634,22 +1669,27 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
         // ── Joystick axis override detection ──
         // If pilot physically deflects stick/rudder, pause AI axis commands.
-        // yokeY: -1 to 1 (negative = push forward / nose down, positive = pull back / nose up). yokeX: -1 to 1. rudderPos: -1 to 1.
-        const threshold = 0.05;  // 5% deflection = pilot is touching the stick
-        const overrideDuration = 3000;  // pause AI for 3 seconds after pilot releases
+        // DISABLED during TAXI/TAKEOFF: AI commands axis surfaces directly, and the
+        // resulting sim position would falsely trigger overrides (self-blocking loop).
+        const phase = this.flightPhase?.phase;
+        const aiFlying = phase === 'TAXI' || phase === 'TAKEOFF';
+        if (!aiFlying) {
+            const threshold = 0.05;  // 5% deflection = pilot is touching the stick
+            const overrideDuration = 3000;  // pause AI for 3 seconds after pilot releases
 
-        const yokeY = data.yokeY;
-        const yokeX = data.yokeX;
-        const rudder = data.rudderPos;
+            const yokeY = data.yokeY;
+            const yokeX = data.yokeX;
+            const rudder = data.rudderPos;
 
-        if (yokeY != null && Math.abs(yokeY) > threshold) {
-            this.commandQueue.registerOverride('ELEVATOR', overrideDuration);
-        }
-        if (yokeX != null && Math.abs(yokeX) > threshold) {
-            this.commandQueue.registerOverride('AILERONS', overrideDuration);
-        }
-        if (rudder != null && Math.abs(rudder) > threshold) {
-            this.commandQueue.registerOverride('RUDDER', overrideDuration);
+            if (yokeY != null && Math.abs(yokeY) > threshold) {
+                this.commandQueue.registerOverride('ELEVATOR', overrideDuration);
+            }
+            if (yokeX != null && Math.abs(yokeX) > threshold) {
+                this.commandQueue.registerOverride('AILERONS', overrideDuration);
+            }
+            if (rudder != null && Math.abs(rudder) > threshold) {
+                this.commandQueue.registerOverride('RUDDER', overrideDuration);
+            }
         }
 
         // ── AP toggle override detection ──

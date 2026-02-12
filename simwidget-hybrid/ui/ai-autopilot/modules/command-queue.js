@@ -33,7 +33,8 @@ class CommandQueue {
 
         // Axis rate limiting — SimConnect drops events if flooded
         this._axisLastSend = {};   // { AXIS_*: timestamp }
-        this._axisMinInterval = 50; // ms between same axis command (~20/sec, like a joystick)
+        this._axisLastValue = {};  // { AXIS_*: value } for log dedup
+        this._axisMinInterval = 100; // ms between same axis command (~10/sec)
     }
 
     /**
@@ -52,14 +53,23 @@ class CommandQueue {
 
         // ── Axis controls (AXIS_*) bypass queue but are rate-limited ──
         // SimConnect events are momentary — must resend continuously to hold position.
-        // Rate limit to ~7/sec per axis (SimConnect drops if >10/sec).
-        // NO dedup — same value must be resent every tick.
+        // Rate limit to ~10/sec per axis. Only log when value changes to reduce spam.
         const isAxisControl = cmd.type.startsWith('AXIS_');
         if (isAxisControl) {
             const now = Date.now();
             const lastSend = this._axisLastSend[cmd.type] || 0;
             if (now - lastSend < this._axisMinInterval) return;
             this._axisLastSend[cmd.type] = now;
+            // Skip logging if value unchanged (reduces command log spam)
+            const lastVal = this._axisLastValue[cmd.type];
+            const roundedVal = Math.round(cmd.value);
+            if (lastVal === roundedVal) {
+                // Still send to sim but don't log
+                const wsCmd = this._buildWsCommand(cmd);
+                if (wsCmd && this.sendCommand) this.sendCommand(wsCmd);
+                return;
+            }
+            this._axisLastValue[cmd.type] = roundedVal;
             this._execute(cmd);
             return;
         }
@@ -169,6 +179,7 @@ class CommandQueue {
             'MIXTURE_RICH':          'MIXTURE_RICH',
             'MIXTURE_LEAN':          'MIXTURE_LEAN',
             'PARKING_BRAKES':        'PARKING_BRAKES',
+            'PARKING_BRAKE_SET':     'PARKING_BRAKE_SET',
             'LANDING_LIGHTS_TOGGLE': 'LANDING_LIGHTS_TOGGLE'
         };
 
@@ -192,6 +203,7 @@ class CommandQueue {
             'AP_ALT_VAR_SET_ENGLISH', 'AP_VS_VAR_SET_ENGLISH',
             'AP_SPD_VAR_SET', 'HEADING_BUG_SET',
             'THROTTLE_SET', 'MIXTURE_SET', 'PROP_PITCH_SET',
+            'PARKING_BRAKE_SET',
             'AXIS_ELEVATOR_SET', 'AXIS_RUDDER_SET', 'AXIS_AILERONS_SET',
             'AXIS_MIXTURE_SET'
         ];

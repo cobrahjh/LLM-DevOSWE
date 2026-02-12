@@ -71,6 +71,7 @@ const SC_RETRY_MAX = 60000;
 const SC_RETRY_MULTIPLIER = 1.5;
 let simConnectRetryCount = 0;
 let mockDataInterval = null;
+let mockDataSuppressed = false;
 
 // Fuel write data definition IDs (set during SimConnect init)
 let fuelWriteDefId = null;
@@ -1462,6 +1463,18 @@ app.get('/api/simconnect/status', (req, res) => {
         retryCount: simConnectRetryCount,
         nextRetryIn: simConnectRetryTimeout ? Math.round(simConnectRetryDelay / SC_RETRY_MULTIPLIER / 1000) : null
     });
+});
+
+// Mock data control
+app.post('/api/mock/stop', (req, res) => {
+    mockDataSuppressed = true;
+    stopMockData();
+    res.json({ mock: false });
+});
+app.post('/api/mock/start', (req, res) => {
+    mockDataSuppressed = false;
+    startMockData();
+    res.json({ mock: true });
 });
 
 // Graceful shutdown endpoint
@@ -3901,7 +3914,7 @@ function getMockFacilityGraph(icao) {
 
 // Mock data for browser testing without MSFS
 function startMockData() {
-    if (mockDataInterval) return; // Already running
+    if (mockDataInterval || mockDataSuppressed) return; // Already running or suppressed
     console.log('[SimConnect] Starting mock data generator...');
 
     let mockAlt = 5000;
