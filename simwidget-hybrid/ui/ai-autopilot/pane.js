@@ -1662,8 +1662,15 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             // Log takeoff sub-phase changes
             const subPhase = this.ruleEngine.getTakeoffSubPhase();
             if (subPhase && subPhase !== this._lastTakeoffSubPhase) {
+                const prevSub = this._lastTakeoffSubPhase;
                 this._lastTakeoffSubPhase = subPhase;
                 this._dbg('cmd', `Takeoff: <span class="val">${this._esc(subPhase)}</span>`);
+                if (this.syncChannel) {
+                    this.syncChannel.postMessage({
+                        type: 'phase-change',
+                        data: { newPhase: subPhase, oldPhase: prevSub || 'TAKEOFF', time: Date.now(), isSubPhase: true }
+                    });
+                }
             }
 
             // Check LLM advisory triggers
@@ -1743,10 +1750,31 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         this.ruleEngine.setTargetCruiseAlt(this.flightPhase.targetCruiseAlt);
         this._lastTakeoffSubPhase = null;
         this._render();
+        // Broadcast phase change for tuner control log
+        if (this.syncChannel) {
+            this.syncChannel.postMessage({
+                type: 'phase-change',
+                data: { newPhase, oldPhase, time: Date.now() }
+            });
+        }
     }
 
     _onCommandExecuted(entry) {
         this._renderCommandLog();
+        // Broadcast to tuner/other panes for real-time control log
+        if (this.syncChannel) {
+            this.syncChannel.postMessage({
+                type: 'command-executed',
+                data: {
+                    time: entry.time,
+                    type: entry.type,
+                    value: entry.value,
+                    description: entry.description,
+                    phase: this.flightPhase.phase,
+                    subPhase: this.ruleEngine.getTakeoffSubPhase()
+                }
+            });
+        }
     }
 
     _onOverrideChange(overrides) {
