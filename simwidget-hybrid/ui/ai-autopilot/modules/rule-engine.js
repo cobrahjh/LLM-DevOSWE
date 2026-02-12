@@ -1212,6 +1212,10 @@ class RuleEngine {
             if (lastVal !== undefined && Math.abs(lastVal - value) < 1) return;
         }
         this._lastCommands[command] = value;
+        // Track live values for telemetry (elevator/aileron/throttle)
+        if (command === 'AXIS_ELEVATOR_SET') this.live.elevator = value;
+        else if (command === 'AXIS_AILERONS_SET') this.live.aileron = value;
+        else if (command === 'THROTTLE_SET') this.live.throttle = value;
         this._logTimeline(command, value, description);
         this.commandQueue.enqueue({
             type: command,

@@ -16,7 +16,68 @@ const TERRAIN_BIN = path.join(__dirname, '..', 'ui', 'shared', 'data', 'terrain-
 let _terrainGrid = null; // { width, height, latMin, latMax, lonMin, lonMax, cellDeg, data: Int16Array }
 
 // Shared state for cross-machine pane sync (AI Autopilot ↔ GTN750)
-const _sharedState = { autopilot: null, nav: null, airport: null, lastUpdate: 0 };
+const _sharedState = { autopilot: null, nav: null, airport: null, tuning: null, lastUpdate: 0 };
+
+// ── Sally Performance Metrics ───────────────────────────────────────
+const _perfMetrics = {
+    queries: [],       // last 50 queries: { time, durationMs, provider, model, promptTokens, responseTokens, responseLen }
+    totalQueries: 0,
+    totalErrors: 0,
+    startTime: Date.now()
+};
+
+function logQueryMetric(metric) {
+    _perfMetrics.queries.push(metric);
+    if (_perfMetrics.queries.length > 50) _perfMetrics.queries.shift();
+    _perfMetrics.totalQueries++;
+}
+
+function getPerfSummary() {
+    const q = _perfMetrics.queries;
+    const recent = q.slice(-20);  // last 20 for averages
+    const durations = recent.map(r => r.durationMs).filter(d => d > 0);
+    const responseLens = recent.map(r => r.responseLen).filter(l => l > 0);
+
+    const avgDuration = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0;
+    const maxDuration = durations.length ? Math.max(...durations) : 0;
+    const minDuration = durations.length ? Math.min(...durations) : 0;
+    const avgResponseLen = responseLens.length ? Math.round(responseLens.reduce((a, b) => a + b, 0) / responseLens.length) : 0;
+
+    // Queries per minute (last 5 minutes)
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    const recentCount = q.filter(r => r.time > fiveMinAgo).length;
+    const qpm = Math.round(recentCount / 5 * 10) / 10;
+
+    // System memory
+    const mem = process.memoryUsage();
+
+    return {
+        totalQueries: _perfMetrics.totalQueries,
+        totalErrors: _perfMetrics.totalErrors,
+        uptime_s: Math.round((Date.now() - _perfMetrics.startTime) / 1000),
+        recentQueries: recent.length,
+        avgResponseTime_ms: avgDuration,
+        maxResponseTime_ms: maxDuration,
+        minResponseTime_ms: minDuration,
+        avgResponseLength: avgResponseLen,
+        queriesPerMinute: qpm,
+        memory: {
+            heapUsed_mb: Math.round(mem.heapUsed / 1048576 * 10) / 10,
+            heapTotal_mb: Math.round(mem.heapTotal / 1048576 * 10) / 10,
+            rss_mb: Math.round(mem.rss / 1048576 * 10) / 10,
+            external_mb: Math.round((mem.external || 0) / 1048576 * 10) / 10
+        },
+        lastQuery: q.length > 0 ? q[q.length - 1] : null,
+        history: q.slice(-20).map(r => ({
+            time: r.time,
+            durationMs: r.durationMs,
+            responseLen: r.responseLen,
+            learnings: r.learnings || 0,
+            tuningChanged: r.tuningChanged || false,
+            error: r.error || false
+        }))
+    };
+}
 
 // ── Takeoff Attempt Logger ──────────────────────────────────────────
 // Persists takeoff attempts so Sally can learn from previous results
@@ -27,6 +88,100 @@ try {
         _takeoffAttempts = JSON.parse(fs.readFileSync(TAKEOFF_LOG_PATH, 'utf8'));
     }
 } catch (_) { _takeoffAttempts = []; }
+
+// ── Sally's Learnings — Persistent Observations ─────────────────────
+// Stable conclusions Sally derives from analyzing attempts.
+// Survives across sessions. Injected into her system prompt.
+const LEARNINGS_PATH = path.join(__dirname, '..', 'data', 'sally-learnings.json');
+let _sallyLearnings = [];
+try {
+    if (fs.existsSync(LEARNINGS_PATH)) {
+        _sallyLearnings = JSON.parse(fs.readFileSync(LEARNINGS_PATH, 'utf8'));
+    }
+} catch (_) { _sallyLearnings = []; }
+
+function saveLearnings() {
+    try {
+        const dir = path.dirname(LEARNINGS_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(LEARNINGS_PATH, JSON.stringify(_sallyLearnings, null, 2));
+    } catch (e) {
+        console.warn('[AI-Pilot] Failed to save learnings:', e.message);
+    }
+}
+
+/**
+ * Parse LEARNING: lines from Sally's response and persist them.
+ * Format: LEARNING: [85%] observation text here
+ * Deduplicates by checking similarity — reinforces confidence if same conclusion repeated.
+ */
+function parseLearnings(text) {
+    const lines = text.split('\n');
+    const newLearnings = [];
+    for (const line of lines) {
+        const match = line.match(/^LEARNING:\s*(?:\[(\d+)%?\])?\s*(.+)/i);
+        if (match) {
+            const confidence = match[1] ? Math.min(100, Math.max(10, parseInt(match[1]))) : 50;
+            const observation = match[2].trim();
+            if (observation.length < 10) continue;  // skip trivial
+
+            // Check similarity to existing learnings
+            let reinforced = false;
+            for (const existing of _sallyLearnings) {
+                const existWords = new Set(existing.observation.toLowerCase().split(/\s+/));
+                const newWords = observation.toLowerCase().split(/\s+/);
+                const overlap = newWords.filter(w => existWords.has(w)).length;
+                const similarity = overlap / Math.max(newWords.length, 1);
+
+                if (similarity > 0.7) {
+                    // Reinforcement: same conclusion reached again → boost confidence
+                    existing.reinforcements = (existing.reinforcements || 0) + 1;
+                    existing.confidence = Math.min(99, (existing.confidence || 50) + 10);
+                    existing.lastReinforced = new Date().toISOString();
+                    existing.observation = observation;  // update wording to latest
+                    reinforced = true;
+                    console.log(`[AI-Pilot] Learning #${existing.id} reinforced → ${existing.confidence}% (×${existing.reinforcements})`);
+                    break;
+                }
+            }
+
+            if (!reinforced) {
+                newLearnings.push({
+                    id: _sallyLearnings.length + newLearnings.length + 1,
+                    time: new Date().toISOString(),
+                    observation,
+                    confidence,
+                    reinforcements: 0,
+                    attemptRef: _takeoffAttempts.length,
+                    category: categorizeLearning(observation)
+                });
+            }
+        }
+    }
+    if (newLearnings.length > 0) {
+        _sallyLearnings.push(...newLearnings);
+        // Keep only last 100 learnings
+        if (_sallyLearnings.length > 100) {
+            _sallyLearnings = _sallyLearnings.slice(-100);
+        }
+        saveLearnings();
+        console.log(`[AI-Pilot] Sally saved ${newLearnings.length} new learning(s): ${newLearnings.map(l => `[${l.confidence}%] ${l.observation.slice(0, 50)}`).join('; ')}`);
+    }
+    return newLearnings;
+}
+
+/** Auto-categorize a learning by keyword matching */
+function categorizeLearning(text) {
+    const t = text.toLowerCase();
+    if (t.includes('elevator') || t.includes('pitch') || t.includes('rotate') || t.includes('nose')) return 'elevator';
+    if (t.includes('aileron') || t.includes('bank') || t.includes('roll') || t.includes('wing')) return 'aileron';
+    if (t.includes('rudder') || t.includes('yaw') || t.includes('heading') || t.includes('p-factor')) return 'rudder';
+    if (t.includes('throttle') || t.includes('power') || t.includes('engine')) return 'throttle';
+    if (t.includes('speed') || t.includes('vr') || t.includes('vs1') || t.includes('stall')) return 'speed';
+    if (t.includes('joystick') || t.includes('deflection') || t.includes('authority')) return 'control';
+    if (t.includes('transition') || t.includes('phase') || t.includes('handoff')) return 'phase';
+    return 'general';
+}
 
 function loadTerrainGrid() {
     if (_terrainGrid) return _terrainGrid;
@@ -139,7 +294,7 @@ CURRENT FLIGHT STATE:
 - Mixture: ${Math.round(fd.mixture || 0)}%, Throttle: ${Math.round(fd.throttle || 0)}%
 - Engine RPM: ${Math.round(fd.engineRpm || 0)}
 - Lat/Lon: ${(fd.latitude || 0).toFixed(4)}, ${(fd.longitude || 0).toFixed(4)}
-${buildEnvelopeContext(fd)}${buildTerrainContext(fd)}${buildNavContext()}${buildAirportContext()}`;
+${buildEnvelopeContext(fd)}${buildTerrainContext(fd)}${buildNavContext()}${buildAirportContext()}${buildTakeoffContext()}`;
 }
 
 function buildEnvelopeContext(fd) {
@@ -241,80 +396,203 @@ function buildAirportContext() {
 }
 
 function buildTakeoffContext() {
-    // Give Sally full knowledge of the AI autopilot takeoff system
+    // Sally's complete system knowledge — architecture, physics, parameters.
+    // NO suggested values or ranges. She derives everything from attempt telemetry.
     const attempts = _takeoffAttempts.slice(-10); // last 10 attempts
     let ctx = `
-AI AUTOPILOT TAKEOFF SYSTEM (SimGlass Rule Engine):
-You are not just an advisor — you are the TUNING ENGINEER for this autopilot.
-Your job is to analyze takeoff attempt results and adjust parameters to achieve successful takeoffs.
+AI AUTOPILOT TAKEOFF SYSTEM — You are the TUNING ENGINEER.
+Analyze telemetry from previous attempts. Output new parameter values. Achieve successful takeoffs.
+You must derive ALL values empirically from attempt results. No guessing — observe, reason, adjust.
 
-ARCHITECTURE:
-- Rule Engine (rule-engine.js): Evaluates flight data every ~200ms, sends commands per sub-phase
-- Command Queue: Rate-limited (2/sec for AP commands), axis commands bypass queue at 50ms intervals
-- Server Held-Axes: 60Hz timer reapplies elevator/aileron/throttle via transmitClientEvent to fight joystick spring-center
-- CRITICAL: Physical joystick polls at ~60-120Hz, overriding our commands ~50% of frames
-- EFFECTIVE deflection is roughly 50% of commanded value due to joystick fighting
+SYSTEM ARCHITECTURE:
+- Rule Engine: Browser-side, evaluates flight data every ~200ms, sends commands per sub-phase
+- Command Queue: AP commands rate-limited (2/sec), axis commands (elevator/aileron/throttle) bypass queue at 50ms intervals
+- Server Held-Axes: Dedicated 60Hz timer reapplies axis commands via SimConnect transmitClientEvent
+- Physical joystick polls at ~60-120Hz, constantly sending axis=0 (spring-center)
+- Our 60Hz timer fights the joystick — effective deflection is roughly HALF of commanded value
+- Example: commanding -80% elevator → actual surface deflection ~40% due to joystick winning ~50% of frames
 
-TAKEOFF SUB-PHASES (in order):
-1. BEFORE_ROLL: Centers all axes (elevator 0.0001, ailerons 0.0001, rudder 0), releases parking brake
-2. ROLL: Full throttle, elevator/ailerons near-zero (0.0001), rudder steering for runway heading
-   → Transitions to ROTATE when speed >= Vr (55 kt)
-3. ROTATE: Progressive elevator from -30% increasing at -25%/sec to max (currently -80%)
-   Rudder steering continues. Trim nose up.
-   → Transitions to LIFTOFF when airborne OR after timeout (15s)
-4. LIFTOFF: Elevator held at current value (currently -70%), wings-level aileron corrections
-   Aileron gain=3, max=±60%. Bank threshold=3°.
-   → Transitions to INITIAL_CLIMB when VS > 100 fpm AND AGL > 200 ft
-5. INITIAL_CLIMB: Elevator (currently -50%), wings-level corrections (gain=3, max=±60%)
-   → Hands off to AP when speed >= Vs1+15 kt AND AGL > 500 ft
-6. DEPARTURE: AP engaged (HDG hold, VS hold at 500 fpm), flaps retract, axes released
+SUB-PHASE FLOW (sequential, each must complete before next):
+BEFORE_ROLL → ROLL → ROTATE → LIFTOFF → INITIAL_CLIMB → DEPARTURE
 
-CURRENT TUNABLE PARAMETERS (defaults, overridable via takeoff-tuner):
-| Parameter | Sub-Phase | Current | Description |
-|-----------|-----------|---------|-------------|
-| rotateElevator | ROTATE | -80% | Max elevator deflection for rotation |
-| rotateRampStart | ROTATE | -30% | Starting elevator (progressive) |
-| rotateRampRate | ROTATE | 25%/sec | How fast elevator increases |
-| liftoffElevator | LIFTOFF | -70% | Elevator hold during initial climb |
-| liftoffAileronGain | LIFTOFF | 3 | Aileron correction per degree of bank |
-| liftoffAileronMax | LIFTOFF | 60% | Max aileron deflection |
-| climbElevator | INITIAL_CLIMB | -50% | Elevator during climb |
-| climbAileronGain | INITIAL_CLIMB | 3 | Aileron correction gain |
-| climbAileronMax | INITIAL_CLIMB | 60% | Max aileron |
-| rollThrottle | ROLL-DEPART | 100% | Throttle during takeoff |
-| taxiThrottleMax | TAXI | 70% | Max taxi throttle |
+BEFORE_ROLL:
+- Centers all axes (near-zero, not zero — zero releases held-axes)
+- Releases parking brake, sets mixture
+- Immediately transitions to ROLL
 
-MSFS 2024 FLIGHT CONTROL QUIRKS:
-- Elevator/Ailerons use legacy transmitClientEvent (InputEvents don't deflect surfaces)
-- Throttle uses InputEvent ENGINE_THROTTLE_1 (legacy doesn't work for throttle)
-- Elevator sign is NEGATED: rule engine -100=nose UP → server sends +16383 to SimConnect
-- Ailerons: NO negation needed (conventions match)
-- Rudder: Legacy transmitClientEvent, no held-axes (single-shot works)
-- All held axes reapplied at 60Hz to fight joystick, but joystick still wins ~50% of frames
+ROLL:
+- Throttle at rollThrottle, elevator/ailerons near-zero, rudder steers runway heading
+- Transition: IAS >= vrSpeed → ROTATE
 
-SIGN CONVENTIONS (rule engine values):
-- Elevator: negative = nose UP (e.g., -80 = strong nose up for rotation)
-- Ailerons: negative = roll LEFT, positive = roll RIGHT
-- Rudder: positive = yaw LEFT, negative = yaw RIGHT
+ROTATE:
+- Progressive elevator: starts at a ramp start value, increases by rampRate per second toward rotateElevator max
+- Rudder steering continues, trim nose up applied
+- Transition: wheels leave ground (not onGround) → LIFTOFF
+- Timeout: if still on ground after rotateTimeout seconds → force LIFTOFF
+
+LIFTOFF:
+- Elevator held at liftoffElevator (constant, not progressive)
+- Wings-level aileron corrections: bank × liftoffAileronGain, clamped to ±liftoffAileronMax
+- Aileron only activates when |bank| > liftoffBankThreshold
+- Transition: VS > liftoffVsThreshold AND AGL > liftoffClimbAgl → INITIAL_CLIMB
+
+INITIAL_CLIMB:
+- Elevator at climbElevator, aileron corrections same pattern as LIFTOFF
+- Transition: IAS >= Vs1 + handoffSpeedMargin AND AGL > handoffAgl → DEPARTURE (AP handoff)
+
+DEPARTURE:
+- Releases all manual axes (elevator=0, aileron=0, rudder=0)
+- Engages autopilot: AP_MASTER, HDG hold (current heading), VS hold at departureVS
+- Retracts flaps, sets climb speed and cruise altitude
+
+TUNABLE PARAMETERS (all set via TUNING_JSON — name: what it controls):
+TAXI:
+  taxiThrottleMin — minimum throttle during taxi (for steering authority)
+  taxiThrottleMax — maximum throttle during taxi
+  taxiTargetGS — target ground speed during taxi (knots)
+  taxiHdgErrorThreshold — heading error above which throttle reduces (degrees)
+  rudderBias — constant rudder offset to counter P-factor yaw (negative = right rudder)
+  steerGainBase — rudder proportional gain at low speed
+  steerGainDecay — how much gain reduces per knot of ground speed
+  taxiRudderMaxLow — max rudder deflection at low ground speed
+  steerDeadband — heading error below which rudder correction is zero (degrees)
+ROLL:
+  rollThrottle — throttle during takeoff roll (%)
+  vrSpeed — rotation speed, IAS at which ROTATE begins (knots)
+ROTATE:
+  rotateElevator — maximum elevator deflection for rotation (negative = nose up, %)
+  rotateRampRate — progressive elevator increase rate (%/second, used as: rampStart - elapsed × rate)
+  rotateThrottle — throttle during rotation (%, defaults to rollThrottle)
+  rotateTimeout — max seconds on ground before forcing LIFTOFF transition
+LIFTOFF:
+  liftoffElevator — constant elevator hold during initial liftoff (negative = nose up, %)
+  liftoffAileronGain — aileron correction per degree of bank deviation (higher = more aggressive)
+  liftoffAileronMax — maximum aileron deflection for wings-level correction (%)
+  liftoffBankThreshold — bank angle below which no aileron correction applied (degrees)
+  liftoffVsThreshold — minimum vertical speed to transition to INITIAL_CLIMB (fpm)
+  liftoffClimbAgl — minimum AGL to transition to INITIAL_CLIMB (feet)
+  liftoffThrottle — throttle during liftoff (%, defaults to rollThrottle)
+INITIAL_CLIMB:
+  climbElevator — elevator during climb phase (negative = nose up, %)
+  climbAileronGain — aileron correction gain during climb
+  climbAileronMax — maximum aileron deflection during climb (%)
+  climbBankThreshold — bank threshold for aileron correction during climb (degrees)
+  handoffSpeedMargin — IAS above Vs1 required for AP handoff (knots)
+  handoffAgl — minimum AGL for AP handoff (feet)
+  climbPhaseThrottle — throttle during initial climb (%, defaults to rollThrottle)
+DEPARTURE:
+  departureVS — vertical speed for AP after handoff (fpm)
+  departureSpeed — target speed after handoff (knots, defaults to Vy)
+CLIMB (after AP engaged):
+  climbThrottle — throttle during climb phase (%)
+  climbVS — AP vertical speed during climb (fpm)
+
+MSFS 2024 PHYSICS & QUIRKS:
+- Elevator: negative value = nose UP. Server NEGATES before sending to SimConnect.
+- Ailerons: negative = roll LEFT, positive = roll RIGHT. No negation.
+- Rudder: positive = yaw LEFT, negative = yaw RIGHT. Single-shot (no held-axes needed).
+- Throttle: 0-100%. Uses InputEvent (only control that works via InputEvent).
+- Elevator/Ailerons: Legacy transmitClientEvent (InputEvents produce zero deflection).
+- Joystick constantly fights our commands — effective authority is ~50% of commanded value.
+- SIM ON GROUND SimVar is unreliable — we use AGL < 50ft as fallback.
+- C172 P-factor: full power pulls nose LEFT, requiring right rudder compensation.
+- Torque effect: full power rolls aircraft LEFT, requiring right aileron compensation.
+
+SAFETY HARD CLAMPS (server-enforced, you cannot exceed these):
+- Elevator: ±90%
+- Ailerons: ±80%
 - Throttle: 0-100%
+- Rudder: ±100%
+- AP altitude: 0-45000 ft
+- AP VS: -6000 to +6000 fpm
 
-HOW TO TUNE:
-When you analyze attempt results, output a TUNING_JSON block to adjust parameters:
-TUNING_JSON: {"rotateElevator": -80, "liftoffElevator": -70, "climbElevator": -50, "liftoffAileronGain": 3, "liftoffAileronMax": 60}
-The rule engine will pick up these overrides on the next attempt.`;
+HOW TO OUTPUT TUNING CHANGES:
+After analyzing attempt results, output a TUNING_JSON block on its own line:
+TUNING_JSON: {"paramName": value, "paramName2": value2}
+Only include parameters you want to change. Omitted parameters keep their current values.
+The rule engine applies your values on the next takeoff attempt.
+
+REASONING REQUIREMENTS:
+- For each parameter you change, explain WHY based on the telemetry data
+- If an attempt crashed due to bank spiral, focus on aileron parameters
+- If the plane didn't rotate, focus on elevator parameters
+- If speed was wrong at rotation, focus on vrSpeed
+- Consider that effective deflection is ~50% of commanded due to joystick fighting`;
 
     if (attempts.length > 0) {
         ctx += '\n\nPREVIOUS TAKEOFF ATTEMPTS (most recent last):';
         for (const a of attempts) {
-            ctx += `\n#${a.id} [${a.time}] ${a.outcome.toUpperCase()}`;
-            ctx += ` | Phases: ${a.phasesReached.join('→')}`;
-            ctx += ` | Max alt: +${a.maxAltGain}ft, Max bank: ${a.maxBank}°, Max hdg err: ${a.maxHdgError}°`;
-            ctx += ` | Elevator: ${a.elevatorUsed}%, Speed at rotate: ${a.rotateSpeed}kt`;
-            if (a.notes) ctx += ` | Notes: ${a.notes}`;
+            ctx += `\n\n--- ATTEMPT #${a.id} [${a.time}] — ${(a.outcome || 'unknown').toUpperCase()} ---`;
+            ctx += `\nPhases reached: ${(a.phasesReached || []).join(' → ')}`;
+            if (a.tuningUsed && Object.keys(a.tuningUsed).length > 0) {
+                ctx += '\nTuning values used:';
+                for (const [k, v] of Object.entries(a.tuningUsed)) {
+                    ctx += ` ${k}=${v}`;
+                }
+            }
+            if (a.telemetry) {
+                const t = a.telemetry;
+                ctx += '\nTelemetry:';
+                if (t.maxAltGain != null) ctx += ` maxAltGain=${t.maxAltGain}ft`;
+                if (t.maxBank != null) ctx += ` maxBank=${t.maxBank}°`;
+                if (t.maxHdgError != null) ctx += ` maxHdgErr=${t.maxHdgError}°`;
+                if (t.maxPitch != null) ctx += ` maxPitch=${t.maxPitch}°`;
+                if (t.minPitch != null) ctx += ` minPitch=${t.minPitch}°`;
+                if (t.rotateSpeed != null) ctx += ` rotateIAS=${t.rotateSpeed}kt`;
+                if (t.liftoffSpeed != null) ctx += ` liftoffIAS=${t.liftoffSpeed}kt`;
+                if (t.maxVs != null) ctx += ` maxVS=${t.maxVs}fpm`;
+                if (t.minVs != null) ctx += ` minVS=${t.minVs}fpm`;
+                if (t.duration_s != null) ctx += ` duration=${t.duration_s}s`;
+                if (t.maxElevator != null) ctx += ` maxElev=${t.maxElevator}%`;
+                if (t.maxAileron != null) ctx += ` maxAil=${t.maxAileron}%`;
+                if (t.maxRudder != null) ctx += ` maxRud=${t.maxRudder}%`;
+            }
+            if (a.timeline && a.timeline.length > 0) {
+                ctx += '\nTimeline (key moments):';
+                for (const snap of a.timeline.slice(0, 15)) {  // limit to 15 snapshots
+                    ctx += `\n  t=${snap.t}s sub=${snap.sub} IAS=${snap.ias}kt VS=${snap.vs}fpm pitch=${snap.pitch}° bank=${snap.bank}° AGL=${snap.agl}ft`;
+                    if (snap.elev != null) ctx += ` elev=${snap.elev}%`;
+                    if (snap.ail != null) ctx += ` ail=${snap.ail}%`;
+                    if (snap.event) ctx += ` [${snap.event}]`;
+                }
+            }
+            if (a.notes) ctx += `\nNotes: ${a.notes}`;
         }
     } else {
-        ctx += '\n\nNo previous takeoff attempts logged yet. This will be the first.';
+        ctx += `\n\nNO PREVIOUS ATTEMPTS — This is the first takeoff.
+You must choose initial parameter values based on your knowledge of C172 aerodynamics.
+Key consideration: joystick fights commands at ~50% effectiveness.
+After the attempt, telemetry will show what happened so you can adjust.`;
     }
+
+    // Inject Sally's accumulated learnings
+    if (_sallyLearnings.length > 0) {
+        const recent = _sallyLearnings.slice(-20);  // last 20 learnings
+        ctx += '\n\nYOUR PREVIOUS LEARNINGS (observations you recorded — confidence % shown):';
+        for (const l of recent) {
+            const conf = l.confidence || 50;
+            const reinf = l.reinforcements ? ` ×${l.reinforcements} confirmed` : '';
+            const cat = l.category ? ` [${l.category}]` : '';
+            ctx += `\n- #${l.id} [${conf}%${reinf}]${cat} ${l.observation}`;
+        }
+        ctx += '\nBuild on these. If you reach the same conclusion again, re-state it (confidence will increase automatically).';
+        ctx += '\nIf new evidence contradicts a learning, output FORGET: #id to remove it.';
+    } else {
+        ctx += '\n\nNO PREVIOUS LEARNINGS — After analyzing results, record observations using LEARNING: lines.';
+        ctx += '\nInclude your confidence: LEARNING: [75%] observation here';
+    }
+
+    ctx += `\n
+OUTPUT FORMAT — Include ALL of these in your response:
+1. Brief analysis (2-3 sentences explaining what you observe in the data)
+2. TUNING_JSON: {param: value, ...} — parameters to change (omit unchanged ones)
+3. LEARNING: [confidence%] observation — stable observations to remember
+   Include a confidence percentage [10-99%] based on evidence strength.
+   Low confidence (10-40%): hypothesis based on limited data
+   Medium confidence (41-70%): supported by 1-2 attempts
+   High confidence (71-99%): confirmed across multiple attempts
+   If re-stating a previous learning, it will be automatically reinforced.
+   To correct a wrong learning: FORGET: #id`;
 
     return ctx;
 }
@@ -742,6 +1020,7 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
 
         try {
             // Get non-streaming response for parsing
+            const _queryStart = Date.now();
             let fullText = '';
             if (provider === 'anthropic') {
                 fullText = await fetchAnthropic(apiKey, model, messages, abortController);
@@ -774,15 +1053,59 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
                 }
             }
 
+            // Parse TUNING_JSON from Sally's response — she adjusts takeoff parameters
+            let tuning = null;
+            const tuningMatch = fullText.match(/TUNING_JSON:\s*(\{[\s\S]*?\})/);
+            if (tuningMatch) {
+                try {
+                    tuning = JSON.parse(tuningMatch[1]);
+                    _sharedState.tuning = tuning;
+                    _sharedState.lastUpdate = Date.now();
+                    console.log('[AI-Pilot] Sally tuning update:', JSON.stringify(tuning));
+                } catch (e) {
+                    console.warn('[AI-Pilot] Failed to parse TUNING_JSON:', e.message);
+                }
+            }
+
+            // Parse LEARNING: lines — Sally's stable observations
+            const newLearnings = parseLearnings(fullText);
+
+            // Parse FORGET: #id — Sally correcting a wrong learning
+            const forgetMatches = fullText.matchAll(/FORGET:\s*#?(\d+)/gi);
+            for (const m of forgetMatches) {
+                const forgetId = parseInt(m[1]);
+                const idx = _sallyLearnings.findIndex(l => l.id === forgetId);
+                if (idx >= 0) {
+                    const removed = _sallyLearnings.splice(idx, 1)[0];
+                    saveLearnings();
+                    console.log(`[AI-Pilot] Sally forgot learning #${forgetId}: ${removed.observation.slice(0, 60)}`);
+                }
+            }
+
+            // Log performance metric
+            logQueryMetric({
+                time: Date.now(),
+                durationMs: Date.now() - _queryStart,
+                provider,
+                model,
+                responseLen: fullText.length,
+                learnings: newLearnings.length,
+                tuningChanged: !!tuning,
+                error: false
+            });
+
             res.json({
                 success: true,
                 advisory: fullText,
                 commands: executed,
+                tuning,
                 simConnected: !!sc
             });
 
         } catch (err) {
             clearTimeout(timeoutId);
+            _perfMetrics.totalErrors++;
+            logQueryMetric({ time: Date.now(), durationMs: 0, provider, model, responseLen: 0, error: true });
             res.status(502).json({ error: err.message });
         }
     });
@@ -845,6 +1168,81 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
             return res.status(400).json({ error: 'key must be "autopilot" or "nav"' });
         }
         res.json({ [key]: _sharedState[key], lastUpdate: _sharedState.lastUpdate });
+    });
+
+    // ── Takeoff Attempt Logger API ─────────────────────────────────
+    // Browser POSTs attempt telemetry when takeoff ends (success or failure).
+    // Sally reads this history to learn what works and what doesn't.
+
+    app.post('/api/ai-pilot/takeoff-attempt', express_json_guard, (req, res) => {
+        const attempt = req.body;
+        if (!attempt || !attempt.outcome) {
+            return res.status(400).json({ error: 'outcome required' });
+        }
+
+        // Assign sequential ID
+        attempt.id = _takeoffAttempts.length + 1;
+        attempt.time = attempt.time || new Date().toISOString();
+
+        _takeoffAttempts.push(attempt);
+
+        // Keep only last 50 attempts
+        if (_takeoffAttempts.length > 50) {
+            _takeoffAttempts = _takeoffAttempts.slice(-50);
+        }
+
+        // Persist to disk
+        try {
+            const dir = path.dirname(TAKEOFF_LOG_PATH);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(TAKEOFF_LOG_PATH, JSON.stringify(_takeoffAttempts, null, 2));
+        } catch (e) {
+            console.warn('[AI-Pilot] Failed to save takeoff log:', e.message);
+        }
+
+        console.log(`[AI-Pilot] Takeoff attempt #${attempt.id}: ${attempt.outcome} (phases: ${(attempt.phasesReached || []).join('→')})`);
+        res.json({ ok: true, id: attempt.id, totalAttempts: _takeoffAttempts.length });
+    });
+
+    app.get('/api/ai-pilot/takeoff-attempts', (req, res) => {
+        const limit = parseInt(req.query.limit) || 10;
+        res.json({
+            attempts: _takeoffAttempts.slice(-limit),
+            total: _takeoffAttempts.length
+        });
+    });
+
+    // Get/set Sally's tuning values (stored server-side, browser polls)
+    app.get('/api/ai-pilot/tuning', (req, res) => {
+        res.json({ tuning: _sharedState.tuning || null });
+    });
+
+    // Sally's learnings — persistent observations
+    app.get('/api/ai-pilot/learnings', (req, res) => {
+        res.json({ learnings: _sallyLearnings, total: _sallyLearnings.length });
+    });
+
+    app.delete('/api/ai-pilot/learnings', (req, res) => {
+        _sallyLearnings = [];
+        saveLearnings();
+        res.json({ ok: true, message: 'All learnings cleared' });
+    });
+
+    app.delete('/api/ai-pilot/learnings/:id', (req, res) => {
+        const id = parseInt(req.params.id);
+        const idx = _sallyLearnings.findIndex(l => l.id === id);
+        if (idx >= 0) {
+            const removed = _sallyLearnings.splice(idx, 1)[0];
+            saveLearnings();
+            res.json({ ok: true, removed: removed.observation });
+        } else {
+            res.status(404).json({ error: 'Learning not found' });
+        }
+    });
+
+    // Sally performance metrics
+    app.get('/api/ai-pilot/performance', (req, res) => {
+        res.json(getPerfSummary());
     });
 
     // ── ATC Ground Operations API ────────────────────────────────────
@@ -1131,7 +1529,7 @@ async function fetchOpenAI(apiKey, model, messages, abortController, baseUrl) {
     const response = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ model, messages, max_tokens: 300 }),
+        body: JSON.stringify({ model, messages, max_tokens: 800 }),
         signal: abortController.signal
     });
     if (!response.ok) throw new Error(`LLM error (${response.status}) from ${url}`);
@@ -1148,7 +1546,7 @@ async function fetchAnthropic(apiKey, model, messages, abortController) {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model, system: systemMsg?.content || '', messages: chatMessages, max_tokens: 300 }),
+        body: JSON.stringify({ model, system: systemMsg?.content || '', messages: chatMessages, max_tokens: 800 }),
         signal: abortController.signal
     });
     if (!response.ok) throw new Error(`Anthropic error (${response.status})`);

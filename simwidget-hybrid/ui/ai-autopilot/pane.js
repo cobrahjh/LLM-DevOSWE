@@ -94,6 +94,9 @@ class AiAutopilotPane extends SimGlassBase {
         this.syncChannel = typeof SafeChannel !== 'undefined' ? new SafeChannel('SimGlass-sync') : null;
         this._syncBroadcastTimer = null;
 
+        // Takeoff attempt telemetry — tracks each takeoff for Sally to learn from
+        this._tkAttempt = null;  // { startTime, phasesReached, telemetry, timeline, tuningUsed }
+
         // Debug log
         this._debugLog = [];
         this._debugMaxEntries = 200;
@@ -445,7 +448,12 @@ class AiAutopilotPane extends SimGlassBase {
             const result = await res.json();
 
             if (result.advisory) {
-                const displayText = result.advisory.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
+                const displayText = result.advisory
+                    .replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '')
+                    .replace(/TUNING_JSON:\s*\{[\s\S]*?\}/, '')
+                    .replace(/^LEARNING:\s*.+$/gm, '')
+                    .replace(/^FORGET:\s*.+$/gm, '')
+                    .trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
 
                 // Speak response (humanized for natural TTS)
@@ -1657,6 +1665,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             }
 
             // Run rule engine
+            const prevPhase = this.flightPhase.phase;
             this.ruleEngine.evaluate(this.flightPhase.phase, data, this.ap);
 
             // Log takeoff sub-phase changes
@@ -1672,6 +1681,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     });
                 }
             }
+
+            // ── Takeoff attempt telemetry tracking ──
+            this._trackTakeoffAttempt(data, prevPhase, subPhase);
 
             // Check LLM advisory triggers
             const trigger = this.llmAdvisor.checkTriggers(data, this.flightPhase.phase);
@@ -1861,14 +1873,32 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
             const result = await res.json();
 
-            // Show advisory text
+            // Show advisory text (strip machine-readable blocks)
             if (result.advisory) {
-                const displayText = result.advisory.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').trim();
+                const displayText = result.advisory
+                    .replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '')
+                    .replace(/TUNING_JSON:\s*\{[\s\S]*?\}/, '')
+                    .replace(/^LEARNING:\s*.+$/gm, '')
+                    .replace(/^FORGET:\s*.+$/gm, '')
+                    .trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
                 // Speak via TTS (humanized for natural speech)
                 const speakText = this._humanizeSpeech(displayText.replace(/RECOMMEND:\s*/g, '').trim());
                 if (this._ttsEnabled && this._voice && speakText) {
                     this._voice.speak(speakText);
+                }
+            }
+
+            // Save Sally's tuning values to localStorage for rule engine pickup
+            if (result.tuning && typeof result.tuning === 'object') {
+                try {
+                    // Merge with existing tuning (Sally only sends changed params)
+                    const existing = JSON.parse(localStorage.getItem('simglass-takeoff-tuning') || '{}');
+                    const merged = { ...existing, ...result.tuning };
+                    localStorage.setItem('simglass-takeoff-tuning', JSON.stringify(merged));
+                    console.log('[AI-Pilot] Sally tuning applied:', result.tuning);
+                } catch (e) {
+                    console.warn('[AI-Pilot] Failed to save tuning:', e.message);
                 }
             }
 
@@ -1892,6 +1922,143 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         } finally {
             this._autoAdviseInFlight = false;
             this._onAdvisoryLoading(false);
+        }
+    }
+
+    /**
+     * Track takeoff attempt telemetry for Sally's learning.
+     * Starts recording when TAKEOFF phase begins, ends when phase changes away.
+     */
+    _trackTakeoffAttempt(data, currentPhase, subPhase) {
+        const phase = this.flightPhase.phase;
+
+        // Start tracking on TAKEOFF phase entry
+        if (phase === 'TAKEOFF' && !this._tkAttempt) {
+            let tuningUsed = {};
+            try { tuningUsed = JSON.parse(localStorage.getItem('simglass-takeoff-tuning') || '{}'); } catch (_) {}
+            this._tkAttempt = {
+                startTime: Date.now(),
+                phasesReached: [],
+                tuningUsed,
+                telemetry: {
+                    maxAltGain: 0, maxBank: 0, maxHdgError: 0,
+                    maxPitch: -999, minPitch: 999,
+                    rotateSpeed: 0, liftoffSpeed: 0,
+                    maxVs: -9999, minVs: 9999,
+                    maxElevator: 0, maxAileron: 0, maxRudder: 0,
+                    duration_s: 0
+                },
+                timeline: [],
+                _lastSnap: 0
+            };
+        }
+
+        // Update telemetry during TAKEOFF
+        if (this._tkAttempt && phase === 'TAKEOFF') {
+            const tk = this._tkAttempt;
+            const t = tk.telemetry;
+            const now = Date.now();
+            const elapsed = (now - tk.startTime) / 1000;
+
+            // Track sub-phases reached
+            if (subPhase && !tk.phasesReached.includes(subPhase)) {
+                tk.phasesReached.push(subPhase);
+            }
+
+            // Update max/min telemetry
+            const agl = data.altitudeAGL || 0;
+            t.maxAltGain = Math.max(t.maxAltGain, Math.round(agl));
+            t.maxBank = Math.max(t.maxBank, Math.round(Math.abs(data.bank || 0)));
+            t.maxPitch = Math.max(t.maxPitch, Math.round(data.pitch || 0));
+            t.minPitch = Math.min(t.minPitch, Math.round(data.pitch || 0));
+            t.maxVs = Math.max(t.maxVs, Math.round(data.verticalSpeed || 0));
+            t.minVs = Math.min(t.minVs, Math.round(data.verticalSpeed || 0));
+            t.duration_s = Math.round(elapsed);
+
+            // Track control surface maxes from rule engine live data
+            const live = this.ruleEngine.live || {};
+            t.maxElevator = Math.max(t.maxElevator, Math.round(Math.abs(live.elevator || 0)));
+            t.maxAileron = Math.max(t.maxAileron, Math.round(Math.abs(live.aileron || 0)));
+            t.maxRudder = Math.max(t.maxRudder, Math.round(Math.abs(live.rudder || 0)));
+
+            // Capture rotate/liftoff speeds
+            if (subPhase === 'ROTATE' && t.rotateSpeed === 0) {
+                t.rotateSpeed = Math.round(data.speed || 0);
+            }
+            if (subPhase === 'LIFTOFF' && t.liftoffSpeed === 0) {
+                t.liftoffSpeed = Math.round(data.speed || 0);
+            }
+
+            // Timeline snapshots every 2 seconds
+            if (now - tk._lastSnap > 2000) {
+                tk._lastSnap = now;
+                const snap = {
+                    t: Math.round(elapsed),
+                    sub: subPhase || '?',
+                    ias: Math.round(data.speed || 0),
+                    vs: Math.round(data.verticalSpeed || 0),
+                    pitch: Math.round(data.pitch || 0),
+                    bank: Math.round(data.bank || 0),
+                    agl: Math.round(agl)
+                };
+                if (live.elevator != null) snap.elev = Math.round(live.elevator);
+                if (live.aileron != null) snap.ail = Math.round(live.aileron);
+                // Mark key events
+                if (subPhase && !tk.phasesReached.includes(subPhase)) {
+                    snap.event = subPhase;
+                }
+                tk.timeline.push(snap);
+            }
+
+            // Heading error tracking
+            const rwyHdg = this.ruleEngine._runwayHeading;
+            if (rwyHdg != null) {
+                const hdgErr = Math.abs(((data.heading - rwyHdg + 540) % 360) - 180);
+                t.maxHdgError = Math.max(t.maxHdgError, Math.round(hdgErr));
+            }
+        }
+
+        // End tracking when phase leaves TAKEOFF (either success or crash/regression)
+        if (this._tkAttempt && phase !== 'TAKEOFF') {
+            const tk = this._tkAttempt;
+            let outcome = 'unknown';
+            if (phase === 'CLIMB' || phase === 'CRUISE') outcome = 'success';
+            else if (phase === 'PREFLIGHT' || phase === 'TAXI') outcome = 'crash';
+            else if (phase === 'LANDING') outcome = 'aborted';
+
+            // Clean up telemetry sentinels
+            if (tk.telemetry.maxPitch === -999) tk.telemetry.maxPitch = 0;
+            if (tk.telemetry.minPitch === 999) tk.telemetry.minPitch = 0;
+            if (tk.telemetry.maxVs === -9999) tk.telemetry.maxVs = 0;
+            if (tk.telemetry.minVs === 9999) tk.telemetry.minVs = 0;
+
+            this._postTakeoffAttempt({
+                outcome,
+                phasesReached: tk.phasesReached,
+                tuningUsed: tk.tuningUsed,
+                telemetry: tk.telemetry,
+                timeline: tk.timeline.slice(0, 30)  // limit to 30 snapshots
+            });
+            this._tkAttempt = null;
+        }
+    }
+
+    /**
+     * POST takeoff attempt to server for Sally's learning history.
+     */
+    async _postTakeoffAttempt(attempt) {
+        try {
+            const res = await fetch('/api/ai-pilot/takeoff-attempt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(attempt)
+            });
+            if (res.ok) {
+                const result = await res.json();
+                this._dbg('api', `Takeoff attempt #${result.id} logged: ${attempt.outcome} (${attempt.phasesReached.join('→')})`);
+            }
+        } catch (e) {
+            console.warn('[AI-Pilot] Failed to log takeoff attempt:', e.message);
         }
     }
 

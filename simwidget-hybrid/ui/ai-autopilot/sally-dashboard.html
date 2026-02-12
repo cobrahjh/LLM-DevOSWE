@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sally's Learning Dashboard - SimGlass</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0e14; color: #c0c8d8; font-family: 'Segoe UI', sans-serif; font-size: 14px; padding: 16px; }
+h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
+.subtitle { color: #6b7a8d; font-size: 12px; margin-bottom: 16px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.panel { background: #111820; border: 1px solid #1e2a38; border-radius: 8px; padding: 14px; }
+.panel-title { font-size: 13px; color: #ffab40; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.panel-full { grid-column: 1 / -1; }
+
+/* Learnings */
+.learning { background: #0d1218; border: 1px solid #1a2430; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; position: relative; }
+.learning-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.learning-id { color: #6b7a8d; font-size: 11px; font-weight: 600; }
+.learning-cat { background: #1a2430; color: #4fc3f7; font-size: 10px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; }
+.learning-cat.elevator { color: #ff7043; background: #2a1510; }
+.learning-cat.aileron { color: #66bb6a; background: #102a15; }
+.learning-cat.rudder { color: #ab47bc; background: #201030; }
+.learning-cat.throttle { color: #ffab40; background: #2a2010; }
+.learning-cat.speed { color: #42a5f5; background: #101a2a; }
+.learning-cat.control { color: #ef5350; background: #2a1010; }
+.learning-cat.phase { color: #78909c; background: #1a2028; }
+.learning-text { font-size: 13px; line-height: 1.4; }
+.learning-meta { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-size: 11px; color: #6b7a8d; }
+.learning-reinf { color: #66bb6a; }
+.conf-bar { height: 4px; border-radius: 2px; background: #1a2430; margin-top: 6px; overflow: hidden; }
+.conf-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.conf-fill.low { background: #ef5350; }
+.conf-fill.med { background: #ffab40; }
+.conf-fill.high { background: #66bb6a; }
+.conf-pct { font-size: 12px; font-weight: 700; min-width: 36px; }
+.conf-pct.low { color: #ef5350; }
+.conf-pct.med { color: #ffab40; }
+.conf-pct.high { color: #66bb6a; }
+.learning-delete { position: absolute; top: 8px; right: 10px; background: none; border: none; color: #4a5568; cursor: pointer; font-size: 14px; }
+.learning-delete:hover { color: #ef5350; }
+
+/* Attempts */
+.attempt { background: #0d1218; border-left: 3px solid #4fc3f7; padding: 8px 12px; margin-bottom: 6px; border-radius: 0 4px 4px 0; }
+.attempt.success { border-left-color: #66bb6a; }
+.attempt.crash { border-left-color: #ef5350; }
+.attempt.aborted { border-left-color: #ffab40; }
+.attempt-header { display: flex; justify-content: space-between; align-items: center; }
+.attempt-id { font-weight: 600; font-size: 12px; }
+.attempt-outcome { font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; }
+.attempt-outcome.success { color: #66bb6a; background: #102a15; }
+.attempt-outcome.crash { color: #ef5350; background: #2a1010; }
+.attempt-outcome.aborted { color: #ffab40; background: #2a2010; }
+.attempt-outcome.unknown { color: #78909c; background: #1a2028; }
+.attempt-phases { font-size: 11px; color: #6b7a8d; margin-top: 3px; }
+.attempt-stats { font-size: 11px; color: #8899aa; margin-top: 3px; }
+
+/* Tuning */
+.tuning-table { width: 100%; border-collapse: collapse; }
+.tuning-table th { text-align: left; font-size: 11px; color: #6b7a8d; padding: 4px 8px; border-bottom: 1px solid #1e2a38; }
+.tuning-table td { padding: 4px 8px; font-size: 12px; border-bottom: 1px solid #111820; }
+.tuning-param { color: #4fc3f7; font-family: 'Consolas', monospace; }
+.tuning-value { color: #ffab40; font-weight: 600; font-family: 'Consolas', monospace; }
+
+/* Stats bar */
+.stats { display: flex; gap: 20px; margin-bottom: 16px; }
+.stat { text-align: center; }
+.stat-value { font-size: 28px; font-weight: 700; }
+.stat-value.cyan { color: #4fc3f7; }
+.stat-value.orange { color: #ffab40; }
+.stat-value.green { color: #66bb6a; }
+.stat-value.red { color: #ef5350; }
+.stat-label { font-size: 10px; color: #6b7a8d; text-transform: uppercase; }
+
+/* Category summary */
+.cat-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.cat-chip { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #1a2430; color: #8899aa; }
+.cat-chip .count { font-weight: 700; margin-left: 3px; }
+
+/* Empty states */
+.empty { color: #4a5568; font-style: italic; text-align: center; padding: 20px; }
+
+/* Status dot */
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-dot.connected { background: #66bb6a; }
+.status-dot.disconnected { background: #ef5350; }
+
+/* Refresh indicator */
+.refresh { font-size: 11px; color: #4a5568; float: right; }
+
+/* Actions */
+.btn { background: #1a2430; border: 1px solid #2a3a4a; color: #8899aa; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.btn:hover { background: #243040; color: #c0c8d8; }
+.btn-danger { border-color: #5a2020; }
+.btn-danger:hover { background: #3a1515; color: #ef5350; }
+.actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* Scrollable panels */
+.scroll { max-height: 500px; overflow-y: auto; }
+.scroll::-webkit-scrollbar { width: 5px; }
+.scroll::-webkit-scrollbar-thumb { background: #2a3a4a; border-radius: 3px; }
+</style>
+</head>
+<body>
+<h1>Sally's Learning Dashboard</h1>
+<div class="subtitle">Qwen 2.5 7B Instruct — Takeoff Tuning Engineer &mdash; <span class="status-dot disconnected" id="statusDot"></span><span id="statusText">connecting...</span> <span class="refresh" id="refreshInfo">...</span></div>
+
+<div class="stats" id="stats">
+    <div class="stat"><div class="stat-value cyan" id="statLearnings">0</div><div class="stat-label">Learnings</div></div>
+    <div class="stat"><div class="stat-value orange" id="statAttempts">0</div><div class="stat-label">Attempts</div></div>
+    <div class="stat"><div class="stat-value green" id="statAvgConf">0%</div><div class="stat-label">Avg Confidence</div></div>
+    <div class="stat"><div class="stat-value red" id="statCrashes">0</div><div class="stat-label">Crashes</div></div>
+    <div class="stat"><div class="stat-value green" id="statSuccesses">0</div><div class="stat-label">Successes</div></div>
+</div>
+
+<div class="grid">
+    <!-- Learnings Panel -->
+    <div class="panel">
+        <div class="panel-title">Learnings <span id="learningCount" style="color:#6b7a8d">(0)</span></div>
+        <div class="cat-summary" id="catSummary"></div>
+        <div class="scroll" id="learningsList"><div class="empty">No learnings yet — Sally will record observations after analyzing takeoff attempts</div></div>
+        <div class="actions">
+            <button class="btn btn-danger" onclick="clearAllLearnings()">Clear All</button>
+            <button class="btn" onclick="refresh()">Refresh</button>
+        </div>
+    </div>
+
+    <!-- Attempts Panel -->
+    <div class="panel">
+        <div class="panel-title">Takeoff Attempts <span id="attemptCount" style="color:#6b7a8d">(0)</span></div>
+        <div class="scroll" id="attemptsList"><div class="empty">No attempts logged yet</div></div>
+    </div>
+
+    <!-- Current Tuning Panel -->
+    <div class="panel">
+        <div class="panel-title">Active Tuning Values</div>
+        <div id="tuningContent"><div class="empty">No tuning values set — defaults in use</div></div>
+    </div>
+
+    <!-- Knowledge Map Panel -->
+    <div class="panel">
+        <div class="panel-title">Knowledge Confidence by Category</div>
+        <div id="knowledgeMap"><div class="empty">No data yet</div></div>
+    </div>
+
+    <!-- Performance Panel -->
+    <div class="panel panel-full">
+        <div class="panel-title">Performance Metrics</div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px;" id="perfStats">
+            <div class="stat"><div class="stat-value cyan" id="perfQueries">0</div><div class="stat-label">Total Queries</div></div>
+            <div class="stat"><div class="stat-value orange" id="perfAvgTime">0ms</div><div class="stat-label">Avg Response</div></div>
+            <div class="stat"><div class="stat-value green" id="perfMinTime">0ms</div><div class="stat-label">Min Response</div></div>
+            <div class="stat"><div class="stat-value red" id="perfMaxTime">0ms</div><div class="stat-label">Max Response</div></div>
+            <div class="stat"><div class="stat-value cyan" id="perfQPM">0</div><div class="stat-label">Queries/Min</div></div>
+            <div class="stat"><div class="stat-value orange" id="perfErrors">0</div><div class="stat-label">Errors</div></div>
+            <div class="stat"><div class="stat-value cyan" id="perfHeap">0</div><div class="stat-label">Heap MB</div></div>
+            <div class="stat"><div class="stat-value green" id="perfRSS">0</div><div class="stat-label">RSS MB</div></div>
+            <div class="stat"><div class="stat-value orange" id="perfUptime">0</div><div class="stat-label">Uptime</div></div>
+        </div>
+        <div id="perfChart" style="height:80px;display:flex;align-items:flex-end;gap:2px;"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:10px;color:#4a5568;">Response time history (last 20 queries)</span>
+            <span style="font-size:10px;color:#4a5568;" id="perfAvgLen">Avg response: 0 chars</span>
+        </div>
+    </div>
+</div>
+
+<script>
+const SERVER = window.location.origin;
+let pollTimer = null;
+
+async function fetchJSON(url) {
+    const res = await fetch(SERVER + url);
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.json();
+}
+
+async function refresh() {
+    try {
+        const [learningsRes, attemptsRes, tuningRes, perfRes] = await Promise.all([
+            fetchJSON('/api/ai-pilot/learnings'),
+            fetchJSON('/api/ai-pilot/takeoff-attempts?limit=20'),
+            fetchJSON('/api/ai-pilot/tuning'),
+            fetchJSON('/api/ai-pilot/performance')
+        ]);
+
+        renderLearnings(learningsRes.learnings || []);
+        renderAttempts(attemptsRes.attempts || []);
+        renderTuning(tuningRes.tuning);
+        renderStats(learningsRes.learnings || [], attemptsRes.attempts || []);
+        renderKnowledgeMap(learningsRes.learnings || []);
+        renderPerformance(perfRes);
+
+        document.getElementById('statusDot').className = 'status-dot connected';
+        document.getElementById('statusText').textContent = 'connected';
+        document.getElementById('refreshInfo').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    } catch (e) {
+        document.getElementById('statusDot').className = 'status-dot disconnected';
+        document.getElementById('statusText').textContent = 'error: ' + e.message;
+    }
+}
+
+function renderStats(learnings, attempts) {
+    document.getElementById('statLearnings').textContent = learnings.length;
+    document.getElementById('statAttempts').textContent = attempts.length;
+
+    const avgConf = learnings.length > 0
+        ? Math.round(learnings.reduce((s, l) => s + (l.confidence || 50), 0) / learnings.length)
+        : 0;
+    document.getElementById('statAvgConf').textContent = avgConf + '%';
+
+    const crashes = attempts.filter(a => a.outcome === 'crash').length;
+    const successes = attempts.filter(a => a.outcome === 'success').length;
+    document.getElementById('statCrashes').textContent = crashes;
+    document.getElementById('statSuccesses').textContent = successes;
+}
+
+function confClass(c) { return c <= 40 ? 'low' : c <= 70 ? 'med' : 'high'; }
+
+function renderLearnings(learnings) {
+    const el = document.getElementById('learningsList');
+    document.getElementById('learningCount').textContent = `(${learnings.length})`;
+
+    if (learnings.length === 0) {
+        el.innerHTML = '<div class="empty">No learnings yet — Sally will record observations after analyzing takeoff attempts</div>';
+        document.getElementById('catSummary').innerHTML = '';
+        return;
+    }
+
+    // Category summary chips
+    const cats = {};
+    learnings.forEach(l => { const c = l.category || 'general'; cats[c] = (cats[c] || 0) + 1; });
+    document.getElementById('catSummary').innerHTML = Object.entries(cats)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, count]) => `<span class="cat-chip"><span class="learning-cat ${cat}">${cat}</span><span class="count">${count}</span></span>`)
+        .join('');
+
+    // Render learnings (newest first)
+    el.innerHTML = [...learnings].reverse().map(l => {
+        const conf = l.confidence || 50;
+        const cc = confClass(conf);
+        const reinf = l.reinforcements > 0 ? `<span class="learning-reinf">confirmed ${l.reinforcements}x</span>` : '';
+        const cat = l.category ? `<span class="learning-cat ${l.category}">${l.category}</span>` : '';
+        const time = l.time ? new Date(l.time).toLocaleString() : '';
+        const ref = l.attemptRef ? `after attempt #${l.attemptRef}` : '';
+
+        return `<div class="learning">
+            <button class="learning-delete" onclick="deleteLearning(${l.id})" title="Delete learning">&times;</button>
+            <div class="learning-header">
+                <span class="learning-id">#${l.id}</span>
+                ${cat}
+                <span class="conf-pct ${cc}">${conf}%</span>
+            </div>
+            <div class="learning-text">${escHtml(l.observation)}</div>
+            <div class="conf-bar"><div class="conf-fill ${cc}" style="width:${conf}%"></div></div>
+            <div class="learning-meta">
+                <span>${time}</span>
+                <span>${ref}</span>
+                ${reinf}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderAttempts(attempts) {
+    const el = document.getElementById('attemptsList');
+    document.getElementById('attemptCount').textContent = `(${attempts.length})`;
+
+    if (attempts.length === 0) {
+        el.innerHTML = '<div class="empty">No attempts logged yet</div>';
+        return;
+    }
+
+    el.innerHTML = [...attempts].reverse().map(a => {
+        const outcome = a.outcome || 'unknown';
+        const t = a.telemetry || {};
+        const phases = (a.phasesReached || []).join(' \u2192 ');
+        const stats = [];
+        if (t.maxAltGain != null) stats.push(`Alt +${t.maxAltGain}ft`);
+        if (t.maxBank != null) stats.push(`Bank ${t.maxBank}\u00b0`);
+        if (t.maxPitch != null) stats.push(`Pitch ${t.maxPitch}\u00b0`);
+        if (t.rotateSpeed) stats.push(`Vr ${t.rotateSpeed}kt`);
+        if (t.duration_s) stats.push(`${t.duration_s}s`);
+
+        return `<div class="attempt ${outcome}">
+            <div class="attempt-header">
+                <span class="attempt-id">#${a.id || '?'} &mdash; ${a.time ? new Date(a.time).toLocaleString() : ''}</span>
+                <span class="attempt-outcome ${outcome}">${outcome}</span>
+            </div>
+            <div class="attempt-phases">${phases || 'no phases'}</div>
+            ${stats.length ? `<div class="attempt-stats">${stats.join(' | ')}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function renderTuning(tuning) {
+    const el = document.getElementById('tuningContent');
+    if (!tuning || Object.keys(tuning).length === 0) {
+        el.innerHTML = '<div class="empty">No tuning values set — defaults in use</div>';
+        return;
+    }
+
+    const rows = Object.entries(tuning).map(([k, v]) =>
+        `<tr><td class="tuning-param">${escHtml(k)}</td><td class="tuning-value">${v}</td></tr>`
+    ).join('');
+
+    el.innerHTML = `<table class="tuning-table"><thead><tr><th>Parameter</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderKnowledgeMap(learnings) {
+    const el = document.getElementById('knowledgeMap');
+    if (learnings.length === 0) {
+        el.innerHTML = '<div class="empty">No data yet</div>';
+        return;
+    }
+
+    // Aggregate confidence by category
+    const cats = {};
+    learnings.forEach(l => {
+        const c = l.category || 'general';
+        if (!cats[c]) cats[c] = { total: 0, count: 0, maxConf: 0 };
+        cats[c].total += (l.confidence || 50);
+        cats[c].count++;
+        cats[c].maxConf = Math.max(cats[c].maxConf, l.confidence || 50);
+    });
+
+    el.innerHTML = Object.entries(cats)
+        .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))
+        .map(([cat, data]) => {
+            const avg = Math.round(data.total / data.count);
+            const cc = confClass(avg);
+            return `<div style="margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                    <span class="learning-cat ${cat}" style="font-size:12px;padding:3px 8px;">${cat}</span>
+                    <span style="font-size:11px;color:#6b7a8d;">${data.count} learning${data.count > 1 ? 's' : ''}</span>
+                    <span class="conf-pct ${cc}">${avg}%</span>
+                </div>
+                <div class="conf-bar"><div class="conf-fill ${cc}" style="width:${avg}%"></div></div>
+            </div>`;
+        }).join('');
+}
+
+async function deleteLearning(id) {
+    if (!confirm('Delete learning #' + id + '?')) return;
+    try {
+        await fetch(SERVER + '/api/ai-pilot/learnings/' + id, { method: 'DELETE' });
+        refresh();
+    } catch (e) {
+        alert('Failed: ' + e.message);
+    }
+}
+
+async function clearAllLearnings() {
+    if (!confirm('Clear ALL learnings? Sally will start from scratch.')) return;
+    try {
+        await fetch(SERVER + '/api/ai-pilot/learnings', { method: 'DELETE' });
+        refresh();
+    } catch (e) {
+        alert('Failed: ' + e.message);
+    }
+}
+
+function renderPerformance(perf) {
+    if (!perf) return;
+
+    document.getElementById('perfQueries').textContent = perf.totalQueries || 0;
+    document.getElementById('perfAvgTime').textContent = (perf.avgResponseTime_ms || 0) + 'ms';
+    document.getElementById('perfMinTime').textContent = (perf.minResponseTime_ms || 0) + 'ms';
+    document.getElementById('perfMaxTime').textContent = (perf.maxResponseTime_ms || 0) + 'ms';
+    document.getElementById('perfQPM').textContent = perf.queriesPerMinute || 0;
+    document.getElementById('perfErrors').textContent = perf.totalErrors || 0;
+    document.getElementById('perfAvgLen').textContent = 'Avg response: ' + (perf.avgResponseLength || 0) + ' chars';
+
+    if (perf.memory) {
+        document.getElementById('perfHeap').textContent = perf.memory.heapUsed_mb || 0;
+        document.getElementById('perfRSS').textContent = perf.memory.rss_mb || 0;
+    }
+
+    // Uptime formatting
+    const up = perf.uptime_s || 0;
+    const h = Math.floor(up / 3600);
+    const m = Math.floor((up % 3600) / 60);
+    document.getElementById('perfUptime').textContent = h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+
+    // Response time bar chart
+    const chart = document.getElementById('perfChart');
+    const history = perf.history || [];
+    if (history.length === 0) {
+        chart.innerHTML = '<span class="empty" style="width:100%">No queries yet</span>';
+        return;
+    }
+
+    const maxMs = Math.max(...history.map(h => h.durationMs || 0), 1);
+    chart.innerHTML = history.map(h => {
+        const ms = h.durationMs || 0;
+        const pct = Math.max(4, Math.round(ms / maxMs * 100));
+        const color = h.error ? '#ef5350' : ms > 10000 ? '#ff7043' : ms > 5000 ? '#ffab40' : '#4fc3f7';
+        const icons = [];
+        if (h.learnings > 0) icons.push('\ud83d\udca1');
+        if (h.tuningChanged) icons.push('\ud83d\udd27');
+        const tooltip = `${ms}ms${h.learnings ? ' +' + h.learnings + ' learnings' : ''}${h.tuningChanged ? ' +tuning' : ''}${h.error ? ' ERROR' : ''}`;
+        return `<div title="${tooltip}" style="flex:1;min-width:12px;height:${pct}%;background:${color};border-radius:2px 2px 0 0;position:relative;cursor:help;">
+            ${icons.length ? '<span style="position:absolute;top:-16px;left:0;font-size:10px;">' + icons.join('') + '</span>' : ''}
+        </div>`;
+    }).join('');
+}
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Auto-refresh every 5 seconds
+refresh();
+pollTimer = setInterval(refresh, 5000);
+</script>
+</body>
+</html>
