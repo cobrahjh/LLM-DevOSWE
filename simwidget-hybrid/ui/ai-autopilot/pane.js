@@ -2468,3 +2468,8 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = AiAutopilotPane;
 }
+
+// Instantiate widget when DOM ready
+if (typeof window !== 'undefined') {
+    window.widget = new AiAutopilotPane();
+}
