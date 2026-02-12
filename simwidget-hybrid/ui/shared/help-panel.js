@@ -611,7 +611,7 @@
             ]
         },
         'otto-search': {
-            title: 'Otto Search',
+            title: 'SimGlass Search',
             desc: 'Universal command search \u2014 find any SimGlass action.',
             items: [
                 'Type to search all available commands.',

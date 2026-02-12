@@ -227,7 +227,7 @@ simwidget-hybrid/
 │   ├── map-widget/         # Live position + weather
 │   ├── navigraph-widget/   # FREE charts (FAA, SkyVector)
 │   ├── notepad-widget/     # Flight notes
-│   ├── otto-search/        # Command palette
+│   ├── otto-search/        # SimGlass Search command palette
 │   ├── panel-launcher/     # Quick launch (30 widgets)
 │   ├── plugin-manager/     # Third-party plugins
 │   ├── radio-stack/        # COM, NAV, transponder

@@ -98,7 +98,7 @@ Ctrl+/                          # Keyboard shortcuts
 |--------|-------------|------|
 | ⌨️ **Keymap Editor** | Customize keybindings | `/ui/keymap-editor/` |
 | 🔌 **Plugin Manager** | Manage plugins | `/ui/plugin-manager/` |
-| 🔍 **Otto Search** | Quick widget search | `/ui/otto-search/` |
+| 🔍 **SimGlass Search** | Quick command search | `/ui/otto-search/` |
 | 🖥️ **Services Panel** | System status | `/ui/services-panel/` |
 | 🎬 **WASM Camera** | Custom cameras | `/ui/wasm-camera/` |
 | 🧩 **Tiny Widgets** | Compact widget collection | `/ui/tinywidgets/` |
