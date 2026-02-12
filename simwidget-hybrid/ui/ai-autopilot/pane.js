@@ -2561,7 +2561,4 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = AiAutopilotPane;
 }
 
-// Instantiate widget when DOM ready
-if (typeof window !== 'undefined') {
-    window.widget = new AiAutopilotPane();
-}
+// Instantiated by index.html (which also wires settings + destroy)
