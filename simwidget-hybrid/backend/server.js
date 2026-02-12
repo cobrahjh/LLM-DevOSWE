@@ -2817,7 +2817,15 @@ function executeCommand(command, value) {
         try {
             const percent = Math.max(0, Math.min(100, value || 0));
             const normalized = percent / 100;
-            simConnectConnection.setInputEvent(global.inputEventHashes.ENGINE_THROTTLE_1, normalized);
+            const hash = global.inputEventHashes.ENGINE_THROTTLE_1;
+            // Store for 60Hz re-application (overcomes joystick throttle override)
+            if (percent === 0) {
+                delete _heldAxes.throttle;
+            } else {
+                _heldAxes.throttle = { hash, value: normalized };
+            }
+            updateHeldAxesTimer();
+            simConnectConnection.setInputEvent(hash, normalized);
             console.log(`[Throttle] InputEvent: ${percent}% (${normalized}) via ENGINE_THROTTLE_1`);
         } catch (e) {
             console.error(`[Throttle] InputEvent error: ${e.message}`);
@@ -2858,19 +2866,8 @@ function executeCommand(command, value) {
         return;
     }
 
-    // Test: AXIS_ELEVATOR_SET through legacy path (bypass InputEvent)
-    if (command === 'AXIS_ELEVATOR_SET_LEGACY') {
-        const axisEventId = eventMap['AXIS_ELEVATOR_SET'];
-        if (axisEventId !== undefined) {
-            const simValue = -Math.round((value || 0) / 100 * 16383);
-            simConnectConnection.transmitClientEvent(0, axisEventId, simValue, 1, 16);
-            console.log(`[Elevator] Legacy AXIS_ELEVATOR_SET: ${value}% → ${simValue}`);
-        }
-        return;
-    }
-
     // ═══════════════════════════════════════════════════════════════════════
-    // MSFS 2024 FLIGHT CONTROLS — LOCKED CONVENTIONS (verified 2026-02-11)
+    // MSFS 2024 FLIGHT CONTROLS — LOCKED CONVENTIONS (verified 2026-02-12)
     // DO NOT CHANGE these values, names, signs, or methods without express
     // written consent from the user. Each was individually tested in-sim.
     //
@@ -2878,36 +2875,37 @@ function executeCommand(command, value) {
     // │ Control  │ Method     │ Convention (input -100..+100)            │
     // ├──────────┼────────────┼──────────────────────────────────────────┤
     // │ Throttle │ InputEvent │ 0..100 → 0.0..1.0 ENGINE_THROTTLE_1    │
-    // │ Elevator │ InputEvent │ +100=nose DOWN, -100=nose UP (negated)  │
-    // │          │            │ UNKNOWN_TAIL_ELEVATOR                   │
-    // │ Ailerons │ InputEvent │ -100=roll LEFT, +100=roll RIGHT(negated)│
-    // │          │            │ UNKNOWN_AILERON_LEFT/RIGHT (split)      │
+    // │ Elevator │ Legacy     │ -100=nose UP, +100=nose DOWN (NEGATED)  │
+    // │          │            │ transmitClientEvent AXIS_ELEVATOR_SET   │
+    // │ Ailerons │ Legacy     │ -100=roll LEFT, +100=roll RIGHT         │
+    // │          │            │ transmitClientEvent AXIS_AILERONS_SET   │
     // │ Rudder   │ Legacy     │ +100=yaw LEFT, -100=yaw RIGHT          │
     // │          │            │ transmitClientEvent AXIS_RUDDER_SET     │
     // └──────────┴────────────┴──────────────────────────────────────────┘
+    //
+    // NOTE: UNKNOWN_TAIL_ELEVATOR and UNKNOWN_AILERON_LEFT/RIGHT InputEvents
+    // do NOT produce actual control surface deflection in MSFS 2024. All
+    // flight surface controls use legacy transmitClientEvent path.
+    //
+    // Elevator sign: SimConnect AXIS_ELEVATOR_SET uses +16383=nose UP,
+    // but our rule engine uses -100=nose UP. So we NEGATE the value.
     // ═══════════════════════════════════════════════════════════════════════
     if (command === 'AXIS_ELEVATOR_SET') {
-        const hash = global.inputEventHashes?.UNKNOWN_TAIL_ELEVATOR;
-        if (hash) {
-            try {
-                const normalized = -Math.max(-1, Math.min(1, (value || 0) / 100));
-                // Store for SIM_FRAME re-application (overcomes joystick spring-center)
-                if (value === 0) {
-                    delete _heldAxes.elevator;
-                } else {
-                    _heldAxes.elevator = { hash, value: normalized };
-                }
-                simConnectConnection.setInputEvent(hash, normalized);
-                console.log(`[Elevator] InputEvent: ${value}% (${normalized}) via UNKNOWN_TAIL_ELEVATOR`);
-            } catch (e) {
-                console.error(`[Elevator] InputEvent error: ${e.message}`);
+        // MSFS 2024: UNKNOWN_TAIL_ELEVATOR InputEvent does NOT deflect elevator.
+        // Use legacy transmitClientEvent — same as ailerons and rudder.
+        // NEGATE: SimConnect +16383=nose UP, rule engine -100=nose UP
+        const elevEventId = eventMap['AXIS_ELEVATOR_SET'];
+        if (elevEventId !== undefined) {
+            const simValue = -Math.round((value || 0) / 100 * 16383);
+            // Store for 60Hz re-application (overcomes joystick spring-center)
+            if (value === 0) {
+                delete _heldAxes.elevator;
+            } else {
+                _heldAxes.elevator = { eventId: elevEventId, value: simValue, legacy: true };
             }
-        } else {
-            const axisEventId = eventMap['AXIS_ELEVATOR_SET'];
-            if (axisEventId !== undefined) {
-                const simValue = Math.round((value || 0) / 100 * 16383);
-                simConnectConnection.transmitClientEvent(0, axisEventId, simValue, 1, 16);
-            }
+            updateHeldAxesTimer();
+            simConnectConnection.transmitClientEvent(0, elevEventId, simValue, 1, 16);
+            console.log(`[Elevator] Legacy: ${value}% → ${simValue}`);
         }
         return;
     }
@@ -2921,33 +2919,20 @@ function executeCommand(command, value) {
         return;
     }
     if (command === 'AXIS_AILERONS_SET') {
-        const hashL = global.inputEventHashes?.UNKNOWN_AILERON_LEFT;
-        const hashR = global.inputEventHashes?.UNKNOWN_AILERON_RIGHT;
-        if (hashL && hashR) {
-            try {
-                const pct = -Math.max(-100, Math.min(100, value || 0));
-                const left = pct > 0 ? pct / 100 : 0;
-                const right = pct < 0 ? -pct / 100 : 0;
-                // Store for SIM_FRAME re-application (overcomes joystick spring-center)
-                if (value === 0) {
-                    delete _heldAxes.aileronLeft;
-                    delete _heldAxes.aileronRight;
-                } else {
-                    _heldAxes.aileronLeft = { hash: hashL, value: left };
-                    _heldAxes.aileronRight = { hash: hashR, value: right };
-                }
-                simConnectConnection.setInputEvent(hashL, left);
-                simConnectConnection.setInputEvent(hashR, right);
-                console.log(`[Ailerons] InputEvent: ${value}% → L:${left.toFixed(2)} R:${right.toFixed(2)}`);
-            } catch (e) {
-                console.error(`[Ailerons] InputEvent error: ${e.message}`);
+        // MSFS 2024: UNKNOWN_AILERON_LEFT/RIGHT InputEvents do NOT control ailerons.
+        // Use legacy transmitClientEvent path — same as rudder.
+        const ailEventId = eventMap['AXIS_AILERONS_SET'];
+        if (ailEventId !== undefined) {
+            const simValue = Math.round((value || 0) / 100 * 16383);
+            // Store for 60Hz re-application (overcomes joystick spring-center)
+            if (value === 0) {
+                delete _heldAxes.ailerons;
+            } else {
+                _heldAxes.ailerons = { eventId: ailEventId, value: simValue, legacy: true };
             }
-        } else {
-            const ailEventId = eventMap['AXIS_AILERONS_SET'];
-            if (ailEventId !== undefined) {
-                const simValue = Math.round((value || 0) / 100 * 16383);
-                simConnectConnection.transmitClientEvent(0, ailEventId, simValue, 1, 16);
-            }
+            updateHeldAxesTimer();
+            simConnectConnection.transmitClientEvent(0, ailEventId, simValue, 1, 16);
+            console.log(`[Ailerons] Legacy: ${value}% → ${simValue}`);
         }
         return;
     }
@@ -3039,6 +3024,7 @@ wss.on('connection', (ws) => {
 
     // Clear held axes on new connection — prevents stale elevator/aileron from previous session
     for (const key of Object.keys(_heldAxes)) delete _heldAxes[key];
+    updateHeldAxesTimer();
 
     ws.on('pong', () => { ws._isAlive = true; });
 
@@ -3208,17 +3194,37 @@ function handleFuelCommand(action, params) {
     }
 }
 
-// Re-apply held axis values every SIM_FRAME — overcomes joystick spring-center.
-// MSFS 2024 InputEvents get overridden each frame by joystick hardware polling.
-// By re-applying at the same rate (SIM_FRAME), the AI can sustain elevator/aileron deflection.
+// Re-apply held axis values — overcomes joystick spring-center.
+// MSFS 2024 joystick hardware polls at ~60-120Hz, overriding our axis commands.
+// SIM_FRAME alone (~30Hz) is too slow — the joystick wins the race.
+// Solution: dedicated 60Hz timer + SIM_FRAME for double coverage.
+let _heldAxesTimer = null;
+
 function reapplyHeldAxes() {
     if (!simConnectConnection) return;
     for (const held of Object.values(_heldAxes)) {
         try {
-            simConnectConnection.setInputEvent(held.hash, held.value);
+            if (held.legacy) {
+                // Legacy transmitClientEvent (elevator, ailerons, rudder)
+                simConnectConnection.transmitClientEvent(0, held.eventId, held.value, 1, 16);
+            } else {
+                // InputEvent (throttle, etc.)
+                simConnectConnection.setInputEvent(held.hash, held.value);
+            }
         } catch (_) {
-            // Silently ignore — will retry next frame
+            // Silently ignore — will retry next tick
         }
+    }
+}
+
+// Start/stop the 60Hz held-axes timer based on whether any axes are held
+function updateHeldAxesTimer() {
+    const hasHeld = Object.keys(_heldAxes).length > 0;
+    if (hasHeld && !_heldAxesTimer) {
+        _heldAxesTimer = setInterval(reapplyHeldAxes, 16); // ~60Hz
+    } else if (!hasHeld && _heldAxesTimer) {
+        clearInterval(_heldAxesTimer);
+        _heldAxesTimer = null;
     }
 }
 
@@ -3834,6 +3840,7 @@ async function initSimConnect() {
             flightData.connected = false;
             // Clear held axes — no SimConnect to apply them to
             for (const key of Object.keys(_heldAxes)) delete _heldAxes[key];
+            updateHeldAxesTimer();
             scheduleSimConnectRetry();
         });
         

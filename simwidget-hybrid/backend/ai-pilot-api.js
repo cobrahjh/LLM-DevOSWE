@@ -18,6 +18,16 @@ let _terrainGrid = null; // { width, height, latMin, latMax, lonMin, lonMax, cel
 // Shared state for cross-machine pane sync (AI Autopilot ↔ GTN750)
 const _sharedState = { autopilot: null, nav: null, airport: null, lastUpdate: 0 };
 
+// ── Takeoff Attempt Logger ──────────────────────────────────────────
+// Persists takeoff attempts so Sally can learn from previous results
+const TAKEOFF_LOG_PATH = path.join(__dirname, '..', 'data', 'takeoff-attempts.json');
+let _takeoffAttempts = [];
+try {
+    if (fs.existsSync(TAKEOFF_LOG_PATH)) {
+        _takeoffAttempts = JSON.parse(fs.readFileSync(TAKEOFF_LOG_PATH, 'utf8'));
+    }
+} catch (_) { _takeoffAttempts = []; }
+
 function loadTerrainGrid() {
     if (_terrainGrid) return _terrainGrid;
     try {
@@ -227,6 +237,85 @@ function buildAirportContext() {
         ctx += `\n- Active Runway: ${rwy.id}, Heading ${rwy.heading}°, Length ${rwy.length || '?'} ft`;
         ctx += `\n- USE THIS RUNWAY HEADING (${rwy.heading}°) for takeoff/approach alignment`;
     }
+    return ctx;
+}
+
+function buildTakeoffContext() {
+    // Give Sally full knowledge of the AI autopilot takeoff system
+    const attempts = _takeoffAttempts.slice(-10); // last 10 attempts
+    let ctx = `
+AI AUTOPILOT TAKEOFF SYSTEM (SimGlass Rule Engine):
+You are not just an advisor — you are the TUNING ENGINEER for this autopilot.
+Your job is to analyze takeoff attempt results and adjust parameters to achieve successful takeoffs.
+
+ARCHITECTURE:
+- Rule Engine (rule-engine.js): Evaluates flight data every ~200ms, sends commands per sub-phase
+- Command Queue: Rate-limited (2/sec for AP commands), axis commands bypass queue at 50ms intervals
+- Server Held-Axes: 60Hz timer reapplies elevator/aileron/throttle via transmitClientEvent to fight joystick spring-center
+- CRITICAL: Physical joystick polls at ~60-120Hz, overriding our commands ~50% of frames
+- EFFECTIVE deflection is roughly 50% of commanded value due to joystick fighting
+
+TAKEOFF SUB-PHASES (in order):
+1. BEFORE_ROLL: Centers all axes (elevator 0.0001, ailerons 0.0001, rudder 0), releases parking brake
+2. ROLL: Full throttle, elevator/ailerons near-zero (0.0001), rudder steering for runway heading
+   → Transitions to ROTATE when speed >= Vr (55 kt)
+3. ROTATE: Progressive elevator from -30% increasing at -25%/sec to max (currently -80%)
+   Rudder steering continues. Trim nose up.
+   → Transitions to LIFTOFF when airborne OR after timeout (15s)
+4. LIFTOFF: Elevator held at current value (currently -70%), wings-level aileron corrections
+   Aileron gain=3, max=±60%. Bank threshold=3°.
+   → Transitions to INITIAL_CLIMB when VS > 100 fpm AND AGL > 200 ft
+5. INITIAL_CLIMB: Elevator (currently -50%), wings-level corrections (gain=3, max=±60%)
+   → Hands off to AP when speed >= Vs1+15 kt AND AGL > 500 ft
+6. DEPARTURE: AP engaged (HDG hold, VS hold at 500 fpm), flaps retract, axes released
+
+CURRENT TUNABLE PARAMETERS (defaults, overridable via takeoff-tuner):
+| Parameter | Sub-Phase | Current | Description |
+|-----------|-----------|---------|-------------|
+| rotateElevator | ROTATE | -80% | Max elevator deflection for rotation |
+| rotateRampStart | ROTATE | -30% | Starting elevator (progressive) |
+| rotateRampRate | ROTATE | 25%/sec | How fast elevator increases |
+| liftoffElevator | LIFTOFF | -70% | Elevator hold during initial climb |
+| liftoffAileronGain | LIFTOFF | 3 | Aileron correction per degree of bank |
+| liftoffAileronMax | LIFTOFF | 60% | Max aileron deflection |
+| climbElevator | INITIAL_CLIMB | -50% | Elevator during climb |
+| climbAileronGain | INITIAL_CLIMB | 3 | Aileron correction gain |
+| climbAileronMax | INITIAL_CLIMB | 60% | Max aileron |
+| rollThrottle | ROLL-DEPART | 100% | Throttle during takeoff |
+| taxiThrottleMax | TAXI | 70% | Max taxi throttle |
+
+MSFS 2024 FLIGHT CONTROL QUIRKS:
+- Elevator/Ailerons use legacy transmitClientEvent (InputEvents don't deflect surfaces)
+- Throttle uses InputEvent ENGINE_THROTTLE_1 (legacy doesn't work for throttle)
+- Elevator sign is NEGATED: rule engine -100=nose UP → server sends +16383 to SimConnect
+- Ailerons: NO negation needed (conventions match)
+- Rudder: Legacy transmitClientEvent, no held-axes (single-shot works)
+- All held axes reapplied at 60Hz to fight joystick, but joystick still wins ~50% of frames
+
+SIGN CONVENTIONS (rule engine values):
+- Elevator: negative = nose UP (e.g., -80 = strong nose up for rotation)
+- Ailerons: negative = roll LEFT, positive = roll RIGHT
+- Rudder: positive = yaw LEFT, negative = yaw RIGHT
+- Throttle: 0-100%
+
+HOW TO TUNE:
+When you analyze attempt results, output a TUNING_JSON block to adjust parameters:
+TUNING_JSON: {"rotateElevator": -80, "liftoffElevator": -70, "climbElevator": -50, "liftoffAileronGain": 3, "liftoffAileronMax": 60}
+The rule engine will pick up these overrides on the next attempt.`;
+
+    if (attempts.length > 0) {
+        ctx += '\n\nPREVIOUS TAKEOFF ATTEMPTS (most recent last):';
+        for (const a of attempts) {
+            ctx += `\n#${a.id} [${a.time}] ${a.outcome.toUpperCase()}`;
+            ctx += ` | Phases: ${a.phasesReached.join('→')}`;
+            ctx += ` | Max alt: +${a.maxAltGain}ft, Max bank: ${a.maxBank}°, Max hdg err: ${a.maxHdgError}°`;
+            ctx += ` | Elevator: ${a.elevatorUsed}%, Speed at rotate: ${a.rotateSpeed}kt`;
+            if (a.notes) ctx += ` | Notes: ${a.notes}`;
+        }
+    } else {
+        ctx += '\n\nNo previous takeoff attempts logged yet. This will be the first.';
+    }
+
     return ctx;
 }
 

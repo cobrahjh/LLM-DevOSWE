@@ -142,6 +142,12 @@ class RuleEngine {
         if (phaseChanged && (phase === 'PREFLIGHT' || phase === 'TAXI')) {
             this._rollBias = 0;
         }
+        // Clear command queue dedup state on ANY phase change so commands
+        // (especially THROTTLE_SET) get re-sent after phase transitions
+        if (phaseChanged && this._cmdQueue) {
+            this._cmdQueue.updateApState({});
+            this._cmdQueue._currentApState = {};
+        }
 
         // ── Parking brake safety ──
         // Release parking brake whenever AI has controls and throttle is above idle.
@@ -193,6 +199,11 @@ class RuleEngine {
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
+
+                // Release parking brake if set (from previous attempt or sim default)
+                if (d.parkingBrake) {
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
+                }
 
                 // ATC hold-short gate: if ATC is active and we're at HOLD_SHORT,
                 // stop the aircraft and wait for clearance
@@ -507,6 +518,12 @@ class RuleEngine {
 
         switch (this._takeoffSubPhase) {
             case 'BEFORE_ROLL':
+                // Recenter ALL flight controls — use 0.0001 (effectively zero) instead of 0
+                // because server deletes held-axes at exactly 0, letting joystick override.
+                // Non-zero keeps server re-applying at SIM_FRAME rate.
+                this._cmdValue('AXIS_ELEVATOR_SET', 0.0001, 'Center elevator');
+                this._cmdValue('AXIS_AILERONS_SET', 0.0001, 'Center ailerons');
+                this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder');
                 this._cmdValue('MIXTURE_SET', tt.beforeRollMixture ?? 100, 'Mixture RICH for takeoff');
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
@@ -520,9 +537,10 @@ class RuleEngine {
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
-                // Ensure elevator/ailerons are neutral during roll (clears any server-held axes)
-                this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Elevator neutral');
-                this._cmdValue('AXIS_AILERONS_SET', 0, 'Ailerons neutral');
+                // Hold elevator/ailerons at near-zero during roll — use 0.0001 (effectively zero)
+                // so server keeps held-axes active, overriding joystick at SIM_FRAME rate.
+                this._cmdValue('AXIS_ELEVATOR_SET', 0.0001, 'Elevator neutral');
+                this._cmdValue('AXIS_AILERONS_SET', 0.0001, 'Ailerons neutral');
                 this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power');
                 if (!this._runwayHeading) {
                     this._runwayHeading = this._activeRunway?.heading || Math.round(d.heading || 0);
@@ -536,11 +554,12 @@ class RuleEngine {
 
             case 'ROTATE': {
                 this._cmdValue('THROTTLE_SET', tt.rotateThrottle ?? tt.rollThrottle ?? 100, 'Full power');
-                // Progressive rotation: start gentle (-20%), increase by -15%/sec to max.
-                // Prevents ground-loop from nosewheel unloading too fast.
-                const rotMax = tt.rotateElevator ?? -50;
+                // Progressive rotation: start at -30%, increase by -25%/sec to max -80%.
+                // High authority needed — 60Hz held-axes fights joystick spring-center,
+                // effective deflection is ~50% of commanded (joystick wins half the frames).
+                const rotMax = tt.rotateElevator ?? -80;
                 const rotElapsed = (Date.now() - this._rotateStartTime) / 1000;
-                const rotElev = Math.max(rotMax, -20 - rotElapsed * 15);
+                const rotElev = Math.max(rotMax, -30 - rotElapsed * 25);
                 this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${Math.round(rotElev)}`);
                 this._groundSteer(d, this._runwayHeading);
                 this._cmd('ELEV_TRIM_UP', true, 'Trim nose up');
@@ -555,10 +574,10 @@ class RuleEngine {
 
             case 'LIFTOFF': {
                 this._cmdValue('THROTTLE_SET', tt.liftoffThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const loElev = tt.liftoffElevator ?? -40;
+                const loElev = tt.liftoffElevator ?? -70;
                 this._cmdValue('AXIS_ELEVATOR_SET', loElev, `Climb — elevator ${loElev}`);
-                const loAilGain = tt.liftoffAileronGain ?? 2;
-                const loAilMax = tt.liftoffAileronMax ?? 30;
+                const loAilGain = tt.liftoffAileronGain ?? 3;
+                const loAilMax = tt.liftoffAileronMax ?? 60;
                 const bank = d.bank || 0;
                 if (Math.abs(bank) > (tt.liftoffBankThreshold ?? 3)) {
                     const ailCorr = bank * loAilGain;
@@ -572,10 +591,10 @@ class RuleEngine {
 
             case 'INITIAL_CLIMB': {
                 this._cmdValue('THROTTLE_SET', tt.climbPhaseThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const icElev = tt.climbElevator ?? -30;
+                const icElev = tt.climbElevator ?? -50;
                 this._cmdValue('AXIS_ELEVATOR_SET', icElev, `Climb — elevator ${icElev}`);
-                const icAilGain = tt.climbAileronGain ?? 2;
-                const icAilMax = tt.climbAileronMax ?? 30;
+                const icAilGain = tt.climbAileronGain ?? 3;
+                const icAilMax = tt.climbAileronMax ?? 60;
                 {
                     const bank = d.bank || 0;
                     if (Math.abs(bank) > (tt.climbBankThreshold ?? 3)) {
@@ -1348,10 +1367,12 @@ class RuleEngine {
         const baseGain = Math.max(3.0, (ttSteer.steerGainBase ?? 8.0) - gs * (ttSteer.steerGainDecay ?? 0.06));
         // Ground steering needs much more authority than flight — C172 nosewheel
         // is sluggish at low speeds, full deflection may be needed to hold heading.
-        // Scale from full authority at taxi speed down to tuned value at Vr.
+        // During takeoff (ROTATE/LIFTOFF), keep high authority to counter P-factor
+        // when nosewheel unloads. Scale down only after liftoff.
         const flightDefl = this.tuning.rudderAuthority || 20;
         const lowSpeedDefl = ttSteer.taxiRudderMaxLow ?? 60;
-        const maxDefl = gs < 30 ? Math.max(flightDefl, lowSpeedDefl) : flightDefl;
+        const isTakeoffPhase = this._takeoffSubPhase === 'ROLL' || this._takeoffSubPhase === 'ROTATE' || this._takeoffSubPhase === 'LIFTOFF';
+        const maxDefl = (gs < 30 || isTakeoffPhase) ? Math.max(flightDefl, lowSpeedDefl) : flightDefl;
 
         // Through server.js: positive RUDDER_SET value → left yaw in MSFS
         // Drifted right (+error) → need LEFT rudder (positive value) to correct

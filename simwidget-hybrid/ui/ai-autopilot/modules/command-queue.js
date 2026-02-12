@@ -34,7 +34,9 @@ class CommandQueue {
         // Axis rate limiting — SimConnect drops events if flooded
         this._axisLastSend = {};   // { AXIS_*: timestamp }
         this._axisLastValue = {};  // { AXIS_*: value } for log dedup
+        this._axisLastLog = {};    // { AXIS_*: timestamp } for periodic log even when value unchanged
         this._axisMinInterval = 50; // ms between same axis command (~20/sec)
+        this._axisLogInterval = 2000; // log held axes every 2s even if value unchanged
     }
 
     /**
@@ -61,15 +63,23 @@ class CommandQueue {
             if (now - lastSend < this._axisMinInterval) return;
             this._axisLastSend[cmd.type] = now;
             // Skip logging if value unchanged (reduces command log spam)
+            // But periodically log held axes every 2s so control log shows they're active
             const lastVal = this._axisLastValue[cmd.type];
             const roundedVal = Math.round(cmd.value);
             if (lastVal === roundedVal) {
-                // Still send to sim but don't log
-                const wsCmd = this._buildWsCommand(cmd);
-                if (wsCmd && this.sendCommand) this.sendCommand(wsCmd);
-                return;
+                const lastLog = this._axisLastLog[cmd.type] || 0;
+                if (now - lastLog < this._axisLogInterval) {
+                    // Still send to sim but don't log yet
+                    const wsCmd = this._buildWsCommand(cmd);
+                    if (wsCmd && this.sendCommand) this.sendCommand(wsCmd);
+                    return;
+                }
+                // Periodic log — show this axis is still being held
+                this._axisLastLog[cmd.type] = now;
+                cmd.description = (cmd.description || cmd.type) + ' (held)';
             }
             this._axisLastValue[cmd.type] = roundedVal;
+            this._axisLastLog[cmd.type] = now;
             this._execute(cmd);
             return;
         }
