@@ -3037,6 +3037,9 @@ wss.on('connection', (ws) => {
     ws._isAlive = true;
     usageMetrics.trackConnection(+1);
 
+    // Clear held axes on new connection — prevents stale elevator/aileron from previous session
+    for (const key of Object.keys(_heldAxes)) delete _heldAxes[key];
+
     ws.on('pong', () => { ws._isAlive = true; });
 
     // Add client to hot reload manager (development only)

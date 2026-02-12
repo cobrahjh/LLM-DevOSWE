@@ -520,6 +520,9 @@ class RuleEngine {
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
+                // Ensure elevator/ailerons are neutral during roll (clears any server-held axes)
+                this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Elevator neutral');
+                this._cmdValue('AXIS_AILERONS_SET', 0, 'Ailerons neutral');
                 this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power');
                 if (!this._runwayHeading) {
                     this._runwayHeading = this._activeRunway?.heading || Math.round(d.heading || 0);
