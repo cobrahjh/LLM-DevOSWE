@@ -214,6 +214,9 @@
             <div class="ls-item"><span class="ls-label">BANK</span><span class="ls-val" id="ls-bank">--</span></div>
             <div class="ls-item"><span class="ls-label">HDG</span><span class="ls-val" id="ls-hdg">--</span></div>
             <div class="ls-item"><span class="ls-label">THR</span><span class="ls-val" id="ls-thr">--</span></div>
+            <div class="ls-item"><span class="ls-label">ELEV</span><span class="ls-val" id="ls-elev">--</span></div>
+            <div class="ls-item"><span class="ls-label">AIL</span><span class="ls-val" id="ls-ail">--</span></div>
+            <div class="ls-item"><span class="ls-label">RUD</span><span class="ls-val" id="ls-rud">--</span></div>
             <div class="ls-item">
                 <span class="ls-phase-label">PHASE</span>
                 <span class="ls-phase-val" id="ls-phase">--</span>
@@ -485,6 +488,9 @@
             setText('ls-bank', (d.bank || 0).toFixed(1) + '\u00B0');
             setText('ls-hdg', Math.round(d.heading || 0) + '\u00B0');
             setText('ls-thr', Math.round(d.throttle || 0) + '%');
+            setText('ls-elev', Math.round(d.elevator || 0) + '%');
+            setText('ls-ail', Math.round(d.aileron || 0) + '%');
+            setText('ls-rud', Math.round(d.rudder || 0) + '%');
             setText('ls-phase', currentPhase || '--');
             setText('ls-sub', currentSubPhase || '--');
         }
