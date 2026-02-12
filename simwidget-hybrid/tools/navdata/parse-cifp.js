@@ -423,7 +423,9 @@ function parseProcedureRecord(line, recType) {
     const ident = col(line, 14, 19);
     if (!icao || !ident) return null;
 
-    const transIdent = col(line, 20, 24);
+    // Col 20 = Route Type digit (1-9), Col 21-25 = Transition Identifier
+    const routeTypeCode = col(line, 20, 20);
+    const transIdent = col(line, 21, 25);
     const seqNr = parseInt(col(line, 27, 29), 10) || 0;
     const fixIdent = col(line, 30, 34);
     const contNr = col(line, 26, 26);
@@ -434,8 +436,8 @@ function parseProcedureRecord(line, recType) {
     else if (recType === 'PE') procType = 'STAR';
     else procType = 'APPROACH';
 
-    // Runway from the record
-    const runway = col(line, 20, 24);
+    // Runway from runway transitions (RW##), otherwise null
+    const runway = transIdent.startsWith('RW') ? transIdent : null;
 
     // Path terminator (TF, CF, DF, IF, etc.)
     const pathTerm = col(line, 48, 49);

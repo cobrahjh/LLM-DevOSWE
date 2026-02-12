@@ -284,13 +284,23 @@ function setupNavdataRoutes(app) {
             const map = seen[p.type];
             if (!map) continue;
 
+            // Clean transition: strip leading route type digit (e.g., "4RW08" → "RW08", "6HBU" → "HBU")
+            const cleanTrans = cleanTransition(p.transition);
+            const cleanRwy = cleanTransition(p.runway);
+
             if (!map.has(p.ident)) {
+                // Collect runways from runway transitions (starting with RW)
+                const runways = [];
+                if (cleanRwy && cleanRwy.startsWith('RW')) runways.push(cleanRwy);
+                else if (cleanTrans && cleanTrans.startsWith('RW')) runways.push(cleanTrans);
+
                 const entry = {
                     id: p.id,
                     name: p.ident,
-                    runway: p.runway || 'ALL',
-                    transition: p.transition || null,
-                    transitions: p.transition ? [p.transition] : [],
+                    runway: runways.length ? runways[0] : 'ALL',
+                    runways,
+                    transition: cleanTrans || null,
+                    transitions: cleanTrans ? [cleanTrans] : [],
                     type: p.type === 'APPROACH' ? guessApproachType(p.ident) : p.type
                 };
                 map.set(p.ident, entry);
@@ -301,8 +311,21 @@ function setupNavdataRoutes(app) {
             } else {
                 // Add transition to existing entry
                 const existing = map.get(p.ident);
-                if (p.transition && !existing.transitions.includes(p.transition)) {
-                    existing.transitions.push(p.transition);
+                if (cleanTrans && !existing.transitions.includes(cleanTrans)) {
+                    existing.transitions.push(cleanTrans);
+                    // Track unique runways
+                    if (cleanTrans.startsWith('RW') && !existing.runways.includes(cleanTrans)) {
+                        existing.runways.push(cleanTrans);
+                    }
+                }
+            }
+        }
+
+        // Build runway display string for each procedure
+        for (const map of Object.values(seen)) {
+            for (const entry of map.values()) {
+                if (entry.runways.length > 0) {
+                    entry.runway = entry.runways.map(r => r.replace('RW', '')).join('/');
                 }
             }
         }
@@ -462,6 +485,19 @@ function setupNavdataRoutes(app) {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────
+
+// Clean transition/runway: strip leading route type digit from ARINC 424 data
+// e.g., "4RW08" → "RW08", "6HBU" → "HBU", "5" → null, "RW08" → "RW08"
+function cleanTransition(val) {
+    if (!val) return null;
+    val = val.trim();
+    if (!val) return null;
+    // If it starts with a digit and has more chars, strip the digit (route type prefix)
+    if (/^\d.+/.test(val)) return val.substring(1);
+    // If it's just a digit (e.g., common route "5"), return null
+    if (/^\d$/.test(val)) return null;
+    return val;
+}
 
 function guessApproachType(ident) {
     if (!ident) return 'OTHER';

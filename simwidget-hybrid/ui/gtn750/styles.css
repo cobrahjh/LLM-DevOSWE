@@ -1671,6 +1671,52 @@ body {
     color: var(--gtn-gray);
 }
 
+/* PROC Items */
+.gtn-proc-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    background: var(--gtn-bg-light);
+    border-radius: 4px;
+    cursor: pointer;
+    gap: 10px;
+}
+
+.gtn-proc-item:hover {
+    background: var(--gtn-accent);
+}
+
+.gtn-proc-item.selected {
+    background: var(--gtn-accent);
+    border: 1px solid var(--gtn-green);
+}
+
+.gtn-proc-name {
+    font-weight: 600;
+    color: var(--gtn-green);
+    min-width: 70px;
+}
+
+.gtn-proc-details {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    font-size: 12px;
+}
+
+.proc-runway {
+    color: var(--gtn-cyan);
+}
+
+.proc-type {
+    color: var(--gtn-gray);
+}
+
+.proc-category {
+    color: var(--gtn-yellow);
+}
+
 .gtn-proc-airport {
     display: flex;
     align-items: center;

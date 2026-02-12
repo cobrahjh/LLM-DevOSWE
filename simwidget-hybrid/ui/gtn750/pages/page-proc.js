@@ -201,18 +201,11 @@ class ProceduresPage {
             const details = document.createElement('div');
             details.className = 'gtn-proc-details';
 
-            if (proc.runway) {
+            if (proc.runway && proc.runway !== 'ALL') {
                 const rwy = document.createElement('span');
                 rwy.className = 'proc-runway';
                 rwy.textContent = `RWY ${proc.runway}`;
                 details.appendChild(rwy);
-            }
-
-            if (proc.transition) {
-                const trans = document.createElement('span');
-                trans.className = 'proc-transition';
-                trans.textContent = proc.transition;
-                details.appendChild(trans);
             }
 
             if (proc.type) {
