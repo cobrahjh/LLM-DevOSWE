@@ -1,5 +1,29 @@
 [
   {
+    "id": "task-1770859299174",
+    "task": "__test_direct_task__",
+    "priority": "normal",
+    "source": "unknown",
+    "timestamp": "2026-02-12T01:21:39.174Z",
+    "status": "pending"
+  },
+  {
+    "id": "task-1770859272769",
+    "task": "__test_direct_task__",
+    "priority": "normal",
+    "source": "unknown",
+    "timestamp": "2026-02-12T01:21:12.769Z",
+    "status": "pending"
+  },
+  {
+    "id": "task-1770782249299",
+    "task": "__test_direct_task__",
+    "priority": "normal",
+    "source": "unknown",
+    "timestamp": "2026-02-11T03:57:29.299Z",
+    "status": "pending"
+  },
+  {
     "id": "task-1768666648869",
     "task": "test",
     "priority": "normal",

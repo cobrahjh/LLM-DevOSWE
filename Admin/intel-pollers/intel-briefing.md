@@ -1,30 +1,33 @@
 # Hive Intel Briefing
-**Generated**: 2/10/2026, 8:00:01 AM
-**Period**: Last 7 days (34 approved items)
+**Generated**: 2/11/2026, 8:00:01 AM
+**Period**: Last 7 days (45 approved items)
 
 ---
 
 ## Executive Summary
 
-- **Libraries & SDKs**: 2 items
-- **Other**: 32 items
+- **New Tools**: 1 items
+- **Libraries & SDKs**: 1 items
+- **Other**: 43 items
 
 ⭐ **1 high-priority items** (relevance ≥ 80)
 
 ---
 
-## Libraries & SDKs
+## New Tools
 
-### 🔴 Do not Let the "Coder" in Qwen3-Coder-Next Fool You! It's the Smartest, General Purpose Model of its Size
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
+### 🔴 op7418/CodePilot
+**Source**: GitHub Trending | **Relevance**: 85/100
 
-Qwen3-Coder-Next is a general-purpose language model designed to assist with coding and AI tasks.
+CodePilot is a native desktop GUI for Claude Code, built with Electron + Next.js.
 
-**Analysis**: This model could be useful for Hive's AI agent orchestration, providing enhanced capabilities for Claude Code and local LLMs like Ollama/LM Studio. It can help in automating code generation, debugging, and other programming-related tasks, thereby improving the overall efficiency of Hive's AI compone
+**Analysis**: CodePilot would be highly useful for Hive as it provides a visual interface for managing projects and interacting with Claude Code, enhancing the AI agent orchestration capabilities of Hive.
 
-**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r0abpl/do_not_let_the_coder_in_qwen3codernext_fool_you/
+**URL**: https://github.com/op7418/CodePilot
 
 ---
+
+## Libraries & SDKs
 
 ### 🟡 agno-agi/dash
 **Source**: GitHub Trending | **Relevance**: 75/100
@@ -58,6 +61,28 @@ Excalidraw MCP App Server — hand-drawn diagrams for Claude
 **Analysis**: Auto-scored by keywords (LLM unavailable).
 
 **URL**: https://github.com/antonpk1/excalidraw-mcp-app
+
+---
+
+### 🟡 A fully local home automation voice assistant using Qwen3 ASR, LLM and TTS on an RTX 5060 Ti with 16GB VRAM
+**Source**: r/LocalLLaMA | **Relevance**: 70/100
+
+A fully local home automation voice assistant using Qwen3 ASR, LLM and TTS on an RTX 5060 Ti with 16GB VRAM
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://v.redd.it/feropirhmkig1
+
+---
+
+### 🟡 The-Vibe-Company/companion
+**Source**: GitHub Trending | **Relevance**: 70/100
+
+Web UI for Claude Code built on a reverse-engineered WebSocket protocol. Launch sessions, stream responses, approve tools.  All from your browser / mobile
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/The-Vibe-Company/companion
 
 ---
 
@@ -135,6 +160,28 @@ sdk: v0.74.0
 **Analysis**: Auto-scored by keywords (LLM unavailable).
 
 **URL**: https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.74.0
+
+---
+
+### 🟢 How Seriously Should We Take State of JS and Other Developer Surveys?
+**Source**: Dev.to | **Relevance**: 60/100
+
+There was a time when I treated State of JS results almost like prophecy.  A new edition dropped and...
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://dev.to/sylwia-lask/how-seriously-should-we-take-state-of-js-and-other-developer-surveys-9ce
+
+---
+
+### 🟢 Tambo 1.0: Open-source toolkit for agents that render React components
+**Source**: Hacker News | **Relevance**: 60/100
+
+Tambo 1.0: Open-source toolkit for agents that render React components
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/tambo-ai/tambo
 
 ---
 
@@ -369,31 +416,108 @@ v0.15.6
 
 ---
 
-### 🟢 anthropics/anthropic-sdk-python v0.78.0
-**Source**: GitHub Release | **Relevance**: 50/100
+### 🟢 stepfun-ai/Step-3.5-Flash
+**Source**: GitHub Trending | **Relevance**: 55/100
 
-v0.78.0
+Fast, Sharp & Reliable Agentic Intelligence
 
 **Analysis**: Auto-scored by keywords (LLM unavailable).
 
-**URL**: https://github.com/anthropics/anthropic-sdk-python/releases/tag/v0.78.0
+**URL**: https://github.com/stepfun-ai/Step-3.5-Flash
 
 ---
 
-### 🟢 anthropics/anthropic-sdk-python v0.79.0
-**Source**: GitHub Release | **Relevance**: 50/100
+### 🟢 Frontier AI agents violate ethical constraints 30–50% of time, pressured by KPIs
+**Source**: Hacker News | **Relevance**: 55/100
 
-v0.79.0
+Frontier AI agents violate ethical constraints 30–50% of time, pressured by KPIs
 
 **Analysis**: Auto-scored by keywords (LLM unavailable).
 
-**URL**: https://github.com/anthropics/anthropic-sdk-python/releases/tag/v0.79.0
+**URL**: https://arxiv.org/abs/2512.20798
+
+---
+
+### 🟢 LLMs as Language Compilers: Lessons from Fortran for the Future of Coding
+**Source**: Hacker News | **Relevance**: 55/100
+
+LLMs as Language Compilers: Lessons from Fortran for the Future of Coding
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://cyber-omelette.com/posts/the-abstraction-rises.html
+
+---
+
+### 🟢 Hugging Face Is Teasing Something Anthropic Related
+**Source**: r/LocalLLaMA | **Relevance**: 55/100
+
+Hugging Face Is Teasing Something Anthropic Related
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://i.redd.it/wvu2vi2jwnig1.png
+
+---
+
+### 🟢 Show HN: Total Recall – write-gated memory for Claude Code
+**Source**: Hacker News | **Relevance**: 55/100
+
+Show HN: Total Recall – write-gated memory for Claude Code
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/davegoldblatt/total-recall
+
+---
+
+### 🟢 Ex-GitHub CEO launches a new developer platform for AI agents
+**Source**: Hacker News | **Relevance**: 55/100
+
+Ex-GitHub CEO launches a new developer platform for AI agents
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://entire.io/blog/hello-entire-world/
+
+---
+
+### 🟢 I measured the "personality" of 6 open-source LLMs (7B-9B) by probing their hidden states. Here's what I found.
+**Source**: r/LocalLLaMA | **Relevance**: 55/100
+
+I measured the "personality" of 6 open-source LLMs (7B-9B) by probing their hidden states. Here's what I found.
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r11zsa/i_measured_the_personality_of_6_opensource_llms/
+
+---
+
+### 🟢 Show HN: Showboat and Rodney, so agents can demo what they've built
+**Source**: Hacker News | **Relevance**: 55/100
+
+Show HN: Showboat and Rodney, so agents can demo what they've built
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://simonwillison.net/2026/Feb/10/showboat-and-rodney/
+
+---
+
+### 🟢 nodejs/node v25.6.1
+**Source**: GitHub Release | **Relevance**: 55/100
+
+2026-02-10, Version 25.6.1 (Current), @aduh95
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/nodejs/node/releases/tag/v25.6.1
 
 ---
 
 ## Recommended Actions
 
 **Queue for Implementation** (2 items):
-- [ ] Do not Let the "Coder" in Qwen3-Coder-Next Fool You! It's the Smartest, General Purpose Model of its Size (relevance: 85)
+- [ ] op7418/CodePilot (relevance: 85)
 - [ ] agno-agi/dash (relevance: 75)
 

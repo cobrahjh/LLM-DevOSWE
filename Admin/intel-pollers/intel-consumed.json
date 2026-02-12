@@ -37,6 +37,16 @@
         "other"
       ],
       "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
+    },
+    {
+      "timestamp": "2026-02-11T13:00:01.449Z",
+      "itemCount": 45,
+      "categories": [
+        "tool",
+        "library",
+        "other"
+      ],
+      "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
     }
   ],
   "queued": [
@@ -57,8 +67,9 @@
     "gh-1146028508",
     "reddit-1qtvo4r",
     "reddit-1qttq5w",
-    "reddit-1r0abpl"
+    "reddit-1r0abpl",
+    "gh-1151411061"
   ],
-  "lastBriefing": "2026-02-10T13:00:01.547Z",
-  "lastAutoQueue": "2026-02-10T13:00:01.601Z"
+  "lastBriefing": "2026-02-11T13:00:01.449Z",
+  "lastAutoQueue": "2026-02-11T13:00:01.507Z"
 }
