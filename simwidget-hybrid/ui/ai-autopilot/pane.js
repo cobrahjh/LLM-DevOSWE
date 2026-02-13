@@ -1170,6 +1170,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 case 'simbrief-plan':
                     this._onSimbriefPlan(msg.data);
                     break;
+                case 'execute-flight-plan':
+                    this._onExecuteFlightPlan(msg.data);
+                    break;
                 case 'tuner-command':
                     this._onTunerCommand(msg.command, msg);
                     break;
@@ -1325,6 +1328,49 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this._dbg('cmd', `SimBrief plan: cruise <span class="val">${plan.cruiseAltitude}ft</span>`);
         }
         this._renderFplReport();
+    }
+
+    _onExecuteFlightPlan(plan) {
+        if (!plan || !plan.waypoints || plan.waypoints.length < 2) {
+            this._dbg('err', 'Invalid flight plan received');
+            return;
+        }
+
+        this._currentPlan = plan;
+
+        // Enable AI if not already enabled
+        if (!this.aiEnabled) {
+            this.aiEnabled = true;
+            this.ruleEngine.reset();
+            this.commandQueue.clear();
+        }
+
+        // Set flight plan in rule engine
+        this.ruleEngine.setFlightPlan(plan);
+
+        // Set cruise altitude
+        if (plan.cruiseAltitude && plan.cruiseAltitude > 0) {
+            this.flightPhase.targetCruiseAlt = plan.cruiseAltitude;
+            this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
+        }
+
+        // Calculate total distance for TOD
+        if (plan.totalDistance) {
+            this.flightPhase.setDestinationDist(plan.totalDistance);
+        }
+
+        // Log activation
+        this._dbg('cmd', `<span class="val">✈️ FLIGHT PLAN ACTIVATED</span> <span class="dim">${plan.name}</span>`);
+        this._dbg('cmd', `waypoints: <span class="val">${plan.waypoints.length}</span> · distance: <span class="val">${plan.totalDistance?.toFixed(0) || '?'}nm</span> · cruise: <span class="val">${plan.cruiseAltitude || '?'}ft</span>`);
+
+        // List waypoints
+        const wpList = plan.waypoints.map((wp, i) => {
+            const alt = wp.altitude ? ` ${wp.altitude}ft` : '';
+            return `${i + 1}. ${wp.ident}${alt}`;
+        }).join(', ');
+        this._dbg('cmd', `<span class="dim">Route:</span> ${wpList}`);
+
+        this._render();
     }
 
     async _importSimBrief() {

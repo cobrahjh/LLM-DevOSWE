@@ -30,6 +30,10 @@ class RuleEngine {
         this._navState = null;
         this._externalTerrainAlert = null;  // from GTN750 TAWS: null | 'CAUTION' | 'WARNING'
 
+        // Flight plan execution
+        this._flightPlan = null;  // { name, waypoints[], cruiseAltitude, totalDistance }
+        this._activeWaypointIndex = 0;
+
         // Airport/runway awareness
         this._airportData = null;  // { icao, name, elevation, runways[], distance, bearing }
         this._activeRunway = null; // { id, heading, length } — best match for current heading+wind
@@ -163,12 +167,12 @@ class RuleEngine {
         }
 
         // ── Parking brake safety ──
-        // Release parking brake whenever AI has controls and throttle is above idle.
-        // MSFS 2024: PARKING_BRAKE_SET doesn't work, use PARKING_BRAKES toggle.
-        // Note: parkingBrake SimVar is unreliable (always reads true) so this fires once
-        // per enable via _cmd dedup, which is the desired behavior for a toggle.
+        // Release parking brake whenever AI has controls.
+        // Use PARKING_BRAKE_SET (idempotent) instead of PARKING_BRAKES (toggle) to avoid
+        // re-engaging after service restart clears dedup state.
+        // Server sends LANDING_GEAR_PARKINGBRAKE InputEvent as MSFS 2024 fallback.
         if (phase !== 'LANDING' && phase !== 'PREFLIGHT') {
-            this._cmd('PARKING_BRAKES', false, 'Release parking brake (safety)');
+            this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake (safety)');
         }
 
         // Continuous flight envelope monitoring — disabled during TAKEOFF for simplicity.
@@ -185,12 +189,14 @@ class RuleEngine {
                     delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
-                // Prepare aircraft for taxi: mixture rich, release brake, idle-up throttle
+                // Prepare aircraft for taxi: engine start, mixture rich, release brake, idle-up throttle
                 {
                     const tt = this._getTakeoffTuning();
+                    // Engine auto-start (cold-and-dark flights have engine off after reload)
+                    this._cmd('ENGINE_AUTO_START', true, 'Engine auto-start');
                     this._cmdValue('MIXTURE_SET', tt.preflightMixture ?? 100, 'Mixture RICH');
-                    // MSFS 2024: use toggle (PARKING_BRAKE_SET doesn't work)
-                    this._cmd('PARKING_BRAKES', false, 'Release parking brake for taxi');
+                    // Idempotent brake release (server uses LANDING_GEAR_PARKINGBRAKE InputEvent)
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake for taxi');
                     this._cmdValue('THROTTLE_SET', tt.preflightThrottle ?? 20, 'Idle-up throttle');
                 }
                 // Capture heading and start steering immediately — don't wait for TAXI
@@ -214,21 +220,18 @@ class RuleEngine {
                 }
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
 
-                // Release parking brake — force-clear dedup on phase entry so toggle fires.
-                // Also send PARKING_BRAKE_SET 0 as fallback (may work in some MSFS versions).
+                // On phase entry: engine start + brake release (idempotent — safe after restarts)
                 if (phaseChanged) {
-                    delete this._lastCommands['PARKING_BRAKES'];
-                    this._cmd('PARKING_BRAKES', false, 'Release parking brake');
-                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Brake off');
+                    this._cmd('ENGINE_AUTO_START', true, 'Engine auto-start');
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
 
                 // ATC hold-short gate: if ATC is active and we're at HOLD_SHORT,
                 // stop the aircraft and wait for clearance
                 if (this._atc && (this._atc.getPhase() === 'HOLD_SHORT' || this._atc.getPhase() === 'TAKEOFF_CLEARANCE_PENDING')) {
                     this._cmdValue('THROTTLE_SET', 0, 'Hold short — awaiting clearance');
-                    // MSFS 2024: parkingBrake SimVar always reads true, so use toggle
-                    if (gs < 1) {
-                        this._cmd('PARKING_BRAKES', true, 'Parking brake — hold short');
+                    if ((d.groundSpeed || 0) < 1) {
+                        this._cmdValue('PARKING_BRAKE_SET', 1, 'Parking brake — hold short');
                     }
                     break;
                 }
@@ -520,8 +523,7 @@ class RuleEngine {
                         this._cmd('FLAPS_UP', true, 'Retract flaps after landing');
                     }
                     if (lndGs < 40 && lndGs > 5) {
-                        // MSFS 2024: use toggle for braking after landing
-                        this._cmd('PARKING_BRAKES', true, 'Braking');
+                        this._cmdValue('PARKING_BRAKE_SET', 1, 'Braking');
                     }
                 }
                 break;
@@ -574,9 +576,8 @@ class RuleEngine {
                 this._cmdValue('AXIS_AILERONS_SET', 0.0001, 'Center ailerons');
                 this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder');
                 this._cmdValue('MIXTURE_SET', tt.beforeRollMixture ?? 100, 'Mixture RICH for takeoff');
-                // Release parking brake — MSFS 2024: PARKING_BRAKE_SET doesn't work,
-                // must use PARKING_BRAKES toggle. _cmd deduplicates so it only fires once.
-                this._cmd('PARKING_BRAKES', false, 'Release parking brake');
+                // Release parking brake (idempotent — safe after restarts)
+                this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 // Ground steering while waiting (prevents heading drift before roll)
                 if (!this._runwayHeading) {
                     this._runwayHeading = this._activeRunway?.heading || Math.round(d.heading || 0);
@@ -590,8 +591,8 @@ class RuleEngine {
                 break;
 
             case 'ROLL':
-                // Ensure brake is off (MSFS 2024: use toggle, deduped by _cmd)
-                this._cmd('PARKING_BRAKES', false, 'Release parking brake');
+                // Ensure brake is off (idempotent — safe after restarts)
+                this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 // Hold elevator at near-zero during roll — use 0.0001 (effectively zero)
                 // so server keeps held-axes active, overriding joystick at SIM_FRAME rate.
                 this._cmdValue('AXIS_ELEVATOR_SET', 0.0001, 'Elevator neutral');
@@ -1676,6 +1677,24 @@ class RuleEngine {
      * @returns {{ heading: number, source: string, description: string } | null}
      */
     _getNavHeading(d) {
+        // Priority 0: Flight plan waypoints (from GTN750 FLY PLAN button)
+        if (this._flightPlan && d) {
+            // Try to sequence waypoint
+            this.sequenceWaypoint(d);
+
+            const wp = this.getActiveWaypoint();
+            if (wp && d.latitude && d.longitude) {
+                const bearing = this._calculateBearing(d.latitude, d.longitude, wp.lat, wp.lon);
+                const dist = this._haversineDistance(d.latitude, d.longitude, wp.lat, wp.lon);
+
+                return {
+                    heading: Math.round(bearing),
+                    source: 'FPL',
+                    description: `${wp.ident} ${dist.toFixed(1)}nm (${this._activeWaypointIndex + 1}/${this._flightPlan.waypoints.length})`
+                };
+            }
+        }
+
         const nav = this._navState;
         if (!nav) return null;
 
@@ -1704,6 +1723,15 @@ class RuleEngine {
         }
 
         return null;
+    }
+
+    _calculateBearing(lat1, lon1, lat2, lon2) {
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+        const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                  Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+        const bearing = Math.atan2(y, x) * 180 / Math.PI;
+        return (bearing + 360) % 360;
     }
 
     /**
@@ -1812,6 +1840,62 @@ class RuleEngine {
     /** Set nav state from GTN750 (called from pane via SafeChannel) */
     setNavState(nav) {
         this._navState = nav || null;
+    }
+
+    /** Set flight plan for execution (called from pane when GTN750 sends plan) */
+    setFlightPlan(plan) {
+        this._flightPlan = plan || null;
+        this._activeWaypointIndex = 0;
+
+        if (plan && plan.waypoints && plan.waypoints.length > 0) {
+            console.log(`[RuleEngine] Flight plan set: ${plan.name} (${plan.waypoints.length} waypoints)`);
+        }
+    }
+
+    /** Get current active waypoint from flight plan */
+    getActiveWaypoint() {
+        if (!this._flightPlan || !this._flightPlan.waypoints) return null;
+        if (this._activeWaypointIndex >= this._flightPlan.waypoints.length) return null;
+        return this._flightPlan.waypoints[this._activeWaypointIndex];
+    }
+
+    /** Sequence to next waypoint */
+    sequenceWaypoint(position) {
+        if (!this._flightPlan || !this._flightPlan.waypoints) return false;
+
+        const currentWp = this.getActiveWaypoint();
+        if (!currentWp || !position) return false;
+
+        // Calculate distance to current waypoint
+        const dist = this._haversineDistance(
+            position.latitude,
+            position.longitude,
+            currentWp.lat,
+            currentWp.lon
+        );
+
+        // Sequence if within 0.5nm
+        if (dist < 0.5) {
+            this._activeWaypointIndex++;
+            const nextWp = this.getActiveWaypoint();
+            if (nextWp) {
+                console.log(`[RuleEngine] Sequenced to waypoint ${this._activeWaypointIndex + 1}: ${nextWp.ident}`);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    _haversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 3440.065; // Earth radius in nautical miles
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
     }
 
     /** Set external terrain alert from GTN750 TAWS (called from pane via SafeChannel) */

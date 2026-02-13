@@ -2448,6 +2448,7 @@ class GTN750Pane extends SimGlassBase {
             case 'fpl-move-up': if (this.fplPage) this.fplPage.onMoveUp(); break;
             case 'fpl-move-down': if (this.fplPage) this.fplPage.onMoveDown(); break;
             case 'fpl-clear': this.showClearFlightPlanConfirm(); break;
+            case 'fly-plan': this.sendFlightPlanToAutopilot(); break;
             case 'save-fpl': this.showSaveFlightPlanModal(); break;
             case 'load-fpl': this.showLoadFlightPlanModal(); break;
             case 'fpl-info': this.showFlightPlanInfoModal(); break;
@@ -2922,6 +2923,66 @@ class GTN750Pane extends SimGlassBase {
         };
 
         cancelBtn.onclick = closeModal;
+    }
+
+    sendFlightPlanToAutopilot() {
+        if (!this.flightPlanManager?.flightPlan?.waypoints?.length) {
+            alert('No flight plan loaded');
+            return;
+        }
+
+        const plan = this.flightPlanManager.flightPlan;
+        const wps = plan.waypoints;
+
+        // Prepare flight plan data for autopilot
+        const autopilotPlan = {
+            name: `${wps[0]?.ident || 'WPT'}-${wps[wps.length - 1]?.ident || 'END'}`,
+            departure: wps[0]?.ident || null,
+            arrival: wps[wps.length - 1]?.ident || null,
+            waypoints: wps.map(wp => ({
+                ident: wp.ident,
+                lat: wp.lat,
+                lon: wp.lng || wp.lon,
+                altitude: wp.altitude || null,
+                type: wp.type || 'WAYPOINT'
+            })),
+            cruiseAltitude: this.findCruiseAltitude(wps),
+            totalDistance: this.flightPlanManager.calculateTotalDistance()
+        };
+
+        // Send via SafeChannel
+        if (this.syncChannel) {
+            this.syncChannel.postMessage({
+                type: 'execute-flight-plan',
+                data: autopilotPlan,
+                source: 'GTN750'
+            });
+
+            // Visual confirmation
+            const msg = `AI Autopilot engaged\nFlying: ${autopilotPlan.name}\n${wps.length} waypoints`;
+            alert(msg);
+
+            GTNCore.log(`[GTN750] Sent flight plan to AI Autopilot: ${autopilotPlan.name}`);
+        } else {
+            alert('SafeChannel not available\nOpen AI Autopilot pane first');
+        }
+    }
+
+    findCruiseAltitude(waypoints) {
+        // Find the highest altitude in middle third of flight plan
+        if (!waypoints || waypoints.length < 3) return 8500;
+
+        const startIdx = Math.floor(waypoints.length / 3);
+        const endIdx = Math.floor(waypoints.length * 2 / 3);
+        const middleWaypoints = waypoints.slice(startIdx, endIdx);
+
+        const altitudes = middleWaypoints
+            .map(wp => wp.altitude)
+            .filter(alt => alt && alt > 0);
+
+        if (altitudes.length === 0) return 8500;
+
+        return Math.max(...altitudes);
     }
 
     // ===== RANGE / DECLUTTER HELPERS =====

@@ -80,7 +80,7 @@ class GTNSoftKeys {
         this.registerContext('fpl', [
             { label: 'SAVE', action: 'save-fpl' },
             { label: 'LOAD', action: 'load-fpl' },
-            { label: 'CLEAR', action: 'fpl-clear' },
+            { label: 'FLY\nPLAN', action: 'fly-plan' },
             { label: 'VNAV', action: 'toggle-vnav', toggle: true },
             { label: 'INFO', action: 'fpl-info' },
             { label: 'D\u2192', action: 'direct-to' }
