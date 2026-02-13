@@ -1012,6 +1012,7 @@ class GTN750Pane extends SimGlassBase {
                 if (!this.proceduresPage && typeof ProceduresPage !== 'undefined') {
                     this.proceduresPage = new ProceduresPage({
                         core: this.core, serverPort: this.serverPort,
+                        frequencyTuner: this.frequencyTuner,
                         onProcedureSelect: (proc, type, waypoints) => this.handleProcedureSelect(proc, type, waypoints),
                         onProcedureLoad: (proc, type, waypoints) => this.handleProcedureLoad(proc, type, waypoints)
                     });

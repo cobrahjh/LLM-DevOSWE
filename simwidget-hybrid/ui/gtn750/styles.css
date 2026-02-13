@@ -2371,6 +2371,45 @@ body {
     color: var(--gtn-yellow);
 }
 
+.proc-ils-freq {
+    color: var(--gtn-green);
+    font-weight: 600;
+    margin-left: 8px;
+    padding: 2px 6px;
+    background: rgba(0, 255, 0, 0.1);
+    border-radius: 3px;
+}
+
+.proc-tune-ils-btn {
+    background: var(--gtn-accent);
+    color: white;
+    border: 1px solid var(--gtn-border);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: all 0.2s ease;
+}
+
+.proc-tune-ils-btn:hover {
+    background: var(--gtn-green);
+    border-color: var(--gtn-green);
+    transform: scale(1.05);
+}
+
+.proc-tune-ils-btn.ils-tuned {
+    background: var(--gtn-green);
+    border-color: var(--gtn-green);
+    animation: ils-pulse 0.4s ease;
+}
+
+@keyframes ils-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
 .gtn-proc-airport {
     display: flex;
     align-items: center;

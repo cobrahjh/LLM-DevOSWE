@@ -7,6 +7,7 @@ class ProceduresPage {
     constructor(options = {}) {
         this.core = options.core || new GTNCore();
         this.serverPort = options.serverPort || 8080;
+        this.frequencyTuner = options.frequencyTuner || null;
 
         // Current state
         this.selectedAirport = null;
@@ -18,6 +19,7 @@ class ProceduresPage {
         };
         this.selectedProcedure = null;
         this.previewWaypoints = [];
+        this.ilsData = null; // ILS frequency data for selected approach
 
         // Elements
         this.elements = {};
@@ -222,6 +224,31 @@ class ProceduresPage {
                 details.appendChild(cat);
             }
 
+            // Show ILS frequency for ILS/LOC approaches
+            if (this.procedureType === 'apr' && typeof isILSApproach !== 'undefined' && isILSApproach(proc.type)) {
+                const runway = typeof extractRunwayFromApproach !== 'undefined' ? extractRunwayFromApproach(proc.ident) : null;
+                if (runway && this.selectedAirport) {
+                    const ilsData = typeof getILSFrequency !== 'undefined' ? getILSFrequency(this.selectedAirport, runway) : null;
+                    if (ilsData) {
+                        const ilsInfo = document.createElement('span');
+                        ilsInfo.className = 'proc-ils-freq';
+                        ilsInfo.textContent = ilsData.freq.toFixed(2);
+                        details.appendChild(ilsInfo);
+
+                        // Add tune button
+                        const tuneBtn = document.createElement('button');
+                        tuneBtn.className = 'proc-tune-ils-btn';
+                        tuneBtn.textContent = 'TUNE';
+                        tuneBtn.title = `Tune ${ilsData.ident} to NAV1`;
+                        tuneBtn.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Don't trigger row selection
+                            this.tuneILS(ilsData, runway);
+                        });
+                        details.appendChild(tuneBtn);
+                    }
+                }
+            }
+
             item.appendChild(name);
             item.appendChild(details);
 
@@ -282,6 +309,39 @@ class ProceduresPage {
         }
 
         this.onProcedureLoad(this.selectedProcedure, this.procedureType, this.previewWaypoints);
+    }
+
+    /**
+     * Tune ILS frequency to NAV1 standby
+     * @param {Object} ilsData - ILS data with freq, ident, name
+     * @param {string} runway - Runway identifier
+     */
+    async tuneILS(ilsData, runway) {
+        if (!this.frequencyTuner || !ilsData) {
+            GTNCore.log('[PROC] No frequency tuner or ILS data available');
+            return;
+        }
+
+        const success = await this.frequencyTuner.setFrequency('nav1', 'standby', ilsData.freq);
+
+        if (success) {
+            GTNCore.log(`[PROC] Tuned ${ilsData.ident} (${ilsData.freq.toFixed(2)}) to NAV1 standby for RWY ${runway}`);
+
+            // Visual feedback - briefly highlight the button
+            const btns = document.querySelectorAll('.proc-tune-ils-btn');
+            btns.forEach(btn => {
+                if (btn.textContent === 'TUNE') {
+                    btn.classList.add('ils-tuned');
+                    btn.textContent = '✓ TUNED';
+                    setTimeout(() => {
+                        btn.classList.remove('ils-tuned');
+                        btn.textContent = 'TUNE';
+                    }, 2000);
+                }
+            });
+        } else {
+            GTNCore.log(`[PROC] Failed to tune ILS frequency ${ilsData.freq.toFixed(2)}`);
+        }
     }
 
     /**
