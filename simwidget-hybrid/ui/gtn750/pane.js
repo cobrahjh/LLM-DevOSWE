@@ -2447,6 +2447,7 @@ class GTN750Pane extends SimGlassBase {
             case 'fpl-airway': if (this.fplPage) this.fplPage.onInsertAirway(); break;
             case 'save-fpl': this.showSaveFlightPlanModal(); break;
             case 'load-fpl': this.showLoadFlightPlanModal(); break;
+            case 'fpl-info': this.showFlightPlanInfoModal(); break;
             case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
                 this.switchNearestType(action.split('-')[1]); break;
             case 'taws-inhibit':
@@ -2679,6 +2680,90 @@ class GTN750Pane extends SimGlassBase {
         };
 
         cancelBtn.onclick = closeModal;
+    }
+
+    showFlightPlanInfoModal() {
+        const modal = document.getElementById('fpl-info-modal');
+        if (!modal || !this.flightPlanManager) return;
+
+        // Get current groundspeed and fuel burn rate
+        const groundSpeed = this.data?.groundSpeed || 120;
+        const fuelBurnRate = 8.5; // Default GPH for GA aircraft
+
+        // Calculate statistics
+        const stats = this.flightPlanManager.getFlightPlanStatistics(groundSpeed, fuelBurnRate);
+
+        if (!stats) {
+            alert('No flight plan loaded');
+            return;
+        }
+
+        // Update summary section
+        document.getElementById('fpl-info-dist').textContent = `${stats.totalDistance.toFixed(1)} NM`;
+
+        const hours = Math.floor(stats.totalETE / 60);
+        const minutes = Math.round(stats.totalETE % 60);
+        document.getElementById('fpl-info-ete').textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
+
+        document.getElementById('fpl-info-fuel').textContent =
+            `${stats.totalFuel.total} GAL (${stats.totalFuel.trip} + ${stats.totalFuel.reserve} rsv)`;
+
+        document.getElementById('fpl-info-alt').textContent =
+            stats.maxAltitude ? `${stats.maxAltitude.toLocaleString()} FT` : 'N/A';
+
+        document.getElementById('fpl-info-wpts').textContent = stats.waypointCount;
+
+        // Update groundspeed and burn rate display
+        document.getElementById('fpl-info-gs').textContent = Math.round(groundSpeed);
+        document.getElementById('fpl-info-burn').textContent = fuelBurnRate;
+
+        // Populate leg details table
+        const tbody = document.getElementById('fpl-info-legs');
+        tbody.innerHTML = '';
+
+        stats.legs.forEach((leg, index) => {
+            const row = document.createElement('tr');
+            if (leg.isActive) row.classList.add('active');
+
+            const isLast = index === stats.legs.length - 1;
+
+            // Waypoint ident
+            const wptCell = document.createElement('td');
+            wptCell.className = isLast ? 'wpt-last' : 'wpt-ident';
+            wptCell.textContent = leg.ident;
+            row.appendChild(wptCell);
+
+            // Leg distance
+            const legCell = document.createElement('td');
+            legCell.textContent = isLast ? '---' : `${leg.legDistance.toFixed(1)}`;
+            row.appendChild(legCell);
+
+            // Course
+            const crsCell = document.createElement('td');
+            crsCell.textContent = leg.bearing !== null ? `${Math.round(leg.bearing)}°` : '---';
+            row.appendChild(crsCell);
+
+            // Cumulative distance
+            const cumulCell = document.createElement('td');
+            cumulCell.textContent = `${leg.cumulativeDistance.toFixed(1)}`;
+            row.appendChild(cumulCell);
+
+            // Cumulative ETE
+            const eteCell = document.createElement('td');
+            const eteHours = Math.floor(leg.cumulativeTime / 60);
+            const eteMinutes = Math.round(leg.cumulativeTime % 60);
+            eteCell.textContent = `${eteHours}:${eteMinutes.toString().padStart(2, '0')}`;
+            row.appendChild(eteCell);
+
+            tbody.appendChild(row);
+        });
+
+        // Show modal
+        modal.style.display = 'block';
+
+        // Wire up close button
+        const closeBtn = document.getElementById('fpl-info-close');
+        closeBtn.onclick = () => modal.style.display = 'none';
     }
 
     // ===== RANGE / DECLUTTER HELPERS =====

@@ -2167,6 +2167,155 @@ class GTNFlightPlan {
             .replace(/'/g, '&apos;');
     }
 
+    /**
+     * Get comprehensive flight plan statistics
+     * @param {number} groundSpeed - Current groundspeed in knots
+     * @param {number} fuelBurnRate - Fuel burn rate in gallons per hour (optional)
+     * @returns {Object} Statistics object with total and per-leg data
+     */
+    getFlightPlanStatistics(groundSpeed = 120, fuelBurnRate = 8.5) {
+        if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length < 2) {
+            return null;
+        }
+
+        const totalDistance = this.calculateTotalDistance();
+        const totalETE = groundSpeed > 0 ? (totalDistance / groundSpeed) * 60 : 0; // minutes
+        const totalFuel = this.calculateFuelRequired(totalDistance, groundSpeed, fuelBurnRate);
+        const legs = this.calculateLegStatistics(groundSpeed);
+
+        // Find highest altitude constraint
+        const maxAltitude = Math.max(...this.flightPlan.waypoints
+            .map(w => w.altitude || 0)
+            .filter(alt => alt > 0));
+
+        return {
+            totalDistance: totalDistance,
+            totalETE: totalETE,
+            totalFuel: totalFuel,
+            maxAltitude: maxAltitude || null,
+            waypointCount: this.flightPlan.waypoints.length,
+            legs: legs,
+            groundSpeed: groundSpeed,
+            fuelBurnRate: fuelBurnRate
+        };
+    }
+
+    /**
+     * Calculate total flight plan distance
+     * @returns {number} Total distance in nautical miles
+     */
+    calculateTotalDistance() {
+        if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length < 2) {
+            return 0;
+        }
+
+        let totalDistance = 0;
+        const waypoints = this.flightPlan.waypoints;
+
+        for (let i = 0; i < waypoints.length - 1; i++) {
+            const wp1 = waypoints[i];
+            const wp2 = waypoints[i + 1];
+
+            if (wp1.lat && wp1.lon && wp2.lat && wp2.lon) {
+                const distance = this.core.haversineDistance(
+                    wp1.lat, wp1.lon || wp1.lng,
+                    wp2.lat, wp2.lon || wp2.lng
+                );
+                totalDistance += distance;
+            }
+        }
+
+        return totalDistance;
+    }
+
+    /**
+     * Calculate per-leg statistics with cumulative data
+     * @param {number} groundSpeed - Groundspeed in knots
+     * @returns {Array} Array of leg statistics
+     */
+    calculateLegStatistics(groundSpeed = 120) {
+        if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length < 2) {
+            return [];
+        }
+
+        const legs = [];
+        const waypoints = this.flightPlan.waypoints;
+        let cumulativeDistance = 0;
+        let cumulativeTime = 0; // minutes
+
+        for (let i = 0; i < waypoints.length; i++) {
+            const wp = waypoints[i];
+            const isLast = i === waypoints.length - 1;
+
+            let legDistance = 0;
+            let legTime = 0;
+            let bearing = null;
+
+            if (!isLast) {
+                const nextWp = waypoints[i + 1];
+
+                if (wp.lat && wp.lon && nextWp.lat && nextWp.lon) {
+                    legDistance = this.core.haversineDistance(
+                        wp.lat, wp.lon || wp.lng,
+                        nextWp.lat, nextWp.lon || nextWp.lng
+                    );
+                    bearing = this.core.calculateBearing(
+                        wp.lat, wp.lon || wp.lng,
+                        nextWp.lat, nextWp.lon || nextWp.lng
+                    );
+                    legTime = groundSpeed > 0 ? (legDistance / groundSpeed) * 60 : 0; // minutes
+                }
+
+                cumulativeDistance += legDistance;
+                cumulativeTime += legTime;
+            }
+
+            legs.push({
+                index: i,
+                ident: wp.ident || `WPT${i + 1}`,
+                lat: wp.lat,
+                lon: wp.lon || wp.lng,
+                altitude: wp.altitude || null,
+                altitudeConstraint: wp.altitudeConstraint || null,
+                speed: wp.speed || null,
+                legDistance: legDistance,
+                legTime: legTime,
+                bearing: bearing,
+                cumulativeDistance: cumulativeDistance,
+                cumulativeTime: cumulativeTime,
+                isActive: i === this.activeWaypointIndex
+            });
+        }
+
+        return legs;
+    }
+
+    /**
+     * Calculate fuel required for route
+     * @param {number} distance - Distance in nautical miles
+     * @param {number} groundSpeed - Groundspeed in knots
+     * @param {number} fuelBurnRate - Fuel burn rate in gallons per hour
+     * @returns {Object} Fuel calculations
+     */
+    calculateFuelRequired(distance, groundSpeed, fuelBurnRate) {
+        if (!distance || !groundSpeed || groundSpeed <= 0) {
+            return { trip: 0, reserve: 0, total: 0 };
+        }
+
+        const timeHours = distance / groundSpeed;
+        const tripFuel = timeHours * fuelBurnRate;
+
+        // FAA reserve: 30 minutes at cruise (VFR day), 45 min (VFR night/IFR)
+        const reserveMinutes = 45; // Conservative reserve
+        const reserveFuel = (reserveMinutes / 60) * fuelBurnRate;
+
+        return {
+            trip: Math.round(tripFuel * 10) / 10,
+            reserve: Math.round(reserveFuel * 10) / 10,
+            total: Math.round((tripFuel + reserveFuel) * 10) / 10
+        };
+    }
+
     destroy() {
         if (this._fetchTimer) clearTimeout(this._fetchTimer);
         if (this.audioContext) {

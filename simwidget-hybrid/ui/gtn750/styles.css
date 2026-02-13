@@ -1098,6 +1098,128 @@ body {
     margin-top: 4px;
 }
 
+/* Flight Plan Info Modal */
+.fpl-info-modal {
+    max-width: 650px;
+    max-height: 85vh;
+}
+
+.fpl-info-content {
+    max-height: calc(85vh - 60px);
+    overflow-y: auto;
+}
+
+.fpl-info-summary {
+    background: var(--gtn-dark);
+    border: 1px solid var(--gtn-border);
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.fpl-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fpl-info-row:last-child {
+    border-bottom: none;
+}
+
+.fpl-info-label {
+    color: var(--gtn-gray);
+    font-size: 13px;
+    font-family: var(--gtn-sans);
+}
+
+.fpl-info-value {
+    color: var(--gtn-cyan);
+    font-size: 14px;
+    font-family: var(--gtn-mono);
+    font-weight: bold;
+}
+
+.fpl-info-table-container {
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1px solid var(--gtn-border);
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.fpl-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--gtn-mono);
+    font-size: 12px;
+}
+
+.fpl-info-table thead {
+    background: var(--gtn-dark);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.fpl-info-table th {
+    padding: 8px 6px;
+    text-align: left;
+    color: var(--gtn-gray);
+    font-weight: bold;
+    border-bottom: 2px solid var(--gtn-border);
+    font-size: 11px;
+}
+
+.fpl-info-table td {
+    padding: 6px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--gtn-text);
+}
+
+.fpl-info-table tbody tr:hover {
+    background: rgba(100, 200, 255, 0.1);
+}
+
+.fpl-info-table tbody tr.active {
+    background: rgba(0, 255, 0, 0.15);
+}
+
+.fpl-info-table tbody tr.active td {
+    color: var(--gtn-green);
+    font-weight: bold;
+}
+
+.fpl-info-table .wpt-ident {
+    color: var(--gtn-cyan);
+    font-weight: bold;
+}
+
+.fpl-info-table .wpt-last {
+    color: var(--gtn-green);
+    font-weight: bold;
+}
+
+.fpl-info-footer {
+    background: var(--gtn-dark);
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.fpl-info-note {
+    font-size: 11px;
+    color: var(--gtn-gray);
+    font-family: var(--gtn-sans);
+    text-align: center;
+}
+
+.fpl-info-note span {
+    color: var(--gtn-cyan);
+    font-weight: bold;
+}
+
 .dto-buttons {
     display: flex;
     gap: 10px;

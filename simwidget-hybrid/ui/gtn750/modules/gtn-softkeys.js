@@ -82,7 +82,7 @@ class GTNSoftKeys {
             { label: 'LOAD', action: 'load-fpl' },
             { label: 'AIRWAY', action: 'insert-airway' },
             { label: 'VNAV', action: 'toggle-vnav', toggle: true },
-            { label: 'INVRT', action: 'invert-plan' },
+            { label: 'INFO', action: 'fpl-info' },
             { label: 'D\u2192', action: 'direct-to' }
         ]);
 

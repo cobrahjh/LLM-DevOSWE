@@ -402,6 +402,62 @@
                     </div>
                 </div>
 
+                <!-- Flight Plan Info Modal -->
+                <div class="dto-modal fpl-info-modal" id="fpl-info-modal" style="display: none;">
+                    <div class="dto-header" style="background: var(--gtn-blue);">FLIGHT PLAN INFO</div>
+                    <div class="dto-content fpl-info-content">
+                        <!-- Summary Section -->
+                        <div class="fpl-info-summary">
+                            <div class="fpl-info-row">
+                                <span class="fpl-info-label">Total Distance:</span>
+                                <span class="fpl-info-value" id="fpl-info-dist">--- NM</span>
+                            </div>
+                            <div class="fpl-info-row">
+                                <span class="fpl-info-label">Est. Time Enroute:</span>
+                                <span class="fpl-info-value" id="fpl-info-ete">--:--</span>
+                            </div>
+                            <div class="fpl-info-row">
+                                <span class="fpl-info-label">Fuel Required:</span>
+                                <span class="fpl-info-value" id="fpl-info-fuel">--- GAL</span>
+                            </div>
+                            <div class="fpl-info-row">
+                                <span class="fpl-info-label">Max Altitude:</span>
+                                <span class="fpl-info-value" id="fpl-info-alt">--- FT</span>
+                            </div>
+                            <div class="fpl-info-row">
+                                <span class="fpl-info-label">Waypoints:</span>
+                                <span class="fpl-info-value" id="fpl-info-wpts">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Leg Details Table -->
+                        <div class="fpl-info-table-container">
+                            <table class="fpl-info-table">
+                                <thead>
+                                    <tr>
+                                        <th>WPT</th>
+                                        <th>LEG</th>
+                                        <th>CRS</th>
+                                        <th>CUMUL</th>
+                                        <th>ETE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fpl-info-legs">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="fpl-info-footer">
+                            <div class="fpl-info-note">Based on GS: <span id="fpl-info-gs">120</span> kt, Burn: <span id="fpl-info-burn">8.5</span> GPH</div>
+                        </div>
+
+                        <div class="dto-buttons">
+                            <button class="dto-btn dto-cancel" id="fpl-info-close">CLOSE</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Traffic Info Panel -->
                 <div class="traffic-info-panel" id="traffic-info" style="display: none;">
                     <div class="traffic-info-header">
