@@ -840,6 +840,89 @@ class GTNFlightPlan {
     }
 
     /**
+     * Show airways insert modal
+     */
+    showAirwaysModal() {
+        const modal = document.getElementById('awy-modal');
+        if (!modal) return;
+
+        modal.style.display = 'block';
+
+        const identInput = document.getElementById('awy-ident');
+        const entryInput = document.getElementById('awy-entry');
+        const exitInput = document.getElementById('awy-exit');
+        const infoDiv = document.getElementById('awy-info');
+
+        // Clear previous values
+        if (identInput) identInput.value = '';
+        if (entryInput) entryInput.value = '';
+        if (exitInput) exitInput.value = '';
+        if (infoDiv) infoDiv.textContent = '';
+
+        // Focus first input
+        if (identInput) {
+            setTimeout(() => identInput.focus(), 100);
+        }
+
+        // Wire up buttons if not already done
+        const insertBtn = document.getElementById('awy-insert');
+        const cancelBtn = document.getElementById('awy-cancel');
+
+        if (insertBtn && !insertBtn._airwaysWired) {
+            insertBtn._airwaysWired = true;
+            insertBtn.onclick = () => this.handleAirwayInsert();
+        }
+
+        if (cancelBtn && !cancelBtn._airwaysWired) {
+            cancelBtn._airwaysWired = true;
+            cancelBtn.onclick = () => this.hideAirwaysModal();
+        }
+    }
+
+    /**
+     * Hide airways insert modal
+     */
+    hideAirwaysModal() {
+        const modal = document.getElementById('awy-modal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    /**
+     * Handle airway insert button click
+     */
+    async handleAirwayInsert() {
+        const identInput = document.getElementById('awy-ident');
+        const entryInput = document.getElementById('awy-entry');
+        const exitInput = document.getElementById('awy-exit');
+        const infoDiv = document.getElementById('awy-info');
+
+        const airwayIdent = identInput?.value.trim().toUpperCase();
+        const entryFix = entryInput?.value.trim().toUpperCase();
+        const exitFix = exitInput?.value.trim().toUpperCase();
+
+        if (!airwayIdent || !entryFix || !exitFix) {
+            if (infoDiv) {
+                infoDiv.textContent = 'Please enter airway, entry fix, and exit fix';
+            }
+            return;
+        }
+
+        if (infoDiv) {
+            infoDiv.textContent = `Inserting ${airwayIdent} from ${entryFix} to ${exitFix}...`;
+        }
+
+        const success = await this.insertAirway(airwayIdent, entryFix, exitFix);
+
+        if (success) {
+            this.hideAirwaysModal();
+        } else {
+            if (infoDiv) {
+                infoDiv.textContent = 'Failed to insert airway. Check entry/exit fixes are valid and entry fix is in flight plan.';
+            }
+        }
+    }
+
+    /**
      * Insert an airway segment between two waypoints
      * @param {string} airwayIdent - Airway identifier (e.g., "V4", "J146")
      * @param {string} entryFix - Entry waypoint identifier
