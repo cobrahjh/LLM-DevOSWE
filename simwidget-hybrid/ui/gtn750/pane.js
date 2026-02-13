@@ -1843,6 +1843,7 @@ class GTN750Pane extends SimGlassBase {
                 if (this.pageManager) this.pageManager.switchPage('map');
                 this.flightPlanManager?.showDirectTo();
                 break;
+            case 'insert-airway': this.flightPlanManager?.showAirwaysModal(); break;
             case 'waypoint-info': this.showWaypointInfoModal(); break;
             case 'fpl-delete': if (this.fplPage) this.fplPage.onDelete(); break;
             case 'fpl-insert': if (this.fplPage) this.fplPage.onInsert(); break;

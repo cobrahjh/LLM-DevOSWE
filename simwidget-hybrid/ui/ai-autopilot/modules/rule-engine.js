@@ -357,6 +357,7 @@ class RuleEngine {
                     this._cmd('AP_MASTER', true, 'Engage AP for descent');
                 }
                 if (phaseChanged) {
+                    this._cmdValue('AP_ALT_VAR_SET', this._targetCruiseAlt, 'ALT ' + this._targetCruiseAlt);
                     this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.DESCENT, 'SPD ' + p.phaseSpeeds.DESCENT);
                 }
                 // Lateral nav — continuous evaluation

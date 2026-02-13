@@ -203,10 +203,14 @@ class FlightPlanPage {
         seq.className = 'fpl-seq';
         seq.textContent = index + 1;
 
-        // Ident
+        // Ident (with airway name if present)
         const ident = document.createElement('span');
         ident.className = 'fpl-ident';
-        ident.textContent = wp.ident || `WP${index + 1}`;
+        let identText = wp.ident || `WP${index + 1}`;
+        if (wp.airway) {
+            identText += ` (${wp.airway})`;
+        }
+        ident.textContent = identText;
 
         // Altitude
         const alt = document.createElement('span');

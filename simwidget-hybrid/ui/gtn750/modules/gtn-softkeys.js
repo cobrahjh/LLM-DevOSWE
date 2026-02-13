@@ -79,7 +79,7 @@ class GTNSoftKeys {
         // FPL page
         this.registerContext('fpl', [
             { label: 'MENU', action: 'fpl-menu' },
-            { label: 'NEW', action: 'new-waypoint' },
+            { label: 'AIRWAY', action: 'insert-airway' },
             { label: 'ACTV', action: 'activate-leg' },
             { label: 'INVRT', action: 'invert-plan' },
             { label: 'INFO', action: 'waypoint-info' },

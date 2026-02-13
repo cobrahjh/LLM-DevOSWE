@@ -100,11 +100,15 @@ class FlightPhase {
                 break;
 
             case 'CRUISE':
-                // Transition to descent when VS is negative for sustained period
-                // or when distance to destination warrants TOD
+                // Transition to descent when:
+                // 1. Distance to destination warrants TOD
+                // 2. VS is negative for sustained period (manual descent)
+                // 3. Cruise altitude lowered — currently well above new target
                 if (this.destinationDist < Math.abs(todNm) && this.destinationDist < 100) {
                     this._setPhase('DESCENT');
                 } else if (vs < -300 && alt < this.targetCruiseAlt - 500 && this._phaseAge() > 30000) {
+                    this._setPhase('DESCENT');
+                } else if (alt > this.targetCruiseAlt + 500 && this._phaseAge() > 5000) {
                     this._setPhase('DESCENT');
                 }
                 break;
