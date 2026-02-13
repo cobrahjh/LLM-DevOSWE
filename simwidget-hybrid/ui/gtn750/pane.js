@@ -2218,7 +2218,9 @@ class GTN750Pane extends SimGlassBase {
             vnavVdev: document.getElementById('vnav-vdev'),
             vnavReqvs: document.getElementById('vnav-reqvs'),
             vnavTgtalt: document.getElementById('vnav-tgtalt'),
-            vnavNext: document.getElementById('vnav-next')
+            vnavNext: document.getElementById('vnav-next'),
+            lat: document.getElementById('lat'),
+            lon: document.getElementById('lon')
         };
     }
 

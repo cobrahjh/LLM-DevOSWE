@@ -101,6 +101,14 @@ class GTNDataHandler {
         if (this.elements.utcTime && data.zuluTime && this.core) {
             this.elements.utcTime.textContent = this.core.formatTime(data.zuluTime);
         }
+
+        // Update position coordinates
+        if (this.elements.lat && data.latitude !== undefined && this.core) {
+            this.elements.lat.textContent = this.core.formatLat(data.latitude);
+        }
+        if (this.elements.lon && data.longitude !== undefined && this.core) {
+            this.elements.lon.textContent = this.core.formatLon(data.longitude);
+        }
     }
 
     /**
