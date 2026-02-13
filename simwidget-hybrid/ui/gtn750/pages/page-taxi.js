@@ -264,7 +264,9 @@ class SafeTaxiPage {
 
             if (!response.ok) return;
 
-            const airports = await response.json();
+            const data = await response.json();
+            // Handle both old array format and new {items: [...]} format
+            const airports = data.items || data;
             if (airports && airports.length > 0) {
                 const nearest = airports[0];
                 GTNCore.log(`[SafeTaxi] Auto-loading nearest airport: ${nearest.icao}`);
