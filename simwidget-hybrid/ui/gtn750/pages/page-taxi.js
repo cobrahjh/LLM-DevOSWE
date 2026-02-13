@@ -30,6 +30,7 @@ class SafeTaxiPage {
             zoomInBtn: document.getElementById('taxi-zoom-in'),
             zoomOutBtn: document.getElementById('taxi-zoom-out'),
             autoBtn: document.getElementById('taxi-auto-btn'),
+            followBtn: document.getElementById('taxi-follow-btn'),
             statusLabel: document.getElementById('taxi-status')
         };
 
@@ -105,6 +106,24 @@ class SafeTaxiPage {
                     this.diagram.centerOnAirport();
                     this.diagram.autoScale();
                     this.render();
+                }
+            });
+        }
+
+        // Follow button - toggle auto-follow mode
+        if (this.elements.followBtn) {
+            this.elements.followBtn.addEventListener('click', () => {
+                if (this.diagram) {
+                    this.diagram.options.autoFollow = !this.diagram.options.autoFollow;
+
+                    // Update button appearance
+                    if (this.diagram.options.autoFollow) {
+                        this.elements.followBtn.classList.add('active');
+                        this.setStatus('Auto-follow: ON', '#00ff00');
+                    } else {
+                        this.elements.followBtn.classList.remove('active');
+                        this.setStatus('Auto-follow: OFF', '#ffff00');
+                    }
                 }
             });
         }

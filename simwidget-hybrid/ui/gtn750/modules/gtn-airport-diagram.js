@@ -42,6 +42,9 @@ class GTNAirportDiagram {
             showOwnship: true,
             showTaxiRoute: true,
             showHotspots: true,
+            showParkingPositions: true,
+            showHoldShortLines: true,
+            autoFollow: false,       // Auto-center on ownship during taxi
             ownshipSize: 20,         // Aircraft symbol size in pixels
             minScale: 0.1,
             maxScale: 10.0
@@ -58,6 +61,9 @@ class GTNAirportDiagram {
             ownshipHeading: '#ff00ff',
             taxiRoute: '#00ff00',
             hotspot: '#ff0000',
+            holdShort: '#ff0000',
+            parking: '#4488ff',
+            parkingLabel: '#ffffff',
             background: '#0a1520'
         };
 
@@ -134,6 +140,11 @@ class GTNAirportDiagram {
             groundSpeed: data.groundSpeed || 0,
             onGround: data.agl < 50
         };
+
+        // Auto-follow mode: center on ownship when moving on ground
+        if (this.options.autoFollow && this.ownship.onGround && this.ownship.groundSpeed > 1) {
+            this.centerOnOwnship();
+        }
     }
 
     /**
@@ -294,6 +305,9 @@ class GTNAirportDiagram {
         // Render layers in order (back to front)
         this.renderTaxiGraph(ctx);
         this.renderRunways(ctx);
+        this.renderHoldShortLines(ctx);
+        this.renderParkingPositions(ctx);
+        this.renderHotspots(ctx);
         this.renderTaxiRoute(ctx);
         this.renderOwnship(ctx);
         this.renderAirportLabel(ctx);
@@ -456,6 +470,137 @@ class GTNAirportDiagram {
         }
         ctx.stroke();
         ctx.setLineDash([]);
+    }
+
+    /**
+     * Render hold-short lines at runway entries
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderHoldShortLines(ctx) {
+        if (!this.options.showHoldShortLines || !this.airport || !this.airport.runways) return;
+        if (!this.taxiGraph || !this.taxiGraph.nodes) return;
+
+        // Draw hold-short lines at taxiway-runway intersections
+        // These are double yellow dashed lines perpendicular to taxiway
+        for (const runway of this.airport.runways) {
+            if (!runway.lat1 || !runway.lon1 || !runway.lat2 || !runway.lon2) continue;
+
+            // Find nodes near runway threshold (within 50m)
+            const rwThreshold = 50; // meters
+
+            for (const nodeId in this.taxiGraph.nodes) {
+                const node = this.taxiGraph.nodes[nodeId];
+
+                // Calculate distance from node to runway centerline
+                const distToRwy1 = this.calculateDistance(node.lat, node.lon, runway.lat1, runway.lon1) * 1852; // nm to meters
+                const distToRwy2 = this.calculateDistance(node.lat, node.lon, runway.lat2, runway.lon2) * 1852;
+
+                if (distToRwy1 < rwThreshold || distToRwy2 < rwThreshold) {
+                    const p = this.latLonToCanvas(node.lat, node.lon);
+
+                    // Draw hold-short marking (perpendicular to runway)
+                    const rwAngle = Math.atan2(runway.lat2 - runway.lat1, runway.lon2 - runway.lon1);
+                    const lineLength = Math.max(15, 30 * this.viewport.scale);
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(rwAngle);
+
+                    // Double yellow dashed lines
+                    ctx.strokeStyle = this.colors.holdShort;
+                    ctx.lineWidth = Math.max(2, 3 * this.viewport.scale);
+                    ctx.setLineDash([5, 5]);
+
+                    // First line
+                    ctx.beginPath();
+                    ctx.moveTo(-lineLength, -3);
+                    ctx.lineTo(lineLength, -3);
+                    ctx.stroke();
+
+                    // Second line
+                    ctx.beginPath();
+                    ctx.moveTo(-lineLength, 3);
+                    ctx.lineTo(lineLength, 3);
+                    ctx.stroke();
+
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                }
+            }
+        }
+    }
+
+    /**
+     * Render parking positions (gates, ramps, FBOs)
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderParkingPositions(ctx) {
+        if (!this.options.showParkingPositions || !this.taxiGraph || !this.taxiGraph.nodes) return;
+
+        // Parking positions are nodes with "parking" type in taxiGraph
+        for (const nodeId in this.taxiGraph.nodes) {
+            const node = this.taxiGraph.nodes[nodeId];
+
+            // Check if this is a parking position (has parking metadata)
+            if (node.type === 'parking' || node.name?.match(/^(GATE|RAMP|PARK|GA)/i)) {
+                const p = this.latLonToCanvas(node.lat, node.lon);
+                const size = Math.max(8, 10 * this.viewport.scale);
+
+                // Draw parking circle
+                ctx.fillStyle = this.colors.parking;
+                ctx.strokeStyle = this.colors.parkingLabel;
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw parking label (if zoomed in enough)
+                if (this.viewport.scale > 0.8 && node.name) {
+                    ctx.font = `bold ${Math.max(10, 12 * this.viewport.scale)}px Arial`;
+                    ctx.fillStyle = this.colors.parkingLabel;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(node.name, p.x, p.y + size + 3);
+                }
+            }
+        }
+    }
+
+    /**
+     * Render hotspots (safety critical areas)
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderHotspots(ctx) {
+        if (!this.options.showHotspots || !this.taxiGraph || !this.taxiGraph.hotspots) return;
+
+        // Hotspots are areas where runway incursions are likely
+        for (const hotspot of this.taxiGraph.hotspots) {
+            if (!hotspot.lat || !hotspot.lon) continue;
+
+            const p = this.latLonToCanvas(hotspot.lat, hotspot.lon);
+            const radius = Math.max(20, (hotspot.radius_m || 30) * this.viewport.scale);
+
+            // Draw hotspot circle with red fill and flashing border
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
+            ctx.strokeStyle = this.colors.hotspot;
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw hotspot label "HS" with identifier
+            ctx.font = `bold ${Math.max(14, 16 * this.viewport.scale)}px Arial`;
+            ctx.fillStyle = this.colors.hotspot;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const label = hotspot.id ? `HS ${hotspot.id}` : 'HS';
+            ctx.fillText(label, p.x, p.y);
+        }
     }
 
     /**

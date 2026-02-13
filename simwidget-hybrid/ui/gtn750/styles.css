@@ -4128,6 +4128,12 @@ body {
     background: var(--gtn-primary);
 }
 
+.taxi-btn.active {
+    background: var(--gtn-green);
+    color: var(--gtn-darker);
+    font-weight: bold;
+}
+
 .taxi-status {
     flex: 1;
     text-align: right;
