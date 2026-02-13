@@ -1091,6 +1091,23 @@ class GTN750Pane extends SimGlassBase {
             GTNCore.log('[GTN750] Flight plan module not available');
         }
 
+        // Auto-enable VNAV if approach has altitude constraints
+        if (type === 'apr' && waypoints?.some(wp => wp.altitude && wp.altitudeConstraint)) {
+            if (this.vnavManager && !this.vnavManager.enabled) {
+                GTNCore.log('[GTN750] Auto-enabling VNAV for approach with altitude constraints');
+                this.vnavManager.setEnabled(true);
+
+                // Update UI
+                if (this.elements.vnavToggle) {
+                    this.elements.vnavToggle.textContent = 'ON';
+                    this.elements.vnavToggle.classList.add('active');
+                }
+                if (this.elements.vnavDisplay) {
+                    this.elements.vnavDisplay.style.display = 'block';
+                }
+            }
+        }
+
         // Notify other instances via sync channel
         this.syncChannel.postMessage({
             type: 'procedure-load',

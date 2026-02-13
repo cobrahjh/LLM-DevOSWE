@@ -284,7 +284,8 @@ class ProceduresPage {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.waypoints?.length > 0) {
-                        this.previewWaypoints = data.waypoints;
+                        // Map altitude constraints for VNAV
+                        this.previewWaypoints = data.waypoints.map(wp => this.mapAltitudeConstraints(wp));
                         this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
                         return;
                     }
@@ -297,6 +298,45 @@ class ProceduresPage {
         // Fallback: empty waypoints if navdb unavailable
         this.previewWaypoints = [];
         this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
+    }
+
+    /**
+     * Map NavDB waypoint altitude constraints to VNAV format
+     * @param {Object} wp - Waypoint from NavDB
+     * @returns {Object} Waypoint with VNAV-compatible altitude fields
+     */
+    mapAltitudeConstraints(wp) {
+        // Copy all existing fields
+        const mapped = { ...wp };
+
+        // Map altitude constraints from NavDB format (alt1, alt2, altDesc) to VNAV format (altitude, altitudeConstraint)
+        if (wp.altDesc && wp.alt1) {
+            mapped.altitude = wp.alt1;
+
+            // Convert ARINC 424 altitude descriptor to VNAV constraint type
+            switch (wp.altDesc) {
+                case '@':  // At altitude
+                    mapped.altitudeConstraint = '@';
+                    break;
+                case '+':  // At or above
+                    mapped.altitudeConstraint = '+';
+                    break;
+                case '-':  // At or below
+                    mapped.altitudeConstraint = '-';
+                    break;
+                case 'B':  // Between (uses alt1 and alt2)
+                    mapped.altitudeConstraint = 'B';
+                    mapped.altitude2 = wp.alt2;
+                    break;
+                default:
+                    // Unknown constraint type, use as-is
+                    mapped.altitudeConstraint = wp.altDesc;
+            }
+
+            GTNCore.log(`[PROC] Mapped altitude constraint for ${wp.ident}: ${mapped.altitudeConstraint} ${mapped.altitude}ft`);
+        }
+
+        return mapped;
     }
 
     /**
