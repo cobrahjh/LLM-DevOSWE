@@ -80,7 +80,7 @@ class GTNSoftKeys {
         this.registerContext('fpl', [
             { label: 'SAVE', action: 'save-fpl' },
             { label: 'LOAD', action: 'load-fpl' },
-            { label: 'AIRWAY', action: 'insert-airway' },
+            { label: 'CLEAR', action: 'fpl-clear' },
             { label: 'VNAV', action: 'toggle-vnav', toggle: true },
             { label: 'INFO', action: 'fpl-info' },
             { label: 'D\u2192', action: 'direct-to' }
@@ -90,10 +90,10 @@ class GTNSoftKeys {
         this.registerContext('fpl-selected', [
             { label: 'DELETE', action: 'fpl-delete' },
             { label: 'INSERT', action: 'fpl-insert' },
-            { label: 'AIRWAY', action: 'fpl-airway' },
+            { label: 'MOVE\n\u25B2', action: 'fpl-move-up' },
+            { label: 'MOVE\n\u25BC', action: 'fpl-move-down' },
             { label: 'ACTV\nLEG', action: 'activate-leg' },
-            { label: 'D\u2192', action: 'direct-to' },
-            { label: 'BACK', action: 'back' }
+            { label: 'D\u2192', action: 'direct-to' }
         ]);
 
         // WPT page

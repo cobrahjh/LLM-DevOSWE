@@ -390,6 +390,47 @@ class FlightPlanPage {
         });
     }
 
+    onMoveUp() {
+        if (this.cursorIndex <= 0 || !this.flightPlanManager) return;
+        const success = this.flightPlanManager.moveWaypoint(this.cursorIndex, -1);
+        if (success) {
+            this.cursorIndex--;
+            this.render();
+            this.setCursor(this.cursorIndex);
+        }
+    }
+
+    onMoveDown() {
+        if (this.cursorIndex < 0 || !this.flightPlanManager) return;
+        const wps = this.flightPlan?.waypoints;
+        if (!wps || this.cursorIndex >= wps.length - 1) return;
+
+        const success = this.flightPlanManager.moveWaypoint(this.cursorIndex, 1);
+        if (success) {
+            this.cursorIndex++;
+            this.render();
+            this.setCursor(this.cursorIndex);
+        }
+    }
+
+    onClear() {
+        if (!this.flightPlanManager?.flightPlan?.waypoints?.length) return;
+
+        // Trigger confirmation modal (will be handled by main pane)
+        if (this.onClearRequested) {
+            this.onClearRequested();
+        }
+    }
+
+    confirmClear() {
+        if (this.flightPlanManager) {
+            this.flightPlanManager.clearFlightPlan();
+            this.cursorIndex = -1;
+            this.render();
+            this.updateSoftKeyContext();
+        }
+    }
+
     // ===== SOFT KEYS =====
 
     updateSoftKeyContext() {

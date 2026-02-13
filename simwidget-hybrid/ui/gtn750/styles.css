@@ -1260,6 +1260,17 @@ body {
     background: var(--gtn-accent);
 }
 
+.dto-confirm {
+    background: var(--gtn-red, #ff0000);
+    color: var(--gtn-text);
+    border: 1px solid var(--gtn-red, #ff0000);
+}
+
+.dto-confirm:hover {
+    background: #cc0000;
+    border-color: #cc0000;
+}
+
 /* Airways Insert Modal */
 .awy-field {
     margin-bottom: 12px;

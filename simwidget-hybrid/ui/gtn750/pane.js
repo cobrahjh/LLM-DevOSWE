@@ -2445,6 +2445,9 @@ class GTN750Pane extends SimGlassBase {
             case 'fpl-delete': if (this.fplPage) this.fplPage.onDelete(); break;
             case 'fpl-insert': if (this.fplPage) this.fplPage.onInsert(); break;
             case 'fpl-airway': if (this.fplPage) this.fplPage.onInsertAirway(); break;
+            case 'fpl-move-up': if (this.fplPage) this.fplPage.onMoveUp(); break;
+            case 'fpl-move-down': if (this.fplPage) this.fplPage.onMoveDown(); break;
+            case 'fpl-clear': this.showClearFlightPlanConfirm(); break;
             case 'save-fpl': this.showSaveFlightPlanModal(); break;
             case 'load-fpl': this.showLoadFlightPlanModal(); break;
             case 'fpl-info': this.showFlightPlanInfoModal(); break;
@@ -2764,6 +2767,38 @@ class GTN750Pane extends SimGlassBase {
         // Wire up close button
         const closeBtn = document.getElementById('fpl-info-close');
         closeBtn.onclick = () => modal.style.display = 'none';
+    }
+
+    showClearFlightPlanConfirm() {
+        const modal = document.getElementById('fpl-clear-confirm-modal');
+        if (!modal) return;
+
+        // Check if there's actually a flight plan to clear
+        if (!this.flightPlanManager?.flightPlan?.waypoints?.length) {
+            return;
+        }
+
+        // Show modal
+        modal.style.display = 'block';
+
+        // Wire up buttons
+        const confirmBtn = document.getElementById('fpl-clear-confirm');
+        const cancelBtn = document.getElementById('fpl-clear-cancel');
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+        };
+
+        confirmBtn.onclick = () => {
+            if (this.fplPage) {
+                this.fplPage.confirmClear();
+            }
+            closeModal();
+        };
+
+        cancelBtn.onclick = closeModal;
     }
 
     // ===== RANGE / DECLUTTER HELPERS =====

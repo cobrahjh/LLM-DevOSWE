@@ -758,6 +758,66 @@ class GTNFlightPlan {
     }
 
     /**
+     * Move waypoint up or down in the flight plan
+     * @param {number} fromIndex - Index of waypoint to move
+     * @param {number} direction - -1 for up, +1 for down
+     */
+    moveWaypoint(fromIndex, direction) {
+        if (!this.flightPlan?.waypoints || fromIndex < 0 || fromIndex >= this.flightPlan.waypoints.length) return false;
+
+        const toIndex = fromIndex + direction;
+        if (toIndex < 0 || toIndex >= this.flightPlan.waypoints.length) return false;
+
+        // Swap waypoints
+        const temp = this.flightPlan.waypoints[fromIndex];
+        this.flightPlan.waypoints[fromIndex] = this.flightPlan.waypoints[toIndex];
+        this.flightPlan.waypoints[toIndex] = temp;
+
+        // Recalculate distances for affected waypoints
+        const start = Math.max(0, Math.min(fromIndex, toIndex) - 1);
+        const end = Math.min(this.flightPlan.waypoints.length - 1, Math.max(fromIndex, toIndex) + 1);
+
+        for (let i = start; i <= end; i++) {
+            const wp = this.flightPlan.waypoints[i];
+            if (i > 0 && wp.lat && wp.lng) {
+                const prev = this.flightPlan.waypoints[i - 1];
+                if (prev?.lat && prev?.lng) {
+                    wp.distanceFromPrev = this.core.calculateDistance(prev.lat, prev.lng, wp.lat, wp.lng);
+                }
+            }
+        }
+
+        // Adjust active waypoint index
+        if (this.activeWaypointIndex === fromIndex) {
+            this.activeWaypointIndex = toIndex;
+        } else if (this.activeWaypointIndex === toIndex) {
+            this.activeWaypointIndex = fromIndex;
+        }
+
+        this.notifyChanged();
+        if (this.onWaypointChanged) this.onWaypointChanged();
+        return true;
+    }
+
+    /**
+     * Clear all waypoints from flight plan
+     */
+    clearFlightPlan() {
+        if (!this.flightPlan?.waypoints?.length) return false;
+
+        this.flightPlan = { waypoints: [], source: 'manual' };
+        this.activeWaypointIndex = 0;
+        this.activeWaypoint = null;
+        this.dtoTarget = null;
+
+        this.notifyChanged();
+        if (this.onWaypointChanged) this.onWaypointChanged();
+
+        GTNCore.log('[GTN750] Flight plan cleared');
+        return true;
+    }
+
+    /**
      * Load a procedure (SID/STAR/Approach) into the flight plan
      * @param {string} type - 'dep', 'arr', or 'apr'
      * @param {Object} procedure - Procedure metadata (name, airport, etc.)

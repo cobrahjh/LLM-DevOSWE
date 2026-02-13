@@ -458,6 +458,21 @@
                     </div>
                 </div>
 
+                <!-- Clear Flight Plan Confirmation Modal -->
+                <div class="dto-modal" id="fpl-clear-confirm-modal" style="display: none;">
+                    <div class="dto-header" style="background: var(--gtn-red, #ff0000);">CLEAR FLIGHT PLAN</div>
+                    <div class="dto-content">
+                        <div style="padding: 20px; text-align: center;">
+                            <p style="margin-bottom: 16px; font-size: 14px;">Delete all waypoints from the flight plan?</p>
+                            <p style="color: var(--gtn-gray); font-size: 12px;">This action cannot be undone.</p>
+                        </div>
+                        <div class="dto-buttons">
+                            <button class="dto-btn dto-confirm" id="fpl-clear-confirm">CLEAR ALL</button>
+                            <button class="dto-btn dto-cancel" id="fpl-clear-cancel">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Traffic Info Panel -->
                 <div class="traffic-info-panel" id="traffic-info" style="display: none;">
                     <div class="traffic-info-header">
