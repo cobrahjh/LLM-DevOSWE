@@ -112,6 +112,7 @@ class GTN750Pane extends SimGlassBase {
         this.chartsPage = null;
         this.nearestPage = null;
         this.systemPage = null;
+        this.taxiPage = null;
 
         // Soft key retry counter
         this._softKeyRetries = 0;
@@ -320,7 +321,8 @@ class GTN750Pane extends SimGlassBase {
             charts: 'pages/page-charts.js',
             nrst: 'pages/page-nrst.js',
             aux: 'pages/page-aux.js',
-            system: 'pages/page-system.js'
+            system: 'pages/page-system.js',
+            taxi: 'pages/page-taxi.js'
         };
 
         const modulePath = moduleMap[pageId];
@@ -540,6 +542,12 @@ class GTN750Pane extends SimGlassBase {
         this.updateTCASDisplay();
         this.updateTimerDisplay();
         this.updateAuxData();
+
+        // Update taxi page if active
+        if (this.pageManager?.activePage === 'taxi' && this.taxiPage) {
+            this.taxiPage.update(this.data);
+            this.taxiPage.render();
+        }
     }
 
     updateAuxData() {
@@ -1006,6 +1014,14 @@ class GTN750Pane extends SimGlassBase {
                     });
                 }
                 break;
+            case 'taxi':
+                if (!this.taxiPage && typeof SafeTaxiPage !== 'undefined') {
+                    this.taxiPage = new SafeTaxiPage({
+                        core: this.core,
+                        serverPort: this.serverPort
+                    });
+                }
+                break;
         }
     }
 
@@ -1150,6 +1166,13 @@ class GTN750Pane extends SimGlassBase {
         if (pageId === 'aux') {
             if (this.auxPage) this.auxPage.init();
             this.updateAuxPageData();
+        }
+        if (pageId === 'taxi') {
+            if (this.taxiPage) {
+                this.taxiPage.init();
+                this.taxiPage.update(this.data);
+                this.taxiPage.render();
+            }
         }
         if (pageId === 'charts') {
             if (this.chartsPage) {

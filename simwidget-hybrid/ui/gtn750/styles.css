@@ -3580,3 +3580,138 @@ body {
     0% { background-position: 0 0; }
     100% { background-position: 0 20px; }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TAXI PAGE (SafeTaxi Airport Diagrams)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.taxi-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--gtn-bg-panel);
+    border-bottom: 1px solid var(--gtn-border);
+}
+
+.taxi-airport-input {
+    width: 100px;
+    padding: 8px 12px;
+    background: var(--gtn-darker);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-cyan);
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+    font-family: var(--gtn-mono);
+}
+
+.taxi-airport-input:focus {
+    outline: none;
+    border-color: var(--gtn-cyan);
+}
+
+.taxi-btn {
+    padding: 8px 16px;
+    background: var(--gtn-accent);
+    border: none;
+    color: var(--gtn-white);
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+.taxi-btn:hover {
+    background: var(--gtn-accent-hover);
+}
+
+.taxi-btn:active {
+    background: var(--gtn-primary);
+}
+
+.taxi-status {
+    flex: 1;
+    text-align: right;
+    color: var(--gtn-green);
+    font-size: 13px;
+    padding-right: 10px;
+}
+
+.taxi-canvas {
+    width: 100%;
+    height: calc(100% - 90px);
+    background: var(--gtn-darker);
+    display: block;
+    cursor: grab;
+}
+
+.taxi-canvas:active {
+    cursor: grabbing;
+}
+
+.taxi-controls {
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.taxi-control-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--gtn-bg-panel);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-cyan);
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.taxi-control-btn:hover {
+    background: var(--gtn-accent);
+    border-color: var(--gtn-cyan);
+    transform: scale(1.1);
+}
+
+.taxi-control-btn:active {
+    background: var(--gtn-primary);
+    transform: scale(0.95);
+}
+
+/* Taxi page responsiveness */
+@media (max-width: 800px) {
+    .taxi-header {
+        flex-wrap: wrap;
+    }
+
+    .taxi-airport-input {
+        width: 80px;
+        font-size: 14px;
+    }
+
+    .taxi-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .taxi-controls {
+        bottom: 50px;
+        right: 10px;
+    }
+
+    .taxi-control-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+    }
+}
