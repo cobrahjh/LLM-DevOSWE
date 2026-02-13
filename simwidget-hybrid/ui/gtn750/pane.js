@@ -513,10 +513,13 @@ class GTN750Pane extends SimGlassBase {
         this.flightPlanManager?.setGroundSpeed(this.data.groundSpeed);
         this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager);
 
-        // Update taxi page ownship position
-        if (this.taxiPage && this.pageManager?.getCurrentPageId() === 'taxi') {
+        // Update taxi page ownship position (always update for auto-load detection)
+        if (this.taxiPage) {
             this.taxiPage.update(this.data);
-            this.taxiPage.render();
+            // Only render if page is currently visible
+            if (this.pageManager?.getCurrentPageId() === 'taxi') {
+                this.taxiPage.render();
+            }
         }
 
         // Calculate GPS navigation from flight plan
@@ -571,10 +574,12 @@ class GTN750Pane extends SimGlassBase {
         this.updateTimerDisplay();
         this.updateAuxData();
 
-        // Update taxi page if active
-        if (this.pageManager?.activePage === 'taxi' && this.taxiPage) {
-            this.taxiPage.update(this.data);
-            this.taxiPage.render();
+        // Update taxi page (render only if active)
+        if (this.taxiPage) {
+            // Always update for auto-load detection (removed from above to avoid duplicate)
+            if (this.pageManager?.activePage === 'taxi') {
+                this.taxiPage.render();
+            }
         }
 
         // Update frequency tuner
