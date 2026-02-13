@@ -196,6 +196,16 @@ class GTNSoftKeys {
             { label: 'BACK', action: 'back' }
         ]);
 
+        // USER WPT page (User Waypoints)
+        this.registerContext('user-wpt', [
+            { label: 'NEW', action: 'user-wpt-new' },
+            { label: 'IMPORT', action: 'user-wpt-import' },
+            { label: 'EXPORT', action: 'user-wpt-export' },
+            { label: 'D→', action: 'direct-to' },
+            { label: 'FPL', action: 'user-wpt-add-fpl' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
         // Map menu submenu
         this.registerContext('map-menu', [
             { label: 'NORTH', action: 'map-north-up' },

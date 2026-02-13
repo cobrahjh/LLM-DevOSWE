@@ -3831,3 +3831,197 @@ body {
         font-size: 18px;
     }
 }
+
+/* ===== USER WAYPOINTS PAGE ===== */
+.user-wpt-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-wpt-filter {
+    flex: 1;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #00ff00;
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    border-radius: 4px;
+    font-family: 'B612 Mono', monospace;
+    font-size: 12px;
+}
+
+.user-wpt-stats {
+    color: #888;
+    font-size: 12px;
+}
+
+.user-wpt-btn {
+    padding: 6px 12px;
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff00;
+    border: 1px solid rgba(0, 255, 0, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'B612 Mono', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.user-wpt-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+    border-color: rgba(0, 255, 0, 0.6);
+}
+
+.user-wpt-btn-sm {
+    padding: 4px 8px;
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff00;
+    border: 1px solid rgba(0, 255, 0, 0.4);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'B612 Mono', monospace;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.user-wpt-btn-danger {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff4444;
+    border-color: rgba(255, 0, 0, 0.4);
+}
+
+.user-wpt-btn-danger:hover {
+    background: rgba(255, 0, 0, 0.3);
+    border-color: rgba(255, 0, 0, 0.6);
+}
+
+.user-wpt-list {
+    height: calc(100% - 60px);
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.user-wpt-empty {
+    text-align: center;
+    color: #666;
+    padding: 40px 20px;
+    font-size: 14px;
+}
+
+.user-wpt-item {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-wpt-item:hover {
+    background: rgba(0, 0, 0, 0.6);
+    border-color: rgba(0, 255, 0, 0.3);
+}
+
+.user-wpt-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.user-wpt-icon {
+    font-size: 16px;
+}
+
+.user-wpt-ident {
+    font-weight: bold;
+    color: #00ff00;
+    font-size: 14px;
+}
+
+.user-wpt-name {
+    color: #aaa;
+    font-size: 12px;
+}
+
+.user-wpt-item-coords {
+    color: #888;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.user-wpt-item-info {
+    color: #666;
+    font-size: 10px;
+}
+
+.user-wpt-form {
+    padding: 20px;
+    height: calc(100% - 60px);
+    overflow-y: auto;
+}
+
+.user-wpt-form h3 {
+    color: #00ff00;
+    margin: 0 0 20px 0;
+    font-size: 16px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    color: #888;
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #00ff00;
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    border-radius: 4px;
+    font-family: 'B612 Mono', monospace;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: rgba(0, 255, 0, 0.6);
+}
+
+.form-group-inline {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.form-group-inline > div {
+    flex: 1;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-actions .user-wpt-btn {
+    flex: 1;
+}

@@ -49,7 +49,8 @@ class GTN750Pane extends SimGlassBase {
             pageNrst: false,
             pageAux: false,
             pageSystem: false,
-            pageTaxi: false
+            pageTaxi: false,
+            pageUserWpt: false
         };
 
         // Initialize core utilities
@@ -119,6 +120,7 @@ class GTN750Pane extends SimGlassBase {
         this.nearestPage = null;
         this.systemPage = null;
         this.taxiPage = null;
+        this.userWptPage = null;
 
         // Soft key retry counter
         this._softKeyRetries = 0;
@@ -334,7 +336,8 @@ class GTN750Pane extends SimGlassBase {
             nrst: 'pages/page-nrst.js',
             aux: 'pages/page-aux.js',
             system: 'pages/page-system.js',
-            taxi: 'pages/page-taxi.js'
+            taxi: 'pages/page-taxi.js',
+            'user-wpt': 'pages/page-user-wpt.js'
         };
 
         const modulePath = moduleMap[pageId];
@@ -1071,6 +1074,17 @@ class GTN750Pane extends SimGlassBase {
                     });
                 }
                 break;
+            case 'user-wpt':
+                if (!this.userWptPage && typeof UserWaypointsPage !== 'undefined') {
+                    this.userWptPage = new UserWaypointsPage({
+                        core: this.core,
+                        serverPort: this.serverPort,
+                        userWaypoints: this.userWaypoints,
+                        onDirectTo: (wp) => this.flightPlanManager?.directTo(wp),
+                        onAddToFPL: (wp) => this.flightPlanManager?.insertWaypoint(wp)
+                    });
+                }
+                break;
         }
     }
 
@@ -1135,7 +1149,7 @@ class GTN750Pane extends SimGlassBase {
             onPageChange: (pageId) => this.onPageChange(pageId)
         });
 
-        const pages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system', 'taxi'];
+        const pages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system', 'taxi', 'user-wpt'];
         pages.forEach(id => {
             this.pageManager.registerPage(id, {
                 id,
@@ -1173,7 +1187,7 @@ class GTN750Pane extends SimGlassBase {
                 map: 'MAP', fpl: 'FLIGHT PLAN', wpt: 'WAYPOINT',
                 nrst: 'NEAREST', proc: 'PROCEDURES', terrain: 'TERRAIN',
                 traffic: 'TRAFFIC', wx: 'WEATHER', charts: 'CHARTS',
-                aux: 'AUX', system: 'SYSTEM', taxi: 'SAFETAXI'
+                aux: 'AUX', system: 'SYSTEM', taxi: 'SAFETAXI', 'user-wpt': 'USER WAYPOINTS'
             };
             title.textContent = titles[pageId] || pageId.toUpperCase();
         }
@@ -1203,7 +1217,7 @@ class GTN750Pane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'system', 'taxi'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -1257,6 +1271,13 @@ class GTN750Pane extends SimGlassBase {
         }
         if (pageId === 'system') {
             if (this.systemPage) this.systemPage.init();
+        }
+        if (pageId === 'user-wpt') {
+            if (this.userWptPage) {
+                this.userWptPage.init();
+                this.userWptPage.setPosition(this.data.latitude, this.data.longitude);
+                this.userWptPage.render();
+            }
         }
     }
 
@@ -2485,6 +2506,26 @@ class GTN750Pane extends SimGlassBase {
                     this.taxiPage.render();
                 }
                 break;
+            case 'user-wpt-new':
+                if (this.userWptPage) {
+                    this.userWptPage.showNewForm();
+                }
+                break;
+            case 'user-wpt-import':
+                if (this.userWptPage && this.userWptPage.elements.importBtn) {
+                    this.userWptPage.elements.importBtn.click();
+                }
+                break;
+            case 'user-wpt-export':
+                if (this.userWptPage) {
+                    this.userWptPage.exportWaypoints();
+                }
+                break;
+            case 'user-wpt-add-fpl':
+                if (this.userWptPage && this.userWptPage.selectedWaypoint) {
+                    this.userWptPage.triggerAddToFPL(this.userWptPage.selectedWaypoint);
+                }
+                break;
             default: GTNCore.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
     }
@@ -3258,6 +3299,7 @@ class GTN750Pane extends SimGlassBase {
 
         // Destroy page instances
         if (this.taxiPage) this.taxiPage.destroy();
+        if (this.userWptPage) this.userWptPage.destroy();
 
         // Cancel compact render
         this.stopCompactRender();
@@ -3305,7 +3347,7 @@ if (document.readyState === 'loading') {
 function handleUrlHash() {
     const hash = window.location.hash.slice(1);
     if (hash && window.gtn750?.pageManager) {
-        const validPages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system', 'taxi'];
+        const validPages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system', 'taxi', 'user-wpt'];
         if (validPages.includes(hash)) {
             setTimeout(() => window.gtn750.pageManager.switchPage(hash), 100);
         }
