@@ -65,9 +65,13 @@ class RuleEngineServer {
         });
 
         // Auto-recover: if we were enabled before a server restart, re-enable
-        if (this._loadState()) {
+        const savedState = this._loadState();
+        if (savedState && savedState.enabled) {
             this._enabled = true;
-            console.log('[RuleEngine] Auto-recovered — was enabled before restart');
+            if (savedState.cruiseAlt) {
+                this.flightPhase.setCruiseAlt(savedState.cruiseAlt);
+            }
+            console.log('[RuleEngine] Auto-recovered — was enabled before restart (cruiseAlt: ' + this.flightPhase.targetCruiseAlt + ')');
         }
 
         console.log('[RuleEngine] Server-side mode ready');
@@ -199,6 +203,7 @@ class RuleEngineServer {
     /** Set target cruise altitude */
     setCruiseAlt(alt) {
         this.flightPhase.setCruiseAlt(alt);
+        if (this._enabled) this._saveState(true);
     }
 
     /** Set nav state from GTN750 */
@@ -216,20 +221,22 @@ class RuleEngineServer {
         this.ruleEngine.setActiveRunway(runway);
     }
 
-    /** Persist enabled state to disk for auto-recovery after restart */
+    /** Persist state to disk for auto-recovery after restart */
     _saveState(enabled) {
         try {
-            fs.writeFileSync(STATE_FILE, JSON.stringify({ enabled }));
+            fs.writeFileSync(STATE_FILE, JSON.stringify({
+                enabled,
+                cruiseAlt: this.flightPhase.targetCruiseAlt
+            }));
         } catch (e) { /* best-effort */ }
     }
 
-    /** Load persisted state. Returns true if was enabled. */
+    /** Load persisted state. Returns object or null. */
     _loadState() {
         try {
-            const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
-            return !!data.enabled;
+            return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
         } catch (e) {
-            return false;
+            return null;
         }
     }
 }

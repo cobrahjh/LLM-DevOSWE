@@ -22,6 +22,10 @@ class TrafficOverlay {
         this.trendDuration = 30; // seconds
         this.altitudeFilter = 'ALL'; // ALL, ABOVE, BELOW, NORMAL
 
+        // Selection state
+        this.selectedTarget = null;
+        this.targetPositions = []; // Cache of rendered target positions for click detection
+
         // Traffic advisory (TA) and resolution advisory (RA) thresholds
         this.taRange = 6; // NM
         this.taAlt = 1200; // feet
@@ -135,6 +139,9 @@ class TrafficOverlay {
         const pixelsPerNm = Math.min(width, height) / 2 / range;
         const rotation = orientation === 'north' ? 0 : heading;
 
+        // Reset target positions cache for click detection
+        this.targetPositions = [];
+
         // Render each traffic target
         targets.forEach(target => {
             // Apply altitude filter
@@ -168,11 +175,33 @@ class TrafficOverlay {
                 this.drawTrendVector(ctx, x, y, target, pixelsPerNm, rotation, threatLevel);
             }
 
+            // Highlight if selected
+            const isSelected = this.selectedTarget && this.selectedTarget.id === target.id;
+            if (isSelected) {
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, this.symbolSize + 8, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
             // Draw traffic symbol
             this.drawTrafficSymbol(ctx, x, y, target.altitude, threatLevel);
 
-            // Draw altitude label
-            this.drawAltitudeLabel(ctx, x, y, target.altitude, target.verticalSpeed);
+            // Draw altitude label or callsign if selected
+            if (isSelected) {
+                this.drawCallsignLabel(ctx, x, y, target.id);
+            } else {
+                this.drawAltitudeLabel(ctx, x, y, target.altitude, target.verticalSpeed);
+            }
+
+            // Cache position for click detection
+            this.targetPositions.push({
+                target,
+                x,
+                y,
+                radius: this.symbolSize + 5 // Click tolerance
+            });
         });
     }
 
@@ -355,6 +384,16 @@ class TrafficOverlay {
     }
 
     /**
+     * Draw callsign label for selected target
+     */
+    drawCallsignLabel(ctx, x, y, callsign) {
+        ctx.font = 'bold 11px Consolas, monospace';
+        ctx.fillStyle = '#00ff00';
+        ctx.textAlign = 'left';
+        ctx.fillText(callsign, x + 12, y + 4);
+    }
+
+    /**
      * Render dedicated traffic page view
      */
     renderTrafficPage(ctx, aircraft, width, height) {
@@ -411,6 +450,54 @@ class TrafficOverlay {
      */
     getMode() {
         return this.mode;
+    }
+
+    /**
+     * Handle click on map to select traffic target
+     * Returns true if a target was selected
+     */
+    handleClick(x, y) {
+        // Check if click is on any target
+        for (const pos of this.targetPositions) {
+            const dx = x - pos.x;
+            const dy = y - pos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= pos.radius) {
+                this.selectedTarget = pos.target;
+                return true;
+            }
+        }
+
+        // Clear selection if clicked on empty space
+        this.selectedTarget = null;
+        return false;
+    }
+
+    /**
+     * Get selected target info for display
+     */
+    getSelectedTargetInfo() {
+        if (!this.selectedTarget) return null;
+
+        const t = this.selectedTarget;
+        return {
+            callsign: t.id,
+            altitude: t.absAlt ? Math.round(t.absAlt) : '---',
+            relativeAlt: Math.round(t.altitude),
+            groundSpeed: t.groundSpeed || 0,
+            heading: t.heading !== undefined ? Math.round(t.heading) : '---',
+            verticalSpeed: t.verticalSpeed || 0,
+            distance: t.distance ? t.distance.toFixed(1) : '0.0',
+            bearing: t.relBearing !== undefined ? Math.round(t.relBearing) : '---'
+        };
+    }
+
+    /**
+     * Clear target selection
+     */
+    clearSelection() {
+        this.selectedTarget = null;
     }
 }
 

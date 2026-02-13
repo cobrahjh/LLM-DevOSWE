@@ -1639,7 +1639,17 @@ class GTN750Pane extends SimGlassBase {
             gcCdiDtk: document.getElementById('gc-cdi-dtk'),
             gcCdiXtk: document.getElementById('gc-cdi-xtk'),
             gcCdiNeedle: document.getElementById('gc-cdi-needle'),
-            gcRange: document.getElementById('gc-range')
+            gcRange: document.getElementById('gc-range'),
+            trafficInfo: document.getElementById('traffic-info'),
+            trafficCallsign: document.getElementById('traffic-callsign'),
+            trafficAlt: document.getElementById('traffic-alt'),
+            trafficRelAlt: document.getElementById('traffic-rel-alt'),
+            trafficSpeed: document.getElementById('traffic-speed'),
+            trafficHdg: document.getElementById('traffic-hdg'),
+            trafficVs: document.getElementById('traffic-vs'),
+            trafficDist: document.getElementById('traffic-dist'),
+            trafficBrg: document.getElementById('traffic-brg'),
+            trafficClose: document.getElementById('traffic-close')
         };
     }
 
@@ -1717,6 +1727,12 @@ class GTN750Pane extends SimGlassBase {
 
         // WPT search
         this.elements.wptGo?.addEventListener('click', () => this.searchWaypoint());
+
+        // Map canvas click for traffic selection
+        this.elements.mapCanvas?.addEventListener('click', (e) => this.handleMapClick(e));
+
+        // Traffic info close button
+        this.elements.trafficClose?.addEventListener('click', () => this.hideTrafficInfo());
         this.elements.wptSearch?.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.searchWaypoint(); });
 
         // NRST type tabs
@@ -2401,6 +2417,59 @@ class GTN750Pane extends SimGlassBase {
             html += `</div>`;
         });
         fplEl.innerHTML = html;
+    }
+
+    // ===== TRAFFIC INFO =====
+
+    handleMapClick(e) {
+        if (!this.trafficOverlay) return;
+
+        const rect = this.elements.mapCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const targetSelected = this.trafficOverlay.handleClick(x, y);
+        if (targetSelected) {
+            this.showTrafficInfo();
+        } else {
+            this.hideTrafficInfo();
+        }
+    }
+
+    showTrafficInfo() {
+        if (!this.trafficOverlay) return;
+
+        const info = this.trafficOverlay.getSelectedTargetInfo();
+        if (!info || !this.elements.trafficInfo) return;
+
+        // Update info panel content
+        if (this.elements.trafficCallsign) this.elements.trafficCallsign.textContent = info.callsign;
+        if (this.elements.trafficAlt) this.elements.trafficAlt.textContent = `${info.altitude} ft`;
+        if (this.elements.trafficRelAlt) {
+            const sign = info.relativeAlt >= 0 ? '+' : '';
+            this.elements.trafficRelAlt.textContent = `${sign}${info.relativeAlt} ft`;
+        }
+        if (this.elements.trafficSpeed) this.elements.trafficSpeed.textContent = `${info.groundSpeed} kts`;
+        if (this.elements.trafficHdg) this.elements.trafficHdg.textContent = `${info.heading}°`;
+        if (this.elements.trafficVs) {
+            const vs = info.verticalSpeed;
+            const sign = vs >= 0 ? '+' : '';
+            this.elements.trafficVs.textContent = `${sign}${vs} fpm`;
+        }
+        if (this.elements.trafficDist) this.elements.trafficDist.textContent = `${info.distance} nm`;
+        if (this.elements.trafficBrg) this.elements.trafficBrg.textContent = `${info.bearing}°`;
+
+        // Show panel
+        this.elements.trafficInfo.style.display = 'block';
+    }
+
+    hideTrafficInfo() {
+        if (this.elements.trafficInfo) {
+            this.elements.trafficInfo.style.display = 'none';
+        }
+        if (this.trafficOverlay) {
+            this.trafficOverlay.clearSelection();
+        }
     }
 
     destroy() {
