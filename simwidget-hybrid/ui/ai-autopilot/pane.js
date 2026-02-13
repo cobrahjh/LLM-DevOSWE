@@ -190,6 +190,7 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.advisoryContent = document.getElementById('advisory-content');
         this.elements.advisoryActions = document.getElementById('advisory-actions');
         this.elements.advisoryAsk = document.getElementById('advisory-ask');
+        this.elements.advisoryStopVoice = document.getElementById('advisory-stop-voice');
         this.elements.advisoryMic = document.getElementById('advisory-mic');
         this.elements.advisoryInputRow = document.getElementById('advisory-input-row');
         this.elements.advisoryTextInput = document.getElementById('advisory-text-input');
@@ -301,6 +302,12 @@ class AiAutopilotPane extends SimGlassBase {
         });
         this.elements.advisoryDismiss?.addEventListener('click', () => {
             this._dismissAdvisory();
+        });
+
+        // Stop voice button — silence Sally mid-speech
+        this.elements.advisoryStopVoice?.addEventListener('click', () => {
+            if (this._voice) this._voice.stop();
+            this._showStopVoiceBtn(false);
         });
 
         // Mic button — toggle voice input
@@ -456,11 +463,8 @@ class AiAutopilotPane extends SimGlassBase {
                     .trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
 
-                // Speak response (humanized for natural TTS)
-                const speakText = this._humanizeSpeech(displayText.replace(/RECOMMEND:\s*/g, '').trim());
-                if (this._ttsEnabled && this._voice && speakText) {
-                    this._voice.speak(speakText);
-                }
+                // Speak response via TTS
+                this._speakWithStopBtn(displayText);
             }
 
             // Log executed commands
@@ -1800,11 +1804,8 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             if (advisory.execCommands?.length) {
                 this._dbg('cmd', `parsed: ${advisory.execCommands.map(c => c.command + (c.value !== undefined ? '=' + c.value : '')).join(', ')}`);
             }
-            // Speak advisory via TTS (humanized for natural speech)
-            if (this._ttsEnabled && this._voice && advisory.text) {
-                const speakText = this._humanizeSpeech(advisory.text.replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/, '').replace(/RECOMMEND:\s*/g, '').trim());
-                if (speakText) this._voice.speak(speakText);
-            }
+            // Speak advisory via TTS
+            if (advisory.text) this._speakWithStopBtn(advisory.text);
         }
         this._renderAdvisory(advisory);
         // Auto-accept when AI has controls
@@ -1882,11 +1883,8 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     .replace(/^FORGET:\s*.+$/gm, '')
                     .trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
-                // Speak via TTS (humanized for natural speech)
-                const speakText = this._humanizeSpeech(displayText.replace(/RECOMMEND:\s*/g, '').trim());
-                if (this._ttsEnabled && this._voice && speakText) {
-                    this._voice.speak(speakText);
-                }
+                // Speak via TTS
+                this._speakWithStopBtn(displayText);
             }
 
             // Save Sally's tuning values to localStorage for rule engine pickup
@@ -2574,6 +2572,50 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     }
 
     // ── Lifecycle ──────────────────────────────────────────
+
+    /** Strip machine-readable blocks (JSON, markdown headers, directives) before TTS */
+    _stripForSpeech(text) {
+        if (!text) return '';
+        return text
+            .replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/g, '')
+            .replace(/TUNING_JSON:\s*\{[\s\S]*?\}/g, '')
+            .replace(/^LEARNING:\s*.+$/gm, '')
+            .replace(/^FORGET:\s*.+$/gm, '')
+            .replace(/RECOMMEND:\s*/g, '')
+            .replace(/^#{1,6}\s+/gm, '')           // markdown headers (###, ##, #)
+            .replace(/```[\s\S]*?```/g, '')         // fenced code blocks
+            .replace(/\{[\s\S]*?\}/g, '')           // any remaining JSON objects
+            .replace(/\[[\s\S]*?\]/g, '')           // any remaining JSON arrays
+            .replace(/\n{2,}/g, '\n')               // collapse blank lines
+            .trim();
+    }
+
+    /** Show/hide the stop voice button and auto-hide when speech ends */
+    _showStopVoiceBtn(show) {
+        if (this.elements.advisoryStopVoice) {
+            this.elements.advisoryStopVoice.style.display = show ? '' : 'none';
+        }
+    }
+
+    /** Speak text via TTS with stop-button integration */
+    _speakWithStopBtn(text) {
+        if (!this._ttsEnabled || !this._voice || !text) return;
+        const speakText = this._humanizeSpeech(this._stripForSpeech(text));
+        if (!speakText) return;
+        this._showStopVoiceBtn(true);
+        // Hook into end/error to hide stop button
+        const origOnEnd = this._voice.synth?.speaking;
+        this._voice.speak(speakText);
+        // Poll for speech end (speechSynthesis events are unreliable cross-browser)
+        const checkDone = setInterval(() => {
+            if (!this._voice?.synth?.speaking) {
+                clearInterval(checkDone);
+                this._showStopVoiceBtn(false);
+            }
+        }, 500);
+        // Safety: auto-hide after 60s
+        setTimeout(() => { clearInterval(checkDone); this._showStopVoiceBtn(false); }, 60000);
+    }
 
     /** Replace technical command/var names with natural speech */
     _humanizeSpeech(text) {

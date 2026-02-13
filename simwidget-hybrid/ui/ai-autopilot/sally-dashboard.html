@@ -95,6 +95,15 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 .btn-danger:hover { background: #3a1515; color: #ef5350; }
 .actions { display: flex; gap: 8px; margin-top: 10px; }
 
+/* Conversations */
+.convo { background: #0d1218; border: 1px solid #1a2430; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+.convo-time { font-size: 10px; color: #4a5568; margin-bottom: 4px; }
+.convo-user { color: #4fc3f7; font-size: 12px; margin-bottom: 4px; padding-left: 8px; border-left: 2px solid #4fc3f7; }
+.convo-sally { color: #c0c8d8; font-size: 12px; padding-left: 8px; border-left: 2px solid #ffab40; white-space: pre-wrap; line-height: 1.4; }
+.convo-meta { display: flex; gap: 10px; font-size: 10px; color: #4a5568; margin-top: 4px; }
+.convo-meta .cmds { color: #66bb6a; }
+.convo-meta .dur { color: #ffab40; }
+
 /* Scrollable panels */
 .scroll { max-height: 500px; overflow-y: auto; }
 .scroll::-webkit-scrollbar { width: 5px; }
@@ -143,6 +152,15 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
         <div id="knowledgeMap"><div class="empty">No data yet</div></div>
     </div>
 
+    <!-- Conversations Panel -->
+    <div class="panel panel-full">
+        <div class="panel-title">Conversation Log <span id="convoCount" style="color:#6b7a8d">(0)</span></div>
+        <div class="scroll" id="convoList" style="max-height:400px;"><div class="empty">No conversations yet</div></div>
+        <div class="actions">
+            <button class="btn btn-danger" onclick="clearConversations()">Clear Log</button>
+        </div>
+    </div>
+
     <!-- Performance Panel -->
     <div class="panel panel-full">
         <div class="panel-title">Performance Metrics</div>
@@ -177,11 +195,12 @@ async function fetchJSON(url) {
 
 async function refresh() {
     try {
-        const [learningsRes, attemptsRes, tuningRes, perfRes] = await Promise.all([
+        const [learningsRes, attemptsRes, tuningRes, perfRes, convoRes] = await Promise.all([
             fetchJSON('/api/ai-pilot/learnings'),
             fetchJSON('/api/ai-pilot/takeoff-attempts?limit=20'),
             fetchJSON('/api/ai-pilot/tuning'),
-            fetchJSON('/api/ai-pilot/performance')
+            fetchJSON('/api/ai-pilot/performance'),
+            fetchJSON('/api/ai-pilot/conversations?limit=50')
         ]);
 
         renderLearnings(learningsRes.learnings || []);
@@ -190,6 +209,7 @@ async function refresh() {
         renderStats(learningsRes.learnings || [], attemptsRes.attempts || []);
         renderKnowledgeMap(learningsRes.learnings || []);
         renderPerformance(perfRes);
+        renderConversations(convoRes.conversations || []);
 
         document.getElementById('statusDot').className = 'status-dot connected';
         document.getElementById('statusText').textContent = 'connected';
@@ -358,6 +378,49 @@ async function clearAllLearnings() {
     } catch (e) {
         alert('Failed: ' + e.message);
     }
+}
+
+async function clearConversations() {
+    if (!confirm('Clear conversation log?')) return;
+    try {
+        await fetch(SERVER + '/api/ai-pilot/conversations', { method: 'DELETE' });
+        refresh();
+    } catch (e) {
+        alert('Failed: ' + e.message);
+    }
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function renderConversations(convos) {
+    const el = document.getElementById('convoList');
+    document.getElementById('convoCount').textContent = `(${convos.length})`;
+    if (!convos.length) { el.innerHTML = '<div class="empty">No conversations yet</div>'; return; }
+    // Show newest first
+    el.innerHTML = convos.slice().reverse().map(c => {
+        const t = new Date(c.time).toLocaleString();
+        const user = esc(c.userMessage || '');
+        // Strip TUNING_JSON, LEARNING, FORGET, COMMANDS_JSON, ### from display
+        let sally = (c.sallyResponse || '')
+            .replace(/COMMANDS_JSON:\s*\[[\s\S]*?\]/g, '')
+            .replace(/TUNING_JSON:\s*\{[\s\S]*?\}/g, '')
+            .replace(/^LEARNING:\s*.+$/gm, '')
+            .replace(/^FORGET:\s*.+$/gm, '')
+            .replace(/#{2,}/g, '')
+            .trim();
+        sally = esc(sally);
+        const cmds = (c.commands || []).length;
+        const dur = c.durationMs ? (c.durationMs / 1000).toFixed(1) + 's' : '?';
+        return `<div class="convo">
+            <div class="convo-time">${t}${c.phase ? ' &mdash; ' + esc(c.phase) : ''}</div>
+            <div class="convo-user">${user}</div>
+            <div class="convo-sally">${sally}</div>
+            <div class="convo-meta">
+                ${cmds ? '<span class="cmds">' + cmds + ' commands</span>' : ''}
+                <span class="dur">${dur}</span>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 function renderPerformance(perf) {

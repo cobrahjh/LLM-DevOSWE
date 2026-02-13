@@ -89,6 +89,31 @@ try {
     }
 } catch (_) { _takeoffAttempts = []; }
 
+// ── Sally's Conversation Log ────────────────────────────────────────
+// Every exchange (user message + Sally's response) persisted for review.
+const CONVO_LOG_PATH = path.join(__dirname, '..', 'data', 'sally-conversations.json');
+let _sallyConversations = [];
+try {
+    if (fs.existsSync(CONVO_LOG_PATH)) {
+        _sallyConversations = JSON.parse(fs.readFileSync(CONVO_LOG_PATH, 'utf8'));
+    }
+} catch (_) { _sallyConversations = []; }
+
+function logConversation(entry) {
+    _sallyConversations.push(entry);
+    // Keep last 200 conversations
+    if (_sallyConversations.length > 200) {
+        _sallyConversations = _sallyConversations.slice(-200);
+    }
+    try {
+        const dir = path.dirname(CONVO_LOG_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(CONVO_LOG_PATH, JSON.stringify(_sallyConversations, null, 2));
+    } catch (e) {
+        console.warn('[AI-Pilot] Failed to save conversation log:', e.message);
+    }
+}
+
 // ── Sally's Learnings — Persistent Observations ─────────────────────
 // Stable conclusions Sally derives from analyzing attempts.
 // Survives across sessions. Injected into her system prompt.
@@ -1094,6 +1119,19 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
                 error: false
             });
 
+            // Log conversation for review
+            logConversation({
+                id: _sallyConversations.length + 1,
+                time: new Date().toISOString(),
+                phase: fd.flightPhase || null,
+                userMessage: message || '(auto-advise)',
+                sallyResponse: fullText,
+                commands: executed.map(c => c.type || c),
+                tuning: tuning || null,
+                learnings: newLearnings.length,
+                durationMs: Date.now() - _queryStart
+            });
+
             res.json({
                 success: true,
                 advisory: fullText,
@@ -1238,6 +1276,18 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
         } else {
             res.status(404).json({ error: 'Learning not found' });
         }
+    });
+
+    // Sally's conversation log
+    app.get('/api/ai-pilot/conversations', (req, res) => {
+        const limit = parseInt(req.query.limit) || 50;
+        res.json({ conversations: _sallyConversations.slice(-limit), total: _sallyConversations.length });
+    });
+
+    app.delete('/api/ai-pilot/conversations', (req, res) => {
+        _sallyConversations = [];
+        try { fs.writeFileSync(CONVO_LOG_PATH, '[]'); } catch (_) {}
+        res.json({ ok: true, message: 'Conversation log cleared' });
     });
 
     // Sally performance metrics
