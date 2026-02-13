@@ -281,8 +281,9 @@ class RuleEngineServer {
                 }).on('error', reject);
             });
 
-            if (data && data.length > 0) {
-                const airport = data[0];
+            const airports = data?.items || data;
+            if (airports && airports.length > 0) {
+                const airport = airports[0];
                 const prevIcao = this._atc.getDetectedIcao();
 
                 if (airport.icao !== prevIcao) {
