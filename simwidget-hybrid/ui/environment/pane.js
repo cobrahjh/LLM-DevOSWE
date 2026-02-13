@@ -7,7 +7,7 @@ class EnvironmentPane extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'environment',
-            widgetVersion: '2.4.0',
+            widgetVersion: '2.5.0',
             autoConnect: true
         });
 
@@ -80,6 +80,7 @@ class EnvironmentPane extends SimGlassBase {
             btnPause: document.getElementById('btn-pause'),
             btnSlew: document.getElementById('btn-slew'),
             btnRefuel: document.getElementById('btn-refuel'),
+            btnCaptureWx: document.getElementById('btn-capture-wx'),
             // Compact elements
             evTimeIcon: document.getElementById('ev-time-icon'),
             evLocal: document.getElementById('ev-local'),
@@ -166,6 +167,13 @@ class EnvironmentPane extends SimGlassBase {
         if (this.elements.btnRefuel) {
             this.elements.btnRefuel.addEventListener('click', () => {
                 this.sendCommand('REPAIR_AND_REFUEL');
+            });
+        }
+
+        // Weather capture button (Phase 3)
+        if (this.elements.btnCaptureWx) {
+            this.elements.btnCaptureWx.addEventListener('click', () => {
+                this.captureWeather();
             });
         }
     }
@@ -271,6 +279,26 @@ class EnvironmentPane extends SimGlassBase {
                 value: value
             }));
         }
+    }
+
+    captureWeather() {
+        // Phase 3: Weather Capture - Download current weather as .WPR file
+        const port = window.location.port || '8080';
+        const presetName = prompt('Enter preset name:', 'My Weather');
+
+        if (!presetName) return; // User cancelled
+
+        const url = `http://localhost:${port}/api/environment/capture-weather?name=${encodeURIComponent(presetName)}`;
+
+        // Create invisible link and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${presetName.replace(/[^a-zA-Z0-9]/g, '_')}.wpr`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        console.log(`[Environment] Weather capture triggered: ${presetName}`);
     }
 
     updateFromSim(data) {

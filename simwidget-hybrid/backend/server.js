@@ -2448,6 +2448,118 @@ app.post('/api/environment/weather', async (req, res) => {
     }
 });
 
+// Capture current weather to .WPR file (Phase 3: Weather Capture)
+app.get('/api/environment/capture-weather', (req, res) => {
+    console.log('[Environment] Capturing current weather to .WPR format');
+
+    if (!flightData) {
+        return res.status(503).json({ success: false, error: 'No flight data available' });
+    }
+
+    const { name = 'Captured Weather' } = req.query;
+
+    try {
+        // Convert current weather data to .WPR XML format
+        const tempK = (flightData.temperature || 15) + 273.15; // Celsius to Kelvin
+        const pressurePa = Math.round((flightData.pressure || 29.92) * 3386.39); // inHg to Pascals
+        const visMeter = flightData.visibility || 10000; // meters
+        const precipMmH = flightData.precipRate || 0; // mm/h
+        const windDir = Math.round(flightData.windDir || 0);
+        const windSpd = Math.round(flightData.windSpeed || 0);
+        const inCloud = flightData.inCloud || false;
+
+        // Determine cloud layers based on conditions
+        let cloudLayers = '';
+        if (inCloud || precipMmH > 0) {
+            // Overcast conditions
+            cloudLayers = `
+        <!-- Low overcast layer -->
+        <CloudLayer>
+            <CloudLayerAltitudeBot value="300" unit="m"/><!-- ~1000ft -->
+            <CloudLayerAltitudeTop value="600" unit="m"/><!-- ~2000ft -->
+            <CloudLayerDensity value="0.9" unit="(0 - 1)"/>
+            <CloudLayerScattering value="0.85" unit="(0 - 1)"/>
+        </CloudLayer>`;
+        } else if (visMeter < 5000) {
+            // Scattered clouds
+            cloudLayers = `
+        <!-- Scattered clouds -->
+        <CloudLayer>
+            <CloudLayerAltitudeBot value="1000" unit="m"/><!-- ~3300ft -->
+            <CloudLayerAltitudeTop value="1500" unit="m"/><!-- ~5000ft -->
+            <CloudLayerDensity value="0.5" unit="(0 - 1)"/>
+            <CloudLayerScattering value="0.6" unit="(0 - 1)"/>
+        </CloudLayer>`;
+        } else {
+            // Few clouds at altitude
+            cloudLayers = `
+        <!-- Few scattered clouds -->
+        <CloudLayer>
+            <CloudLayerAltitudeBot value="1500" unit="m"/><!-- ~5000ft -->
+            <CloudLayerAltitudeTop value="1800" unit="m"/><!-- ~6000ft -->
+            <CloudLayerDensity value="0.2" unit="(0 - 1)"/>
+            <CloudLayerScattering value="0.4" unit="(0 - 1)"/>
+        </CloudLayer>`;
+        }
+
+        // Determine precipitation type
+        let precipType = 'RAIN';
+        if (tempK < 275) precipType = 'SNOW'; // Below 2°C
+
+        const precipitationLine = precipMmH > 0
+            ? `<Precipitations>${precipMmH.toFixed(1)}</Precipitations>\n        <PrecipitationType>${precipType}</PrecipitationType>`
+            : `<Precipitations>0</Precipitations>`;
+
+        // Build .WPR XML
+        const wprXml = `<?xml version="1.0" encoding="UTF-8"?>
+<SimBase.Document Type="WeatherPreset" version="1,3">
+    <Descr>AceXML Document</Descr>
+    <WeatherPreset.Preset>
+        <!-- Metadata -->
+        <Name>${name}</Name>
+        <Order>20</Order>
+        <LoadingTip>Captured from live conditions</LoadingTip>
+        <LiveID>WEATHER_UNKNOWN</LiveID>
+
+        <!-- Atmospheric Conditions -->
+        <IsAltitudeAMGL>False</IsAltitudeAMGL>
+        <MSLPressure>${pressurePa}</MSLPressure><!-- ${flightData.pressure?.toFixed(2)} inHg -->
+        <MSLTemperature>${tempK.toFixed(2)}</MSLTemperature><!-- ${flightData.temperature?.toFixed(1)}°C -->
+        <AerosolDensity>${inCloud ? '0.8' : '0.3'}</AerosolDensity>
+        ${precipitationLine}
+        <SnowCover>0</SnowCover>
+        <ThunderstormIntensity>${precipMmH > 5 ? '0.3' : '0'}</ThunderstormIntensity>
+${cloudLayers}
+
+        <!-- Surface wind -->
+        <WindLayer>
+            <WindLayerAltitude value="0" unit="m"/>
+            <WindLayerAngle value="${windDir}" unit="degrees"/>
+            <WindLayerSpeed value="${windSpd}" unit="knts"/>
+        </WindLayer>
+
+        <!-- Upper wind (estimated from surface) -->
+        <WindLayer>
+            <WindLayerAltitude value="3000" unit="m"/>
+            <WindLayerAngle value="${(windDir + 20) % 360}" unit="degrees"/>
+            <WindLayerSpeed value="${Math.round(windSpd * 1.5)}" unit="knts"/>
+        </WindLayer>
+    </WeatherPreset.Preset>
+</SimBase.Document>
+`;
+
+        // Return as downloadable XML file
+        res.setHeader('Content-Type', 'application/xml');
+        res.setHeader('Content-Disposition', `attachment; filename="${name.replace(/[^a-zA-Z0-9]/g, '_')}.wpr"`);
+        res.send(wprXml);
+
+        console.log(`[Environment] Generated .WPR file: ${name}`);
+    } catch (e) {
+        console.error('[Environment] Weather capture error:', e.message);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // Set sim rate
 app.post('/api/environment/simrate', (req, res) => {
     const { rate } = req.body;
@@ -2758,6 +2870,34 @@ app.get('/api/debug/inputevents', (req, res) => {
     res.json(result);
 });
 
+app.get('/api/debug/held-axes', (req, res) => {
+    const result = {};
+    for (const [k, v] of Object.entries(_heldAxes)) {
+        if (k.startsWith('_')) {
+            result[k] = v;
+        } else if (v && typeof v === 'object') {
+            result[k] = { hash: typeof v.hash === 'bigint' ? v.hash.toString() : v.hash, value: v.value };
+        } else {
+            result[k] = v;
+        }
+    }
+    res.json(result);
+});
+
+app.post('/api/debug/throttle-test', (req, res) => {
+    const hash = global.inputEventHashes?.ENGINE_THROTTLE_1;
+    if (!hash || !simConnectConnection) return res.json({ error: 'No hash or connection' });
+    const val = 0.8;
+    try {
+        simConnectConnection.setInputEvent(hash, val);
+        _heldAxes.throttle = { hash, value: val };
+        updateHeldAxesTimer();
+        res.json({ success: true, hash: typeof hash === 'bigint' ? hash.toString() : hash, value: val, heldAxes: Object.keys(_heldAxes) });
+    } catch (e) {
+        res.json({ error: e.message });
+    }
+});
+
 // SimConnect command execution - events mapped during init
 let eventMap = {};
 
@@ -2810,22 +2950,29 @@ function executeCommand(command, value) {
     }
 
     // MSFS 2024 InputEvents for throttle — legacy THROTTLE_SET doesn't work
-    if ((command === 'THROTTLE_SET' || command === 'THROTTLE1_SET') && global.inputEventHashes?.ENGINE_THROTTLE_1) {
-        try {
-            const percent = Math.max(0, Math.min(100, value || 0));
-            const normalized = percent / 100;
-            const hash = global.inputEventHashes.ENGINE_THROTTLE_1;
-            // Store for 60Hz re-application (overcomes joystick throttle override)
-            if (percent === 0) {
-                delete _heldAxes.throttle;
-            } else {
-                _heldAxes.throttle = { hash, value: normalized };
+    if (command === 'THROTTLE_SET' || command === 'THROTTLE1_SET') {
+        const percent = Math.max(0, Math.min(100, value || 0));
+        const normalized = percent / 100;
+        const hash = global.inputEventHashes?.ENGINE_THROTTLE_1;
+        if (hash) {
+            try {
+                // Store for 60Hz re-application (overcomes joystick throttle override)
+                if (percent === 0) {
+                    delete _heldAxes.throttle;
+                } else {
+                    _heldAxes.throttle = { hash, value: normalized };
+                }
+                updateHeldAxesTimer();
+                simConnectConnection.setInputEvent(hash, normalized);
+                console.log(`[Throttle] InputEvent: ${percent}% (${normalized}) via ENGINE_THROTTLE_1`);
+            } catch (e) {
+                console.error(`[Throttle] InputEvent error: ${e.message}`);
             }
-            updateHeldAxesTimer();
-            simConnectConnection.setInputEvent(hash, normalized);
-            console.log(`[Throttle] InputEvent: ${percent}% (${normalized}) via ENGINE_THROTTLE_1`);
-        } catch (e) {
-            console.error(`[Throttle] InputEvent error: ${e.message}`);
+        } else {
+            // InputEvent hash not yet available (race condition after restart).
+            // Store pending value — will be applied when inputEventsList arrives.
+            _heldAxes._pendingThrottle = normalized;
+            console.log(`[Throttle] Pending: ${percent}% (hash not yet available)`);
         }
         return;
     }
@@ -3733,6 +3880,12 @@ async function initSimConnect() {
         handle.addToDataDefinition(13, 'GENERAL ENG MIXTURE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
         console.log('[Mixture] Registered writable mixture definition (ID 13)');
 
+        // Writable throttle lever position (ID 14) — direct SimVar write bypasses hardware axis override
+        // InputEvent ENGINE_THROTTLE_1 gets overridden by physical joystick throttle axis.
+        // SimVar write goes directly into the sim data store, immune to hardware axis.
+        handle.addToDataDefinition(14, 'GENERAL ENG THROTTLE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
+        console.log('[Throttle] Registered writable throttle definition (ID 14)');
+
         // MSFS 2024 InputEvents — mixture lever uses B: variables, not legacy SimConnect events.
         // Enumerate input events to find FUEL_MIXTURE_1 hash for setInputEvent().
         global.inputEventHashes = {};
@@ -3781,6 +3934,25 @@ async function initSimConnect() {
                     global.inputEventHashes.HANDLING_FLAPS = e.inputEventIdHash;
                     console.log(`[InputEvents] HANDLING_FLAPS hash: ${e.inputEventIdHash}`);
                 }
+            }
+            // Apply any pending throttle that was queued before hashes arrived
+            if (_heldAxes._pendingThrottle != null && global.inputEventHashes.ENGINE_THROTTLE_1) {
+                const hash = global.inputEventHashes.ENGINE_THROTTLE_1;
+                const val = _heldAxes._pendingThrottle;
+                delete _heldAxes._pendingThrottle;
+                _heldAxes.throttle = { hash, value: val };
+                updateHeldAxesTimer();
+                try {
+                    simConnectConnection.setInputEvent(hash, val);
+                    console.log(`[Throttle] Applied pending: ${Math.round(val * 100)}% after InputEvent ready`);
+                } catch (e) {
+                    console.error(`[Throttle] Pending apply error: ${e.message}`);
+                }
+            }
+            // Force rule engine to re-send all commands now that InputEvents are ready
+            if (ruleEngineServer && ruleEngineServer.isEnabled()) {
+                ruleEngineServer.commandQueue.clear();
+                console.log('[InputEvents] Cleared rule engine dedup cache — commands will re-send');
             }
         });
         handle.enumerateInputEvents(0);

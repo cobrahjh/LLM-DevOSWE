@@ -166,6 +166,15 @@ async function testAPI() {
     } catch (e) {
         assert(false, `POST /api/recorder/position - ${e.message}`);
     }
+
+    // GET /api/environment/capture-weather (Phase 3)
+    try {
+        const res = await fetch(`${API_BASE}/api/environment/capture-weather?name=Test`);
+        // Accept 200 (success) or 503 (no flight data yet in mock mode)
+        assert(res.ok || res.status === 503, 'GET /api/environment/capture-weather responds');
+    } catch (e) {
+        assert(false, `GET /api/environment/capture-weather - ${e.message}`);
+    }
 }
 
 // ============================================
