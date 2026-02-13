@@ -90,7 +90,7 @@ class GTNSoftKeys {
         this.registerContext('fpl-selected', [
             { label: 'DELETE', action: 'fpl-delete' },
             { label: 'INSERT', action: 'fpl-insert' },
-            { label: 'INFO', action: 'waypoint-info' },
+            { label: 'AIRWAY', action: 'fpl-airway' },
             { label: 'ACTV\nLEG', action: 'activate-leg' },
             { label: 'D\u2192', action: 'direct-to' },
             { label: 'BACK', action: 'back' }

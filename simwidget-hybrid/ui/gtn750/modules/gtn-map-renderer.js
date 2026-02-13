@@ -787,22 +787,31 @@ class GTNMapRenderer {
             ctx.stroke();
         }
 
-        // Future legs
+        // Future legs - draw segment by segment to handle airways differently
         if (activeIdx < waypoints.length - 1) {
-            ctx.strokeStyle = '#ff00ff';
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            let started = false;
-            for (let i = activeIdx; i < waypoints.length; i++) {
-                if (!positions[i]) continue;
-                if (!started) {
-                    ctx.moveTo(positions[i].x, positions[i].y);
-                    started = true;
+            for (let i = activeIdx; i < waypoints.length - 1; i++) {
+                if (!positions[i] || !positions[i + 1]) continue;
+
+                const nextWp = waypoints[i + 1];
+                const isAirway = nextWp.airway;
+
+                // Airway segments: cyan dashed lines
+                if (isAirway) {
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.setLineDash([8, 4]);
                 } else {
-                    ctx.lineTo(positions[i].x, positions[i].y);
+                    // Direct segments: magenta solid lines
+                    ctx.strokeStyle = '#ff00ff';
+                    ctx.setLineDash([]);
                 }
+
+                ctx.beginPath();
+                ctx.moveTo(positions[i].x, positions[i].y);
+                ctx.lineTo(positions[i + 1].x, positions[i + 1].y);
+                ctx.stroke();
             }
-            ctx.stroke();
+            ctx.setLineDash([]); // Reset to solid
         }
 
         // Active leg glow
@@ -892,6 +901,30 @@ class GTNMapRenderer {
             const isCompleted = index < activeIdx;
             this.renderWaypoint(ctx, positions[index].x, positions[index].y, wp, isActive, isCompleted, declutterLevel);
         });
+
+        // Airway labels (show at low declutter levels)
+        if (declutterLevel < 2) {
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            waypoints.forEach((wp, index) => {
+                if (!wp.airway || !positions[index] || index >= waypoints.length - 1) return;
+                if (!positions[index + 1]) return;
+
+                // Draw airway name at midpoint of segment
+                const midX = (positions[index].x + positions[index + 1].x) / 2;
+                const midY = (positions[index].y + positions[index + 1].y) / 2;
+
+                // Background for readability
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                const metrics = ctx.measureText(wp.airway);
+                ctx.fillRect(midX - metrics.width / 2 - 2, midY - 12, metrics.width + 4, 12);
+
+                // Airway text in cyan
+                ctx.fillStyle = '#00ffff';
+                ctx.fillText(wp.airway, midX, midY);
+            });
+        }
     }
 
     /**

@@ -2063,6 +2063,7 @@ class GTN750Pane extends SimGlassBase {
             case 'waypoint-info': this.showWaypointInfoModal(); break;
             case 'fpl-delete': if (this.fplPage) this.fplPage.onDelete(); break;
             case 'fpl-insert': if (this.fplPage) this.fplPage.onInsert(); break;
+            case 'fpl-airway': if (this.fplPage) this.fplPage.onInsertAirway(); break;
             case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
                 this.switchNearestType(action.split('-')[1]); break;
             case 'taws-inhibit':

@@ -3226,11 +3226,19 @@ const ruleEngineServer = new RuleEngineServer({
 // API endpoints for server-side rule engine
 app.post('/api/ai-autopilot/enable', (req, res) => {
     ruleEngineServer.enable();
+    // Auto-disable joystick so hardware axes don't override software control
+    setJoystickEnabled(false, (ok, err) => {
+        if (!ok) console.warn('[AI-AP] Joystick disable failed (may not be present):', err);
+    });
     res.json({ success: true, enabled: true });
 });
 
 app.post('/api/ai-autopilot/disable', (req, res) => {
     ruleEngineServer.disable();
+    // Re-enable joystick for manual flight
+    setJoystickEnabled(true, (ok, err) => {
+        if (!ok) console.warn('[AI-AP] Joystick enable failed:', err);
+    });
     res.json({ success: true, enabled: false });
 });
 
@@ -3243,6 +3251,61 @@ app.post('/api/ai-autopilot/cruise-alt', (req, res) => {
     if (isNaN(alt)) return res.status(400).json({ error: 'altitude required' });
     ruleEngineServer.setCruiseAlt(alt);
     res.json({ success: true, cruiseAlt: alt });
+});
+
+// ── Device Management (joystick disable/enable for AI autopilot) ──
+// Saitek Pro Flight joystick (VID_06A3&PID_0763) hardware throttle axis
+// overrides ALL software throttle commands in MSFS 2024.
+// Solution: disable the device at Windows PnP level when AI autopilot is active.
+const JOYSTICK_VID_PID = 'VID_06A3&PID_0763'; // Saitek Pro Flight
+
+function setJoystickEnabled(enabled, callback) {
+    const action = enabled ? 'Enable' : 'Disable';
+    // Pipeline: find all HID entries matching VID/PID → enable/disable them all
+    const ps = `Get-PnpDevice -Class 'HIDClass' | Where-Object { $_.InstanceId -like '*${JOYSTICK_VID_PID}*' } | ${action}-PnpDevice -Confirm:$false`;
+    exec(`powershell -Command "${ps}"`, { timeout: 10000 }, (err, stdout, stderr) => {
+        if (err) {
+            console.error(`[Device] ${action} joystick failed:`, stderr || err.message);
+            if (callback) callback(false, stderr || err.message);
+        } else {
+            console.log(`[Device] Joystick ${action.toLowerCase()}d successfully`);
+            if (callback) callback(true);
+        }
+    });
+}
+
+// List HID devices (for UI/debugging)
+app.get('/api/devices', (req, res) => {
+    const ps = `Get-PnpDevice -Class 'HIDClass' | Select-Object InstanceId,FriendlyName,Status | ConvertTo-Json`;
+    exec(`powershell -Command "${ps}"`, { timeout: 10000 }, (err, stdout, stderr) => {
+        if (err) return res.status(500).json({ error: stderr || err.message });
+        try {
+            const devices = JSON.parse(stdout);
+            const list = (Array.isArray(devices) ? devices : [devices]).map(d => ({
+                id: d.InstanceId,
+                name: d.FriendlyName || 'Unknown',
+                status: d.Status === 'OK' ? 'enabled' : 'disabled',
+                isJoystick: (d.InstanceId || '').includes(JOYSTICK_VID_PID)
+            }));
+            res.json({ devices: list, joystickVidPid: JOYSTICK_VID_PID });
+        } catch (e) {
+            res.status(500).json({ error: 'Failed to parse device list' });
+        }
+    });
+});
+
+// Disable joystick manually
+app.post('/api/devices/joystick/disable', (req, res) => {
+    setJoystickEnabled(false, (ok, err) => {
+        res.json({ success: ok, action: 'disabled', error: ok ? undefined : err });
+    });
+});
+
+// Enable joystick manually
+app.post('/api/devices/joystick/enable', (req, res) => {
+    setJoystickEnabled(true, (ok, err) => {
+        res.json({ success: ok, action: 'enabled', error: ok ? undefined : err });
+    });
 });
 
 // WebSocket handling

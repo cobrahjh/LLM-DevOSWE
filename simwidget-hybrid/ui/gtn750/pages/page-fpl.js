@@ -369,6 +369,23 @@ class FlightPlanPage {
         }
     }
 
+    onInsertAirway() {
+        if (this.cursorIndex < 0 || !this.flightPlanManager) return;
+        const selectedWp = this.getSelectedWaypoint();
+        if (!selectedWp) return;
+
+        // Show airway modal via flight plan manager
+        this.flightPlanManager.showAirwaysModal();
+
+        // Pre-fill entry fix with selected waypoint
+        setTimeout(() => {
+            const entryInput = document.getElementById('awy-entry');
+            if (entryInput) {
+                entryInput.value = selectedWp.ident || '';
+            }
+        }, 150);
+    }
+
     // ===== SOFT KEYS =====
 
     updateSoftKeyContext() {
