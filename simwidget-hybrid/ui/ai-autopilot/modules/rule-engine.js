@@ -307,9 +307,12 @@ class RuleEngine {
                 break;
 
             case 'CLIMB':
-                // On phase entry: engage AP FIRST, then release manual controls.
-                // If controls are released before AP engages, the plane banks freely.
+                // On phase entry: engage AP, then wait for it to stabilise before
+                // touching any control surfaces.  Manual-axis commands sent via
+                // InputEvent can override/fight the AP, so we give the AP 5 seconds
+                // to start managing before falling back to manual flight.
                 if (phaseChanged) {
+                    this._climbEntryTime = Date.now();
                     // Set heading bug to current heading before engaging AP
                     const climbHdg = Math.round(d.heading || this._runwayHeading || 0);
                     this._cmdValue('HEADING_BUG_SET', climbHdg, 'HDG ' + climbHdg + '\u00B0');
@@ -320,11 +323,6 @@ class RuleEngine {
                     this._cmd('AP_VS_HOLD', true, 'VS hold for climb');
                     const climbTT2 = this._getTakeoffTuning();
                     this._cmdValue('AP_VS_VAR_SET_ENGLISH', climbTT2.departureVS ?? 500, 'VS +500 for climb');
-                    // Release manual controls (AP should now be managing)
-                    this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release elevator for AP');
-                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Release rudder for AP');
-                    this._cmdValue('STEERING_SET', 0, 'Release nosewheel for AP');
-                    this._cmdValue('AXIS_AILERONS_SET', 0, 'Release ailerons for AP');
                 }
                 // Retract flaps if still deployed (DEPARTURE may not have had time)
                 if ((d.flapsIndex || 0) > 0) {
@@ -337,18 +335,24 @@ class RuleEngine {
                     this._cmdValue('THROTTLE_SET', climbTT.climbThrottle ?? 100, 'Climb power');
                 }
                 if (!apState.master) {
-                    // AP not active — fly manually with gentle proportional control
-                    // until AP engages. This prevents uncontrolled bank/pitch excursions.
-                    const climbBank = d.bankAngle || 0;
-                    const climbPitch = d.pitch || 0;
-                    // Wings-level: proportional aileron (0.6 gain, max ±25)
-                    const bankFix = Math.max(-25, Math.min(25, -climbBank * 0.6));
-                    this._cmdValue('AXIS_AILERONS_SET', Math.round(bankFix), `Wings level (bank ${Math.round(climbBank)}°)`);
-                    // Pitch hold ~5° nose-up: proportional elevator
-                    const pitchTarget = 5;
-                    const pitchErr = pitchTarget - climbPitch;
-                    const pitchFix = Math.max(-15, Math.min(15, pitchErr * 1.0));
-                    this._cmdValue('AXIS_ELEVATOR_SET', Math.round(-pitchFix), `Pitch hold (${Math.round(climbPitch)}°)`);
+                    const secsSinceEntry = (Date.now() - (this._climbEntryTime || 0)) / 1000;
+                    if (secsSinceEntry < 5) {
+                        // AP engagement grace period — don't send manual axis commands
+                        // that would fight the AP while SimVar feedback is lagging.
+                    } else {
+                        // AP failed to engage after 5s — fly manually with gentle
+                        // proportional control.  Use d.bank (not d.bankAngle).
+                        const climbBank = d.bank || 0;
+                        const climbPitch = d.pitch || 0;
+                        // Wings-level: proportional aileron (0.6 gain, max ±25)
+                        const bankFix = Math.max(-25, Math.min(25, -climbBank * 0.6));
+                        this._cmdValue('AXIS_AILERONS_SET', Math.round(bankFix), `Wings level (bank ${Math.round(climbBank)}°)`);
+                        // Pitch hold ~5° nose-up: proportional elevator
+                        const pitchTarget = 5;
+                        const pitchErr = pitchTarget - climbPitch;
+                        const pitchFix = Math.max(-15, Math.min(15, pitchErr * 1.0));
+                        this._cmdValue('AXIS_ELEVATOR_SET', Math.round(-pitchFix), `Pitch hold (${Math.round(climbPitch)}°)`);
+                    }
                     // Keep trying to engage AP
                     delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
