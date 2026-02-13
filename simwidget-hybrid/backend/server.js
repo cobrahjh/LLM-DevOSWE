@@ -3227,8 +3227,8 @@ const ruleEngineServer = new RuleEngineServer({
 app.post('/api/ai-autopilot/enable', (req, res) => {
     ruleEngineServer.enable();
     // Auto-disable flight controllers so hardware axes don't override software control
-    setFlightDevicesEnabled(false, (ok, err) => {
-        if (!ok) console.warn('[AI-AP] Flight device disable failed (may not be present):', err);
+    setFlightDevicesEnabled(false, (ok) => {
+        if (!ok) console.warn('[AI-AP] Flight device disable task failed to start');
     });
     res.json({ success: true, enabled: true });
 });
@@ -3236,8 +3236,8 @@ app.post('/api/ai-autopilot/enable', (req, res) => {
 app.post('/api/ai-autopilot/disable', (req, res) => {
     ruleEngineServer.disable();
     // Re-enable flight controllers for manual flight
-    setFlightDevicesEnabled(true, (ok, err) => {
-        if (!ok) console.warn('[AI-AP] Flight device enable failed:', err);
+    setFlightDevicesEnabled(true, (ok) => {
+        if (!ok) console.warn('[AI-AP] Flight device enable task failed to start');
     });
     res.json({ success: true, enabled: false });
 });
@@ -3260,27 +3260,19 @@ app.post('/api/ai-autopilot/cruise-alt', (req, res) => {
 const FLIGHT_DEVICE_VIDS = ['VID_044F', 'VID_06A3']; // Thrustmaster, Saitek
 
 function setFlightDevicesEnabled(enabled, callback) {
+    const taskName = enabled ? 'EnableFlightDevices' : 'DisableFlightDevices';
+    const scriptPath = enabled
+        ? 'C:\\LLM-DevOSWE\\enable-flight-devices.ps1'
+        : 'C:\\LLM-DevOSWE\\disable-flight-devices.ps1';
     const action = enabled ? 'Enable' : 'Disable';
-    const statusFilter = enabled ? "Status -ne 'OK'" : "Status -eq 'OK'";
-    // Build OR filter for all flight device VIDs — only target devices that need changing
-    const vidFilters = FLIGHT_DEVICE_VIDS.map(v => `$_.InstanceId -like '*${v}*'`).join(' -or ');
-    const ps = `Get-PnpDevice -Class 'HIDClass' | Where-Object { (${vidFilters}) -and ($_.${statusFilter}) } | ${action}-PnpDevice -Confirm:$false -ErrorAction SilentlyContinue`;
-    // Run as admin via Start-Process for privilege escalation
-    const cmd = `powershell -Command "Start-Process powershell -ArgumentList '-Command',\\\"${ps.replace(/"/g, '`\\"')}\\\" -Verb RunAs -Wait -WindowStyle Hidden"`;
-    exec(cmd, { timeout: 15000 }, (err, stdout, stderr) => {
+    // Use pre-deployed SYSTEM scheduled tasks (Disable-PnpDevice requires SYSTEM privileges)
+    // The tasks report "Generic failure" but the devices DO change state (Error = disabled)
+    exec(`schtasks /Run /TN ${taskName}`, { timeout: 10000 }, (err, stdout, stderr) => {
         if (err) {
-            // Fallback: try direct (works if service is LocalSystem)
-            exec(`powershell -Command "${ps}"`, { timeout: 10000 }, (err2, stdout2, stderr2) => {
-                if (err2) {
-                    console.error(`[Device] ${action} flight devices failed:`, stderr2 || err2.message);
-                    if (callback) callback(false, stderr2 || err2.message);
-                } else {
-                    console.log(`[Device] Flight devices ${action.toLowerCase()}d (direct)`);
-                    if (callback) callback(true);
-                }
-            });
+            console.warn(`[Device] Task ${taskName} failed to start:`, stderr || err.message);
+            if (callback) callback(false, stderr || err.message);
         } else {
-            console.log(`[Device] Flight devices ${action.toLowerCase()}d (elevated)`);
+            console.log(`[Device] ${action} task started — devices will change state in ~3s`);
             if (callback) callback(true);
         }
     });

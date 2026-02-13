@@ -279,6 +279,7 @@ function buildAiPilotPrompt(flightData) {
 You provide concise, actionable autopilot and flight control recommendations.
 Keep responses to 2-3 sentences maximum.
 ALWAYS respond in English only. Never use other languages, special characters, emoji, or markdown formatting (no #, *, _, etc.).
+Your text is read aloud via TTS. NEVER say "JSON", "commands JSON", "tuning JSON", "API", "endpoint", "parameter", "SimConnect", or any programming terms. Speak naturally as a pilot would. Put any machine-readable blocks silently at the end.
 When recommending changes, prefix with "RECOMMEND:" on its own line.
 
 C172 V-SPEEDS (POH at max gross 2550 lbs): Vr=55, Vx=62, Vy=74, Vcruise=110, Vfe=85, Va=99, Vno=129, Vne=163, Vref=65, Vs0=48, Vs1=53
@@ -1042,7 +1043,9 @@ FLIGHT CONTROL COMMANDS:
 - LANDING_LIGHTS_TOGGLE (no value, toggle)
 
 For toggle commands, omit the value field. Only include commands that need to CHANGE from current state.
-For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MASTER after liftoff.`;
+For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MASTER after liftoff.
+
+CRITICAL: Your spoken text is read aloud via TTS. NEVER mention "JSON", "COMMANDS_JSON", "TUNING_JSON", "API", "endpoint", "parameter", "SimConnect", or any technical/programming terms in your conversational text. Speak naturally as a pilot would. Put the COMMANDS_JSON block silently at the end with no introduction.`;
 
         const userMsg = message || `Current phase of flight: altitude ${Math.round(fd.altitude||0)}ft, speed ${Math.round(fd.speed||0)}kt, heading ${Math.round(fd.heading||0)}. Recommend optimal AP settings.`;
 
