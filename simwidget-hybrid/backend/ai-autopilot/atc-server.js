@@ -62,11 +62,20 @@ class ATCServerController extends ATCController {
             this._graph = graph;
 
             // Find start and goal nodes
+            // Strip "RW" prefix — navdata uses "RW16C", facility graph uses "16R"
+            const bareRunway = runway.replace(/^RW/, '');
             const start = this._findNearestNode(graph, this._lastLat, this._lastLon);
-            const goalIdx = this._findRunwayNode(graph, runway);
+            let goalIdx = this._findRunwayNode(graph, bareRunway);
+
+            // Fallback: try any runway in the graph if specific one not found
+            if (goalIdx < 0 && graph.runways?.length > 0) {
+                console.log(`[ATC] Runway ${bareRunway} not in graph, falling back to ${graph.runways[0].ident}`);
+                goalIdx = graph.runways[0].nodeIndex ?? -1;
+                this._runway = graph.runways[0].ident;
+            }
 
             if (start.nodeIndex < 0 || goalIdx < 0) {
-                this._emit(`Cannot find route nodes for runway ${runway}`, 'error');
+                this._emit(`Cannot find route nodes for runway ${bareRunway}`, 'error');
                 this._setPhase('PARKED');
                 return;
             }
