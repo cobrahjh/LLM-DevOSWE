@@ -107,7 +107,7 @@ class GTNMapRenderer {
             this.renderRoute(ctx, cx, cy, w, h, state);
         }
 
-        // OBS course line
+        // OBS course line (includes holding pattern if active)
         if (state.obs?.active) {
             this.renderObsCourseLine(ctx, cx, cy, w, h, state);
         }
@@ -357,6 +357,121 @@ class GTNMapRenderer {
         const labelX = (inboundStart.x + outboundEnd.x) / 2;
         const labelY = (inboundStart.y + outboundEnd.y) / 2;
         ctx.fillText(`HOLD ${state.obs.turnDirection}`, labelX, labelY);
+
+        // Draw entry path if entry type is calculated
+        if (state.obs.entryType && state.data.latitude && state.data.longitude) {
+            this.renderHoldingEntry(ctx, wpPos, state, courseRad, legPixels, turnRadius, isRightTurn, rotation, w, h);
+        }
+
+        ctx.restore();
+    }
+
+    renderHoldingEntry(ctx, wpPos, state, courseRad, legPixels, turnRadius, isRightTurn, rotation, w, h) {
+        // Calculate aircraft position on canvas
+        const acPos = this.core.latLonToCanvas(
+            state.data.latitude, state.data.longitude,
+            state.data.latitude, state.data.longitude,
+            rotation, state.map.range,
+            w, h, state.map.orientation === 'north'
+        );
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
+
+        const entryType = state.obs.entryType;
+
+        switch (entryType) {
+            case 'direct':
+                // Direct entry: straight line to holding fix
+                ctx.beginPath();
+                ctx.moveTo(acPos.x, acPos.y);
+                ctx.lineTo(wpPos.x, wpPos.y);
+                ctx.stroke();
+
+                // Label
+                ctx.font = '9px Consolas, monospace';
+                ctx.fillStyle = '#00ffff';
+                ctx.textAlign = 'center';
+                const midX = (acPos.x + wpPos.x) / 2;
+                const midY = (acPos.y + wpPos.y) / 2;
+                ctx.fillText('DIRECT', midX, midY - 5);
+                break;
+
+            case 'teardrop':
+                // Teardrop entry: outbound at ~30° from holding course, then turn back
+                const teardropAngle = isRightTurn ? courseRad + Math.PI / 6 : courseRad - Math.PI / 6;
+                const teardropDist = legPixels * 0.7;
+
+                const teardropEndX = wpPos.x + Math.sin(teardropAngle) * teardropDist;
+                const teardropEndY = wpPos.y - Math.cos(teardropAngle) * teardropDist;
+
+                // Line to fix
+                ctx.beginPath();
+                ctx.moveTo(acPos.x, acPos.y);
+                ctx.lineTo(wpPos.x, wpPos.y);
+                ctx.stroke();
+
+                // Outbound teardrop leg
+                ctx.beginPath();
+                ctx.moveTo(wpPos.x, wpPos.y);
+                ctx.lineTo(teardropEndX, teardropEndY);
+                ctx.stroke();
+
+                // Turn back to intercept
+                const inboundIntercept = {
+                    x: wpPos.x + Math.sin(courseRad) * legPixels * 0.5,
+                    y: wpPos.y - Math.cos(courseRad) * legPixels * 0.5
+                };
+
+                ctx.beginPath();
+                ctx.moveTo(teardropEndX, teardropEndY);
+                ctx.lineTo(inboundIntercept.x, inboundIntercept.y);
+                ctx.stroke();
+
+                // Label
+                ctx.font = '9px Consolas, monospace';
+                ctx.fillStyle = '#00ffff';
+                ctx.textAlign = 'center';
+                ctx.fillText('TEARDROP', teardropEndX, teardropEndY + 15);
+                break;
+
+            case 'parallel':
+                // Parallel entry: fly parallel on non-holding side, then turn back
+                const parallelOffset = isRightTurn ? courseRad + Math.PI / 2 : courseRad - Math.PI / 2;
+                const parallelDist = turnRadius * 2;
+
+                const parallelStartX = wpPos.x + Math.sin(parallelOffset) * parallelDist;
+                const parallelStartY = wpPos.y - Math.cos(parallelOffset) * parallelDist;
+                const parallelEndX = parallelStartX + Math.sin(courseRad) * legPixels;
+                const parallelEndY = parallelStartY - Math.cos(courseRad) * legPixels;
+
+                // Line to parallel entry point
+                ctx.beginPath();
+                ctx.moveTo(acPos.x, acPos.y);
+                ctx.lineTo(parallelStartX, parallelStartY);
+                ctx.stroke();
+
+                // Parallel outbound leg
+                ctx.beginPath();
+                ctx.moveTo(parallelStartX, parallelStartY);
+                ctx.lineTo(parallelEndX, parallelEndY);
+                ctx.stroke();
+
+                // Turn to intercept inbound
+                ctx.beginPath();
+                ctx.moveTo(parallelEndX, parallelEndY);
+                ctx.lineTo(wpPos.x + Math.sin(courseRad) * legPixels * 0.3, wpPos.y - Math.cos(courseRad) * legPixels * 0.3);
+                ctx.stroke();
+
+                // Label
+                ctx.font = '9px Consolas, monospace';
+                ctx.fillStyle = '#00ffff';
+                ctx.textAlign = 'center';
+                ctx.fillText('PARALLEL', parallelEndX, parallelEndY + 15);
+                break;
+        }
 
         ctx.restore();
     }
