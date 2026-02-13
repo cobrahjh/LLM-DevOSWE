@@ -1208,6 +1208,136 @@ body {
     margin-bottom: 12px;
 }
 
+/* Flight Plan Validation Modal */
+.fpl-validation-modal {
+    max-width: 600px;
+    max-height: 85vh;
+}
+
+.validation-summary {
+    background: var(--gtn-dark);
+    border: 1px solid var(--gtn-border);
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.validation-summary.critical {
+    border-color: var(--gtn-red, #ff0000);
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.validation-summary.warning {
+    border-color: var(--gtn-yellow, #ffaa00);
+    background: rgba(255, 170, 0, 0.1);
+}
+
+.validation-summary.ok {
+    border-color: var(--gtn-green);
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.validation-issues {
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1px solid var(--gtn-border);
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.validation-issue {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 13px;
+}
+
+.validation-issue:last-child {
+    border-bottom: none;
+}
+
+.validation-issue.critical {
+    background: rgba(255, 0, 0, 0.15);
+    border-left: 3px solid var(--gtn-red, #ff0000);
+}
+
+.validation-issue.caution {
+    background: rgba(255, 170, 0, 0.1);
+    border-left: 3px solid var(--gtn-yellow, #ffaa00);
+}
+
+.validation-issue-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.validation-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.validation-icon.critical {
+    color: var(--gtn-red, #ff0000);
+}
+
+.validation-icon.caution {
+    color: var(--gtn-yellow, #ffaa00);
+}
+
+.validation-message {
+    font-weight: bold;
+    color: var(--gtn-text);
+}
+
+.validation-details {
+    color: var(--gtn-gray);
+    font-size: 12px;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.validation-waypoint {
+    display: inline-block;
+    padding: 2px 6px;
+    background: rgba(255, 0, 255, 0.2);
+    border-radius: 3px;
+    font-family: var(--gtn-mono);
+    font-size: 11px;
+    color: var(--gtn-magenta);
+    margin-left: 4px;
+}
+
+/* FPL Page Validation Badges */
+.fpl-validation-badge {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.fpl-validation-badge.critical {
+    background: var(--gtn-red, #ff0000);
+    color: white;
+}
+
+.fpl-validation-badge.caution {
+    background: var(--gtn-yellow, #ffaa00);
+    color: black;
+}
+
+.fpl-validation-badge:hover {
+    transform: scale(1.15);
+    cursor: help;
+}
+
 .fpl-info-note {
     font-size: 11px;
     color: var(--gtn-gray);

@@ -147,6 +147,12 @@ class GTN750Pane extends SimGlassBase {
             getState: () => this.getRendererState()
         });
 
+        // Flight Plan Validator
+        this.flightPlanValidator = new GTNFlightPlanValidator({
+            core: this.core,
+            terrainGrid: window._terrainGrid || null
+        });
+
         // XPDR control panel
         this.xpdrControl = new GTNXpdrControl({ serverPort: this.serverPort });
 
@@ -2931,41 +2937,147 @@ class GTN750Pane extends SimGlassBase {
             return;
         }
 
-        const plan = this.flightPlanManager.flightPlan;
-        const wps = plan.waypoints;
+        // Validate flight plan first
+        this.showValidationModal(() => {
+            const plan = this.flightPlanManager.flightPlan;
+            const wps = plan.waypoints;
 
-        // Prepare flight plan data for autopilot
-        const autopilotPlan = {
-            name: `${wps[0]?.ident || 'WPT'}-${wps[wps.length - 1]?.ident || 'END'}`,
-            departure: wps[0]?.ident || null,
-            arrival: wps[wps.length - 1]?.ident || null,
-            waypoints: wps.map(wp => ({
-                ident: wp.ident,
-                lat: wp.lat,
-                lon: wp.lng || wp.lon,
-                altitude: wp.altitude || null,
-                type: wp.type || 'WAYPOINT'
-            })),
-            cruiseAltitude: this.findCruiseAltitude(wps),
-            totalDistance: this.flightPlanManager.calculateTotalDistance()
+            // Prepare flight plan data for autopilot
+            const autopilotPlan = {
+                name: `${wps[0]?.ident || 'WPT'}-${wps[wps.length - 1]?.ident || 'END'}`,
+                departure: wps[0]?.ident || null,
+                arrival: wps[wps.length - 1]?.ident || null,
+                waypoints: wps.map(wp => ({
+                    ident: wp.ident,
+                    lat: wp.lat,
+                    lon: wp.lng || wp.lon,
+                    altitude: wp.altitude || null,
+                    type: wp.type || 'WAYPOINT'
+                })),
+                cruiseAltitude: this.findCruiseAltitude(wps),
+                totalDistance: this.flightPlanManager.calculateTotalDistance()
+            };
+
+            // Send via SafeChannel
+            if (this.syncChannel) {
+                this.syncChannel.postMessage({
+                    type: 'execute-flight-plan',
+                    data: autopilotPlan,
+                    source: 'GTN750'
+                });
+
+                // Visual confirmation
+                const msg = `AI Autopilot engaged\nFlying: ${autopilotPlan.name}\n${wps.length} waypoints`;
+                alert(msg);
+
+                GTNCore.log(`[GTN750] Sent flight plan to AI Autopilot: ${autopilotPlan.name}`);
+            } else {
+                alert('SafeChannel not available\nOpen AI Autopilot pane first');
+            }
+        });
+    }
+
+    showValidationModal(onProceed) {
+        if (!this.flightPlanValidator || !this.flightPlanManager?.flightPlan) {
+            // No validator or no plan, proceed directly
+            if (onProceed) onProceed();
+            return;
+        }
+
+        // Run validation
+        const validation = this.flightPlanValidator.validateFlightPlan(
+            this.flightPlanManager.flightPlan,
+            { fuelTotal: this.data.fuelTotal }
+        );
+
+        const summary = this.flightPlanValidator.getValidationSummary(validation);
+
+        // If no issues, proceed directly
+        if (validation.warnings.length === 0 && validation.errors.length === 0) {
+            if (onProceed) onProceed();
+            return;
+        }
+
+        // Show validation modal
+        const modal = document.getElementById('fpl-validation-modal');
+        const header = document.getElementById('validation-header');
+        const summaryEl = document.getElementById('validation-summary');
+        const issuesEl = document.getElementById('validation-issues');
+        const proceedBtn = document.getElementById('validation-proceed');
+        const reviewBtn = document.getElementById('validation-review');
+        const cancelBtn = document.getElementById('validation-cancel');
+
+        if (!modal || !summaryEl || !issuesEl) {
+            // Modal not available, proceed
+            if (onProceed) onProceed();
+            return;
+        }
+
+        // Update header color and summary
+        summaryEl.className = `validation-summary ${summary.level}`;
+        if (summary.level === 'critical') {
+            header.style.background = 'var(--gtn-red, #ff0000)';
+        } else if (summary.level === 'warning') {
+            header.style.background = 'var(--gtn-yellow, #ffaa00)';
+        }
+
+        summaryEl.textContent = summary.message + (summary.canProceed ? ' found. Review before proceeding.' : ' must be resolved.');
+
+        // Render issues list
+        issuesEl.innerHTML = '';
+        const allIssues = [...validation.errors, ...validation.warnings];
+        allIssues.forEach(issue => {
+            const issueEl = document.createElement('div');
+            issueEl.className = `validation-issue ${issue.severity}`;
+
+            const icon = issue.severity === 'critical' ? '❌' : '⚠️';
+            const waypointTag = issue.waypointIndex >= 0
+                ? `<span class="validation-waypoint">Leg ${issue.waypointIndex + 1}</span>`
+                : '';
+
+            issueEl.innerHTML = `
+                <div class="validation-issue-header">
+                    <span class="validation-icon ${issue.severity}">${icon}</span>
+                    <span class="validation-message">${issue.message}</span>
+                    ${waypointTag}
+                </div>
+                ${issue.details ? `<div class="validation-details">${issue.details}</div>` : ''}
+            `;
+            issuesEl.appendChild(issueEl);
+        });
+
+        // Show/hide proceed button based on can proceed
+        if (summary.canProceed) {
+            proceedBtn.style.display = 'inline-block';
+        } else {
+            proceedBtn.style.display = 'none';
+        }
+
+        // Show modal
+        modal.style.display = 'block';
+
+        // Wire up buttons
+        const closeModal = () => {
+            modal.style.display = 'none';
+            proceedBtn.onclick = null;
+            reviewBtn.onclick = null;
+            cancelBtn.onclick = null;
         };
 
-        // Send via SafeChannel
-        if (this.syncChannel) {
-            this.syncChannel.postMessage({
-                type: 'execute-flight-plan',
-                data: autopilotPlan,
-                source: 'GTN750'
-            });
+        proceedBtn.onclick = () => {
+            closeModal();
+            if (onProceed) onProceed();
+        };
 
-            // Visual confirmation
-            const msg = `AI Autopilot engaged\nFlying: ${autopilotPlan.name}\n${wps.length} waypoints`;
-            alert(msg);
+        reviewBtn.onclick = () => {
+            closeModal();
+            // Switch to FPL page to review
+            if (this.pageManager) {
+                this.pageManager.setActivePage('fpl');
+            }
+        };
 
-            GTNCore.log(`[GTN750] Sent flight plan to AI Autopilot: ${autopilotPlan.name}`);
-        } else {
-            alert('SafeChannel not available\nOpen AI Autopilot pane first');
-        }
+        cancelBtn.onclick = closeModal;
     }
 
     findCruiseAltitude(waypoints) {

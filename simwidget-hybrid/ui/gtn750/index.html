@@ -493,6 +493,24 @@
                     </div>
                 </div>
 
+                <!-- Flight Plan Validation Modal -->
+                <div class="dto-modal fpl-validation-modal" id="fpl-validation-modal" style="display: none;">
+                    <div class="dto-header" id="validation-header" style="background: var(--gtn-yellow, #ffaa00);">FLIGHT PLAN VALIDATION</div>
+                    <div class="dto-content">
+                        <div class="validation-summary" id="validation-summary">
+                            <!-- Summary will be inserted here -->
+                        </div>
+                        <div class="validation-issues" id="validation-issues">
+                            <!-- Issues list will be inserted here -->
+                        </div>
+                        <div class="dto-buttons">
+                            <button class="dto-btn dto-confirm" id="validation-proceed" style="display: none;">PROCEED ANYWAY</button>
+                            <button class="dto-btn" id="validation-review">REVIEW PLAN</button>
+                            <button class="dto-btn dto-cancel" id="validation-cancel">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Traffic Info Panel -->
                 <div class="traffic-info-panel" id="traffic-info" style="display: none;">
                     <div class="traffic-info-header">
@@ -1228,6 +1246,7 @@
     <script src="data/ils-frequencies.js"></script>
     <script src="modules/gtn-airport-diagram.js"></script>
     <script src="modules/gtn-map-renderer.js"></script>
+    <script src="modules/gtn-flight-plan-validator.js"></script>
     <script src="modules/gtn-xpdr-control.js"></script>
 
     <!-- Main orchestrator (handles lazy loading) -->
