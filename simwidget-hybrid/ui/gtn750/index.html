@@ -108,6 +108,19 @@
                     <span class="fuel-state-indicator" id="fuel-state">●</span>
                 </div>
             </div>
+
+            <!-- Altitude Alert Section -->
+            <div class="freq-section alt-section">
+                <div class="freq-label">ALT</div>
+                <div class="alt-assigned-row">
+                    <input type="number" class="alt-assigned-input" id="alt-assigned" placeholder="-----" step="100" min="0" max="60000">
+                    <span class="alt-unit">FT</span>
+                </div>
+                <div class="alt-status-row">
+                    <span class="alt-status-label" id="alt-status-label">---</span>
+                    <span class="alt-state-indicator" id="alt-state">●</span>
+                </div>
+            </div>
         </div>
 
         <!-- Home Page Buttons -->
@@ -870,6 +883,7 @@
     <script src="modules/gtn-vnav.js"></script>
     <script src="modules/gtn-holding.js"></script>
     <script src="modules/gtn-fuel-monitor.js"></script>
+    <script src="modules/gtn-altitude-alerts.js"></script>
     <script src="modules/gtn-map-renderer.js"></script>
     <script src="modules/gtn-xpdr-control.js"></script>
 

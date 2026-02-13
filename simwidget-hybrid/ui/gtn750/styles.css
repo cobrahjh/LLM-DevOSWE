@@ -408,6 +408,91 @@ body {
     50% { opacity: 0.3; }
 }
 
+/* Altitude Alert Section */
+.alt-section {
+    min-width: 95px;
+}
+
+.alt-assigned-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.alt-assigned-input {
+    width: 60px;
+    font-size: 14px;
+    font-family: var(--gtn-mono);
+    font-weight: 600;
+    color: #00ffff;
+    background: rgba(0, 50, 100, 0.3);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 3px;
+    padding: 2px 4px;
+    text-align: right;
+}
+
+.alt-assigned-input:focus {
+    outline: none;
+    border-color: #00ffff;
+    background: rgba(0, 80, 150, 0.4);
+}
+
+.alt-assigned-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.alt-unit {
+    font-size: 10px;
+    color: var(--gtn-text-dim);
+}
+
+.alt-status-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.alt-status-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--gtn-text);
+}
+
+.alt-state-indicator {
+    font-size: 14px;
+    margin-left: auto;
+}
+
+.alt-state-indicator.CAPTURED,
+.alt-state-indicator.HOLDING {
+    color: #00ff00;
+}
+
+.alt-state-indicator.PROXIMITY {
+    color: #ffaa00;
+    animation: alt-blink 1s infinite;
+}
+
+.alt-state-indicator.APPROACHING {
+    color: #ffff00;
+}
+
+.alt-state-indicator.DEVIATION {
+    color: #ff0000;
+    animation: alt-blink 0.5s infinite;
+}
+
+.alt-state-indicator.ARMED {
+    color: #00ffff;
+}
+
+@keyframes alt-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
 /* NAV Tuning Info Display */
 .nav-group {
     flex-wrap: wrap;

@@ -144,6 +144,12 @@ class GTN750Pane extends SimGlassBase {
         // Fuel monitor (will be initialized after flight plan manager)
         this.fuelMonitor = null;
 
+        // Altitude alerts
+        this.altitudeAlerts = new GTNAltitudeAlerts({
+            core: this.core,
+            onAlert: (type, message, level) => this.handleAltitudeAlert(type, message, level)
+        });
+
         // Deferred modules (loaded after 500ms)
         this.flightPlanManager = null;
         this.dataHandler = null;
@@ -483,9 +489,11 @@ class GTN750Pane extends SimGlassBase {
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
+        this.altitudeAlerts?.update(this.data);
         this.updateApproachPhaseDisplay();
         this.updateIlsDisplay();
         this.updateFuelDisplay();
+        this.updateAltitudeDisplay();
         this.updateAuxData();
     }
 
@@ -597,6 +605,45 @@ class GTN750Pane extends SimGlassBase {
         // Update state indicator
         fuelState.className = `fuel-state-indicator ${status.state}`;
         fuelState.style.color = status.stateColor;
+    }
+
+    updateAltitudeDisplay() {
+        const altStatusLabel = document.getElementById('alt-status-label');
+        const altState = document.getElementById('alt-state');
+
+        if (!altStatusLabel || !altState || !this.altitudeAlerts) return;
+
+        const status = this.altitudeAlerts.getStatus();
+
+        // Update status label
+        altStatusLabel.textContent = status.stateLabel || '---';
+        altStatusLabel.style.color = status.stateColor;
+
+        // Update state indicator
+        altState.className = `alt-state-indicator ${status.state}`;
+        altState.style.color = status.stateColor;
+    }
+
+    handleAltitudeAlert(type, message, level) {
+        // Show visual notification (reuse sequence notification element for now)
+        const notify = document.getElementById('cdi-sequence-notify');
+        if (!notify) return;
+
+        notify.textContent = message;
+        notify.style.display = '';
+        notify.style.background = level === 'critical' ? 'rgba(255, 0, 0, 0.9)' :
+                                   level === 'warning' ? 'rgba(255, 170, 0, 0.9)' :
+                                   level === 'success' ? 'rgba(0, 255, 0, 0.9)' :
+                                   'rgba(0, 255, 255, 0.9)';
+
+        // Clear after 3 seconds
+        if (this._altAlertTimer) {
+            clearTimeout(this._altAlertTimer);
+        }
+        this._altAlertTimer = setTimeout(() => {
+            notify.style.display = 'none';
+            notify.style.background = ''; // Reset to default
+        }, 3000);
     }
 
     /**
@@ -1843,6 +1890,7 @@ class GTN750Pane extends SimGlassBase {
             xpdrMode: document.getElementById('xpdr-mode'),
             xpdrModeIndicator: document.querySelector('.xpdr-mode-indicator'),
             utcTime: document.getElementById('utc-time'),
+            altAssigned: document.getElementById('alt-assigned'),
             tabs: document.querySelectorAll('.gtn-tab'),
             // Compact mode elements
             gcCom1: document.getElementById('gc-com1'),
@@ -2039,6 +2087,16 @@ class GTN750Pane extends SimGlassBase {
             btn.addEventListener('click', () => this.setWeatherPreset(btn.dataset.preset));
         });
         document.getElementById('wx-live-btn')?.addEventListener('click', () => this.setLiveWeather());
+
+        // Altitude alerts
+        this.elements.altAssigned?.addEventListener('change', (e) => {
+            const altitude = parseFloat(e.target.value);
+            if (!isNaN(altitude) && altitude > 0) {
+                this.altitudeAlerts.setAssignedAltitude(altitude);
+            } else {
+                this.altitudeAlerts.setAssignedAltitude(null);
+            }
+        });
     }
 
     _getCdiState() {
