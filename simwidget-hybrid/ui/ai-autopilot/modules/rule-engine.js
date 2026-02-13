@@ -267,18 +267,20 @@ class RuleEngine {
                     // for nosewheel steering authority (15% stalls the correction loop)
                     // Values overridable via takeoff-tuner.html
                     const tt = this._getTakeoffTuning();
-                    const thrMin = tt.taxiThrottleMin ?? 20;
-                    const thrMax = tt.taxiThrottleMax ?? 35;
+                    const thrMax = tt.taxiThrottleMax ?? 40;
                     const targetGS = tt.taxiTargetGS ?? 12;
                     let thr;
-                    if (hdgError > (tt.taxiHdgErrorThreshold ?? 15)) {
-                        // Misaligned — slow down but keep enough power for nosewheel steering
-                        // C172 needs ~20% to roll, so keep minimum high
-                        thr = Math.max(thrMin, 25 - hdgError * (tt.taxiHdgPenalty ?? 0.05));
+                    if (gs < 1) {
+                        // Breakaway power — C172 needs ~40% to overcome static friction
+                        // Once rolling (GS > 1kt), reduce to speed-proportional control
+                        thr = tt.taxiBreakawayThrottle ?? 40;
+                    } else if (hdgError > (tt.taxiHdgErrorThreshold ?? 30)) {
+                        // Misaligned — reduce to idle to slow down for the turn
+                        thr = Math.max(15, 25 - hdgError * (tt.taxiHdgPenalty ?? 0.1));
                     } else {
-                        // Speed-proportional: ~25% at target, ramp up/down with error
+                        // Speed-proportional: target 25%, ramp with speed error
                         const speedError = targetGS - gs;
-                        thr = Math.max(thrMin, Math.min(thrMax, 25 + speedError * (tt.taxiSpeedGain ?? 1.0)));
+                        thr = Math.max(20, Math.min(thrMax, 25 + speedError * (tt.taxiSpeedGain ?? 1.5)));
                     }
                     this._cmdValue('THROTTLE_SET', Math.round(thr), `Taxi (GS ${Math.round(gs)}, hdg err ${Math.round(hdgError)}°)`);
                 }
