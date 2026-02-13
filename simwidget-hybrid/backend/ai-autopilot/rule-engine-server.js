@@ -128,11 +128,15 @@ class RuleEngineServer {
     disable() {
         this._enabled = false;
         this._saveState(false);
-        // Release all flight control axes so joystick takes over
+        // Release ALL axes so user regains full control
+        this._executeCommand('THROTTLE_SET', 0);
         this._executeCommand('AXIS_ELEVATOR_SET', 0);
         this._executeCommand('AXIS_RUDDER_SET', 0);
+        this._executeCommand('STEERING_SET', 0);
         this._executeCommand('AXIS_AILERONS_SET', 0);
-        console.log('[RuleEngine] DISABLED — axes released');
+        this._executeCommand('AXIS_LEFT_BRAKE_SET', 0);
+        this._executeCommand('AXIS_RIGHT_BRAKE_SET', 0);
+        console.log('[RuleEngine] DISABLED — all axes released');
     }
 
     /** @returns {boolean} */
@@ -177,7 +181,8 @@ class RuleEngineServer {
 
     /**
      * Request taxi to runway. Auto-detects airport and picks best runway.
-     * If engine not running, sends ENGINE_AUTO_START first.
+     * Note: Engine must be running before requesting taxi (Ctrl+E in MSFS).
+     * MSFS 2024 RPM SimVar is unreliable — skip auto-start detection.
      * @returns {Object} result
      */
     async requestTaxi() {
@@ -188,15 +193,6 @@ class RuleEngineServer {
 
         const icao = this._atc.getDetectedIcao();
         if (!icao) return { success: false, error: 'No airport detected — are you on the ground near an airport?' };
-
-        // Auto-start engine if not running (Ctrl+E equivalent)
-        const engineRunning = (fd.engineRpm > 100) || (fd.rpm > 100) || (fd.eng1N1 > 5) || (fd.throttle > 10);
-        if (!engineRunning) {
-            console.log('[ATC] Engine not running — sending ENGINE_AUTO_START');
-            this._executeCommand('ENGINE_AUTO_START');
-            // Brief delay for engine spool-up
-            await new Promise(r => setTimeout(r, 3000));
-        }
 
         // Pick best runway based on heading
         const heading = fd.heading || 0;
