@@ -168,6 +168,12 @@ class GTN750Pane extends SimGlassBase {
             core: this.core
         });
 
+        // Frequency Tuner (COM/NAV radio management)
+        this.frequencyTuner = new GTNFrequencyTuner({
+            serverPort: this.serverPort,
+            onFrequencyChange: (radio, type, freq) => this.handleFrequencyChange(radio, type, freq)
+        });
+
         // Deferred modules (loaded after 500ms)
         this.flightPlanManager = null;
         this.dataHandler = null;
@@ -548,6 +554,11 @@ class GTN750Pane extends SimGlassBase {
             this.taxiPage.update(this.data);
             this.taxiPage.render();
         }
+
+        // Update frequency tuner
+        if (this.frequencyTuner) {
+            this.frequencyTuner.update(this.data);
+        }
     }
 
     updateAuxData() {
@@ -799,6 +810,29 @@ class GTN750Pane extends SimGlassBase {
             this.showSequenceNotification('', 'TAKEOFF');
         } else if (newPhase === 'LANDING') {
             this.showSequenceNotification('', 'LANDING');
+        }
+    }
+
+    /**
+     * Handle frequency change
+     * @param {string} radio - Radio name (com1, com2, nav1, nav2)
+     * @param {string} type - 'active', 'standby', or 'swap'
+     * @param {number} frequency - New frequency
+     */
+    handleFrequencyChange(radio, type, frequency) {
+        GTNCore.log(`[GTN750] ${radio} ${type}: ${frequency.toFixed(3)}`);
+
+        // Update display elements if they exist
+        const activeEl = document.getElementById(radio);
+        const standbyEl = document.getElementById(`${radio}-stby`);
+
+        if (this.frequencyTuner) {
+            const active = this.frequencyTuner.getFrequency(radio, 'active');
+            const standby = this.frequencyTuner.getFrequency(radio, 'standby');
+            const radioType = radio.startsWith('com') ? 'com' : 'nav';
+
+            if (activeEl) activeEl.textContent = this.frequencyTuner.formatFrequency(active, radioType);
+            if (standbyEl) standbyEl.textContent = this.frequencyTuner.formatFrequency(standby, radioType);
         }
     }
 
@@ -2150,10 +2184,11 @@ class GTN750Pane extends SimGlassBase {
         // Top bar IDENT button → quick ident toggle
         this.elements.xpdrIdent?.addEventListener('click', (e) => { e.stopPropagation(); this.xpdrControl._onIdent(); });
 
-        // Frequency swaps
-        this.elements.swapCom1?.addEventListener('click', () => this.dataHandler?.swapFrequency('COM1'));
-        this.elements.swapCom2?.addEventListener('click', () => this.dataHandler?.swapFrequency('COM2'));
-        this.elements.swapNav1?.addEventListener('click', () => this.dataHandler?.swapFrequency('NAV1'));
+        // Frequency swaps (use frequency tuner)
+        this.elements.swapCom1?.addEventListener('click', () => this.frequencyTuner?.swapFrequencies('com1'));
+        this.elements.swapCom2?.addEventListener('click', () => this.frequencyTuner?.swapFrequencies('com2'));
+        this.elements.swapNav1?.addEventListener('click', () => this.frequencyTuner?.swapFrequencies('nav1'));
+        this.elements.swapNav2?.addEventListener('click', () => this.frequencyTuner?.swapFrequencies('nav2'));
 
         // Zoom
         this.elements.zoomIn?.addEventListener('click', () => this.changeRange(-1));
