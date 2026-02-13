@@ -1458,16 +1458,17 @@ class RuleEngine {
         const hdg = d.heading || 0;
         const hdgError = ((hdg - targetHdg + 540) % 360) - 180;  // positive = drifted right
 
-        // Gain: lower at speed (aerodynamic authority increases)
         const ttSteer = this._getTakeoffTuning();
-        const baseGain = Math.max(3.0, (ttSteer.steerGainBase ?? 8.0) - gs * (ttSteer.steerGainDecay ?? 0.06));
-        // Ground steering needs much more authority than flight — C172 nosewheel
-        // is sluggish at low speeds, full deflection may be needed to hold heading.
-        // During takeoff (ROTATE/LIFTOFF), keep high authority to counter P-factor
-        // when nosewheel unloads. Scale down only after liftoff.
-        const flightDefl = this.tuning.rudderAuthority || 20;
-        const lowSpeedDefl = ttSteer.taxiRudderMaxLow ?? 60;
         const isTakeoffPhase = this._takeoffSubPhase === 'ROLL' || this._takeoffSubPhase === 'ROTATE' || this._takeoffSubPhase === 'LIFTOFF';
+
+        // Gain: taxi uses gentle proportional control, takeoff uses aggressive tracking
+        const taxiGain = ttSteer.taxiSteerGain ?? 2.0;
+        const takeoffGain = Math.max(3.0, (ttSteer.steerGainBase ?? 8.0) - gs * (ttSteer.steerGainDecay ?? 0.06));
+        const baseGain = isTakeoffPhase ? takeoffGain : taxiGain;
+
+        // Max deflection: taxi limits to 40% to prevent over-correction oscillation
+        const flightDefl = this.tuning.rudderAuthority || 20;
+        const lowSpeedDefl = isTakeoffPhase ? (ttSteer.taxiRudderMaxLow ?? 60) : 40;
         const maxDefl = (gs < 30 || isTakeoffPhase) ? Math.max(flightDefl, lowSpeedDefl) : flightDefl;
 
         // Through server.js: positive RUDDER_SET value → left yaw in MSFS
@@ -1477,7 +1478,21 @@ class RuleEngine {
         const biasVal = ttSteer.rudderBias ?? this.tuning.rudderBias ?? 0;
         const bias = (d.throttle || 0) > 50 ? -biasVal : 0;
         const correction = Math.abs(hdgError) < (ttSteer.steerDeadband ?? 0.5) ? 0 : hdgError * baseGain;  // deadband on correction only
-        const rudder = Math.max(-maxDefl, Math.min(maxDefl, correction + bias));
+
+        // Derivative term — dampen oscillation by opposing heading rate of change
+        const now = Date.now();
+        let dTerm = 0;
+        if (!isTakeoffPhase && this._lastSteerError !== undefined && this._lastSteerTime) {
+            const dt = (now - this._lastSteerTime) / 1000;
+            if (dt > 0 && dt < 1) {
+                const rate = (hdgError - this._lastSteerError) / dt;
+                dTerm = rate * (ttSteer.taxiSteerDGain ?? 0.8);
+            }
+        }
+        this._lastSteerError = hdgError;
+        this._lastSteerTime = now;
+
+        const rudder = Math.max(-maxDefl, Math.min(maxDefl, correction + bias - dTerm));
         this.live.rudder = rudder;
         // Nosewheel steering (STEERING_SET) for ground turns — wider angle than rudder pedals.
         // STEERING_SET is overridden by AXIS_RUDDER_SET, so send steering ONLY on ground.
