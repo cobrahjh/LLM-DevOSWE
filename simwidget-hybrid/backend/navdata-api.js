@@ -272,62 +272,42 @@ function setupNavdataRoutes(app) {
             ORDER BY type, ident, transition
         `).all(icao);
 
-        // Group by type
+        // Group by type - each transition is a separate entry
         const departures = [];
         const arrivals = [];
         const approaches = [];
 
-        // Deduplicate by ident (merge transitions)
-        const seen = { SID: new Map(), STAR: new Map(), APPROACH: new Map() };
-
         for (const p of procs) {
-            const map = seen[p.type];
-            if (!map) continue;
-
             // Clean transition: strip leading route type digit (e.g., "4RW08" → "RW08", "6HBU" → "HBU")
             const cleanTrans = cleanTransition(p.transition);
             const cleanRwy = cleanTransition(p.runway);
 
-            if (!map.has(p.ident)) {
-                // Collect runways from runway transitions (starting with RW)
-                const runways = [];
-                if (cleanRwy && cleanRwy.startsWith('RW')) runways.push(cleanRwy);
-                else if (cleanTrans && cleanTrans.startsWith('RW')) runways.push(cleanTrans);
-
-                const entry = {
-                    id: p.id,
-                    name: p.ident,
-                    runway: runways.length ? runways[0] : 'ALL',
-                    runways,
-                    transition: cleanTrans || null,
-                    transitions: cleanTrans ? [cleanTrans] : [],
-                    type: p.type === 'APPROACH' ? guessApproachType(p.ident) : p.type
-                };
-                map.set(p.ident, entry);
-
-                if (p.type === 'SID') departures.push(entry);
-                else if (p.type === 'STAR') arrivals.push(entry);
-                else approaches.push(entry);
-            } else {
-                // Add transition to existing entry
-                const existing = map.get(p.ident);
-                if (cleanTrans && !existing.transitions.includes(cleanTrans)) {
-                    existing.transitions.push(cleanTrans);
-                    // Track unique runways
-                    if (cleanTrans.startsWith('RW') && !existing.runways.includes(cleanTrans)) {
-                        existing.runways.push(cleanTrans);
-                    }
-                }
+            // Build display name: "IDENT.TRANSITION" or just "IDENT" if no transition
+            let displayName = p.ident;
+            if (cleanTrans) {
+                displayName = `${p.ident}.${cleanTrans}`;
             }
-        }
 
-        // Build runway display string for each procedure
-        for (const map of Object.values(seen)) {
-            for (const entry of map.values()) {
-                if (entry.runways.length > 0) {
-                    entry.runway = entry.runways.map(r => r.replace('RW', '')).join('/');
-                }
+            // Extract runway for display
+            let runway = 'ALL';
+            if (cleanRwy && cleanRwy.startsWith('RW')) {
+                runway = cleanRwy.replace('RW', '');
+            } else if (cleanTrans && cleanTrans.startsWith('RW')) {
+                runway = cleanTrans.replace('RW', '');
             }
+
+            const entry = {
+                id: p.id,
+                name: displayName,
+                ident: p.ident,        // Base procedure identifier
+                runway,
+                transition: cleanTrans || null,
+                type: p.type === 'APPROACH' ? guessApproachType(p.ident) : p.type
+            };
+
+            if (p.type === 'SID') departures.push(entry);
+            else if (p.type === 'STAR') arrivals.push(entry);
+            else approaches.push(entry);
         }
 
         res.json({

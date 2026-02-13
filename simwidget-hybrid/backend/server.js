@@ -2802,6 +2802,7 @@ function executeCommand(command, value) {
     if (!simConnectConnection) return;
 
     // MSFS 2024 mixture — InputEvent with held-axes to overcome joystick override
+    // Falls through to legacy transmitClientEvent if InputEvent hash not available
     if (command === 'MIXTURE_SET' || command === 'MIXTURE_RICH' || command === 'MIXTURE_LEAN' || command === 'AXIS_MIXTURE_SET') {
         try {
             let percent;
@@ -2819,12 +2820,23 @@ function executeCommand(command, value) {
                 }
                 updateHeldAxesTimer();
                 simConnectConnection.setInputEvent(hash, normalized);
+                console.log(`[Mixture] InputEvent: ${percent}% (held-axes: ${percent > 0})`);
+                return;
             }
-            console.log(`[Mixture] InputEvent: ${percent}% (held-axes: ${percent > 0})`);
+            // InputEvent not available — try direct SimVar write (data definition 13)
+            if (simConnectConnection.setDataOnSimObject) {
+                const buf = Buffer.alloc(8);
+                buf.writeDoubleLE(percent, 0);
+                simConnectConnection.setDataOnSimObject(13, 0, 0, 0, 8, buf);
+                console.log(`[Mixture] SimVar write: ${percent}% (FUEL_MIXTURE_1 hash not available)`);
+                return;
+            }
+            // No InputEvent, no SimVar write — fall through to legacy transmitClientEvent
+            console.log(`[Mixture] Falling through to legacy event for ${percent}%`);
         } catch (e) {
             console.error(`[Mixture] Error: ${e.message}`);
         }
-        return;
+        // Don't return — let legacy transmitClientEvent path handle it
     }
 
     // MSFS 2024 InputEvents for throttle — legacy THROTTLE_SET doesn't work
