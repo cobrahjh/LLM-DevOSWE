@@ -326,6 +326,75 @@
     white-space: nowrap;
 }
 
+/* Weather Panel */
+.weather-panel {
+    border-bottom: 1px solid var(--border-color, #1e2a3a);
+    flex-shrink: 0;
+    font-family: 'Consolas', monospace;
+}
+
+.weather-header {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64b5f6;
+    background: rgba(100, 181, 246, 0.08);
+    letter-spacing: 1px;
+}
+
+.weather-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 12px;
+    flex-wrap: wrap;
+}
+
+.weather-wind {
+    padding: 1px 8px;
+    border-radius: 3px;
+    background: rgba(100, 181, 246, 0.15);
+    color: #64b5f6;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.weather-components {
+    color: #90caf9;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.weather-correction {
+    color: #81c784;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.weather-turbulence {
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.weather-turbulence.light {
+    background: rgba(255, 235, 59, 0.15);
+    color: #ffeb3b;
+}
+
+.weather-turbulence.moderate {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+}
+
+.weather-turbulence.severe {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
 /* Flight Plan Report */
 .fpl-report {
     border-bottom: 1px solid var(--border-color, #1e2a3a);

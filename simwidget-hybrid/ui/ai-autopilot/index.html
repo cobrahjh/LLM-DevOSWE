@@ -70,6 +70,17 @@
             </div>
         </div>
 
+        <!-- Weather Panel (wind compensation display) -->
+        <div class="weather-panel" id="weather-panel" style="display:none">
+            <div class="weather-header">WEATHER</div>
+            <div class="weather-body">
+                <span class="weather-wind" id="weather-wind">WIND ---/--kt</span>
+                <span class="weather-components" id="weather-components">X-WIND --kt · H-WIND --kt</span>
+                <span class="weather-correction" id="weather-correction">DRIFT CORR ---°</span>
+                <span class="weather-turbulence" id="weather-turbulence"></span>
+            </div>
+        </div>
+
         <!-- Flight Plan Report (shown after SimBrief import) -->
         <div class="fpl-report" id="fpl-report" style="display:none">
             <div class="fpl-report-header" id="fpl-report-toggle">
@@ -246,7 +257,8 @@
     <script src="data/flight-procedures.js"></script>
     <script src="data/atc-phraseology.js"></script>
     <script src="modules/flight-phase.js"></script>
-    <script src="modules/rule-engine.js?v=4"></script>
+    <script src="modules/wind-compensation.js"></script>
+    <script src="modules/rule-engine.js?v=5"></script>
     <script src="modules/command-queue.js?v=2"></script>
     <script src="modules/llm-advisor.js"></script>
     <script src="modules/atc-controller.js"></script>

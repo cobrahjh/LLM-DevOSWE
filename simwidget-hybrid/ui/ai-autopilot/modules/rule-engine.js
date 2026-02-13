@@ -50,6 +50,9 @@ class RuleEngine {
         // Adaptive bias — learns torque/P-factor compensation from observed drift
         this._rollBias = 0;    // positive = right aileron bias (counters left torque)
 
+        // Wind compensation calculator
+        this._windComp = typeof WindCompensation !== 'undefined' ? new WindCompensation() : null;
+
         // Dynamic flight envelope (computed every frame)
         this._envelope = null;  // latest computed envelope snapshot
 
@@ -143,6 +146,14 @@ class RuleEngine {
         // Bias learned at full power doesn't apply at taxi power
         if (phaseChanged && (phase === 'PREFLIGHT' || phase === 'TAXI')) {
             this._rollBias = 0;
+        }
+
+        // Detect turbulence
+        let turbulence = { isTurbulent: false, severity: 0 };
+        if (this._windComp && d.verticalSpeed != null) {
+            turbulence = this._windComp.detectTurbulence(d.verticalSpeed);
+            this.live.turbulence = turbulence.severity;
+            this.live.turbulenceVsDelta = turbulence.vsDelta || 0;
         }
         // Clear command queue dedup state on ANY phase change so commands
         // (especially THROTTLE_SET) get re-sent after phase transitions
@@ -1656,6 +1667,7 @@ class RuleEngine {
      * Apply lateral nav guidance — shared logic for CLIMB/CRUISE/DESCENT phases.
      * Engages NAV mode when CDI is valid, falls back to heading bug intercept,
      * or holds current heading if no nav data available.
+     * Applies wind compensation to heading commands when in HDG mode.
      * @param {Object} d - flightData
      * @param {Object} apState - current AP states
      * @param {boolean} phaseChanged - true on first tick of new phase
@@ -1669,8 +1681,24 @@ class RuleEngine {
         } else {
             const navHdg = this._getNavHeading(d);
             if (navHdg) {
-                // Have DTK/bearing but CDI not suitable for NAV mode — use heading bug
-                this._cmdValue('HEADING_BUG_SET', navHdg.heading, navHdg.description);
+                // Have DTK/bearing but CDI not suitable for NAV mode — use heading bug with wind correction
+                let targetHeading = navHdg.heading;
+                let description = navHdg.description;
+
+                // Apply wind compensation if available
+                if (this._windComp && d.windSpeed > 1 && d.speed > 50) {
+                    const windCorr = this._windComp.calculateWindCorrection(
+                        navHdg.heading,  // desired track
+                        d.speed,         // TAS approximation (using IAS, close enough at low alt)
+                        d.windDirection,
+                        d.windSpeed
+                    );
+                    targetHeading = windCorr.heading;
+                    const corrSign = windCorr.correction >= 0 ? '+' : '';
+                    description = `${navHdg.description} (wind ${corrSign}${windCorr.correction}°)`;
+                }
+
+                this._cmdValue('HEADING_BUG_SET', targetHeading, description);
                 if (!apState.headingHold || phaseChanged) {
                     this._cmd('AP_HDG_HOLD', true, 'HDG hold (nav intercept)');
                 }
