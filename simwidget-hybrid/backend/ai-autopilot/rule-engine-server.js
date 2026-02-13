@@ -9,10 +9,13 @@
  */
 
 const path = require('path');
+const fs = require('fs');
 const RuleEngine = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine'));
 const FlightPhase = require(path.join(__dirname, '../../ui/ai-autopilot/modules/flight-phase'));
 const CommandQueue = require(path.join(__dirname, '../../ui/ai-autopilot/modules/command-queue'));
 const { AIRCRAFT_PROFILES, DEFAULT_PROFILE } = require(path.join(__dirname, '../../ui/ai-autopilot/data/aircraft-profiles'));
+
+const STATE_FILE = path.join(__dirname, '.rule-engine-state.json');
 
 class RuleEngineServer {
     /**
@@ -61,6 +64,12 @@ class RuleEngineServer {
             holdsGetter: () => ({})  // no phase holds on server
         });
 
+        // Auto-recover: if we were enabled before a server restart, re-enable
+        if (this._loadState()) {
+            this._enabled = true;
+            console.log('[RuleEngine] Auto-recovered — was enabled before restart');
+        }
+
         console.log('[RuleEngine] Server-side mode ready');
     }
 
@@ -70,6 +79,7 @@ class RuleEngineServer {
      */
     enable() {
         this._enabled = true;
+        this._saveState(true);
         this.ruleEngine.reset();
         this.commandQueue.clear();
         this._commandLog = [];
@@ -81,6 +91,7 @@ class RuleEngineServer {
      */
     disable() {
         this._enabled = false;
+        this._saveState(false);
         // Release all flight control axes so joystick takes over
         this._executeCommand('AXIS_ELEVATOR_SET', 0);
         this._executeCommand('AXIS_RUDDER_SET', 0);
@@ -203,6 +214,23 @@ class RuleEngineServer {
     /** Set active runway */
     setActiveRunway(runway) {
         this.ruleEngine.setActiveRunway(runway);
+    }
+
+    /** Persist enabled state to disk for auto-recovery after restart */
+    _saveState(enabled) {
+        try {
+            fs.writeFileSync(STATE_FILE, JSON.stringify({ enabled }));
+        } catch (e) { /* best-effort */ }
+    }
+
+    /** Load persisted state. Returns true if was enabled. */
+    _loadState() {
+        try {
+            const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+            return !!data.enabled;
+        } catch (e) {
+            return false;
+        }
     }
 }
 

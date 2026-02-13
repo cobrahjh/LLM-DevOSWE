@@ -15,3 +15,6 @@ tools/navdata/FAACIFP18.zip
 
 # ATC facility data cache (generated at runtime from SimConnect)
 data/atc-cache/
+
+# AI autopilot runtime state (persisted for auto-recovery)
+backend/ai-autopilot/.rule-engine-state.json
