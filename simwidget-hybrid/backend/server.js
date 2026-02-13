@@ -3226,18 +3226,18 @@ const ruleEngineServer = new RuleEngineServer({
 // API endpoints for server-side rule engine
 app.post('/api/ai-autopilot/enable', (req, res) => {
     ruleEngineServer.enable();
-    // Auto-disable joystick so hardware axes don't override software control
-    setJoystickEnabled(false, (ok, err) => {
-        if (!ok) console.warn('[AI-AP] Joystick disable failed (may not be present):', err);
+    // Auto-disable flight controllers so hardware axes don't override software control
+    setFlightDevicesEnabled(false, (ok, err) => {
+        if (!ok) console.warn('[AI-AP] Flight device disable failed (may not be present):', err);
     });
     res.json({ success: true, enabled: true });
 });
 
 app.post('/api/ai-autopilot/disable', (req, res) => {
     ruleEngineServer.disable();
-    // Re-enable joystick for manual flight
-    setJoystickEnabled(true, (ok, err) => {
-        if (!ok) console.warn('[AI-AP] Joystick enable failed:', err);
+    // Re-enable flight controllers for manual flight
+    setFlightDevicesEnabled(true, (ok, err) => {
+        if (!ok) console.warn('[AI-AP] Flight device enable failed:', err);
     });
     res.json({ success: true, enabled: false });
 });
@@ -3253,22 +3253,34 @@ app.post('/api/ai-autopilot/cruise-alt', (req, res) => {
     res.json({ success: true, cruiseAlt: alt });
 });
 
-// ── Device Management (joystick disable/enable for AI autopilot) ──
-// Saitek Pro Flight joystick (VID_06A3&PID_0763) hardware throttle axis
-// overrides ALL software throttle commands in MSFS 2024.
-// Solution: disable the device at Windows PnP level when AI autopilot is active.
-const JOYSTICK_VID_PID = 'VID_06A3&PID_0763'; // Saitek Pro Flight
+// ── Device Management (flight controller disable/enable for AI autopilot) ──
+// Hardware throttle/joystick axes override ALL software commands in MSFS 2024.
+// Solution: disable flight sim peripherals at Windows PnP level when AI is active.
+// Devices: Thrustmaster (VID_044F) joystick+throttle, Saitek (VID_06A3) rudder pedals
+const FLIGHT_DEVICE_VIDS = ['VID_044F', 'VID_06A3']; // Thrustmaster, Saitek
 
-function setJoystickEnabled(enabled, callback) {
+function setFlightDevicesEnabled(enabled, callback) {
     const action = enabled ? 'Enable' : 'Disable';
-    // Pipeline: find all HID entries matching VID/PID → enable/disable them all
-    const ps = `Get-PnpDevice -Class 'HIDClass' | Where-Object { $_.InstanceId -like '*${JOYSTICK_VID_PID}*' } | ${action}-PnpDevice -Confirm:$false`;
-    exec(`powershell -Command "${ps}"`, { timeout: 10000 }, (err, stdout, stderr) => {
+    const statusFilter = enabled ? "Status -ne 'OK'" : "Status -eq 'OK'";
+    // Build OR filter for all flight device VIDs — only target devices that need changing
+    const vidFilters = FLIGHT_DEVICE_VIDS.map(v => `$_.InstanceId -like '*${v}*'`).join(' -or ');
+    const ps = `Get-PnpDevice -Class 'HIDClass' | Where-Object { (${vidFilters}) -and ($_.${statusFilter}) } | ${action}-PnpDevice -Confirm:$false -ErrorAction SilentlyContinue`;
+    // Run as admin via Start-Process for privilege escalation
+    const cmd = `powershell -Command "Start-Process powershell -ArgumentList '-Command',\\\"${ps.replace(/"/g, '`\\"')}\\\" -Verb RunAs -Wait -WindowStyle Hidden"`;
+    exec(cmd, { timeout: 15000 }, (err, stdout, stderr) => {
         if (err) {
-            console.error(`[Device] ${action} joystick failed:`, stderr || err.message);
-            if (callback) callback(false, stderr || err.message);
+            // Fallback: try direct (works if service is LocalSystem)
+            exec(`powershell -Command "${ps}"`, { timeout: 10000 }, (err2, stdout2, stderr2) => {
+                if (err2) {
+                    console.error(`[Device] ${action} flight devices failed:`, stderr2 || err2.message);
+                    if (callback) callback(false, stderr2 || err2.message);
+                } else {
+                    console.log(`[Device] Flight devices ${action.toLowerCase()}d (direct)`);
+                    if (callback) callback(true);
+                }
+            });
         } else {
-            console.log(`[Device] Joystick ${action.toLowerCase()}d successfully`);
+            console.log(`[Device] Flight devices ${action.toLowerCase()}d (elevated)`);
             if (callback) callback(true);
         }
     });
@@ -3285,25 +3297,25 @@ app.get('/api/devices', (req, res) => {
                 id: d.InstanceId,
                 name: d.FriendlyName || 'Unknown',
                 status: d.Status === 'OK' ? 'enabled' : 'disabled',
-                isJoystick: (d.InstanceId || '').includes(JOYSTICK_VID_PID)
+                isFlightDevice: FLIGHT_DEVICE_VIDS.some(v => (d.InstanceId || '').includes(v))
             }));
-            res.json({ devices: list, joystickVidPid: JOYSTICK_VID_PID });
+            res.json({ devices: list, flightDeviceVids: FLIGHT_DEVICE_VIDS });
         } catch (e) {
             res.status(500).json({ error: 'Failed to parse device list' });
         }
     });
 });
 
-// Disable joystick manually
-app.post('/api/devices/joystick/disable', (req, res) => {
-    setJoystickEnabled(false, (ok, err) => {
+// Disable flight devices manually
+app.post('/api/devices/flight/disable', (req, res) => {
+    setFlightDevicesEnabled(false, (ok, err) => {
         res.json({ success: ok, action: 'disabled', error: ok ? undefined : err });
     });
 });
 
-// Enable joystick manually
-app.post('/api/devices/joystick/enable', (req, res) => {
-    setJoystickEnabled(true, (ok, err) => {
+// Enable flight devices manually
+app.post('/api/devices/flight/enable', (req, res) => {
+    setFlightDevicesEnabled(true, (ok, err) => {
         res.json({ success: ok, action: 'enabled', error: ok ? undefined : err });
     });
 });

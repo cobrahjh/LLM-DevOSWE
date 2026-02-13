@@ -141,6 +141,9 @@ class GTN750Pane extends SimGlassBase {
         // XPDR control panel
         this.xpdrControl = new GTNXpdrControl({ serverPort: this.serverPort });
 
+        // Fuel monitor (will be initialized after flight plan manager)
+        this.fuelMonitor = null;
+
         // Deferred modules (loaded after 500ms)
         this.flightPlanManager = null;
         this.dataHandler = null;
@@ -243,6 +246,13 @@ class GTN750Pane extends SimGlassBase {
             onFlightPlanChanged: (plan) => {
                 this.fplPage?.update(plan);
             }
+        });
+
+        // Initialize fuel monitor (needs flight plan manager reference)
+        this.fuelMonitor = new GTNFuelMonitor({
+            core: this.core,
+            serverPort: this.serverPort,
+            flightPlanManager: this.flightPlanManager
         });
 
         this.loadedModules.flightPlan = true;
@@ -388,6 +398,7 @@ class GTN750Pane extends SimGlassBase {
             gps: this.cdiManager.gps,
             vnavManager: this.vnavManager,
             holdingManager: this.holdingManager,
+            fuelMonitor: this.fuelMonitor,
             onUpdateDatafields: () => {
                 this.dataFieldsManager.update(this.data, {
                     flightPlan: this.flightPlanManager?.flightPlan || null,
@@ -471,8 +482,10 @@ class GTN750Pane extends SimGlassBase {
         this.flightPlanManager?.checkApproachPhase(this.data);
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
+        this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
         this.updateApproachPhaseDisplay();
         this.updateIlsDisplay();
+        this.updateFuelDisplay();
         this.updateAuxData();
     }
 
@@ -563,6 +576,27 @@ class GTN750Pane extends SimGlassBase {
         this.elements.cdiApproachType.textContent = `ILS ${freq} ${tuned}`;
         this.elements.cdiApproachType.className = ilsInfo.autoTuned ? 'cdi-approach-type ils' : 'cdi-approach-type';
         this.elements.cdiApproachType.style.display = '';
+    }
+
+    updateFuelDisplay() {
+        const fuelRemaining = document.getElementById('fuel-remaining');
+        const fuelEndurance = document.getElementById('fuel-endurance');
+        const fuelState = document.getElementById('fuel-state');
+
+        if (!fuelRemaining || !fuelEndurance || !fuelState || !this.fuelMonitor) return;
+
+        const status = this.fuelMonitor.getStatus();
+
+        // Update fuel remaining
+        fuelRemaining.textContent = status.fuelRemaining.toFixed(1);
+        fuelRemaining.style.color = status.stateColor;
+
+        // Update endurance
+        fuelEndurance.textContent = status.enduranceStr;
+
+        // Update state indicator
+        fuelState.className = `fuel-state-indicator ${status.state}`;
+        fuelState.style.color = status.stateColor;
     }
 
     /**

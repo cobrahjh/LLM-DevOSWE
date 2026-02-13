@@ -553,47 +553,81 @@ class GTNMapRenderer {
     }
 
     renderFuelRangeRing(ctx, cx, cy, w, h, state) {
-        const fuelTotal = state.data.fuelTotal || 0;
-        const fuelFlow = state.data.fuelFlow || 1;
-        const groundSpeed = state.data.groundSpeed || 100;
+        // Use fuel monitor for accurate range rings with reserves
+        if (!state.fuelMonitor) {
+            // Fallback to simple calculation if monitor not available
+            const fuelTotal = state.data.fuelTotal || 0;
+            const fuelFlow = state.data.fuelFlow || 1;
+            const groundSpeed = state.data.groundSpeed || 100;
+            const enduranceHours = fuelTotal / fuelFlow;
+            const rangeNm = enduranceHours * groundSpeed;
 
-        const enduranceHours = fuelTotal / fuelFlow;
-        const rangeNm = enduranceHours * groundSpeed;
+            if (rangeNm > state.map.range * 2 || rangeNm < 5) return;
 
-        if (rangeNm > state.map.range * 2) return;
-        if (rangeNm < 5) return;
+            const pixelsPerNm = Math.min(w, h) / 2 / state.map.range;
+            const ringRadius = rangeNm * pixelsPerNm;
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 4]);
+            ctx.beginPath();
+            ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+            return;
+        }
+
+        // Get range rings from fuel monitor (includes safe/marginal/critical zones)
+        const rings = state.fuelMonitor.getRangeRings();
+        if (!rings || rings.length === 0) return;
 
         const pixelsPerNm = Math.min(w, h) / 2 / state.map.range;
-        const ringRadius = rangeNm * pixelsPerNm;
 
         ctx.save();
 
-        ctx.strokeStyle = 'rgba(255, 165, 0, 0.6)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 4]);
+        // Draw each ring (outer to inner for proper layering)
+        rings.reverse().forEach(ring => {
+            if (ring.radius > state.map.range * 2) return; // Too large for current view
 
-        ctx.beginPath();
-        ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
-        ctx.stroke();
+            const ringRadius = ring.radius * pixelsPerNm;
+
+            // Fill ring area
+            if (ring.color) {
+                ctx.fillStyle = ring.color;
+                ctx.beginPath();
+                ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Stroke ring outline
+            ctx.strokeStyle = ring.strokeColor || ring.color;
+            ctx.lineWidth = 2;
+            ctx.setLineDash(ring.dash || []);
+            ctx.beginPath();
+            ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw label at 45° angle
+            if (ring.label && ringRadius > 30) {
+                const labelAngle = -Math.PI / 4;
+                const labelX = cx + Math.cos(labelAngle) * ringRadius;
+                const labelY = cy + Math.sin(labelAngle) * ringRadius;
+
+                ctx.font = 'bold 9px Consolas, monospace';
+                ctx.textAlign = 'left';
+
+                const textWidth = ctx.measureText(ring.label).width;
+                ctx.fillStyle = 'rgba(0, 10, 20, 0.8)';
+                ctx.fillRect(labelX + 4, labelY - 9, textWidth + 6, 12);
+
+                ctx.fillStyle = ring.strokeColor || '#ffffff';
+                ctx.fillText(ring.label, labelX + 7, labelY);
+            }
+        });
 
         ctx.setLineDash([]);
-
-        const labelAngle = -Math.PI / 4;
-        const labelX = cx + Math.cos(labelAngle) * ringRadius;
-        const labelY = cy + Math.sin(labelAngle) * ringRadius;
-
-        ctx.font = 'bold 10px Consolas, monospace';
-        ctx.fillStyle = 'rgba(255, 165, 0, 0.9)';
-        ctx.textAlign = 'left';
-
-        const labelText = `FUEL ${Math.round(rangeNm)}nm`;
-        const textWidth = ctx.measureText(labelText).width;
-        ctx.fillStyle = 'rgba(0, 10, 20, 0.8)';
-        ctx.fillRect(labelX + 4, labelY - 10, textWidth + 6, 14);
-
-        ctx.fillStyle = '#ffa500';
-        ctx.fillText(labelText, labelX + 7, labelY);
-
         ctx.restore();
     }
 

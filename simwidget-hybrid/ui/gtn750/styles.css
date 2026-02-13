@@ -345,6 +345,69 @@ body {
     white-space: nowrap;
 }
 
+/* Fuel Section */
+.fuel-section {
+    min-width: 90px;
+}
+
+.fuel-main-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.fuel-remaining {
+    font-size: 16px;
+    font-weight: 600;
+    color: #00ff00;
+}
+
+.fuel-unit {
+    font-size: 10px;
+    color: var(--gtn-text-dim);
+}
+
+.fuel-endurance-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.fuel-endurance-label {
+    font-size: 8px;
+    color: var(--gtn-text-dim);
+}
+
+.fuel-endurance {
+    font-size: 12px;
+    color: var(--gtn-text);
+}
+
+.fuel-state-indicator {
+    font-size: 14px;
+    margin-left: auto;
+}
+
+.fuel-state-indicator.safe {
+    color: #00ff00;
+}
+
+.fuel-state-indicator.marginal {
+    color: #ffff00;
+    animation: fuel-blink 1s infinite;
+}
+
+.fuel-state-indicator.critical {
+    color: #ff0000;
+    animation: fuel-blink 0.5s infinite;
+}
+
+@keyframes fuel-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
 /* NAV Tuning Info Display */
 .nav-group {
     flex-wrap: wrap;
