@@ -9,6 +9,7 @@ class GTNFlightPlan {
         this.elements = options.elements || {};
         this.serverPort = options.serverPort || 8080;
         this.syncChannel = options.syncChannel || null;
+        this.userWaypoints = options.userWaypoints || null;
 
         // Waypoint sequencing constants
         this.SEQUENCING = {
@@ -437,7 +438,41 @@ class GTNFlightPlan {
         const info = document.getElementById('dto-info');
         const activateBtn = document.getElementById('dto-activate');
 
-        // Try navdb cross-type search first (airports + VOR + NDB + FIX)
+        // Try user waypoints first
+        if (this.userWaypoints) {
+            const userWpt = this.userWaypoints.getWaypoint(ident);
+            if (userWpt) {
+                this.dtoTarget = {
+                    ident: userWpt.ident,
+                    name: userWpt.name,
+                    lat: userWpt.lat,
+                    lon: userWpt.lon,
+                    type: 'USER WPT',
+                    category: userWpt.category
+                };
+
+                const dist = this.core.calculateDistance(
+                    this._currentLat || 0, this._currentLon || 0,
+                    this.dtoTarget.lat, this.dtoTarget.lon
+                );
+                const brg = this.core.calculateBearing(
+                    this._currentLat || 0, this._currentLon || 0,
+                    this.dtoTarget.lat, this.dtoTarget.lon
+                );
+
+                const catInfo = this.userWaypoints.getCategory(userWpt.category);
+                const icon = catInfo ? catInfo.icon : '●';
+
+                info.innerHTML = `
+                    <div class="dto-name">${icon} ${this.dtoTarget.name}</div>
+                    <div class="dto-coords">USER WPT - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
+                `;
+                activateBtn.disabled = false;
+                return;
+            }
+        }
+
+        // Try navdb cross-type search (airports + VOR + NDB + FIX)
         try {
             const navdbResponse = await fetch(`http://${location.hostname}:${this.serverPort}/api/navdb/search/${ident}`);
             if (navdbResponse.ok) {

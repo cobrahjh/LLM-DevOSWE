@@ -162,6 +162,11 @@ class GTN750Pane extends SimGlassBase {
             onPhaseChange: (newPhase, oldPhase) => this.handleFlightPhaseChange(newPhase, oldPhase)
         });
 
+        // User Waypoints (custom waypoint management)
+        this.userWaypoints = new GTNUserWaypoints({
+            core: this.core
+        });
+
         // Deferred modules (loaded after 500ms)
         this.flightPlanManager = null;
         this.dataHandler = null;
@@ -253,6 +258,7 @@ class GTN750Pane extends SimGlassBase {
             elements: this.elements,
             serverPort: this.serverPort,
             syncChannel: this.syncChannel,
+            userWaypoints: this.userWaypoints,
             onWaypointChanged: () => this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager),
             onDirectToActivated: () => {
                 if (this.pageManager) this.pageManager.switchPage('map');
