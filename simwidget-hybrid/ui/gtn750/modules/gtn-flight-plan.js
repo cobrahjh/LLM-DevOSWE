@@ -690,6 +690,88 @@ class GTNFlightPlan {
         if (this.onWaypointChanged) this.onWaypointChanged();
     }
 
+    /**
+     * Load a procedure (SID/STAR/Approach) into the flight plan
+     * @param {string} type - 'dep', 'arr', or 'apr'
+     * @param {Object} procedure - Procedure metadata (name, airport, etc.)
+     * @param {Array} waypoints - Array of waypoint objects with ident, lat, lon
+     */
+    loadProcedure(type, procedure, waypoints) {
+        if (!waypoints || waypoints.length === 0) {
+            GTNCore.log(`[GTN750] No waypoints to load for ${procedure?.name}`);
+            return;
+        }
+
+        if (!this.flightPlan) {
+            this.flightPlan = { waypoints: [], source: 'manual' };
+        }
+        if (!this.flightPlan.waypoints) {
+            this.flightPlan.waypoints = [];
+        }
+
+        // Convert navdb waypoints to flight plan format
+        const fplWaypoints = waypoints.map(wp => ({
+            ident: wp.ident,
+            lat: wp.lat,
+            lng: wp.lon,  // Note: flight plan uses 'lng', navdb uses 'lon'
+            type: wp.type || 'WAYPOINT',
+            pathTerm: wp.pathTerm,
+            altDesc: wp.altDesc,
+            alt1: wp.alt1,
+            alt2: wp.alt2,
+            speedLimit: wp.speedLimit
+        }));
+
+        let insertIndex = 0;
+        let procedureName = procedure?.name || 'UNKNOWN';
+
+        switch (type) {
+            case 'dep': // SID - insert after origin
+                // Find origin airport (first waypoint) or insert at beginning
+                insertIndex = this.flightPlan.waypoints.length > 0 ? 1 : 0;
+                GTNCore.log(`[GTN750] Loading departure ${procedureName} at index ${insertIndex}`);
+                break;
+
+            case 'arr': // STAR - insert before destination
+                // Insert before last waypoint (destination) or at end if no destination
+                insertIndex = Math.max(0, this.flightPlan.waypoints.length - 1);
+                if (this.flightPlan.waypoints.length === 0) insertIndex = 0;
+                GTNCore.log(`[GTN750] Loading arrival ${procedureName} at index ${insertIndex}`);
+                break;
+
+            case 'apr': // Approach - append to end
+                insertIndex = this.flightPlan.waypoints.length;
+                GTNCore.log(`[GTN750] Loading approach ${procedureName} at index ${insertIndex}`);
+                break;
+
+            default:
+                GTNCore.log(`[GTN750] Unknown procedure type: ${type}`);
+                return;
+        }
+
+        // Insert all procedure waypoints
+        for (let i = 0; i < fplWaypoints.length; i++) {
+            this.insertWaypoint(fplWaypoints[i], insertIndex + i);
+        }
+
+        // Mark flight plan as manually modified
+        this.flightPlan.source = 'manual';
+
+        // Store procedure metadata
+        if (!this.flightPlan.procedures) {
+            this.flightPlan.procedures = {};
+        }
+        this.flightPlan.procedures[type] = {
+            name: procedureName,
+            airport: procedure?.airport || procedure?.ident?.split('.')[0],
+            transition: procedure?.transition,
+            waypointCount: fplWaypoints.length
+        };
+
+        GTNCore.log(`[GTN750] Loaded ${procedureName}: ${fplWaypoints.length} waypoints`);
+        this.notifyChanged();
+    }
+
     destroy() {
         if (this._fetchTimer) clearTimeout(this._fetchTimer);
         if (this.audioContext) {
