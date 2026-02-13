@@ -231,10 +231,57 @@ class GTNAirportDiagram {
     }
 
     /**
+     * Calculate distance between two lat/lon points (Haversine formula)
+     * @param {number} lat1 - Latitude 1
+     * @param {number} lon1 - Longitude 1
+     * @param {number} lat2 - Latitude 2
+     * @param {number} lon2 - Longitude 2
+     * @returns {number} Distance in nautical miles
+     */
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 3440.065; // Earth radius in nautical miles
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    /**
+     * Update canvas size to match container
+     * @returns {boolean} True if size changed
+     */
+    updateCanvasSize() {
+        if (!this.canvas) return false;
+
+        const container = this.canvas.parentElement;
+        if (!container) return false;
+
+        const newWidth = container.clientWidth;
+        const newHeight = container.clientHeight;
+
+        if (this.canvas.width !== newWidth || this.canvas.height !== newHeight) {
+            this.canvas.width = newWidth;
+            this.canvas.height = newHeight;
+            GTNCore.log(`[AirportDiagram] Canvas resized to ${newWidth}x${newHeight}`);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Render the complete airport diagram
      */
     render() {
         if (!this.canvas || !this.airport) return;
+
+        // Update canvas size to match container (if changed)
+        this.updateCanvasSize();
 
         const ctx = this.canvas.getContext('2d');
         const w = this.canvas.width;
@@ -250,6 +297,7 @@ class GTNAirportDiagram {
         this.renderTaxiRoute(ctx);
         this.renderOwnship(ctx);
         this.renderAirportLabel(ctx);
+        this.renderScaleIndicator(ctx);
     }
 
     /**
@@ -455,6 +503,66 @@ class GTNAirportDiagram {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(`${this.airport.icao} - ${this.airport.name}`, 10, 10);
+    }
+
+    /**
+     * Render scale indicator bar
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderScaleIndicator(ctx) {
+        if (!this.canvas) return;
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // Determine appropriate scale length based on current zoom
+        // Target: 100-200px on screen
+        const targetPx = 150;
+        const metersPerPx = 1 / this.viewport.scale;
+        const scaleMeters = Math.round(metersPerPx * targetPx);
+
+        // Round to nice numbers (100, 200, 500, 1000, etc.)
+        let niceScale;
+        if (scaleMeters < 100) {
+            niceScale = Math.ceil(scaleMeters / 50) * 50;
+        } else if (scaleMeters < 500) {
+            niceScale = Math.ceil(scaleMeters / 100) * 100;
+        } else if (scaleMeters < 1000) {
+            niceScale = Math.ceil(scaleMeters / 200) * 200;
+        } else {
+            niceScale = Math.ceil(scaleMeters / 500) * 500;
+        }
+
+        const scalePx = niceScale * this.viewport.scale;
+
+        // Draw scale bar in bottom-left corner
+        const barX = 10;
+        const barY = h - 30;
+        const barHeight = 5;
+
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(barX - 2, barY - 15, scalePx + 4, 25);
+
+        // Scale bar
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(barX, barY, scalePx, barHeight);
+
+        // Tick marks at ends
+        ctx.fillRect(barX, barY - 3, 2, barHeight + 6);
+        ctx.fillRect(barX + scalePx - 2, barY - 3, 2, barHeight + 6);
+
+        // Label
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+
+        const label = niceScale >= 1000
+            ? `${(niceScale / 1000).toFixed(1)}km`
+            : `${niceScale}m`;
+
+        ctx.fillText(label, barX + scalePx / 2, barY - 12);
     }
 
     /**

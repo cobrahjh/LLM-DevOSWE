@@ -40,6 +40,9 @@ class SafeTaxiPage {
                 canvas: this.elements.canvas,
                 serverPort: this.serverPort
             });
+
+            // Set initial canvas size based on container
+            this.diagram.updateCanvasSize();
         }
     }
 
@@ -186,8 +189,24 @@ class SafeTaxiPage {
         this.diagram.updateOwnship(data);
 
         // Auto-load nearest airport when on ground
-        if (data.agl < 50 && data.groundSpeed < 5 && !this.diagram.airport) {
-            this.autoLoadNearestAirport(data.latitude, data.longitude);
+        if (data.agl < 50 && data.groundSpeed < 5) {
+            // Check if we need to load/reload airport
+            if (!this.diagram.airport) {
+                // No airport loaded - load nearest
+                this.autoLoadNearestAirport(data.latitude, data.longitude);
+            } else {
+                // Airport loaded - check if we're too far away (transitioned to different airport)
+                const distNm = this.diagram.calculateDistance(
+                    data.latitude, data.longitude,
+                    this.diagram.airport.lat, this.diagram.airport.lon
+                );
+
+                // If more than 5nm from current airport, reload nearest
+                if (distNm > 5) {
+                    GTNCore.log(`[SafeTaxi] Distance from ${this.diagram.airport.icao}: ${distNm.toFixed(1)}nm - reloading nearest`);
+                    this.autoLoadNearestAirport(data.latitude, data.longitude);
+                }
+            }
         }
     }
 
