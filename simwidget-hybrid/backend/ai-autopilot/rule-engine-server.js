@@ -159,7 +159,7 @@ class RuleEngineServer {
 
         // Update ATC position (every frame for accurate waypoint tracking)
         if (this._atc) {
-            const agl = fd.altAGL ?? fd.altitude ?? 0;
+            const agl = fd.altitudeAGL ?? fd.altAGL ?? 0;
             this._atc.updatePosition(fd.latitude || 0, fd.longitude || 0, fd.groundSpeed || 0, agl);
         }
 
@@ -256,7 +256,7 @@ class RuleEngineServer {
         if (!fd || !fd.latitude || !fd.longitude) return;
 
         // Only detect when on ground
-        const agl = fd.altAGL ?? fd.altitude ?? 0;
+        const agl = fd.altitudeAGL ?? fd.altAGL ?? 0;
         const onGround = agl < 50;
         if (!onGround) {
             // Airborne — clear detection
