@@ -102,6 +102,11 @@ class GTNMapRenderer {
             state.weatherOverlay.setEnabled(false);
         }
 
+        // Airways (if enabled)
+        if (state.map.showAirways && state.nearbyAirways?.length) {
+            this.renderAirways(ctx, cx, cy, w, h, state);
+        }
+
         // Flight plan route
         if (state.flightPlan?.waypoints) {
             this.renderRoute(ctx, cx, cy, w, h, state);
@@ -982,6 +987,107 @@ class GTNMapRenderer {
                 ctx.fillText(wp.airway, midX, midY);
             });
         }
+    }
+
+    /**
+     * Render nearby airways on map (Victor/Jet routes)
+     */
+    renderAirways(ctx, cx, cy, w, h, state) {
+        const declutterLevel = state.declutterLevel || 0;
+        if (declutterLevel >= 2) return; // Hide airways at high declutter
+
+        const nearbyAirways = state.nearbyAirways || [];
+        const aircraftLat = state.data.latitude;
+        const aircraftLon = state.data.longitude;
+        const heading = state.data.heading || 0;
+        const range = state.map.range;
+        const orientation = state.map.orientation;
+
+        nearbyAirways.forEach(airway => {
+            if (!airway.fixes || airway.fixes.length < 2) return;
+
+            // Convert fixes to screen coordinates
+            const positions = airway.fixes.map(fix => {
+                const { x, y } = this.latLonToCanvas(
+                    fix.lat,
+                    fix.lon,
+                    aircraftLat,
+                    aircraftLon,
+                    heading,
+                    range,
+                    orientation,
+                    cx,
+                    cy,
+                    w,
+                    h
+                );
+                return { x, y, fix };
+            });
+
+            // Filter to on-screen segments only
+            const visibleSegments = [];
+            for (let i = 0; i < positions.length - 1; i++) {
+                const p1 = positions[i];
+                const p2 = positions[i + 1];
+
+                // Check if segment is at least partially on screen
+                const margin = 50;
+                if (
+                    (p1.x >= -margin && p1.x <= w + margin && p1.y >= -margin && p1.y <= h + margin) ||
+                    (p2.x >= -margin && p2.x <= w + margin && p2.y >= -margin && p2.y <= h + margin)
+                ) {
+                    visibleSegments.push({ p1, p2, index: i });
+                }
+            }
+
+            if (visibleSegments.length === 0) return;
+
+            // Draw airway segments (dashed light blue lines)
+            ctx.strokeStyle = 'rgba(100, 200, 255, 0.4)'; // Light blue, semi-transparent
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+
+            visibleSegments.forEach(seg => {
+                ctx.beginPath();
+                ctx.moveTo(seg.p1.x, seg.p1.y);
+                ctx.lineTo(seg.p2.x, seg.p2.y);
+                ctx.stroke();
+            });
+
+            ctx.setLineDash([]);
+
+            // Draw airway label at midpoint of visible segment (low declutter only)
+            if (declutterLevel === 0 && visibleSegments.length > 0) {
+                const midSegment = visibleSegments[Math.floor(visibleSegments.length / 2)];
+                const midX = (midSegment.p1.x + midSegment.p2.x) / 2;
+                const midY = (midSegment.p1.y + midSegment.p2.y) / 2;
+
+                const label = `${airway.ident}`;
+                ctx.font = '9px Consolas, monospace';
+                const metrics = ctx.measureText(label);
+
+                // Background for readability
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(midX - metrics.width / 2 - 2, midY - 10, metrics.width + 4, 11);
+
+                // Airway name in light blue
+                ctx.fillStyle = 'rgba(100, 200, 255, 0.9)';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, midX, midY);
+            }
+
+            // Draw fixes as small dots (very low declutter only)
+            if (declutterLevel === 0 && state.map.range <= 50) {
+                positions.forEach(pos => {
+                    if (pos.x >= 0 && pos.x <= w && pos.y >= 0 && pos.y <= h) {
+                        ctx.fillStyle = 'rgba(100, 200, 255, 0.5)';
+                        ctx.beginPath();
+                        ctx.arc(pos.x, pos.y, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+        });
     }
 
     /**

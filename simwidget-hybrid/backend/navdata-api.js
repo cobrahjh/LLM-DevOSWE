@@ -240,6 +240,36 @@ function setupNavdataRoutes(app) {
         res.json({ items: results, count: results.length, source: 'navdb' });
     });
 
+    app.get('/api/navdb/nearby/airways', requireDb, (req, res) => {
+        const lat = parseFloat(req.query.lat);
+        const lon = parseFloat(req.query.lon);
+        const range = parseFloat(req.query.range) || 100;
+        const limit = parseInt(req.query.limit) || 50;
+
+        if (isNaN(lat) || isNaN(lon)) {
+            return res.status(400).json({ error: 'lat and lon required' });
+        }
+
+        const { dLat, dLon } = rangeToDeg(range, lat);
+
+        // Get unique airways that have fixes within the region
+        const rows = db.prepare(`
+            SELECT DISTINCT ident, route_type
+            FROM airways
+            WHERE fix_lat BETWEEN ? AND ? AND fix_lon BETWEEN ? AND ?
+            ORDER BY ident
+            LIMIT ?
+        `).all(lat - dLat, lat + dLat, lon - dLon, lon + dLon, limit);
+
+        const results = rows.map(r => ({
+            ident: r.ident,
+            type: r.route_type,
+            category: r.route_type === 'J' ? 'Jet' : 'Victor'
+        }));
+
+        res.json({ items: results, count: results.length, source: 'navdb' });
+    });
+
     // ── Airport detail ─────────────────────────────────────────────
 
     app.get('/api/navdb/airport/:icao', requireDb, (req, res) => {

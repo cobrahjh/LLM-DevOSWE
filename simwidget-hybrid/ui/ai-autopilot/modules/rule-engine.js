@@ -191,7 +191,7 @@ class RuleEngine {
                     this._cmdValue('MIXTURE_SET', tt.preflightMixture ?? 100, 'Mixture RICH');
                     // MSFS 2024: use toggle (PARKING_BRAKE_SET doesn't work)
                     this._cmd('PARKING_BRAKES', false, 'Release parking brake for taxi');
-                    this._cmdValue('THROTTLE_SET', tt.preflightThrottle ?? 35, 'Idle-up throttle');
+                    this._cmdValue('THROTTLE_SET', tt.preflightThrottle ?? 10, 'Idle-up throttle');
                 }
                 // Capture heading and start steering immediately — don't wait for TAXI
                 if (!this._runwayHeading) {
@@ -263,15 +263,17 @@ class RuleEngine {
                     // for nosewheel steering authority (15% stalls the correction loop)
                     // Values overridable via takeoff-tuner.html
                     const tt = this._getTakeoffTuning();
-                    const thrMin = tt.taxiThrottleMin ?? 25;
-                    const thrMax = tt.taxiThrottleMax ?? 100;
-                    const targetGS = tt.taxiTargetGS ?? 25;
+                    const thrMin = tt.taxiThrottleMin ?? 5;
+                    const thrMax = tt.taxiThrottleMax ?? 20;
+                    const targetGS = tt.taxiTargetGS ?? 10;
                     let thr;
                     if (hdgError > (tt.taxiHdgErrorThreshold ?? 15)) {
-                        thr = Math.max(thrMin, 35 - hdgError * (tt.taxiHdgPenalty ?? 0.3));
+                        // Misaligned — slow down but keep minimum for nosewheel authority
+                        thr = Math.max(thrMin, 12 - hdgError * (tt.taxiHdgPenalty ?? 0.3));
                     } else {
+                        // Speed-proportional: ~12% at target, ramp up/down with error
                         const speedError = targetGS - gs;
-                        thr = Math.max(thrMin, Math.min(thrMax, 80 + speedError * (tt.taxiSpeedGain ?? 2.0)));
+                        thr = Math.max(thrMin, Math.min(thrMax, 12 + speedError * (tt.taxiSpeedGain ?? 1.0)));
                     }
                     this._cmdValue('THROTTLE_SET', Math.round(thr), `Taxi (GS ${Math.round(gs)}, hdg err ${Math.round(hdgError)}°)`);
                 }

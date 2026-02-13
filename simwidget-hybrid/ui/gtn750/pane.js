@@ -74,8 +74,13 @@ class GTN750Pane extends SimGlassBase {
             range: 10,
             ranges: [2, 5, 10, 20, 50, 100, 200],
             orientation: 'track',
-            showTerrain: false, showTraffic: false, showWeather: false
+            showTerrain: false, showTraffic: false, showWeather: false,
+            showAirways: false
         };
+
+        // Nearby airways cache
+        this.nearbyAirways = [];
+        this._airwaysFetchTimer = null;
 
         // TAWS
         this.taws = { active: true, inhibited: false };
@@ -422,6 +427,7 @@ class GTN750Pane extends SimGlassBase {
             terrainOverlay: this.terrainOverlay,
             trafficOverlay: this.trafficOverlay,
             weatherOverlay: this.weatherOverlay,
+            nearbyAirways: this.nearbyAirways,
             flightPlan: this.flightPlanManager?.flightPlan || null,
             activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0,
             activeWaypoint: this.flightPlanManager?.activeWaypoint || null,
@@ -2162,6 +2168,7 @@ class GTN750Pane extends SimGlassBase {
             vnavStatus: document.getElementById('vnav-status'),
             vnavToggle: document.getElementById('vnav-toggle'),
             vnavTod: document.getElementById('vnav-tod'),
+            airwaysToggle: document.getElementById('airways-toggle'),
             vnavVdev: document.getElementById('vnav-vdev'),
             vnavReqvs: document.getElementById('vnav-reqvs'),
             vnavTgtalt: document.getElementById('vnav-tgtalt'),
@@ -2253,6 +2260,10 @@ class GTN750Pane extends SimGlassBase {
 
         // VNAV toggle button
         this.elements.vnavToggle?.addEventListener('click', () => this.toggleVNav());
+
+        // Airways toggle button
+        this.elements.airwaysToggle?.addEventListener('click', () => this.toggleAirways());
+
         this.elements.wptSearch?.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.searchWaypoint(); });
 
         // NRST type tabs
@@ -2659,6 +2670,74 @@ class GTN750Pane extends SimGlassBase {
             const current = this.terrainOverlay.getRange();
             const idx = ranges.indexOf(current);
             this.terrainOverlay.setRange(ranges[(idx + 1) % ranges.length]);
+        }
+    }
+
+    // ===== AIRWAYS =====
+
+    toggleAirways() {
+        this.map.showAirways = !this.map.showAirways;
+
+        // Update toggle button if it exists
+        const toggle = document.getElementById('airways-toggle');
+        if (toggle) {
+            toggle.textContent = this.map.showAirways ? 'ON' : 'OFF';
+            toggle.classList.toggle('active', this.map.showAirways);
+        }
+
+        // Start/stop airways fetching
+        if (this.map.showAirways) {
+            this.fetchNearbyAirways();
+            this._airwaysFetchTimer = setInterval(() => this.fetchNearbyAirways(), 15000); // Every 15s
+        } else {
+            if (this._airwaysFetchTimer) {
+                clearInterval(this._airwaysFetchTimer);
+                this._airwaysFetchTimer = null;
+            }
+            this.nearbyAirways = [];
+        }
+    }
+
+    async fetchNearbyAirways() {
+        if (!this.map.showAirways || !this.data.latitude || !this.data.longitude) return;
+
+        try {
+            const range = Math.max(this.map.range * 2, 100); // Fetch wider area than visible
+            const url = `http://${location.hostname}:${this.serverPort}/api/navdb/nearby/airways?lat=${this.data.latitude}&lon=${this.data.longitude}&range=${range}&limit=20`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                GTNCore.log('[GTN750] Airways fetch failed:', response.status);
+                return;
+            }
+
+            const data = await response.json();
+            if (!data.items) return;
+
+            // Fetch fix details for each airway
+            const airwaysWithFixes = await Promise.all(
+                data.items.map(async (airway) => {
+                    try {
+                        const fixUrl = `http://${location.hostname}:${this.serverPort}/api/navdb/airway/${airway.ident}`;
+                        const fixResponse = await fetch(fixUrl);
+                        if (!fixResponse.ok) return null;
+
+                        const fixData = await fixResponse.json();
+                        return {
+                            ident: airway.ident,
+                            type: airway.type,
+                            fixes: fixData.fixes
+                        };
+                    } catch (e) {
+                        return null;
+                    }
+                })
+            );
+
+            this.nearbyAirways = airwaysWithFixes.filter(a => a !== null);
+
+        } catch (e) {
+            GTNCore.log('[GTN750] Airways fetch error:', e.message);
         }
     }
 
@@ -3170,6 +3249,12 @@ class GTN750Pane extends SimGlassBase {
         if (this.dataHandler) this.dataHandler.destroy();
         if (this.flightPlanManager) this.flightPlanManager.destroy();
         if (this.xpdrControl) this.xpdrControl.destroy();
+
+        // Stop airways fetching
+        if (this._airwaysFetchTimer) {
+            clearInterval(this._airwaysFetchTimer);
+            this._airwaysFetchTimer = null;
+        }
 
         // Destroy page instances
         if (this.taxiPage) this.taxiPage.destroy();
