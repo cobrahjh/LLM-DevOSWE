@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SimBase.Document Type="WeatherPreset" version="1,3">
+    <Descr>AceXML Document</Descr>
+    <WeatherPreset.Preset>
+        <!-- Metadata -->
+        <Name>SimGlass Clear VFR</Name>
+        <Order>10</Order>
+        <LoadingTip>Perfect VFR conditions - visibility unlimited</LoadingTip>
+        <LiveID>WEATHER_CLEAR_SKY</LiveID>
+
+        <!-- Atmospheric Conditions -->
+        <IsAltitudeAMGL>False</IsAltitudeAMGL>
+        <MSLPressure>101325</MSLPressure><!-- 29.92 inHg standard -->
+        <MSLTemperature>288.15</MSLTemperature><!-- 15°C / 59°F -->
+        <AerosolDensity>0.3</AerosolDensity><!-- Light haze -->
+        <Precipitations>0</Precipitations>
+        <SnowCover>0</SnowCover>
+        <ThunderstormIntensity>0</ThunderstormIntensity>
+
+        <!-- Few scattered clouds at 5000ft -->
+        <CloudLayer>
+            <CloudLayerAltitudeBot value="1500" unit="m"/><!-- ~5000ft -->
+            <CloudLayerAltitudeTop value="1800" unit="m"/><!-- ~6000ft -->
+            <CloudLayerDensity value="0.2" unit="(0 - 1)"/><!-- Sparse -->
+            <CloudLayerScattering value="0.4" unit="(0 - 1)"/><!-- Light -->
+        </CloudLayer>
+
+        <!-- Surface wind: 270° at 10kt with light gusts -->
+        <WindLayer>
+            <WindLayerAltitude value="0" unit="m"/>
+            <WindLayerAngle value="270" unit="degrees"/><!-- West -->
+            <WindLayerSpeed value="10" unit="knts"/>
+            <GustWave>
+                <GustWaveDuration value="4" unit="sec"/>
+                <GustWaveInterval value="20" unit="sec"/>
+                <GustWaveSpeed value="5" unit="knts"/><!-- Gust to 15kt -->
+                <GustAngle value="280" unit="degrees"/>
+            </GustWave>
+        </WindLayer>
+
+        <!-- Upper level wind: 3000m (~10,000ft) -->
+        <WindLayer>
+            <WindLayerAltitude value="3000" unit="m"/>
+            <WindLayerAngle value="250" unit="degrees"/>
+            <WindLayerSpeed value="25" unit="knts"/>
+        </WindLayer>
+    </WeatherPreset.Preset>
+</SimBase.Document>

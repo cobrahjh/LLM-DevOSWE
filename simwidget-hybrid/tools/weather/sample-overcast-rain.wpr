@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SimBase.Document Type="WeatherPreset" version="1,3">
+    <Descr>AceXML Document</Descr>
+    <WeatherPreset.Preset>
+        <!-- Metadata -->
+        <Name>SimGlass IFR Rain</Name>
+        <Order>11</Order>
+        <LoadingTip>IFR conditions - overcast with moderate rain</LoadingTip>
+        <LiveID>WEATHER_RAIN</LiveID>
+
+        <!-- Atmospheric Conditions -->
+        <IsAltitudeAMGL>False</IsAltitudeAMGL>
+        <MSLPressure>98500</MSLPressure><!-- 29.09 inHg - low pressure -->
+        <MSLTemperature>283.15</MSLTemperature><!-- 10°C / 50°F -->
+        <AerosolDensity>0.8</AerosolDensity><!-- Heavy moisture -->
+        <Precipitations>15</Precipitations><!-- 15mm/h moderate rain -->
+        <PrecipitationType>RAIN</PrecipitationType>
+        <SnowCover>0</SnowCover>
+        <ThunderstormIntensity>0.2</ThunderstormIntensity><!-- Light thunder -->
+
+        <!-- Low overcast layer (ceiling 800ft) -->
+        <CloudLayer>
+            <CloudLayerAltitudeBot value="200" unit="m"/><!-- ~650ft -->
+            <CloudLayerAltitudeTop value="400" unit="m"/><!-- ~1300ft -->
+            <CloudLayerDensity value="0.95" unit="(0 - 1)"/><!-- Nearly solid -->
+            <CloudLayerScattering value="0.9" unit="(0 - 1)"/><!-- Heavy -->
+        </CloudLayer>
+
+        <!-- Mid-level clouds -->
+        <CloudLayer>
+            <CloudLayerAltitudeBot value="1000" unit="m"/>
+            <CloudLayerAltitudeTop value="2000" unit="m"/>
+            <CloudLayerDensity value="0.85" unit="(0 - 1)"/>
+            <CloudLayerScattering value="0.85" unit="(0 - 1)"/>
+        </CloudLayer>
+
+        <!-- Strong surface wind with gustsweather -->
+        <WindLayer>
+            <WindLayerAltitude value="0" unit="m"/>
+            <WindLayerAngle value="180" unit="degrees"/><!-- South -->
+            <WindLayerSpeed value="20" unit="knts"/>
+            <GustWave>
+                <GustWaveDuration value="6" unit="sec"/>
+                <GustWaveInterval value="12" unit="sec"/>
+                <GustWaveSpeed value="15" unit="knts"/><!-- Gust to 35kt -->
+                <GustAngle value="190" unit="degrees"/>
+            </GustWave>
+        </WindLayer>
+
+        <!-- Upper wind -->
+        <WindLayer>
+            <WindLayerAltitude value="3000" unit="m"/>
+            <WindLayerAngle value="210" unit="degrees"/>
+            <WindLayerSpeed value="35" unit="knts"/>
+        </WindLayer>
+    </WeatherPreset.Preset>
+</SimBase.Document>
