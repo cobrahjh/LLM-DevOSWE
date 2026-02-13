@@ -2885,17 +2885,63 @@ app.get('/api/debug/held-axes', (req, res) => {
 });
 
 app.post('/api/debug/throttle-test', (req, res) => {
+    if (!simConnectConnection) return res.json({ error: 'No SimConnect' });
+    const method = req.query.method || 'all';
+    const pct = parseInt(req.query.pct) || 80;
+    const results = {};
+
+    // Method 1: InputEvent ENGINE_THROTTLE_1
     const hash = global.inputEventHashes?.ENGINE_THROTTLE_1;
-    if (!hash || !simConnectConnection) return res.json({ error: 'No hash or connection' });
-    const val = 0.8;
-    try {
-        simConnectConnection.setInputEvent(hash, val);
-        _heldAxes.throttle = { hash, value: val };
-        updateHeldAxesTimer();
-        res.json({ success: true, hash: typeof hash === 'bigint' ? hash.toString() : hash, value: val, heldAxes: Object.keys(_heldAxes) });
-    } catch (e) {
-        res.json({ error: e.message });
+    if (hash && (method === 'all' || method === 'inputevent')) {
+        try {
+            simConnectConnection.setInputEvent(hash, pct / 100);
+            results.inputEvent = { ok: true, hash: hash.toString(), value: pct / 100 };
+        } catch (e) { results.inputEvent = { error: e.message }; }
     }
+
+    // Method 2: SimVar write (definition 14)
+    if (method === 'all' || method === 'simvar') {
+        try {
+            const { RawBuffer } = require('node-simconnect');
+            const buf = new RawBuffer(8);
+            buf.writeFloat64(pct);
+            simConnectConnection.setDataOnSimObject(14, 0, { tagged: false, arrayCount: 0, buffer: buf });
+            results.simvarWrite = { ok: true, defId: 14, value: pct };
+        } catch (e) { results.simvarWrite = { error: e.message }; }
+    }
+
+    // Method 3: Legacy transmitClientEvent THROTTLE_SET
+    if (method === 'all' || method === 'legacy') {
+        const eid = eventMap['THROTTLE_SET'];
+        if (eid !== undefined) {
+            try {
+                const simValue = Math.round((pct / 100) * 16383);
+                simConnectConnection.transmitClientEvent(0, eid, simValue, 1, 16);
+                results.legacy = { ok: true, eventId: eid, simValue };
+            } catch (e) { results.legacy = { error: e.message }; }
+        } else {
+            results.legacy = { error: 'THROTTLE_SET not in eventMap' };
+        }
+    }
+
+    // Method 4: AXIS_THROTTLE_SET (simulates joystick axis — may override hardware)
+    if (method === 'all' || method === 'axis') {
+        const eid = eventMap['AXIS_THROTTLE_SET'];
+        if (eid !== undefined) {
+            try {
+                // AXIS events use -16383 to +16383 range (center = 0, full = 16383)
+                const simValue = Math.round((pct / 100) * 16383);
+                simConnectConnection.transmitClientEvent(0, eid, simValue, 1, 16);
+                results.axisThrottle = { ok: true, eventId: eid, simValue };
+            } catch (e) { results.axisThrottle = { error: e.message }; }
+        } else {
+            results.axisThrottle = { error: 'AXIS_THROTTLE_SET not in eventMap' };
+        }
+    }
+
+    // Clear held axes to avoid interference
+    delete _heldAxes.throttle;
+    res.json(results);
 });
 
 // SimConnect command execution - events mapped during init
@@ -2949,30 +2995,27 @@ function executeCommand(command, value) {
         return;
     }
 
-    // MSFS 2024 InputEvents for throttle — legacy THROTTLE_SET doesn't work
+    // MSFS 2024 throttle — use direct SimVar write (definition ID 14)
+    // InputEvent ENGINE_THROTTLE_1 gets overridden by physical joystick throttle axis.
+    // SimVar write bypasses the input system entirely.
     if (command === 'THROTTLE_SET' || command === 'THROTTLE1_SET') {
         const percent = Math.max(0, Math.min(100, value || 0));
-        const normalized = percent / 100;
-        const hash = global.inputEventHashes?.ENGINE_THROTTLE_1;
-        if (hash) {
-            try {
-                // Store for 60Hz re-application (overcomes joystick throttle override)
-                if (percent === 0) {
-                    delete _heldAxes.throttle;
-                } else {
-                    _heldAxes.throttle = { hash, value: normalized };
-                }
-                updateHeldAxesTimer();
-                simConnectConnection.setInputEvent(hash, normalized);
-                console.log(`[Throttle] InputEvent: ${percent}% (${normalized}) via ENGINE_THROTTLE_1`);
-            } catch (e) {
-                console.error(`[Throttle] InputEvent error: ${e.message}`);
+        try {
+            const { RawBuffer } = require('node-simconnect');
+            const buf = new RawBuffer(8);
+            buf.writeFloat64(percent); // SimVar uses 0-100 Percent
+            const dataPacket = { tagged: false, arrayCount: 0, buffer: buf };
+            // Store for 120Hz re-application (overcomes hardware axis override)
+            if (percent === 0) {
+                delete _heldAxes.throttle;
+            } else {
+                _heldAxes.throttle = { simvar: true, defId: 14, value: percent };
             }
-        } else {
-            // InputEvent hash not yet available (race condition after restart).
-            // Store pending value — will be applied when inputEventsList arrives.
-            _heldAxes._pendingThrottle = normalized;
-            console.log(`[Throttle] Pending: ${percent}% (hash not yet available)`);
+            updateHeldAxesTimer();
+            simConnectConnection.setDataOnSimObject(14, 0, dataPacket);
+            console.log(`[Throttle] SimVar write: ${percent}%`);
+        } catch (e) {
+            console.error(`[Throttle] SimVar write error: ${e.message}`);
         }
         return;
     }
@@ -3573,6 +3616,9 @@ async function initSimConnect() {
             'BRAKES_RIGHT',
             // Engine control events
             'THROTTLE_SET',
+            'THROTTLE1_SET',
+            'AXIS_THROTTLE_SET',
+            'AXIS_THROTTLE1_SET',
             'PROP_PITCH_SET',
             'MIXTURE_SET',
             'MIXTURE1_SET',

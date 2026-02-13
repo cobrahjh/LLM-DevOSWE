@@ -1585,6 +1585,36 @@ class GTNFlightPlan {
         };
     }
 
+    /**
+     * Check if active waypoint is a holding pattern and return hold parameters
+     * @returns {Object|null} - Hold parameters or null
+     */
+    getActiveHoldingPattern() {
+        if (!this.flightPlan?.waypoints?.length) return null;
+
+        const activeWp = this.flightPlan.waypoints[this.activeWaypointIndex];
+        if (!activeWp) return null;
+
+        // Check if waypoint is a holding pattern (ARINC 424 leg types: HM, HA, HF)
+        const holdingLegTypes = ['HM', 'HA', 'HF'];
+        if (!holdingLegTypes.includes(activeWp.pathTerm)) {
+            return null;
+        }
+
+        // Extract holding parameters
+        return {
+            fix: {
+                ident: activeWp.ident,
+                lat: activeWp.lat,
+                lon: activeWp.lng
+            },
+            inboundCourse: activeWp.course || activeWp.magneticCourse || 0,
+            turnDirection: activeWp.turnDir || 'R',
+            legTime: activeWp.legTime || 60,
+            altitude: activeWp.alt1 || null
+        };
+    }
+
     destroy() {
         if (this._fetchTimer) clearTimeout(this._fetchTimer);
         if (this.audioContext) {

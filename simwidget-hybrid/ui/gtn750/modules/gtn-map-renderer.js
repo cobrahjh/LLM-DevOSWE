@@ -112,6 +112,11 @@ class GTNMapRenderer {
             this.renderTODMarker(ctx, cx, cy, w, h, state);
         }
 
+        // Holding pattern
+        if (state.holdingManager?.active) {
+            this.renderHoldingPattern(ctx, cx, cy, w, h, state);
+        }
+
         // OBS course line (includes holding pattern if active)
         if (state.obs?.active) {
             this.renderObsCourseLine(ctx, cx, cy, w, h, state);
@@ -1131,6 +1136,129 @@ class GTNMapRenderer {
             ctx.moveTo(Math.sin(angle) * inner, -Math.cos(angle) * inner);
             ctx.lineTo(Math.sin(angle) * outer, -Math.cos(angle) * outer);
             ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Render holding pattern racetrack on map
+     */
+    renderHoldingPattern(ctx, cx, cy, w, h, state) {
+        if (!state.holdingManager) return;
+
+        const holdStatus = state.holdingManager.getStatus();
+        if (!holdStatus.active || !holdStatus.fix) return;
+
+        const fix = holdStatus.fix;
+        const fixScreen = this.latLonToCanvas(fix.lat, fix.lon, cx, cy, state);
+
+        if (!fixScreen) return;
+
+        // Calculate racetrack coordinates
+        const racetrack = state.holdingManager.calculateRacetrack(
+            fix.lat,
+            fix.lon,
+            holdStatus.inboundCourse,
+            holdStatus.legTime,
+            holdStatus.turnDirection,
+            state.data.groundSpeed || 120
+        );
+
+        ctx.save();
+
+        // Draw holding pattern with cyan color
+        ctx.strokeStyle = holdStatus.entryComplete ? '#00ff00' : '#00ffff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+
+        // Convert all coordinates to screen space
+        const inboundStartScreen = this.latLonToCanvas(
+            racetrack.inboundStart.lat,
+            racetrack.inboundStart.lon,
+            cx, cy, state
+        );
+        const inboundEndScreen = this.latLonToCanvas(
+            racetrack.inboundEnd.lat,
+            racetrack.inboundEnd.lon,
+            cx, cy, state
+        );
+        const outboundStartScreen = this.latLonToCanvas(
+            racetrack.outboundStart.lat,
+            racetrack.outboundStart.lon,
+            cx, cy, state
+        );
+        const outboundEndScreen = this.latLonToCanvas(
+            racetrack.outboundEnd.lat,
+            racetrack.outboundEnd.lon,
+            cx, cy, state
+        );
+
+        if (!inboundStartScreen || !inboundEndScreen || !outboundStartScreen || !outboundEndScreen) {
+            ctx.restore();
+            return;
+        }
+
+        // Draw inbound leg
+        ctx.beginPath();
+        ctx.moveTo(inboundStartScreen.x, inboundStartScreen.y);
+        ctx.lineTo(inboundEndScreen.x, inboundEndScreen.y);
+        ctx.stroke();
+
+        // Draw outbound leg
+        ctx.beginPath();
+        ctx.moveTo(outboundStartScreen.x, outboundStartScreen.y);
+        ctx.lineTo(outboundEndScreen.x, outboundEndScreen.y);
+        ctx.stroke();
+
+        // Draw turn arcs (simplified as straight lines for now)
+        ctx.beginPath();
+        ctx.moveTo(inboundEndScreen.x, inboundEndScreen.y);
+        ctx.lineTo(outboundStartScreen.x, outboundStartScreen.y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(outboundEndScreen.x, outboundEndScreen.y);
+        ctx.lineTo(inboundStartScreen.x, inboundStartScreen.y);
+        ctx.stroke();
+
+        // Draw hold fix marker
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#00ffff';
+        ctx.beginPath();
+        ctx.arc(fixScreen.x, fixScreen.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw hold fix label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(fix.ident, fixScreen.x, fixScreen.y - 12);
+
+        // Draw hold info
+        const inboundCourseStr = Math.round(holdStatus.inboundCourse).toString().padStart(3, '0');
+        const turnDir = holdStatus.turnDirection === 'R' ? 'R' : 'L';
+        const legTimeMin = Math.round(holdStatus.legTime / 60);
+
+        ctx.font = '10px Arial';
+        ctx.fillText(
+            `${inboundCourseStr}° ${turnDir} ${legTimeMin}min`,
+            fixScreen.x,
+            fixScreen.y + 20
+        );
+
+        // Draw entry type indicator if not yet established
+        if (!holdStatus.entryComplete && holdStatus.entryType) {
+            ctx.fillStyle = '#ffff00';
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText(
+                holdStatus.entryType,
+                fixScreen.x,
+                fixScreen.y + 35
+            );
         }
 
         ctx.restore();

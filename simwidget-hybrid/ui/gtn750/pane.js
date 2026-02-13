@@ -128,6 +128,11 @@ class GTN750Pane extends SimGlassBase {
         this.dataFieldsManager = new GTNDataFields({ core: this.core });
         this.cdiManager = new GTNCdi({ core: this.core, elements: {}, serverPort: this.serverPort });
         this.vnavManager = new GTNVNav({ core: this.core });
+        this.holdingManager = new GTNHolding({
+            core: this.core,
+            serverPort: this.serverPort,
+            syncChannel: this.syncChannel
+        });
         this.mapRenderer = new GTNMapRenderer({
             core: this.core,
             getState: () => this.getRendererState()
@@ -382,6 +387,7 @@ class GTN750Pane extends SimGlassBase {
             nav2: this.cdiManager.nav2,
             gps: this.cdiManager.gps,
             vnavManager: this.vnavManager,
+            holdingManager: this.holdingManager,
             onUpdateDatafields: () => {
                 this.dataFieldsManager.update(this.data, {
                     flightPlan: this.flightPlanManager?.flightPlan || null,
@@ -463,6 +469,8 @@ class GTN750Pane extends SimGlassBase {
         });
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.flightPlanManager?.checkApproachPhase(this.data);
+        this.holdingManager?.update(this.data);
+        this.checkHoldingPattern();
         this.updateApproachPhaseDisplay();
         this.updateIlsDisplay();
         this.updateAuxData();
@@ -653,6 +661,32 @@ class GTN750Pane extends SimGlassBase {
             notify.style.display = 'none';
             this._cdiSourceNotifyTimer = null;
         }, 2500);
+    }
+
+    /**
+     * Check for holding pattern at active waypoint and enter if found
+     */
+    checkHoldingPattern() {
+        if (!this.flightPlanManager || !this.holdingManager) return;
+
+        // Don't auto-enter if already in a hold
+        if (this.holdingManager.active) return;
+
+        // Check if active waypoint is a holding pattern
+        const holdParams = this.flightPlanManager.getActiveHoldingPattern();
+        if (!holdParams) return;
+
+        // Calculate distance to hold fix
+        const distToFix = this.core.calculateDistance(
+            this.data.latitude, this.data.longitude,
+            holdParams.fix.lat, holdParams.fix.lon
+        );
+
+        // Enter hold when within 2nm of fix
+        if (distToFix < 2.0) {
+            this.holdingManager.enterHold(holdParams, this.data.heading, this.data.altitude);
+            GTNCore.log(`[GTN750] Auto-entering holding pattern at ${holdParams.fix.ident}`);
+        }
     }
 
     // ===== OVERLAYS =====
