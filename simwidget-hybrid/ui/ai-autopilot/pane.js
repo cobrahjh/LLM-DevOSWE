@@ -2223,8 +2223,11 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
         this.elements.advisoryContent.innerHTML = `<span class="advisory-text">${advisory.text}</span>`;
 
+        // Only show Accept/Dismiss when there are actual executable commands
         if (this.elements.advisoryActions) {
-            this.elements.advisoryActions.style.display = advisory.commands.length > 0 ? 'flex' : 'none';
+            const hasExecCmds = (advisory.execCommands?.length > 0) ||
+                (advisory.commands?.length > 0 && typeof advisory.commands[0] === 'object');
+            this.elements.advisoryActions.style.display = hasExecCmds ? 'flex' : 'none';
         }
     }
 
