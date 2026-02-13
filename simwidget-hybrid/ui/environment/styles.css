@@ -1,27 +1,43 @@
 /**
- * Environment Widget
- * SimGlass Engine v2.2.0 - Phase 5: Environment Controls (Redesigned)
+ * Environment Widget - GTN750 Style
+ * SimGlass Engine v2.3.0 - Compact Aviation Design
  */
 
+:root {
+    --env-green: #00ff00;
+    --env-cyan: #00ffff;
+    --env-yellow: #ffff00;
+    --env-amber: #ffaa00;
+    --env-white: #ffffff;
+    --env-gray: #888888;
+    --env-dark: #0a0a12;
+    --env-darker: #050505;
+    --env-border: #333333;
+    --env-bg: #0a0e14;
+    --env-bg-light: #0f1520;
+    --env-bg-panel: #1a2535;
+    --env-text: #cccccc;
+    --env-text-dim: #888888;
+    --env-font: 'Segoe UI', Arial, sans-serif;
+    --env-mono: 'Consolas', 'Monaco', monospace;
+}
+
 .environment {
-    width: 320px;
+    width: 280px;
+    background: var(--env-dark);
+    font-family: var(--env-font);
 }
 
 /* ===========================================
-   SECTIONS
+   SECTIONS - GTN STYLE
    =========================================== */
 
 .env-section {
-    background: var(--sg-bg-card);
-    border: 1px solid var(--sg-border-subtle);
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 12px;
-    transition: border-color 0.2s;
-}
-
-.env-section:hover {
-    border-color: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(180deg, #1a1a2a 0%, #0d0d18 100%);
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
+    padding: 4px;
+    margin-bottom: 3px;
 }
 
 .env-section:last-child {
@@ -29,359 +45,331 @@
 }
 
 .env-section-header {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--sg-text-dim);
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--env-gray);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.env-section-header::before {
-    content: '';
-    width: 3px;
-    height: 12px;
-    background: linear-gradient(to bottom, var(--sg-accent-blue), transparent);
-    border-radius: 2px;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    padding: 0 2px;
 }
 
 /* ===========================================
-   TIME OF DAY
+   TIME OF DAY - COMPACT
    =========================================== */
 
 .env-time-display {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--sg-space-md);
-    margin-bottom: var(--sg-space-sm);
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 4px;
+    padding: 2px;
 }
 
 .env-time-icon {
-    font-size: 32px;
+    font-size: 18px;
+    line-height: 1;
 }
 
 .env-time-value {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 60px;
 }
 
 .env-time-local {
-    font-size: var(--sg-text-2xl);
+    font-size: 16px;
     font-weight: 700;
-    font-family: var(--sg-font-data);
-    color: var(--sg-accent-yellow);
+    font-family: var(--env-mono);
+    color: var(--env-green);
+    line-height: 1;
 }
 
 .env-time-zulu {
-    font-size: var(--sg-text-lg);
+    font-size: 12px;
     font-weight: 600;
-    font-family: var(--sg-font-data);
-    color: var(--sg-accent-cyan);
+    font-family: var(--env-mono);
+    color: var(--env-cyan);
+    line-height: 1.2;
 }
 
 .env-time-label {
-    font-size: var(--sg-text-xs);
-    color: var(--sg-text-dim);
+    font-size: 7px;
+    color: var(--env-text-dim);
+    text-transform: uppercase;
 }
 
-/* Time Slider */
+/* Time Slider - Compact */
 .env-time-slider {
-    margin-bottom: var(--sg-space-sm);
+    margin-bottom: 3px;
 }
 
 .env-slider {
     width: 100%;
-    height: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--env-border);
+    border-radius: 1px;
     appearance: none;
     outline: none;
 }
 
 .env-slider::-webkit-slider-thumb {
     appearance: none;
-    width: 20px;
-    height: 20px;
-    background: var(--sg-accent-yellow);
-    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--env-yellow);
+    border: 1px solid var(--env-amber);
+    border-radius: 1px;
     cursor: pointer;
-    box-shadow: 0 0 8px var(--sg-accent-yellow);
 }
 
 .env-slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: var(--sg-accent-yellow);
-    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--env-yellow);
+    border: 1px solid var(--env-amber);
+    border-radius: 1px;
     cursor: pointer;
-    border: none;
-    box-shadow: 0 0 8px var(--sg-accent-yellow);
 }
 
 .env-time-marks {
     display: flex;
     justify-content: space-between;
-    margin-top: 4px;
-    font-size: 9px;
-    color: var(--sg-text-dim);
+    margin-top: 2px;
+    font-size: 7px;
+    color: var(--env-text-dim);
+    font-family: var(--env-mono);
 }
 
-/* Time Presets */
+/* Time Presets - Compact Row */
 .env-time-presets {
     display: flex;
-    justify-content: center;
-    gap: var(--sg-space-sm);
+    justify-content: space-between;
+    gap: 2px;
 }
 
 .env-preset-btn {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--sg-bg-panel);
-    border: 1px solid var(--sg-border-subtle);
-    border-radius: var(--sg-radius);
-    font-size: 24px;
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
+    font-size: 18px;
     cursor: pointer;
-    transition: all var(--sg-transition-fast);
+    transition: background 0.15s;
 }
 
 .env-preset-btn:hover {
-    border-color: var(--sg-accent-yellow);
-    transform: scale(1.1);
+    background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+    border-color: var(--env-yellow);
 }
 
 .env-preset-btn:active {
-    transform: scale(0.95);
+    background: rgba(255, 255, 0, 0.2);
 }
 
 /* ===========================================
-   SIMULATION RATE
+   SIMULATION RATE - COMPACT
    =========================================== */
 
 .env-simrate {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--sg-space-md);
-    margin-bottom: var(--sg-space-sm);
+    justify-content: space-between;
+    gap: 3px;
+    margin-bottom: 3px;
 }
 
 .env-rate-btn {
-    width: 44px;
-    height: 44px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--sg-bg-panel);
-    border: 1px solid var(--sg-border-subtle);
-    border-radius: 50%;
-    font-size: 24px;
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
+    font-size: 18px;
     font-weight: 700;
-    color: var(--sg-text-primary);
+    color: var(--env-text);
     cursor: pointer;
-    transition: all var(--sg-transition-fast);
+    transition: background 0.15s;
 }
 
 .env-rate-btn:hover {
-    border-color: var(--sg-accent-cyan);
-    color: var(--sg-accent-cyan);
-}
-
-.env-rate-btn:active {
-    transform: scale(0.95);
+    background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+    border-color: var(--env-cyan);
 }
 
 .env-rate-display {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 80px;
+    flex: 1;
 }
 
 .env-rate-value {
-    font-size: var(--sg-text-2xl);
+    font-size: 18px;
     font-weight: 700;
-    font-family: var(--sg-font-data);
-    color: var(--sg-accent-cyan);
+    font-family: var(--env-mono);
+    color: var(--env-cyan);
+    line-height: 1;
 }
 
 .env-rate-label {
-    font-size: var(--sg-text-xs);
-    color: var(--sg-text-dim);
+    font-size: 7px;
+    color: var(--env-text-dim);
+    text-transform: uppercase;
 }
 
-/* Rate Presets */
+/* Rate Presets - Compact Pills */
 .env-rate-presets {
     display: flex;
     justify-content: center;
-    gap: 4px;
+    gap: 2px;
     flex-wrap: wrap;
 }
 
 .env-rate-preset {
-    padding: 8px 12px;
-    background: var(--sg-bg-panel);
-    border: 1px solid var(--sg-border-subtle);
-    border-radius: var(--sg-radius-sm);
-    font-size: var(--sg-text-sm);
+    padding: 3px 6px;
+    background: #1a1a2a;
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
+    font-size: 9px;
     font-weight: 600;
-    font-family: var(--sg-font-data);
-    color: var(--sg-text-secondary);
+    font-family: var(--env-mono);
+    color: var(--env-text-dim);
     cursor: pointer;
-    transition: all var(--sg-transition-fast);
+    transition: all 0.15s;
+    line-height: 1;
 }
 
 .env-rate-preset:hover {
-    border-color: var(--sg-text-dim);
-    color: var(--sg-text-primary);
+    background: #2a2a3a;
+    color: var(--env-text);
 }
 
 .env-rate-preset.active {
-    background: rgba(0, 255, 255, 0.15);
-    border-color: var(--sg-accent-cyan);
-    color: var(--sg-accent-cyan);
+    background: rgba(0, 255, 255, 0.2);
+    border-color: var(--env-cyan);
+    color: var(--env-cyan);
 }
 
 /* ===========================================
-   WEATHER
+   WEATHER - COMPACT GRID
    =========================================== */
 
 .env-weather-current {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--sg-space-sm);
-    padding: var(--sg-space-sm);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(0, 0, 0, 0.2));
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 8px;
-    margin-bottom: var(--sg-space-sm);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 4px;
+    padding: 3px 4px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
+    margin-bottom: 4px;
 }
 
 .env-weather-display {
     display: flex;
     align-items: center;
-    gap: var(--sg-space-sm);
+    gap: 4px;
 }
 
 .env-weather-icon {
-    font-size: 36px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    font-size: 20px;
+    line-height: 1;
 }
 
 .env-weather-name {
-    font-size: var(--sg-text-lg);
+    font-size: 11px;
     font-weight: 600;
-    color: var(--sg-text-primary);
+    color: var(--env-text);
+    line-height: 1.2;
 }
 
 .env-weather-badge {
-    font-size: 9px;
+    font-size: 7px;
     font-weight: 700;
-    padding: 3px 6px;
-    background: rgba(251, 191, 36, 0.2);
-    border: 1px solid rgba(251, 191, 36, 0.4);
-    border-radius: 3px;
-    color: var(--sg-accent-yellow);
+    padding: 2px 4px;
+    background: rgba(255, 170, 0, 0.15);
+    border: 1px solid var(--env-amber);
+    border-radius: 2px;
+    color: var(--env-amber);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     white-space: nowrap;
+    line-height: 1;
 }
 
 .env-weather-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 2px;
 }
 
 .env-weather-btn {
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 10px 6px;
-    background: var(--sg-bg-panel);
-    border: 2px solid var(--sg-border-subtle);
-    border-radius: 8px;
+    padding: 4px 2px;
+    background: #1a1a2a;
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 64px;
-    overflow: hidden;
-}
-
-.env-weather-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.0), rgba(59, 130, 246, 0.05));
-    opacity: 0;
-    transition: opacity 0.2s;
+    transition: all 0.15s;
+    min-height: 42px;
 }
 
 .env-weather-btn:hover {
-    border-color: rgba(59, 130, 246, 0.5);
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.env-weather-btn:hover::before {
-    opacity: 1;
+    background: #2a2a3a;
+    border-color: var(--env-text-dim);
 }
 
 .env-weather-btn.active {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.15));
-    border-color: var(--sg-accent-blue);
-    box-shadow: 0 0 16px rgba(59, 130, 246, 0.4), inset 0 1px 2px rgba(255,255,255,0.1);
+    background: rgba(0, 136, 255, 0.2);
+    border-color: #0088ff;
 }
 
 .env-weather-emoji {
-    font-size: 24px;
-    margin-bottom: 4px;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
-    transition: transform 0.2s;
-}
-
-.env-weather-btn:hover .env-weather-emoji {
-    transform: scale(1.1);
+    font-size: 18px;
+    margin-bottom: 2px;
+    line-height: 1;
 }
 
 .env-weather-text {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 600;
-    color: var(--sg-text-dim);
+    color: var(--env-text-dim);
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    transition: color 0.2s;
+    line-height: 1;
 }
 
 .env-weather-btn:hover .env-weather-text {
-    color: var(--sg-text-secondary);
+    color: var(--env-text);
 }
 
 .env-weather-btn.active .env-weather-text {
-    color: var(--sg-accent-blue);
+    color: #0088ff;
     font-weight: 700;
 }
 
 /* ===========================================
-   QUICK ACTIONS
+   QUICK ACTIONS - COMPACT ROW
    =========================================== */
 
 .env-actions-row {
     display: flex;
-    gap: var(--sg-space-sm);
+    gap: 2px;
     justify-content: center;
 }
 
@@ -391,68 +379,46 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px 8px;
-    background: var(--sg-bg-panel);
-    border: 2px solid var(--sg-border-subtle);
-    border-radius: 8px;
+    padding: 4px 3px;
+    background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 72px;
+    transition: all 0.15s;
+    min-height: 48px;
 }
 
 .env-action-btn:hover {
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+    border-color: var(--env-text-dim);
 }
 
 .env-action-btn.active {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(239, 68, 68, 0.15));
-    border-color: var(--sg-accent-red);
-    box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+    background: rgba(255, 0, 0, 0.15);
+    border-color: #ff4444;
 }
 
 .env-action-icon {
-    font-size: 24px;
-    margin-bottom: 4px;
+    font-size: 20px;
+    margin-bottom: 2px;
+    line-height: 1;
 }
 
 .env-action-text {
-    font-size: var(--sg-text-xs);
+    font-size: 8px;
     font-weight: 600;
-    color: var(--sg-text-secondary);
+    color: var(--env-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1;
+}
+
+.env-action-btn:hover .env-action-text {
+    color: var(--env-text);
 }
 
 .env-action-btn.active .env-action-text {
-    color: var(--sg-accent-red);
-}
-
-/* ===========================================
-   RESPONSIVE
-   =========================================== */
-
-@container widget (max-width: 280px) {
-    .env-weather-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .env-time-display {
-        flex-wrap: wrap;
-    }
-    .env-preset-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 18px;
-    }
-}
-
-@container widget (min-width: 360px) {
-    .env-weather-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-    }
-    .env-action-btn {
-        min-height: 72px;
-    }
+    color: #ff4444;
 }
 
 /* ============================================
@@ -463,21 +429,28 @@
     top: 8px;
     left: 36px;
     z-index: 999;
-    width: 24px;
-    height: 24px;
-    background: transparent;
-    border: none;
-    color: var(--sg-text-muted);
-    font-size: 14px;
+    width: 20px;
+    height: 20px;
+    background: #1a1a2a;
+    border: 1px solid var(--env-border);
+    color: var(--env-text-dim);
+    font-size: 12px;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.15s;
+    transition: all 0.15s;
 }
-.compact-toggle:hover { color: var(--sg-text-primary); }
-.compact-toggle.active { color: var(--sg-accent-green); }
+.compact-toggle:hover {
+    background: #2a2a3a;
+    color: var(--env-text);
+    border-color: var(--env-green);
+}
+.compact-toggle.active {
+    color: var(--env-green);
+    border-color: var(--env-green);
+}
 
 /* ============================================
    COMPACT MODE — Layout switching
@@ -494,19 +467,19 @@
 /* Compact mode: shrink container */
 .widget-container.compact {
     max-width: 280px;
-    padding: 3px;
+    padding: 2px;
 }
 
 /* ============================================
-   COMPACT ENVIRONMENT LAYOUT (~280 x 80px)
+   COMPACT ENVIRONMENT LAYOUT (~280 x 60px)
    ============================================ */
 .ev-compact {
     flex-direction: column;
     gap: 2px;
-    padding: 4px 6px;
-    background: var(--sg-bg-header);
-    border: 1px solid var(--sg-border-subtle);
-    border-radius: 5px;
+    padding: 3px 4px;
+    background: var(--env-dark);
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
     user-select: none;
     min-width: 260px;
     max-width: 280px;
@@ -516,42 +489,46 @@
 .ev-compact-top {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     padding-bottom: 2px;
-    border-bottom: 1px solid var(--sg-border-subtle);
+    border-bottom: 1px solid var(--env-border);
 }
 
 .ev-compact-icon {
-    font-size: 16px;
+    font-size: 14px;
     flex-shrink: 0;
+    line-height: 1;
 }
 
 .ev-compact-time {
-    font-size: var(--sg-text-sm, 12px);
+    font-size: 11px;
     font-weight: 700;
-    font-family: var(--sg-font-data);
-    color: var(--sg-accent-yellow);
+    font-family: var(--env-mono);
+    color: var(--env-yellow);
     min-width: 46px;
+    line-height: 1;
 }
 
 .ev-compact-wx {
     font-size: 14px;
     margin-left: auto;
     flex-shrink: 0;
+    line-height: 1;
 }
 
 .ev-compact-wx-name {
-    font-size: var(--sg-text-xs, 10px);
+    font-size: 9px;
     font-weight: 600;
-    color: var(--sg-text-secondary);
+    color: var(--env-text);
     text-transform: uppercase;
+    line-height: 1;
 }
 
 /* Bottom row: data cells */
 .ev-compact-bottom {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     justify-content: space-between;
 }
 
@@ -564,19 +541,46 @@
 }
 
 .ev-compact-lbl {
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 600;
-    color: var(--sg-text-dim);
+    color: var(--env-text-dim);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     line-height: 1;
 }
 
 .ev-compact-val {
-    font-size: var(--sg-text-xs, 10px);
+    font-size: 9px;
     font-weight: 700;
-    font-family: var(--sg-font-data);
-    color: var(--sg-text-primary);
+    font-family: var(--env-mono);
+    color: var(--env-text);
     white-space: nowrap;
-    line-height: 1.3;
+    line-height: 1.2;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@container widget (max-width: 260px) {
+    .env-weather-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .env-time-display {
+        flex-wrap: wrap;
+    }
+    .env-preset-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+}
+
+@container widget (min-width: 300px) {
+    .environment {
+        width: 300px;
+    }
+    .env-weather-grid {
+        gap: 3px;
+    }
 }

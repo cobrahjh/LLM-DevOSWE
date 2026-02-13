@@ -7,7 +7,7 @@ class EnvironmentPane extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'environment',
-            widgetVersion: '2.2.0',
+            widgetVersion: '2.3.0',
             autoConnect: true
         });
 
