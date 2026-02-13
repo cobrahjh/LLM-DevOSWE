@@ -3146,6 +3146,23 @@ function executeCommand(command, value) {
         }
         return;
     }
+    // MSFS 2024 parking brake via InputEvent (LANDING_GEAR_PARKINGBRAKE)
+    // Legacy PARKING_BRAKES event may not work — also try InputEvent as fallback
+    if (command === 'PARKING_BRAKES' || command === 'PARKING_BRAKE_SET') {
+        const hash = global.inputEventHashes?.LANDING_GEAR_PARKINGBRAKE;
+        if (hash) {
+            try {
+                // InputEvent toggle: 0 = release, 1 = engage
+                const ieValue = (command === 'PARKING_BRAKE_SET') ? (value ? 1 : 0) : 0;
+                simConnectConnection.setInputEvent(hash, ieValue);
+                console.log(`[ParkBrake] InputEvent LANDING_GEAR_PARKINGBRAKE: ${ieValue}`);
+            } catch (e) {
+                console.error(`[ParkBrake] InputEvent error: ${e.message}`);
+            }
+        }
+        // Also fall through to legacy event below (belt and suspenders)
+    }
+
     // Differential braking for ground steering — not affected by joystick rudder axis
     if (command === 'AXIS_LEFT_BRAKE_SET' || command === 'AXIS_RIGHT_BRAKE_SET') {
         const brakeEventId = eventMap[command];
