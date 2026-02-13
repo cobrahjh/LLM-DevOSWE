@@ -2154,6 +2154,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         this._renderApStatus();
         this._renderCommandLog();
         this._renderATCPanel();
+        this._renderWeatherPanel(this._lastFlightData);
         this._renderFooter();
     }
 
@@ -2836,6 +2837,82 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this.elements.atcRoute.textContent = route.taxiways?.length
                 ? `WP ${route.currentWaypoint}/${route.waypointCount} | ${Math.round(route.distance_ft)}ft`
                 : '';
+        }
+    }
+
+    _renderWeatherPanel(d) {
+        const panel = document.getElementById('weather-panel');
+        if (!panel) return;
+
+        // Show panel if significant wind or turbulence
+        const hasWind = d && d.windSpeed > 3;
+        const hasTurbulence = this.ruleEngine?.live?.turbulence > 0;
+
+        if (!hasWind && !hasTurbulence) {
+            panel.style.display = 'none';
+            return;
+        }
+
+        panel.style.display = '';
+
+        // Wind direction and speed
+        const windEl = document.getElementById('weather-wind');
+        if (windEl && d) {
+            const windDir = Math.round(d.windDirection || 0);
+            const windSpd = Math.round(d.windSpeed || 0);
+            windEl.textContent = `WIND ${String(windDir).padStart(3, '0')}/${windSpd}kt`;
+        }
+
+        // Crosswind and headwind components (relative to current heading)
+        const compEl = document.getElementById('weather-components');
+        if (compEl && d && d.windSpeed > 1) {
+            const windComp = this.ruleEngine?._windComp;
+            if (windComp) {
+                const xwind = windComp.getCrosswindComponent(d.heading || 0, d.windDirection, d.windSpeed);
+                const hwind = windComp.getHeadwindComponent(d.heading || 0, d.windDirection, d.windSpeed);
+                const xSign = xwind >= 0 ? 'R' : 'L';
+                const hSign = hwind >= 0 ? 'HEAD' : 'TAIL';
+                compEl.textContent = `X-WIND ${Math.abs(Math.round(xwind))}kt${xSign} · ${hSign} ${Math.abs(Math.round(hwind))}kt`;
+            }
+        }
+
+        // Wind correction angle (if in HDG mode with nav)
+        const corrEl = document.getElementById('weather-correction');
+        if (corrEl) {
+            const navGuidance = this.ruleEngine?.getNavGuidance();
+            if (navGuidance && navGuidance.interceptHdg && navGuidance.interceptDesc?.includes('wind')) {
+                const match = navGuidance.interceptDesc.match(/wind\s*([\+\-]\d+\.?\d*)/);
+                if (match) {
+                    corrEl.textContent = `DRIFT CORR ${match[1]}°`;
+                    corrEl.style.display = '';
+                } else {
+                    corrEl.style.display = 'none';
+                }
+            } else {
+                corrEl.style.display = 'none';
+            }
+        }
+
+        // Turbulence indicator
+        const turbEl = document.getElementById('weather-turbulence');
+        if (turbEl) {
+            const severity = this.ruleEngine?.live?.turbulence || 0;
+            if (severity > 0) {
+                turbEl.className = 'weather-turbulence';
+                if (severity === 1) {
+                    turbEl.textContent = 'LIGHT TURB';
+                    turbEl.classList.add('light');
+                } else if (severity === 2) {
+                    turbEl.textContent = 'MOD TURB';
+                    turbEl.classList.add('moderate');
+                } else {
+                    turbEl.textContent = 'SEVERE TURB';
+                    turbEl.classList.add('severe');
+                }
+                turbEl.style.display = '';
+            } else {
+                turbEl.style.display = 'none';
+            }
         }
     }
 

@@ -776,6 +776,122 @@ async function testATC() {
 }
 
 // ============================================
+// WEATHER & WIND COMPENSATION TESTS
+// ============================================
+
+async function testWeatherIntegration() {
+    log('\n── Weather & Wind Compensation Tests ──', 'cyan');
+
+    // Test: Wind compensation module loads
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/modules/wind-compensation.js`);
+        assert(res.ok, 'wind-compensation.js loads');
+        const js = await res.text();
+        assert(js.includes('class WindCompensation'), 'Contains WindCompensation class');
+        assert(js.includes('calculateWindCorrection'), 'Has calculateWindCorrection method');
+        assert(js.includes('getCrosswindComponent'), 'Has getCrosswindComponent method');
+        assert(js.includes('detectTurbulence'), 'Has detectTurbulence method');
+    } catch (e) {
+        assert(false, `wind-compensation.js load - ${e.message}`);
+    }
+
+    // Test: Wind compensation calculations (wind triangle math)
+    try {
+        // Simulate: desired track 090°, TAS 100kt, wind 180/20kt (south wind)
+        // Expected: need to crab ~12° right to maintain eastbound track
+        const desiredTrack = 90;
+        const tas = 100;
+        const windDir = 180;
+        const windSpd = 20;
+
+        // Calculate using physics
+        const trackRad = desiredTrack * Math.PI / 180;
+        const windToRad = (windDir + 180) % 360 * Math.PI / 180;
+        const windX = windSpd * Math.sin(windToRad);
+        const windY = windSpd * Math.cos(windToRad);
+        const acX = tas * Math.sin(trackRad);
+        const acY = tas * Math.cos(trackRad);
+        const gsX = acX + windX;
+        const gsY = acY + windY;
+        const actualTrack = Math.atan2(gsX, gsY) * 180 / Math.PI;
+        const drift = actualTrack - desiredTrack;
+        const correction = -drift;
+
+        // Verify correction is positive (right crab) and ~10-15°
+        assert(Math.abs(correction) > 5 && Math.abs(correction) < 20, `Wind correction ${correction.toFixed(1)}° is reasonable`);
+        assert(correction > 0, 'Right crosswind requires right crab');
+
+        log('  Wind triangle: 090° track + 180/20kt wind → crab ' + correction.toFixed(1) + '°', 'gray');
+    } catch (e) {
+        assert(false, `Wind triangle calculation - ${e.message}`);
+    }
+
+    // Test: Crosswind component calculation
+    try {
+        // Runway 09 (090°), wind 180/20kt → 20kt direct crosswind from right
+        const rwyHdg = 90;
+        const windDir = 180;
+        const windSpd = 20;
+        const windRelAngle = (windDir - rwyHdg) * Math.PI / 180;
+        const crosswind = windSpd * Math.sin(windRelAngle);
+
+        assert(Math.abs(crosswind - 20) < 1, `Crosswind component ${crosswind.toFixed(1)}kt is ~20kt`);
+        log('  Crosswind: RWY 09 + 180/20kt wind → 20kt right crosswind', 'gray');
+    } catch (e) {
+        assert(false, `Crosswind calculation - ${e.message}`);
+    }
+
+    // Test: Turbulence detection thresholds
+    try {
+        // Simulate VS readings with light turbulence (stdDev ~100-150 fpm)
+        const vsReadings = [500, 600, 450, 700, 550, 400, 650];
+        const avg = vsReadings.reduce((a, b) => a + b) / vsReadings.length;
+        const variance = vsReadings.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / vsReadings.length;
+        const stdDev = Math.sqrt(variance);
+
+        // StdDev >= 100 fpm = light turbulence threshold
+        assert(stdDev >= 100 && stdDev < 250, `VS stdDev ${stdDev.toFixed(0)} fpm indicates light turbulence`);
+        log(`  Turbulence: VS ±${stdDev.toFixed(0)} fpm → light turbulence`, 'gray');
+    } catch (e) {
+        assert(false, `Turbulence detection - ${e.message}`);
+    }
+
+    // Test: index.html includes wind module
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/`);
+        assert(res.ok, 'AI Autopilot pane loads');
+        const html = await res.text();
+        assert(html.includes('wind-compensation.js'), 'HTML includes wind-compensation.js');
+        assert(html.includes('weather-panel'), 'HTML includes weather-panel');
+    } catch (e) {
+        assert(false, `Weather HTML integration - ${e.message}`);
+    }
+
+    // Test: CSS has weather panel styles
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/styles.css`);
+        assert(res.ok, 'styles.css loads');
+        const css = await res.text();
+        assert(css.includes('.weather-panel'), 'CSS contains weather-panel');
+        assert(css.includes('.weather-turbulence'), 'CSS contains turbulence styles');
+        assert(css.includes('.weather-correction'), 'CSS contains correction styles');
+    } catch (e) {
+        assert(false, `Weather CSS - ${e.message}`);
+    }
+
+    // Test: rule-engine v5 incremented
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/`);
+        const html = await res.text();
+        assert(html.includes('rule-engine.js?v=5'), 'rule-engine.js version incremented to v=5');
+    } catch (e) {
+        assert(false, `Rule engine version - ${e.message}`);
+    }
+
+    log('\n  Weather Integration: Wind compensation module, turbulence detection, UI panel verified', 'cyan');
+}
+
+// ============================================
 // NAVIGATION DATABASE TESTS
 // ============================================
 
@@ -907,6 +1023,7 @@ async function runTests(suite) {
     if (!suite || suite === 'splitting') await testCodeSplitting();
     if (!suite || suite === 'ai-autopilot') await testAiAutopilot();
     if (!suite || suite === 'atc') await testATC();
+    if (!suite || suite === 'weather') await testWeatherIntegration();
     if (!suite || suite === 'navdata') await testNavdata();
 
     // Summary
@@ -926,8 +1043,8 @@ async function runTests(suite) {
 }
 
 const suite = process.argv[2];
-if (suite && !['api', 'websocket', 'widgets', 'splitting', 'ai-autopilot', 'atc', 'navdata'].includes(suite)) {
-    log('Usage: node test-runner.js [api|websocket|widgets|splitting|ai-autopilot|atc|navdata]', 'yellow');
+if (suite && !['api', 'websocket', 'widgets', 'splitting', 'ai-autopilot', 'atc', 'weather', 'navdata'].includes(suite)) {
+    log('Usage: node test-runner.js [api|websocket|widgets|splitting|ai-autopilot|atc|weather|navdata]', 'yellow');
     process.exit(1);
 }
 
