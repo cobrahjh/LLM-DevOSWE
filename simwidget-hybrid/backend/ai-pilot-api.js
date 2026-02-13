@@ -532,18 +532,30 @@ SAFETY HARD CLAMPS (server-enforced, you cannot exceed these):
 - AP altitude: 0-45000 ft
 - AP VS: -6000 to +6000 fpm
 
-HOW TO OUTPUT TUNING CHANGES:
+TUNING PHILOSOPHY — HARD-SET RULES:
+The current tuner values are HARD-SET by the pilot. Treat them as correct baseline rules.
+Do NOT change parameters unless you have VERY HIGH CONFIDENCE that a specific value
+is directly causing a failure, backed by clear telemetry evidence across multiple attempts.
+
+When in doubt: DO NOT CHANGE VALUES. The defaults work. Only fix what is clearly broken.
+Small incremental adjustments (5-10%) are preferred over large jumps.
+Never change more than 2 parameters at once — isolate variables.
+
+HOW TO OUTPUT TUNING CHANGES (use sparingly):
 After analyzing attempt results, output a TUNING_JSON block on its own line:
 TUNING_JSON: {"paramName": value, "paramName2": value2}
 Only include parameters you want to change. Omitted parameters keep their current values.
 The rule engine applies your values on the next takeoff attempt.
 
 REASONING REQUIREMENTS:
-- For each parameter you change, explain WHY based on the telemetry data
+- You MUST have clear telemetry evidence from at least 2 attempts showing the same failure
+- For each parameter you change, explain WHY with specific numbers from telemetry
+- State your confidence level (LOW/MEDIUM/HIGH) — only change at HIGH confidence
 - If an attempt crashed due to bank spiral, focus on aileron parameters
 - If the plane didn't rotate, focus on elevator parameters
 - If speed was wrong at rotation, focus on vrSpeed
-- Consider that effective deflection is ~50% of commanded due to joystick fighting`;
+- Consider that effective deflection is ~50% of commanded due to joystick fighting
+- If unsure, say "keeping current values" and explain what data you'd need to see`;
 
     if (attempts.length > 0) {
         ctx += '\n\nPREVIOUS TAKEOFF ATTEMPTS (most recent last):';

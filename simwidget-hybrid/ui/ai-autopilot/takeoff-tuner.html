@@ -143,6 +143,17 @@
             min-height: 26px; align-items: center;
         }
         .phase-live:empty { display: none; }
+        .phase-set {
+            display: flex; flex-wrap: wrap; gap: 6px 16px;
+            padding: 4px 8px;
+            background: rgba(79, 195, 247, 0.06);
+            border-radius: 3px;
+            border-left: 2px solid #4fc3f740;
+            margin-bottom: 4px;
+        }
+        .set-item { display: flex; align-items: baseline; gap: 4px; }
+        .set-label { font-size: 9px; color: #4fc3f7; text-transform: uppercase; letter-spacing: 0.5px; }
+        .set-val { font-size: 12px; font-family: 'Consolas', monospace; color: #4fc3f7; font-weight: 600; }
         .pl-item { display: flex; align-items: baseline; gap: 4px; }
         .pl-label { font-size: 9px; color: #506070; text-transform: uppercase; }
         .pl-val { font-size: 12px; font-family: 'Consolas', monospace; color: #e0e8f0; }
@@ -279,6 +290,7 @@
                 ],
                 checklist: ['Brake released', 'Heading captured', 'Rudder steering active'],
                 liveFields: ['gs', 'hdgError', 'throttle', 'rudder'],
+                setFields: [{ key: 'taxiThrottleMax', label: 'THR MAX' }, { key: 'taxiTargetGS', label: 'GS TGT' }, { key: 'taxiRudderMaxLow', label: 'RUD MAX' }],
                 isFlight: true
             },
             {
@@ -299,7 +311,8 @@
                     { key: 'rollRudderBias', label: 'P-factor rudder bias', default: 8, unit: '%' }
                 ],
                 checklist: ['Full power applied', 'Runway heading locked', 'Rudder steering active'],
-                liveFields: ['ias', 'vrBar', 'throttle', 'rudder']
+                liveFields: ['ias', 'vrBar', 'throttle', 'rudder'],
+                setFields: [{ key: 'rollThrottle', label: 'THR SET' }, { key: 'vrSpeed', label: 'Vr' }]
             },
             {
                 id: 'ROTATE', name: 'ROTATE', type: 'air',
@@ -310,7 +323,8 @@
                     { key: 'rotateThrottle', label: 'Throttle', default: 100, unit: '%' }
                 ],
                 checklist: ['Elevator applied', 'Trim nose up', 'Waiting for liftoff (onGround=false)'],
-                liveFields: ['ias', 'pitch', 'elevator', 'onGround']
+                liveFields: ['ias', 'pitch', 'elevator', 'onGround'],
+                setFields: [{ key: 'rotateElevator', label: 'ELEV SET' }, { key: 'rotateThrottle', label: 'THR SET' }, { key: 'rotateTimeout', label: 'TIMEOUT' }]
             },
             {
                 id: 'LIFTOFF', name: 'LIFTOFF', type: 'air',
@@ -325,7 +339,8 @@
                     { key: 'liftoffClimbAgl', label: 'Climb AGL for next phase', default: 200, unit: 'ft AGL' }
                 ],
                 checklist: ['Nose up hold', 'Wings level (proportional)', 'VS > threshold', 'Waiting for AGL threshold'],
-                liveFields: ['agl', 'aglBar', 'vs', 'bank', 'elevator']
+                liveFields: ['agl', 'aglBar', 'vs', 'bank', 'elevator'],
+                setFields: [{ key: 'liftoffElevator', label: 'ELEV SET' }, { key: 'liftoffVsThreshold', label: 'VS TRIG' }, { key: 'liftoffClimbAgl', label: 'AGL TRIG' }]
             },
             {
                 id: 'INITIAL_CLIMB', name: 'INITIAL_CLIMB', type: 'air',
@@ -340,7 +355,8 @@
                     { key: 'handoffSpeedMargin', label: 'Speed margin above Vs1', default: 15, unit: 'kt' }
                 ],
                 checklist: ['Climbing steadily', 'Wings level', 'Waiting for AP handoff conditions'],
-                liveFields: ['agl', 'handoffBar', 'ias', 'vs', 'bank']
+                liveFields: ['agl', 'handoffBar', 'ias', 'vs', 'bank'],
+                setFields: [{ key: 'climbElevator', label: 'ELEV SET' }, { key: 'handoffAgl', label: 'HANDOFF AGL' }, { key: 'handoffSpeedMargin', label: 'SPD MARGIN' }]
             },
             {
                 id: 'DEPARTURE', name: 'DEPARTURE', type: 'ap',
@@ -351,7 +367,8 @@
                     { key: 'departureCruiseAlt', label: 'Cruise altitude', default: 8500, unit: 'ft' }
                 ],
                 checklist: ['AP engaged', 'HDG hold active', 'VS hold active', 'Flaps retracted'],
-                liveFields: ['vs', 'apMaster', 'flaps']
+                liveFields: ['vs', 'apMaster', 'flaps'],
+                setFields: [{ key: 'departureVS', label: 'VS SET' }, { key: 'departureSpeed', label: 'SPD SET' }, { key: 'departureCruiseAlt', label: 'CRZ ALT' }]
             },
             {
                 id: 'CLIMB', name: 'CLIMB', type: 'ap',
@@ -362,6 +379,7 @@
                 ],
                 checklist: ['Full power maintained', 'Lateral nav active', 'ALT target set to cruise'],
                 liveFields: ['throttle', 'vs', 'alt', 'ias'],
+                setFields: [{ key: 'climbThrottle', label: 'THR SET' }, { key: 'climbVS', label: 'VS SET' }],
                 isFlight: true
             }
         ];
@@ -730,6 +748,24 @@
                 liveDiv.id = 'live-' + phase.id;
                 body.appendChild(liveDiv);
 
+                // Set values strip — shows current tuner targets at a glance
+                if (phase.setFields && phase.setFields.length > 0) {
+                    const setDiv = document.createElement('div');
+                    setDiv.className = 'phase-set';
+                    setDiv.id = 'set-' + phase.id;
+                    phase.setFields.forEach(sf => {
+                        const v = values[sf.key] ?? DEFAULTS[sf.key] ?? '?';
+                        const input = (phase.inputs || []).find(i => i.key === sf.key);
+                        const unit = input ? input.unit.replace('(-) = nose up', '%') : '';
+                        const span = document.createElement('span');
+                        span.className = 'set-item';
+                        span.dataset.key = sf.key;
+                        span.innerHTML = `<span class="set-label">${sf.label}</span><span class="set-val">${v}${unit ? ' ' + unit : ''}</span>`;
+                        setDiv.appendChild(span);
+                    });
+                    body.appendChild(setDiv);
+                }
+
                 // Inputs
                 if (phase.inputs.length > 0) {
                     const grid = document.createElement('div');
@@ -746,7 +782,15 @@
                         inp.value = values[input.key] ?? input.default;
                         inp.addEventListener('input', function() {
                             const v = parseFloat(this.value);
-                            if (!isNaN(v)) { values[input.key] = v; saveValues(input.key); }
+                            if (!isNaN(v)) {
+                                values[input.key] = v;
+                                saveValues(input.key);
+                                // Update matching set-value display
+                                document.querySelectorAll(`.set-item[data-key="${input.key}"] .set-val`).forEach(el => {
+                                    const u = input.unit.replace('(-) = nose up', '%');
+                                    el.textContent = v + (u ? ' ' + u : '');
+                                });
+                            }
                         });
                         const unit = document.createElement('div');
                         unit.className = 'unit';
