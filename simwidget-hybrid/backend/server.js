@@ -2887,16 +2887,16 @@ function executeCommand(command, value) {
     // do NOT produce actual control surface deflection in MSFS 2024. All
     // flight surface controls use legacy transmitClientEvent path.
     //
-    // Elevator sign: SimConnect AXIS_ELEVATOR_SET uses +16383=nose UP,
-    // but our rule engine uses -100=nose UP. So we NEGATE the value.
+    // Elevator sign: SimConnect AXIS_ELEVATOR_SET uses -16383=nose UP (aft stick),
+    // +16383=nose DOWN (forward stick). Rule engine uses -100=nose UP, same direction.
+    // NO negation needed — pass through directly.
     // ═══════════════════════════════════════════════════════════════════════
     if (command === 'AXIS_ELEVATOR_SET') {
         // MSFS 2024: UNKNOWN_TAIL_ELEVATOR InputEvent does NOT deflect elevator.
         // Use legacy transmitClientEvent — same as ailerons and rudder.
-        // NEGATE: SimConnect +16383=nose UP, rule engine -100=nose UP
         const elevEventId = eventMap['AXIS_ELEVATOR_SET'];
         if (elevEventId !== undefined) {
-            const simValue = -Math.round((value || 0) / 100 * 16383);
+            const simValue = Math.round((value || 0) / 100 * 16383);
             // Store for 60Hz re-application (overcomes joystick spring-center)
             if (value === 0) {
                 delete _heldAxes.elevator;

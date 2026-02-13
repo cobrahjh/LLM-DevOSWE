@@ -38,6 +38,10 @@
         .btn:hover { background: #2a3040; }
         .btn-reset { border-color: #ff5252; color: #ff5252; }
         .btn-reset:hover { background: #2a1515; }
+        .btn-nuke { border-color: #ff9800; color: #ff9800; }
+        .btn-nuke:hover { background: #2a1a08; }
+        .btn-clear-convos { border-color: #4fc3f7; color: #4fc3f7; }
+        .btn-clear-convos:hover { background: #0d2233; }
         .btn-copy { border-color: #4fc3f7; color: #4fc3f7; }
         .btn-copy:hover { background: #152a30; }
 
@@ -194,6 +198,8 @@
             <div class="header-actions">
                 <button class="btn" id="btn-release-all">Release All Holds</button>
                 <button class="btn btn-copy" id="btn-copy">Copy JSON</button>
+                <button class="btn btn-clear-convos" id="btn-clear-convos">Clear Convos</button>
+                <button class="btn btn-nuke" id="btn-nuke">Reset Sally</button>
                 <button class="btn btn-reset" id="btn-reset">Reset Defaults</button>
             </div>
         </div>
@@ -810,6 +816,31 @@
         });
 
         // ── Buttons ──
+        document.getElementById('btn-clear-convos').addEventListener('click', function() {
+            if (!confirm('Clear conversation log?\n\nOld conversations will be archived to a timestamped file.')) return;
+            fetch('/api/ai-pilot/conversations', { method: 'DELETE' })
+                .then(r => r.json())
+                .then(res => showToast(res.ok ? 'Conversations archived & cleared' : 'Failed'))
+                .catch(() => showToast('Failed — server error'));
+        });
+
+        document.getElementById('btn-nuke').addEventListener('click', function() {
+            if (!confirm('Reset ALL Sally learning?\n\nThis clears:\n- All learnings & observations\n- All takeoff attempt history\n- All tuner overrides\n- LocalStorage tuning on all browsers')) return;
+            fetch('/api/ai-pilot/reset-learning', { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    // Also reset local tuner to defaults
+                    values = { ...DEFAULTS };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+                    holds = {};
+                    saveHolds();
+                    if (channel) channel.postMessage({ type: 'takeoff-tuning', values, timestamp: Date.now() });
+                    render();
+                    showToast(res.ok ? 'Sally learning fully reset' : 'Reset failed');
+                })
+                .catch(() => showToast('Reset failed — server error'));
+        });
+
         document.getElementById('btn-reset').addEventListener('click', function() {
             values = { ...DEFAULTS };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(values));

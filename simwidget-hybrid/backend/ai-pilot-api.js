@@ -514,7 +514,7 @@ CLIMB (after AP engaged):
   climbVS — AP vertical speed during climb (fpm)
 
 MSFS 2024 PHYSICS & QUIRKS:
-- Elevator: negative value = nose UP. Server NEGATES before sending to SimConnect.
+- Elevator: negative value = nose UP, positive = nose DOWN. Passed through directly to SimConnect.
 - Ailerons: negative = roll LEFT, positive = roll RIGHT. No negation.
 - Rudder: positive = yaw LEFT, negative = yaw RIGHT. Single-shot (no held-axes needed).
 - Throttle: 0-100%. Uses InputEvent (only control that works via InputEvent).
@@ -1256,6 +1256,37 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
         res.json({ tuning: _sharedState.tuning || null });
     });
 
+    // Reset all Sally learning — clears learnings, attempts, tuning, and tells browsers to wipe localStorage
+    app.post('/api/ai-pilot/reset-learning', (req, res) => {
+        // Archive before clearing
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        try {
+            if (_sallyLearnings.length > 0)
+                fs.writeFileSync(path.join(__dirname, '..', 'data', `sally-learnings-${ts}.json`), JSON.stringify(_sallyLearnings, null, 2));
+            if (_takeoffAttempts.length > 0)
+                fs.writeFileSync(path.join(__dirname, '..', 'data', `takeoff-attempts-${ts}.json`), JSON.stringify(_takeoffAttempts, null, 2));
+            if (_sallyConversations.length > 0)
+                fs.writeFileSync(path.join(__dirname, '..', 'data', `sally-conversations-${ts}.json`), JSON.stringify(_sallyConversations, null, 2));
+            console.log(`[AI-Pilot] Archived learnings/attempts/conversations with timestamp ${ts}`);
+        } catch (e) { console.warn('[AI-Pilot] Archive failed:', e.message); }
+        _sallyLearnings = [];
+        saveLearnings();
+        _takeoffAttempts = [];
+        try { fs.writeFileSync(TAKEOFF_LOG_PATH, '[]'); } catch (_) {}
+        _sallyConversations = [];
+        try { fs.writeFileSync(CONVO_LOG_PATH, '[]'); } catch (_) {}
+        _sharedState.tuning = null;
+        // Broadcast to all connected WS clients to clear localStorage tuning
+        if (global.wss) {
+            const msg = JSON.stringify({ type: 'clearTuning' });
+            for (const client of global.wss.clients) {
+                if (client.readyState === 1) client.send(msg);
+            }
+        }
+        console.log('[AI-Pilot] Sally learning fully reset');
+        res.json({ ok: true, message: 'Learnings, attempts, and tuning all cleared' });
+    });
+
     // Sally's learnings — persistent observations
     app.get('/api/ai-pilot/learnings', (req, res) => {
         res.json({ learnings: _sallyLearnings, total: _sallyLearnings.length });
@@ -1286,9 +1317,20 @@ For takeoff: use THROTTLE_SET 100, then AXIS_ELEVATOR_SET -25 at Vr, then AP_MAS
     });
 
     app.delete('/api/ai-pilot/conversations', (req, res) => {
+        // Archive old conversations before clearing
+        if (_sallyConversations.length > 0) {
+            try {
+                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                const archivePath = path.join(__dirname, '..', 'data', `sally-conversations-${ts}.json`);
+                fs.writeFileSync(archivePath, JSON.stringify(_sallyConversations, null, 2));
+                console.log(`[AI-Pilot] Archived ${_sallyConversations.length} conversations to ${path.basename(archivePath)}`);
+            } catch (e) {
+                console.warn('[AI-Pilot] Failed to archive conversations:', e.message);
+            }
+        }
         _sallyConversations = [];
         try { fs.writeFileSync(CONVO_LOG_PATH, '[]'); } catch (_) {}
-        res.json({ ok: true, message: 'Conversation log cleared' });
+        res.json({ ok: true, message: 'Conversation log archived and cleared' });
     });
 
     // Sally performance metrics

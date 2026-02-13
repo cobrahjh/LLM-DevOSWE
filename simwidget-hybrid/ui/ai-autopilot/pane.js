@@ -110,7 +110,9 @@ class AiAutopilotPane extends SimGlassBase {
         // Voice announcer for AI advisory TTS
         const savedVoice = localStorage.getItem('ai-ap-voice') || null;
         const savedRate = parseFloat(localStorage.getItem('ai-ap-voice-rate')) || 0.95;
-        this._voice = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer({ rate: savedRate, pitch: 1.0, voice: savedVoice }) : null;
+        const savedVolume = parseFloat(localStorage.getItem('ai-ap-voice-volume'));
+        this._voiceVolume = isNaN(savedVolume) ? 0.8 : savedVolume;
+        this._voice = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer({ rate: savedRate, pitch: 1.0, volume: this._voiceVolume, voice: savedVoice }) : null;
         this._ttsEnabled = localStorage.getItem('ai-ap-tts') !== 'false';
 
         // Cache DOM elements
@@ -191,6 +193,8 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.advisoryActions = document.getElementById('advisory-actions');
         this.elements.advisoryAsk = document.getElementById('advisory-ask');
         this.elements.advisoryStopVoice = document.getElementById('advisory-stop-voice');
+        this.elements.volSlider = document.getElementById('vol-slider');
+        this.elements.volIcon = document.getElementById('vol-icon');
         this.elements.advisoryMic = document.getElementById('advisory-mic');
         this.elements.advisoryInputRow = document.getElementById('advisory-input-row');
         this.elements.advisoryTextInput = document.getElementById('advisory-text-input');
@@ -308,6 +312,33 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.advisoryStopVoice?.addEventListener('click', () => {
             if (this._voice) this._voice.stop();
             this._showStopVoiceBtn(false);
+        });
+
+        // Volume slider — instant Sally volume control
+        if (this.elements.volSlider) {
+            this.elements.volSlider.value = Math.round(this._voiceVolume * 100);
+            this._updateVolIcon();
+            this.elements.volSlider.addEventListener('input', () => {
+                const vol = parseInt(this.elements.volSlider.value) / 100;
+                this._voiceVolume = vol;
+                if (this._voice) this._voice.volume = vol;
+                localStorage.setItem('ai-ap-voice-volume', vol);
+                this._updateVolIcon();
+            });
+        }
+
+        // Volume icon click — toggle mute
+        this.elements.volIcon?.addEventListener('click', () => {
+            if (this._voiceVolume > 0) {
+                this._preMuteVolume = this._voiceVolume;
+                this._voiceVolume = 0;
+            } else {
+                this._voiceVolume = this._preMuteVolume || 0.8;
+            }
+            if (this._voice) this._voice.volume = this._voiceVolume;
+            localStorage.setItem('ai-ap-voice-volume', this._voiceVolume);
+            if (this.elements.volSlider) this.elements.volSlider.value = Math.round(this._voiceVolume * 100);
+            this._updateVolIcon();
         });
 
         // Mic button — toggle voice input
@@ -1622,6 +1653,13 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
     onMessage(msg) {
         this._wsCount++;
+        if (msg.type === 'clearTuning') {
+            localStorage.removeItem('simglass-takeoff-tuning');
+            localStorage.removeItem('simglass-takeoff-holds');
+            console.log('[AI-Pilot] Tuning cleared by server reset');
+            this._dbg('cmd', '<span class="val">Sally learning reset</span> — tuning cleared');
+            return;
+        }
         if (msg.type === 'flightData' && msg.data) {
             // Throttle WS debug logging to 1 per 5 seconds (avoid flooding)
             const now = Date.now();
@@ -2530,6 +2568,10 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                             </select>
                         </div>
                         <div class="as-row">
+                            <label>Volume: <span id="vs-vol-label">${Math.round(self._voiceVolume * 100)}%</span></label>
+                            <input type="range" id="vs-vol" min="0" max="100" step="5" value="${Math.round(self._voiceVolume * 100)}" style="width:100%">
+                        </div>
+                        <div class="as-row">
                             <label>Speed: <span id="vs-rate-label">${currentRate}x</span></label>
                             <input type="range" id="vs-rate" min="0.5" max="2.0" step="0.05" value="${currentRate}" style="width:100%">
                         </div>
@@ -2545,6 +2587,8 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 const voiceSelect = container.querySelector('#vs-voice');
                 const rateSlider = container.querySelector('#vs-rate');
                 const rateLabel = container.querySelector('#vs-rate-label');
+                const volSlider = container.querySelector('#vs-vol');
+                const volLabel = container.querySelector('#vs-vol-label');
 
                 ttsCheck?.addEventListener('change', () => {
                     self._ttsEnabled = ttsCheck.checked;
@@ -2559,6 +2603,17 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                         self._voice.voice = null;
                         self._voice.loadVoice();
                     }
+                });
+
+                volSlider?.addEventListener('input', () => {
+                    const vol = parseInt(volSlider.value) / 100;
+                    if (volLabel) volLabel.textContent = Math.round(vol * 100) + '%';
+                    self._voiceVolume = vol;
+                    if (self._voice) self._voice.volume = vol;
+                    localStorage.setItem('ai-ap-voice-volume', vol);
+                    // Sync header slider
+                    if (self.elements.volSlider) self.elements.volSlider.value = volSlider.value;
+                    self._updateVolIcon();
                 });
 
                 rateSlider?.addEventListener('input', () => {
@@ -2612,6 +2667,14 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         if (this.elements.advisoryStopVoice) {
             this.elements.advisoryStopVoice.style.display = show ? '' : 'none';
         }
+    }
+
+    /** Update volume icon based on current volume level */
+    _updateVolIcon() {
+        if (!this.elements.volIcon) return;
+        const v = this._voiceVolume;
+        this.elements.volIcon.textContent = v === 0 ? '\u{1F507}' : v < 0.4 ? '\u{1F508}' : v < 0.7 ? '\u{1F509}' : '\u{1F50A}';
+        this.elements.volIcon.classList.toggle('muted', v === 0);
     }
 
     /** Speak text via TTS with stop-button integration */
