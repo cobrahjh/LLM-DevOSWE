@@ -460,6 +460,7 @@ class AiAutopilotPane extends SimGlassBase {
                     .replace(/TUNING_JSON:\s*\{[\s\S]*?\}/, '')
                     .replace(/^LEARNING:\s*.+$/gm, '')
                     .replace(/^FORGET:\s*.+$/gm, '')
+                    .replace(/_?RECOMMEND:\s*/g, '')
                     .trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
 
@@ -1881,6 +1882,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     .replace(/TUNING_JSON:\s*\{[\s\S]*?\}/, '')
                     .replace(/^LEARNING:\s*.+$/gm, '')
                     .replace(/^FORGET:\s*.+$/gm, '')
+                    .replace(/_?RECOMMEND:\s*/g, '')
                     .trim();
                 this._renderAdvisory({ text: displayText, commands: result.commands || [], error: false });
                 // Speak via TTS
@@ -2221,7 +2223,8 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             return;
         }
 
-        this.elements.advisoryContent.innerHTML = `<span class="advisory-text">${advisory.text}</span>`;
+        const cleanText = (advisory.text || '').replace(/_?RECOMMEND:\s*/g, '').trim();
+        this.elements.advisoryContent.innerHTML = `<span class="advisory-text">${cleanText}</span>`;
 
         // Only show Accept/Dismiss when there are actual executable commands
         if (this.elements.advisoryActions) {
@@ -2584,7 +2587,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             .replace(/TUNING_JSON:\s*\{[\s\S]*?\}/g, '')
             .replace(/^LEARNING:\s*.+$/gm, '')
             .replace(/^FORGET:\s*.+$/gm, '')
-            .replace(/RECOMMEND:\s*/g, '')
+            .replace(/_?RECOMMEND:\s*/g, '')
             .replace(/^#{1,6}\s+/gm, '')           // markdown headers (###, ##, #)
             .replace(/```[\s\S]*?```/g, '')         // fenced code blocks
             .replace(/\{[\s\S]*?\}/g, '')           // any remaining JSON objects
