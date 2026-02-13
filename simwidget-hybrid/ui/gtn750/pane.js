@@ -463,6 +463,7 @@ class GTN750Pane extends SimGlassBase {
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.flightPlanManager?.checkApproachPhase(this.data);
         this.updateApproachPhaseDisplay();
+        this.updateIlsDisplay();
         this.updateAuxData();
     }
 
@@ -535,6 +536,27 @@ class GTN750Pane extends SimGlassBase {
     }
 
     /**
+     * Update ILS frequency display for ILS/LOC approaches
+     */
+    updateIlsDisplay() {
+        if (!this.elements.cdiApproachType) return;
+
+        const ilsInfo = this.flightPlanManager?.getIlsInfo();
+        if (!ilsInfo) {
+            this.elements.cdiApproachType.style.display = 'none';
+            return;
+        }
+
+        const freq = ilsInfo.frequency.toFixed(2);
+        const runway = ilsInfo.runway || '';
+        const tuned = ilsInfo.autoTuned ? '✓' : '';
+
+        this.elements.cdiApproachType.textContent = `ILS ${freq} ${tuned}`;
+        this.elements.cdiApproachType.className = ilsInfo.autoTuned ? 'cdi-approach-type ils' : 'cdi-approach-type';
+        this.elements.cdiApproachType.style.display = '';
+    }
+
+    /**
      * Show visual notification when waypoint sequencing occurs
      * @param {string} passedIdent - Waypoint that was passed
      * @param {string} activeIdent - New active waypoint
@@ -556,6 +578,33 @@ class GTN750Pane extends SimGlassBase {
             notify.style.display = 'none';
             this._sequenceNotifyTimer = null;
         }, 2000);
+    }
+
+    /**
+     * Show ILS auto-tune notification
+     * @param {Object} data - { frequency, runway, airport }
+     */
+    showIlsTunedNotification(data) {
+        const notify = this.elements.cdiIlsNotify;
+        if (!notify) return;
+
+        const freq = data.frequency?.toFixed(2) || '---';
+        const runway = data.runway || '';
+        const airport = data.airport || '';
+
+        notify.textContent = `ILS ${freq} tuned - ${airport} RWY ${runway}`;
+        notify.style.display = '';
+
+        // Clear any existing timeout
+        if (this._ilsNotifyTimer) {
+            clearTimeout(this._ilsNotifyTimer);
+        }
+
+        // Hide after animation completes (3s)
+        this._ilsNotifyTimer = setTimeout(() => {
+            notify.style.display = 'none';
+            this._ilsNotifyTimer = null;
+        }, 3000);
     }
 
     // ===== OVERLAYS =====
@@ -1367,6 +1416,9 @@ class GTN750Pane extends SimGlassBase {
             } else if (msg.type === 'waypoint-sequence') {
                 // Show visual notification for waypoint sequencing
                 this.showSequenceNotification(msg.data.passedIdent, msg.data.activeIdent);
+            } else if (msg.type === 'ils-tuned') {
+                // Show ILS auto-tune notification
+                this.showIlsTunedNotification(msg.data);
             } else if (msg.type === 'simbrief-plan' || msg.type === 'route-update') {
                 // Flight plan messages — ensure module is loaded first
                 if (!this.flightPlanManager) {
@@ -1585,6 +1637,7 @@ class GTN750Pane extends SimGlassBase {
             cdiVnav: document.getElementById('cdi-vnav'),
             cdiApproachType: document.getElementById('cdi-approach-type'),
             cdiApproachPhase: document.getElementById('cdi-approach-phase'),
+            cdiIlsNotify: document.getElementById('cdi-ils-notify'),
             cdiGsNeedle: document.getElementById('cdi-gs-needle'),
             cdiGsBar: document.getElementById('cdi-gs-bar'),
             cdiFlag: document.getElementById('cdi-flag'),

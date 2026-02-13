@@ -1532,6 +1532,32 @@ body {
     }
 }
 
+.cdi-ils-notify {
+    color: var(--gtn-green);
+    font-family: var(--gtn-mono);
+    font-weight: 700;
+    font-size: 11px;
+    background: rgba(0, 150, 0, 0.3);
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--gtn-green);
+    animation: ils-flash 3s ease-out;
+}
+
+@keyframes ils-flash {
+    0% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1);
+    }
+}
+
 .obs-controls {
     display: flex;
     align-items: center;

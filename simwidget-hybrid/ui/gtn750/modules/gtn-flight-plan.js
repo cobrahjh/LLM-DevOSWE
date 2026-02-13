@@ -813,6 +813,11 @@ class GTNFlightPlan {
 
             // Identify critical approach fixes after loading
             this.identifyApproachFixes();
+
+            // Fetch ILS frequency for auto-tuning
+            if (approachType === 'ILS' || approachType === 'LOC') {
+                this.fetchIlsFrequency(procedure);
+            }
         }
 
         GTNCore.log(`[GTN750] Loaded ${procedureName}: ${fplWaypoints.length} waypoints`);
@@ -848,6 +853,142 @@ class GTNFlightPlan {
         const apr = this.flightPlan?.procedures?.apr;
         if (!apr || !apr.approachType) return false;
         return apr.approachType === 'ILS' || apr.approachType === 'LOC';
+    }
+
+    /**
+     * Fetch ILS frequency for the loaded approach
+     * @param {Object} procedure - Procedure metadata with airport ICAO
+     */
+    async fetchIlsFrequency(procedure) {
+        if (!procedure?.airport && !procedure?.ident) {
+            GTNCore.log('[GTN750] Cannot fetch ILS freq - no airport identifier');
+            return;
+        }
+
+        // Extract airport ICAO from procedure
+        const airportIcao = procedure.airport || procedure.ident?.split('.')[0];
+        if (!airportIcao) return;
+
+        // Extract runway identifier from approach name
+        // Example: "ILS RWY 28L" -> "28L"
+        const runwayMatch = procedure.name?.match(/RWY?\s*(\d{1,2}[LCR]?)/i);
+        if (!runwayMatch) {
+            GTNCore.log(`[GTN750] Cannot extract runway from approach name: ${procedure.name}`);
+            return;
+        }
+
+        const runwayIdent = runwayMatch[1];
+
+        try {
+            // Fetch airport data including runways from navdb
+            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/navdb/airport/${airportIcao}`);
+            if (!response.ok) {
+                GTNCore.log(`[GTN750] Failed to fetch airport data for ${airportIcao}`);
+                return;
+            }
+
+            const airportData = await response.json();
+            if (!airportData.runways || airportData.runways.length === 0) {
+                GTNCore.log(`[GTN750] No runway data for ${airportIcao}`);
+                return;
+            }
+
+            // Find matching runway
+            const runway = airportData.runways.find(rwy => {
+                // Match runway identifier (e.g., "28L", "28", "09R")
+                const rwyId = rwy.runway_id || rwy.ident || '';
+                return rwyId.toUpperCase() === runwayIdent.toUpperCase();
+            });
+
+            if (!runway) {
+                GTNCore.log(`[GTN750] Runway ${runwayIdent} not found at ${airportIcao}`);
+                return;
+            }
+
+            // Check if runway has ILS frequency
+            const ilsFreq = runway.ils_freq || runway.loc_freq;
+            if (!ilsFreq) {
+                GTNCore.log(`[GTN750] No ILS frequency for runway ${runwayIdent} at ${airportIcao}`);
+                return;
+            }
+
+            // Store ILS frequency in flight plan
+            if (!this.flightPlan.procedures.apr) {
+                this.flightPlan.procedures.apr = {};
+            }
+            this.flightPlan.procedures.apr.ilsFrequency = ilsFreq;
+            this.flightPlan.procedures.apr.runway = runwayIdent;
+            this.flightPlan.procedures.apr.airport = airportIcao;
+
+            GTNCore.log(`[GTN750] ILS frequency for ${airportIcao} RWY ${runwayIdent}: ${ilsFreq.toFixed(2)}`);
+
+        } catch (e) {
+            GTNCore.log(`[GTN750] Error fetching ILS frequency: ${e.message}`);
+        }
+    }
+
+    /**
+     * Auto-tune NAV1 to ILS frequency
+     * Called when approach phase reaches FAF
+     */
+    async autoTuneIls() {
+        if (!this.isIlsApproach()) return;
+
+        const ilsFreq = this.flightPlan?.procedures?.apr?.ilsFrequency;
+        if (!ilsFreq) {
+            GTNCore.log('[GTN750] No ILS frequency available for auto-tune');
+            return;
+        }
+
+        try {
+            // Set NAV1 active frequency via backend API
+            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/radio/nav1/active`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ frequency: ilsFreq })
+            });
+
+            if (response.ok) {
+                GTNCore.log(`[GTN750] Auto-tuned NAV1 to ILS ${ilsFreq.toFixed(2)}`);
+
+                // Notify via sync channel for display update
+                if (this.syncChannel) {
+                    this.syncChannel.postMessage({
+                        type: 'ils-tuned',
+                        data: {
+                            frequency: ilsFreq,
+                            runway: this.flightPlan.procedures.apr.runway,
+                            airport: this.flightPlan.procedures.apr.airport
+                        }
+                    });
+                }
+
+                // Mark that auto-tune has been performed
+                this.ilsAutoTuned = true;
+            } else {
+                GTNCore.log(`[GTN750] Failed to auto-tune NAV1: ${response.statusText}`);
+            }
+        } catch (e) {
+            GTNCore.log(`[GTN750] Error auto-tuning ILS: ${e.message}`);
+        }
+    }
+
+    /**
+     * Get ILS approach info for display
+     * @returns {Object|null} - { frequency, runway, airport } or null
+     */
+    getIlsInfo() {
+        if (!this.isIlsApproach()) return null;
+
+        const apr = this.flightPlan?.procedures?.apr;
+        if (!apr?.ilsFrequency) return null;
+
+        return {
+            frequency: apr.ilsFrequency,
+            runway: apr.runway,
+            airport: apr.airport,
+            autoTuned: this.ilsAutoTuned || false
+        };
     }
 
     /**
@@ -1344,6 +1485,11 @@ class GTNFlightPlan {
                     this.approachPhase = 'FAF';
                     this.approachActive = true;
                     GTNCore.log('[GTN750] Approach phase: FAF - final approach active');
+
+                    // Auto-tune ILS frequency if ILS/LOC approach
+                    if (this.isIlsApproach() && !this.ilsAutoTuned) {
+                        this.autoTuneIls();
+                    }
                 }
             }
         } else if (distToFaf <= 2.0) {
