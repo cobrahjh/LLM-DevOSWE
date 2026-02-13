@@ -83,6 +83,9 @@ class GTN750Pane extends SimGlassBase {
         this.terrainOverlay = null;
         this.mapControls = null;
 
+        // VNAV
+        this.vnavManager = null;
+
         // Pan offset for map
         this.panOffset = { x: 0, y: 0 };
 
@@ -124,6 +127,7 @@ class GTN750Pane extends SimGlassBase {
         // Create critical module instances (loaded immediately)
         this.dataFieldsManager = new GTNDataFields({ core: this.core });
         this.cdiManager = new GTNCdi({ core: this.core, elements: {}, serverPort: this.serverPort });
+        this.vnavManager = new GTNVNav({ core: this.core });
         this.mapRenderer = new GTNMapRenderer({
             core: this.core,
             getState: () => this.getRendererState()
@@ -1649,7 +1653,14 @@ class GTN750Pane extends SimGlassBase {
             trafficVs: document.getElementById('traffic-vs'),
             trafficDist: document.getElementById('traffic-dist'),
             trafficBrg: document.getElementById('traffic-brg'),
-            trafficClose: document.getElementById('traffic-close')
+            trafficClose: document.getElementById('traffic-close'),
+            vnavDisplay: document.getElementById('vnav-display'),
+            vnavStatus: document.getElementById('vnav-status'),
+            vnavToggle: document.getElementById('vnav-toggle'),
+            vnavTod: document.getElementById('vnav-tod'),
+            vnavVdev: document.getElementById('vnav-vdev'),
+            vnavReqvs: document.getElementById('vnav-reqvs'),
+            vnavTgtalt: document.getElementById('vnav-tgtalt')
         };
     }
 
@@ -1733,6 +1744,9 @@ class GTN750Pane extends SimGlassBase {
 
         // Traffic info close button
         this.elements.trafficClose?.addEventListener('click', () => this.hideTrafficInfo());
+
+        // VNAV toggle button
+        this.elements.vnavToggle?.addEventListener('click', () => this.toggleVNav());
         this.elements.wptSearch?.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.searchWaypoint(); });
 
         // NRST type tabs
@@ -2330,6 +2344,9 @@ class GTN750Pane extends SimGlassBase {
 
         // Range
         if (e.gcRange) e.gcRange.textContent = this.map.range;
+
+        // Update VNAV
+        this.updateVNav();
     }
 
     bindCompactEvents() {
@@ -2469,6 +2486,121 @@ class GTN750Pane extends SimGlassBase {
         }
         if (this.trafficOverlay) {
             this.trafficOverlay.clearSelection();
+        }
+    }
+
+    // ===== VNAV =====
+
+    toggleVNav() {
+        if (!this.vnavManager) return;
+
+        const newState = !this.vnavManager.enabled;
+        this.vnavManager.setEnabled(newState);
+
+        if (this.elements.vnavToggle) {
+            this.elements.vnavToggle.textContent = newState ? 'ON' : 'OFF';
+            this.elements.vnavToggle.classList.toggle('active', newState);
+        }
+
+        if (this.elements.vnavDisplay) {
+            this.elements.vnavDisplay.style.display = newState ? 'block' : 'none';
+        }
+
+        if (newState) {
+            this.updateVNav();
+        }
+    }
+
+    updateVNav() {
+        if (!this.vnavManager || !this.vnavManager.enabled) return;
+
+        // Calculate VNAV with current flight plan and position
+        const flightPlan = this.flightPlanManager?.flightPlan;
+        if (!flightPlan) {
+            return;
+        }
+
+        this.vnavManager.calculate(flightPlan, {
+            latitude: this.data.latitude,
+            longitude: this.data.longitude,
+            altitude: this.data.altitude
+        }, this.data.groundSpeed);
+
+        // Update display
+        const status = this.vnavManager.getStatus();
+
+        // TOD distance
+        if (this.elements.vnavTod) {
+            if (status.todDistance > 0) {
+                this.elements.vnavTod.textContent = `${status.todDistance.toFixed(1)} NM`;
+                this.elements.vnavTod.classList.remove('active', 'warning');
+                if (status.armed) {
+                    this.elements.vnavTod.classList.add('armed');
+                }
+            } else if (status.todDistance < 0) {
+                this.elements.vnavTod.textContent = `${Math.abs(status.todDistance).toFixed(1)} NM PAST`;
+                this.elements.vnavTod.classList.add('active');
+            } else {
+                this.elements.vnavTod.textContent = '--- NM';
+                this.elements.vnavTod.classList.remove('active', 'armed');
+            }
+        }
+
+        // Vertical deviation
+        if (this.elements.vnavVdev) {
+            const dev = status.verticalDeviation;
+            if (status.active && dev !== 0) {
+                const sign = dev >= 0 ? '+' : '';
+                this.elements.vnavVdev.textContent = `${sign}${Math.round(dev)} FT`;
+                this.elements.vnavVdev.classList.remove('active', 'warning', 'alert');
+                if (Math.abs(dev) > 500) {
+                    this.elements.vnavVdev.classList.add('alert');
+                } else if (Math.abs(dev) > 200) {
+                    this.elements.vnavVdev.classList.add('warning');
+                }
+            } else {
+                this.elements.vnavVdev.textContent = '--- FT';
+                this.elements.vnavVdev.classList.remove('active', 'warning', 'alert');
+            }
+        }
+
+        // Required VS
+        if (this.elements.vnavReqvs) {
+            if (status.requiredVS > 0) {
+                this.elements.vnavReqvs.textContent = `-${status.requiredVS} FPM`;
+                this.elements.vnavReqvs.classList.remove('warning', 'alert');
+                if (status.requiredVS > 1500) {
+                    this.elements.vnavReqvs.classList.add('alert');
+                } else if (status.requiredVS > 1000) {
+                    this.elements.vnavReqvs.classList.add('warning');
+                }
+            } else {
+                this.elements.vnavReqvs.textContent = '--- FPM';
+                this.elements.vnavReqvs.classList.remove('warning', 'alert');
+            }
+        }
+
+        // Target altitude
+        if (this.elements.vnavTgtalt) {
+            if (status.targetAltitude > 0 && status.active) {
+                this.elements.vnavTgtalt.textContent = `${status.targetAltitude} FT`;
+            } else {
+                this.elements.vnavTgtalt.textContent = '--- FT';
+            }
+        }
+
+        // Update status indicator
+        if (this.elements.vnavStatus) {
+            if (status.active) {
+                this.elements.vnavStatus.textContent = 'VNAV ACT';
+                this.elements.vnavStatus.style.color = 'var(--gtn-green)';
+            } else if (status.armed) {
+                this.elements.vnavStatus.textContent = 'VNAV ARM';
+                this.elements.vnavStatus.style.color = 'var(--gtn-yellow)';
+            } else {
+                this.elements.vnavStatus.textContent = 'VNAV';
+                this.elements.vnavStatus.style.color = 'var(--gtn-green)';
+            }
         }
     }
 

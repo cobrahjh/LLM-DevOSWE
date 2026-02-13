@@ -681,6 +681,31 @@
                 </div>
                 <span class="cdi-label-right">R</span>
             </div>
+            <!-- VNAV Display -->
+            <div class="vnav-display" id="vnav-display" style="display: none;">
+                <div class="vnav-header">
+                    <span class="vnav-status" id="vnav-status">VNAV</span>
+                    <button class="vnav-toggle-btn" id="vnav-toggle" title="Toggle VNAV">OFF</button>
+                </div>
+                <div class="vnav-info">
+                    <div class="vnav-row">
+                        <span class="vnav-label">TOD:</span>
+                        <span class="vnav-value" id="vnav-tod">--- NM</span>
+                    </div>
+                    <div class="vnav-row">
+                        <span class="vnav-label">V/DEV:</span>
+                        <span class="vnav-value" id="vnav-vdev">--- FT</span>
+                    </div>
+                    <div class="vnav-row">
+                        <span class="vnav-label">REQ VS:</span>
+                        <span class="vnav-value" id="vnav-reqvs">--- FPM</span>
+                    </div>
+                    <div class="vnav-row">
+                        <span class="vnav-label">TGT ALT:</span>
+                        <span class="vnav-value" id="vnav-tgtalt">--- FT</span>
+                    </div>
+                </div>
+            </div>
             <!-- OBS Controls -->
             <div class="obs-controls" id="obs-controls" style="display:none;">
                 <button class="obs-btn" id="obs-dec">&lt;</button>
@@ -826,6 +851,7 @@
     <script src="modules/gtn-softkeys.js"></script>
     <script src="modules/gtn-data-fields.js"></script>
     <script src="modules/gtn-cdi.js"></script>
+    <script src="modules/gtn-vnav.js"></script>
     <script src="modules/gtn-map-renderer.js"></script>
     <script src="modules/gtn-xpdr-control.js"></script>
 
