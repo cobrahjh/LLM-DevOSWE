@@ -277,6 +277,9 @@ class VoiceControlPane extends SimGlassBase {
                 case 'glass':
                     await this.executeWidget(cmd);
                     break;
+                case 'atc':
+                    await this.executeATC(cmd);
+                    break;
                 default:
                     this.log(`Unknown action type: ${cmd.action}`, 'error');
             }
@@ -435,6 +438,71 @@ class VoiceControlPane extends SimGlassBase {
                 });
                 this.log('Notepad: Copy requested', 'info');
                 break;
+        }
+
+        channel.close();
+    }
+
+    async executeATC(cmd) {
+        const channel = new SafeChannel('SimGlass-sync');
+
+        switch (cmd.atcAction) {
+            case 'request-taxi':
+                // Request taxi clearance from ATC
+                channel.postMessage({
+                    type: 'atc-command',
+                    data: { action: 'request-taxi-clearance' }
+                });
+                this.log('ATC: Requesting taxi clearance', 'info');
+                break;
+
+            case 'readback':
+                // Pilot readback of ATC clearance
+                channel.postMessage({
+                    type: 'atc-command',
+                    data: { action: 'readback', text: cmd.readbackText || '' }
+                });
+                this.log('ATC: Reading back clearance', 'info');
+                break;
+
+            case 'report-ready':
+                // Report ready for departure
+                channel.postMessage({
+                    type: 'atc-command',
+                    data: { action: 'report-ready' }
+                });
+                this.log('ATC: Reporting ready for departure', 'info');
+                break;
+
+            case 'request-takeoff':
+                // Request takeoff clearance
+                channel.postMessage({
+                    type: 'atc-command',
+                    data: { action: 'request-takeoff' }
+                });
+                this.log('ATC: Requesting takeoff clearance', 'info');
+                break;
+
+            case 'roger':
+                // Acknowledge ATC instruction
+                channel.postMessage({
+                    type: 'atc-command',
+                    data: { action: 'acknowledge' }
+                });
+                this.log('ATC: Roger', 'info');
+                break;
+
+            case 'wilco':
+                // Will comply with ATC instruction
+                channel.postMessage({
+                    type: 'atc-command',
+                    data: { action: 'wilco' }
+                });
+                this.log('ATC: Wilco', 'info');
+                break;
+
+            default:
+                this.log(`Unknown ATC action: ${cmd.atcAction}`, 'error');
         }
 
         channel.close();

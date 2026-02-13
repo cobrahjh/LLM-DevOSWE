@@ -1173,6 +1173,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 case 'tuner-command':
                     this._onTunerCommand(msg.command, msg);
                     break;
+                case 'atc-command':
+                    this._onATCCommand(msg.data);
+                    break;
             }
         };
     }
@@ -1222,6 +1225,58 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 break;
             }
         }
+    }
+
+    /** Handle ATC voice commands from voice-control pane via SafeChannel */
+    _onATCCommand(data) {
+        if (!data || !data.action || !this.atcController) return;
+
+        switch (data.action) {
+            case 'request-taxi-clearance':
+                // Auto-detect nearest airport and active runway if available
+                if (this._nearestAirport?.icao && this._activeRunway?.ident) {
+                    this.atcController.requestTaxiClearance(
+                        this._nearestAirport.icao,
+                        this._activeRunway.ident
+                    );
+                    this._addLogEntry('Voice: Requesting taxi clearance', 'atc');
+                } else {
+                    this._addLogEntry('Voice: Unable to request taxi (no airport/runway detected)', 'error');
+                }
+                break;
+
+            case 'readback':
+                // Validate readback against ATC instruction
+                const readbackText = data.text || 'taxi clearance readback';
+                const validation = this.atcController.validateReadback(readbackText);
+                if (validation.valid) {
+                    this._addLogEntry('Voice: Readback correct', 'atc');
+                } else {
+                    this._addLogEntry(`Voice: Readback incomplete (missing: ${validation.missing.join(', ')})`, 'atc');
+                }
+                break;
+
+            case 'report-ready':
+                this.atcController.reportReadyForDeparture();
+                this._addLogEntry('Voice: Reporting ready for departure', 'atc');
+                break;
+
+            case 'request-takeoff':
+                this.atcController.issueTakeoffClearance();
+                this._addLogEntry('Voice: Requesting takeoff clearance', 'atc');
+                break;
+
+            case 'acknowledge':
+            case 'wilco':
+                // Simple acknowledgment, just log it
+                this._addLogEntry(`Voice: ${data.action === 'wilco' ? 'Wilco' : 'Roger'}`, 'atc');
+                break;
+
+            default:
+                this._addLogEntry(`Voice: Unknown ATC action: ${data.action}`, 'error');
+        }
+
+        this._render();
     }
 
     _onNavStateReceived(nav) {

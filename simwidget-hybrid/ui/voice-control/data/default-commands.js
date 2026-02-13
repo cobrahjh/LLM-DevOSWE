@@ -65,5 +65,19 @@ const DEFAULT_VOICE_COMMANDS = [
     { phrase: 'fetch weather', action: 'glass', glass: 'weather', widgetAction: 'fetch', description: 'Fetch weather' },
     { phrase: 'fetch simbrief', action: 'glass', glass: 'simbrief', widgetAction: 'fetch', description: 'Fetch SimBrief OFP' },
     { phrase: 'show charts', action: 'glass', glass: 'charts', widgetAction: 'open', description: 'Open charts glass' },
-    { phrase: 'copy to notepad', action: 'glass', glass: 'notepad', widgetAction: 'copy', description: 'Copy to notepad' }
+    { phrase: 'copy to notepad', action: 'glass', glass: 'notepad', widgetAction: 'copy', description: 'Copy to notepad' },
+
+    // ATC commands
+    { phrase: 'request taxi', action: 'atc', atcAction: 'request-taxi', description: 'Request taxi clearance' },
+    { phrase: 'request taxi clearance', action: 'atc', atcAction: 'request-taxi', description: 'Request taxi clearance' },
+    { phrase: 'ground request taxi', action: 'atc', atcAction: 'request-taxi', description: 'Request taxi clearance' },
+    { phrase: 'read back', action: 'atc', atcAction: 'readback', description: 'Read back ATC clearance' },
+    { phrase: 'readback', action: 'atc', atcAction: 'readback', description: 'Read back ATC clearance' },
+    { phrase: 'ready for departure', action: 'atc', atcAction: 'report-ready', description: 'Report ready for departure' },
+    { phrase: 'ready to go', action: 'atc', atcAction: 'report-ready', description: 'Report ready for departure' },
+    { phrase: 'holding short', action: 'atc', atcAction: 'report-ready', description: 'Report holding short' },
+    { phrase: 'request takeoff', action: 'atc', atcAction: 'request-takeoff', description: 'Request takeoff clearance' },
+    { phrase: 'ready for takeoff', action: 'atc', atcAction: 'request-takeoff', description: 'Request takeoff clearance' },
+    { phrase: 'roger', action: 'atc', atcAction: 'roger', description: 'Acknowledge ATC' },
+    { phrase: 'wilco', action: 'atc', atcAction: 'wilco', description: 'Will comply with ATC' }
 ];

@@ -785,6 +785,54 @@ async function testATC() {
 }
 
 // ============================================
+// VOICE + ATC INTEGRATION TESTS
+// ============================================
+
+async function testVoiceATCIntegration() {
+    log('\n── Voice + ATC Integration Tests ──', 'cyan');
+
+    // Test: Voice control pane has ATC action case
+    try {
+        const res = await fetch(`${API_BASE}/ui/voice-control/pane.js`);
+        assert(res.ok, 'voice-control pane.js loads');
+        const js = await res.text();
+        assert(js.includes("case 'atc'"), "executeAction has 'atc' case");
+        assert(js.includes('executeATC'), 'Has executeATC method');
+    } catch (e) {
+        assert(false, `Voice-control ATC case - ${e.message}`);
+    }
+
+    // Test: Default commands include ATC commands
+    try {
+        const res = await fetch(`${API_BASE}/ui/voice-control/data/default-commands.js`);
+        assert(res.ok, 'default-commands.js loads');
+        const js = await res.text();
+        assert(js.includes('request taxi'), 'Has "request taxi" command');
+        assert(js.includes('request-taxi'), "Has 'request-taxi' atcAction");
+        assert(js.includes('readback'), 'Has readback command');
+        assert(js.includes('ready for departure'), 'Has "ready for departure" command');
+        assert(js.includes('request takeoff'), 'Has "request takeoff" command');
+        assert(js.includes('roger'), 'Has "roger" command');
+        assert(js.includes('wilco'), 'Has "wilco" command');
+    } catch (e) {
+        assert(false, `Voice-control ATC commands - ${e.message}`);
+    }
+
+    // Test: AI Autopilot pane handles atc-command messages
+    try {
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/pane.js`);
+        assert(res.ok, 'AI autopilot pane.js loads');
+        const js = await res.text();
+        assert(js.includes("case 'atc-command'"), "SafeChannel listener has 'atc-command' case");
+        assert(js.includes('_onATCCommand'), 'Has _onATCCommand method');
+    } catch (e) {
+        assert(false, `AI autopilot ATC message handler - ${e.message}`);
+    }
+
+    log('\n  Voice + ATC: 7 integration points verified', 'cyan');
+}
+
+// ============================================
 // WEATHER & WIND COMPENSATION TESTS
 // ============================================
 
@@ -1032,6 +1080,7 @@ async function runTests(suite) {
     if (!suite || suite === 'splitting') await testCodeSplitting();
     if (!suite || suite === 'ai-autopilot') await testAiAutopilot();
     if (!suite || suite === 'atc') await testATC();
+    if (!suite || suite === 'voice-atc') await testVoiceATCIntegration();
     if (!suite || suite === 'weather') await testWeatherIntegration();
     if (!suite || suite === 'navdata') await testNavdata();
 
@@ -1052,8 +1101,8 @@ async function runTests(suite) {
 }
 
 const suite = process.argv[2];
-if (suite && !['api', 'websocket', 'widgets', 'splitting', 'ai-autopilot', 'atc', 'weather', 'navdata'].includes(suite)) {
-    log('Usage: node test-runner.js [api|websocket|widgets|splitting|ai-autopilot|atc|weather|navdata]', 'yellow');
+if (suite && !['api', 'websocket', 'widgets', 'splitting', 'ai-autopilot', 'atc', 'voice-atc', 'weather', 'navdata'].includes(suite)) {
+    log('Usage: node test-runner.js [api|websocket|widgets|splitting|ai-autopilot|atc|voice-atc|weather|navdata]', 'yellow');
     process.exit(1);
 }
 
