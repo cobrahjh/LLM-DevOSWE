@@ -7,7 +7,7 @@ class EnvironmentPane extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'environment',
-            widgetVersion: '2.1.0',
+            widgetVersion: '2.2.0',
             autoConnect: true
         });
 
@@ -21,15 +21,15 @@ class EnvironmentPane extends SimGlassBase {
         };
 
         this.weatherPresets = {
-            clear: { name: 'Clear Skies', icon: '☀️', short: 'CLR' },
-            fewclouds: { name: 'Few Clouds', icon: '🌤️', short: 'FEW' },
-            scattered: { name: 'Scattered Clouds', icon: '⛅', short: 'SCT' },
-            broken: { name: 'Broken Clouds', icon: '🌥️', short: 'BKN' },
-            overcast: { name: 'Overcast', icon: '☁️', short: 'OVC' },
-            rain: { name: 'Rain', icon: '🌧️', short: 'RA' },
-            storm: { name: 'Thunderstorm', icon: '⛈️', short: 'TS' },
-            snow: { name: 'Snow', icon: '🌨️', short: 'SN' },
-            fog: { name: 'Fog', icon: '🌫️', short: 'FG' }
+            clear: { name: 'Clear Skies', icon: '☀️', short: 'CLR', desc: 'Perfect VFR conditions' },
+            fewclouds: { name: 'Few Clouds', icon: '🌤️', short: 'FEW', desc: '1-2 oktas cloud cover' },
+            scattered: { name: 'Scattered Clouds', icon: '⛅', short: 'SCT', desc: '3-4 oktas cloud cover' },
+            broken: { name: 'Broken Clouds', icon: '🌥️', short: 'BKN', desc: '5-7 oktas cloud cover' },
+            overcast: { name: 'Overcast', icon: '☁️', short: 'OVC', desc: '8 oktas complete cover' },
+            rain: { name: 'Rain', icon: '🌧️', short: 'RA', desc: 'Light to moderate rain' },
+            storm: { name: 'Thunderstorm', icon: '⛈️', short: 'TS', desc: 'Heavy rain with lightning' },
+            snow: { name: 'Snow', icon: '🌨️', short: 'SN', desc: 'Snowfall conditions' },
+            fog: { name: 'Fog', icon: '🌫️', short: 'FG', desc: 'Reduced visibility <1SM' }
         };
 
         // Compact mode state
@@ -200,8 +200,11 @@ class EnvironmentPane extends SimGlassBase {
     setWeather(preset) {
         this.data.weather = preset;
 
+        // Visual feedback
+        this.showWeatherFeedback(preset);
+
         // Send weather preset command to server
-        // Server will use HTTP API to set weather
+        // Note: MSFS 2024 has limited weather API - this updates UI state only
         fetch(`http://${window.location.hostname}:8080/api/environment/weather`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -210,7 +213,10 @@ class EnvironmentPane extends SimGlassBase {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                console.log(`Weather set: ${preset}`);
+                console.log(`Weather preset selected: ${preset} (${data.method})`);
+                if (data.note) {
+                    console.info(`ℹ️ ${data.note}`);
+                }
             } else {
                 console.warn(`Weather failed: ${data.error}`);
             }
@@ -218,6 +224,19 @@ class EnvironmentPane extends SimGlassBase {
         .catch(err => console.error('Weather error:', err));
 
         this.updateUI();
+    }
+
+    showWeatherFeedback(preset) {
+        // Animate the weather current display to show selection
+        const currentDisplay = document.querySelector('.env-weather-current');
+        if (currentDisplay) {
+            currentDisplay.style.transform = 'scale(1.05)';
+            currentDisplay.style.boxShadow = '0 4px 20px rgba(59, 130, 246, 0.4)';
+            setTimeout(() => {
+                currentDisplay.style.transform = 'scale(1)';
+                currentDisplay.style.boxShadow = '';
+            }, 300);
+        }
     }
 
     // SimGlassBase lifecycle hooks
