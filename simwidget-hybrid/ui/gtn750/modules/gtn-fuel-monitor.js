@@ -15,13 +15,17 @@ class GTNFuelMonitor {
             warningBuffer: 30,  // Warning threshold: reserves + 30min (minutes)
             fuelUnit: 'GAL',    // 'GAL' or 'LBS'
             showRangeRings: true,
-            usableFuelPercent: 100 // Some aircraft have unusable fuel
+            usableFuelPercent: 100, // Some aircraft have unusable fuel
+            burnRateWindowSize: 10, // Number of samples for burn rate averaging
+            nearestAirportRange: 50 // Range to search for nearest suitable airports (nm)
         };
 
         // State
         this.fuelState = 'unknown'; // 'safe', 'marginal', 'critical', 'unknown'
         this.lastWarningTime = 0;
         this.warningCooldown = 60000; // 1 minute between warnings
+        this.burnHistory = [];       // Historical burn rate samples for averaging
+        this.lastNearestAirportsUpdate = 0;
 
         // Cached calculations (updated each frame)
         this.calculations = {
@@ -50,18 +54,31 @@ class GTNFuelMonitor {
         const groundSpeed = data.groundSpeed || 0;
         const fuelCapacity = data.fuelCapacity || 50; // Default for small GA
 
+        // Track burn rate history for more accurate predictions
+        if (fuelFlow > 0) {
+            this.burnHistory.push(fuelFlow);
+            if (this.burnHistory.length > this.config.burnRateWindowSize) {
+                this.burnHistory.shift();
+            }
+        }
+
+        // Calculate average burn rate (use instantaneous if insufficient history)
+        const avgBurnRate = this.burnHistory.length >= 3
+            ? this.burnHistory.reduce((sum, rate) => sum + rate, 0) / this.burnHistory.length
+            : fuelFlow;
+
         // Calculate usable fuel
         const usableFuel = fuelTotal * (this.config.usableFuelPercent / 100);
 
-        // Calculate endurance (hours)
-        const endurance = fuelFlow > 0 ? usableFuel / fuelFlow : 0;
+        // Calculate endurance (hours) using average burn rate
+        const endurance = avgBurnRate > 0 ? usableFuel / avgBurnRate : 0;
 
         // Calculate range (nautical miles)
         const range = groundSpeed > 0 ? endurance * groundSpeed : 0;
 
-        // Calculate reserves based on config
+        // Calculate reserves based on config (using average burn rate)
         const reserveMinutes = this.config.reserveType === 'IFR' ? 60 : 45;
-        const reserveFuel = fuelFlow * (reserveMinutes / 60);
+        const reserveFuel = avgBurnRate * (reserveMinutes / 60);
 
         // Calculate fuel required to destination
         let fuelRequired = 0;
@@ -83,9 +100,9 @@ class GTNFuelMonitor {
                 distanceRemaining += this.flightPlanManager.distanceToActive;
             }
 
-            // Calculate fuel required (distance / speed * fuel flow)
+            // Calculate fuel required (distance / speed * average burn rate)
             const timeToDestination = distanceRemaining / groundSpeed; // hours
-            fuelRequired = timeToDestination * fuelFlow;
+            fuelRequired = timeToDestination * avgBurnRate;
 
             // Can we make it with reserves?
             canReachDestination = usableFuel >= (fuelRequired + reserveFuel);
@@ -96,9 +113,9 @@ class GTNFuelMonitor {
 
         // Determine fuel state
         let fuelState = 'unknown';
-        const warningThreshold = reserveFuel + (fuelFlow * (this.config.warningBuffer / 60));
+        const warningThreshold = reserveFuel + (avgBurnRate * (this.config.warningBuffer / 60));
 
-        if (fuelFlow > 0) {
+        if (avgBurnRate > 0) {
             if (usableFuel > warningThreshold) {
                 fuelState = 'safe';
             } else if (usableFuel > reserveFuel) {
@@ -119,10 +136,17 @@ class GTNFuelMonitor {
             timeToEmpty: endurance * 60, // Convert to minutes
             distanceRemaining,
             canReachDestination,
-            nearestSuitableAirports: [] // TODO: Populate from NavDB
+            nearestSuitableAirports: this.calculations.nearestSuitableAirports || []
         };
 
         this.fuelState = fuelState;
+
+        // Update nearest suitable airports (throttled to every 30 seconds)
+        const now = Date.now();
+        if (now - this.lastNearestAirportsUpdate > 30000) {
+            this.updateNearestSuitableAirports(data);
+            this.lastNearestAirportsUpdate = now;
+        }
 
         // Trigger warnings if needed
         this.checkWarnings(data);
@@ -168,6 +192,67 @@ class GTNFuelMonitor {
         // Parent can set this.onWarning callback to handle UI notifications
         if (typeof this.onWarning === 'function') {
             this.onWarning(title, message, level);
+        }
+    }
+
+    /**
+     * Update nearest suitable airports within fuel range
+     * Queries NavDB for airports and filters by fuel range
+     * @param {Object} data - Current flight data
+     */
+    async updateNearestSuitableAirports(data) {
+        if (!data.latitude || !data.longitude) return;
+
+        try {
+            // Query nearby airports within fuel range (or config range, whichever is smaller)
+            const searchRange = Math.min(this.calculations.range, this.config.nearestAirportRange);
+            if (searchRange < 5) return; // Don't search if range is too small
+
+            const response = await fetch(
+                `http://${location.hostname}:${this.serverPort}/api/navdb/nearby/airports?lat=${data.latitude}&lon=${data.longitude}&range=${searchRange}&limit=10`
+            );
+
+            if (!response.ok) return;
+
+            const airports = await response.json();
+            if (!airports || airports.length === 0) return;
+
+            // Calculate fuel required to each airport
+            const suitableAirports = airports.map(apt => {
+                const distance = this.core.calculateDistance(
+                    data.latitude, data.longitude,
+                    apt.lat, apt.lon
+                );
+                const bearing = this.core.calculateBearing(
+                    data.latitude, data.longitude,
+                    apt.lat, apt.lon
+                );
+
+                // Estimate fuel required (assumes current ground speed and burn rate)
+                const groundSpeed = data.groundSpeed || 100;
+                const avgBurnRate = this.burnHistory.length >= 3
+                    ? this.burnHistory.reduce((sum, rate) => sum + rate, 0) / this.burnHistory.length
+                    : (data.fuelFlow || 10);
+
+                const timeToAirport = distance / groundSpeed; // hours
+                const fuelRequired = timeToAirport * avgBurnRate;
+                const fuelWithReserves = fuelRequired + this.calculations.fuelReserves;
+
+                return {
+                    icao: apt.icao || apt.ident,
+                    name: apt.name,
+                    distance: Math.round(distance * 10) / 10,
+                    bearing: Math.round(bearing),
+                    fuelRequired: Math.round(fuelRequired * 10) / 10,
+                    reachable: this.calculations.fuelRemaining >= fuelWithReserves,
+                    elevation: apt.elevation || 0
+                };
+            }).sort((a, b) => a.distance - b.distance); // Sort by distance
+
+            this.calculations.nearestSuitableAirports = suitableAirports;
+
+        } catch (error) {
+            GTNCore.log(`[FuelMonitor] Failed to fetch nearest airports: ${error.message}`);
         }
     }
 
