@@ -236,6 +236,18 @@ class RuleEngine {
                     break;
                 }
 
+                // ATC cleared for takeoff: full power to accelerate past 25kt → TAKEOFF phase
+                if (this._atc && this._atc.getPhase() === 'CLEARED_TAKEOFF') {
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Brake off — cleared for takeoff');
+                    // Capture runway heading for takeoff roll if not already set
+                    if (!this._runwayHeading) {
+                        this._runwayHeading = Math.round(d.heading || 0);
+                    }
+                    this._groundSteer(d, this._runwayHeading);
+                    this._cmdValue('THROTTLE_SET', 100, 'Full power — takeoff roll');
+                    break;
+                }
+
                 // Use ATC waypoint for steering if available, else runway heading
                 {
                     let steerTarget;
