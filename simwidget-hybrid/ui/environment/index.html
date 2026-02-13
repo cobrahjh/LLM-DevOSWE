@@ -77,7 +77,42 @@
                         </div>
                     </div>
 
-                    <!-- Weather Section -->
+                    <!-- Weather Conditions Section - NEW -->
+                    <div class="env-section">
+                        <div class="env-section-header">WEATHER CONDITIONS</div>
+                        <div class="env-wx-grid">
+                            <div class="env-wx-cell">
+                                <span class="env-wx-label">TEMP</span>
+                                <span class="env-wx-value" id="wx-temp">--°C</span>
+                            </div>
+                            <div class="env-wx-cell">
+                                <span class="env-wx-label">QNH</span>
+                                <span class="env-wx-value" id="wx-qnh">----</span>
+                            </div>
+                            <div class="env-wx-cell">
+                                <span class="env-wx-label">VIS</span>
+                                <span class="env-wx-value" id="wx-vis">--SM</span>
+                            </div>
+                            <div class="env-wx-cell">
+                                <span class="env-wx-label">WIND</span>
+                                <span class="env-wx-value" id="wx-wind">---/--</span>
+                            </div>
+                            <div class="env-wx-cell">
+                                <span class="env-wx-label">D-ALT</span>
+                                <span class="env-wx-value" id="wx-dalt">----</span>
+                            </div>
+                            <div class="env-wx-cell">
+                                <span class="env-wx-label">CLOUD</span>
+                                <span class="env-wx-value" id="wx-cloud">CLR</span>
+                            </div>
+                        </div>
+                        <div class="env-wx-precip" id="wx-precip-bar" style="display:none;">
+                            <span class="env-wx-precip-icon">🌧️</span>
+                            <span class="env-wx-precip-text" id="wx-precip-text">PRECIP: 0.0mm</span>
+                        </div>
+                    </div>
+
+                    <!-- Weather Presets Section -->
                     <div class="env-section">
                         <div class="env-section-header">WEATHER PRESETS</div>
                         <div class="env-weather-current">

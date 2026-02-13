@@ -422,8 +422,9 @@
       "category": "library",
       "summary": "GLM-OCR is an Optical Character Recognition library designed to accurately and quickly extract text from images.",
       "thoughts": "GLM-OCR could be very useful for Hive's real-time dashboards and monitoring, as well as voice control and accessibility features. It would enable more accurate extraction of data from various sources, improving the overall functionality and user experience.",
-      "status": "pending",
-      "fetchedAt": "2026-02-11T20:06:07.988Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-11T20:06:07.988Z",
+      "decidedAt": "2026-02-13T07:26:42.963Z"
     },
     {
       "id": "reddit-1r28xxz",
@@ -439,8 +440,9 @@
       "category": "release",
       "summary": "GLM-5 is a new open-source language model that scores highly on the Intelligence Index and has become the leader in open weights.",
       "thoughts": "GLM-5 could be useful for Hive by providing advanced AI capabilities, enhancing the functionality of Claude Code and local LLMs like Ollama/LM Studio. Its improved intelligence index suggests it may offer more sophisticated language understanding and generation, which could benefit various component",
-      "status": "pending",
-      "fetchedAt": "2026-02-12T02:04:38.766Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-12T02:04:38.766Z",
+      "decidedAt": "2026-02-13T07:26:45.941Z"
     },
     {
       "id": "gh-rel-electron-electron-285366423",
@@ -455,8 +457,9 @@
       "category": "release",
       "summary": "electron v40.4.0 is a major release of the Electron framework.",
       "thoughts": "Electron is a crucial component for Hive, as it powers the MSFS 2024 flight simulation widgets and overlays. Upgrading to Electron v40.4.0 could improve performance, security, and compatibility with newer technologies, making it highly useful for enhancing Hive's capabilities.",
-      "status": "pending",
-      "fetchedAt": "2026-02-12T08:09:12.148Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-12T08:09:12.148Z",
+      "decidedAt": "2026-02-13T07:26:47.368Z"
     },
     {
       "id": "reddit-1r2xjwp",
@@ -472,8 +475,9 @@
       "category": "release",
       "summary": "Ring-1T-2.5 is a large language model (LLM) released by inclusionAI.",
       "thoughts": "This LLM could be useful for Hive's AI agent orchestration, enhancing its capabilities in natural language processing and understanding.",
-      "status": "pending",
-      "fetchedAt": "2026-02-12T20:16:19.234Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-12T20:16:19.234Z",
+      "decidedAt": "2026-02-13T07:26:48.349Z"
     },
     {
       "id": "reddit-1r30bgz",
@@ -489,8 +493,9 @@
       "category": "release",
       "summary": "Ming-flash-omni-2.0 is a large multimodal model capable of unified speech/SFX/music generation.",
       "thoughts": "This advanced AI model could significantly enhance Hive's capabilities in voice control, accessibility, and AI agent orchestration, providing more natural and diverse interactions.",
-      "status": "pending",
-      "fetchedAt": "2026-02-12T20:19:06.168Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-12T20:19:06.168Z",
+      "decidedAt": "2026-02-13T07:26:49.397Z"
     },
     {
       "id": "gh-rel-ollama-ollama-285497225",
@@ -505,8 +510,9 @@
       "category": "release",
       "summary": "ollama/ollama v0.16.0 is a local language model that can be integrated into applications for natural language processing tasks.",
       "thoughts": "This release of ollama could be highly useful for Hive, as it provides an additional local LLM option that can enhance AI agent orchestration capabilities, particularly in scenarios where real-time responses are required without relying on external cloud-based services.",
-      "status": "pending",
-      "fetchedAt": "2026-02-12T20:25:00.815Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-12T20:25:00.815Z",
+      "decidedAt": "2026-02-13T07:26:50.749Z"
     },
     {
       "id": "gh-rel-ollama-ollama-285905972",
@@ -521,8 +527,9 @@
       "category": "release",
       "summary": "ollama/ollama v0.16.1 is a local language model that can be integrated into applications for natural language processing tasks.",
       "thoughts": "This release of Ollama could be very useful for Hive as it provides a powerful local LLM that can enhance AI agent orchestration capabilities, including Claude Code and other local LLMs like LM Studio. The integration potential with existing services in Hive, such as KittBox and SimWidget, could sig",
-      "status": "pending",
-      "fetchedAt": "2026-02-13T02:00:23.396Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-13T02:00:23.396Z",
+      "decidedAt": "2026-02-13T07:26:52.296Z"
     },
     {
       "id": "gh-1141934589",
@@ -651,8 +658,9 @@
       "category": "library",
       "summary": "A modular agent framework that dynamically generates its topology and evolves at runtime.",
       "thoughts": "This library could enhance Hive's AI agent orchestration capabilities by providing a more flexible and adaptive system for managing agents. It could help in creating more dynamic and intelligent interactions within the Hive ecosystem, particularly in real-time dashboards and monitoring.",
-      "status": "pending",
-      "fetchedAt": "2026-02-12T02:18:13.060Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-12T02:18:13.060Z",
+      "decidedAt": "2026-02-13T07:26:57.848Z"
     },
     {
       "id": "gh-rel-anthropics-anthropic-sdk-typescript-281206290",
@@ -13433,9 +13441,9 @@
   "lastFetch": "2026-02-13T02:00:23.396Z",
   "stats": {
     "total": 767,
-    "approved": 53,
+    "approved": 61,
     "rejected": 1,
-    "pending": 692,
+    "pending": 684,
     "implemented": 0
   }
 }

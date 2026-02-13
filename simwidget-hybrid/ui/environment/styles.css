@@ -262,7 +262,73 @@
 }
 
 /* ===========================================
-   WEATHER - COMPACT GRID
+   WEATHER CONDITIONS - LIVE DATA GRID
+   =========================================== */
+
+.env-wx-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px 2px;
+    margin-bottom: 4px;
+}
+
+.env-wx-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--env-border);
+    border-radius: 2px;
+    padding: 3px 2px;
+    min-height: 32px;
+    justify-content: center;
+}
+
+.env-wx-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: var(--env-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.env-wx-value {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--env-mono);
+    color: var(--env-green);
+    line-height: 1;
+}
+
+.env-wx-precip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 3px 4px;
+    background: rgba(0, 136, 255, 0.15);
+    border: 1px solid #0088ff;
+    border-radius: 2px;
+    margin-top: 3px;
+}
+
+.env-wx-precip-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.env-wx-precip-text {
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--env-mono);
+    color: #0088ff;
+    line-height: 1;
+}
+
+/* ===========================================
+   WEATHER PRESETS - COMPACT GRID
    =========================================== */
 
 .env-weather-current {

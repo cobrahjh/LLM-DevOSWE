@@ -3519,6 +3519,16 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'MAGVAR', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AMBIENT WIND DIRECTION', 'degrees', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'AMBIENT WIND VELOCITY', 'knots', SimConnectDataType.FLOAT64, 0);
+
+        // Weather conditions (7 vars) - Phase 1: Enhanced Weather Reading
+        handle.addToDataDefinition(0, 'AMBIENT TEMPERATURE', 'celsius', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT PRESSURE', 'inches of mercury', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'SEA LEVEL PRESSURE', 'millibars', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT VISIBILITY', 'meters', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT PRECIP RATE', 'millimeters of water', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT IN CLOUD', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AMBIENT DENSITY ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
+
         handle.addToDataDefinition(0, 'LOCAL TIME', 'Hours', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'ZULU TIME', 'Hours', SimConnectDataType.FLOAT64, 0);
 
@@ -3797,6 +3807,12 @@ async function initSimConnect() {
                     fd.groundSpeed = rf(); fd.latitude = rf(); fd.longitude = rf();
                     fd.pitch = rf(); fd.bank = rf(); fd.magvar = rf();
                     fd.windDirection = rf(); fd.windSpeed = rf();
+
+                    // Weather conditions (7 vars)
+                    fd.temperature = rf(); fd.pressure = rf(); fd.seaLevelPressure = rf();
+                    fd.visibility = rf(); fd.precipRate = rf();
+                    fd.inCloud = rb(); fd.densityAltitude = rf();
+
                     fd.localTime = rf(); fd.zuluTime = rf();
 
                     // Autopilot (9 vars)
@@ -4141,6 +4157,15 @@ function startMockData() {
             groundSpeed: mockSpd * 1.1 + (Math.random() - 0.5) * 10,
             windDirection: 270 + (Math.random() - 0.5) * 20,
             windSpeed: 15 + (Math.random() - 0.5) * 10,
+
+            // Weather conditions (Phase 1: Enhanced Weather Reading)
+            temperature: 15 + (Math.random() - 0.5) * 10,  // Celsius
+            pressure: 29.92 + (Math.random() - 0.5) * 0.3,  // inHg
+            seaLevelPressure: 1013 + (Math.random() - 0.5) * 20,  // mb
+            visibility: 9000 + Math.random() * 1000,  // meters (good VFR)
+            precipRate: Math.random() < 0.8 ? 0 : Math.random() * 2,  // mm (mostly clear)
+            inCloud: Math.random() < 0.2,  // 20% chance in cloud
+            densityAltitude: 4700 + (Math.random() - 0.5) * 500,
             // GPS Flight Plan (mock flight: KJFK -> KLAX)
             gpsWpCount: 5,
             gpsWpIndex: 2,

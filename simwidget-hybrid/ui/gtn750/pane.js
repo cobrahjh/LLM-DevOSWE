@@ -380,6 +380,7 @@ class GTN750Pane extends SimGlassBase {
             nav1: this.cdiManager.nav1,
             nav2: this.cdiManager.nav2,
             gps: this.cdiManager.gps,
+            vnavManager: this.vnavManager,
             onUpdateDatafields: () => {
                 this.dataFieldsManager.update(this.data, {
                     flightPlan: this.flightPlanManager?.flightPlan || null,

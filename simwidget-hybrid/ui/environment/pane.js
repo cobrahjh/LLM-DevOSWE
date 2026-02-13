@@ -7,7 +7,7 @@ class EnvironmentPane extends SimGlassBase {
     constructor() {
         super({
             widgetName: 'environment',
-            widgetVersion: '2.3.0',
+            widgetVersion: '2.4.0',
             autoConnect: true
         });
 
@@ -64,7 +64,16 @@ class EnvironmentPane extends SimGlassBase {
             simRate: document.getElementById('sim-rate'),
             rateDecrease: document.getElementById('rate-decrease'),
             rateIncrease: document.getElementById('rate-increase'),
-            // Weather
+            // Weather conditions (Phase 1: Live Weather Data)
+            wxTemp: document.getElementById('wx-temp'),
+            wxQnh: document.getElementById('wx-qnh'),
+            wxVis: document.getElementById('wx-vis'),
+            wxWind: document.getElementById('wx-wind'),
+            wxDalt: document.getElementById('wx-dalt'),
+            wxCloud: document.getElementById('wx-cloud'),
+            wxPrecipBar: document.getElementById('wx-precip-bar'),
+            wxPrecipText: document.getElementById('wx-precip-text'),
+            // Weather presets
             weatherIcon: document.getElementById('weather-icon'),
             weatherName: document.getElementById('weather-name'),
             // Actions
@@ -278,12 +287,16 @@ class EnvironmentPane extends SimGlassBase {
         if (data.isPaused !== undefined) this.data.isPaused = data.isPaused;
         if (data.isSlew !== undefined) this.data.isSlew = data.isSlew;
 
-        // Environment data for compact view
+        // Weather data (Phase 1: Enhanced Weather Reading)
         if (data.windSpeed !== undefined) this.data.windSpeed = data.windSpeed;
-        if (data.windDir !== undefined) this.data.windDir = data.windDir;
+        if (data.windDirection !== undefined) this.data.windDir = data.windDirection;
         if (data.temperature !== undefined) this.data.temperature = data.temperature;
         if (data.pressure !== undefined) this.data.pressure = data.pressure;
+        if (data.seaLevelPressure !== undefined) this.data.seaLevelPressure = data.seaLevelPressure;
         if (data.visibility !== undefined) this.data.visibility = data.visibility;
+        if (data.precipRate !== undefined) this.data.precipRate = data.precipRate;
+        if (data.inCloud !== undefined) this.data.inCloud = data.inCloud;
+        if (data.densityAltitude !== undefined) this.data.densityAltitude = data.densityAltitude;
 
         this.updateUI();
     }
@@ -317,6 +330,51 @@ class EnvironmentPane extends SimGlassBase {
         // Sim rate
         if (this.elements.simRate) {
             this.elements.simRate.textContent = this.data.simRate + 'x';
+        }
+
+        // Weather conditions (Phase 1: Live Weather Data)
+        if (this.elements.wxTemp && this.data.temperature !== undefined) {
+            const tempC = Math.round(this.data.temperature);
+            const tempF = Math.round(tempC * 9/5 + 32);
+            this.elements.wxTemp.textContent = `${tempC}°C`;
+            this.elements.wxTemp.title = `${tempF}°F`;
+        }
+
+        if (this.elements.wxQnh && this.data.pressure !== undefined) {
+            this.elements.wxQnh.textContent = this.data.pressure.toFixed(2);
+        }
+
+        if (this.elements.wxVis && this.data.visibility !== undefined) {
+            const visSM = (this.data.visibility / 1609.34).toFixed(1);
+            this.elements.wxVis.textContent = `${visSM}SM`;
+        }
+
+        if (this.elements.wxWind && this.data.windDir !== undefined && this.data.windSpeed !== undefined) {
+            const dir = String(Math.round(this.data.windDir)).padStart(3, '0');
+            const spd = Math.round(this.data.windSpeed);
+            this.elements.wxWind.textContent = `${dir}/${spd}`;
+        }
+
+        if (this.elements.wxDalt && this.data.densityAltitude !== undefined) {
+            const dalt = Math.round(this.data.densityAltitude);
+            this.elements.wxDalt.textContent = dalt.toLocaleString();
+        }
+
+        if (this.elements.wxCloud && this.data.inCloud !== undefined) {
+            this.elements.wxCloud.textContent = this.data.inCloud ? 'IMC' : 'CLR';
+            this.elements.wxCloud.style.color = this.data.inCloud ? 'var(--env-amber)' : 'var(--env-green)';
+        }
+
+        // Precipitation bar (show only if precipitating)
+        if (this.elements.wxPrecipBar && this.data.precipRate !== undefined) {
+            if (this.data.precipRate > 0.1) {
+                this.elements.wxPrecipBar.style.display = 'flex';
+                if (this.elements.wxPrecipText) {
+                    this.elements.wxPrecipText.textContent = `PRECIP: ${this.data.precipRate.toFixed(1)}mm`;
+                }
+            } else {
+                this.elements.wxPrecipBar.style.display = 'none';
+            }
         }
 
         // Sim rate preset highlighting

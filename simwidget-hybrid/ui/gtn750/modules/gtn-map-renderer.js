@@ -107,6 +107,11 @@ class GTNMapRenderer {
             this.renderRoute(ctx, cx, cy, w, h, state);
         }
 
+        // TOD marker (VNAV)
+        if (state.vnavManager?.enabled && state.flightPlan?.waypoints) {
+            this.renderTODMarker(ctx, cx, cy, w, h, state);
+        }
+
         // OBS course line (includes holding pattern if active)
         if (state.obs?.active) {
             this.renderObsCourseLine(ctx, cx, cy, w, h, state);
@@ -882,6 +887,123 @@ class GTNMapRenderer {
             const isCompleted = index < activeIdx;
             this.renderWaypoint(ctx, positions[index].x, positions[index].y, wp, isActive, isCompleted, declutterLevel);
         });
+    }
+
+    /**
+     * Render TOD (Top of Descent) marker for VNAV
+     */
+    renderTODMarker(ctx, cx, cy, w, h, state) {
+        const vnavStatus = state.vnavManager.getStatus();
+        if (!vnavStatus.enabled || vnavStatus.todDistance === 0) return;
+
+        const todPos = state.vnavManager.getTODPosition(state.flightPlan.waypoints);
+        if (!todPos) return;
+
+        // Convert TOD lat/lon to screen coordinates
+        const { x, y } = this.latLonToCanvas(
+            todPos.lat,
+            todPos.lon,
+            state.data.latitude,
+            state.data.longitude,
+            state.data.heading,
+            state.map.range,
+            state.map.orientation,
+            w,
+            h,
+            cx,
+            cy
+        );
+
+        // Check if within visible area
+        if (x < 0 || x > w || y < 0 || y > h) return;
+
+        // Determine color based on VNAV state
+        let color = '#00ffff'; // Cyan - default
+        if (vnavStatus.active) {
+            color = '#00ff00'; // Green - active
+        } else if (vnavStatus.armed) {
+            color = '#ffff00'; // Yellow - armed
+        }
+
+        // Draw TOD marker - flag style
+        ctx.save();
+        ctx.translate(x, y);
+
+        // Flag pole
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -20);
+        ctx.stroke();
+
+        // Flag
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(0, -20);
+        ctx.lineTo(15, -17);
+        ctx.lineTo(15, -12);
+        ctx.lineTo(0, -15);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // TOD label
+        ctx.font = 'bold 11px Consolas, monospace';
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.fillText('TOD', 3, -8);
+
+        // Distance label (if not too close)
+        if (Math.abs(vnavStatus.todDistance) > 0.5) {
+            ctx.font = '10px Consolas, monospace';
+            ctx.fillText(`${Math.abs(vnavStatus.todDistance).toFixed(1)}nm`, 3, 2);
+        }
+
+        // Circle marker at base
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Draw descent path line from TOD to constraint (if active or armed)
+        if ((vnavStatus.active || vnavStatus.armed) && vnavStatus.nextConstraint) {
+            const constraintWp = state.flightPlan.waypoints.find(
+                wp => wp.ident === vnavStatus.nextConstraint.ident
+            );
+
+            if (constraintWp && constraintWp.lat && constraintWp.lng) {
+                const constraintPos = this.latLonToCanvas(
+                    constraintWp.lat,
+                    constraintWp.lng,
+                    state.data.latitude,
+                    state.data.longitude,
+                    state.data.heading,
+                    state.map.range,
+                    state.map.orientation,
+                    w,
+                    h,
+                    cx,
+                    cy
+                );
+
+                // Draw dashed line from TOD to constraint
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.globalAlpha = 0.5;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(constraintPos.x, constraintPos.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1.0;
+            }
+        }
     }
 
     renderWaypoint(ctx, x, y, waypoint, isActive, isCompleted, declutterLevel) {
