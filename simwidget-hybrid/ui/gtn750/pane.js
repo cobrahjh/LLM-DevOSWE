@@ -156,6 +156,12 @@ class GTN750Pane extends SimGlassBase {
             onAlert: (type, message, level, threat) => this.handleTCASAlert(type, message, level, threat)
         });
 
+        // Flight Logger (automatic logbook and timer tracking)
+        this.flightLogger = new GTNFlightLogger({
+            core: this.core,
+            onPhaseChange: (newPhase, oldPhase) => this.handleFlightPhaseChange(newPhase, oldPhase)
+        });
+
         // Deferred modules (loaded after 500ms)
         this.flightPlanManager = null;
         this.dataHandler = null;
@@ -512,11 +518,21 @@ class GTN750Pane extends SimGlassBase {
             this.tcas.update(trafficList, ownShip);
         }
 
+        // Update flight logger with current data
+        if (this.flightLogger) {
+            this.flightLogger.update(this.data);
+            // Update flight plan in logger if available
+            if (this.flightPlanManager?.flightPlan) {
+                this.flightLogger.updateFlightPlan(this.flightPlanManager.flightPlan);
+            }
+        }
+
         this.updateApproachPhaseDisplay();
         this.updateIlsDisplay();
         this.updateFuelDisplay();
         this.updateAltitudeDisplay();
         this.updateTCASDisplay();
+        this.updateTimerDisplay();
         this.updateAuxData();
     }
 
@@ -733,6 +749,43 @@ class GTN750Pane extends SimGlassBase {
 
         // Log alert
         GTNCore.log(`[GTN750] TCAS ${type}: ${message}`);
+    }
+
+    /**
+     * Update flight timer display
+     */
+    updateTimerDisplay() {
+        if (!this.flightLogger || !this.elements.timerPhase || !this.elements.timerHobbs) {
+            return;
+        }
+
+        const status = this.flightLogger.getStatus();
+        const timers = status.timers;
+
+        // Update phase label with color
+        this.elements.timerPhase.textContent = status.phaseLabel;
+        this.elements.timerPhase.className = 'timer-phase-label';
+        this.elements.timerPhase.classList.add(status.phase.toLowerCase().replace('_', '-'));
+        this.elements.timerPhase.style.color = status.phaseColor;
+
+        // Update Hobbs time
+        this.elements.timerHobbs.textContent = timers.hobbsTimeStr;
+    }
+
+    /**
+     * Handle flight phase change
+     * @param {string} newPhase - New flight phase
+     * @param {string} oldPhase - Previous flight phase
+     */
+    handleFlightPhaseChange(newPhase, oldPhase) {
+        GTNCore.log(`[GTN750] Flight phase: ${oldPhase} → ${newPhase}`);
+
+        // Show notification for significant phase changes
+        if (newPhase === 'TAKEOFF') {
+            this.showSequenceNotification('', 'TAKEOFF');
+        } else if (newPhase === 'LANDING') {
+            this.showSequenceNotification('', 'LANDING');
+        }
     }
 
     /**
@@ -1983,6 +2036,8 @@ class GTN750Pane extends SimGlassBase {
             tcasStatusLabel: document.getElementById('tcas-status-label'),
             tcasState: document.getElementById('tcas-state'),
             tcasCount: document.getElementById('tcas-count'),
+            timerPhase: document.getElementById('timer-phase'),
+            timerHobbs: document.getElementById('timer-hobbs'),
             tabs: document.querySelectorAll('.gtn-tab'),
             // Compact mode elements
             gcCom1: document.getElementById('gc-com1'),
