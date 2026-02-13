@@ -317,10 +317,10 @@ class RuleEngine {
                     if (phaseChanged || !apState.vsHold) {
                         this._cmd('AP_VS_HOLD', true, 'VS hold for climb');
                     }
-                    this._cmdValue('AP_VS_VAR_SET', climbVS, 'VS +' + climbVS);
+                    this._cmdValue('AP_VS_VAR_SET_ENGLISH', climbVS, 'VS +' + climbVS);
                 }
                 if (phaseChanged) {
-                    this._cmdValue('AP_ALT_VAR_SET', this._getCruiseAlt(), 'ALT ' + this._getCruiseAlt());
+                    this._cmdValue('AP_ALT_VAR_SET_ENGLISH', this._getCruiseAlt(), 'ALT ' + this._getCruiseAlt());
                     this._cmdValue('AP_SPD_VAR_SET', speeds.Vy, 'SPD ' + speeds.Vy + ' (Vy)');
                 }
                 break;
@@ -332,7 +332,7 @@ class RuleEngine {
                 if (phaseChanged) {
                     // Level off
                     this._cmd('AP_ALT_HOLD', true, 'ALT hold at cruise');
-                    this._cmdValue('AP_VS_VAR_SET', 0, 'VS 0 (level)');
+                    this._cmdValue('AP_VS_VAR_SET_ENGLISH', 0, 'VS 0 (level)');
                     this._cmdValue('AP_SPD_VAR_SET', speeds.Vcruise, 'SPD ' + speeds.Vcruise + ' (cruise)');
                 }
                 // Lateral nav — continuous evaluation
@@ -357,14 +357,24 @@ class RuleEngine {
                     this._cmd('AP_MASTER', true, 'Engage AP for descent');
                 }
                 if (phaseChanged) {
-                    this._cmdValue('AP_ALT_VAR_SET', this._targetCruiseAlt, 'ALT ' + this._targetCruiseAlt);
+                    this._cmdValue('AP_ALT_VAR_SET_ENGLISH', this._targetCruiseAlt, 'ALT ' + this._targetCruiseAlt);
                     this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.DESCENT, 'SPD ' + p.phaseSpeeds.DESCENT);
                 }
                 // Lateral nav — continuous evaluation
                 this._applyLateralNav(d, apState, phaseChanged);
-                // Continuously enforce VS descent (dedup prevents spam)
+                // Enforce VS descent — disengage ALT hold if active, then engage VS
+                if (apState.altitudeHold) {
+                    delete this._lastCommands['AP_ALT_HOLD'];
+                    this._cmd('AP_ALT_HOLD', true, 'Disengage ALT hold for descent');
+                }
+                // Clear dedup if AP isn't maintaining descent rate (restart recovery)
+                const desVs = d.verticalSpeed || 0;
+                if (Math.abs(desVs - p.descent.normalRate) > 200) {
+                    delete this._lastCommands['AP_VS_HOLD'];
+                    delete this._lastCommands['AP_VS_VAR_SET_ENGLISH'];
+                }
                 this._cmd('AP_VS_HOLD', true, 'VS hold for descent');
-                this._cmdValue('AP_VS_VAR_SET', p.descent.normalRate, 'VS ' + p.descent.normalRate);
+                this._cmdValue('AP_VS_VAR_SET_ENGLISH', p.descent.normalRate, 'VS ' + p.descent.normalRate);
                 // Descent throttle: keep power high until speed builds from gravity.
                 // Pitching nose-down in descent adds speed via gravity — don't cut throttle
                 // until speed is above descent target, or stall protection will fight descent.
@@ -387,7 +397,7 @@ class RuleEngine {
                 if (phaseChanged) {
                     this._cmdValue('AP_SPD_VAR_SET', p.phaseSpeeds.APPROACH, 'SPD ' + p.phaseSpeeds.APPROACH);
                     this._cmd('AP_VS_HOLD', true, 'VS hold for approach');
-                    this._cmdValue('AP_VS_VAR_SET', p.descent.approachRate, 'VS ' + p.descent.approachRate);
+                    this._cmdValue('AP_VS_VAR_SET_ENGLISH', p.descent.approachRate, 'VS ' + p.descent.approachRate);
                 }
                 // Progressive flap deployment (use notch # as value to bypass dedup)
                 const flaps = d.flapsIndex || 0;
@@ -454,18 +464,18 @@ class RuleEngine {
                         // High on final — normal descent
                         if (!apState.master) this._cmd('AP_MASTER', true, 'AP for final');
                         this._cmd('AP_VS_HOLD', true, 'VS hold final');
-                        this._cmdValue('AP_VS_VAR_SET', -300, 'VS -300 (final)');
+                        this._cmdValue('AP_VS_VAR_SET_ENGLISH', -300, 'VS -300 (final)');
                         this._cmdValue('THROTTLE_SET', 35, 'Final throttle');
                     } else if (lndAgl > 50) {
                         // Short final — gentle
                         if (apState.master) {
-                            this._cmdValue('AP_VS_VAR_SET', -200, 'VS -200 (short final)');
+                            this._cmdValue('AP_VS_VAR_SET_ENGLISH', -200, 'VS -200 (short final)');
                         }
                         this._cmdValue('THROTTLE_SET', 25, 'Short final throttle');
                     } else if (lndAgl > 20) {
                         // Pre-flare — very gentle
                         if (apState.master) {
-                            this._cmdValue('AP_VS_VAR_SET', -100, 'VS -100 (pre-flare)');
+                            this._cmdValue('AP_VS_VAR_SET_ENGLISH', -100, 'VS -100 (pre-flare)');
                         }
                         this._cmdValue('THROTTLE_SET', 15, 'Pre-flare throttle');
                     } else {
@@ -660,7 +670,7 @@ class RuleEngine {
                         this._cmd('AP_HDG_HOLD', true, 'HDG hold');
                         this._cmd('AP_VS_HOLD', true, 'VS hold');
                         const depVS = tt.departureVS ?? p.climb.normalRate ?? 500;
-                        this._cmdValue('AP_VS_VAR_SET', depVS, 'VS +' + depVS);
+                        this._cmdValue('AP_VS_VAR_SET_ENGLISH', depVS, 'VS +' + depVS);
                         // Verify: don't advance until AP is actually flying
                         if (apState.master) {
                             this._takeoffSubPhase = 'DEPARTURE';
@@ -679,7 +689,7 @@ class RuleEngine {
                 const depSpd = tt.departureSpeed ?? speeds.Vy;
                 const depAlt = tt.departureCruiseAlt ?? this._getCruiseAlt();
                 this._cmdValue('AP_SPD_VAR_SET', depSpd, 'SPD ' + depSpd + ' (Vy climb)');
-                this._cmdValue('AP_ALT_VAR_SET', depAlt, 'ALT ' + depAlt);
+                this._cmdValue('AP_ALT_VAR_SET_ENGLISH', depAlt, 'ALT ' + depAlt);
                 // Do NOT engage AP_ALT_HOLD here — it captures current alt (~800ft)
                 // and prevents the CLIMB phase from commanding VS climb to cruise
                 this._cmd('LANDING_LIGHTS_TOGGLE', true, 'Lights off after departure');
@@ -873,7 +883,7 @@ class RuleEngine {
                 this._cmd('AP_HDG_HOLD', true, 'HDG hold — bank recovery');
                 // Reduce VS if in a steep descending turn
                 if (vs < -500) {
-                    this._cmdValue('AP_VS_VAR_SET', 0, 'Level off — bank recovery');
+                    this._cmdValue('AP_VS_VAR_SET_ENGLISH', 0, 'Level off — bank recovery');
                 }
             }
             this._bankCorrectionActive = true;
@@ -923,7 +933,7 @@ class RuleEngine {
             if (apState.master) {
                 // Reduce pitch / lower nose — more aggressive if deep into stall
                 const vsCmd = ias < stallSpeed ? -500 : -200;
-                this._cmdValue('AP_VS_VAR_SET', vsCmd, 'STALL: nose down');
+                this._cmdValue('AP_VS_VAR_SET_ENGLISH', vsCmd, 'STALL: nose down');
                 this._cmd('AP_VS_HOLD', true, 'STALL: VS hold recovery');
             }
             // If in a steep bank AND stalling, wings level is priority
@@ -936,7 +946,7 @@ class RuleEngine {
             // Approaching stall — increase power, reduce VS
             alert = alert || 'STALL_WARN';
             if (vs < -300) {
-                this._cmdValue('AP_VS_VAR_SET', Math.min(vs + 200, 0), `Low IAS ${Math.round(ias)} (stall ${Math.round(stallSpeed)}) — reduce descent`);
+                this._cmdValue('AP_VS_VAR_SET_ENGLISH', Math.min(vs + 200, 0), `Low IAS ${Math.round(ias)} (stall ${Math.round(stallSpeed)}) — reduce descent`);
             }
             // If bank is adding to stall risk, shallow the turn
             if (absBank > 25 && apState.master) {
@@ -949,7 +959,7 @@ class RuleEngine {
             alert = 'OVERSPEED';
             this._cmdValue('THROTTLE_SET', 50, `OVERSPEED: reduce power (IAS ${Math.round(ias)} near Vne ${vne})`);
             if (apState.master && vs < -200) {
-                this._cmdValue('AP_VS_VAR_SET', Math.min(vs + 500, 0), 'OVERSPEED: reduce descent rate');
+                this._cmdValue('AP_VS_VAR_SET_ENGLISH', Math.min(vs + 500, 0), 'OVERSPEED: reduce descent rate');
             }
             this._speedCorrectionActive = true;
         } else if (ias > vno && phase !== 'DESCENT') {
@@ -977,13 +987,13 @@ class RuleEngine {
             // Excessive nose-up — risk of stall
             alert = alert || 'PITCH';
             if (apState.master) {
-                this._cmdValue('AP_VS_VAR_SET', Math.min(vs, 500), `Pitch ${Math.round(pitch)}° — reduce climb`);
+                this._cmdValue('AP_VS_VAR_SET_ENGLISH', Math.min(vs, 500), `Pitch ${Math.round(pitch)}° — reduce climb`);
             }
         } else if (pitch < maxPitchDown && !onGround) {
             // Excessive nose-down — risk of overspeed/CFIT
             alert = alert || 'PITCH';
             if (apState.master) {
-                this._cmdValue('AP_VS_VAR_SET', Math.max(vs, -300), `Pitch ${Math.round(pitch)}° — reduce descent`);
+                this._cmdValue('AP_VS_VAR_SET_ENGLISH', Math.max(vs, -300), `Pitch ${Math.round(pitch)}° — reduce descent`);
             }
         }
 
@@ -993,9 +1003,9 @@ class RuleEngine {
         const minVs = limits.minVs || -1500;
 
         if (vs > maxVs + 200 && apState.master && phase !== 'TAKEOFF') {
-            this._cmdValue('AP_VS_VAR_SET', maxVs, `VS ${Math.round(vs)} > max ${maxVs} — limiting`);
+            this._cmdValue('AP_VS_VAR_SET_ENGLISH', maxVs, `VS ${Math.round(vs)} > max ${maxVs} — limiting`);
         } else if (vs < minVs - 200 && apState.master) {
-            this._cmdValue('AP_VS_VAR_SET', minVs, `VS ${Math.round(vs)} < min ${minVs} — limiting`);
+            this._cmdValue('AP_VS_VAR_SET_ENGLISH', minVs, `VS ${Math.round(vs)} < min ${minVs} — limiting`);
         }
 
         // ── ALTITUDE DEVIATION (when AP ALT hold should be active) ──
@@ -1005,7 +1015,7 @@ class RuleEngine {
             if (altDev > 200) {
                 // Drifting off target altitude — re-engage
                 const correctVs = alt < targetAlt ? 300 : -300;
-                this._cmdValue('AP_VS_VAR_SET', correctVs, `ALT deviation ${Math.round(altDev)}ft — correcting`);
+                this._cmdValue('AP_VS_VAR_SET_ENGLISH', correctVs, `ALT deviation ${Math.round(altDev)}ft — correcting`);
                 this._cmd('AP_VS_HOLD', true, 'ALT correction VS hold');
             }
         }
@@ -1203,9 +1213,9 @@ class RuleEngine {
                 // Climb immediately to clear terrain
                 const safeAlt = worstElev + 1500; // 1500ft above highest terrain ahead
                 if (apState.master) {
-                    this._cmdValue('AP_ALT_VAR_SET', safeAlt, `TERRAIN: climb to ${safeAlt}ft (terrain ${worstElev}ft at ${worstDist}nm)`);
+                    this._cmdValue('AP_ALT_VAR_SET_ENGLISH', safeAlt, `TERRAIN: climb to ${safeAlt}ft (terrain ${worstElev}ft at ${worstDist}nm)`);
                     this._cmd('AP_VS_HOLD', true, 'TERRAIN: VS hold for climb');
-                    this._cmdValue('AP_VS_VAR_SET', 1000, 'TERRAIN: max climb');
+                    this._cmdValue('AP_VS_VAR_SET_ENGLISH', 1000, 'TERRAIN: max climb');
                 }
             }
         } else if (worstClearance < 1500) {
@@ -1227,9 +1237,9 @@ class RuleEngine {
                 if (this._externalTerrainAlert === 'WARNING' && localSev < 2 && phase !== 'TAKEOFF' && phase !== 'LANDING') {
                     const safeAlt = alt + 1500;
                     if (apState.master) {
-                        this._cmdValue('AP_ALT_VAR_SET', safeAlt, `TAWS: climb to ${safeAlt}ft (external alert)`);
+                        this._cmdValue('AP_ALT_VAR_SET_ENGLISH', safeAlt, `TAWS: climb to ${safeAlt}ft (external alert)`);
                         this._cmd('AP_VS_HOLD', true, 'TAWS: VS hold for climb');
-                        this._cmdValue('AP_VS_VAR_SET', 1000, 'TAWS: max climb');
+                        this._cmdValue('AP_VS_VAR_SET_ENGLISH', 1000, 'TAWS: max climb');
                     }
                 }
             }
