@@ -497,9 +497,10 @@ class RuleEngine {
         const vs = d.verticalSpeed || 0;
         // Takeoff tuner overrides (from takeoff-tuner.html via localStorage)
         const tt = this._getTakeoffTuning();
-        // MSFS 2024: onGround SimVar can be unreliable, AGL reads 15-30ft on runway
-        // due to terrain model offset. On ground if SimVar says so OR low AGL + no climb.
-        const onGround = d.onGround || (agl < 50 && Math.abs(vs) < 200);
+        // MSFS 2024: onGround SimVar is unreliable (can report true at 300+ AGL).
+        // Trust AGL as tiebreaker: only believe onGround if AGL also < 50ft.
+        // Also consider on-ground if very low AGL regardless of SimVar.
+        const onGround = (d.onGround && agl < 50) || (agl < 15 && Math.abs(vs) < 200);
 
         // Initialize sub-phase on entry
         if (phaseChanged || !this._takeoffSubPhase) {
@@ -543,11 +544,13 @@ class RuleEngine {
                 // so server keeps held-axes active, overriding joystick at SIM_FRAME rate.
                 this._cmdValue('AXIS_ELEVATOR_SET', 0.0001, 'Elevator neutral');
                 // Wings-level during roll — torque from full power rolls left
+                // Negative AXIS_AILERONS_SET = roll LEFT, positive = roll RIGHT
+                // Right bank (+) needs left aileron (-) to correct → negate bank
                 const rollBank = d.bank || 0;
                 if (Math.abs(rollBank) > (tt.liftoffBankThreshold ?? 3)) {
-                    const rollAilGain = tt.liftoffAileronGain ?? 3;
-                    const rollAilMax = tt.liftoffAileronMax ?? 60;
-                    const rollAilCorr = rollBank * rollAilGain;
+                    const rollAilGain = tt.liftoffAileronGain ?? 2;
+                    const rollAilMax = tt.liftoffAileronMax ?? 25;
+                    const rollAilCorr = -rollBank * rollAilGain;
                     this._cmdValue('AXIS_AILERONS_SET', Math.max(-rollAilMax, Math.min(rollAilMax, rollAilCorr)), `Wings level (bank ${Math.round(rollBank)}°)`);
                 } else {
                     this._cmdValue('AXIS_AILERONS_SET', 0.0001, 'Ailerons neutral');
@@ -565,18 +568,18 @@ class RuleEngine {
 
             case 'ROTATE': {
                 this._cmdValue('THROTTLE_SET', tt.rotateThrottle ?? tt.rollThrottle ?? 100, 'Full power');
-                // Progressive rotation: start at -10%, increase by -5%/sec to max.
-                // Joystick fights ~50%, so -30 commanded ≈ -15 effective.
-                const rotMax = tt.rotateElevator ?? -30;
+                // Progressive rotation: start at -5%, increase by -3%/sec to max.
+                // Server-side held-axes deliver full value (no joystick fighting).
+                const rotMax = tt.rotateElevator ?? -12;
                 const rotElapsed = (Date.now() - this._rotateStartTime) / 1000;
-                const rotElev = Math.max(rotMax, -10 - rotElapsed * 5);
+                const rotElev = Math.max(rotMax, -5 - rotElapsed * 3);
                 this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${Math.round(rotElev)}`);
-                // Aggressive wings-level during rotate — torque is strongest at full power + pitch
-                const rotAilGain = tt.liftoffAileronGain ?? 5;
-                const rotAilMax = tt.liftoffAileronMax ?? 60;
+                // Wings-level during rotate — negate bank for correct roll direction
+                const rotAilGain = tt.liftoffAileronGain ?? 2;
+                const rotAilMax = tt.liftoffAileronMax ?? 30;
                 const rotBank = d.bank || 0;
                 if (Math.abs(rotBank) > (tt.liftoffBankThreshold ?? 2)) {
-                    const rotAilCorr = rotBank * rotAilGain;
+                    const rotAilCorr = -rotBank * rotAilGain;
                     this._cmdValue('AXIS_AILERONS_SET', Math.max(-rotAilMax, Math.min(rotAilMax, rotAilCorr)), `Wings level (bank ${Math.round(rotBank)}°)`);
                 }
                 this._groundSteer(d, this._runwayHeading);
@@ -592,13 +595,13 @@ class RuleEngine {
 
             case 'LIFTOFF': {
                 this._cmdValue('THROTTLE_SET', tt.liftoffThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const loElev = tt.liftoffElevator ?? -20;
+                const loElev = tt.liftoffElevator ?? -10;
                 this._cmdValue('AXIS_ELEVATOR_SET', loElev, `Climb — elevator ${loElev}`);
-                const loAilGain = tt.liftoffAileronGain ?? 5;
-                const loAilMax = tt.liftoffAileronMax ?? 60;
+                const loAilGain = tt.liftoffAileronGain ?? 3;
+                const loAilMax = tt.liftoffAileronMax ?? 30;
                 const bank = d.bank || 0;
                 if (Math.abs(bank) > (tt.liftoffBankThreshold ?? 3)) {
-                    const ailCorr = bank * loAilGain;
+                    const ailCorr = -bank * loAilGain;
                     this._cmdValue('AXIS_AILERONS_SET', Math.max(-loAilMax, Math.min(loAilMax, ailCorr)), `Wings level (bank ${Math.round(bank)}°)`);
                 }
                 if (vs > (tt.liftoffVsThreshold ?? 100) && agl > (tt.liftoffClimbAgl ?? tk.initialClimbAgl ?? 200) && !this._isPhaseHeld('LIFTOFF')) {
@@ -609,14 +612,14 @@ class RuleEngine {
 
             case 'INITIAL_CLIMB': {
                 this._cmdValue('THROTTLE_SET', tt.climbPhaseThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const icElev = tt.climbElevator ?? -15;
+                const icElev = tt.climbElevator ?? -8;
                 this._cmdValue('AXIS_ELEVATOR_SET', icElev, `Climb — elevator ${icElev}`);
-                const icAilGain = tt.climbAileronGain ?? 5;
-                const icAilMax = tt.climbAileronMax ?? 60;
+                const icAilGain = tt.climbAileronGain ?? 3;
+                const icAilMax = tt.climbAileronMax ?? 30;
                 {
                     const bank = d.bank || 0;
                     if (Math.abs(bank) > (tt.climbBankThreshold ?? 3)) {
-                        const ailCorr = bank * icAilGain;
+                        const ailCorr = -bank * icAilGain;
                         this._cmdValue('AXIS_AILERONS_SET', Math.max(-icAilMax, Math.min(icAilMax, ailCorr)), `Wings level (bank ${Math.round(bank)}°)`);
                     }
                 }
@@ -809,9 +812,10 @@ class RuleEngine {
         const alt = d.altitude || 0;        // MSL
         const agl = d.altitudeAGL || 0;
         const gs = d.groundSpeed || 0;
-        // MSFS 2024: onGround SimVar can be unreliable, AGL reads 15-30ft on runway
-        // due to terrain model offset. On ground if SimVar says so OR low AGL + no climb.
-        const onGround = d.onGround || (agl < 50 && Math.abs(vs) < 200);
+        // MSFS 2024: onGround SimVar is unreliable (can report true at 300+ AGL).
+        // Trust AGL as tiebreaker: only believe onGround if AGL also < 50ft.
+        // Also consider on-ground if very low AGL regardless of SimVar.
+        const onGround = (d.onGround && agl < 50) || (agl < 15 && Math.abs(vs) < 200);
         const absBank = Math.abs(bank);
 
         // Skip ground phases
@@ -1436,11 +1440,11 @@ class RuleEngine {
         }
 
         // Roll bias accumulates for use after liftoff (P-factor compensation)
-        // Positive AXIS_AILERONS_SET = roll LEFT. Left bank (negative) needs right roll (negative bias).
-        // So bias should track same sign as bank: left bank → negative bias → negative deflection → roll right
+        // Negative AXIS_AILERONS_SET = roll LEFT, Positive = roll RIGHT.
+        // Right bank (+) needs left roll (-) to correct → bias tracks -bank direction
         const bank = d.bank || 0;
         const powerFactor = Math.max(0.1, (d.throttle || 0) / 100);
-        this._rollBias += bank * 0.02 * powerFactor;  // left bank → negative bias → roll right
+        this._rollBias += -bank * 0.02 * powerFactor;  // right bank → negative bias → roll left
         this._rollBias *= 0.97;
         this._rollBias = Math.max(-20, Math.min(20, this._rollBias));
     }
