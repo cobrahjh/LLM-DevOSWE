@@ -846,13 +846,16 @@ class GTNFlightPlan {
         if (activeIdx === 0 || this.dtoTarget) {
             const bearing = this.core.calculateBearing(lat, lon, toWpt.lat, toWpt.lng);
             const distance = this.core.calculateDistance(lat, lon, toWpt.lat, toWpt.lng);
+            const scaling = this.getCdiScaling(distance);
 
             return {
                 dtk: bearing,
                 xtrk: 0,  // No cross-track for direct-to
                 cdi: 0,
                 distance,
-                toWaypoint: toWpt.ident
+                toWaypoint: toWpt.ident,
+                cdiMode: scaling.mode,
+                fsd: scaling.fsd
             };
         }
 
@@ -862,7 +865,16 @@ class GTNFlightPlan {
             // Fall back to direct bearing
             const bearing = this.core.calculateBearing(lat, lon, toWpt.lat, toWpt.lng);
             const distance = this.core.calculateDistance(lat, lon, toWpt.lat, toWpt.lng);
-            return { dtk: bearing, xtrk: 0, cdi: 0, distance, toWaypoint: toWpt.ident };
+            const scaling = this.getCdiScaling(distance);
+            return {
+                dtk: bearing,
+                xtrk: 0,
+                cdi: 0,
+                distance,
+                toWaypoint: toWpt.ident,
+                cdiMode: scaling.mode,
+                fsd: scaling.fsd
+            };
         }
 
         // Calculate desired track (DTK): bearing from previous waypoint to active waypoint
@@ -880,18 +892,35 @@ class GTNFlightPlan {
         const xtrk = Math.asin(Math.sin(d13 / 60 / 180 * Math.PI) *
                                Math.sin((brg13 - dtk) * Math.PI / 180)) * 60 * 180 / Math.PI;
 
-        // CDI needle deflection: -127 to +127
-        // Full scale deflection (FSD) = 5nm for enroute, 1nm for terminal, 0.3nm for approach
-        // TODO: Detect approach mode and adjust FSD accordingly
-        const fsd = 5.0; // nm
-        const cdi = Math.max(-127, Math.min(127, Math.round(xtrk / fsd * 127)));
+        // Calculate distance to destination (last waypoint in flight plan)
+        const destWpt = waypoints[waypoints.length - 1];
+        let distanceToDestination = distance; // Default to current waypoint distance
+        if (destWpt && destWpt.lat && destWpt.lng) {
+            // Sum remaining leg distances for more accurate total
+            distanceToDestination = distance;
+            for (let i = activeIdx + 1; i < waypoints.length; i++) {
+                const wp = waypoints[i];
+                const prevWp = waypoints[i - 1];
+                if (wp && wp.lat && wp.lng && prevWp && prevWp.lat && prevWp.lng) {
+                    distanceToDestination += this.core.calculateDistance(prevWp.lat, prevWp.lng, wp.lat, wp.lng);
+                }
+            }
+        }
+
+        // Get CDI scaling mode based on distance to destination
+        const scaling = this.getCdiScaling(distanceToDestination);
+
+        // CDI needle deflection: -127 to +127 with dynamic FSD
+        const cdi = Math.max(-127, Math.min(127, Math.round(xtrk / scaling.fsd * 127)));
 
         return {
             dtk: Math.round(dtk),
             xtrk: Math.abs(xtrk),
             cdi,
             distance,
-            toWaypoint: toWpt.ident
+            toWaypoint: toWpt.ident,
+            cdiMode: scaling.mode,
+            fsd: scaling.fsd
         };
     }
 

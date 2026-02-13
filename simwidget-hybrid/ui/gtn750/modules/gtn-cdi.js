@@ -100,7 +100,9 @@ class GTNCdi {
                             toFrom: 1,  // Always TO when following flight plan
                             gsNeedle: Math.round(this.gps.vertError * 40),
                             gsValid: this.gps.approachMode,
-                            signalValid: true
+                            signalValid: true,
+                            mode: state.gpsNav.cdiMode || 'ENR',
+                            fsd: state.gpsNav.fsd || 5.0
                         };
                     } else {
                         // Fall back to raw GPS data from SimConnect
@@ -112,7 +114,9 @@ class GTNCdi {
                             toFrom: 1,
                             gsNeedle: Math.round(this.gps.vertError * 40),
                             gsValid: this.gps.approachMode,
-                            signalValid: true
+                            signalValid: true,
+                            mode: 'ENR',
+                            fsd: 5.0
                         };
                     }
                 }
@@ -131,6 +135,12 @@ class GTNCdi {
         if (this.elements.cdiSource) {
             this.elements.cdiSource.textContent = this.cdi.source;
             this.elements.cdiSource.className = `cdi-source cdi-source-${this.cdi.source.toLowerCase()}`;
+        }
+
+        if (this.elements.cdiMode) {
+            const mode = this.cdi.mode || 'ENR';
+            this.elements.cdiMode.textContent = mode;
+            this.elements.cdiMode.className = `cdi-mode ${mode.toLowerCase()}`;
         }
 
         if (this.elements.cdiNeedle) {
