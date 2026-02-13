@@ -387,17 +387,37 @@
                 </div>
 
                 <!-- Load Flight Plan Modal -->
-                <div class="dto-modal" id="load-fpl-modal" style="display: none;">
+                <div class="dto-modal load-fpl-modal" id="load-fpl-modal" style="display: none;">
                     <div class="dto-header" style="background: var(--gtn-green);">LOAD FLIGHT PLAN</div>
                     <div class="dto-content">
-                        <div class="awy-field">
-                            <label class="awy-label">Select File:</label>
-                            <input type="file" id="load-fpl-file" class="dto-file-input" accept=".fpl,.gpx,.json" />
+                        <!-- Tab Buttons -->
+                        <div class="fpl-load-tabs">
+                            <button class="fpl-load-tab active" data-tab="recent">RECENT PLANS</button>
+                            <button class="fpl-load-tab" data-tab="file">BROWSE FILE</button>
                         </div>
-                        <div class="dto-info" id="load-fpl-info">Select a .fpl, .gpx, or .json file</div>
-                        <div class="dto-buttons">
-                            <button class="dto-btn dto-activate" id="load-fpl-btn">LOAD</button>
-                            <button class="dto-btn dto-cancel" id="load-fpl-cancel">CANCEL</button>
+
+                        <!-- Recent Plans Tab -->
+                        <div class="fpl-load-tab-content" id="recent-plans-tab">
+                            <div class="recent-plans-list" id="recent-plans-list">
+                                <!-- Populated dynamically -->
+                            </div>
+                            <div class="recent-plans-empty" id="recent-plans-empty" style="display: none;">
+                                <p>No recent flight plans</p>
+                                <p style="font-size: 11px; color: var(--gtn-gray);">Saved plans will appear here</p>
+                            </div>
+                        </div>
+
+                        <!-- Browse File Tab -->
+                        <div class="fpl-load-tab-content" id="file-load-tab" style="display: none;">
+                            <div class="awy-field">
+                                <label class="awy-label">Select File:</label>
+                                <input type="file" id="load-fpl-file" class="dto-file-input" accept=".fpl,.gpx,.json" />
+                            </div>
+                            <div class="dto-info" id="load-fpl-info">Select a .fpl, .gpx, or .json file</div>
+                            <div class="dto-buttons">
+                                <button class="dto-btn dto-activate" id="load-fpl-btn">LOAD</button>
+                                <button class="dto-btn dto-cancel" id="load-fpl-cancel">CANCEL</button>
+                            </div>
                         </div>
                     </div>
                 </div>

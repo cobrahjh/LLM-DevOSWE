@@ -2645,17 +2645,28 @@ class GTN750Pane extends SimGlassBase {
         const modal = document.getElementById('load-fpl-modal');
         if (!modal) return;
 
-        const fileInput = document.getElementById('load-fpl-file');
-        const infoDiv = document.getElementById('load-fpl-info');
+        // Reset to recent plans tab
+        this.switchLoadTab('recent');
 
-        if (fileInput) fileInput.value = '';
-        if (infoDiv) infoDiv.textContent = 'Select a .fpl, .gpx, or .json file';
+        // Populate recent plans
+        this.renderRecentPlans();
 
         modal.style.display = 'block';
 
-        // Wire up buttons
+        // Wire up tab switcher
+        const tabs = modal.querySelectorAll('.fpl-load-tab');
+        tabs.forEach(tab => {
+            tab.onclick = () => this.switchLoadTab(tab.dataset.tab);
+        });
+
+        // Wire up file load buttons
+        const fileInput = document.getElementById('load-fpl-file');
+        const infoDiv = document.getElementById('load-fpl-info');
         const loadBtn = document.getElementById('load-fpl-btn');
         const cancelBtn = document.getElementById('load-fpl-cancel');
+
+        if (fileInput) fileInput.value = '';
+        if (infoDiv) infoDiv.textContent = 'Select a .fpl, .gpx, or .json file';
 
         const closeModal = () => modal.style.display = 'none';
 
@@ -2672,6 +2683,10 @@ class GTN750Pane extends SimGlassBase {
             const success = await this.flightPlanManager?.loadFlightPlan(file);
 
             if (success) {
+                // Add to recent plans
+                const filename = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+                this.flightPlanManager?.addToRecentPlans(filename);
+
                 if (infoDiv) infoDiv.textContent = `Loaded ${file.name}`;
                 setTimeout(() => closeModal(), 1000);
 
@@ -2683,6 +2698,114 @@ class GTN750Pane extends SimGlassBase {
         };
 
         cancelBtn.onclick = closeModal;
+    }
+
+    switchLoadTab(tabName) {
+        const modal = document.getElementById('load-fpl-modal');
+        if (!modal) return;
+
+        // Update tab buttons
+        const tabs = modal.querySelectorAll('.fpl-load-tab');
+        tabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        // Show/hide tab content
+        const recentTab = document.getElementById('recent-plans-tab');
+        const fileTab = document.getElementById('file-load-tab');
+
+        if (recentTab) recentTab.style.display = tabName === 'recent' ? 'block' : 'none';
+        if (fileTab) fileTab.style.display = tabName === 'file' ? 'block' : 'none';
+    }
+
+    renderRecentPlans() {
+        const list = document.getElementById('recent-plans-list');
+        const empty = document.getElementById('recent-plans-empty');
+        if (!list || !empty) return;
+
+        const recent = this.flightPlanManager?.getRecentPlans() || [];
+
+        if (recent.length === 0) {
+            list.style.display = 'none';
+            empty.style.display = 'block';
+            return;
+        }
+
+        list.style.display = 'flex';
+        empty.style.display = 'none';
+        list.innerHTML = '';
+
+        recent.forEach((plan, index) => {
+            const item = document.createElement('div');
+            item.className = 'recent-plan-item';
+
+            const info = document.createElement('div');
+            info.className = 'recent-plan-info';
+
+            const name = document.createElement('div');
+            name.className = 'recent-plan-name';
+            name.textContent = plan.name;
+
+            const route = document.createElement('div');
+            route.className = 'recent-plan-route';
+            route.textContent = `${plan.departure} → ${plan.arrival}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'recent-plan-meta';
+            const dist = plan.distance ? `${Math.round(plan.distance)} NM · ` : '';
+            const age = this.formatAge(plan.timestamp);
+            meta.textContent = `${dist}${plan.waypointCount} waypoints · ${age}`;
+
+            info.appendChild(name);
+            info.appendChild(route);
+            info.appendChild(meta);
+
+            const actions = document.createElement('div');
+            actions.className = 'recent-plan-actions';
+
+            const activateBtn = document.createElement('button');
+            activateBtn.className = 'recent-plan-btn activate';
+            activateBtn.textContent = 'ACTIVATE';
+            activateBtn.onclick = (e) => {
+                e.stopPropagation();
+                const success = this.flightPlanManager?.activateRecentPlan(index);
+                if (success) {
+                    document.getElementById('load-fpl-modal').style.display = 'none';
+                    if (this.fplPage) this.fplPage.render();
+                }
+            };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'recent-plan-btn delete';
+            deleteBtn.textContent = '✕';
+            deleteBtn.title = 'Delete from recent';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.flightPlanManager?.deleteRecentPlan(index);
+                this.renderRecentPlans();
+            };
+
+            actions.appendChild(activateBtn);
+            actions.appendChild(deleteBtn);
+
+            item.appendChild(info);
+            item.appendChild(actions);
+            list.appendChild(item);
+        });
+    }
+
+    formatAge(timestamp) {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
+        return new Date(timestamp).toLocaleDateString();
     }
 
     showFlightPlanInfoModal() {

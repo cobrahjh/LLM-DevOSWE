@@ -1933,6 +1933,9 @@ class GTNFlightPlan {
         a.click();
         URL.revokeObjectURL(url);
 
+        // Add to recent plans
+        this.addToRecentPlans(filename);
+
         GTNCore.log(`[GTN750] Flight plan saved: ${filename}.${extension}`);
         return true;
     }
@@ -2374,6 +2377,114 @@ class GTNFlightPlan {
             reserve: Math.round(reserveFuel * 10) / 10,
             total: Math.round((tripFuel + reserveFuel) * 10) / 10
         };
+    }
+
+    // ===== RECENT FLIGHT PLANS =====
+
+    /**
+     * Add flight plan to recent plans list
+     * @param {string} name - Plan name (e.g., "KSEA-KDEN")
+     * @param {Object} planData - Flight plan data
+     */
+    addToRecentPlans(name, planData = null) {
+        try {
+            const plan = planData || this.flightPlan;
+            if (!plan?.waypoints?.length) return;
+
+            const recent = this.getRecentPlans();
+            const wps = plan.waypoints;
+
+            const planEntry = {
+                name: name,
+                departure: wps[0]?.ident || 'WPT',
+                arrival: wps[wps.length - 1]?.ident || 'END',
+                waypointCount: wps.length,
+                distance: this.calculateTotalDistance(),
+                timestamp: Date.now(),
+                data: plan // Store full plan for quick activation
+            };
+
+            // Remove if already exists (by name)
+            const filtered = recent.filter(p => p.name !== name);
+
+            // Add to front
+            filtered.unshift(planEntry);
+
+            // Keep only last 10
+            const trimmed = filtered.slice(0, 10);
+
+            localStorage.setItem('gtn750-recent-plans', JSON.stringify(trimmed));
+            GTNCore.log(`[GTN750] Added "${name}" to recent plans`);
+
+        } catch (e) {
+            GTNCore.log('[GTN750] Failed to save recent plan:', e.message);
+        }
+    }
+
+    /**
+     * Get list of recent flight plans
+     * @returns {Array} Recent plans array
+     */
+    getRecentPlans() {
+        try {
+            const stored = localStorage.getItem('gtn750-recent-plans');
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            GTNCore.log('[GTN750] Failed to load recent plans:', e.message);
+            return [];
+        }
+    }
+
+    /**
+     * Activate a flight plan from recent list
+     * @param {number} index - Index in recent plans array
+     * @returns {boolean} Success
+     */
+    activateRecentPlan(index) {
+        try {
+            const recent = this.getRecentPlans();
+            if (index < 0 || index >= recent.length) return false;
+
+            const planEntry = recent[index];
+            if (!planEntry.data?.waypoints?.length) return false;
+
+            // Set as current flight plan
+            this.flightPlan = JSON.parse(JSON.stringify(planEntry.data)); // Deep clone
+            this.flightPlan.source = 'recent';
+            this.activeWaypointIndex = 0;
+            this.activeWaypoint = this.flightPlan.waypoints[0];
+
+            // Move to front of recent list
+            this.addToRecentPlans(planEntry.name, this.flightPlan);
+
+            this.notifyChanged();
+            GTNCore.log(`[GTN750] Activated "${planEntry.name}" from recent plans`);
+
+            return true;
+
+        } catch (e) {
+            GTNCore.log('[GTN750] Failed to activate recent plan:', e.message);
+            return false;
+        }
+    }
+
+    /**
+     * Delete a plan from recent list
+     * @param {number} index - Index to delete
+     */
+    deleteRecentPlan(index) {
+        try {
+            const recent = this.getRecentPlans();
+            if (index < 0 || index >= recent.length) return;
+
+            recent.splice(index, 1);
+            localStorage.setItem('gtn750-recent-plans', JSON.stringify(recent));
+
+            GTNCore.log('[GTN750] Deleted plan from recent list');
+
+        } catch (e) {
+            GTNCore.log('[GTN750] Failed to delete recent plan:', e.message);
+        }
     }
 
     destroy() {
