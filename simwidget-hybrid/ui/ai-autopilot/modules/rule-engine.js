@@ -481,8 +481,9 @@ class RuleEngine {
                     this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release elevator');
                     this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder');
                     this._cmdValue('AXIS_AILERONS_SET', 0, 'Center ailerons');
-                    // Retract flaps on ground
+                    // Retract flaps on ground — clear dedup cache so command resends if needed
                     if ((d.flapsIndex || 0) > 0) {
+                        delete this._lastCommands['FLAPS_UP'];
                         this._cmd('FLAPS_UP', true, 'Retract flaps after landing');
                     }
                     if (lndGs < 40 && lndGs > 5 && !d.parkingBrake) {
@@ -542,8 +543,13 @@ class RuleEngine {
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
-                if (!this._isPhaseHeld('BEFORE_ROLL')) {
-                    this._takeoffSubPhase = 'ROLL';
+                // Verify: don't advance until brake is actually off and mixture is rich
+                {
+                    const brakeOff = !d.parkingBrake;
+                    const mixtureRich = (d.mixture || 0) > 80;
+                    if (brakeOff && mixtureRich && !this._isPhaseHeld('BEFORE_ROLL')) {
+                        this._takeoffSubPhase = 'ROLL';
+                    }
                 }
                 break;
 
@@ -642,6 +648,7 @@ class RuleEngine {
                         this._cmdValue('AXIS_RUDDER_SET', 0, 'Release for AP');
                         this._cmdValue('AXIS_AILERONS_SET', 0, 'Release for AP');
                         if (!apState.master) {
+                            delete this._lastCommands['AP_MASTER'];
                             this._cmd('AP_MASTER', true, 'Engage AP');
                             const hdg = Math.round(d.heading || this._runwayHeading || 0);
                             this._cmdValue('HEADING_BUG_SET', hdg, 'HDG ' + hdg + '\u00B0');
@@ -650,15 +657,21 @@ class RuleEngine {
                         this._cmd('AP_VS_HOLD', true, 'VS hold');
                         const depVS = tt.departureVS ?? p.climb.normalRate ?? 500;
                         this._cmdValue('AP_VS_VAR_SET', depVS, 'VS +' + depVS);
-                        this._takeoffSubPhase = 'DEPARTURE';
+                        // Verify: don't advance until AP is actually flying
+                        if (apState.master) {
+                            this._takeoffSubPhase = 'DEPARTURE';
+                        }
                     }
                 }
                 break;
             }
 
             case 'DEPARTURE': {
-                // Retract flaps, set climb speed, set cruise alt target
-                this._cmd('FLAPS_UP', true, 'Retract flaps');
+                // Retract flaps — keep sending until SimVar confirms retracted
+                if ((d.flapsIndex || 0) > 0) {
+                    delete this._lastCommands['FLAPS_UP'];
+                    this._cmd('FLAPS_UP', true, 'Retract flaps');
+                }
                 const depSpd = tt.departureSpeed ?? speeds.Vy;
                 const depAlt = tt.departureCruiseAlt ?? this._getCruiseAlt();
                 this._cmdValue('AP_SPD_VAR_SET', depSpd, 'SPD ' + depSpd + ' (Vy climb)');
