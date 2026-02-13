@@ -164,9 +164,11 @@ class RuleEngine {
 
         // ── Parking brake safety ──
         // Release parking brake whenever AI has controls and throttle is above idle.
-        // This catches cases where onGround data is wrong or phase skips TAKEOFF.
-        if (d.parkingBrake && (d.throttle > 20 || phase === 'TAKEOFF') && phase !== 'LANDING') {
-            this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake (safety)');
+        // MSFS 2024: PARKING_BRAKE_SET doesn't work, use PARKING_BRAKES toggle.
+        // Note: parkingBrake SimVar is unreliable (always reads true) so this fires once
+        // per enable via _cmd dedup, which is the desired behavior for a toggle.
+        if (phase !== 'LANDING' && phase !== 'PREFLIGHT') {
+            this._cmd('PARKING_BRAKES', false, 'Release parking brake (safety)');
         }
 
         // Continuous flight envelope monitoring — disabled during TAKEOFF for simplicity.
@@ -187,9 +189,8 @@ class RuleEngine {
                 {
                     const tt = this._getTakeoffTuning();
                     this._cmdValue('MIXTURE_SET', tt.preflightMixture ?? 100, 'Mixture RICH');
-                    if (d.parkingBrake) {
-                        this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake for taxi');
-                    }
+                    // MSFS 2024: use toggle (PARKING_BRAKE_SET doesn't work)
+                    this._cmd('PARKING_BRAKES', false, 'Release parking brake for taxi');
                     this._cmdValue('THROTTLE_SET', tt.preflightThrottle ?? 35, 'Idle-up throttle');
                 }
                 // Capture heading and start steering immediately — don't wait for TAXI
@@ -213,17 +214,17 @@ class RuleEngine {
                 }
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
 
-                // Release parking brake if set (from previous attempt or sim default)
-                if (d.parkingBrake) {
-                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
-                }
+                // Release parking brake — MSFS 2024: PARKING_BRAKE_SET doesn't work,
+                // must use PARKING_BRAKES toggle. _cmd deduplicates so it only fires once.
+                this._cmd('PARKING_BRAKES', false, 'Release parking brake');
 
                 // ATC hold-short gate: if ATC is active and we're at HOLD_SHORT,
                 // stop the aircraft and wait for clearance
                 if (this._atc && (this._atc.getPhase() === 'HOLD_SHORT' || this._atc.getPhase() === 'TAKEOFF_CLEARANCE_PENDING')) {
                     this._cmdValue('THROTTLE_SET', 0, 'Hold short — awaiting clearance');
-                    if (!d.parkingBrake) {
-                        this._cmdValue('PARKING_BRAKE_SET', 1, 'Parking brake — hold short');
+                    // MSFS 2024: parkingBrake SimVar always reads true, so use toggle
+                    if (gs < 1) {
+                        this._cmd('PARKING_BRAKES', true, 'Parking brake — hold short');
                     }
                     break;
                 }
@@ -502,8 +503,9 @@ class RuleEngine {
                         delete this._lastCommands['FLAPS_UP'];
                         this._cmd('FLAPS_UP', true, 'Retract flaps after landing');
                     }
-                    if (lndGs < 40 && lndGs > 5 && !d.parkingBrake) {
-                        this._cmdValue('PARKING_BRAKE_SET', 1, 'Braking');
+                    if (lndGs < 40 && lndGs > 5) {
+                        // MSFS 2024: use toggle for braking after landing
+                        this._cmd('PARKING_BRAKES', true, 'Braking');
                     }
                 }
                 break;
@@ -556,20 +558,24 @@ class RuleEngine {
                 this._cmdValue('AXIS_AILERONS_SET', 0.0001, 'Center ailerons');
                 this._cmdValue('AXIS_RUDDER_SET', 0, 'Center rudder');
                 this._cmdValue('MIXTURE_SET', tt.beforeRollMixture ?? 100, 'Mixture RICH for takeoff');
-                if (d.parkingBrake) {
-                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
+                // Release parking brake — MSFS 2024: PARKING_BRAKE_SET doesn't work,
+                // must use PARKING_BRAKES toggle. _cmd deduplicates so it only fires once.
+                this._cmd('PARKING_BRAKES', false, 'Release parking brake');
+                // Ground steering while waiting (prevents heading drift before roll)
+                if (!this._runwayHeading) {
+                    this._runwayHeading = this._activeRunway?.heading || Math.round(d.heading || 0);
                 }
-                // Verify: don't advance until brake is actually off
-                // (Mixture is managed by MSFS auto mixture — don't gate on it)
-                if (!d.parkingBrake && !this._isPhaseHeld('BEFORE_ROLL')) {
+                this._groundSteer(d, this._runwayHeading);
+                // Advance to ROLL once plane is actually moving (gs > 3 proves brake is off).
+                // MSFS 2024: parkingBrake SimVar is unreliable (always reads true).
+                if (gs > 3 && !this._isPhaseHeld('BEFORE_ROLL')) {
                     this._takeoffSubPhase = 'ROLL';
                 }
                 break;
 
             case 'ROLL':
-                if (d.parkingBrake) {
-                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
-                }
+                // Ensure brake is off (MSFS 2024: use toggle, deduped by _cmd)
+                this._cmd('PARKING_BRAKES', false, 'Release parking brake');
                 // Hold elevator at near-zero during roll — use 0.0001 (effectively zero)
                 // so server keeps held-axes active, overriding joystick at SIM_FRAME rate.
                 this._cmdValue('AXIS_ELEVATOR_SET', 0.0001, 'Elevator neutral');

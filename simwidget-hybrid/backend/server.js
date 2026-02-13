@@ -2995,27 +2995,29 @@ function executeCommand(command, value) {
         return;
     }
 
-    // MSFS 2024 throttle — use direct SimVar write (definition ID 14)
-    // InputEvent ENGINE_THROTTLE_1 gets overridden by physical joystick throttle axis.
-    // SimVar write bypasses the input system entirely.
+    // MSFS 2024 throttle — use InputEvent ENGINE_THROTTLE_1
+    // SimVar write doesn't work (GENERAL ENG THROTTLE LEVER POSITION:1 is read-only).
+    // Hardware flight devices must be disabled via scheduled task to prevent override.
     if (command === 'THROTTLE_SET' || command === 'THROTTLE1_SET') {
         const percent = Math.max(0, Math.min(100, value || 0));
-        try {
-            const { RawBuffer } = require('node-simconnect');
-            const buf = new RawBuffer(8);
-            buf.writeFloat64(percent); // SimVar uses 0-100 Percent
-            const dataPacket = { tagged: false, arrayCount: 0, buffer: buf };
-            // Store for 120Hz re-application (overcomes hardware axis override)
-            if (percent === 0) {
-                delete _heldAxes.throttle;
-            } else {
-                _heldAxes.throttle = { simvar: true, defId: 14, value: percent };
+        const normalized = percent / 100; // InputEvent uses 0.0–1.0
+        const hash = global.inputEventHashes?.ENGINE_THROTTLE_1;
+        if (hash) {
+            try {
+                simConnectConnection.setInputEvent(hash, normalized);
+                // Store for 120Hz re-application (holds value against any remaining hardware)
+                if (percent === 0) {
+                    delete _heldAxes.throttle;
+                } else {
+                    _heldAxes.throttle = { hash, value: normalized };
+                }
+                updateHeldAxesTimer();
+                console.log(`[Throttle] InputEvent: ${percent}% (${normalized})`);
+            } catch (e) {
+                console.error(`[Throttle] InputEvent error: ${e.message}`);
             }
-            updateHeldAxesTimer();
-            simConnectConnection.setDataOnSimObject(14, 0, dataPacket);
-            console.log(`[Throttle] SimVar write: ${percent}%`);
-        } catch (e) {
-            console.error(`[Throttle] SimVar write error: ${e.message}`);
+        } else {
+            console.warn('[Throttle] ENGINE_THROTTLE_1 hash not available yet');
         }
         return;
     }
