@@ -3114,6 +3114,20 @@ function executeCommand(command, value) {
         }
         return;
     }
+    if (command === 'STEERING_SET') {
+        const steerEventId = eventMap['STEERING_SET'];
+        if (steerEventId !== undefined) {
+            const simValue = Math.round((value || 0) / 100 * 16383);
+            if (value === 0) {
+                delete _heldAxes.steering;
+            } else {
+                _heldAxes.steering = { eventId: steerEventId, value: simValue, legacy: true };
+            }
+            updateHeldAxesTimer();
+            simConnectConnection.transmitClientEvent(0, steerEventId, simValue, 1, 16);
+        }
+        return;
+    }
     if (command === 'AXIS_AILERONS_SET') {
         // MSFS 2024: UNKNOWN_AILERON_LEFT/RIGHT InputEvents do NOT control ailerons.
         // Use legacy transmitClientEvent path — same as rudder.
@@ -3702,6 +3716,8 @@ async function initSimConnect() {
             'ELEVATOR_TRIM_SET',
             'AILERON_SET',
             'CENTER_AILER_RUDDER',
+            // Nosewheel steering (ground only — wider angle than rudder pedals)
+            'STEERING_SET',
             // Differential braking (ground steering)
             'AXIS_LEFT_BRAKE_SET',
             'AXIS_RIGHT_BRAKE_SET',

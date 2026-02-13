@@ -184,6 +184,7 @@ class CommandQueue {
             'FLAPS_DOWN':            'FLAPS_DOWN',
             'AXIS_ELEVATOR_SET':     'AXIS_ELEVATOR_SET',
             'AXIS_RUDDER_SET':       'AXIS_RUDDER_SET',
+            'STEERING_SET':          'STEERING_SET',
             'AXIS_AILERONS_SET':     'AXIS_AILERONS_SET',
             'AXIS_MIXTURE_SET':      'AXIS_MIXTURE_SET',
             'MIXTURE_RICH':          'MIXTURE_RICH',
@@ -214,7 +215,7 @@ class CommandQueue {
             'AP_SPD_VAR_SET', 'HEADING_BUG_SET',
             'THROTTLE_SET', 'MIXTURE_SET', 'PROP_PITCH_SET',
             'PARKING_BRAKE_SET',
-            'AXIS_ELEVATOR_SET', 'AXIS_RUDDER_SET', 'AXIS_AILERONS_SET',
+            'AXIS_ELEVATOR_SET', 'AXIS_RUDDER_SET', 'STEERING_SET', 'AXIS_AILERONS_SET',
             'AXIS_MIXTURE_SET'
         ];
 
@@ -293,6 +294,7 @@ class CommandQueue {
         if (type === 'MIXTURE_SET') return 'MIXTURE';
         if (type === 'AXIS_ELEVATOR_SET') return 'ELEVATOR';
         if (type === 'AXIS_RUDDER_SET') return 'RUDDER';
+        if (type === 'STEERING_SET') return 'STEERING';
         if (type === 'AXIS_AILERONS_SET') return 'AILERONS';
         if (type.includes('FLAPS')) return 'FLAPS';
         if (type === 'PARKING_BRAKES') return 'BRAKES';

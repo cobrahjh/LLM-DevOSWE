@@ -263,13 +263,13 @@ class RuleEngine {
                     // for nosewheel steering authority (15% stalls the correction loop)
                     // Values overridable via takeoff-tuner.html
                     const tt = this._getTakeoffTuning();
-                    const thrMin = tt.taxiThrottleMin ?? 5;
+                    const thrMin = tt.taxiThrottleMin ?? 8;
                     const thrMax = tt.taxiThrottleMax ?? 20;
                     const targetGS = tt.taxiTargetGS ?? 10;
                     let thr;
                     if (hdgError > (tt.taxiHdgErrorThreshold ?? 15)) {
-                        // Misaligned — slow down but keep minimum for nosewheel authority
-                        thr = Math.max(thrMin, 12 - hdgError * (tt.taxiHdgPenalty ?? 0.3));
+                        // Misaligned — slow down but keep enough power for nosewheel steering
+                        thr = Math.max(thrMin, 12 - hdgError * (tt.taxiHdgPenalty ?? 0.1));
                     } else {
                         // Speed-proportional: ~12% at target, ramp up/down with error
                         const speedError = targetGS - gs;
@@ -288,6 +288,7 @@ class RuleEngine {
                 if (phaseChanged) {
                     this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release elevator for AP');
                     this._cmdValue('AXIS_RUDDER_SET', 0, 'Release rudder for AP');
+                    this._cmdValue('STEERING_SET', 0, 'Release nosewheel for AP');
                     this._cmdValue('AXIS_AILERONS_SET', 0, 'Release ailerons for AP');
                 }
                 // Retract flaps if still deployed (DEPARTURE may not have had time)
@@ -1471,8 +1472,16 @@ class RuleEngine {
         const correction = Math.abs(hdgError) < (ttSteer.steerDeadband ?? 0.5) ? 0 : hdgError * baseGain;  // deadband on correction only
         const rudder = Math.max(-maxDefl, Math.min(maxDefl, correction + bias));
         this.live.rudder = rudder;
-        this._cmdValue('AXIS_RUDDER_SET', Math.round(rudder),
-            `Rudder hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${hdgError > 0 ? '+' : ''}${hdgError.toFixed(1)}°)`);
+        // Nosewheel steering (STEERING_SET) for ground turns — wider angle than rudder pedals.
+        // STEERING_SET is overridden by AXIS_RUDDER_SET, so send steering ONLY on ground.
+        // At speed or during takeoff roll, use AXIS_RUDDER_SET for aerodynamic authority.
+        if (gs < 30 && !isTakeoffPhase) {
+            this._cmdValue('STEERING_SET', Math.round(rudder),
+                `Steer hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${hdgError > 0 ? '+' : ''}${hdgError.toFixed(1)}°)`);
+        } else {
+            this._cmdValue('AXIS_RUDDER_SET', Math.round(rudder),
+                `Rudder hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${hdgError > 0 ? '+' : ''}${hdgError.toFixed(1)}°)`);
+        }
 
         // Differential braking for ground steering — overcomes joystick rudder axis override.
         // During takeoff roll, brakes are the ONLY effective steering (rudder is joystick-overridden).
