@@ -3222,7 +3222,9 @@ const ruleEngineServer = new RuleEngineServer({
             const state = getSharedState();
             return state?.tuning || {};
         } catch { return {}; }
-    }
+    },
+    requestFacilityGraph: (icao) => requestFacilityGraph(icao),
+    getFlightData: () => flightData
 });
 
 // API endpoints for server-side rule engine
@@ -3253,6 +3255,28 @@ app.post('/api/ai-autopilot/cruise-alt', (req, res) => {
     if (isNaN(alt)) return res.status(400).json({ error: 'altitude required' });
     ruleEngineServer.setCruiseAlt(alt);
     res.json({ success: true, cruiseAlt: alt });
+});
+
+// ── ATC Ground Operations API ──────────────────────────────────────────
+app.post('/api/ai-autopilot/request-taxi', async (req, res) => {
+    try {
+        const result = await ruleEngineServer.requestTaxi();
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/ai-autopilot/cleared-takeoff', (req, res) => {
+    res.json(ruleEngineServer.clearedForTakeoff());
+});
+
+app.get('/api/ai-autopilot/atc-state', (req, res) => {
+    res.json(ruleEngineServer.getATCState());
+});
+
+app.post('/api/ai-autopilot/atc-deactivate', (req, res) => {
+    res.json(ruleEngineServer.deactivateATC());
 });
 
 // ── Device Management (flight controller disable/enable for AI autopilot) ──
@@ -3702,6 +3726,7 @@ async function initSimConnect() {
             'MAGNETO1_LEFT',
             'MAGNETO1_BOTH',
             'MAGNETO1_START',
+            'ENGINE_AUTO_START',
             // Slew mode for flight recorder playback
             'SLEW_TOGGLE',
             'SLEW_ON',

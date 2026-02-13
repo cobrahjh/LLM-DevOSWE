@@ -453,6 +453,17 @@ class VoiceControlPane extends SimGlassBase {
                     type: 'atc-command',
                     data: { action: 'request-taxi-clearance' }
                 });
+                // Also call server-side ATC for rule engine integration
+                fetch(`${API_BASE}/api/ai-autopilot/request-taxi`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.log(`ATC: Taxi to runway ${data.runway} at ${data.icao}`, 'success');
+                        } else {
+                            this.log(`ATC: ${data.error || 'Taxi request failed'}`, 'error');
+                        }
+                    })
+                    .catch(() => {});
                 this.log('ATC: Requesting taxi clearance', 'info');
                 break;
 
@@ -480,6 +491,17 @@ class VoiceControlPane extends SimGlassBase {
                     type: 'atc-command',
                     data: { action: 'request-takeoff' }
                 });
+                // Also call server-side ATC for rule engine integration
+                fetch(`${API_BASE}/api/ai-autopilot/cleared-takeoff`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.log('ATC: Cleared for takeoff', 'success');
+                        } else {
+                            this.log(`ATC: ${data.error || 'Takeoff clearance failed'}`, 'error');
+                        }
+                    })
+                    .catch(() => {});
                 this.log('ATC: Requesting takeoff clearance', 'info');
                 break;
 

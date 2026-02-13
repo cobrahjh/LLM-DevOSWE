@@ -14,6 +14,7 @@ const RuleEngine = require(path.join(__dirname, '../../ui/ai-autopilot/modules/r
 const FlightPhase = require(path.join(__dirname, '../../ui/ai-autopilot/modules/flight-phase'));
 const CommandQueue = require(path.join(__dirname, '../../ui/ai-autopilot/modules/command-queue'));
 const { AIRCRAFT_PROFILES, DEFAULT_PROFILE } = require(path.join(__dirname, '../../ui/ai-autopilot/data/aircraft-profiles'));
+const ATCServerController = require(path.join(__dirname, 'atc-server'));
 
 const STATE_FILE = path.join(__dirname, '.rule-engine-state.json');
 
@@ -22,10 +23,13 @@ class RuleEngineServer {
      * @param {Object} opts
      * @param {Function} opts.executeCommand - server.js executeCommand(command, value)
      * @param {Function} opts.getTuning - returns tuning object (from ai-pilot-api _sharedState)
+     * @param {Function} [opts.requestFacilityGraph] - async (icao) => graph
+     * @param {Function} [opts.getFlightData] - () => current flightData object
      */
     constructor(opts = {}) {
         this._executeCommand = opts.executeCommand;
         this._getTuning = opts.getTuning || (() => ({}));
+        this._getFlightData = opts.getFlightData || (() => null);
         this._enabled = false;
 
         // Command log for API/broadcast
@@ -63,6 +67,34 @@ class RuleEngineServer {
             tuningGetter: () => this._getTuning(),
             holdsGetter: () => ({})  // no phase holds on server
         });
+
+        // ── ATC Server Controller ──────────────────────────────────
+        this._atc = null;
+        this._airportDetectInterval = null;
+        this._lastAirportCheck = 0;
+        const requestFacilityGraph = opts.requestFacilityGraph;
+        if (requestFacilityGraph) {
+            const { findNearestNode, findRunwayNode, aStarRoute } = require('../ai-pilot-api');
+            this._atc = new ATCServerController({
+                requestFacilityGraph,
+                findNearestNode,
+                findRunwayNode,
+                aStarRoute,
+                onInstruction: (text, type) => {
+                    console.log(`[ATC] ${type}: ${text}`);
+                    this._onCommand({ time: Date.now(), type: 'atc', value: type, description: text });
+                },
+                onPhaseChange: (oldPhase, newPhase) => {
+                    console.log(`[ATC] Phase: ${oldPhase} → ${newPhase}`);
+                }
+            });
+            // Wire ATC into rule engine and flight phase so they respect ATC gates
+            this.ruleEngine.setATCController(this._atc);
+            this.flightPhase.setATCController(this._atc);
+            // Start airport detection polling (every 15s)
+            this._startAirportDetection();
+            console.log('[ATC] Server-side ATC ready');
+        }
 
         // Auto-recover: if we were enabled before a server restart, re-enable
         const savedState = this._loadState();
@@ -125,6 +157,12 @@ class RuleEngineServer {
         this.ap.navHold = !!fd.apNavLock;
         this.ap.aprHold = !!fd.apAprLock;
 
+        // Update ATC position (every frame for accurate waypoint tracking)
+        if (this._atc) {
+            const agl = fd.altAGL ?? fd.altitude ?? 0;
+            this._atc.updatePosition(fd.latitude || 0, fd.longitude || 0, fd.groundSpeed || 0, agl);
+        }
+
         // Update flight phase state machine
         this.flightPhase.update(fd);
 
@@ -133,6 +171,149 @@ class RuleEngineServer {
 
         // Run rule engine evaluation
         this.ruleEngine.evaluate(this.flightPhase.phase, fd, this.ap);
+    }
+
+    // ── ATC Control Methods ──────────────────────────────────────────
+
+    /**
+     * Request taxi to runway. Auto-detects airport and picks best runway.
+     * If engine not running, sends ENGINE_AUTO_START first.
+     * @returns {Object} result
+     */
+    async requestTaxi() {
+        if (!this._atc) return { success: false, error: 'ATC not initialized' };
+
+        const fd = this._getFlightData();
+        if (!fd) return { success: false, error: 'No flight data available' };
+
+        const icao = this._atc.getDetectedIcao();
+        if (!icao) return { success: false, error: 'No airport detected — are you on the ground near an airport?' };
+
+        // Auto-start engine if not running (Ctrl+E equivalent)
+        const engineRunning = (fd.engineRpm > 100) || (fd.rpm > 100) || (fd.eng1N1 > 5) || (fd.throttle > 10);
+        if (!engineRunning) {
+            console.log('[ATC] Engine not running — sending ENGINE_AUTO_START');
+            this._executeCommand('ENGINE_AUTO_START');
+            // Brief delay for engine spool-up
+            await new Promise(r => setTimeout(r, 3000));
+        }
+
+        // Pick best runway based on heading
+        const heading = fd.heading || 0;
+        const runway = this._atc.pickBestRunway(heading);
+        if (!runway) return { success: false, error: `No runways found at ${icao}` };
+
+        // Activate ATC and request clearance
+        this._atc.activate();
+        await this._atc.requestTaxiClearance(icao, runway);
+
+        return {
+            success: true,
+            icao,
+            runway,
+            phase: this._atc.getPhase(),
+            route: this._atc.getRoute()
+        };
+    }
+
+    /**
+     * Issue takeoff clearance. Called after voice "request takeoff".
+     */
+    clearedForTakeoff() {
+        if (!this._atc) return { success: false, error: 'ATC not initialized' };
+        const phase = this._atc.getPhase();
+        if (phase !== 'HOLD_SHORT' && phase !== 'TAKEOFF_CLEARANCE_PENDING') {
+            return { success: false, error: `Cannot clear for takeoff in phase: ${phase}` };
+        }
+        this._atc.issueTakeoffClearance();
+        return { success: true, phase: this._atc.getPhase() };
+    }
+
+    /** Get full ATC state for API */
+    getATCState() {
+        if (!this._atc) return { active: false };
+        return {
+            active: true,
+            ...this._atc.getFullState()
+        };
+    }
+
+    /** Deactivate ATC ground ops */
+    deactivateATC() {
+        if (!this._atc) return { success: false };
+        this._atc.deactivate();
+        return { success: true, phase: this._atc.getPhase() };
+    }
+
+    // ── Airport Detection (15s poll) ─────────────────────────────────
+
+    _startAirportDetection() {
+        this._airportDetectInterval = setInterval(() => this._detectAirport(), 15000);
+    }
+
+    async _detectAirport() {
+        const fd = this._getFlightData();
+        if (!fd || !fd.latitude || !fd.longitude) return;
+
+        // Only detect when on ground
+        const agl = fd.altAGL ?? fd.altitude ?? 0;
+        const onGround = agl < 50;
+        if (!onGround) {
+            // Airborne — clear detection
+            if (this._atc.getDetectedIcao()) {
+                this._atc.setDetectedAirport(null, null);
+            }
+            return;
+        }
+
+        // Query navdata for nearest airport within 2nm
+        try {
+            const http = require('http');
+            const url = `http://localhost:8080/api/navdb/nearby/airports?lat=${fd.latitude}&lon=${fd.longitude}&range=2&limit=1`;
+            const data = await new Promise((resolve, reject) => {
+                http.get(url, (res) => {
+                    let body = '';
+                    res.on('data', chunk => body += chunk);
+                    res.on('end', () => {
+                        try { resolve(JSON.parse(body)); }
+                        catch (e) { reject(e); }
+                    });
+                }).on('error', reject);
+            });
+
+            if (data && data.length > 0) {
+                const airport = data[0];
+                const prevIcao = this._atc.getDetectedIcao();
+
+                if (airport.icao !== prevIcao) {
+                    console.log(`[ATC] Airport detected: ${airport.icao} (${airport.name}) — ${airport.distance}nm`);
+
+                    // Fetch runway data
+                    const rwyData = await new Promise((resolve, reject) => {
+                        http.get(`http://localhost:8080/api/navdb/airport/${airport.icao}`, (res) => {
+                            let body = '';
+                            res.on('data', chunk => body += chunk);
+                            res.on('end', () => {
+                                try { resolve(JSON.parse(body)); }
+                                catch (e) { reject(e); }
+                            });
+                        }).on('error', reject);
+                    });
+
+                    const runways = rwyData?.runways || [];
+                    this._atc.setDetectedAirport(airport.icao, runways);
+
+                    if (this._atc.getPhase() === 'INACTIVE') {
+                        this._atc.activate();
+                    }
+                }
+            } else if (this._atc.getDetectedIcao()) {
+                // Moved away from airport
+                this._atc.setDetectedAirport(null, null);
+            }
+        } catch (e) {
+            // NavDB not available — silent fallback
+        }
     }
 
     /**
@@ -168,7 +349,7 @@ class RuleEngineServer {
      * Kept slim to avoid bloating flightData messages.
      */
     getState() {
-        return {
+        const state = {
             enabled: this._enabled,
             phase: this.flightPhase.phase,
             subPhase: this.ruleEngine.getTakeoffSubPhase() || null,
@@ -176,6 +357,10 @@ class RuleEngineServer {
             live: this.ruleEngine.live,
             commandLog: this._commandLog.slice(0, 10)
         };
+        if (this._atc) {
+            state.atc = this.getATCState();
+        }
+        return state;
     }
 
     /**
@@ -183,7 +368,7 @@ class RuleEngineServer {
      */
     getBroadcastState() {
         if (!this._enabled) return { enabled: false };
-        return {
+        const state = {
             enabled: true,
             phase: this.flightPhase.phase,
             subPhase: this.ruleEngine.getTakeoffSubPhase() || null,
@@ -198,6 +383,18 @@ class RuleEngineServer {
             },
             lastCmd: this._commandLog.length > 0 ? this._commandLog[0] : null
         };
+        // Include ATC state if active
+        if (this._atc && this._atc.getPhase() !== 'INACTIVE') {
+            state.atc = {
+                phase: this._atc.getPhase(),
+                icao: this._atc._icao || this._atc.getDetectedIcao(),
+                runway: this._atc._runway,
+                instruction: this._atc.getATCInstruction(),
+                route: this._atc.getRoute(),
+                nextWaypoint: this._atc.getNextWaypoint()
+            };
+        }
+        return state;
     }
 
     /** Set target cruise altitude */

@@ -291,11 +291,13 @@ STALL SPEED IS DYNAMIC: Stall speed changes with weight and bank angle.
 - ALWAYS use the DYNAMIC stall speed from the envelope data, not the static POH values.
 SPEED ENVELOPE: Below dynamic stall speed +10 is warning zone. Above Vno needs power reduction. Near Vne is emergency.
 
+CRITICAL: The autopilot (AP) is ONLY used in the air, NEVER on the ground. Ground taxi uses throttle and rudder steering only. AP Master, heading hold, altitude hold, and VS hold are all OFF during taxi, takeoff roll, and landing rollout. AP is first engaged at 200 AGL after liftoff.
+
 PROCEDURES BY PHASE:
-- PREFLIGHT/TAXI: No AP commands. Verify mixture rich, fuel both, controls free.
+- PREFLIGHT/TAXI: AP is OFF. Steer with rudder only. Throttle controls taxi speed. No AP commands ever on the ground.
 - BEFORE TAKEOFF: Runup at 1800 RPM, check mags (125 RPM max drop), flaps 0-10°, trim takeoff.
-- TAKEOFF ROLL: Full throttle, mixture rich. At 55 KIAS (Vr) rotate with ~10° pitch up.
-- INITIAL CLIMB: At 200 AGL with positive climb, engage AP, HDG hold, VS +700.
+- TAKEOFF ROLL: Full throttle, mixture rich. Steer with rudder (NO AP). At 55 KIAS (Vr) rotate with ~10° pitch up.
+- INITIAL CLIMB: At 200 AGL with positive climb, NOW engage AP, HDG hold, VS +700. This is the FIRST time AP is used.
 - DEPARTURE (500+ AGL): Retract flaps, set Vy (74 kt), set cruise altitude target.
 - CLIMB: Maintain Vy, full throttle, lean above 3000 ft.
 - CRUISE: Level at target alt, set cruise power (2200-2400 RPM), lean mixture.
@@ -1704,4 +1706,4 @@ function express_json_guard(req, res, next) {
 /** Get shared state (used by server-side rule engine for tuning data) */
 function getSharedState() { return _sharedState; }
 
-module.exports = { setupAiPilotRoutes, getSharedState };
+module.exports = { setupAiPilotRoutes, getSharedState, findNearestNode, findRunwayNode, aStarRoute };
