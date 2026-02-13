@@ -2223,7 +2223,11 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             return;
         }
 
-        const cleanText = (advisory.text || '').replace(/_?RECOMMEND:\s*/g, '').trim();
+        const cleanText = (advisory.text || '')
+            .replace(/_?RECOMMEND:\s*/g, '')
+            .replace(/^#{1,6}\s+/gm, '')
+            .replace(/\*{2,}/g, '')
+            .trim();
         this.elements.advisoryContent.innerHTML = `<span class="advisory-text">${cleanText}</span>`;
 
         // Only show Accept/Dismiss when there are actual executable commands
