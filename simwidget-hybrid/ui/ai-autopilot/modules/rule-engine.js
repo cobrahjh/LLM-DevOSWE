@@ -214,9 +214,13 @@ class RuleEngine {
                 }
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
 
-                // Release parking brake — MSFS 2024: PARKING_BRAKE_SET doesn't work,
-                // must use PARKING_BRAKES toggle. _cmd deduplicates so it only fires once.
-                this._cmd('PARKING_BRAKES', false, 'Release parking brake');
+                // Release parking brake — force-clear dedup on phase entry so toggle fires.
+                // Also send PARKING_BRAKE_SET 0 as fallback (may work in some MSFS versions).
+                if (phaseChanged) {
+                    delete this._lastCommands['PARKING_BRAKES'];
+                    this._cmd('PARKING_BRAKES', false, 'Release parking brake');
+                    this._cmdValue('PARKING_BRAKE_SET', 0, 'Brake off');
+                }
 
                 // ATC hold-short gate: if ATC is active and we're at HOLD_SHORT,
                 // stop the aircraft and wait for clearance
@@ -1483,15 +1487,19 @@ class RuleEngine {
                 `Rudder hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${hdgError > 0 ? '+' : ''}${hdgError.toFixed(1)}°)`);
         }
 
-        // Differential braking for ground steering — overcomes joystick rudder axis override.
-        // During takeoff roll, brakes are the ONLY effective steering (rudder is joystick-overridden).
-        // Active up to Vr+10 during takeoff, or gs<30 during taxi. Brake power scales down with speed.
-        const brakeSpeedLimit = isTakeoffPhase ? 65 : 30;  // kt — full takeoff roll coverage
-        const useBrakes = d.onGround && gs < brakeSpeedLimit && Math.abs(hdgError) > (isTakeoffPhase ? 1 : 3);
+        // Differential braking for ground steering — only for fine corrections during taxi.
+        // During takeoff roll, brakes help counter P-factor and hold centerline.
+        // For large heading errors (> 30°), do NOT brake — let nosewheel steering turn the plane.
+        // Braking at large errors locks the wheels and prevents turning.
+        const brakeSpeedLimit = isTakeoffPhase ? 65 : 30;  // kt
+        const minHdgForBrake = isTakeoffPhase ? 1 : 15;    // degrees — taxi: only fine corrections
+        const maxHdgForBrake = isTakeoffPhase ? 90 : 30;   // degrees — taxi: no brakes for big turns
+        const useBrakes = d.onGround && gs < brakeSpeedLimit
+            && Math.abs(hdgError) > minHdgForBrake
+            && Math.abs(hdgError) < maxHdgForBrake;
         if (useBrakes) {
-            // Scale brake power: full at low speed, lighter at high speed to avoid destabilizing
             const speedFactor = gs < 20 ? 1.0 : Math.max(0.3, 1.0 - (gs - 20) / 60);
-            const brakePower = Math.min(80, Math.abs(hdgError) * 3) * speedFactor;
+            const brakePower = Math.min(50, Math.abs(hdgError) * 2) * speedFactor;
             if (hdgError > 0) {
                 // Drifted right → brake LEFT wheel to turn left
                 this._cmdValue('AXIS_LEFT_BRAKE_SET', Math.round(brakePower));
