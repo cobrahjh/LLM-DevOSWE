@@ -796,10 +796,33 @@ class GTNFlightPlan {
     }
 
     /**
+     * Determine CDI scaling mode based on flight phase
+     * @param {number} distanceToDestination - Distance to final waypoint (nm)
+     * @returns {Object} { mode: 'ENR'|'TERM'|'APR', fsd: number }
+     */
+    getCdiScaling(distanceToDestination) {
+        // Check if approach is loaded
+        const hasApproach = this.flightPlan?.waypoints?.some(wp => wp.procedureType === 'APPROACH');
+
+        // Approach mode: 0.3nm FSD (within 2nm of destination with approach loaded)
+        if (hasApproach && distanceToDestination <= 2.0) {
+            return { mode: 'APR', fsd: 0.3 };
+        }
+
+        // Terminal mode: 1nm FSD (within 30nm of destination)
+        if (distanceToDestination <= 30.0) {
+            return { mode: 'TERM', fsd: 1.0 };
+        }
+
+        // Enroute mode: 5nm FSD (default)
+        return { mode: 'ENR', fsd: 5.0 };
+    }
+
+    /**
      * Calculate GPS navigation data (DTK, XTK, CDI) for the active leg
      * @param {number} lat - Current aircraft latitude
      * @param {number} lon - Current aircraft longitude
-     * @returns {Object} { dtk, xtrk, cdi, distance, toWaypoint } or null if no active leg
+     * @returns {Object} { dtk, xtrk, cdi, distance, toWaypoint, cdiMode, fsd } or null if no active leg
      */
     calculateGpsNavigation(lat, lon) {
         if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length === 0) {
