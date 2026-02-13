@@ -31,6 +31,7 @@ class SafeTaxiPage {
             zoomOutBtn: document.getElementById('taxi-zoom-out'),
             autoBtn: document.getElementById('taxi-auto-btn'),
             followBtn: document.getElementById('taxi-follow-btn'),
+            trackUpBtn: document.getElementById('taxi-trackup-btn'),
             statusLabel: document.getElementById('taxi-status')
         };
 
@@ -124,6 +125,27 @@ class SafeTaxiPage {
                         this.elements.followBtn.classList.remove('active');
                         this.setStatus('Auto-follow: OFF', '#ffff00');
                     }
+                }
+            });
+        }
+
+        // Track-up button - toggle track-up orientation
+        if (this.elements.trackUpBtn) {
+            this.elements.trackUpBtn.addEventListener('click', () => {
+                if (this.diagram) {
+                    this.diagram.options.trackUp = !this.diagram.options.trackUp;
+
+                    // Update button appearance
+                    if (this.diagram.options.trackUp) {
+                        this.elements.trackUpBtn.classList.add('active');
+                        this.setStatus('Track-up: ON', '#00ff00');
+                    } else {
+                        this.elements.trackUpBtn.classList.remove('active');
+                        this.setStatus('North-up: ON', '#ffff00');
+                    }
+
+                    // Re-render with new orientation
+                    this.render();
                 }
             });
         }

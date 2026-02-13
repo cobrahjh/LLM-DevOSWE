@@ -45,6 +45,7 @@ class GTNAirportDiagram {
             showParkingPositions: true,
             showHoldShortLines: true,
             autoFollow: false,       // Auto-center on ownship during taxi
+            trackUp: false,          // Rotate diagram to aircraft heading
             ownshipSize: 20,         // Aircraft symbol size in pixels
             minScale: 0.1,
             maxScale: 10.0
@@ -216,7 +217,7 @@ class GTNAirportDiagram {
     }
 
     /**
-     * Convert lat/lon to canvas coordinates
+     * Convert lat/lon to canvas coordinates with Web Mercator projection
      * @param {number} lat - Latitude
      * @param {number} lon - Longitude
      * @returns {Object} {x, y} canvas coordinates
@@ -227,16 +228,36 @@ class GTNAirportDiagram {
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
 
-        // Calculate meters from center
-        const dLat = lat - this.viewport.centerLat;
-        const dLon = lon - this.viewport.centerLon;
+        // Web Mercator projection for better accuracy
+        // Convert lat/lon to meters from viewport center
+        const R = 6378137; // Earth radius in meters (WGS84)
 
-        const meterY = dLat * 111320; // 1 degree lat ≈ 111.32 km
-        const meterX = dLon * 111320 * Math.cos(this.viewport.centerLat * Math.PI / 180);
+        // Convert to radians
+        const latRad = lat * Math.PI / 180;
+        const lonRad = lon * Math.PI / 180;
+        const centerLatRad = this.viewport.centerLat * Math.PI / 180;
+        const centerLonRad = this.viewport.centerLon * Math.PI / 180;
 
-        // Convert to pixels
-        const x = centerX + (meterX * this.viewport.scale) + this.viewport.offsetX;
-        const y = centerY - (meterY * this.viewport.scale) + this.viewport.offsetY; // Y is inverted
+        // Mercator projection
+        const x_m = R * (lonRad - centerLonRad);
+        const y_m = R * Math.log(Math.tan(Math.PI / 4 + latRad / 2)) -
+                    R * Math.log(Math.tan(Math.PI / 4 + centerLatRad / 2));
+
+        // Convert meters to pixels
+        let x = centerX + (x_m * this.viewport.scale) + this.viewport.offsetX;
+        let y = centerY - (y_m * this.viewport.scale) + this.viewport.offsetY; // Y is inverted
+
+        // Apply track-up rotation if enabled
+        if (this.options.trackUp && this.ownship && this.ownship.heading !== undefined) {
+            const heading = this.ownship.heading;
+            const angle = -(heading - 90) * Math.PI / 180; // Rotate to heading-up
+
+            // Rotate around center
+            const dx = x - centerX;
+            const dy = y - centerY;
+            x = centerX + dx * Math.cos(angle) - dy * Math.sin(angle);
+            y = centerY + dx * Math.sin(angle) + dy * Math.cos(angle);
+        }
 
         return { x, y };
     }
@@ -358,7 +379,7 @@ class GTNAirportDiagram {
     }
 
     /**
-     * Render runway numbers
+     * Render runway numbers (always upright relative to viewport)
      * @param {CanvasRenderingContext2D} ctx - Canvas context
      * @param {Object} p1 - Start point {x, y}
      * @param {Object} p2 - End point {x, y}
@@ -380,16 +401,39 @@ class GTNAirportDiagram {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Draw runway number at each end
+        // Helper function to normalize angle to keep text upright
+        const normalizeAngle = (angle) => {
+            let normalized = angle % (Math.PI * 2);
+            // If text would be upside-down, rotate it 180° to keep upright
+            if (normalized > Math.PI / 2 && normalized < Math.PI * 3 / 2) {
+                normalized += Math.PI;
+            } else if (normalized < -Math.PI / 2 && normalized > -Math.PI * 3 / 2) {
+                normalized += Math.PI;
+            }
+            return normalized;
+        };
+
+        // In track-up mode, compensate for diagram rotation
+        let textAngle1 = angle1 + Math.PI / 2;
+        let textAngle2 = angle2 + Math.PI / 2;
+
+        if (this.options.trackUp && this.ownship && this.ownship.heading !== undefined) {
+            const heading = this.ownship.heading;
+            const rotationOffset = (heading - 90) * Math.PI / 180;
+            textAngle1 += rotationOffset;
+            textAngle2 += rotationOffset;
+        }
+
+        // Draw runway number at each end (always upright)
         ctx.save();
         ctx.translate(p1.x, p1.y);
-        ctx.rotate(angle1 + Math.PI / 2);
+        ctx.rotate(normalizeAngle(textAngle1));
         ctx.fillText(id1, 0, 0);
         ctx.restore();
 
         ctx.save();
         ctx.translate(p2.x, p2.y);
-        ctx.rotate(angle2 + Math.PI / 2);
+        ctx.rotate(normalizeAngle(textAngle2));
         ctx.fillText(id2, 0, 0);
         ctx.restore();
     }
@@ -616,7 +660,12 @@ class GTNAirportDiagram {
 
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.rotate((heading - 90) * Math.PI / 180); // -90 to align with north-up
+
+        // In track-up mode, aircraft always points up (no rotation needed)
+        // In north-up mode, rotate to heading
+        if (!this.options.trackUp) {
+            ctx.rotate((heading - 90) * Math.PI / 180); // -90 to align with north-up
+        }
 
         // Draw aircraft symbol (simple triangle)
         ctx.fillStyle = this.colors.ownship;
