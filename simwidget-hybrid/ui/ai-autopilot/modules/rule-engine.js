@@ -13,6 +13,8 @@ class RuleEngine {
     constructor(options = {}) {
         this.profile = options.profile || null;
         this.commandQueue = options.commandQueue || null;
+        this._tuningGetter = options.tuningGetter || null;
+        this._holdsGetter = options.holdsGetter || null;
         this._lastPhase = null;
         this._lastCommands = {};  // track what we last commanded per axis
         this._takeoffSubPhase = null;
@@ -70,7 +72,7 @@ class RuleEngine {
             // Lateral control during takeoff
             rudderAuthority: 20,      // % max rudder deflection (yaw)
             bankAuthority: 25,        // % max aileron deflection (roll)
-            rudderBias: 8,            // constant right-rudder offset (%) to counter P-factor yaw
+            rudderBias: 15,           // constant right-rudder offset (%) to counter P-factor yaw
             aileronBias: 5,           // constant right-roll offset (%) to counter torque roll
             // Safety thresholds — Sally reads these to know her limits
             safetyMaxPitch: 15,       // pitch (deg) where correction starts
@@ -250,14 +252,14 @@ class RuleEngine {
                     // Values overridable via takeoff-tuner.html
                     const tt = this._getTakeoffTuning();
                     const thrMin = tt.taxiThrottleMin ?? 25;
-                    const thrMax = tt.taxiThrottleMax ?? 70;
+                    const thrMax = tt.taxiThrottleMax ?? 100;
                     const targetGS = tt.taxiTargetGS ?? 25;
                     let thr;
                     if (hdgError > (tt.taxiHdgErrorThreshold ?? 15)) {
                         thr = Math.max(thrMin, 35 - hdgError * (tt.taxiHdgPenalty ?? 0.3));
                     } else {
                         const speedError = targetGS - gs;
-                        thr = Math.max(thrMin, Math.min(thrMax, 55 + speedError * (tt.taxiSpeedGain ?? 0.8)));
+                        thr = Math.max(thrMin, Math.min(thrMax, 80 + speedError * (tt.taxiSpeedGain ?? 2.0)));
                     }
                     this._cmdValue('THROTTLE_SET', Math.round(thr), `Taxi (GS ${Math.round(gs)}, hdg err ${Math.round(hdgError)}°)`);
                 }
@@ -537,10 +539,19 @@ class RuleEngine {
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
-                // Hold elevator/ailerons at near-zero during roll — use 0.0001 (effectively zero)
+                // Hold elevator at near-zero during roll — use 0.0001 (effectively zero)
                 // so server keeps held-axes active, overriding joystick at SIM_FRAME rate.
                 this._cmdValue('AXIS_ELEVATOR_SET', 0.0001, 'Elevator neutral');
-                this._cmdValue('AXIS_AILERONS_SET', 0.0001, 'Ailerons neutral');
+                // Wings-level during roll — torque from full power rolls left
+                const rollBank = d.bank || 0;
+                if (Math.abs(rollBank) > (tt.liftoffBankThreshold ?? 3)) {
+                    const rollAilGain = tt.liftoffAileronGain ?? 3;
+                    const rollAilMax = tt.liftoffAileronMax ?? 60;
+                    const rollAilCorr = rollBank * rollAilGain;
+                    this._cmdValue('AXIS_AILERONS_SET', Math.max(-rollAilMax, Math.min(rollAilMax, rollAilCorr)), `Wings level (bank ${Math.round(rollBank)}°)`);
+                } else {
+                    this._cmdValue('AXIS_AILERONS_SET', 0.0001, 'Ailerons neutral');
+                }
                 this._cmdValue('THROTTLE_SET', tt.rollThrottle ?? 100, 'Full power');
                 if (!this._runwayHeading) {
                     this._runwayHeading = this._activeRunway?.heading || Math.round(d.heading || 0);
@@ -554,29 +565,36 @@ class RuleEngine {
 
             case 'ROTATE': {
                 this._cmdValue('THROTTLE_SET', tt.rotateThrottle ?? tt.rollThrottle ?? 100, 'Full power');
-                // Progressive rotation: start at -30%, increase by -25%/sec to max -80%.
-                // High authority needed — 60Hz held-axes fights joystick spring-center,
-                // effective deflection is ~50% of commanded (joystick wins half the frames).
-                const rotMax = tt.rotateElevator ?? -80;
+                // Progressive rotation: start at -10%, increase by -5%/sec to max.
+                // Joystick fights ~50%, so -30 commanded ≈ -15 effective.
+                const rotMax = tt.rotateElevator ?? -30;
                 const rotElapsed = (Date.now() - this._rotateStartTime) / 1000;
-                const rotElev = Math.max(rotMax, -30 - rotElapsed * 25);
+                const rotElev = Math.max(rotMax, -10 - rotElapsed * 5);
                 this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${Math.round(rotElev)}`);
+                // Aggressive wings-level during rotate — torque is strongest at full power + pitch
+                const rotAilGain = tt.liftoffAileronGain ?? 5;
+                const rotAilMax = tt.liftoffAileronMax ?? 60;
+                const rotBank = d.bank || 0;
+                if (Math.abs(rotBank) > (tt.liftoffBankThreshold ?? 2)) {
+                    const rotAilCorr = rotBank * rotAilGain;
+                    this._cmdValue('AXIS_AILERONS_SET', Math.max(-rotAilMax, Math.min(rotAilMax, rotAilCorr)), `Wings level (bank ${Math.round(rotBank)}°)`);
+                }
                 this._groundSteer(d, this._runwayHeading);
                 this._cmd('ELEV_TRIM_UP', true, 'Trim nose up');
+                // Only transition to LIFTOFF when actually airborne
                 if (!onGround && !this._isPhaseHeld('ROTATE')) {
                     this._takeoffSubPhase = 'LIFTOFF';
                 }
-                if (Date.now() - this._rotateStartTime > (tt.rotateTimeout ?? 15) * 1000 && onGround && !this._isPhaseHeld('ROTATE')) {
-                    this._takeoffSubPhase = 'LIFTOFF';
-                }
+                // Timeout safety: if still on ground after timeout, hold max elevator but DON'T
+                // force LIFTOFF — that applies constant elevator on ground = tipover
                 break;
             }
 
             case 'LIFTOFF': {
                 this._cmdValue('THROTTLE_SET', tt.liftoffThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const loElev = tt.liftoffElevator ?? -70;
+                const loElev = tt.liftoffElevator ?? -20;
                 this._cmdValue('AXIS_ELEVATOR_SET', loElev, `Climb — elevator ${loElev}`);
-                const loAilGain = tt.liftoffAileronGain ?? 3;
+                const loAilGain = tt.liftoffAileronGain ?? 5;
                 const loAilMax = tt.liftoffAileronMax ?? 60;
                 const bank = d.bank || 0;
                 if (Math.abs(bank) > (tt.liftoffBankThreshold ?? 3)) {
@@ -591,9 +609,9 @@ class RuleEngine {
 
             case 'INITIAL_CLIMB': {
                 this._cmdValue('THROTTLE_SET', tt.climbPhaseThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const icElev = tt.climbElevator ?? -50;
+                const icElev = tt.climbElevator ?? -15;
                 this._cmdValue('AXIS_ELEVATOR_SET', icElev, `Climb — elevator ${icElev}`);
-                const icAilGain = tt.climbAileronGain ?? 3;
+                const icAilGain = tt.climbAileronGain ?? 5;
                 const icAilMax = tt.climbAileronMax ?? 60;
                 {
                     const bank = d.bank || 0;
@@ -1208,7 +1226,10 @@ class RuleEngine {
         const isAxis = command.startsWith('AXIS_');
         // AXIS_* commands are momentary SimConnect events — must send every tick
         // to maintain deflection. Only dedup non-axis AP commands.
-        if (!isAxis) {
+        // Exception: THROTTLE_SET and MIXTURE_SET must resend periodically to
+        // re-establish held-axes after server restart or InputEvent re-enumeration.
+        const criticalControl = (command === 'THROTTLE_SET' || command === 'MIXTURE_SET' || command === 'MIXTURE_RICH');
+        if (!isAxis && !criticalControl) {
             if (lastVal !== undefined && Math.abs(lastVal - value) < 1) return;
         }
         this._lastCommands[command] = value;
@@ -1389,6 +1410,30 @@ class RuleEngine {
         this.live.rudder = rudder;
         this._cmdValue('AXIS_RUDDER_SET', Math.round(rudder),
             `Rudder hdg ${Math.round(hdg)}→${Math.round(targetHdg)} (err ${hdgError > 0 ? '+' : ''}${hdgError.toFixed(1)}°)`);
+
+        // Differential braking for ground steering — overcomes joystick rudder axis override.
+        // During takeoff roll, brakes are the ONLY effective steering (rudder is joystick-overridden).
+        // Active up to Vr+10 during takeoff, or gs<30 during taxi. Brake power scales down with speed.
+        const brakeSpeedLimit = isTakeoffPhase ? 65 : 30;  // kt — full takeoff roll coverage
+        const useBrakes = d.onGround && gs < brakeSpeedLimit && Math.abs(hdgError) > (isTakeoffPhase ? 1 : 3);
+        if (useBrakes) {
+            // Scale brake power: full at low speed, lighter at high speed to avoid destabilizing
+            const speedFactor = gs < 20 ? 1.0 : Math.max(0.3, 1.0 - (gs - 20) / 60);
+            const brakePower = Math.min(80, Math.abs(hdgError) * 3) * speedFactor;
+            if (hdgError > 0) {
+                // Drifted right → brake LEFT wheel to turn left
+                this._cmdValue('AXIS_LEFT_BRAKE_SET', Math.round(brakePower));
+                this._cmdValue('AXIS_RIGHT_BRAKE_SET', 0);
+            } else {
+                // Drifted left → brake RIGHT wheel to turn right
+                this._cmdValue('AXIS_LEFT_BRAKE_SET', 0);
+                this._cmdValue('AXIS_RIGHT_BRAKE_SET', Math.round(brakePower));
+            }
+        } else if (d.onGround) {
+            // Release both brakes when aligned or at speed
+            this._cmdValue('AXIS_LEFT_BRAKE_SET', 0);
+            this._cmdValue('AXIS_RIGHT_BRAKE_SET', 0);
+        }
 
         // Roll bias accumulates for use after liftoff (P-factor compensation)
         // Positive AXIS_AILERONS_SET = roll LEFT. Left bank (negative) needs right roll (negative bias).
@@ -1679,16 +1724,18 @@ class RuleEngine {
         return this._activeRunway;
     }
 
-    /** Read takeoff tuner overrides from localStorage (set by takeoff-tuner.html) */
+    /** Read takeoff tuner overrides — server-side getter or localStorage fallback */
     _getTakeoffTuning() {
+        if (this._tuningGetter) return this._tuningGetter();
         try {
             const raw = localStorage.getItem('simglass-takeoff-tuning');
             return raw ? JSON.parse(raw) : {};
         } catch { return {}; }
     }
 
-    /** Read takeoff phase holds from localStorage (set by takeoff-tuner.html) */
+    /** Read takeoff phase holds — server-side getter or localStorage fallback */
     _getTakeoffHolds() {
+        if (this._holdsGetter) return this._holdsGetter();
         try {
             const raw = localStorage.getItem('simglass-takeoff-holds');
             return raw ? JSON.parse(raw) : {};

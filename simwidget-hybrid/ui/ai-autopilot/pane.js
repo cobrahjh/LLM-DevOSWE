@@ -96,6 +96,7 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Takeoff attempt telemetry — tracks each takeoff for Sally to learn from
         this._tkAttempt = null;  // { startTime, phasesReached, telemetry, timeline, tuningUsed }
+        this._lastServerCmdTime = 0;  // dedup server command log entries
 
         // Debug log
         this._debugLog = [];
@@ -140,6 +141,9 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Fetch copilot config status
         this._fetchCopilotStatus();
+
+        // Fetch server-side rule engine state (in case it's already running)
+        this._fetchServerAIState();
 
         // SafeChannel sync — subscribe to GTN750 nav-state and broadcast autopilot-state
         this._initSyncListener();
@@ -251,14 +255,23 @@ class AiAutopilotPane extends SimGlassBase {
     // ── Event Setup ────────────────────────────────────────
 
     _setupEvents() {
-        // Master AI toggle
+        // Master AI toggle — calls server-side rule engine API
         this.elements.aiToggle?.addEventListener('click', () => {
-            this.aiEnabled = !this.aiEnabled;
-            if (this.aiEnabled) {
-                this.ruleEngine.reset();
-                this.commandQueue.clear();
-            }
-            this._render();
+            const enabling = !this.aiEnabled;
+            const endpoint = enabling ? '/api/ai-autopilot/enable' : '/api/ai-autopilot/disable';
+            fetch(`${window.location.origin}${endpoint}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    this.aiEnabled = data.enabled;
+                    this._dbg('cmd', `AI ${this.aiEnabled ? 'ENABLED' : 'DISABLED'} (server-side)`);
+                    this._render();
+                })
+                .catch(err => {
+                    console.error('[AI-AP] Toggle failed:', err);
+                    // Fallback: toggle locally
+                    this.aiEnabled = enabling;
+                    this._render();
+                });
         });
 
         // SimBrief import
@@ -1589,7 +1602,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 enabled: this.aiEnabled,
                 autoControls: this._autoControlsEnabled,
                 phase: this.flightPhase.phase,
-                takeoffSubPhase: this.ruleEngine.getTakeoffSubPhase(),
+                takeoffSubPhase: this._lastTakeoffSubPhase || this.ruleEngine.getTakeoffSubPhase(),
                 targets: {
                     altitude: this.flightPhase.targetCruiseAlt,
                     speed: this.setValues.speed,
@@ -1695,24 +1708,21 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // Detect pilot overrides (AP state changed without AI commanding it)
         this._detectPilotOverride(data);
 
-        if (this.aiEnabled) {
-            // Update flight phase
-            this.flightPhase.update(data);
-
-            // Update ATC ground controller (only when near ground)
-            if (this.atcController && (data.altitudeAGL || 0) < 100) {
-                this.atcController.updatePosition(
-                    data.latitude, data.longitude,
-                    data.groundSpeed || 0, data.altitudeAGL || 0
-                );
+        // ── Server-side rule engine state ──
+        // The rule engine runs on the server (backend/ai-autopilot/rule-engine-server.js).
+        // Browser is display-only — reads state from flightData.aiAutopilot broadcast.
+        const serverAP = data.aiAutopilot;
+        if (serverAP) {
+            // Sync enabled state from server
+            if (serverAP.enabled !== undefined) {
+                this.aiEnabled = serverAP.enabled;
             }
-
-            // Run rule engine
-            const prevPhase = this.flightPhase.phase;
-            this.ruleEngine.evaluate(this.flightPhase.phase, data, this.ap);
-
-            // Log takeoff sub-phase changes
-            const subPhase = this.ruleEngine.getTakeoffSubPhase();
+            if (serverAP.phase) {
+                this.flightPhase.phase = serverAP.phase;
+                this.flightPhase.phaseIndex = this.flightPhase.PHASES.indexOf(serverAP.phase);
+            }
+            // Log takeoff sub-phase changes from server
+            const subPhase = serverAP.subPhase;
             if (subPhase && subPhase !== this._lastTakeoffSubPhase) {
                 const prevSub = this._lastTakeoffSubPhase;
                 this._lastTakeoffSubPhase = subPhase;
@@ -1724,9 +1734,34 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     });
                 }
             }
+            // Update live display values from server
+            if (serverAP.live) {
+                this.ruleEngine.live.elevator = serverAP.live.elevator || 0;
+                this.ruleEngine.live.aileron = serverAP.live.aileron || 0;
+                this.ruleEngine.live.throttle = serverAP.live.throttle || 0;
+                this.ruleEngine.live.rudder = serverAP.live.rudder || 0;
+                this.ruleEngine.live.safetyActive = serverAP.live.safetyActive || false;
+                this.ruleEngine.live.safetyReason = serverAP.live.safetyReason || '';
+            }
+            // Update command log from server's last command
+            if (serverAP.lastCmd && serverAP.lastCmd.time !== this._lastServerCmdTime) {
+                this._lastServerCmdTime = serverAP.lastCmd.time;
+                this._onCommandExecuted(serverAP.lastCmd);
+            }
+        }
+
+        if (this.aiEnabled) {
+            // Update ATC ground controller (only when near ground)
+            if (this.atcController && (data.altitudeAGL || 0) < 100) {
+                this.atcController.updatePosition(
+                    data.latitude, data.longitude,
+                    data.groundSpeed || 0, data.altitudeAGL || 0
+                );
+            }
 
             // ── Takeoff attempt telemetry tracking ──
-            this._trackTakeoffAttempt(data, prevPhase, subPhase);
+            const subPhase2 = serverAP?.subPhase || this.ruleEngine.getTakeoffSubPhase();
+            this._trackTakeoffAttempt(data, this.flightPhase.phase, subPhase2);
 
             // Check LLM advisory triggers
             const trigger = this.llmAdvisor.checkTriggers(data, this.flightPhase.phase);
@@ -2136,7 +2171,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     _renderPhase() {
         const phase = this.flightPhase.phase;
         const progress = this.flightPhase.getProgress();
-        const subPhase = this.ruleEngine.getTakeoffSubPhase();
+        const subPhase = this._lastTakeoffSubPhase || this.ruleEngine.getTakeoffSubPhase();
 
         if (this.elements.phaseName) {
             const display = (phase === 'TAKEOFF' && subPhase) ? `TAKEOFF \u203A ${subPhase}` : phase;
@@ -2295,6 +2330,23 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     }
 
     // ── Copilot Status & Settings ─────────────────────────
+
+    async _fetchServerAIState() {
+        try {
+            const res = await fetch('/api/ai-autopilot/state');
+            if (res.ok) {
+                const state = await res.json();
+                this.aiEnabled = state.enabled;
+                if (state.phase) {
+                    this.flightPhase.phase = state.phase;
+                    this.flightPhase.phaseIndex = this.flightPhase.PHASES.indexOf(state.phase);
+                }
+                this._render();
+            }
+        } catch (e) {
+            console.warn('[AI-AP] Could not fetch server AI state:', e.message);
+        }
+    }
 
     async _fetchCopilotStatus() {
         try {

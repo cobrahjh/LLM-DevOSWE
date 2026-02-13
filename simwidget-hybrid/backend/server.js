@@ -46,6 +46,7 @@ const { setupWeatherRoutes } = require('./weather-api');
 const { setupCopilotRoutes } = require('./copilot-api');
 const { setupAiPilotRoutes } = require('./ai-pilot-api');
 const { setupNavdataRoutes } = require('./navdata-api');
+const RuleEngineServer = require('./ai-autopilot/rule-engine-server');
 const usageMetrics = require('../../Admin/shared/usage-metrics');
 
 // Hot reload manager (development only)
@@ -253,7 +254,12 @@ const sharedUIPath = path.join(__dirname, '../shared-ui');
 app.use('/shared-ui', express.static(sharedUIPath));
 
 // Serve UI directories (listing only in dev mode)
-app.use('/ui', express.static(uiPath));
+// No-cache for JS files — prevents stale code after SCP deploys
+app.use('/ui', express.static(uiPath, { setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js') || filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+}}));
 if (!isProduction) {
     app.use('/ui', serveIndex(uiPath, { icons: true }));
     app.use('/config', serveIndex(configPath, { icons: true }));
@@ -2795,19 +2801,28 @@ function executeCommand(command, value) {
     
     if (!simConnectConnection) return;
 
-    // MSFS 2024 InputEvents for mixture — legacy events/SimVar writes don't work
-    if ((command === 'MIXTURE_SET' || command === 'MIXTURE_RICH' || command === 'MIXTURE_LEAN' || command === 'AXIS_MIXTURE_SET') && global.inputEventHashes?.FUEL_MIXTURE_1) {
+    // MSFS 2024 mixture — InputEvent with held-axes to overcome joystick override
+    if (command === 'MIXTURE_SET' || command === 'MIXTURE_RICH' || command === 'MIXTURE_LEAN' || command === 'AXIS_MIXTURE_SET') {
         try {
             let percent;
             if (command === 'MIXTURE_RICH') percent = 100;
             else if (command === 'MIXTURE_LEAN') percent = 0;
             else percent = Math.max(0, Math.min(100, value || 0));
-            // InputEvent FUEL_MIXTURE_1 uses 0.0 to 1.0 range
             const normalized = percent / 100;
-            simConnectConnection.setInputEvent(global.inputEventHashes.FUEL_MIXTURE_1, normalized);
-            console.log(`[Mixture] InputEvent: ${percent}% (${normalized}) via FUEL_MIXTURE_1`);
+            const hash = global.inputEventHashes?.FUEL_MIXTURE_1;
+            if (hash) {
+                // Store for 120Hz re-application (overcomes joystick mixture override)
+                if (percent === 0) {
+                    delete _heldAxes.mixture;
+                } else {
+                    _heldAxes.mixture = { hash, value: normalized };
+                }
+                updateHeldAxesTimer();
+                simConnectConnection.setInputEvent(hash, normalized);
+            }
+            console.log(`[Mixture] InputEvent: ${percent}% (held-axes: ${percent > 0})`);
         } catch (e) {
-            console.error(`[Mixture] InputEvent error: ${e.message}`);
+            console.error(`[Mixture] Error: ${e.message}`);
         }
         return;
     }
@@ -2913,6 +2928,13 @@ function executeCommand(command, value) {
         const rudderEventId = eventMap['AXIS_RUDDER_SET'];
         if (rudderEventId !== undefined) {
             const simValue = Math.round((value || 0) / 100 * 16383);
+            // Store for 60Hz re-application (overcomes joystick spring-center)
+            if (value === 0) {
+                delete _heldAxes.rudder;
+            } else {
+                _heldAxes.rudder = { eventId: rudderEventId, value: simValue, legacy: true };
+            }
+            updateHeldAxesTimer();
             simConnectConnection.transmitClientEvent(0, rudderEventId, simValue, 1, 16);
             console.log(`[Rudder] Legacy: ${value}% → ${simValue}`);
         }
@@ -2936,12 +2958,23 @@ function executeCommand(command, value) {
         }
         return;
     }
+    // Differential braking for ground steering — not affected by joystick rudder axis
+    if (command === 'AXIS_LEFT_BRAKE_SET' || command === 'AXIS_RIGHT_BRAKE_SET') {
+        const brakeEventId = eventMap[command];
+        if (brakeEventId !== undefined) {
+            // 0-100% → 0-16383
+            const simValue = Math.round(Math.max(0, Math.min(100, value || 0)) / 100 * 16383);
+            simConnectConnection.transmitClientEvent(0, brakeEventId, simValue, 1, 16);
+            if (value > 5) console.log(`[Brake] ${command}: ${value}% → ${simValue}`);
+        }
+        return;
+    }
 
     const eventId = eventMap[command];
     if (eventId !== undefined) {
         try {
             let simValue = 0;
-            
+
             // Handle different command types
             if (command === 'THROTTLE_SET' || command === 'PROP_PITCH_SET' || command === 'MIXTURE_SET' || command === 'MIXTURE1_SET') {
                 // 0-100% → 0-16383
@@ -3002,6 +3035,43 @@ function executeCommand(command, value) {
         console.log(`Unknown command: ${command}`);
     }
 }
+
+// ── Server-Side AI Autopilot Rule Engine ──────────────────────────────────
+// Evaluates flight rules directly in Node.js, calling executeCommand() without
+// any browser/WebSocket hop. Eliminates browser cache issues entirely.
+const ruleEngineServer = new RuleEngineServer({
+    executeCommand: (cmd, val) => executeCommand(cmd, val),
+    getTuning: () => {
+        // Read tuning from ai-pilot-api shared state if available
+        try {
+            const { getSharedState } = require('./ai-pilot-api');
+            const state = getSharedState();
+            return state?.tuning || {};
+        } catch { return {}; }
+    }
+});
+
+// API endpoints for server-side rule engine
+app.post('/api/ai-autopilot/enable', (req, res) => {
+    ruleEngineServer.enable();
+    res.json({ success: true, enabled: true });
+});
+
+app.post('/api/ai-autopilot/disable', (req, res) => {
+    ruleEngineServer.disable();
+    res.json({ success: true, enabled: false });
+});
+
+app.get('/api/ai-autopilot/state', (req, res) => {
+    res.json(ruleEngineServer.getState());
+});
+
+app.post('/api/ai-autopilot/cruise-alt', (req, res) => {
+    const alt = parseInt(req.body.altitude);
+    if (isNaN(alt)) return res.status(400).json({ error: 'altitude required' });
+    ruleEngineServer.setCruiseAlt(alt);
+    res.json({ success: true, cruiseAlt: alt });
+});
 
 // WebSocket handling
 // Ping/pong heartbeat — detect dead clients every 30s
@@ -3202,9 +3272,16 @@ let _heldAxesTimer = null;
 
 function reapplyHeldAxes() {
     if (!simConnectConnection) return;
+    const { RawBuffer } = require('node-simconnect');
     for (const held of Object.values(_heldAxes)) {
         try {
-            if (held.legacy) {
+            if (held.simvar) {
+                // Direct SimVar write — bypasses InputEvent/joystick
+                const buf = new RawBuffer(8);
+                buf.writeFloat64(held.value);
+                const dataPacket = { tagged: false, arrayCount: 0, buffer: buf };
+                simConnectConnection.setDataOnSimObject(held.defId, 0, dataPacket);
+            } else if (held.legacy) {
                 // Legacy transmitClientEvent (elevator, ailerons, rudder)
                 simConnectConnection.transmitClientEvent(0, held.eventId, held.value, 1, 16);
             } else {
@@ -3217,11 +3294,13 @@ function reapplyHeldAxes() {
     }
 }
 
-// Start/stop the 60Hz held-axes timer based on whether any axes are held
+// Start/stop the held-axes timer based on whether any axes are held.
+// 8ms (~120Hz) — balances between outpacing joystick polling and not
+// overwhelming SimConnect. 16ms was too slow for rudder, 4ms caused drops.
 function updateHeldAxesTimer() {
     const hasHeld = Object.keys(_heldAxes).length > 0;
     if (hasHeld && !_heldAxesTimer) {
-        _heldAxesTimer = setInterval(reapplyHeldAxes, 16); // ~60Hz
+        _heldAxesTimer = setInterval(reapplyHeldAxes, 8); // ~120Hz
     } else if (!hasHeld && _heldAxesTimer) {
         clearInterval(_heldAxesTimer);
         _heldAxesTimer = null;
@@ -3358,6 +3437,11 @@ async function initSimConnect() {
             'ELEVATOR_TRIM_SET',
             'AILERON_SET',
             'CENTER_AILER_RUDDER',
+            // Differential braking (ground steering)
+            'AXIS_LEFT_BRAKE_SET',
+            'AXIS_RIGHT_BRAKE_SET',
+            'BRAKES_LEFT',
+            'BRAKES_RIGHT',
             // Engine control events
             'THROTTLE_SET',
             'PROP_PITCH_SET',
@@ -3653,6 +3737,10 @@ async function initSimConnect() {
         handle.addToDataDefinition(12, 'AIRSPEED INDICATED', 'knots', SimConnectDataType.FLOAT64, 0);
         console.log('[Recorder] Registered writable position definition (ID 12)');
 
+        // Writable mixture lever position (ID 13) — direct SimVar write bypasses InputEvent/joystick issues
+        handle.addToDataDefinition(13, 'GENERAL ENG MIXTURE LEVER POSITION:1', 'Percent', SimConnectDataType.FLOAT64, 0);
+        console.log('[Mixture] Registered writable mixture definition (ID 13)');
+
         // MSFS 2024 InputEvents — mixture lever uses B: variables, not legacy SimConnect events.
         // Enumerate input events to find FUEL_MIXTURE_1 hash for setInputEvent().
         global.inputEventHashes = {};
@@ -3827,6 +3915,10 @@ async function initSimConnect() {
                 // Update flightData with whatever we successfully read
                 if (Object.keys(fd).length > 5) {
                     flightData = fd;
+                    // Server-side rule engine evaluation (direct executeCommand, no browser)
+                    ruleEngineServer.evaluate(fd);
+                    // Include rule engine state in broadcast for UI display
+                    flightData.aiAutopilot = ruleEngineServer.getBroadcastState();
                     broadcastFlightData();
                     // Re-apply held axis values at SIM_FRAME rate to overcome joystick polling
                     reapplyHeldAxes();
@@ -4112,9 +4204,10 @@ function startMockData() {
             transponderIdent: 0,
             // Navigation source
             apNavSelected: 0,
-            connected: false // Show as disconnected in mock mode
+            connected: false, // Show as disconnected in mock mode
+            aiAutopilot: ruleEngineServer.getBroadcastState()
         };
-        
+
         broadcastFlightData();
     }, 100);
 }

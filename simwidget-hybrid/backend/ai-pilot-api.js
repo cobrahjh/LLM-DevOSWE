@@ -1698,4 +1698,7 @@ function express_json_guard(req, res, next) {
     next();
 }
 
-module.exports = { setupAiPilotRoutes };
+/** Get shared state (used by server-side rule engine for tuning data) */
+function getSharedState() { return _sharedState; }
+
+module.exports = { setupAiPilotRoutes, getSharedState };

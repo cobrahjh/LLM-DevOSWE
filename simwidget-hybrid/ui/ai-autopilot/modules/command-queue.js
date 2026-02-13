@@ -356,6 +356,10 @@ class CommandQueue {
      * Check if command is duplicate of current state
      */
     _isDuplicate(cmd) {
+        // Never dedup flight control commands — server needs periodic resends
+        // to re-establish held-axes after server restart or InputEvent re-enumeration.
+        // These go through the rate-limited queue (500ms) so flooding isn't an issue.
+        if (cmd.type === 'THROTTLE_SET' || cmd.type === 'MIXTURE_SET' || cmd.type === 'MIXTURE_RICH') return false;
         const current = this._currentApState[cmd.type];
         if (current === undefined) return false;
         if (typeof cmd.value === 'boolean') return current === cmd.value;

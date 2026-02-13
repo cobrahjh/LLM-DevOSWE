@@ -279,14 +279,14 @@
                     { key: 'taxiThrottleMax', label: 'Throttle aligned max', default: 70, unit: '%' },
                     { key: 'taxiThrottleMin', label: 'Throttle misaligned min', default: 25, unit: '%' },
                     { key: 'taxiTargetGS', label: 'Target ground speed', default: 25, unit: 'kt' },
-                    { key: 'taxiRudderMaxLow', label: 'Rudder authority (low speed)', default: 60, unit: '%' },
+                    { key: 'taxiRudderMaxLow', label: 'Rudder authority (low speed)', default: 90, unit: '%' },
                     { key: 'taxiHdgErrorThreshold', label: 'Heading error for throttle cut', default: 15, unit: '°' },
                     { key: 'taxiSpeedGain', label: 'Speed error gain', default: 0.8, unit: 'x' },
                     { key: 'taxiHdgPenalty', label: 'Heading penalty gain', default: 0.3, unit: 'x' },
                     { key: 'steerGainBase', label: 'Steer gain (base)', default: 8.0, unit: 'x' },
                     { key: 'steerGainDecay', label: 'Steer gain decay /kt', default: 0.06, unit: 'x' },
                     { key: 'steerDeadband', label: 'Steer deadband', default: 0.5, unit: '°' },
-                    { key: 'rudderBias', label: 'P-factor rudder bias', default: 8, unit: '%' }
+                    { key: 'rudderBias', label: 'P-factor rudder bias', default: 15, unit: '%' }
                 ],
                 checklist: ['Brake released', 'Heading captured', 'Rudder steering active'],
                 liveFields: ['gs', 'hdgError', 'throttle', 'rudder'],
@@ -318,7 +318,7 @@
                 id: 'ROTATE', name: 'ROTATE', type: 'air',
                 condition: 'IAS >= Vr',
                 inputs: [
-                    { key: 'rotateElevator', label: 'Elevator value', default: -50, unit: '(-) = nose up' },
+                    { key: 'rotateElevator', label: 'Elevator value', default: -30, unit: '(-) = nose up' },
                     { key: 'rotateTimeout', label: 'Max rotate time', default: 15, unit: 'sec' },
                     { key: 'rotateThrottle', label: 'Throttle', default: 100, unit: '%' }
                 ],
@@ -330,11 +330,11 @@
                 id: 'LIFTOFF', name: 'LIFTOFF', type: 'air',
                 condition: 'Not on ground',
                 inputs: [
-                    { key: 'liftoffElevator', label: 'Elevator value', default: -40, unit: '(-) = nose up' },
+                    { key: 'liftoffElevator', label: 'Elevator value', default: -20, unit: '(-) = nose up' },
                     { key: 'liftoffThrottle', label: 'Throttle', default: 100, unit: '%' },
-                    { key: 'liftoffAileronGain', label: 'Aileron gain (prop.)', default: 2, unit: 'x bank deg' },
+                    { key: 'liftoffAileronGain', label: 'Aileron gain (prop.)', default: 5, unit: 'x bank deg' },
                     { key: 'liftoffAileronMax', label: 'Max aileron deflection', default: 30, unit: '%' },
-                    { key: 'liftoffBankThreshold', label: 'Wings-level bank threshold', default: 3, unit: '°' },
+                    { key: 'liftoffBankThreshold', label: 'Wings-level bank threshold', default: 2, unit: '°' },
                     { key: 'liftoffVsThreshold', label: 'VS threshold for next phase', default: 100, unit: 'fpm' },
                     { key: 'liftoffClimbAgl', label: 'Climb AGL for next phase', default: 200, unit: 'ft AGL' }
                 ],
@@ -348,7 +348,7 @@
                 inputs: [
                     { key: 'climbElevator', label: 'Elevator value', default: -30, unit: '(-) = nose up' },
                     { key: 'climbPhaseThrottle', label: 'Throttle', default: 100, unit: '%' },
-                    { key: 'climbAileronGain', label: 'Aileron gain (prop.)', default: 2, unit: 'x bank deg' },
+                    { key: 'climbAileronGain', label: 'Aileron gain (prop.)', default: 5, unit: 'x bank deg' },
                     { key: 'climbAileronMax', label: 'Max aileron deflection', default: 30, unit: '%' },
                     { key: 'climbBankThreshold', label: 'Wings-level bank threshold', default: 3, unit: '°' },
                     { key: 'handoffAgl', label: 'AP handoff AGL', default: 500, unit: 'ft AGL' },
