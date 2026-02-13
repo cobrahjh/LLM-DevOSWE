@@ -849,6 +849,113 @@ class GTNFlightPlan {
         };
     }
 
+    /**
+     * Calculate vertical navigation guidance for the active waypoint
+     * @param {number} currentAltitude - Current aircraft altitude MSL (feet)
+     * @param {number} distanceToWaypoint - Distance to active waypoint (nm)
+     * @returns {Object} { targetAlt, altDesc, verticalDeviation, requiredVS, restrictionText } or null
+     */
+    calculateVNav(currentAltitude, distanceToWaypoint) {
+        if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length === 0) {
+            return null;
+        }
+
+        const activeIdx = this.activeWaypointIndex;
+        const waypoints = this.flightPlan.waypoints;
+
+        if (activeIdx >= waypoints.length || activeIdx < 0) {
+            return null;
+        }
+
+        const toWpt = waypoints[activeIdx];
+        if (!toWpt) {
+            return null;
+        }
+
+        // Check if waypoint has altitude constraint
+        const altDesc = toWpt.altDesc;
+        const alt1 = toWpt.alt1; // Primary altitude (feet MSL)
+        const alt2 = toWpt.alt2; // Secondary altitude for "BETWEEN" constraints
+
+        if (!altDesc || !alt1) {
+            return null; // No altitude constraint
+        }
+
+        // Parse altitude descriptor (ARINC 424 format)
+        let restrictionText = '';
+        let targetAlt = alt1;
+        let verticalDeviation = 0;
+
+        switch (altDesc) {
+            case '@':  // AT - must cross at exactly this altitude
+                restrictionText = `AT ${alt1}`;
+                targetAlt = alt1;
+                verticalDeviation = currentAltitude - alt1;
+                break;
+
+            case '+':  // AT OR ABOVE
+                restrictionText = `${alt1}A`; // "5000A" = at or above 5000
+                targetAlt = alt1;
+                verticalDeviation = Math.min(0, currentAltitude - alt1); // Only show deviation if below
+                break;
+
+            case '-':  // AT OR BELOW
+                restrictionText = `${alt1}B`; // "8000B" = at or below 8000
+                targetAlt = alt1;
+                verticalDeviation = Math.max(0, currentAltitude - alt1); // Only show deviation if above
+                break;
+
+            case 'B':  // BETWEEN alt1 and alt2
+                if (alt2) {
+                    restrictionText = `${Math.min(alt1, alt2)}A ${Math.max(alt1, alt2)}B`;
+                    targetAlt = Math.min(alt1, alt2); // Target the lower altitude for descent
+                    // Deviation if outside the range
+                    if (currentAltitude < Math.min(alt1, alt2)) {
+                        verticalDeviation = currentAltitude - Math.min(alt1, alt2);
+                    } else if (currentAltitude > Math.max(alt1, alt2)) {
+                        verticalDeviation = currentAltitude - Math.max(alt1, alt2);
+                    } else {
+                        verticalDeviation = 0; // Within range
+                    }
+                } else {
+                    return null;
+                }
+                break;
+
+            default:
+                return null; // Unknown altitude descriptor
+        }
+
+        // Calculate required vertical speed (fpm) to reach target altitude
+        // Assume groundspeed from flight plan module (set externally)
+        const groundSpeed = this._groundSpeed || 120; // Default 120 knots if not set
+        let requiredVS = 0;
+
+        if (distanceToWaypoint && distanceToWaypoint > 0.1) {
+            // Time to waypoint in minutes
+            const timeToWaypoint = distanceToWaypoint / groundSpeed * 60;
+            // Required vertical speed in feet per minute
+            requiredVS = -Math.round((currentAltitude - targetAlt) / timeToWaypoint);
+        }
+
+        return {
+            targetAlt,
+            altDesc,
+            verticalDeviation: Math.round(verticalDeviation),
+            requiredVS,
+            restrictionText,
+            waypointIdent: toWpt.ident
+        };
+    }
+
+    /**
+     * Set ground speed for VNAV calculations
+     * @param {number} groundSpeed - Ground speed in knots
+     */
+    setGroundSpeed(groundSpeed) {
+        this._groundSpeed = groundSpeed;
+    }
+
     destroy() {
         if (this._fetchTimer) clearTimeout(this._fetchTimer);
         if (this.audioContext) {

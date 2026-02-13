@@ -118,6 +118,9 @@ class GTNCdi {
                 }
         }
 
+        // Store VNAV data for rendering
+        this.vnav = state.vnav || null;
+
         this.render();
     }
 
@@ -163,6 +166,16 @@ class GTNCdi {
         if (this.elements.obsValue && this.cdi.source !== 'GPS') {
             const obs = this.cdi.source === 'NAV1' ? this.nav1.obs : this.nav2.obs;
             this.elements.obsValue.textContent = Math.round(obs).toString().padStart(3, '0');
+        }
+
+        // VNAV display
+        if (this.elements.cdiVnav) {
+            if (this.vnav && this.vnav.restrictionText) {
+                this.elements.cdiVnav.textContent = `VNAV ${this.vnav.restrictionText}`;
+                this.elements.cdiVnav.style.display = '';
+            } else {
+                this.elements.cdiVnav.style.display = 'none';
+            }
         }
     }
 
