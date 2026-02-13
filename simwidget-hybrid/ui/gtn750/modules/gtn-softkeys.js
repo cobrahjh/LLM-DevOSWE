@@ -52,8 +52,8 @@ class GTNSoftKeys {
             { label: 'TER', action: 'toggle-terrain', toggle: true },
             { label: 'TFC', action: 'toggle-traffic', toggle: true },
             { label: 'WX', action: 'toggle-weather', toggle: true },
-            { label: 'CDI', action: 'cdi-menu' },
-            { label: 'BACK', action: 'back' }
+            { label: 'VNAV', action: 'toggle-vnav', toggle: true },
+            { label: 'CDI', action: 'cdi-menu' }
         ]);
 
         // CDI source menu
@@ -79,11 +79,11 @@ class GTNSoftKeys {
         // FPL page
         this.registerContext('fpl', [
             { label: 'MENU', action: 'fpl-menu' },
+            { label: 'VNAV', action: 'toggle-vnav', toggle: true },
             { label: 'AIRWAY', action: 'insert-airway' },
             { label: 'ACTV', action: 'activate-leg' },
             { label: 'INVRT', action: 'invert-plan' },
-            { label: 'INFO', action: 'waypoint-info' },
-            { label: 'BACK', action: 'back' }
+            { label: 'D\u2192', action: 'direct-to' }
         ]);
 
         // FPL page (waypoint selected)

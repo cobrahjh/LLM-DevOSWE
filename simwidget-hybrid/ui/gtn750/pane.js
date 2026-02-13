@@ -2081,7 +2081,8 @@ class GTN750Pane extends SimGlassBase {
             vnavTod: document.getElementById('vnav-tod'),
             vnavVdev: document.getElementById('vnav-vdev'),
             vnavReqvs: document.getElementById('vnav-reqvs'),
-            vnavTgtalt: document.getElementById('vnav-tgtalt')
+            vnavTgtalt: document.getElementById('vnav-tgtalt'),
+            vnavNext: document.getElementById('vnav-next')
         };
     }
 
@@ -2355,6 +2356,9 @@ class GTN750Pane extends SimGlassBase {
             case 'hold-time':
                 const newTime = prompt('Enter holding leg time (30-240 seconds):', this.cdiManager.obs.legTime);
                 if (newTime) this.cdiManager.setHoldingLegTime(parseInt(newTime));
+                break;
+            case 'toggle-vnav':
+                this.toggleVNav();
                 break;
             default: GTNCore.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
@@ -3018,6 +3022,17 @@ class GTN750Pane extends SimGlassBase {
                 this.elements.vnavTgtalt.textContent = `${status.targetAltitude} FT`;
             } else {
                 this.elements.vnavTgtalt.textContent = '--- FT';
+            }
+        }
+
+        // Next constraint
+        if (this.elements.vnavNext) {
+            if (status.nextConstraint) {
+                const c = status.nextConstraint;
+                const constraint = c.constraint === '@' ? '' : c.constraint;
+                this.elements.vnavNext.textContent = `${c.ident} ${constraint}${c.altitude}'`;
+            } else {
+                this.elements.vnavNext.textContent = '---';
             }
         }
 
