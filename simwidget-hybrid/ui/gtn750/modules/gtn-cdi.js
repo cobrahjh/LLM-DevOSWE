@@ -44,10 +44,41 @@ class GTNCdi {
     }
 
     /**
+     * Check and auto-switch to NAV1 for ILS approaches
+     * @param {Object} flightPlan - Flight plan object
+     * @returns {boolean} - True if auto-switched
+     */
+    checkIlsAutoSwitch(flightPlan) {
+        // Check if ILS approach is loaded
+        const apr = flightPlan?.procedures?.apr;
+        const isILS = apr && (apr.approachType === 'ILS' || apr.approachType === 'LOC');
+
+        if (!isILS) return false;
+
+        // Check if NAV1 has localizer signal
+        const hasLoc = this.nav1.hasLoc && this.nav1.signal > 10;
+
+        // Auto-switch to NAV1 if localizer is active and we're still on GPS
+        if (hasLoc && this.navSource === 'GPS') {
+            GTNCore.log('[GTN750] Auto-switching to NAV1 for ILS approach');
+            this.setNavSource('NAV1');
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Update CDI from the active nav source
      * @param {Object} state - { flightPlan, activeWaypointIndex, data }
      */
     updateFromSource(state) {
+        // Store approach type for display
+        this.approachType = state.flightPlan?.procedures?.apr?.approachType || null;
+
+        // Check for ILS auto-switch before selecting source
+        this.checkIlsAutoSwitch(state.flightPlan);
+
         const source = this.navSource;
 
         switch (source) {
@@ -185,6 +216,18 @@ class GTNCdi {
                 this.elements.cdiVnav.style.display = '';
             } else {
                 this.elements.cdiVnav.style.display = 'none';
+            }
+        }
+
+        // Approach type display
+        if (this.elements.cdiApproachType) {
+            const apr = this.approachType;
+            if (apr && apr !== 'UNKNOWN') {
+                this.elements.cdiApproachType.textContent = apr;
+                this.elements.cdiApproachType.className = `cdi-approach-type ${apr.toLowerCase()}`;
+                this.elements.cdiApproachType.style.display = '';
+            } else {
+                this.elements.cdiApproachType.style.display = 'none';
             }
         }
     }

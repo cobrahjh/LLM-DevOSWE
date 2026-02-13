@@ -732,6 +732,9 @@ class GTNFlightPlan {
             this.flightPlan.waypoints = [];
         }
 
+        // Determine procedure type string for waypoints
+        const procTypeStr = type === 'dep' ? 'SID' : (type === 'arr' ? 'STAR' : 'APPROACH');
+
         // Convert navdb waypoints to flight plan format
         const fplWaypoints = waypoints.map(wp => ({
             ident: wp.ident,
@@ -742,7 +745,8 @@ class GTNFlightPlan {
             altDesc: wp.altDesc,
             alt1: wp.alt1,
             alt2: wp.alt2,
-            speedLimit: wp.speedLimit
+            speedLimit: wp.speedLimit,
+            procedureType: procTypeStr
         }));
 
         let insertIndex = 0;
@@ -788,11 +792,51 @@ class GTNFlightPlan {
             name: procedureName,
             airport: procedure?.airport || procedure?.ident?.split('.')[0],
             transition: procedure?.transition,
-            waypointCount: fplWaypoints.length
+            waypointCount: fplWaypoints.length,
+            type: procedure?.type  // Store approach type (ILS, RNAV, etc.)
         };
+
+        // Detect and store approach type for ILS switching
+        if (type === 'apr') {
+            const approachType = procedure?.type || this.detectApproachType(procedureName);
+            this.flightPlan.procedures[type].approachType = approachType;
+
+            GTNCore.log(`[GTN750] Loaded ${approachType} approach: ${procedureName}`);
+        }
 
         GTNCore.log(`[GTN750] Loaded ${procedureName}: ${fplWaypoints.length} waypoints`);
         this.notifyChanged();
+    }
+
+    /**
+     * Detect approach type from procedure name
+     * @param {string} name - Procedure name (e.g., "ILS RWY 28", "RNAV GPS RWY 10")
+     * @returns {string} - Approach type ('ILS', 'RNAV', 'VOR', 'NDB', etc.)
+     */
+    detectApproachType(name) {
+        if (!name) return 'UNKNOWN';
+
+        const upperName = name.toUpperCase();
+
+        if (upperName.includes('ILS')) return 'ILS';
+        if (upperName.includes('LOC')) return 'LOC';  // Localizer-only
+        if (upperName.includes('RNAV')) return 'RNAV';
+        if (upperName.includes('GPS')) return 'RNAV';  // GPS is typically RNAV
+        if (upperName.includes('VOR')) return 'VOR';
+        if (upperName.includes('NDB')) return 'NDB';
+        if (upperName.includes('TACAN')) return 'TACAN';
+
+        return 'UNKNOWN';
+    }
+
+    /**
+     * Check if current approach is ILS or LOC type requiring NAV radio
+     * @returns {boolean} - True if ILS/LOC approach is loaded
+     */
+    isIlsApproach() {
+        const apr = this.flightPlan?.procedures?.apr;
+        if (!apr || !apr.approachType) return false;
+        return apr.approachType === 'ILS' || apr.approachType === 'LOC';
     }
 
     /**
