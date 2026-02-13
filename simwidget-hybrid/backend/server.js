@@ -2801,42 +2801,12 @@ function executeCommand(command, value) {
     
     if (!simConnectConnection) return;
 
-    // MSFS 2024 mixture — InputEvent with held-axes to overcome joystick override
-    // Falls through to legacy transmitClientEvent if InputEvent hash not available
+    // MSFS 2024 mixture — auto mixture is enabled in sim, so mixture is managed by MSFS.
+    // FUEL_MIXTURE_1 InputEvent is enumerated but does NOT actually control mixture lever.
+    // Just log and return — don't fight the sim's auto mixture system.
     if (command === 'MIXTURE_SET' || command === 'MIXTURE_RICH' || command === 'MIXTURE_LEAN' || command === 'AXIS_MIXTURE_SET') {
-        try {
-            let percent;
-            if (command === 'MIXTURE_RICH') percent = 100;
-            else if (command === 'MIXTURE_LEAN') percent = 0;
-            else percent = Math.max(0, Math.min(100, value || 0));
-            const normalized = percent / 100;
-            const hash = global.inputEventHashes?.FUEL_MIXTURE_1;
-            if (hash) {
-                // Store for 120Hz re-application (overcomes joystick mixture override)
-                if (percent === 0) {
-                    delete _heldAxes.mixture;
-                } else {
-                    _heldAxes.mixture = { hash, value: normalized };
-                }
-                updateHeldAxesTimer();
-                simConnectConnection.setInputEvent(hash, normalized);
-                console.log(`[Mixture] InputEvent: ${percent}% (held-axes: ${percent > 0})`);
-                return;
-            }
-            // InputEvent not available — try direct SimVar write (data definition 13)
-            if (simConnectConnection.setDataOnSimObject) {
-                const buf = Buffer.alloc(8);
-                buf.writeDoubleLE(percent, 0);
-                simConnectConnection.setDataOnSimObject(13, 0, 0, 0, 8, buf);
-                console.log(`[Mixture] SimVar write: ${percent}% (FUEL_MIXTURE_1 hash not available)`);
-                return;
-            }
-            // No InputEvent, no SimVar write — fall through to legacy transmitClientEvent
-            console.log(`[Mixture] Falling through to legacy event for ${percent}%`);
-        } catch (e) {
-            console.error(`[Mixture] Error: ${e.message}`);
-        }
-        // Don't return — let legacy transmitClientEvent path handle it
+        // No-op: MSFS auto mixture handles this
+        return;
     }
 
     // MSFS 2024 InputEvents for throttle — legacy THROTTLE_SET doesn't work
