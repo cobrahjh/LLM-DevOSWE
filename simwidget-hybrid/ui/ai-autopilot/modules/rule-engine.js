@@ -270,17 +270,18 @@ class RuleEngine {
                     const thrMax = tt.taxiThrottleMax ?? 40;
                     const targetGS = tt.taxiTargetGS ?? 12;
                     let thr;
-                    if (gs < 1) {
-                        // Breakaway power — C172 needs ~40% to overcome static friction
-                        // Once rolling (GS > 1kt), reduce to speed-proportional control
+                    if (gs < 5) {
+                        // Breakaway / acceleration — keep high throttle until established taxi speed.
+                        // C172 needs ~40% to start rolling and maintain speed during turns.
+                        // Don't reduce for heading error until we have taxi speed — nosewheel
+                        // needs forward momentum to actually turn the aircraft.
                         thr = tt.taxiBreakawayThrottle ?? 40;
-                    } else if (hdgError > (tt.taxiHdgErrorThreshold ?? 30)) {
-                        // Misaligned — reduce to idle to slow down for the turn
-                        thr = Math.max(15, 25 - hdgError * (tt.taxiHdgPenalty ?? 0.1));
                     } else {
                         // Speed-proportional: target 25%, ramp with speed error
+                        // Allow heading error to reduce throttle only when we have speed
                         const speedError = targetGS - gs;
-                        thr = Math.max(20, Math.min(thrMax, 25 + speedError * (tt.taxiSpeedGain ?? 1.5)));
+                        const hdgPenalty = hdgError > 30 ? (hdgError - 30) * 0.15 : 0;
+                        thr = Math.max(20, Math.min(thrMax, 25 + speedError * (tt.taxiSpeedGain ?? 1.5) - hdgPenalty));
                     }
                     this._cmdValue('THROTTLE_SET', Math.round(thr), `Taxi (GS ${Math.round(gs)}, hdg err ${Math.round(hdgError)}°)`);
                 }
