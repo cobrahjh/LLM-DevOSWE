@@ -712,16 +712,66 @@ class GTNMapRenderer {
             ctx.setLineDash([]);
         }
 
+        // Turn anticipation circles
+        if (state.data.groundSpeed > 30 && declutterLevel < 2) {
+            for (let i = activeIdx; i < waypoints.length - 1; i++) {
+                if (!positions[i] || !positions[i + 1]) continue;
+
+                const currentWp = waypoints[i];
+                const nextWp = waypoints[i + 1];
+
+                // Calculate turn angle
+                const prevIdx = i > 0 ? i - 1 : i;
+                const prevWp = waypoints[prevIdx];
+
+                if (!prevWp || !currentWp || !nextWp) continue;
+
+                const inboundTrack = this.core.calculateBearing(
+                    prevIdx === i ? state.data.latitude : prevWp.lat,
+                    prevIdx === i ? state.data.longitude : prevWp.lng,
+                    currentWp.lat, currentWp.lng
+                );
+                const outboundTrack = this.core.calculateBearing(
+                    currentWp.lat, currentWp.lng,
+                    nextWp.lat, nextWp.lng
+                );
+
+                const turnAngle = Math.abs(this.core.normalizeAngle(outboundTrack - inboundTrack));
+
+                // Only show anticipation for turns > 10°
+                if (turnAngle > 10) {
+                    // Turn radius (25° bank, standard rate)
+                    const turnRadius = Math.pow(state.data.groundSpeed, 2) / 52.5 / 60; // in nm
+                    const leadDistance = turnRadius * Math.tan(this.core.toRad(turnAngle / 2));
+                    const threshold = Math.min(0.5 + leadDistance, 2.0); // Cap at 2nm
+
+                    // Convert threshold distance to pixels
+                    const radiusPixels = threshold * pixelsPerNm;
+
+                    // Draw anticipation circle
+                    ctx.strokeStyle = i === activeIdx ? 'rgba(0, 255, 255, 0.4)' : 'rgba(0, 200, 200, 0.2)';
+                    ctx.lineWidth = i === activeIdx ? 2 : 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.arc(positions[i].x, positions[i].y, radiusPixels, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+        }
+
         // Waypoint symbols
         waypoints.forEach((wp, index) => {
             if (!positions[index]) return;
             const isActive = index === activeIdx;
             const isCompleted = index < activeIdx;
-            this.renderWaypoint(ctx, positions[index].x, positions[index].y, wp.ident, isActive, isCompleted, declutterLevel);
+            this.renderWaypoint(ctx, positions[index].x, positions[index].y, wp, isActive, isCompleted, declutterLevel);
         });
     }
 
-    renderWaypoint(ctx, x, y, ident, isActive, isCompleted, declutterLevel) {
+    renderWaypoint(ctx, x, y, waypoint, isActive, isCompleted, declutterLevel) {
+        const ident = waypoint.ident || waypoint;
+
         let color;
         if (isActive) {
             color = '#ff00ff';
@@ -748,10 +798,43 @@ class GTNMapRenderer {
             ctx.stroke();
         }
 
+        // Waypoint identifier
         if (ident && (!isCompleted || (declutterLevel || 0) < 2)) {
             ctx.fillStyle = isActive ? '#ff00ff' : (isCompleted ? '#888888' : '#00ff00');
             ctx.font = isActive ? 'bold 11px Consolas, monospace' : '10px Consolas, monospace';
             ctx.fillText(ident, x + 8, y + 4);
+        }
+
+        // Altitude constraint (if present and not completed)
+        if (waypoint.altDesc && waypoint.alt1 && !isCompleted && (declutterLevel || 0) < 1) {
+            let altText = '';
+            const alt1 = Math.round(waypoint.alt1);
+            const alt2 = waypoint.alt2 ? Math.round(waypoint.alt2) : null;
+
+            switch (waypoint.altDesc) {
+                case '@':  // AT
+                    altText = `${alt1}`;
+                    break;
+                case '+':  // AT OR ABOVE
+                    altText = `${alt1}A`;
+                    break;
+                case '-':  // AT OR BELOW
+                    altText = `${alt1}B`;
+                    break;
+                case 'B':  // BETWEEN
+                    if (alt2) {
+                        const min = Math.min(alt1, alt2);
+                        const max = Math.max(alt1, alt2);
+                        altText = `${min}A ${max}B`;
+                    }
+                    break;
+            }
+
+            if (altText) {
+                ctx.fillStyle = isActive ? 'rgba(0, 255, 255, 0.9)' : 'rgba(0, 200, 200, 0.7)';
+                ctx.font = '9px Consolas, monospace';
+                ctx.fillText(altText, x + 8, y + 14);
+            }
         }
     }
 
