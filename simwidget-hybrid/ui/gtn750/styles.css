@@ -1226,6 +1226,32 @@ body {
     border: 1px solid var(--gtn-cyan);
 }
 
+.cdi-sequence-notify {
+    color: var(--gtn-magenta);
+    font-family: var(--gtn-mono);
+    font-weight: 700;
+    font-size: 11px;
+    background: rgba(200, 0, 200, 0.3);
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--gtn-magenta);
+    animation: sequence-flash 2s ease-out;
+}
+
+@keyframes sequence-flash {
+    0% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1);
+    }
+}
+
 .obs-controls {
     display: flex;
     align-items: center;

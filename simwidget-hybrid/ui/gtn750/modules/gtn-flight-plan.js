@@ -238,7 +238,7 @@ class GTNFlightPlan {
     // ===== WAYPOINT AUTO-SEQUENCING =====
 
     /**
-     * Check if aircraft should sequence to next waypoint
+     * Check if aircraft should sequence to next waypoint with turn anticipation
      * @param {Object} data - Current sim data
      * @param {boolean} obsSuspended - Whether OBS mode suspends sequencing
      */
@@ -259,8 +259,31 @@ class GTNFlightPlan {
             wp.lat, wp.lng
         );
 
+        // Base threshold: smaller of fixed minimum or percentage of leg
         const legDist = wp.distanceFromPrev || this.SEQUENCING.DEFAULT_LEG_DIST;
-        const threshold = Math.min(this.SEQUENCING.MIN_THRESHOLD_NM, legDist * this.SEQUENCING.LEG_PERCENT);
+        let threshold = Math.min(this.SEQUENCING.MIN_THRESHOLD_NM, legDist * this.SEQUENCING.LEG_PERCENT);
+
+        // Add turn anticipation if we have a next waypoint
+        if (this.activeWaypointIndex < this.flightPlan.waypoints.length - 1 && data.groundSpeed > 30) {
+            const nextWpt = this.flightPlan.waypoints[this.activeWaypointIndex + 1];
+            if (nextWpt && nextWpt.lat && nextWpt.lng) {
+                // Calculate turn angle
+                const inboundTrack = this.core.calculateBearing(data.latitude, data.longitude, wp.lat, wp.lng);
+                const outboundTrack = this.core.calculateBearing(wp.lat, wp.lng, nextWpt.lat, nextWpt.lng);
+                const turnAngle = Math.abs(this.core.normalizeAngle(outboundTrack - inboundTrack));
+
+                // Turn radius (assuming 25° bank, standard rate turn)
+                // R (nm) = V² / (11.26 * tan(bank)) ≈ V² / 52.5
+                const turnRadius = Math.pow(data.groundSpeed, 2) / 52.5 / 60; // in nm
+
+                // Lead distance = R * tan(turnAngle / 2)
+                if (turnAngle > 10) {
+                    const leadDistance = turnRadius * Math.tan(this.core.toRad(turnAngle / 2));
+                    threshold += leadDistance;
+                    threshold = Math.min(threshold, 2.0); // Cap at 2nm
+                }
+            }
+        }
 
         if (dist <= threshold && data.groundSpeed > this.SEQUENCING.MIN_GROUND_SPEED) {
             const brg = this.core.calculateBearing(

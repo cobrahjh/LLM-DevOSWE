@@ -477,6 +477,30 @@ class GTN750Pane extends SimGlassBase {
         }
     }
 
+    /**
+     * Show visual notification when waypoint sequencing occurs
+     * @param {string} passedIdent - Waypoint that was passed
+     * @param {string} activeIdent - New active waypoint
+     */
+    showSequenceNotification(passedIdent, activeIdent) {
+        const notify = document.getElementById('cdi-sequence-notify');
+        if (!notify) return;
+
+        notify.textContent = `${passedIdent} → ${activeIdent}`;
+        notify.style.display = '';
+
+        // Clear any existing timeout
+        if (this._sequenceNotifyTimer) {
+            clearTimeout(this._sequenceNotifyTimer);
+        }
+
+        // Hide after animation completes (2s)
+        this._sequenceNotifyTimer = setTimeout(() => {
+            notify.style.display = 'none';
+            this._sequenceNotifyTimer = null;
+        }, 2000);
+    }
+
     // ===== OVERLAYS =====
 
     initOverlays() {
@@ -1283,6 +1307,9 @@ class GTN750Pane extends SimGlassBase {
             if (msg.type === 'autopilot-state') {
                 this._autopilotState = msg.data;
                 this._renderAutopilotStatus();
+            } else if (msg.type === 'waypoint-sequence') {
+                // Show visual notification for waypoint sequencing
+                this.showSequenceNotification(msg.data.passedIdent, msg.data.activeIdent);
             } else if (msg.type === 'simbrief-plan' || msg.type === 'route-update') {
                 // Flight plan messages — ensure module is loaded first
                 if (!this.flightPlanManager) {
@@ -2393,6 +2420,10 @@ class GTN750Pane extends SimGlassBase {
         if (this._navBroadcastTimer) {
             clearInterval(this._navBroadcastTimer);
             this._navBroadcastTimer = null;
+        }
+        if (this._sequenceNotifyTimer) {
+            clearTimeout(this._sequenceNotifyTimer);
+            this._sequenceNotifyTimer = null;
         }
         if (this.syncChannel) this.syncChannel.close();
 
