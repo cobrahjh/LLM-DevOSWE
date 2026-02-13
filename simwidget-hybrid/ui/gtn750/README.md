@@ -55,10 +55,22 @@ Full-featured Garmin GTN 750 GPS emulator for Microsoft Flight Simulator with mo
 - **Real-time updates** - Live sim data integration
 - **Touch to customize** - Click any field to change
 
+### 🛬 SafeTaxi Page (NEW v2.4.0)
+- **Airport surface diagrams** - Real-time ownship position on airport layouts
+- **Web Mercator projection** - Sub-meter accuracy for precise positioning
+- **Track-up & North-up** - Configurable orientation modes
+- **Auto-follow mode** - Automatic camera centering on aircraft
+- **Smart auto-load** - Automatic diagram loading when on ground
+- **Safety features** - Hold-short lines, hotspots, parking positions
+- **Scale indicator** - Dynamic distance reference bar
+- **Interactive controls** - Pan, zoom, and center operations
+- **Responsive canvas** - Adapts to any screen size
+
 ### 📄 Multiple Pages
 - **MAP** - Moving map with overlays
 - **FPL** - Flight plan management
 - **NRST** - Nearest airports/navaids
+- **TAXI** - SafeTaxi airport surface diagrams (NEW)
 - **PROC** - Departure/arrival/approach procedures (placeholder)
 - **AUX** - Auxiliary functions
 - **CHARTS** - Approach plate viewer (integration ready)
@@ -187,6 +199,35 @@ http://localhost:8080/ui/gtn750/
 2. Type 4-digit code
 3. Press Enter
 
+### 7. SafeTaxi Airport Diagrams
+
+**Auto-Load** (when on ground):
+- Diagram loads automatically when AGL < 50ft and GS < 5kts
+- Reloads if you taxi to a different airport (>5nm away)
+
+**Manual Load**:
+1. Press `TAXI` page button
+2. Type airport ICAO code (e.g., `KSEA`)
+3. Press `LOAD` or hit Enter
+
+**Controls**:
+- **ZOOM +/-** - Zoom in/out on diagram
+- **CENTER** - Center on ownship position
+- **AUTO** - Auto-scale and center on airport
+- **FOLLOW** - Toggle auto-follow mode (keeps ownship centered)
+- **TRK UP** - Toggle track-up orientation (map rotates with aircraft)
+- **Mouse drag** - Pan around diagram
+- **Mouse wheel** - Zoom in/out
+
+**Display Features**:
+- Runways with numbers (always upright for readability)
+- Taxiways with labels
+- Hold-short lines (red/white stripes at runway entries)
+- Parking positions (gates, ramps, FBOs)
+- Hotspots (safety-critical areas in orange)
+- Scale indicator (distance reference bar)
+- Ownship position with heading indicator
+
 ## Soft Keys
 
 Bottom row of 12 soft keys changes per page:
@@ -216,6 +257,17 @@ Bottom row of 12 soft keys changes per page:
 | `NDB` | Nearest NDBs |
 | `INT` | Nearest intersections |
 | `D→` | Direct-To selected |
+
+### TAXI Page
+| Key | Function |
+|-----|----------|
+| `LOAD` | Load airport diagram |
+| `CENTER` | Center on ownship |
+| `ZOOM+` | Zoom in |
+| `ZOOM-` | Zoom out |
+| `AUTO` | Auto-scale diagram |
+| `FOLLOW` | Toggle auto-follow |
+| `TRK UP` | Toggle track-up mode |
 
 ## Data Field Customization
 
@@ -281,6 +333,7 @@ Settings persist to localStorage.
 | `M` | Switch to MAP page |
 | `F` | Switch to FPL page |
 | `N` | Switch to NRST page |
+| `T` | Switch to TAXI page |
 | `D` | Open Direct-To |
 | `+` / `-` | Zoom in/out |
 | `Space` | Re-center map |
@@ -358,27 +411,31 @@ gtn750/
 ├── widget.js           # Orchestrator (1273 lines)
 ├── styles.css          # GTN750 styling
 ├── modules/
-│   ├── gtn-core.js           # Math & formatting utilities
-│   ├── gtn-data-fields.js    # Corner data fields
-│   ├── gtn-cdi.js            # CDI, OBS, nav source
-│   ├── gtn-flight-plan.js    # FPL management
-│   ├── gtn-map-renderer.js   # Canvas rendering
-│   ├── gtn-data-handler.js   # WebSocket (browser)
-│   ├── gtn-simvar-handler.js # SimVar (native)
-│   └── gtn-pages.js          # Page manager
+│   ├── gtn-core.js              # Math & formatting utilities
+│   ├── gtn-data-fields.js       # Corner data fields
+│   ├── gtn-cdi.js               # CDI, OBS, nav source
+│   ├── gtn-flight-plan.js       # FPL management
+│   ├── gtn-map-renderer.js      # Canvas rendering
+│   ├── gtn-airport-diagram.js   # SafeTaxi diagram renderer
+│   ├── gtn-data-handler.js      # WebSocket (browser)
+│   ├── gtn-simvar-handler.js    # SimVar (native)
+│   └── gtn-pages.js             # Page manager
 ├── overlays/
 │   ├── terrain-overlay.js    # Elevation shading
 │   ├── traffic-overlay.js    # TCAS display
 │   ├── weather-overlay.js    # NEXRAD radar
 │   └── map-controls.js       # Zoom/pan controls
-└── pages/
-    ├── page-proc.js          # Procedures page
-    ├── page-aux.js           # Auxiliary page
-    ├── page-charts.js        # Charts page
-    ├── page-nrst.js          # Nearest page
-    └── page-system.js        # System settings
+├── pages/
+│   ├── page-proc.js          # Procedures page
+│   ├── page-aux.js           # Auxiliary page
+│   ├── page-charts.js        # Charts page
+│   ├── page-nrst.js          # Nearest page
+│   ├── page-taxi.js          # SafeTaxi page
+│   └── page-system.js        # System settings
+└── docs/
+    └── SAFETAXI-IMPROVEMENTS.md  # SafeTaxi feature documentation
 
-Total: ~3800 lines across 19 files
+Total: ~4500 lines across 21 files
 ```
 
 ### Module Communication
@@ -403,6 +460,24 @@ Modules communicate via:
 3. Field automatically available in customization
 
 ## Version History
+
+**v2.4.0** (2026-02-13) - SafeTaxi Airport Diagrams
+- ✅ New TAXI page with airport surface diagrams
+- ✅ Web Mercator projection for accurate positioning
+- ✅ Track-up and North-up orientation modes
+- ✅ Auto-follow mode with continuous ownship centering
+- ✅ Smart auto-load (ground detection, distance checking)
+- ✅ Responsive canvas sizing
+- ✅ Scale indicator with dynamic range
+- ✅ Hold-short lines (runway safety markings)
+- ✅ Parking positions (gates, ramps, FBOs)
+- ✅ Hotspot highlighting (safety-critical areas)
+- ✅ Upright runway numbers (always readable)
+- ✅ ETE rounding fix (nearest minute)
+- ✅ Interactive controls (pan, zoom, center)
+- ✅ Mouse drag and wheel support
+- ✅ 100% test pass rate (245 automated + 26 manual)
+- See [docs/SAFETAXI-IMPROVEMENTS.md](docs/SAFETAXI-IMPROVEMENTS.md) for details
 
 **v2.3.0** (2026-02-07) - Performance Optimizations
 - ✅ Waypoint position caching (98% calculation reduction)
