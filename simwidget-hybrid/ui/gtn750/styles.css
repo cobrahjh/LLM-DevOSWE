@@ -493,6 +493,72 @@ body {
     50% { opacity: 0.3; }
 }
 
+/* TCAS Section */
+.tcas-section {
+    min-width: 70px;
+}
+
+.tcas-status-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.tcas-status-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.tcas-state-indicator {
+    font-size: 14px;
+    margin-left: auto;
+}
+
+/* TCAS state colors */
+.tcas-state-indicator.clear {
+    color: #00ff00; /* Green - no threats */
+}
+
+.tcas-state-indicator.traffic {
+    color: #00ffff; /* Cyan - traffic present */
+}
+
+.tcas-state-indicator.ta {
+    color: #ffff00; /* Yellow - Traffic Advisory */
+    animation: tcas-blink 1s infinite;
+}
+
+.tcas-state-indicator.ra {
+    color: #ff0000; /* Red - Resolution Advisory */
+    animation: tcas-blink 0.3s infinite;
+}
+
+.tcas-count-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-top: 1px;
+}
+
+.tcas-count-label {
+    font-size: 8px;
+    color: var(--gtn-text-dim);
+}
+
+.tcas-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gtn-text);
+    margin-left: auto;
+}
+
+@keyframes tcas-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
 /* NAV Tuning Info Display */
 .nav-group {
     flex-wrap: wrap;

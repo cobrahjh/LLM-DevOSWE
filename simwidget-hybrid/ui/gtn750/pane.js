@@ -150,6 +150,12 @@ class GTN750Pane extends SimGlassBase {
             onAlert: (type, message, level) => this.handleAltitudeAlert(type, message, level)
         });
 
+        // TCAS (Traffic Collision Avoidance System)
+        this.tcas = new GTNTCAS({
+            core: this.core,
+            onAlert: (type, message, level, threat) => this.handleTCASAlert(type, message, level, threat)
+        });
+
         // Deferred modules (loaded after 500ms)
         this.flightPlanManager = null;
         this.dataHandler = null;
@@ -490,10 +496,27 @@ class GTN750Pane extends SimGlassBase {
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
         this.altitudeAlerts?.update(this.data);
+
+        // Update TCAS with traffic data
+        if (this.tcas && this.trafficOverlay) {
+            const trafficList = Array.from(this.trafficOverlay.targets.values());
+            const ownShip = {
+                latitude: this.data.latitude,
+                longitude: this.data.longitude,
+                altitude: this.data.altitude,
+                heading: this.data.heading,
+                track: this.data.groundTrack,
+                groundSpeed: this.data.groundSpeed,
+                verticalSpeed: this.data.verticalSpeed
+            };
+            this.tcas.update(trafficList, ownShip);
+        }
+
         this.updateApproachPhaseDisplay();
         this.updateIlsDisplay();
         this.updateFuelDisplay();
         this.updateAltitudeDisplay();
+        this.updateTCASDisplay();
         this.updateAuxData();
     }
 
@@ -644,6 +667,72 @@ class GTN750Pane extends SimGlassBase {
             notify.style.display = 'none';
             notify.style.background = ''; // Reset to default
         }, 3000);
+    }
+
+    /**
+     * Update TCAS display
+     */
+    updateTCASDisplay() {
+        if (!this.tcas || !this.elements.tcasStatusLabel || !this.elements.tcasState || !this.elements.tcasCount) {
+            return;
+        }
+
+        const status = this.tcas.getStatus();
+
+        // Update status label
+        this.elements.tcasStatusLabel.textContent = status.statusLabel;
+
+        // Update state indicator color
+        this.elements.tcasState.style.color = status.statusColor;
+        this.elements.tcasState.className = 'tcas-state-indicator';
+
+        if (status.hasRA) {
+            this.elements.tcasState.classList.add('ra');
+        } else if (status.hasTA) {
+            this.elements.tcasState.classList.add('ta');
+        } else if (status.threatCount > 0) {
+            this.elements.tcasState.classList.add('traffic');
+        } else {
+            this.elements.tcasState.classList.add('clear');
+        }
+
+        // Update traffic count
+        this.elements.tcasCount.textContent = status.threatCount;
+    }
+
+    /**
+     * Handle TCAS alert
+     * @param {string} type - 'TA' or 'RA'
+     * @param {string} message - Alert message
+     * @param {string} level - Alert level
+     * @param {Object} threat - Threat object
+     */
+    handleTCASAlert(type, message, level, threat) {
+        // Show visual notification
+        const notify = document.getElementById('cdi-sequence-notify');
+        if (!notify) return;
+
+        notify.textContent = message.toUpperCase();
+        notify.style.display = '';
+        notify.style.fontSize = '16px';
+        notify.style.fontWeight = '700';
+        notify.style.background = type === 'RA' ? 'rgba(255, 0, 0, 0.95)' : 'rgba(255, 255, 0, 0.90)';
+
+        // Clear after duration (RA stays longer)
+        const duration = type === 'RA' ? 5000 : 3000;
+
+        if (this._tcasAlertTimer) {
+            clearTimeout(this._tcasAlertTimer);
+        }
+        this._tcasAlertTimer = setTimeout(() => {
+            notify.style.display = 'none';
+            notify.style.fontSize = '';
+            notify.style.fontWeight = '';
+            notify.style.background = '';
+        }, duration);
+
+        // Log alert
+        GTNCore.log(`[GTN750] TCAS ${type}: ${message}`);
     }
 
     /**
@@ -1891,6 +1980,9 @@ class GTN750Pane extends SimGlassBase {
             xpdrModeIndicator: document.querySelector('.xpdr-mode-indicator'),
             utcTime: document.getElementById('utc-time'),
             altAssigned: document.getElementById('alt-assigned'),
+            tcasStatusLabel: document.getElementById('tcas-status-label'),
+            tcasState: document.getElementById('tcas-state'),
+            tcasCount: document.getElementById('tcas-count'),
             tabs: document.querySelectorAll('.gtn-tab'),
             // Compact mode elements
             gcCom1: document.getElementById('gc-com1'),
