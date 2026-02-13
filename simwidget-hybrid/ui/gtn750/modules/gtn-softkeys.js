@@ -186,6 +186,16 @@ class GTNSoftKeys {
             { label: 'BACK', action: 'back' }
         ]);
 
+        // TAXI page (SafeTaxi Airport Diagrams)
+        this.registerContext('taxi', [
+            { label: 'LOAD', action: 'taxi-load' },
+            { label: 'CENTER', action: 'taxi-center' },
+            { label: 'AUTO', action: 'taxi-auto' },
+            { label: 'ZOOM+', action: 'taxi-zoom-in' },
+            { label: 'ZOOM-', action: 'taxi-zoom-out' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
         // Map menu submenu
         this.registerContext('map-menu', [
             { label: 'NORTH', action: 'map-north-up' },

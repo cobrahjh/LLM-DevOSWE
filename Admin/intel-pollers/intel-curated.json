@@ -422,9 +422,10 @@
       "category": "library",
       "summary": "GLM-OCR is an Optical Character Recognition library designed to accurately and quickly extract text from images.",
       "thoughts": "GLM-OCR could be very useful for Hive's real-time dashboards and monitoring, as well as voice control and accessibility features. It would enable more accurate extraction of data from various sources, improving the overall functionality and user experience.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-11T20:06:07.988Z",
-      "decidedAt": "2026-02-13T07:26:42.963Z"
+      "decidedAt": "2026-02-13T07:26:42.963Z",
+      "queuedAt": "2026-02-13T13:00:01.523Z"
     },
     {
       "id": "reddit-1r28xxz",
@@ -440,9 +441,10 @@
       "category": "release",
       "summary": "GLM-5 is a new open-source language model that scores highly on the Intelligence Index and has become the leader in open weights.",
       "thoughts": "GLM-5 could be useful for Hive by providing advanced AI capabilities, enhancing the functionality of Claude Code and local LLMs like Ollama/LM Studio. Its improved intelligence index suggests it may offer more sophisticated language understanding and generation, which could benefit various component",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-12T02:04:38.766Z",
-      "decidedAt": "2026-02-13T07:26:45.941Z"
+      "decidedAt": "2026-02-13T07:26:45.941Z",
+      "queuedAt": "2026-02-13T13:00:01.535Z"
     },
     {
       "id": "gh-rel-electron-electron-285366423",
@@ -457,9 +459,10 @@
       "category": "release",
       "summary": "electron v40.4.0 is a major release of the Electron framework.",
       "thoughts": "Electron is a crucial component for Hive, as it powers the MSFS 2024 flight simulation widgets and overlays. Upgrading to Electron v40.4.0 could improve performance, security, and compatibility with newer technologies, making it highly useful for enhancing Hive's capabilities.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-12T08:09:12.148Z",
-      "decidedAt": "2026-02-13T07:26:47.368Z"
+      "decidedAt": "2026-02-13T07:26:47.368Z",
+      "queuedAt": "2026-02-13T13:00:01.547Z"
     },
     {
       "id": "reddit-1r2xjwp",
@@ -475,9 +478,10 @@
       "category": "release",
       "summary": "Ring-1T-2.5 is a large language model (LLM) released by inclusionAI.",
       "thoughts": "This LLM could be useful for Hive's AI agent orchestration, enhancing its capabilities in natural language processing and understanding.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-12T20:16:19.234Z",
-      "decidedAt": "2026-02-13T07:26:48.349Z"
+      "decidedAt": "2026-02-13T07:26:48.349Z",
+      "queuedAt": "2026-02-13T13:00:01.558Z"
     },
     {
       "id": "reddit-1r30bgz",
@@ -493,9 +497,10 @@
       "category": "release",
       "summary": "Ming-flash-omni-2.0 is a large multimodal model capable of unified speech/SFX/music generation.",
       "thoughts": "This advanced AI model could significantly enhance Hive's capabilities in voice control, accessibility, and AI agent orchestration, providing more natural and diverse interactions.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-12T20:19:06.168Z",
-      "decidedAt": "2026-02-13T07:26:49.397Z"
+      "decidedAt": "2026-02-13T07:26:49.397Z",
+      "queuedAt": "2026-02-13T13:00:01.569Z"
     },
     {
       "id": "gh-rel-ollama-ollama-285497225",
@@ -510,9 +515,10 @@
       "category": "release",
       "summary": "ollama/ollama v0.16.0 is a local language model that can be integrated into applications for natural language processing tasks.",
       "thoughts": "This release of ollama could be highly useful for Hive, as it provides an additional local LLM option that can enhance AI agent orchestration capabilities, particularly in scenarios where real-time responses are required without relying on external cloud-based services.",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-12T20:25:00.815Z",
-      "decidedAt": "2026-02-13T07:26:50.749Z"
+      "decidedAt": "2026-02-13T07:26:50.749Z",
+      "queuedAt": "2026-02-13T13:00:01.582Z"
     },
     {
       "id": "gh-rel-ollama-ollama-285905972",
@@ -527,9 +533,10 @@
       "category": "release",
       "summary": "ollama/ollama v0.16.1 is a local language model that can be integrated into applications for natural language processing tasks.",
       "thoughts": "This release of Ollama could be very useful for Hive as it provides a powerful local LLM that can enhance AI agent orchestration capabilities, including Claude Code and other local LLMs like LM Studio. The integration potential with existing services in Hive, such as KittBox and SimWidget, could sig",
-      "status": "approved",
+      "status": "queued",
       "fetchedAt": "2026-02-13T02:00:23.396Z",
-      "decidedAt": "2026-02-13T07:26:52.296Z"
+      "decidedAt": "2026-02-13T07:26:52.296Z",
+      "queuedAt": "2026-02-13T13:00:01.592Z"
     },
     {
       "id": "reddit-1r35d2x",
@@ -5509,6 +5516,142 @@
       "thoughts": "This item does not appear to be relevant or useful for improving Hive capabilities.",
       "status": "pending",
       "fetchedAt": "2026-02-13T08:00:45.965Z"
+    },
+    {
+      "id": "hn-47000041",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "MinIO repository is no longer maintained",
+      "url": "https://github.com/minio/minio/commit/7aac2a2c5b7c882e68c1ce017d8256be2feea27f",
+      "score": 298,
+      "comments": 191,
+      "timestamp": "2026-02-13T07:46:03.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "news",
+      "summary": "MinIO repository has been marked as no longer maintained.",
+      "thoughts": "This news item is not directly relevant to improving Hive capabilities. MinIO was a storage solution that may have been used in Hive's infrastructure, but its discontinuation does not impact the current or future development of Hive.",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:10.680Z"
+    },
+    {
+      "id": "hn-47001871",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "Monosketch",
+      "url": "https://monosketch.io/",
+      "score": 124,
+      "comments": 34,
+      "timestamp": "2026-02-13T12:18:05.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "other",
+      "summary": "Monosketch is a digital whiteboard and collaboration tool.",
+      "thoughts": "Monosketch appears to be a general-purpose digital whiteboard and collaboration tool, which does not directly align with the specific needs of Hive for MSFS widgets, AI agent orchestration, real-time dashboards, voice control, or WebSocket/REST APIs. While it might have some indirect applications in",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:12.069Z"
+    },
+    {
+      "id": "hn-46945693",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "Ruby Newbie Is Joining the Ruby Users Forum",
+      "url": "https://www.rubyforum.org/tag/getting-started",
+      "score": 43,
+      "comments": 7,
+      "timestamp": "2026-02-09T14:39:45.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "news",
+      "summary": "A Ruby newbie joining a Ruby users forum.",
+      "thoughts": "This news item is not relevant to improving Hive capabilities as it pertains to the Ruby programming language and community, which does not align with Hive's focus on MSFS 2024 widgets, AI agent orchestration, real-time dashboards, voice control, WebSocket/REST APIs, and message queues.",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:13.159Z"
+    },
+    {
+      "id": "hn-46933020",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "Cache Monet",
+      "url": "https://cachemonet.com",
+      "score": 41,
+      "comments": 14,
+      "timestamp": "2026-02-08T10:22:00.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "other",
+      "summary": "Cache Monet is a caching service designed to improve website performance.",
+      "thoughts": "Cache Monet does not appear to be directly relevant or useful for improving Hive's capabilities in MSFS 2024 flight simulation widgets and overlays, AI agent orchestration, real-time dashboards and monitoring, voice control and accessibility, WebSocket/REST APIs, and message queues. It is a caching ",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:14.424Z"
+    },
+    {
+      "id": "hn-46938084",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "Particle Lenia",
+      "url": "https://znah.net/lenia/",
+      "score": 29,
+      "comments": 0,
+      "timestamp": "2026-02-08T20:15:19.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "other",
+      "summary": "Particle Lenia appears to be a visual simulation tool that models the behavior of particles in space.",
+      "thoughts": "While it may have applications in various fields, there is no direct connection between Particle Lenia and the specific needs of Hive's modular service ecosystem for MSFS 2024, AI agent orchestration, real-time dashboards, voice control, or WebSocket/REST APIs. Therefore, it does not appear to be us",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:15.634Z"
+    },
+    {
+      "id": "hn-47000164",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "CSS-Doodle",
+      "url": "https://css-doodle.com/",
+      "score": 29,
+      "comments": 0,
+      "timestamp": "2026-02-13T08:02:23.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "other",
+      "summary": "CSS-Doodle is an online tool that allows users to create and customize CSS-based patterns.",
+      "thoughts": "CSS-Doodle does not directly relate to the tech stack or services of Hive, nor does it address any specific needs such as AI agent orchestration, real-time dashboards, voice control, or WebSocket/REST APIs. It is an unrelated tool that focuses on web design and pattern creation.",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:16.764Z"
+    },
+    {
+      "id": "hn-47002404",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "I asked Claude Code to remove jQuery. It failed miserably",
+      "url": "https://www.jitbit.com/alexblog/323-i-asked-claude-code-to-remove-jquery-it-failed-miserably/",
+      "score": 11,
+      "comments": 3,
+      "timestamp": "2026-02-13T13:22:32.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "news",
+      "summary": "A news article about Claude Code failing to remove jQuery.",
+      "thoughts": "This item is not relevant or useful for improving Hive capabilities. It discusses a failure of an AI agent, which does not align with the goals of enhancing Hive's modular service ecosystem for flight simulation widgets, AI agent orchestration, real-time dashboards, voice control, and messaging.",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:21.132Z"
+    },
+    {
+      "id": "hn-47001968",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "Gauntlet AI (YC S17) train you to master building with AI, give you $200k+ job",
+      "url": "http://qualify.gauntletAI.com",
+      "score": 1,
+      "comments": 0,
+      "timestamp": "2026-02-13T12:32:05.000Z",
+      "relevance": 50,
+      "recommend": false,
+      "category": "other",
+      "summary": "Gauntlet AI is a training platform for building with AI that offers job opportunities.",
+      "thoughts": "Gauntlet AI does not directly relate to the tech stack or services of Hive. It focuses on AI training and job opportunities, which are not directly applicable to improving Hive's capabilities in flight simulation widgets, AI agent orchestration, real-time dashboards, voice control, WebSocket/REST AP",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:22.325Z"
     },
     {
       "id": "hn-46917033",
@@ -12494,6 +12637,29 @@
       "fetchedAt": "2026-02-13T08:00:45.190Z"
     },
     {
+      "id": "devto-3249896",
+      "source": "Dev.to",
+      "sourceIcon": "👩‍💻",
+      "title": "Your IDE is an Attack Vector",
+      "url": "https://dev.to/aezur/your-ide-is-an-attack-vector-2i0b",
+      "description": "A new type of VSCode phishing attack is targeting freelancers via Upwork. Here’s how it works and how...",
+      "tags": [
+        "vscode",
+        "security",
+        "phishing",
+        "tooling"
+      ],
+      "reactions": 24,
+      "timestamp": "2026-02-12T00:36:03Z",
+      "relevance": 30,
+      "recommend": false,
+      "category": "news",
+      "summary": "A new type of VSCode phishing attack targeting freelancers via Upwork.",
+      "thoughts": "While this news item highlights a security concern related to VSCode, it does not directly relate to the tech stack or services of Hive. It is more relevant for developers and freelancers using VSCode but does not provide specific value in improving Hive's capabilities.",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:18.789Z"
+    },
+    {
       "id": "hn-46820360",
       "source": "Hacker News",
       "sourceIcon": "🟧",
@@ -12612,6 +12778,58 @@
       "thoughts": "While Hibana could potentially be useful for developing complex, concurrent applications within Hive, its focus on Rust and MPST (Multiparty Session Types) may not directly align with the existing tech stack or primary use cases of Hive. The relevance is low as it does not provide direct benefits fo",
       "status": "pending",
       "fetchedAt": "2026-02-11T20:14:27.415Z"
+    },
+    {
+      "id": "gh-1154009261",
+      "source": "GitHub Trending",
+      "sourceIcon": "🐙",
+      "title": "PeonPing/peon-ping",
+      "url": "https://github.com/PeonPing/peon-ping",
+      "description": "Warcraft III Peon voice notifications (+ more!) for Claude Code, Codex, and other IDEs. Stop babysitting your terminal.",
+      "stars": 1700,
+      "language": "Shell",
+      "timestamp": "2026-02-09T23:12:48Z",
+      "relevance": 20,
+      "recommend": false,
+      "category": "tool",
+      "summary": "PeonPing/peon-ping is a tool for Warcraft III Peon voice notifications that can integrate with Claude Code and other IDEs.",
+      "thoughts": "While PeonPing/peon-ping is useful for providing voice notifications in an IDE, it does not directly enhance the capabilities of Hive in MSFS 2024 flight simulation widgets, AI agent orchestration, real-time dashboards, voice control, or WebSocket/REST APIs and message queues.",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:09.714Z"
+    },
+    {
+      "id": "hn-46934860",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "Advanced Aerial Robotics Made Simple",
+      "url": "https://www.drehmflight.com",
+      "score": 27,
+      "comments": 4,
+      "timestamp": "2026-02-08T15:10:30.000Z",
+      "relevance": 20,
+      "recommend": false,
+      "category": "other",
+      "summary": "Advanced Aerial Robotics Made Simple appears to be a website or resource related to aerial robotics.",
+      "thoughts": "While interesting, this item does not directly relate to the tech stack or services of Hive. It seems more focused on a different domain and would not be useful for improving Hive capabilities.",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:17.719Z"
+    },
+    {
+      "id": "hn-46930461",
+      "source": "Hacker News",
+      "sourceIcon": "🟧",
+      "title": "Implementing Auto Tiling with Just 5 Tiles",
+      "url": "https://www.kyledunbar.dev/2026/02/05/Implementing-auto-tiling-with-just-5-tiles.html",
+      "score": 15,
+      "comments": 3,
+      "timestamp": "2026-02-08T01:37:36.000Z",
+      "relevance": 20,
+      "recommend": false,
+      "category": "tutorial",
+      "summary": "A tutorial on implementing auto-tiling functionality with just five tiles.",
+      "thoughts": "The tutorial is about a technical topic related to tiling, which could be useful for improving the user interface of Hive. However, it does not directly address any of the key services or capabilities mentioned in the Hive ecosystem (MSFS widgets, AI agent orchestration, real-time dashboards, voice ",
+      "status": "pending",
+      "fetchedAt": "2026-02-13T14:00:20.060Z"
     },
     {
       "id": "hn-46821774",
@@ -13836,12 +14054,12 @@
       "fetchedAt": "2026-02-13T02:00:19.350Z"
     }
   ],
-  "lastFetch": "2026-02-13T08:00:45.965Z",
+  "lastFetch": "2026-02-13T14:00:22.326Z",
   "stats": {
-    "total": 790,
-    "approved": 61,
+    "total": 802,
+    "approved": 54,
     "rejected": 1,
-    "pending": 707,
+    "pending": 719,
     "implemented": 0
   }
 }

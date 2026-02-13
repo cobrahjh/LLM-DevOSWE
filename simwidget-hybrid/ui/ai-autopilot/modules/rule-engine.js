@@ -299,6 +299,8 @@ class RuleEngine {
                     this._cmdValue('THROTTLE_SET', climbTT.climbThrottle ?? 100, 'Climb power');
                 }
                 if (!apState.master) {
+                    // Clear dedup — AP_MASTER is a toggle, must re-send after dropout
+                    delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
                 }
                 // Lateral nav — continuous evaluation
@@ -328,6 +330,7 @@ class RuleEngine {
 
             case 'CRUISE': {
                 if (!apState.master) {
+                    delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', true, 'Engage AP for cruise');
                 }
                 if (phaseChanged) {
@@ -355,6 +358,7 @@ class RuleEngine {
 
             case 'DESCENT': {
                 if (!apState.master) {
+                    delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', true, 'Engage AP for descent');
                 }
                 if (phaseChanged) {
@@ -392,6 +396,7 @@ class RuleEngine {
 
             case 'APPROACH': {
                 if (!apState.master) {
+                    delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', true, 'Engage AP for approach');
                 }
                 const aprAgl = d.altitudeAGL || 0;
@@ -891,6 +896,14 @@ class RuleEngine {
                 if (vs < -500) {
                     this._cmdValue('AP_VS_VAR_SET_ENGLISH', 0, 'Level off — bank recovery');
                 }
+            } else {
+                // AP is OFF — use direct aileron to level wings, then re-engage AP
+                const bankCorr = -bank * 2;  // oppose the bank
+                const clampedCorr = Math.max(-80, Math.min(80, bankCorr));
+                this._cmdValue('AXIS_AILERONS_SET', clampedCorr, `BANK ${Math.round(bank)}° — aileron recovery`);
+                // Try to re-engage AP
+                delete this._lastCommands['AP_MASTER'];
+                this._cmd('AP_MASTER', true, 'Re-engage AP — bank recovery');
             }
             this._bankCorrectionActive = true;
         } else if (absBank > dangerBank) {

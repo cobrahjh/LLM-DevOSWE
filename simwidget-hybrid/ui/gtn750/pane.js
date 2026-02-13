@@ -48,7 +48,8 @@ class GTN750Pane extends SimGlassBase {
             pageCharts: false,
             pageNrst: false,
             pageAux: false,
-            pageSystem: false
+            pageSystem: false,
+            pageTaxi: false
         };
 
         // Initialize core utilities
@@ -496,6 +497,12 @@ class GTN750Pane extends SimGlassBase {
         this.flightPlanManager?.setPosition(this.data.latitude, this.data.longitude);
         this.flightPlanManager?.setGroundSpeed(this.data.groundSpeed);
         this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager);
+
+        // Update taxi page ownship position
+        if (this.taxiPage && this.pageManager?.getCurrentPageId() === 'taxi') {
+            this.taxiPage.update(this.data);
+            this.taxiPage.render();
+        }
 
         // Calculate GPS navigation from flight plan
         const gpsNav = this.flightPlanManager?.calculateGpsNavigation(this.data.latitude, this.data.longitude);
@@ -1122,7 +1129,7 @@ class GTN750Pane extends SimGlassBase {
             onPageChange: (pageId) => this.onPageChange(pageId)
         });
 
-        const pages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system'];
+        const pages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system', 'taxi'];
         pages.forEach(id => {
             this.pageManager.registerPage(id, {
                 id,
@@ -1160,7 +1167,7 @@ class GTN750Pane extends SimGlassBase {
                 map: 'MAP', fpl: 'FLIGHT PLAN', wpt: 'WAYPOINT',
                 nrst: 'NEAREST', proc: 'PROCEDURES', terrain: 'TERRAIN',
                 traffic: 'TRAFFIC', wx: 'WEATHER', charts: 'CHARTS',
-                aux: 'AUX', system: 'SYSTEM'
+                aux: 'AUX', system: 'SYSTEM', taxi: 'SAFETAXI'
             };
             title.textContent = titles[pageId] || pageId.toUpperCase();
         }
@@ -1190,7 +1197,7 @@ class GTN750Pane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'system'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'system', 'taxi'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -2437,6 +2444,36 @@ class GTN750Pane extends SimGlassBase {
             case 'toggle-vnav':
                 this.toggleVNav();
                 break;
+            case 'taxi-load':
+                if (this.taxiPage && this.taxiPage.elements.airportInput) {
+                    this.taxiPage.elements.airportInput.focus();
+                }
+                break;
+            case 'taxi-center':
+                if (this.taxiPage) {
+                    this.taxiPage.diagram?.centerOnOwnship();
+                    this.taxiPage.render();
+                }
+                break;
+            case 'taxi-auto':
+                if (this.taxiPage) {
+                    this.taxiPage.diagram?.centerOnAirport();
+                    this.taxiPage.diagram?.autoScale();
+                    this.taxiPage.render();
+                }
+                break;
+            case 'taxi-zoom-in':
+                if (this.taxiPage) {
+                    this.taxiPage.diagram?.zoom(1.5);
+                    this.taxiPage.render();
+                }
+                break;
+            case 'taxi-zoom-out':
+                if (this.taxiPage) {
+                    this.taxiPage.diagram?.zoom(0.67);
+                    this.taxiPage.render();
+                }
+                break;
             default: GTNCore.log(`[GTN750] Unhandled soft key action: ${action}`);
         }
     }
@@ -3134,6 +3171,9 @@ class GTN750Pane extends SimGlassBase {
         if (this.flightPlanManager) this.flightPlanManager.destroy();
         if (this.xpdrControl) this.xpdrControl.destroy();
 
+        // Destroy page instances
+        if (this.taxiPage) this.taxiPage.destroy();
+
         // Cancel compact render
         this.stopCompactRender();
 
@@ -3180,7 +3220,7 @@ if (document.readyState === 'loading') {
 function handleUrlHash() {
     const hash = window.location.hash.slice(1);
     if (hash && window.gtn750?.pageManager) {
-        const validPages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system'];
+        const validPages = ['map', 'fpl', 'wpt', 'nrst', 'proc', 'terrain', 'traffic', 'wx', 'charts', 'aux', 'system', 'taxi'];
         if (validPages.includes(hash)) {
             setTimeout(() => window.gtn750.pageManager.switchPage(hash), 100);
         }

@@ -222,6 +222,29 @@ class GTNMapRenderer {
         ctx.fillStyle = '#00ccff';
         ctx.textAlign = 'center';
         ctx.fillText(modeLabels[state.map.orientation] || 'TRK', x, y + 34);
+
+        // VNAV status indicator (if enabled)
+        if (state.vnavManager?.enabled) {
+            const vnavStatus = state.vnavManager.getStatus();
+            let statusText = '';
+            let statusColor = '#00ccff';
+
+            if (vnavStatus.active) {
+                statusText = 'VNAV PATH';
+                statusColor = '#00ff00';
+            } else if (vnavStatus.armed) {
+                statusText = 'VNAV ARMED';
+                statusColor = '#ffff00';
+            } else {
+                statusText = 'VNAV';
+                statusColor = '#00ccff';
+            }
+
+            ctx.font = 'bold 9px Consolas, monospace';
+            ctx.fillStyle = statusColor;
+            ctx.textAlign = 'center';
+            ctx.fillText(statusText, x, y + 46);
+        }
     }
 
     renderObsCourseLine(ctx, cx, cy, w, h, state) {
@@ -1140,7 +1163,28 @@ class GTNMapRenderer {
             }
 
             if (altText) {
-                ctx.fillStyle = isActive ? 'rgba(0, 255, 255, 0.9)' : 'rgba(0, 200, 200, 0.7)';
+                // Determine color based on constraint status relative to current altitude
+                let constraintColor = 'rgba(0, 200, 200, 0.7)'; // Default: cyan (future constraint)
+
+                if (isActive && state.vnavManager?.enabled) {
+                    const currentAlt = state.data?.altitude || 0;
+                    const deviation = Math.abs(currentAlt - alt1);
+
+                    // Color based on proximity and compliance
+                    if (deviation < 100) {
+                        constraintColor = 'rgba(0, 255, 0, 0.9)'; // Green: within 100ft (met)
+                    } else if (deviation < 500) {
+                        constraintColor = 'rgba(255, 255, 0, 0.9)'; // Yellow: approaching (100-500ft)
+                    } else if (deviation > 1000) {
+                        constraintColor = 'rgba(255, 100, 100, 0.9)'; // Red: significant deviation (>1000ft)
+                    } else {
+                        constraintColor = 'rgba(0, 255, 255, 0.9)'; // Cyan: active but not critical
+                    }
+                } else if (isActive) {
+                    constraintColor = 'rgba(0, 255, 255, 0.9)'; // Bright cyan for active
+                }
+
+                ctx.fillStyle = constraintColor;
                 ctx.font = '9px Consolas, monospace';
                 ctx.fillText(altText, x + 8, y + 14);
             }

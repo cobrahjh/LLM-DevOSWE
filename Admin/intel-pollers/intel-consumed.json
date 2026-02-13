@@ -58,6 +58,16 @@
         "other"
       ],
       "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
+    },
+    {
+      "timestamp": "2026-02-13T13:00:01.465Z",
+      "itemCount": 45,
+      "categories": [
+        "library",
+        "release",
+        "other"
+      ],
+      "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
     }
   ],
   "queued": [
@@ -81,8 +91,15 @@
     "reddit-1r0abpl",
     "gh-1151411061",
     "reddit-1r1wjch",
-    "gh-rel-electron-electron-284890927"
+    "gh-rel-electron-electron-284890927",
+    "hn-46924075",
+    "reddit-1r28xxz",
+    "gh-rel-electron-electron-285366423",
+    "reddit-1r2xjwp",
+    "reddit-1r30bgz",
+    "gh-rel-ollama-ollama-285497225",
+    "gh-rel-ollama-ollama-285905972"
   ],
-  "lastBriefing": "2026-02-12T13:00:01.449Z",
-  "lastAutoQueue": "2026-02-12T13:00:01.528Z"
+  "lastBriefing": "2026-02-13T13:00:01.465Z",
+  "lastAutoQueue": "2026-02-13T13:00:01.597Z"
 }
