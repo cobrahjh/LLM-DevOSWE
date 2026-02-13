@@ -56,6 +56,7 @@ class GTNFlightPlan {
         this.onDirectToActivated = options.onDirectToActivated || null;
         this.onInsertComplete = options.onInsertComplete || null;
         this.onFlightPlanChanged = options.onFlightPlanChanged || null;
+        this.onCdiSourceSwitch = options.onCdiSourceSwitch || null;
 
         // Insert mode state (used when FPL INSERT opens Direct-To modal)
         this._insertMode = false;
@@ -1490,6 +1491,11 @@ class GTNFlightPlan {
                     if (this.isIlsApproach() && !this.ilsAutoTuned) {
                         this.autoTuneIls();
                     }
+
+                    // Auto-switch CDI to NAV1 for ILS/LOC approaches
+                    if (this.isIlsApproach() && this.onCdiSourceSwitch) {
+                        this.onCdiSourceSwitch('NAV1', 'ILS approach at FAF');
+                    }
                 }
             }
         } else if (distToFaf <= 2.0) {
@@ -1545,6 +1551,11 @@ class GTNFlightPlan {
         this.approachPhase = 'MISSED';
 
         GTNCore.log('[GTN750] MISSED APPROACH ACTIVATED');
+
+        // Switch CDI back to GPS for missed approach navigation
+        if (this.onCdiSourceSwitch) {
+            this.onCdiSourceSwitch('GPS', 'Missed approach');
+        }
 
         // Sequence to next waypoint (first missed approach fix if it exists)
         if (this.activeWaypointIndex < this.flightPlan.waypoints.length - 1) {

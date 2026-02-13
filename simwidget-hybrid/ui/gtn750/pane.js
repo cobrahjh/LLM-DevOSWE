@@ -234,6 +234,7 @@ class GTN750Pane extends SimGlassBase {
             onInsertComplete: () => {
                 if (this.pageManager) this.pageManager.switchPage('fpl');
             },
+            onCdiSourceSwitch: (source, reason) => this.handleCdiSourceSwitch(source, reason),
             onFlightPlanChanged: (plan) => {
                 this.fplPage?.update(plan);
             }
@@ -605,6 +606,53 @@ class GTN750Pane extends SimGlassBase {
             notify.style.display = 'none';
             this._ilsNotifyTimer = null;
         }, 3000);
+    }
+
+    /**
+     * Handle CDI source switch request from flight plan manager
+     * @param {string} source - 'GPS'|'NAV1'|'NAV2'
+     * @param {string} reason - Reason for switch (e.g., 'ILS approach at FAF')
+     */
+    handleCdiSourceSwitch(source, reason) {
+        if (!this.cdiManager) return;
+
+        const prevSource = this.cdiManager.navSource;
+        if (prevSource === source) return; // Already on this source
+
+        // Switch CDI source
+        this.cdiManager.setNavSource(source);
+
+        // Show notification
+        this.showCdiSourceNotification(source, reason);
+
+        GTNCore.log(`[GTN750] CDI source switched: ${prevSource} → ${source} (${reason})`);
+    }
+
+    /**
+     * Show CDI source switch notification
+     * @param {string} source - 'GPS'|'NAV1'|'NAV2'
+     * @param {string} reason - Reason for switch
+     */
+    showCdiSourceNotification(source, reason) {
+        const notify = this.elements.cdiIlsNotify; // Reuse ILS notify element
+        if (!notify) return;
+
+        let message = `CDI: ${source}`;
+        if (reason) message += ` - ${reason}`;
+
+        notify.textContent = message;
+        notify.style.display = '';
+
+        // Clear any existing timeout
+        if (this._cdiSourceNotifyTimer) {
+            clearTimeout(this._cdiSourceNotifyTimer);
+        }
+
+        // Hide after 2.5s
+        this._cdiSourceNotifyTimer = setTimeout(() => {
+            notify.style.display = 'none';
+            this._cdiSourceNotifyTimer = null;
+        }, 2500);
     }
 
     // ===== OVERLAYS =====

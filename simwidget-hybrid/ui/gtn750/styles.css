@@ -1385,6 +1385,33 @@ body {
 .cdi-source {
     color: var(--gtn-green);
     font-weight: 600;
+    font-family: var(--gtn-mono);
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.cdi-source-gps {
+    color: var(--gtn-green);
+    background: rgba(0, 150, 0, 0.15);
+}
+
+.cdi-source-nav1 {
+    color: var(--gtn-magenta);
+    background: rgba(200, 0, 200, 0.2);
+    border: 1px solid var(--gtn-magenta);
+    animation: source-pulse 2s ease-in-out infinite;
+}
+
+.cdi-source-nav2 {
+    color: var(--gtn-cyan);
+    background: rgba(0, 150, 200, 0.2);
+    border: 1px solid var(--gtn-cyan);
+}
+
+@keyframes source-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
 .cdi-mode {
