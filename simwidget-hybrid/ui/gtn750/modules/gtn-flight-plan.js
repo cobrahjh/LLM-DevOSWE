@@ -772,6 +772,83 @@ class GTNFlightPlan {
         this.notifyChanged();
     }
 
+    /**
+     * Calculate GPS navigation data (DTK, XTK, CDI) for the active leg
+     * @param {number} lat - Current aircraft latitude
+     * @param {number} lon - Current aircraft longitude
+     * @returns {Object} { dtk, xtrk, cdi, distance, toWaypoint } or null if no active leg
+     */
+    calculateGpsNavigation(lat, lon) {
+        if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length === 0) {
+            return null;
+        }
+
+        const activeIdx = this.activeWaypointIndex;
+        const waypoints = this.flightPlan.waypoints;
+
+        // Need at least one waypoint
+        if (activeIdx >= waypoints.length || activeIdx < 0) {
+            return null;
+        }
+
+        const toWpt = waypoints[activeIdx];
+        if (!toWpt || !toWpt.lat || !toWpt.lng) {
+            return null;
+        }
+
+        // Direct-To case or first waypoint - use direct bearing
+        if (activeIdx === 0 || this.dtoTarget) {
+            const bearing = this.core.calculateBearing(lat, lon, toWpt.lat, toWpt.lng);
+            const distance = this.core.calculateDistance(lat, lon, toWpt.lat, toWpt.lng);
+
+            return {
+                dtk: bearing,
+                xtrk: 0,  // No cross-track for direct-to
+                cdi: 0,
+                distance,
+                toWaypoint: toWpt.ident
+            };
+        }
+
+        // Normal leg: calculate from previous waypoint to active waypoint
+        const fromWpt = waypoints[activeIdx - 1];
+        if (!fromWpt || !fromWpt.lat || !fromWpt.lng) {
+            // Fall back to direct bearing
+            const bearing = this.core.calculateBearing(lat, lon, toWpt.lat, toWpt.lng);
+            const distance = this.core.calculateDistance(lat, lon, toWpt.lat, toWpt.lng);
+            return { dtk: bearing, xtrk: 0, cdi: 0, distance, toWaypoint: toWpt.ident };
+        }
+
+        // Calculate desired track (DTK): bearing from previous waypoint to active waypoint
+        const dtk = this.core.calculateBearing(fromWpt.lat, fromWpt.lng, toWpt.lat, toWpt.lng);
+
+        // Calculate distance to active waypoint
+        const distance = this.core.calculateDistance(lat, lon, toWpt.lat, toWpt.lng);
+
+        // Calculate cross-track error (XTK)
+        // Using great circle cross-track distance formula
+        const d13 = this.core.calculateDistance(fromWpt.lat, fromWpt.lng, lat, lon); // Distance from start of leg
+        const brg13 = this.core.calculateBearing(fromWpt.lat, fromWpt.lng, lat, lon); // Bearing to aircraft
+
+        // Cross-track distance in nautical miles
+        const xtrk = Math.asin(Math.sin(d13 / 60 / 180 * Math.PI) *
+                               Math.sin((brg13 - dtk) * Math.PI / 180)) * 60 * 180 / Math.PI;
+
+        // CDI needle deflection: -127 to +127
+        // Full scale deflection (FSD) = 5nm for enroute, 1nm for terminal, 0.3nm for approach
+        // TODO: Detect approach mode and adjust FSD accordingly
+        const fsd = 5.0; // nm
+        const cdi = Math.max(-127, Math.min(127, Math.round(xtrk / fsd * 127)));
+
+        return {
+            dtk: Math.round(dtk),
+            xtrk: Math.abs(xtrk),
+            cdi,
+            distance,
+            toWaypoint: toWpt.ident
+        };
+    }
+
     destroy() {
         if (this._fetchTimer) clearTimeout(this._fetchTimer);
         if (this.audioContext) {

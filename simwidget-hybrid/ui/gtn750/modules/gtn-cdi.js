@@ -90,16 +90,31 @@ class GTNCdi {
                         signalValid: true
                     };
                 } else {
-                    this.cdi = {
-                        source: 'GPS',
-                        needle: this.gps.cdi,
-                        dtk: this.gps.dtk || this.cdi.dtk,
-                        xtrk: Math.abs(this.gps.xtrk),
-                        toFrom: 1,
-                        gsNeedle: Math.round(this.gps.vertError * 40),
-                        gsValid: this.gps.approachMode,
-                        signalValid: true
-                    };
+                    // Use flight plan GPS navigation if available
+                    if (state.gpsNav) {
+                        this.cdi = {
+                            source: 'GPS',
+                            needle: state.gpsNav.cdi,
+                            dtk: state.gpsNav.dtk,
+                            xtrk: state.gpsNav.xtrk,
+                            toFrom: 1,  // Always TO when following flight plan
+                            gsNeedle: Math.round(this.gps.vertError * 40),
+                            gsValid: this.gps.approachMode,
+                            signalValid: true
+                        };
+                    } else {
+                        // Fall back to raw GPS data from SimConnect
+                        this.cdi = {
+                            source: 'GPS',
+                            needle: this.gps.cdi,
+                            dtk: this.gps.dtk || this.cdi.dtk,
+                            xtrk: Math.abs(this.gps.xtrk),
+                            toFrom: 1,
+                            gsNeedle: Math.round(this.gps.vertError * 40),
+                            gsValid: this.gps.approachMode,
+                            signalValid: true
+                        };
+                    }
                 }
         }
 

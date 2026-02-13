@@ -438,10 +438,15 @@ class GTN750Pane extends SimGlassBase {
         this.flightPlanManager?.setPosition(this.data.latitude, this.data.longitude);
         this.flightPlanManager?.setGroundSpeed(this.data.groundSpeed);
         this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager);
+
+        // Calculate GPS navigation from flight plan
+        const gpsNav = this.flightPlanManager?.calculateGpsNavigation(this.data.latitude, this.data.longitude);
+
         this.cdiManager.updateFromSource({
             flightPlan: this.flightPlanManager?.flightPlan || null,
             activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0,
-            data: this.data
+            data: this.data,
+            gpsNav: gpsNav  // Pass calculated GPS navigation to CDI
         });
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.updateAuxData();
