@@ -461,6 +461,8 @@ class GTN750Pane extends SimGlassBase {
             vnav: vnav       // Pass vertical navigation data
         });
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
+        this.flightPlanManager?.checkApproachPhase(this.data);
+        this.updateApproachPhaseDisplay();
         this.updateAuxData();
     }
 
@@ -483,6 +485,53 @@ class GTN750Pane extends SimGlassBase {
                 this.elements.auxEta.textContent = this.core.formatTime(etaHrs);
             }
         }
+    }
+
+    /**
+     * Update approach phase display based on current flight plan state
+     */
+    updateApproachPhaseDisplay() {
+        if (!this.elements.cdiApproachPhase) return;
+
+        const approachStatus = this.flightPlanManager?.getApproachStatus();
+        if (!approachStatus || !approachStatus.phase) {
+            this.elements.cdiApproachPhase.style.display = 'none';
+            return;
+        }
+
+        const phase = approachStatus.phase;
+        let displayText = '';
+        let className = '';
+
+        switch (phase) {
+            case 'TERM':
+                displayText = 'TERM';
+                className = 'term';
+                break;
+            case 'APR':
+                displayText = 'APR';
+                className = 'apr';
+                break;
+            case 'FAF':
+                displayText = `FAF: ${approachStatus.fafIdent || '---'}`;
+                className = 'faf';
+                break;
+            case 'MAP':
+                displayText = `MAP: ${approachStatus.mapIdent || '---'}`;
+                className = 'map';
+                break;
+            case 'MISSED':
+                displayText = 'MISSED APPR';
+                className = 'missed';
+                break;
+            default:
+                this.elements.cdiApproachPhase.style.display = 'none';
+                return;
+        }
+
+        this.elements.cdiApproachPhase.textContent = displayText;
+        this.elements.cdiApproachPhase.className = `cdi-approach-phase ${className}`;
+        this.elements.cdiApproachPhase.style.display = '';
     }
 
     /**
@@ -1535,6 +1584,7 @@ class GTN750Pane extends SimGlassBase {
             cdiToFrom: document.getElementById('cdi-tofrom'),
             cdiVnav: document.getElementById('cdi-vnav'),
             cdiApproachType: document.getElementById('cdi-approach-type'),
+            cdiApproachPhase: document.getElementById('cdi-approach-phase'),
             cdiGsNeedle: document.getElementById('cdi-gs-needle'),
             cdiGsBar: document.getElementById('cdi-gs-bar'),
             cdiFlag: document.getElementById('cdi-flag'),

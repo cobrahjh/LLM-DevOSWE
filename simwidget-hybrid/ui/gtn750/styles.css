@@ -1459,6 +1459,53 @@ body {
     border-color: #00ff00;
 }
 
+.cdi-approach-phase {
+    color: var(--gtn-magenta);
+    font-family: var(--gtn-mono);
+    font-weight: 700;
+    font-size: 10px;
+    background: rgba(200, 0, 200, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--gtn-magenta);
+    animation: phase-pulse 2s ease-in-out infinite;
+}
+
+.cdi-approach-phase.term {
+    color: var(--gtn-cyan);
+    background: rgba(0, 150, 200, 0.2);
+    border-color: var(--gtn-cyan);
+}
+
+.cdi-approach-phase.faf {
+    color: var(--gtn-yellow);
+    background: rgba(200, 200, 0, 0.2);
+    border-color: var(--gtn-yellow);
+}
+
+.cdi-approach-phase.map {
+    color: var(--gtn-green);
+    background: rgba(0, 150, 0, 0.2);
+    border-color: var(--gtn-green);
+}
+
+.cdi-approach-phase.missed {
+    color: var(--gtn-red);
+    background: rgba(200, 0, 0, 0.3);
+    border-color: var(--gtn-red);
+    animation: missed-blink 0.5s ease-in-out infinite;
+}
+
+@keyframes phase-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes missed-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
 .cdi-sequence-notify {
     color: var(--gtn-magenta);
     font-family: var(--gtn-mono);

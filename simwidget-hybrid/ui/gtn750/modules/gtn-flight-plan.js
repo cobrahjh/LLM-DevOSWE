@@ -40,6 +40,14 @@ class GTNFlightPlan {
         // Direct-To state
         this.dtoTarget = null;
 
+        // Approach activation state
+        this.approachPhase = null; // null, 'TERM', 'APR', 'FAF', 'MAP', 'MISSED'
+        this.approachActive = false;
+        this.missedApproachActive = false;
+        this.fafIndex = -1; // Final Approach Fix index
+        this.mapIndex = -1; // Missed Approach Point index
+        this.lastApproachAltitude = 0; // Track altitude for missed approach detection
+
         // Audio context for sequence chime
         this.audioContext = null;
 
@@ -802,6 +810,9 @@ class GTNFlightPlan {
             this.flightPlan.procedures[type].approachType = approachType;
 
             GTNCore.log(`[GTN750] Loaded ${approachType} approach: ${procedureName}`);
+
+            // Identify critical approach fixes after loading
+            this.identifyApproachFixes();
         }
 
         GTNCore.log(`[GTN750] Loaded ${procedureName}: ${fplWaypoints.length} waypoints`);
@@ -1226,6 +1237,195 @@ class GTNFlightPlan {
      */
     setGroundSpeed(groundSpeed) {
         this._groundSpeed = groundSpeed;
+    }
+
+    // ===== APPROACH ACTIVATION & MISSED APPROACH =====
+
+    /**
+     * Identify approach critical fixes (IAF, FAF, MAP) from loaded procedure
+     * Called after loadProcedure() with type='apr'
+     */
+    identifyApproachFixes() {
+        if (!this.flightPlan?.waypoints) return;
+
+        const waypoints = this.flightPlan.waypoints;
+
+        // Find first and last approach waypoint
+        let firstApprIdx = -1;
+        let lastApprIdx = -1;
+
+        for (let i = 0; i < waypoints.length; i++) {
+            if (waypoints[i].procedureType === 'APPROACH') {
+                if (firstApprIdx === -1) firstApprIdx = i;
+                lastApprIdx = i;
+            }
+        }
+
+        if (firstApprIdx === -1) {
+            // No approach loaded
+            this.fafIndex = -1;
+            this.mapIndex = -1;
+            return;
+        }
+
+        // FAF detection: Look for path terminators or altitude constraints in latter part of approach
+        // Common FAF indicators: CF (Course to Fix), TF (Track to Fix) with altitude constraint
+        let fafIdx = -1;
+        for (let i = lastApprIdx; i >= firstApprIdx; i--) {
+            const wp = waypoints[i];
+            // FAF typically has altitude constraint and is in the final segment
+            if (wp.altDesc && wp.alt1 && (wp.pathTerm === 'CF' || wp.pathTerm === 'TF')) {
+                fafIdx = i;
+                break;
+            }
+        }
+
+        // If no FAF found by path term, use waypoint 2/3 through the approach
+        if (fafIdx === -1) {
+            const approachLength = lastApprIdx - firstApprIdx + 1;
+            fafIdx = firstApprIdx + Math.floor(approachLength * 0.66);
+        }
+
+        // MAP is typically the last waypoint in the approach
+        this.fafIndex = fafIdx;
+        this.mapIndex = lastApprIdx;
+
+        GTNCore.log(`[GTN750] Approach fixes identified: FAF=${waypoints[fafIdx]?.ident} (idx ${fafIdx}), MAP=${waypoints[lastApprIdx]?.ident} (idx ${lastApprIdx})`);
+    }
+
+    /**
+     * Check approach phase and update state based on position
+     * Called from main update loop
+     * @param {Object} data - Current sim data with latitude, longitude, altitude
+     */
+    checkApproachPhase(data) {
+        if (!this.flightPlan?.waypoints || this.fafIndex === -1) {
+            // No approach loaded
+            if (this.approachActive) {
+                this.approachActive = false;
+                this.approachPhase = null;
+                GTNCore.log('[GTN750] Approach deactivated - no approach in flight plan');
+            }
+            return;
+        }
+
+        if (!data.latitude || !data.longitude || !data.altitude) return;
+
+        const waypoints = this.flightPlan.waypoints;
+        const fafWp = waypoints[this.fafIndex];
+        const mapWp = waypoints[this.mapIndex];
+
+        if (!fafWp || !mapWp) return;
+
+        // Calculate distances
+        const distToFaf = fafWp.lat && fafWp.lng ?
+            this.core.calculateDistance(data.latitude, data.longitude, fafWp.lat, fafWp.lng) : 999;
+        const distToMap = mapWp.lat && mapWp.lng ?
+            this.core.calculateDistance(data.latitude, data.longitude, mapWp.lat, mapWp.lng) : 999;
+
+        // Phase logic
+        const activeIdx = this.activeWaypointIndex;
+
+        // Check if we're past FAF
+        if (activeIdx >= this.fafIndex) {
+            if (activeIdx >= this.mapIndex) {
+                // At or past MAP
+                if (this.approachPhase !== 'MAP') {
+                    this.approachPhase = 'MAP';
+                    this.lastApproachAltitude = data.altitude;
+                    GTNCore.log('[GTN750] Approach phase: MAP');
+                }
+
+                // Check for missed approach (altitude loss or go-around)
+                this.detectMissedApproach(data);
+            } else {
+                // Between FAF and MAP - final approach
+                if (this.approachPhase !== 'FAF') {
+                    this.approachPhase = 'FAF';
+                    this.approachActive = true;
+                    GTNCore.log('[GTN750] Approach phase: FAF - final approach active');
+                }
+            }
+        } else if (distToFaf <= 2.0) {
+            // Approaching FAF (within 2nm)
+            if (this.approachPhase !== 'APR') {
+                this.approachPhase = 'APR';
+                this.approachActive = true;
+                GTNCore.log('[GTN750] Approach phase: APR - approach mode armed');
+            }
+        } else if (distToFaf <= 30.0) {
+            // Terminal area
+            if (this.approachPhase !== 'TERM') {
+                this.approachPhase = 'TERM';
+                GTNCore.log('[GTN750] Approach phase: TERM - terminal area');
+            }
+        } else {
+            // Enroute - deactivate approach
+            if (this.approachActive) {
+                this.approachActive = false;
+                this.approachPhase = null;
+            }
+        }
+    }
+
+    /**
+     * Detect missed approach conditions
+     * @param {Object} data - Current sim data
+     */
+    detectMissedApproach(data) {
+        if (this.missedApproachActive) return; // Already in missed
+        if (this.approachPhase !== 'MAP') return; // Only detect at MAP
+
+        const altLoss = this.lastApproachAltitude - data.altitude;
+
+        // Missed approach triggers:
+        // 1. Altitude GAIN of >200ft (go-around initiated)
+        if (altLoss < -200) {
+            // Climbing - go-around
+            this.activateMissedApproach();
+        } else {
+            // Update last altitude for next check
+            this.lastApproachAltitude = Math.min(this.lastApproachAltitude, data.altitude);
+        }
+    }
+
+    /**
+     * Activate missed approach mode
+     */
+    activateMissedApproach() {
+        if (this.missedApproachActive) return;
+
+        this.missedApproachActive = true;
+        this.approachPhase = 'MISSED';
+
+        GTNCore.log('[GTN750] MISSED APPROACH ACTIVATED');
+
+        // Sequence to next waypoint (first missed approach fix if it exists)
+        if (this.activeWaypointIndex < this.flightPlan.waypoints.length - 1) {
+            this.sequenceToNextWaypoint();
+        }
+
+        // Notify CDI manager of missed approach (for autopilot/mode changes)
+        if (this.syncChannel) {
+            this.syncChannel.postMessage({
+                type: 'missed-approach',
+                data: { active: true }
+            });
+        }
+    }
+
+    /**
+     * Get approach status for display
+     * @returns {Object} { active, phase, fafIdent, mapIdent, missed }
+     */
+    getApproachStatus() {
+        return {
+            active: this.approachActive,
+            phase: this.approachPhase,
+            missed: this.missedApproachActive,
+            fafIdent: this.fafIndex >= 0 ? this.flightPlan?.waypoints[this.fafIndex]?.ident : null,
+            mapIdent: this.mapIndex >= 0 ? this.flightPlan?.waypoints[this.mapIndex]?.ident : null
+        };
     }
 
     destroy() {
