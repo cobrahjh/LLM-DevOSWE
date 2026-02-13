@@ -42,9 +42,9 @@ class FlightPhase {
         const gs = d.groundSpeed || 0;
         const ias = d.speed || 0;
         const vs = d.verticalSpeed || 0;
-        // MSFS 2024: onGround SimVar can be unreliable, AGL reads 15-30ft on runway
-        // due to terrain model offset. On ground if SimVar says so OR low AGL + no climb.
-        const onGround = d.onGround || (agl < 50 && Math.abs(vs) < 200);
+        // MSFS 2024: onGround SimVar is unreliable (reports true at 4000+ AGL).
+        // Require BOTH SimVar AND low AGL. Fallback: very low AGL + no climb.
+        const onGround = (d.onGround && agl < 50) || (agl < 15 && Math.abs(vs) < 200);
         const gearDown = d.gearDown !== undefined ? d.gearDown : true;
         const engineRunning = d.engineRunning || false;
 
