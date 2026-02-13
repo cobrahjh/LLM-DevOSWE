@@ -287,6 +287,11 @@ class RuleEngine {
                     this._cmdValue('AXIS_RUDDER_SET', 0, 'Release rudder for AP');
                     this._cmdValue('AXIS_AILERONS_SET', 0, 'Release ailerons for AP');
                 }
+                // Retract flaps if still deployed (DEPARTURE may not have had time)
+                if ((d.flapsIndex || 0) > 0) {
+                    delete this._lastCommands['FLAPS_UP'];
+                    this._cmd('FLAPS_UP', true, 'Retract flaps for climb');
+                }
                 // Climb power — full throttle unless speed protection is managing throttle
                 if (!this._speedCorrectionActive) {
                     const climbTT = this._getTakeoffTuning();
@@ -543,13 +548,10 @@ class RuleEngine {
                 if (d.parkingBrake) {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
                 }
-                // Verify: don't advance until brake is actually off and mixture is rich
-                {
-                    const brakeOff = !d.parkingBrake;
-                    const mixtureRich = (d.mixture || 0) > 80;
-                    if (brakeOff && mixtureRich && !this._isPhaseHeld('BEFORE_ROLL')) {
-                        this._takeoffSubPhase = 'ROLL';
-                    }
+                // Verify: don't advance until brake is actually off
+                // (Mixture is managed by MSFS auto mixture — don't gate on it)
+                if (!d.parkingBrake && !this._isPhaseHeld('BEFORE_ROLL')) {
+                    this._takeoffSubPhase = 'ROLL';
                 }
                 break;
 
@@ -585,11 +587,12 @@ class RuleEngine {
 
             case 'ROTATE': {
                 this._cmdValue('THROTTLE_SET', tt.rotateThrottle ?? tt.rollThrottle ?? 100, 'Full power');
-                // Progressive rotation: start at -5%, increase by -3%/sec to max.
+                // Progressive rotation: start at -3%, increase by -2%/sec to max.
                 // Server-side held-axes deliver full value (no joystick fighting).
-                const rotMax = tt.rotateElevator ?? -12;
+                // C172 only needs ~8° pitch for Vy climb — keep elevator gentle.
+                const rotMax = tt.rotateElevator ?? -8;
                 const rotElapsed = (Date.now() - this._rotateStartTime) / 1000;
-                const rotElev = Math.max(rotMax, -5 - rotElapsed * 3);
+                const rotElev = Math.max(rotMax, -3 - rotElapsed * 2);
                 this._cmdValue('AXIS_ELEVATOR_SET', rotElev, `Rotate — elevator ${Math.round(rotElev)}`);
                 // Wings-level during rotate — negate bank for correct roll direction
                 const rotAilGain = tt.liftoffAileronGain ?? 2;
@@ -612,7 +615,7 @@ class RuleEngine {
 
             case 'LIFTOFF': {
                 this._cmdValue('THROTTLE_SET', tt.liftoffThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const loElev = tt.liftoffElevator ?? -10;
+                const loElev = tt.liftoffElevator ?? -5;
                 this._cmdValue('AXIS_ELEVATOR_SET', loElev, `Climb — elevator ${loElev}`);
                 const loAilGain = tt.liftoffAileronGain ?? 3;
                 const loAilMax = tt.liftoffAileronMax ?? 30;
@@ -629,7 +632,7 @@ class RuleEngine {
 
             case 'INITIAL_CLIMB': {
                 this._cmdValue('THROTTLE_SET', tt.climbPhaseThrottle ?? tt.rollThrottle ?? 100, 'Full power climb');
-                const icElev = tt.climbElevator ?? -8;
+                const icElev = tt.climbElevator ?? -4;
                 this._cmdValue('AXIS_ELEVATOR_SET', icElev, `Climb — elevator ${icElev}`);
                 const icAilGain = tt.climbAileronGain ?? 3;
                 const icAilMax = tt.climbAileronMax ?? 30;
