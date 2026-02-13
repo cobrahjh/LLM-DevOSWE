@@ -2225,7 +2225,10 @@ class GTN750Pane extends SimGlassBase {
             vnavTgtalt: document.getElementById('vnav-tgtalt'),
             vnavNext: document.getElementById('vnav-next'),
             lat: document.getElementById('lat'),
-            lon: document.getElementById('lon')
+            lon: document.getElementById('lon'),
+            navIls: document.getElementById('nav-ils'),
+            gcGpsDot: document.getElementById('gc-gps-dot'),
+            gcGpsLbl: document.getElementById('gc-gps-lbl')
         };
     }
 

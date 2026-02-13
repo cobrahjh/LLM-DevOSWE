@@ -38,6 +38,13 @@ class GTNDataHandler {
             if (this.elements.sysGpsStatus) {
                 this.elements.sysGpsStatus.textContent = '3D FIX';
             }
+            // Update compact mode GPS status
+            if (this.elements.gcGpsLbl) {
+                this.elements.gcGpsLbl.textContent = '3D';
+            }
+            if (this.elements.gcGpsDot) {
+                this.elements.gcGpsDot.classList.add('connected');
+            }
         };
 
         this.ws.onmessage = (event) => {
@@ -57,6 +64,13 @@ class GTNDataHandler {
             if (this.elements.conn) this.elements.conn.classList.remove('connected');
             if (this.elements.sysGpsStatus) {
                 this.elements.sysGpsStatus.textContent = 'NO GPS';
+            }
+            // Update compact mode GPS status
+            if (this.elements.gcGpsLbl) {
+                this.elements.gcGpsLbl.textContent = 'NO GPS';
+            }
+            if (this.elements.gcGpsDot) {
+                this.elements.gcGpsDot.classList.remove('connected');
             }
             if (!this._destroyed) {
                 this._reconnectTimer = setTimeout(() => this.connect(), this.reconnectDelay);
@@ -108,6 +122,40 @@ class GTNDataHandler {
         }
         if (this.elements.lon && data.longitude !== undefined && this.core) {
             this.elements.lon.textContent = this.core.formatLon(data.longitude);
+        }
+
+        // Update ILS indicator
+        this.updateIlsIndicator(data, nav1);
+    }
+
+    /**
+     * Update ILS/GS runway indicator
+     */
+    updateIlsIndicator(data, nav1) {
+        if (!this.elements.navIls) return;
+
+        // Check if NAV1 has localizer signal (ILS)
+        const hasIls = nav1 && nav1.hasLoc;
+
+        if (hasIls) {
+            // ILS is active - try to show runway info
+            let ilsText = 'ILS/GS';
+
+            // If we have runway info from navaid lookup, include it
+            const navaidIdent = nav1.ident || this.lookupNavaidByFreq(data.nav1Active);
+            if (navaidIdent) {
+                // Extract runway from ident if it contains RW or I- prefix
+                const rwMatch = navaidIdent.match(/(?:RW|I-?)?(\d{1,2}[LRC]?)/i);
+                if (rwMatch) {
+                    ilsText = `ILS/GS RW${rwMatch[1]}`;
+                }
+            }
+
+            this.elements.navIls.textContent = ilsText;
+            this.elements.navIls.style.display = '';
+        } else {
+            // No ILS - hide the indicator
+            this.elements.navIls.style.display = 'none';
         }
     }
 

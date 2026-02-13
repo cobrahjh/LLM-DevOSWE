@@ -3981,6 +3981,11 @@ body {
     width: 4px;
     height: 4px;
     border-radius: 50%;
+    background: #666;
+    box-shadow: 0 0 2px #666;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+.gc-gps-dot.connected {
     background: var(--gtn-green);
     box-shadow: 0 0 4px var(--gtn-green);
 }
