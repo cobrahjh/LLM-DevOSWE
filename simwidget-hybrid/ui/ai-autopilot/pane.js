@@ -2593,7 +2593,10 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             .replace(/^FORGET:\s*.+$/gm, '')
             .replace(/_?RECOMMEND:\s*/g, '')
             .replace(/^#{1,6}\s+/gm, '')           // markdown headers (###, ##, #)
+            .replace(/\*{1,3}/g, '')                // bold/italic markers (**, *, ***)
+            .replace(/__?/g, '')                    // underline/italic markers (_, __)
             .replace(/```[\s\S]*?```/g, '')         // fenced code blocks
+            .replace(/`[^`]+`/g, (m) => m.slice(1,-1)) // inline code → just the text
             .replace(/\{[\s\S]*?\}/g, '')           // any remaining JSON objects
             .replace(/\[[\s\S]*?\]/g, '')           // any remaining JSON arrays
             .replace(/\n{2,}/g, '\n')               // collapse blank lines
