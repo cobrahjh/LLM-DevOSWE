@@ -2599,7 +2599,11 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             .replace(/`[^`]+`/g, (m) => m.slice(1,-1)) // inline code → just the text
             .replace(/\{[\s\S]*?\}/g, '')           // any remaining JSON objects
             .replace(/\[[\s\S]*?\]/g, '')           // any remaining JSON arrays
-            .replace(/\n{2,}/g, '\n')               // collapse blank lines
+            .replace(/\\n/g, ' ')                   // literal \n strings
+            .replace(/\\/g, '')                     // any remaining backslashes
+            .replace(/\n{2,}/g, ' ')                // collapse multiple newlines to space
+            .replace(/\n/g, ' ')                    // newlines to spaces for natural speech
+            .replace(/\s{2,}/g, ' ')                // collapse multiple spaces
             .trim();
     }
 
