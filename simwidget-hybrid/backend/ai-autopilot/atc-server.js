@@ -122,10 +122,15 @@ class ATCServerController extends ATCController {
         if (!this._detectedRunways || this._detectedRunways.length === 0) return null;
         let best = null, bestErr = 360;
         for (const rwy of this._detectedRunways) {
-            // Runway heading from ident: "16R" → 160°, "09" → 090°
-            const rwyNum = parseInt(rwy.ident);
-            if (isNaN(rwyNum)) continue;
-            const rwyHdg = rwyNum * 10;
+            // Use heading field if available, else parse from ident
+            // NavDB idents have "RW" prefix: "RW16C" → 160°, "RW09" → 090°
+            let rwyHdg = rwy.heading;
+            if (rwyHdg == null) {
+                const stripped = rwy.ident.replace(/^RW/, '');
+                const rwyNum = parseInt(stripped);
+                if (isNaN(rwyNum)) continue;
+                rwyHdg = rwyNum * 10;
+            }
             const err = Math.abs(((heading - rwyHdg + 540) % 360) - 180);
             if (err < bestErr) {
                 bestErr = err;
