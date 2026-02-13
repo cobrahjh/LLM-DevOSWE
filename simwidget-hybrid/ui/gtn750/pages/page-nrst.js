@@ -7,6 +7,7 @@ class NearestPage {
     constructor(options = {}) {
         this.core = options.core || new GTNCore();
         this.serverPort = options.serverPort || 8080;
+        this.frequencyTuner = options.frequencyTuner || null;
 
         // Current state
         this.activeType = 'apt'; // apt, vor, ndb, fix
@@ -182,7 +183,16 @@ class NearestPage {
             if (this.activeType === 'apt') {
                 info.textContent = item.type?.substring(0, 3) || '';
             } else if (item.freq) {
-                info.textContent = item.freq;
+                // Create clickable frequency button
+                const freqBtn = document.createElement('button');
+                freqBtn.className = 'nrst-freq-btn';
+                freqBtn.textContent = item.freq;
+                freqBtn.title = 'Load to NAV1 standby';
+                freqBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Don't trigger row selection
+                    this.loadFrequency(item);
+                });
+                info.appendChild(freqBtn);
             }
 
             row.appendChild(id);
@@ -246,6 +256,40 @@ class NearestPage {
             return { lat: item.lat, lon: item.lon, item };
         }
         return null;
+    }
+
+    /**
+     * Load navaid frequency to NAV1 standby
+     * @param {Object} item - Navaid item with freq property
+     */
+    async loadFrequency(item) {
+        if (!this.frequencyTuner || !item.freq) {
+            GTNCore.log('[NRST] No frequency tuner or frequency available');
+            return;
+        }
+
+        // Parse frequency string to number (e.g., "116.80" -> 116.80)
+        const freq = parseFloat(item.freq);
+        if (isNaN(freq)) {
+            GTNCore.log(`[NRST] Invalid frequency: ${item.freq}`);
+            return;
+        }
+
+        // Load to NAV1 standby
+        const success = await this.frequencyTuner.setFrequency('nav1', 'standby', freq);
+
+        if (success) {
+            GTNCore.log(`[NRST] Loaded ${item.id} freq ${freq.toFixed(2)} to NAV1 standby`);
+
+            // Visual feedback - briefly highlight the button
+            const btn = event.target;
+            if (btn) {
+                btn.classList.add('freq-loaded');
+                setTimeout(() => btn.classList.remove('freq-loaded'), 800);
+            }
+        } else {
+            GTNCore.log(`[NRST] Failed to load frequency ${freq.toFixed(2)}`);
+        }
     }
 
     /**

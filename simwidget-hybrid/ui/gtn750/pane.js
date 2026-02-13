@@ -1034,6 +1034,7 @@ class GTN750Pane extends SimGlassBase {
                 if (!this.nearestPage && typeof NearestPage !== 'undefined') {
                     this.nearestPage = new NearestPage({
                         core: this.core, serverPort: this.serverPort,
+                        frequencyTuner: this.frequencyTuner,
                         onItemSelect: (item, type) => {},
                         onDirectTo: (item) => this.flightPlanManager?.directTo(item)
                     });
