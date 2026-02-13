@@ -18,3 +18,5 @@ data/atc-cache/
 
 # AI autopilot runtime state (persisted for auto-recovery)
 backend/ai-autopilot/.rule-engine-state.json
+tempstatus.json
+C:tempstatus.json
