@@ -840,6 +840,76 @@ class GTNFlightPlan {
     }
 
     /**
+     * Insert an airway segment between two waypoints
+     * @param {string} airwayIdent - Airway identifier (e.g., "V4", "J146")
+     * @param {string} entryFix - Entry waypoint identifier
+     * @param {string} exitFix - Exit waypoint identifier
+     * @returns {Promise<boolean>} - True if successful
+     */
+    async insertAirway(airwayIdent, entryFix, exitFix) {
+        if (!airwayIdent || !entryFix || !exitFix) {
+            GTNCore.log('[GTN750] Invalid airway parameters');
+            return false;
+        }
+
+        try {
+            // Fetch airway segment from navdb
+            const response = await fetch(
+                `http://${location.hostname}:${this.serverPort}/api/navdb/airway/${airwayIdent}?entry=${entryFix}&exit=${exitFix}`
+            );
+
+            if (!response.ok) {
+                const error = await response.json();
+                GTNCore.log(`[GTN750] Airway fetch failed: ${error.error}`);
+                return false;
+            }
+
+            const airway = await response.json();
+
+            if (!airway.fixes || airway.fixes.length < 2) {
+                GTNCore.log('[GTN750] No fixes found on airway segment');
+                return false;
+            }
+
+            if (!this.flightPlan) {
+                this.flightPlan = { waypoints: [], source: 'manual' };
+            }
+
+            // Find entry fix in current flight plan
+            const entryIdx = this.flightPlan.waypoints.findIndex(wp => wp.ident === entryFix);
+
+            if (entryIdx === -1) {
+                GTNCore.log(`[GTN750] Entry fix ${entryFix} not found in flight plan`);
+                return false;
+            }
+
+            // Convert airway fixes to waypoints (skip first since it's already in plan)
+            const airwayWaypoints = airway.fixes.slice(1).map(fix => ({
+                ident: fix.ident,
+                lat: fix.lat,
+                lng: fix.lon,
+                type: 'WAYPOINT',
+                airway: airwayIdent,
+                minAlt: fix.min_alt,
+                maxAlt: fix.max_alt
+            }));
+
+            // Insert airway waypoints after entry fix
+            for (let i = 0; i < airwayWaypoints.length; i++) {
+                this.insertWaypoint(airwayWaypoints[i], entryIdx + 1 + i);
+            }
+
+            GTNCore.log(`[GTN750] Inserted airway ${airwayIdent}: ${entryFix}..${exitFix} (${airwayWaypoints.length} fixes)`);
+            this.notifyChanged();
+            return true;
+
+        } catch (e) {
+            GTNCore.log(`[GTN750] Airway insert failed: ${e.message}`);
+            return false;
+        }
+    }
+
+    /**
      * Determine CDI scaling mode based on flight phase
      * @param {number} distanceToDestination - Distance to final waypoint (nm)
      * @returns {Object} { mode: 'ENR'|'TERM'|'APR', fsd: number }

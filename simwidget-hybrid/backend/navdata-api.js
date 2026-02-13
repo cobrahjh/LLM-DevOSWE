@@ -373,9 +373,11 @@ function setupNavdataRoutes(app) {
 
     app.get('/api/navdb/airway/:ident', requireDb, (req, res) => {
         const ident = req.params.ident.toUpperCase();
+        const entryFix = req.query.entry ? req.query.entry.toUpperCase() : null;
+        const exitFix = req.query.exit ? req.query.exit.toUpperCase() : null;
 
         const fixes = db.prepare(`
-            SELECT fix_ident, fix_lat, fix_lon, min_alt, max_alt, route_type
+            SELECT fix_ident, fix_lat, fix_lon, min_alt, max_alt, route_type, seq
             FROM airways
             WHERE ident = ?
             ORDER BY seq
@@ -385,10 +387,34 @@ function setupNavdataRoutes(app) {
             return res.status(404).json({ error: 'Airway not found', ident });
         }
 
+        let segmentFixes = fixes;
+
+        // Extract segment if entry/exit specified
+        if (entryFix && exitFix) {
+            const entryIdx = fixes.findIndex(f => f.fix_ident === entryFix);
+            const exitIdx = fixes.findIndex(f => f.fix_ident === exitFix);
+
+            if (entryIdx === -1) {
+                return res.status(404).json({ error: 'Entry fix not found on airway', fix: entryFix });
+            }
+            if (exitIdx === -1) {
+                return res.status(404).json({ error: 'Exit fix not found on airway', fix: exitFix });
+            }
+
+            // Airway can be traversed in either direction
+            if (entryIdx < exitIdx) {
+                segmentFixes = fixes.slice(entryIdx, exitIdx + 1);
+            } else {
+                segmentFixes = fixes.slice(exitIdx, entryIdx + 1).reverse();
+            }
+        }
+
         res.json({
             ident,
             route_type: fixes[0].route_type,
-            fixes: fixes.map(f => ({
+            entry: entryFix,
+            exit: exitFix,
+            fixes: segmentFixes.map(f => ({
                 ident: f.fix_ident,
                 lat: f.fix_lat,
                 lon: f.fix_lon,
