@@ -1164,6 +1164,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 case 'nav-state':
                     this._onNavStateReceived(msg.data);
                     break;
+                case 'waypoint-sequence':
+                    this._onWaypointSequence(msg.data);
+                    break;
                 case 'taws-alert':
                     this._onTawsAlert(msg.data);
                     break;
@@ -1316,6 +1319,20 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this._dbg('cmd', `TAWS <span class="${alert.level === 'WARNING' ? 'err' : 'val'}">${alert.level}</span>: ${this._esc(alert.message || 'TERRAIN')}`);
         } else {
             this.ruleEngine.setExternalTerrainAlert(null);
+        }
+    }
+
+    _onWaypointSequence(data) {
+        if (!data || data.activeIndex == null) return;
+
+        // Sync the AI Autopilot's flight plan waypoint index with GTN750
+        if (this.ruleEngine.hasFlightPlan()) {
+            this.ruleEngine.setActiveWaypointIndex(data.activeIndex);
+
+            // Log waypoint sequence
+            const passedIdent = data.passedIdent || '???';
+            const activeIdent = data.activeIdent || '???';
+            this._dbg('cmd', `<span class="val">✓ ${passedIdent}</span> → <span class="val">${activeIdent}</span> <span class="dim">(waypoint ${data.activeIndex + 1})</span>`);
         }
     }
 

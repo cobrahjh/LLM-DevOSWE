@@ -307,8 +307,20 @@ class RuleEngine {
                 break;
 
             case 'CLIMB':
-                // Release manual controls so AP can take over
+                // On phase entry: engage AP FIRST, then release manual controls.
+                // If controls are released before AP engages, the plane banks freely.
                 if (phaseChanged) {
+                    // Set heading bug to current heading before engaging AP
+                    const climbHdg = Math.round(d.heading || this._runwayHeading || 0);
+                    this._cmdValue('HEADING_BUG_SET', climbHdg, 'HDG ' + climbHdg + '\u00B0');
+                    // Engage AP + modes
+                    delete this._lastCommands['AP_MASTER'];
+                    this._cmd('AP_MASTER', true, 'Engage AP for climb');
+                    this._cmd('AP_HDG_HOLD', true, 'HDG hold for climb');
+                    this._cmd('AP_VS_HOLD', true, 'VS hold for climb');
+                    const climbTT2 = this._getTakeoffTuning();
+                    this._cmdValue('AP_VS_VAR_SET_ENGLISH', climbTT2.departureVS ?? 500, 'VS +500 for climb');
+                    // Release manual controls (AP should now be managing)
                     this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release elevator for AP');
                     this._cmdValue('AXIS_RUDDER_SET', 0, 'Release rudder for AP');
                     this._cmdValue('STEERING_SET', 0, 'Release nosewheel for AP');
@@ -325,7 +337,19 @@ class RuleEngine {
                     this._cmdValue('THROTTLE_SET', climbTT.climbThrottle ?? 100, 'Climb power');
                 }
                 if (!apState.master) {
-                    // Clear dedup — AP_MASTER is a toggle, must re-send after dropout
+                    // AP not active — fly manually with gentle proportional control
+                    // until AP engages. This prevents uncontrolled bank/pitch excursions.
+                    const climbBank = d.bankAngle || 0;
+                    const climbPitch = d.pitch || 0;
+                    // Wings-level: proportional aileron (0.6 gain, max ±25)
+                    const bankFix = Math.max(-25, Math.min(25, -climbBank * 0.6));
+                    this._cmdValue('AXIS_AILERONS_SET', Math.round(bankFix), `Wings level (bank ${Math.round(climbBank)}°)`);
+                    // Pitch hold ~5° nose-up: proportional elevator
+                    const pitchTarget = 5;
+                    const pitchErr = pitchTarget - climbPitch;
+                    const pitchFix = Math.max(-15, Math.min(15, pitchErr * 1.0));
+                    this._cmdValue('AXIS_ELEVATOR_SET', Math.round(-pitchFix), `Pitch hold (${Math.round(climbPitch)}°)`);
+                    // Keep trying to engage AP
                     delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
                 }
@@ -921,9 +945,11 @@ class RuleEngine {
                     this._cmdValue('AP_VS_VAR_SET_ENGLISH', 0, 'Level off — bank recovery');
                 }
             } else {
-                // AP is OFF — use direct aileron to level wings, then re-engage AP
-                const bankCorr = -bank * 2;  // oppose the bank
-                const clampedCorr = Math.max(-80, Math.min(80, bankCorr));
+                // AP is OFF — use proportional aileron to level wings, then re-engage AP.
+                // Gain of 0.8 with ±30 clamp prevents overshoot and bang-bang oscillation.
+                // (Previous gain of 2x with ±80 caused wild aileron swings.)
+                const bankCorr = -bank * 0.8;  // gentle proportional opposition
+                const clampedCorr = Math.max(-30, Math.min(30, bankCorr));
                 this._cmdValue('AXIS_AILERONS_SET', clampedCorr, `BANK ${Math.round(bank)}° — aileron recovery`);
                 // Try to re-engage AP
                 delete this._lastCommands['AP_MASTER'];
@@ -1869,6 +1895,18 @@ class RuleEngine {
         if (!this._flightPlan || !this._flightPlan.waypoints) return null;
         if (this._activeWaypointIndex >= this._flightPlan.waypoints.length) return null;
         return this._flightPlan.waypoints[this._activeWaypointIndex];
+    }
+
+    /** Check if flight plan is loaded */
+    hasFlightPlan() {
+        return !!(this._flightPlan && this._flightPlan.waypoints && this._flightPlan.waypoints.length > 0);
+    }
+
+    /** Set active waypoint index (for GTN750 sync) */
+    setActiveWaypointIndex(index) {
+        if (!this._flightPlan || !this._flightPlan.waypoints) return;
+        if (index < 0 || index >= this._flightPlan.waypoints.length) return;
+        this._activeWaypointIndex = index;
     }
 
     /** Sequence to next waypoint */
