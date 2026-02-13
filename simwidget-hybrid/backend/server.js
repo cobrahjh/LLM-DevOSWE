@@ -4287,53 +4287,146 @@ async function requestFacilityGraph(icao) {
     if (!icao) return null;
     const key = icao.toUpperCase();
 
-    // Check JSON cache
-    const cachePath = path.join(ATC_CACHE_DIR, `${key}.json`);
+    // Build a dynamic graph using aircraft position + real NavDB runway data.
+    // Not cached because it depends on aircraft's current position.
+    const startLat = flightData?.latitude || 0;
+    const startLon = flightData?.longitude || 0;
+
+    // Query NavDB for real runway data
+    let navdbRunways = [];
     try {
-        if (fs.existsSync(cachePath)) {
-            const stat = fs.statSync(cachePath);
-            if (Date.now() - stat.mtimeMs < ATC_CACHE_TTL) {
-                const cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
-                cached.cached = true;
-                return cached;
-            }
+        const navdata = require('./navdata-api');
+        if (navdata.queryAirport) {
+            const airport = navdata.queryAirport(key);
+            if (airport?.runways) navdbRunways = airport.runways;
         }
-    } catch (e) {
-        console.warn(`[ATC] Cache read error for ${key}:`, e.message);
+    } catch (e) { /* NavDB not available */ }
+
+    // Fallback: try HTTP API if direct query failed
+    if (navdbRunways.length === 0) {
+        try {
+            const http = require('http');
+            const data = await new Promise((resolve, reject) => {
+                const req = http.get(`http://localhost:8080/api/navdb/airport/${key}`, (res) => {
+                    let body = '';
+                    res.on('data', chunk => body += chunk);
+                    res.on('end', () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+                });
+                req.on('error', reject);
+                req.setTimeout(2000, () => { req.destroy(); reject(new Error('timeout')); });
+            });
+            navdbRunways = data?.runways || [];
+        } catch (e) { /* HTTP fallback failed */ }
     }
 
-    // SimConnect not available — return mock graph
-    if (!simConnectConnection || !isSimConnected) {
-        return getMockFacilityGraph(key);
+    if (navdbRunways.length === 0 || !startLat) {
+        console.log(`[ATC] No NavDB data for ${key} — using static mock graph`);
+        return getStaticMockGraph(key);
     }
 
-    // Query SimConnect facility data
-    // Note: node-simconnect facility data API varies by version.
-    // We build a synthetic graph from runway + parking data that we already know.
-    // Real facility data (taxi paths) requires SDK facility data request which
-    // most node-simconnect builds don't expose. Instead, we use navdata + position.
-    const graph = getMockFacilityGraph(key);
-    graph.source = 'synthetic';
-
-    // Cache it
-    try {
-        graph.timestamp = Date.now();
-        fs.writeFileSync(cachePath, JSON.stringify(graph, null, 2));
-        console.log(`[ATC] Cached facility graph for ${key} (${graph.nodes.length} nodes)`);
-    } catch (e) {
-        console.warn(`[ATC] Cache write error for ${key}:`, e.message);
-    }
-
-    return graph;
+    return buildDynamicGraph(key, startLat, startLon, navdbRunways);
 }
 
 /**
- * Generate a mock/synthetic taxi graph for testing.
- * In production, this is replaced by actual SimConnect facility data.
+ * Build a dynamic taxi graph from aircraft position + real NavDB runway data.
+ * Creates intermediate waypoints between the aircraft and each runway.
  */
-function getMockFacilityGraph(icao) {
-    // Generate a simple grid-like taxiway graph
-    // This serves as both a test fixture and a fallback when SimConnect can't provide data
+function buildDynamicGraph(icao, startLat, startLon, navdbRunways) {
+    const nodes = [];
+    const edges = [];
+    const parking = [];
+    const runways = [];
+
+    // Node 0: Aircraft's current position (parking/start)
+    nodes.push({ index: 0, lat: startLat, lon: startLon, name: 'AIRCRAFT', type: 'PARKING' });
+    parking.push({ name: 'AIRCRAFT', lat: startLat, lon: startLon, nodeIndex: 0 });
+
+    let nodeIdx = 1;
+    const FT_PER_DEG = 364567; // approximate ft per degree latitude
+
+    for (const rwy of navdbRunways) {
+        const rwyLat = rwy.lat;
+        const rwyLon = rwy.lon;
+        const rwyHdg = rwy.heading || 0;
+        const rwyIdent = (rwy.ident || '').replace(/^RW/, '');
+
+        // Hold-short point: ~300ft perpendicular to the runway (left side of heading)
+        const perpRad = (rwyHdg - 90) * Math.PI / 180;
+        const holdOffsetFt = 300;
+        const holdLat = rwyLat + (holdOffsetFt / FT_PER_DEG) * Math.cos(perpRad);
+        const holdLon = rwyLon + (holdOffsetFt / (FT_PER_DEG * Math.cos(rwyLat * Math.PI / 180))) * Math.sin(perpRad);
+
+        // Generate 4 intermediate waypoints from aircraft to hold-short
+        // Slight lateral offset to simulate taxiway routing (not a perfectly straight line)
+        const wpIndices = [];
+        const steps = 4;
+        for (let i = 1; i <= steps; i++) {
+            const t = i / (steps + 1);
+            let wpLat = startLat + (holdLat - startLat) * t;
+            let wpLon = startLon + (holdLon - startLon) * t;
+            const idx = nodeIdx++;
+            const taxiLetter = String.fromCharCode(64 + i); // A, B, C, D
+            nodes.push({ index: idx, lat: wpLat, lon: wpLon, name: taxiLetter, type: 'TAXIWAY' });
+            wpIndices.push(idx);
+        }
+
+        // Hold-short node
+        const holdIdx = nodeIdx++;
+        nodes.push({ index: holdIdx, lat: holdLat, lon: holdLon, name: `RWY_${rwyIdent}`, type: 'RUNWAY_HOLD' });
+
+        // Runway threshold node
+        const thrIdx = nodeIdx++;
+        nodes.push({ index: thrIdx, lat: rwyLat, lon: rwyLon, name: `${rwyIdent}_THR`, type: 'RUNWAY_THRESHOLD' });
+
+        // Build edges: aircraft → wp1 → wp2 → wp3 → wp4 → hold → threshold
+        const chain = [0, ...wpIndices, holdIdx, thrIdx];
+        const taxiNames = ['Alpha', 'Alpha', 'Bravo', 'Bravo', 'Charlie', null];
+        for (let i = 0; i < chain.length - 1; i++) {
+            const from = nodes[chain[i]];
+            const to = nodes[chain[i + 1]];
+            const dist = haversineFtLocal(from.lat, from.lon, to.lat, to.lon);
+            edges.push({
+                from: chain[i],
+                to: chain[i + 1],
+                taxiway: taxiNames[i] || null,
+                distance_ft: Math.round(dist)
+            });
+        }
+
+        runways.push({
+            ident: rwyIdent,
+            lat: rwyLat,
+            lon: rwyLon,
+            heading: rwyHdg,
+            nodeIndex: holdIdx,
+            thresholdIndex: thrIdx
+        });
+    }
+
+    console.log(`[ATC] Built dynamic graph for ${icao}: ${nodes.length} nodes, ${edges.length} edges, ${runways.length} runways (aircraft at ${startLat.toFixed(4)}, ${startLon.toFixed(4)})`);
+    return {
+        icao,
+        nodes, edges, parking, runways,
+        source: 'navdb-dynamic',
+        cached: false,
+        timestamp: Date.now()
+    };
+}
+
+/** Haversine distance in feet (local copy for graph builder) */
+function haversineFtLocal(lat1, lon1, lat2, lon2) {
+    const R = 20902231;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Static mock graph — only used when NavDB is unavailable and no aircraft position.
+ */
+function getStaticMockGraph(icao) {
     const nodes = [
         { index: 0, lat: 47.4490, lon: -122.3088, name: 'GATE_A1', type: 'PARKING' },
         { index: 1, lat: 47.4492, lon: -122.3080, name: 'A',       type: 'TAXIWAY' },
@@ -4349,12 +4442,11 @@ function getMockFacilityGraph(icao) {
         { from: 3, to: 4, taxiway: 'Charlie', distance_ft: 300 },
         { from: 4, to: 5, taxiway: null,       distance_ft: 150 }
     ];
-    const parking = [{ name: 'GATE_A1', lat: 47.4490, lon: -122.3088, nodeIndex: 0 }];
-    const runways = [{ ident: '16R', lat: 47.4530, lon: -122.3045, heading: 160, nodeIndex: 4, thresholdIndex: 5 }];
-
     return {
         icao: icao || 'KSEA',
-        nodes, edges, parking, runways,
+        nodes, edges,
+        parking: [{ name: 'GATE_A1', lat: 47.4490, lon: -122.3088, nodeIndex: 0 }],
+        runways: [{ ident: '16R', lat: 47.4530, lon: -122.3045, heading: 160, nodeIndex: 4, thresholdIndex: 5 }],
         source: 'mock',
         cached: false,
         timestamp: Date.now()
