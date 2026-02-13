@@ -361,6 +361,47 @@
                     </div>
                 </div>
 
+                <!-- Save Flight Plan Modal -->
+                <div class="dto-modal" id="save-fpl-modal" style="display: none;">
+                    <div class="dto-header" style="background: var(--gtn-green);">SAVE FLIGHT PLAN</div>
+                    <div class="dto-content">
+                        <div class="awy-field">
+                            <label class="awy-label">Filename:</label>
+                            <input type="text" id="save-fpl-filename" class="dto-input" placeholder="flight-plan" maxlength="50" autocomplete="off">
+                        </div>
+                        <div class="awy-field">
+                            <label class="awy-label">Format:</label>
+                            <select id="save-fpl-format" class="dto-select">
+                                <option value="fpl">Garmin FPL (XML)</option>
+                                <option value="gpx">GPX (GPS Exchange)</option>
+                                <option value="json">JSON (Full Data)</option>
+                                <option value="txt">Plain Text</option>
+                            </select>
+                        </div>
+                        <div class="dto-info" id="save-fpl-info"></div>
+                        <div class="dto-buttons">
+                            <button class="dto-btn dto-activate" id="save-fpl-btn">SAVE</button>
+                            <button class="dto-btn dto-cancel" id="save-fpl-cancel">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Load Flight Plan Modal -->
+                <div class="dto-modal" id="load-fpl-modal" style="display: none;">
+                    <div class="dto-header" style="background: var(--gtn-green);">LOAD FLIGHT PLAN</div>
+                    <div class="dto-content">
+                        <div class="awy-field">
+                            <label class="awy-label">Select File:</label>
+                            <input type="file" id="load-fpl-file" class="dto-file-input" accept=".fpl,.gpx,.json" />
+                        </div>
+                        <div class="dto-info" id="load-fpl-info">Select a .fpl, .gpx, or .json file</div>
+                        <div class="dto-buttons">
+                            <button class="dto-btn dto-activate" id="load-fpl-btn">LOAD</button>
+                            <button class="dto-btn dto-cancel" id="load-fpl-cancel">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Traffic Info Panel -->
                 <div class="traffic-info-panel" id="traffic-info" style="display: none;">
                     <div class="traffic-info-header">
@@ -678,6 +719,77 @@
                         <span class="timer-display" id="timer-display">00:00:00</span>
                         <button class="timer-btn" id="timer-toggle">START</button>
                         <button class="timer-btn" id="timer-reset">RESET</button>
+                    </div>
+                </div>
+
+                <!-- LOGBOOK Section -->
+                <div class="gtn-aux-section" id="aux-logbook" style="display:none;">
+                    <div class="aux-title">FLIGHT LOGBOOK</div>
+
+                    <!-- Current Flight Panel -->
+                    <div class="logbook-current">
+                        <div class="logbook-current-header">Current Flight</div>
+                        <div class="logbook-current-info">
+                            <span class="logbook-phase" id="logbook-phase">Shutdown</span>
+                            <span id="logbook-current-aircraft">No aircraft</span>
+                            <span id="logbook-current-route">---- → ----</span>
+                        </div>
+                        <div class="logbook-timers">
+                            <div class="logbook-timer">
+                                <span class="logbook-timer-label">Hobbs:</span>
+                                <span class="logbook-timer-value" id="logbook-hobbs">0:00:00</span>
+                            </div>
+                            <div class="logbook-timer">
+                                <span class="logbook-timer-label">Flight:</span>
+                                <span class="logbook-timer-value" id="logbook-flight">0:00:00</span>
+                            </div>
+                            <div class="logbook-timer">
+                                <span class="logbook-timer-label">Approach:</span>
+                                <span class="logbook-timer-value" id="logbook-approach">0:00:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Panel -->
+                    <div class="logbook-stats">
+                        <div class="logbook-stat">
+                            <span class="logbook-stat-label">Total Flight Time:</span>
+                            <span class="logbook-stat-value" id="logbook-total-flight">0:00:00</span>
+                        </div>
+                        <div class="logbook-stat">
+                            <span class="logbook-stat-label">Total Hobbs Time:</span>
+                            <span class="logbook-stat-value" id="logbook-total-hobbs">0:00:00</span>
+                        </div>
+                        <div class="logbook-stat">
+                            <span class="logbook-stat-label">Total Flights:</span>
+                            <span class="logbook-stat-value" id="logbook-total-flights">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Flight History Table -->
+                    <div class="logbook-history">
+                        <div class="logbook-history-header">Flight History</div>
+                        <table class="logbook-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Aircraft</th>
+                                    <th>Flight</th>
+                                    <th>Hobbs</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logbook-history-table">
+                                <tr><td colspan="6" style="text-align:center;color:#666;">No flight history</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Export/Clear Buttons -->
+                    <div class="logbook-actions">
+                        <button class="logbook-btn" id="logbook-export">EXPORT CSV</button>
+                        <button class="logbook-btn logbook-btn-danger" id="logbook-clear">CLEAR ALL</button>
                     </div>
                 </div>
             </div>

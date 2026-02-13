@@ -1823,6 +1823,350 @@ class GTNFlightPlan {
         };
     }
 
+    // ===== FLIGHT PLAN SAVE/LOAD =====
+
+    /**
+     * Save current flight plan to file
+     * @param {string} filename - Output filename (without extension)
+     * @param {string} format - File format: 'fpl', 'gpx', 'json', 'txt'
+     */
+    saveFlightPlan(filename = 'flight-plan', format = 'fpl') {
+        if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length === 0) {
+            GTNCore.log('[GTN750] No flight plan to save');
+            return false;
+        }
+
+        let content, mimeType, extension;
+
+        switch (format) {
+            case 'fpl':
+                content = this.serializeToFPL();
+                mimeType = 'application/xml';
+                extension = 'fpl';
+                break;
+            case 'gpx':
+                content = this.serializeToGPX();
+                mimeType = 'application/gpx+xml';
+                extension = 'gpx';
+                break;
+            case 'json':
+                content = JSON.stringify(this.flightPlan, null, 2);
+                mimeType = 'application/json';
+                extension = 'json';
+                break;
+            case 'txt':
+                content = this.serializeToText();
+                mimeType = 'text/plain';
+                extension = 'txt';
+                break;
+            default:
+                GTNCore.log(`[GTN750] Unknown format: ${format}`);
+                return false;
+        }
+
+        // Create download link
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.${extension}`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        GTNCore.log(`[GTN750] Flight plan saved: ${filename}.${extension}`);
+        return true;
+    }
+
+    /**
+     * Serialize flight plan to Garmin FPL format (XML)
+     */
+    serializeToFPL() {
+        const wp = this.flightPlan.waypoints;
+        const origin = wp[0];
+        const dest = wp[wp.length - 1];
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<flight-plan xmlns="http://www8.garmin.com/xmlschemas/FlightPlan/v1">\n';
+        xml += '  <created>SimGlass GTN750</created>\n';
+        xml += `  <waypoint-table>\n`;
+
+        wp.forEach((w, i) => {
+            xml += `    <waypoint>\n`;
+            xml += `      <identifier>${this.escapeXml(w.ident || `WPT${i + 1}`)}</identifier>\n`;
+            xml += `      <type>${w.type || 'USER WAYPOINT'}</type>\n`;
+            xml += `      <country-code>${w.country || '__'}</country-code>\n`;
+            xml += `      <lat>${w.lat.toFixed(6)}</lat>\n`;
+            xml += `      <lon>${(w.lng || w.lon).toFixed(6)}</lon>\n`;
+            if (w.altitude) xml += `      <comment>ALT ${w.altitude}ft ${w.altitudeConstraint || ''}</comment>\n`;
+            xml += `    </waypoint>\n`;
+        });
+
+        xml += `  </waypoint-table>\n`;
+        xml += `  <route>\n`;
+        xml += `    <route-name>${origin.ident}-${dest.ident}</route-name>\n`;
+        xml += `    <flight-plan-index>1</flight-plan-index>\n`;
+
+        wp.forEach((w, i) => {
+            xml += `    <route-point>\n`;
+            xml += `      <waypoint-identifier>${this.escapeXml(w.ident || `WPT${i + 1}`)}</waypoint-identifier>\n`;
+            xml += `      <waypoint-type>${w.type || 'USER WAYPOINT'}</waypoint-type>\n`;
+            xml += `      <waypoint-country-code>${w.country || '__'}</waypoint-country-code>\n`;
+            if (w.airway) xml += `      <comment>via ${w.airway}</comment>\n`;
+            xml += `    </route-point>\n`;
+        });
+
+        xml += `  </route>\n`;
+        xml += '</flight-plan>\n';
+
+        return xml;
+    }
+
+    /**
+     * Serialize flight plan to GPX format
+     */
+    serializeToGPX() {
+        const wp = this.flightPlan.waypoints;
+
+        let gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        gpx += '<gpx version="1.1" creator="SimGlass GTN750"\n';
+        gpx += '     xmlns="http://www.topografix.com/GPX/1/1">\n';
+        gpx += '  <metadata>\n';
+        gpx += `    <name>${wp[0].ident}-${wp[wp.length - 1].ident}</name>\n`;
+        gpx += '  </metadata>\n';
+
+        // Waypoints
+        wp.forEach((w, i) => {
+            gpx += `  <wpt lat="${w.lat.toFixed(6)}" lon="${(w.lng || w.lon).toFixed(6)}">\n`;
+            gpx += `    <name>${this.escapeXml(w.ident || `WPT${i + 1}`)}</name>\n`;
+            if (w.altitude) gpx += `    <ele>${w.altitude * 0.3048}</ele>\n`; // Convert ft to meters
+            if (w.airway) gpx += `    <desc>via ${this.escapeXml(w.airway)}</desc>\n`;
+            gpx += `  </wpt>\n`;
+        });
+
+        // Route
+        gpx += '  <rte>\n';
+        gpx += `    <name>${wp[0].ident}-${wp[wp.length - 1].ident}</name>\n`;
+        wp.forEach((w, i) => {
+            gpx += `    <rtept lat="${w.lat.toFixed(6)}" lon="${(w.lng || w.lon).toFixed(6)}">\n`;
+            gpx += `      <name>${this.escapeXml(w.ident || `WPT${i + 1}`)}</name>\n`;
+            gpx += `    </rtept>\n`;
+        });
+        gpx += '  </rte>\n';
+        gpx += '</gpx>\n';
+
+        return gpx;
+    }
+
+    /**
+     * Serialize flight plan to plain text
+     */
+    serializeToText() {
+        const wp = this.flightPlan.waypoints;
+        let txt = `FLIGHT PLAN: ${wp[0].ident} → ${wp[wp.length - 1].ident}\n`;
+        txt += `Generated: ${new Date().toISOString()}\n`;
+        txt += `Waypoints: ${wp.length}\n\n`;
+
+        txt += 'SEQ  IDENT        TYPE          LAT/LON              ALT        AIRWAY\n';
+        txt += '─'.repeat(80) + '\n';
+
+        wp.forEach((w, i) => {
+            const seq = String(i + 1).padStart(3, ' ');
+            const ident = (w.ident || `WPT${i + 1}`).padEnd(12, ' ');
+            const type = (w.type || '').padEnd(13, ' ');
+            const latLon = `${w.lat.toFixed(4)}, ${(w.lng || w.lon).toFixed(4)}`.padEnd(20, ' ');
+            const alt = w.altitude ? `${Math.round(w.altitude)}ft ${w.altitudeConstraint || ''}`.padEnd(10, ' ') : ''.padEnd(10, ' ');
+            const airway = w.airway || '';
+
+            txt += `${seq}  ${ident}  ${type}  ${latLon}  ${alt}  ${airway}\n`;
+        });
+
+        return txt;
+    }
+
+    /**
+     * Load flight plan from file
+     * @param {File} file - File object from input
+     */
+    async loadFlightPlan(file) {
+        try {
+            const content = await file.text();
+            const extension = file.name.split('.').pop().toLowerCase();
+
+            let loadedPlan = null;
+
+            switch (extension) {
+                case 'fpl':
+                    loadedPlan = this.parseFromFPL(content);
+                    break;
+                case 'gpx':
+                    loadedPlan = this.parseFromGPX(content);
+                    break;
+                case 'json':
+                    loadedPlan = JSON.parse(content);
+                    break;
+                default:
+                    GTNCore.log(`[GTN750] Unsupported file format: ${extension}`);
+                    return false;
+            }
+
+            if (!loadedPlan || !loadedPlan.waypoints || loadedPlan.waypoints.length === 0) {
+                GTNCore.log('[GTN750] Invalid flight plan data');
+                return false;
+            }
+
+            // Set as current flight plan
+            this.flightPlan = loadedPlan;
+            this.flightPlan.source = 'file';
+            this.activeWaypointIndex = 0;
+            this.activeWaypoint = this.flightPlan.waypoints[0];
+
+            this.notifyChanged();
+            GTNCore.log(`[GTN750] Flight plan loaded: ${file.name} (${loadedPlan.waypoints.length} waypoints)`);
+
+            return true;
+
+        } catch (e) {
+            GTNCore.log(`[GTN750] Failed to load flight plan: ${e.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Parse Garmin FPL format
+     */
+    parseFromFPL(xml) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xml, 'text/xml');
+
+        const waypoints = [];
+        const routePoints = doc.querySelectorAll('route-point');
+
+        routePoints.forEach(rp => {
+            const ident = rp.querySelector('waypoint-identifier')?.textContent;
+            const type = rp.querySelector('waypoint-type')?.textContent;
+            const comment = rp.querySelector('comment')?.textContent;
+
+            // Find matching waypoint in waypoint-table
+            const wptTable = doc.querySelectorAll('waypoint-table > waypoint');
+            let lat, lon, alt;
+
+            for (const wpt of wptTable) {
+                if (wpt.querySelector('identifier')?.textContent === ident) {
+                    lat = parseFloat(wpt.querySelector('lat')?.textContent);
+                    lon = parseFloat(wpt.querySelector('lon')?.textContent);
+                    const wptComment = wpt.querySelector('comment')?.textContent;
+                    if (wptComment && wptComment.includes('ALT')) {
+                        const match = wptComment.match(/ALT\s+(\d+)/);
+                        if (match) alt = parseInt(match[1]);
+                    }
+                    break;
+                }
+            }
+
+            if (lat && lon) {
+                const waypoint = { ident, lat, lon: lon, lng: lon, type };
+                if (alt) waypoint.altitude = alt;
+                if (comment && comment.includes('via')) {
+                    waypoint.airway = comment.replace('via ', '');
+                }
+                waypoints.push(waypoint);
+            }
+        });
+
+        return { waypoints, source: 'file' };
+    }
+
+    /**
+     * Parse GPX format
+     */
+    parseFromGPX(xml) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xml, 'text/xml');
+
+        const waypoints = [];
+        const routePoints = doc.querySelectorAll('rte > rtept');
+
+        if (routePoints.length > 0) {
+            // Use route if available
+            routePoints.forEach(rp => {
+                const lat = parseFloat(rp.getAttribute('lat'));
+                const lon = parseFloat(rp.getAttribute('lon'));
+                const ident = rp.querySelector('name')?.textContent;
+
+                if (lat && lon) {
+                    waypoints.push({ ident, lat, lon: lon, lng: lon, type: 'WAYPOINT' });
+                }
+            });
+        } else {
+            // Fallback to waypoints
+            const wpts = doc.querySelectorAll('wpt');
+            wpts.forEach(wpt => {
+                const lat = parseFloat(wpt.getAttribute('lat'));
+                const lon = parseFloat(wpt.getAttribute('lon'));
+                const ident = wpt.querySelector('name')?.textContent;
+                const ele = wpt.querySelector('ele')?.textContent;
+
+                if (lat && lon) {
+                    const waypoint = { ident, lat, lon: lon, lng: lon, type: 'WAYPOINT' };
+                    if (ele) waypoint.altitude = Math.round(parseFloat(ele) * 3.28084); // meters to feet
+                    waypoints.push(waypoint);
+                }
+            });
+        }
+
+        return { waypoints, source: 'file' };
+    }
+
+    /**
+     * Auto-save flight plan to localStorage
+     */
+    autoSaveFlightPlan() {
+        if (!this.flightPlan || !this.flightPlan.waypoints) return;
+
+        try {
+            localStorage.setItem('gtn750-flight-plan', JSON.stringify(this.flightPlan));
+            localStorage.setItem('gtn750-active-waypoint-index', this.activeWaypointIndex);
+        } catch (e) {
+            GTNCore.log('[GTN750] Auto-save failed:', e.message);
+        }
+    }
+
+    /**
+     * Restore flight plan from localStorage
+     */
+    restoreFlightPlan() {
+        try {
+            const saved = localStorage.getItem('gtn750-flight-plan');
+            const activeIdx = localStorage.getItem('gtn750-active-waypoint-index');
+
+            if (saved) {
+                this.flightPlan = JSON.parse(saved);
+                this.activeWaypointIndex = activeIdx ? parseInt(activeIdx) : 0;
+                this.activeWaypoint = this.flightPlan.waypoints[this.activeWaypointIndex];
+
+                GTNCore.log('[GTN750] Flight plan restored from auto-save');
+                return true;
+            }
+        } catch (e) {
+            GTNCore.log('[GTN750] Restore failed:', e.message);
+        }
+
+        return false;
+    }
+
+    /**
+     * Escape XML special characters
+     */
+    escapeXml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+    }
+
     destroy() {
         if (this._fetchTimer) clearTimeout(this._fetchTimer);
         if (this.audioContext) {

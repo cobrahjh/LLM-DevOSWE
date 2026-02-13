@@ -1028,6 +1028,55 @@ body {
     border-color: var(--gtn-cyan);
 }
 
+.dto-select {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-family: var(--gtn-mono);
+    background: var(--gtn-bg-light);
+    border: 2px solid var(--gtn-border);
+    color: var(--gtn-green);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dto-select:focus {
+    outline: none;
+    border-color: var(--gtn-cyan);
+}
+
+.dto-file-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+    font-family: var(--gtn-mono);
+    background: var(--gtn-bg-light);
+    border: 2px solid var(--gtn-border);
+    color: var(--gtn-text);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dto-file-input:focus {
+    outline: none;
+    border-color: var(--gtn-cyan);
+}
+
+.dto-file-input::file-selector-button {
+    padding: 8px 12px;
+    background: var(--gtn-green);
+    color: #000;
+    border: none;
+    border-radius: 3px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.dto-file-input::file-selector-button:hover {
+    background: var(--gtn-cyan);
+}
+
 .dto-info {
     margin-top: 12px;
     padding: 10px;
@@ -4091,4 +4140,169 @@ body {
 
 .form-actions .user-wpt-btn {
     flex: 1;
+}
+
+/* ===== FLIGHT LOGBOOK STYLES ===== */
+.logbook-current {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.logbook-current-header {
+    color: #00ff00;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.logbook-current-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 11px;
+}
+
+.logbook-phase {
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.logbook-timers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.logbook-timer {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.logbook-timer-label {
+    color: #888;
+    font-size: 10px;
+    margin-bottom: 4px;
+}
+
+.logbook-timer-value {
+    color: #00ff00;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'B612 Mono', monospace;
+}
+
+.logbook-stats {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.logbook-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logbook-stat:last-child {
+    border-bottom: none;
+}
+
+.logbook-stat-label {
+    color: #aaa;
+    font-size: 11px;
+}
+
+.logbook-stat-value {
+    color: #00ff00;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.logbook-history {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.logbook-history-header {
+    color: #00ff00;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.logbook-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.logbook-table th {
+    color: #888;
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: normal;
+}
+
+.logbook-table td {
+    color: #ccc;
+    padding: 8px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logbook-row:hover {
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.logbook-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.logbook-btn {
+    padding: 8px 16px;
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff00;
+    border: 1px solid rgba(0, 255, 0, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'B612 Mono', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.logbook-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+    border-color: rgba(0, 255, 0, 0.6);
+}
+
+.logbook-btn-danger {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff4444;
+    border-color: rgba(255, 0, 0, 0.4);
+}
+
+.logbook-btn-danger:hover {
+    background: rgba(255, 0, 0, 0.3);
+    border-color: rgba(255, 0, 0, 0.6);
 }

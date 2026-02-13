@@ -1037,6 +1037,10 @@ class GTN750Pane extends SimGlassBase {
             case 'aux':
                 if (!this.auxPage && typeof AuxPage !== 'undefined') {
                     this.auxPage = new AuxPage({ core: this.core });
+                    // Connect flight logger to AUX page
+                    if (this.flightLogger) {
+                        this.auxPage.setFlightLogger(this.flightLogger);
+                    }
                 }
                 break;
             case 'charts':
@@ -1210,6 +1214,21 @@ class GTN750Pane extends SimGlassBase {
         // Lazy load flight plan module when FPL page accessed
         if (pageId === 'fpl' && !this.flightPlanManager) {
             await this.loadFlightPlan();
+
+            // Restore auto-saved flight plan
+            if (this.flightPlanManager) {
+                this.flightPlanManager.restoreFlightPlan();
+
+                // Start auto-save timer (every 30s)
+                if (!this._autoSaveTimer) {
+                    this._autoSaveTimer = setInterval(() => {
+                        if (this.flightPlanManager) {
+                            this.flightPlanManager.autoSaveFlightPlan();
+                        }
+                    }, 30000);
+                }
+            }
+
             // Start server poll if no SimBrief plan is active
             if (this.flightPlanManager && this.flightPlanManager.flightPlan?.source !== 'simbrief') {
                 this.flightPlanManager.fetchFlightPlan();
@@ -2426,6 +2445,8 @@ class GTN750Pane extends SimGlassBase {
             case 'fpl-delete': if (this.fplPage) this.fplPage.onDelete(); break;
             case 'fpl-insert': if (this.fplPage) this.fplPage.onInsert(); break;
             case 'fpl-airway': if (this.fplPage) this.fplPage.onInsertAirway(); break;
+            case 'save-fpl': this.showSaveFlightPlanModal(); break;
+            case 'load-fpl': this.showLoadFlightPlanModal(); break;
             case 'nrst-apt': case 'nrst-vor': case 'nrst-ndb': case 'nrst-fix':
                 this.switchNearestType(action.split('-')[1]); break;
             case 'taws-inhibit':
@@ -2447,6 +2468,8 @@ class GTN750Pane extends SimGlassBase {
             case 'aux-util': if (this.auxPage) this.auxPage.showSubpage('util'); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
             case 'aux-calc': if (this.auxPage) this.auxPage.showSubpage('calc'); break;
+            case 'aux-logbook': if (this.auxPage) this.auxPage.showSubpage('logbook'); break;
+            case 'logbook-export': if (this.auxPage) this.auxPage.exportLogbook(); break;
             case 'traffic-operate': case 'traffic-standby': case 'traffic-test':
                 this.setTrafficMode(action.split('-')[1]); break;
             case 'wx-simRadar': case 'wx-nexrad': case 'wx-metar': case 'wx-taf': case 'wx-satellite': case 'wx-winds': case 'wx-lightning':
@@ -2570,6 +2593,92 @@ class GTN750Pane extends SimGlassBase {
         const escHandler = (e) => { if (e.key === 'Escape') closeModal(); };
         document.addEventListener('keydown', escHandler);
         document.getElementById('wpt-info-close').onclick = closeModal;
+    }
+
+    showSaveFlightPlanModal() {
+        const modal = document.getElementById('save-fpl-modal');
+        if (!modal) return;
+
+        const filenameInput = document.getElementById('save-fpl-filename');
+        const formatSelect = document.getElementById('save-fpl-format');
+        const infoDiv = document.getElementById('save-fpl-info');
+
+        // Generate default filename
+        if (filenameInput && this.flightPlanManager?.flightPlan?.waypoints) {
+            const wp = this.flightPlanManager.flightPlan.waypoints;
+            const origin = wp[0]?.ident || 'WPT';
+            const dest = wp[wp.length - 1]?.ident || 'END';
+            filenameInput.value = `${origin}-${dest}`;
+        }
+
+        if (infoDiv) infoDiv.textContent = '';
+
+        modal.style.display = 'block';
+
+        // Wire up buttons
+        const saveBtn = document.getElementById('save-fpl-btn');
+        const cancelBtn = document.getElementById('save-fpl-cancel');
+
+        const closeModal = () => modal.style.display = 'none';
+
+        saveBtn.onclick = () => {
+            const filename = filenameInput?.value || 'flight-plan';
+            const format = formatSelect?.value || 'fpl';
+
+            const success = this.flightPlanManager?.saveFlightPlan(filename, format);
+
+            if (success) {
+                closeModal();
+            } else {
+                if (infoDiv) infoDiv.textContent = 'No flight plan to save';
+            }
+        };
+
+        cancelBtn.onclick = closeModal;
+    }
+
+    showLoadFlightPlanModal() {
+        const modal = document.getElementById('load-fpl-modal');
+        if (!modal) return;
+
+        const fileInput = document.getElementById('load-fpl-file');
+        const infoDiv = document.getElementById('load-fpl-info');
+
+        if (fileInput) fileInput.value = '';
+        if (infoDiv) infoDiv.textContent = 'Select a .fpl, .gpx, or .json file';
+
+        modal.style.display = 'block';
+
+        // Wire up buttons
+        const loadBtn = document.getElementById('load-fpl-btn');
+        const cancelBtn = document.getElementById('load-fpl-cancel');
+
+        const closeModal = () => modal.style.display = 'none';
+
+        loadBtn.onclick = async () => {
+            const file = fileInput?.files[0];
+
+            if (!file) {
+                if (infoDiv) infoDiv.textContent = 'Please select a file';
+                return;
+            }
+
+            if (infoDiv) infoDiv.textContent = `Loading ${file.name}...`;
+
+            const success = await this.flightPlanManager?.loadFlightPlan(file);
+
+            if (success) {
+                if (infoDiv) infoDiv.textContent = `Loaded ${file.name}`;
+                setTimeout(() => closeModal(), 1000);
+
+                // Refresh FPL page if visible
+                if (this.fplPage) this.fplPage.render();
+            } else {
+                if (infoDiv) infoDiv.textContent = 'Failed to load flight plan';
+            }
+        };
+
+        cancelBtn.onclick = closeModal;
     }
 
     // ===== RANGE / DECLUTTER HELPERS =====
@@ -3295,6 +3404,12 @@ class GTN750Pane extends SimGlassBase {
         if (this._airwaysFetchTimer) {
             clearInterval(this._airwaysFetchTimer);
             this._airwaysFetchTimer = null;
+        }
+
+        // Stop auto-save timer
+        if (this._autoSaveTimer) {
+            clearInterval(this._autoSaveTimer);
+            this._autoSaveTimer = null;
         }
 
         // Destroy page instances

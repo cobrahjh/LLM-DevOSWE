@@ -63,6 +63,17 @@ class AuxPage {
         // Timer controls
         this.elements.timerStartStop?.addEventListener('click', () => this.toggleTimer());
         this.elements.timerReset?.addEventListener('click', () => this.resetTimer());
+
+        // Logbook controls
+        const exportBtn = document.getElementById('logbook-export');
+        const clearBtn = document.getElementById('logbook-clear');
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.exportLogbook());
+        }
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => this.clearLogbook());
+        }
     }
 
     loadSettings() {
@@ -464,6 +475,202 @@ class AuxPage {
             return { time: fuel / fuelRate };
         }
         return null;
+    }
+
+    // ===== SUBPAGE MANAGEMENT =====
+
+    /**
+     * Show specific subpage
+     * @param {string} subpage - Subpage to show ('trip', 'util', 'calc', 'logbook')
+     */
+    showSubpage(subpage) {
+        // Hide all subpages
+        const subpages = ['trip', 'timer', 'calc', 'logbook'];
+        subpages.forEach(id => {
+            const el = document.getElementById(`aux-${id}`);
+            if (el) el.style.display = 'none';
+        });
+
+        // Show requested subpage
+        const targetEl = document.getElementById(`aux-${subpage}`);
+        if (targetEl) {
+            targetEl.style.display = 'block';
+        }
+
+        // Update logbook if showing it
+        if (subpage === 'logbook') {
+            this.renderLogbook();
+        }
+    }
+
+    // ===== FLIGHT LOGGER UI =====
+
+    /**
+     * Set flight logger instance
+     * @param {GTNFlightLogger} flightLogger - Flight logger instance
+     */
+    setFlightLogger(flightLogger) {
+        this.flightLogger = flightLogger;
+    }
+
+    /**
+     * Render logbook display
+     */
+    renderLogbook() {
+        if (!this.flightLogger) return;
+
+        // Render current flight panel
+        this.renderCurrentFlight();
+
+        // Render flight history table
+        this.renderFlightHistory();
+
+        // Render statistics
+        this.renderStats();
+    }
+
+    /**
+     * Render current flight panel
+     */
+    renderCurrentFlight() {
+        if (!this.flightLogger) return;
+
+        const status = this.flightLogger.getStatus();
+        const timers = status.timers;
+
+        // Update phase display
+        const phaseEl = document.getElementById('logbook-phase');
+        if (phaseEl) {
+            phaseEl.textContent = status.phaseLabel;
+            phaseEl.style.color = status.phaseColor;
+        }
+
+        // Update timers
+        const hobbsEl = document.getElementById('logbook-hobbs');
+        const flightEl = document.getElementById('logbook-flight');
+        const approachEl = document.getElementById('logbook-approach');
+
+        if (hobbsEl) hobbsEl.textContent = timers.hobbsTimeStr;
+        if (flightEl) flightEl.textContent = timers.flightTimeStr;
+        if (approachEl) approachEl.textContent = timers.approachTimeStr;
+
+        // Update current flight info
+        if (status.currentFlight) {
+            const aircraft = document.getElementById('logbook-current-aircraft');
+            const route = document.getElementById('logbook-current-route');
+
+            if (aircraft) aircraft.textContent = status.currentFlight.aircraft || 'Unknown';
+            if (route) {
+                const dep = status.currentFlight.departure || '----';
+                const dest = status.currentFlight.destination || '----';
+                route.textContent = `${dep} → ${dest}`;
+            }
+        }
+    }
+
+    /**
+     * Render flight history table
+     */
+    renderFlightHistory() {
+        if (!this.flightLogger) return;
+
+        const tableBody = document.getElementById('logbook-history-table');
+        if (!tableBody) return;
+
+        const history = this.flightLogger.getHistory(20); // Last 20 flights
+
+        tableBody.innerHTML = '';
+
+        if (history.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;">No flight history</td></tr>';
+            return;
+        }
+
+        history.forEach(flight => {
+            const row = document.createElement('tr');
+            row.className = 'logbook-row';
+
+            const date = new Date(flight.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const dep = flight.departure || '----';
+            const dest = flight.destination || '----';
+            const aircraft = flight.aircraft || 'Unknown';
+            const flightTime = this.flightLogger.formatDuration(flight.flightTime);
+            const hobbsTime = this.flightLogger.formatDuration(flight.hobbsTime);
+
+            row.innerHTML = `
+                <td>${date}</td>
+                <td>${dep}</td>
+                <td>${dest}</td>
+                <td>${aircraft}</td>
+                <td>${flightTime}</td>
+                <td>${hobbsTime}</td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    /**
+     * Render statistics
+     */
+    renderStats() {
+        if (!this.flightLogger) return;
+
+        const timers = this.flightLogger.getTimers();
+        const history = this.flightLogger.getHistory(999);
+
+        // Total flight time
+        const totalFlightEl = document.getElementById('logbook-total-flight');
+        if (totalFlightEl) {
+            totalFlightEl.textContent = this.flightLogger.formatDuration(timers.totalFlightTime);
+        }
+
+        // Total Hobbs time
+        const totalHobbsEl = document.getElementById('logbook-total-hobbs');
+        if (totalHobbsEl) {
+            totalHobbsEl.textContent = this.flightLogger.formatDuration(timers.totalHobbsTime);
+        }
+
+        // Total flights
+        const totalFlightsEl = document.getElementById('logbook-total-flights');
+        if (totalFlightsEl) {
+            totalFlightsEl.textContent = history.length.toString();
+        }
+    }
+
+    /**
+     * Export logbook to CSV
+     */
+    exportLogbook() {
+        if (!this.flightLogger) return;
+
+        const csv = this.flightLogger.exportCSV();
+
+        // Download file
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `logbook-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        GTNCore.log('[AuxPage] Logbook exported to CSV');
+    }
+
+    /**
+     * Clear flight history
+     */
+    clearLogbook() {
+        if (!this.flightLogger) return;
+
+        const confirm = window.confirm('Clear all flight history? This cannot be undone.');
+        if (!confirm) return;
+
+        this.flightLogger.clearHistory();
+        this.renderLogbook();
+
+        GTNCore.log('[AuxPage] Flight history cleared');
     }
 }
 

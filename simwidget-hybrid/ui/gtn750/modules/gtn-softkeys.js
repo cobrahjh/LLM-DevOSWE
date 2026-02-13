@@ -78,10 +78,10 @@ class GTNSoftKeys {
 
         // FPL page
         this.registerContext('fpl', [
-            { label: 'MENU', action: 'fpl-menu' },
-            { label: 'VNAV', action: 'toggle-vnav', toggle: true },
+            { label: 'SAVE', action: 'save-fpl' },
+            { label: 'LOAD', action: 'load-fpl' },
             { label: 'AIRWAY', action: 'insert-airway' },
-            { label: 'ACTV', action: 'activate-leg' },
+            { label: 'VNAV', action: 'toggle-vnav', toggle: true },
             { label: 'INVRT', action: 'invert-plan' },
             { label: 'D\u2192', action: 'direct-to' }
         ]);
@@ -169,10 +169,10 @@ class GTNSoftKeys {
         // AUX page
         this.registerContext('aux', [
             { label: 'TRIP', action: 'aux-trip' },
-            { label: 'UTIL', action: 'aux-util' },
+            { label: 'LOGBK', action: 'aux-logbook' },
             { label: 'TIMER', action: 'aux-timer' },
             { label: 'CALC', action: 'aux-calc' },
-            { label: '', action: null },
+            { label: 'EXPORT', action: 'logbook-export' },
             { label: 'BACK', action: 'back' }
         ]);
 
