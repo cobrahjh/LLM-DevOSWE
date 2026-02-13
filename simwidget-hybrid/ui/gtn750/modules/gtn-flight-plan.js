@@ -1028,9 +1028,10 @@ class GTNFlightPlan {
     }
 
     /**
-     * Show airways insert modal
+     * Show airways insert modal with smart suggestions
+     * @param {Object} options - { selectedWp, nextWp, lat, lon }
      */
-    showAirwaysModal() {
+    async showAirwaysModal(options = {}) {
         const modal = document.getElementById('awy-modal');
         if (!modal) return;
 
@@ -1040,12 +1041,27 @@ class GTNFlightPlan {
         const entryInput = document.getElementById('awy-entry');
         const exitInput = document.getElementById('awy-exit');
         const infoDiv = document.getElementById('awy-info');
+        const suggestionsDiv = document.getElementById('awy-suggestions');
 
         // Clear previous values
         if (identInput) identInput.value = '';
         if (entryInput) entryInput.value = '';
         if (exitInput) exitInput.value = '';
         if (infoDiv) infoDiv.textContent = '';
+        if (suggestionsDiv) suggestionsDiv.innerHTML = '';
+
+        // Pre-fill entry/exit if provided
+        if (options.selectedWp && entryInput) {
+            entryInput.value = options.selectedWp.ident || '';
+        }
+        if (options.nextWp && exitInput) {
+            exitInput.value = options.nextWp.ident || '';
+        }
+
+        // Find and display airway suggestions
+        if (options.selectedWp && options.nextWp) {
+            this.findConnectingAirways(options.selectedWp, options.nextWp, options.lat, options.lon);
+        }
 
         // Focus first input
         if (identInput) {
@@ -1065,6 +1081,163 @@ class GTNFlightPlan {
             cancelBtn._airwaysWired = true;
             cancelBtn.onclick = () => this.hideAirwaysModal();
         }
+    }
+
+    /**
+     * Find airways that connect two waypoints and display suggestions
+     * @param {Object} entryWp - Entry waypoint
+     * @param {Object} exitWp - Exit waypoint
+     * @param {number} lat - Current latitude (for nearby search)
+     * @param {number} lon - Current longitude (for nearby search)
+     */
+    async findConnectingAirways(entryWp, exitWp, lat, lon) {
+        const suggestionsDiv = document.getElementById('awy-suggestions');
+        if (!suggestionsDiv) return;
+
+        suggestionsDiv.innerHTML = '<div class="awy-searching">Searching airways...</div>';
+
+        try {
+            // Use midpoint between waypoints for nearby search
+            const searchLat = lat || (entryWp.lat + exitWp.lat) / 2;
+            const searchLon = lon || ((entryWp.lng || entryWp.lon) + (exitWp.lng || exitWp.lon)) / 2;
+
+            // Fetch nearby airways (wider search range)
+            const response = await fetch(
+                `http://${location.hostname}:${this.serverPort}/api/navdb/nearby/airways?lat=${searchLat}&lon=${searchLon}&range=200&limit=50`
+            );
+
+            if (!response.ok) {
+                suggestionsDiv.innerHTML = '<div class="awy-no-results">No airways found nearby</div>';
+                return;
+            }
+
+            const data = await response.json();
+            const nearbyAirways = data.items || [];
+
+            if (nearbyAirways.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="awy-no-results">No airways found nearby</div>';
+                return;
+            }
+
+            // Check each airway to see if it connects both waypoints
+            const connectingAirways = [];
+
+            for (const airway of nearbyAirways) {
+                try {
+                    const awResponse = await fetch(
+                        `http://${location.hostname}:${this.serverPort}/api/navdb/airway/${airway.ident}`
+                    );
+
+                    if (!awResponse.ok) continue;
+
+                    const awData = await awResponse.json();
+                    const fixes = awData.fixes || [];
+
+                    // Check if both waypoints are on this airway
+                    const entryIdx = fixes.findIndex(f => f.ident === entryWp.ident);
+                    const exitIdx = fixes.findIndex(f => f.ident === exitWp.ident);
+
+                    if (entryIdx !== -1 && exitIdx !== -1 && entryIdx !== exitIdx) {
+                        const segmentFixes = entryIdx < exitIdx
+                            ? fixes.slice(entryIdx, exitIdx + 1)
+                            : fixes.slice(exitIdx, entryIdx + 1).reverse();
+
+                        // Calculate MEA (max of all segment min_alts)
+                        const mea = Math.max(...segmentFixes.map(f => f.min_alt || 0));
+
+                        connectingAirways.push({
+                            ident: airway.ident,
+                            type: airway.type,
+                            fixCount: segmentFixes.length,
+                            mea: mea,
+                            distance: this.calculateRouteDistance(segmentFixes),
+                            entry: entryWp.ident,
+                            exit: exitWp.ident
+                        });
+                    }
+                } catch (e) {
+                    // Skip this airway on error
+                }
+            }
+
+            // Display results
+            if (connectingAirways.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="awy-no-results">No airways connect these waypoints</div>';
+                return;
+            }
+
+            // Sort by distance (shortest first)
+            connectingAirways.sort((a, b) => a.distance - b.distance);
+
+            // Render suggestions
+            let html = '<div class="awy-suggestions-header">SUGGESTED AIRWAYS</div>';
+            connectingAirways.forEach(aw => {
+                const meaText = aw.mea > 0 ? `${Math.round(aw.mea).toLocaleString()} ft` : 'N/A';
+                const distText = aw.distance > 0 ? `${Math.round(aw.distance)} nm` : '';
+
+                html += `
+                    <div class="awy-suggestion-item" data-ident="${aw.ident}" data-entry="${aw.entry}" data-exit="${aw.exit}">
+                        <div class="awy-suggestion-name">${aw.ident}</div>
+                        <div class="awy-suggestion-details">
+                            ${aw.fixCount} fixes • MEA ${meaText}${distText ? ' • ' + distText : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            suggestionsDiv.innerHTML = html;
+
+            // Wire up click handlers
+            suggestionsDiv.querySelectorAll('.awy-suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const ident = item.dataset.ident;
+                    const entry = item.dataset.entry;
+                    const exit = item.dataset.exit;
+                    this.handleSuggestionClick(ident, entry, exit);
+                });
+            });
+
+        } catch (e) {
+            GTNCore.log(`[GTN750] Airway suggestions error: ${e.message}`);
+            suggestionsDiv.innerHTML = '<div class="awy-no-results">Error loading suggestions</div>';
+        }
+    }
+
+    /**
+     * Calculate total distance along a route
+     * @param {Array} fixes - Array of fixes with lat/lon
+     * @returns {number} Total distance in nm
+     */
+    calculateRouteDistance(fixes) {
+        if (!fixes || fixes.length < 2) return 0;
+
+        let totalDist = 0;
+        for (let i = 0; i < fixes.length - 1; i++) {
+            const f1 = fixes[i];
+            const f2 = fixes[i + 1];
+            totalDist += this.core.haversine(f1.lat, f1.lon, f2.lat, f2.lon);
+        }
+        return totalDist;
+    }
+
+    /**
+     * Handle click on airway suggestion
+     * @param {string} ident - Airway identifier
+     * @param {string} entry - Entry fix
+     * @param {string} exit - Exit fix
+     */
+    async handleSuggestionClick(ident, entry, exit) {
+        // Fill in the form fields
+        const identInput = document.getElementById('awy-ident');
+        const entryInput = document.getElementById('awy-entry');
+        const exitInput = document.getElementById('awy-exit');
+
+        if (identInput) identInput.value = ident;
+        if (entryInput) entryInput.value = entry;
+        if (exitInput) exitInput.value = exit;
+
+        // Auto-insert
+        await this.handleAirwayInsert();
     }
 
     /**

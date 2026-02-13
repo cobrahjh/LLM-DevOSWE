@@ -1103,6 +1103,73 @@ body {
     text-transform: uppercase;
 }
 
+/* Airway Suggestions */
+.awy-suggestions {
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    border: 1px solid #333;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.awy-suggestions:empty {
+    display: none;
+}
+
+.awy-suggestions-header {
+    background: rgba(0, 255, 100, 0.1);
+    border-bottom: 1px solid var(--gtn-green);
+    padding: 6px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gtn-green);
+    letter-spacing: 0.5px;
+}
+
+.awy-suggestion-item {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.awy-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.awy-suggestion-item:hover {
+    background: rgba(100, 200, 255, 0.2);
+}
+
+.awy-suggestion-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(100, 200, 255, 1);
+    margin-bottom: 3px;
+    font-family: var(--gtn-mono);
+}
+
+.awy-suggestion-details {
+    font-size: 10px;
+    color: #aaa;
+    font-family: var(--gtn-mono);
+}
+
+.awy-searching,
+.awy-no-results {
+    padding: 12px;
+    text-align: center;
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+}
+
+.awy-manual-section {
+    padding-top: 8px;
+    border-top: 1px solid #333;
+}
+
 /* XPDR Control Modal */
 .xpdr-modal {
     position: absolute;

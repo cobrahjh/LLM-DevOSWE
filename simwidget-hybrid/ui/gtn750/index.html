@@ -301,18 +301,25 @@
                 <div class="dto-modal" id="awy-modal" style="display: none;">
                     <div class="dto-header" style="background: var(--gtn-green);">INSERT AIRWAY</div>
                     <div class="dto-content">
-                        <div class="awy-field">
-                            <label class="awy-label">Airway:</label>
-                            <input type="text" id="awy-ident" class="dto-input" placeholder="V4, J146" maxlength="6" autocomplete="off">
+                        <!-- Airway Suggestions -->
+                        <div class="awy-suggestions" id="awy-suggestions"></div>
+
+                        <!-- Manual Entry Fields -->
+                        <div class="awy-manual-section">
+                            <div class="awy-field">
+                                <label class="awy-label">Airway:</label>
+                                <input type="text" id="awy-ident" class="dto-input" placeholder="V4, J146" maxlength="6" autocomplete="off">
+                            </div>
+                            <div class="awy-field">
+                                <label class="awy-label">Entry Fix:</label>
+                                <input type="text" id="awy-entry" class="dto-input" placeholder="From waypoint" maxlength="5" autocomplete="off">
+                            </div>
+                            <div class="awy-field">
+                                <label class="awy-label">Exit Fix:</label>
+                                <input type="text" id="awy-exit" class="dto-input" placeholder="To waypoint" maxlength="5" autocomplete="off">
+                            </div>
                         </div>
-                        <div class="awy-field">
-                            <label class="awy-label">Entry Fix:</label>
-                            <input type="text" id="awy-entry" class="dto-input" placeholder="From waypoint" maxlength="5" autocomplete="off">
-                        </div>
-                        <div class="awy-field">
-                            <label class="awy-label">Exit Fix:</label>
-                            <input type="text" id="awy-exit" class="dto-input" placeholder="To waypoint" maxlength="5" autocomplete="off">
-                        </div>
+
                         <div class="dto-info" id="awy-info"></div>
                         <div class="dto-buttons">
                             <button class="dto-btn dto-activate" id="awy-insert">INSERT</button>

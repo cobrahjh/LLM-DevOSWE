@@ -374,16 +374,20 @@ class FlightPlanPage {
         const selectedWp = this.getSelectedWaypoint();
         if (!selectedWp) return;
 
-        // Show airway modal via flight plan manager
-        this.flightPlanManager.showAirwaysModal();
+        // Get next waypoint in flight plan
+        const nextWp = this.flightPlanManager.flightPlan?.waypoints?.[this.cursorIndex + 1];
 
-        // Pre-fill entry fix with selected waypoint
-        setTimeout(() => {
-            const entryInput = document.getElementById('awy-entry');
-            if (entryInput) {
-                entryInput.value = selectedWp.ident || '';
-            }
-        }, 150);
+        // Get current position for nearby search
+        const lat = this.aircraftData?.latitude || selectedWp.lat;
+        const lon = this.aircraftData?.longitude || selectedWp.lng || selectedWp.lon;
+
+        // Show airway modal with smart suggestions
+        this.flightPlanManager.showAirwaysModal({
+            selectedWp,
+            nextWp,
+            lat,
+            lon
+        });
     }
 
     // ===== SOFT KEYS =====
