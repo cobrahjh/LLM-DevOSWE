@@ -215,8 +215,9 @@ class GTNCore {
 
     formatEte(minutes) {
         if (!isFinite(minutes) || minutes < 0) return '--:--';
-        const hrs = Math.floor(minutes / 60);
-        const mins = Math.floor(minutes % 60);
+        const rounded = Math.round(minutes);
+        const hrs = Math.floor(rounded / 60);
+        const mins = rounded % 60;
         return hrs > 0 ? `${hrs}:${mins.toString().padStart(2, '0')}` : `${mins}m`;
     }
 
