@@ -320,7 +320,7 @@ class GTNAirportDiagram {
      * Render the complete airport diagram (with caching)
      */
     render() {
-        if (!this.canvas || !this.airport) return;
+        if (!this.canvas) return;
 
         // Update canvas size to match container (if changed)
         this.updateCanvasSize();
@@ -332,6 +332,23 @@ class GTNAirportDiagram {
         // Clear canvas
         ctx.fillStyle = this.colors.background;
         ctx.fillRect(0, 0, w, h);
+
+        // Check if airport is loaded and has diagram data
+        if (!this.airport) {
+            this.renderNoDataMessage(ctx, 'NO AIRPORT LOADED', 'Load an airport using the input above');
+            return;
+        }
+
+        // Check if airport has actual diagram data
+        const hasRunways = this.airport.runways && this.airport.runways.length > 0;
+        const hasTaxiways = this.taxiGraph && this.taxiGraph.edges && this.taxiGraph.edges.length > 0;
+
+        if (!hasRunways && !hasTaxiways) {
+            this.renderNoDataMessage(ctx,
+                `NO DIAGRAM DATA FOR ${this.airport.icao}`,
+                `${this.airport.name}\nDiagram not available in database`);
+            return;
+        }
 
         // Check if we need to regenerate static cache
         const scaleChanged = Math.abs(this.viewport.scale - this.lastCacheScale) > 0.01;
@@ -356,6 +373,37 @@ class GTNAirportDiagram {
         this.renderOwnship(ctx);
         this.renderAirportLabel(ctx);
         this.renderScaleIndicator(ctx);
+    }
+
+    /**
+     * Render "no data" message when diagram not available
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {string} title - Main message title
+     * @param {string} subtitle - Detailed message
+     */
+    renderNoDataMessage(ctx, title, subtitle) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // Title
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(title, w / 2, h / 2 - 40);
+
+        // Subtitle (handle multi-line)
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        const lines = subtitle.split('\n');
+        lines.forEach((line, i) => {
+            ctx.fillText(line, w / 2, h / 2 + (i * 20));
+        });
+
+        // Help text
+        ctx.fillStyle = '#888888';
+        ctx.font = '12px Arial';
+        ctx.fillText('Diagram data only available for major airports', w / 2, h / 2 + 60);
     }
 
     /**
