@@ -46,6 +46,7 @@ const { setupWeatherRoutes } = require('./weather-api');
 const { setupCopilotRoutes } = require('./copilot-api');
 const { setupAiPilotRoutes } = require('./ai-pilot-api');
 const { setupNavdataRoutes } = require('./navdata-api');
+const LittleNavMapAPI = require('./littlenavmap-api');
 const RuleEngineServer = require('./ai-autopilot/rule-engine-server');
 const usageMetrics = require('../../Admin/shared/usage-metrics');
 
@@ -56,6 +57,9 @@ const hotReloadManager = new HotReloadManager();
 const pluginsDir = path.join(__dirname, '../plugins');
 const pluginLoader = new PluginLoader(pluginsDir);
 const pluginAPI = new PluginAPI();
+
+// Little Navmap integration
+const littleNavMapAPI = new LittleNavMapAPI();
 
 const SERVER_VERSION = '1.14.0';
 
@@ -4781,6 +4785,9 @@ setupAiPilotRoutes(app, () => flightData, () => simConnectConnection, eventMap, 
 
 // Setup Navigation Database API (FAA CIFP SQLite)
 setupNavdataRoutes(app);
+
+// Setup Little Navmap Integration API (UDP position sharing, .PLN import/export)
+littleNavMapAPI.setupRoutes(app);
 
 const troubleshoot = new TroubleshootEngine('SimGlass');
 
