@@ -382,7 +382,7 @@ class ProceduresPage {
             const wp1 = waypoints[i];
             const wp2 = waypoints[i + 1];
             if (wp1.lat && wp1.lon && wp2.lat && wp2.lon) {
-                totalDistance += this.core.haversineDistance(wp1.lat, wp1.lon, wp2.lat, wp2.lon);
+                totalDistance += this.core.calculateDistance(wp1.lat, wp1.lon, wp2.lat, wp2.lon);
             }
         }
         this.elements.procDistanceVal.textContent = totalDistance > 0 ? `${totalDistance.toFixed(1)} nm` : '—';
@@ -422,7 +422,7 @@ class ProceduresPage {
             if (i < waypoints.length - 1) {
                 const nextWp = waypoints[i + 1];
                 if (wp.lat && wp.lon && nextWp.lat && nextWp.lon) {
-                    distance = this.core.haversineDistance(wp.lat, wp.lon, nextWp.lat, nextWp.lon);
+                    distance = this.core.calculateDistance(wp.lat, wp.lon, nextWp.lat, nextWp.lon);
                     bearing = this.core.calculateBearing(wp.lat, wp.lon, nextWp.lat, nextWp.lon);
                     cumulativeDistance += distance;
                 }
