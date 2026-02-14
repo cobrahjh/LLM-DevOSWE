@@ -2,6 +2,17 @@
 
 Full-featured Garmin GTN 750 GPS emulator for Microsoft Flight Simulator with modular architecture, flight planning, navigation, and map rendering.
 
+## 📚 Documentation
+
+**[→ Open HTML Documentation](docs/index.html)** - Complete interactive documentation
+
+Quick links:
+- [User Guide](docs/user-guide.html) - How to use all features
+- [Plugin Development](docs/plugins.html) - Extend GTN750 with custom pages
+- [Keyboard Shortcuts](docs/keyboard-shortcuts.html) - Complete keyboard reference
+- [Troubleshooting](docs/troubleshooting.html) - Common issues and solutions
+- [SafeTaxi Guide](docs/safetaxi.html) - Airport diagram documentation
+
 ## Features
 
 ### 🗺️ Moving Map Display

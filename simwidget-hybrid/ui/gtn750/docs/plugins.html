@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Development - GTN750</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GTN750 Plugin Development</h1>
+            <p class="subtitle">Extending GTN750 with custom pages and modules</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="index.html">← Back to Index</a>
+            <a href="#overview">Overview</a>
+            <a href="#architecture">Architecture</a>
+            <a href="#creating">Creating Plugins</a>
+            <a href="#api">API Reference</a>
+            <a href="#examples">Examples</a>
+        </nav>
+
+        <section id="overview">
+            <h2>Plugin System Overview</h2>
+            <p>GTN750 uses a modular architecture that allows you to extend functionality through custom pages and modules. The plugin system is based on lazy-loaded page modules that integrate seamlessly with the main orchestrator.</p>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>Lazy Loading</h3>
+                    <p>On-Demand Modules</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Clean API</h3>
+                    <p>Standardized Interface</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Hot Swap</h3>
+                    <p>No Restart Needed</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Isolated</h3>
+                    <p>No Side Effects</p>
+                </div>
+            </div>
+
+            <h3>What You Can Create</h3>
+            <ul>
+                <li><strong>Custom Pages</strong> - New navigation pages with unique functionality</li>
+                <li><strong>Data Field Types</strong> - New display fields for corner data areas</li>
+                <li><strong>Map Overlays</strong> - Additional map layers (airspace, obstacles, etc.)</li>
+                <li><strong>Utility Modules</strong> - Helper functions and calculators</li>
+                <li><strong>Data Integrations</strong> - External data sources and APIs</li>
+            </ul>
+        </section>
+
+        <section id="architecture">
+            <h2>Plugin Architecture</h2>
+
+            <h3>Module Loading Strategy</h3>
+            <p>GTN750 uses a three-tier loading strategy:</p>
+
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Tier</th>
+                        <th>Load Time</th>
+                        <th>Modules</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Critical</strong></td>
+                        <td>Immediate</td>
+                        <td>core, map-renderer, cdi, data-fields</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Deferred</strong></td>
+                        <td>500ms delay</td>
+                        <td>data-handler, overlays, simvar-handler</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lazy</strong></td>
+                        <td>On first use</td>
+                        <td>page modules (FPL, PROC, AUX, etc.)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Plugin Types</h3>
+
+            <div class="feature-category">
+                <h3>1. Page Plugins</h3>
+                <p>Full-page modules with UI, logic, and soft key definitions</p>
+                <ul>
+                    <li>Loaded when page is first accessed</li>
+                    <li>Can define custom soft keys</li>
+                    <li>Access to full GTN750 state</li>
+                    <li>Lifecycle management (init, update, destroy)</li>
+                </ul>
+                <p><strong>Examples:</strong> AUX, CHARTS, PROC, TAXI pages</p>
+            </div>
+
+            <div class="feature-category">
+                <h3>2. Overlay Plugins</h3>
+                <p>Canvas-based map overlays for additional data visualization</p>
+                <ul>
+                    <li>Render on top of base map</li>
+                    <li>Toggle on/off independently</li>
+                    <li>Access to map projection and state</li>
+                    <li>Optimized rendering pipeline</li>
+                </ul>
+                <p><strong>Examples:</strong> terrain-overlay, traffic-overlay, weather-overlay</p>
+            </div>
+
+            <div class="feature-category">
+                <h3>3. Data Field Plugins</h3>
+                <p>Custom data field types for corner displays</p>
+                <ul>
+                    <li>Define label and getValue() function</li>
+                    <li>Access to aircraft state</li>
+                    <li>Automatic formatting support</li>
+                    <li>User-selectable from field menu</li>
+                </ul>
+                <p><strong>Examples:</strong> GS, TRK, ALT, custom calculations</p>
+            </div>
+        </section>
+
+        <section id="creating">
+            <h2>Creating a Page Plugin</h2>
+
+            <h3>Step 1: Create the Page Class</h3>
+            <p>Create a new file in <code>pages/page-myname.js</code>:</p>
+
+            <pre><code>/**
+ * My Custom Page Plugin
+ * Description of what this page does
+ */
+class MyCustomPage {
+    constructor(options = {}) {
+        this.core = options.core || new GTNCore();
+        this.data = options.data || {};
+        this.elements = {};
+
+        // Your custom state
+        this.customState = {
+            value: 0
+        };
+    }
+
+    /**
+     * Initialize page
+     * Called once when page is first loaded
+     */
+    init() {
+        this.cacheElements();
+        this.bindEvents();
+        this.loadSettings();
+    }
+
+    /**
+     * Cache DOM elements
+     */
+    cacheElements() {
+        this.elements = {
+            myButton: document.getElementById('my-button'),
+            myDisplay: document.getElementById('my-display')
+        };
+    }
+
+    /**
+     * Bind event listeners
+     */
+    bindEvents() {
+        this.elements.myButton?.addEventListener('click', () => {
+            this.handleButtonClick();
+        });
+    }
+
+    /**
+     * Load settings from localStorage
+     */
+    loadSettings() {
+        const saved = localStorage.getItem('mypage-settings');
+        if (saved) {
+            Object.assign(this.customState, JSON.parse(saved));
+        }
+    }
+
+    /**
+     * Save settings to localStorage
+     */
+    saveSettings() {
+        localStorage.setItem('mypage-settings',
+            JSON.stringify(this.customState));
+    }
+
+    /**
+     * Update page with new data
+     * Called on every data update (10Hz)
+     */
+    update(data) {
+        this.data = data;
+        this.render();
+    }
+
+    /**
+     * Render page content
+     */
+    render() {
+        if (this.elements.myDisplay) {
+            this.elements.myDisplay.textContent =
+                `Value: ${this.customState.value}`;
+        }
+    }
+
+    /**
+     * Handle button click
+     */
+    handleButtonClick() {
+        this.customState.value++;
+        this.saveSettings();
+        this.render();
+    }
+
+    /**
+     * Define soft keys for this page
+     * @returns {Array} Array of soft key definitions
+     */
+    getSoftKeys() {
+        return [
+            {
+                label: 'INCREMENT',
+                action: () => this.handleButtonClick()
+            },
+            {
+                label: 'RESET',
+                action: () => {
+                    this.customState.value = 0;
+                    this.saveSettings();
+                    this.render();
+                }
+            }
+        ];
+    }
+
+    /**
+     * Cleanup when page is destroyed
+     */
+    destroy() {
+        // Remove event listeners
+        // Clear timers/intervals
+        // Save state if needed
+        this.saveSettings();
+    }
+}</code></pre>
+
+            <h3>Step 2: Create the HTML</h3>
+            <p>Add your page HTML to <code>index.html</code>:</p>
+
+            <pre><code>&lt;!-- My Custom Page --&gt;
+&lt;div id="page-mycustom" class="page" style="display: none;"&gt;
+    &lt;div class="page-header"&gt;
+        &lt;h2&gt;My Custom Page&lt;/h2&gt;
+    &lt;/div&gt;
+
+    &lt;div class="page-content"&gt;
+        &lt;div id="my-display" class="display-value"&gt;
+            Value: 0
+        &lt;/div&gt;
+
+        &lt;button id="my-button" class="gtn-button"&gt;
+            Click Me
+        &lt;/button&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+            <h3>Step 3: Register the Page</h3>
+            <p>In <code>pane.js</code>, register your page with the page manager:</p>
+
+            <pre><code>// In GTN750Pane constructor, add to loadedModules
+this.loadedModules = {
+    // ... existing modules
+    pageMyCustom: false  // Add this
+};
+
+// In initPageManager(), register the page
+this.pageManager.registerPage('MYCUSTOM', {
+    element: document.getElementById('page-mycustom'),
+    module: null, // Lazy loaded
+    softKeys: [] // Will be populated when module loads
+});
+
+// In loadPageModule(), add case for your page
+async loadPageModule(pageId) {
+    if (pageId === 'MYCUSTOM' && !this.loadedModules.pageMyCustom) {
+        await this.moduleLoader.loadModule('pages/page-mycustom.js');
+        this.myCustomPage = new MyCustomPage({
+            core: this.core,
+            data: this.data
+        });
+        this.myCustomPage.init();
+        this.loadedModules.pageMyCustom = true;
+
+        // Update soft keys
+        this.pageManager.pages['MYCUSTOM'].softKeys =
+            this.myCustomPage.getSoftKeys();
+    }
+}</code></pre>
+
+            <h3>Step 4: Add Page Button</h3>
+            <p>Add a button to access your page in <code>index.html</code>:</p>
+
+            <pre><code>&lt;button class="page-btn" data-page="MYCUSTOM"&gt;
+    MYCUSTOM
+&lt;/button&gt;</code></pre>
+        </section>
+
+        <section id="overlay">
+            <h2>Creating a Map Overlay Plugin</h2>
+
+            <h3>Basic Overlay Structure</h3>
+            <pre><code>/**
+ * Custom Map Overlay
+ */
+class MyOverlay {
+    constructor(options = {}) {
+        this.canvas = options.canvas;
+        this.ctx = this.canvas.getContext('2d');
+        this.core = options.core || new GTNCore();
+        this.visible = false;
+        this.opacity = 0.7;
+    }
+
+    /**
+     * Set visibility
+     */
+    setVisible(visible) {
+        this.visible = visible;
+    }
+
+    /**
+     * Set opacity (0-1)
+     */
+    setOpacity(opacity) {
+        this.opacity = Math.max(0, Math.min(1, opacity));
+    }
+
+    /**
+     * Render overlay
+     * @param {Object} state - Map state with projection info
+     */
+    render(state) {
+        if (!this.visible) return;
+
+        const { centerLat, centerLon, zoom, width, height } = state;
+
+        this.ctx.save();
+        this.ctx.globalAlpha = this.opacity;
+
+        // Your rendering logic here
+        // Example: Draw a circle at aircraft position
+        const { x, y } = this.latLonToPixel(
+            state.aircraftLat,
+            state.aircraftLon,
+            state
+        );
+
+        this.ctx.fillStyle = '#ff0000';
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 10, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.restore();
+    }
+
+    /**
+     * Convert lat/lon to canvas pixel coordinates
+     */
+    latLonToPixel(lat, lon, state) {
+        // Use map projection from state
+        // Return {x, y} pixel coordinates
+        return this.core.latLonToXY(lat, lon, state);
+    }
+
+    /**
+     * Cleanup
+     */
+    destroy() {
+        this.visible = false;
+    }
+}</code></pre>
+
+            <h3>Integrating the Overlay</h3>
+            <pre><code>// In pane.js, load and initialize overlay
+async loadOverlays() {
+    // Load your overlay module
+    await this.moduleLoader.loadModule('overlays/my-overlay.js');
+
+    this.myOverlay = new MyOverlay({
+        canvas: this.mapCanvas,
+        core: this.core
+    });
+}
+
+// In map render loop
+renderMap() {
+    // ... base map rendering
+
+    // Render your overlay
+    if (this.myOverlay) {
+        this.myOverlay.render(this.getMapState());
+    }
+}</code></pre>
+        </section>
+
+        <section id="data-fields">
+            <h2>Creating Custom Data Fields</h2>
+
+            <h3>Add to GTNDataFields</h3>
+            <p>Edit <code>modules/gtn-data-fields.js</code>:</p>
+
+            <pre><code>// In GTNDataFields.FIELD_TYPES map
+static FIELD_TYPES = {
+    // ... existing fields
+
+    // Your custom field
+    'mycalc': {
+        label: 'MYCALC',
+        getValue: (data, flightPlan) => {
+            // Custom calculation
+            const result = data.groundSpeed * 2 + data.altitude / 100;
+            return Math.round(result);
+        },
+        unit: 'custom'
+    }
+};</code></pre>
+
+            <p>Your field will now be available in the data field customization menu!</p>
+        </section>
+
+        <section id="api">
+            <h2>Plugin API Reference</h2>
+
+            <h3>GTNCore Utilities</h3>
+            <p>Available through <code>this.core</code> in your plugin:</p>
+
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Description</th>
+                        <th>Returns</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>calculateDistance(lat1, lon1, lat2, lon2)</code></td>
+                        <td>Great circle distance</td>
+                        <td>Distance in nm</td>
+                    </tr>
+                    <tr>
+                        <td><code>calculateBearing(lat1, lon1, lat2, lon2)</code></td>
+                        <td>Initial bearing</td>
+                        <td>Bearing in degrees</td>
+                    </tr>
+                    <tr>
+                        <td><code>formatFrequency(freq)</code></td>
+                        <td>Format radio frequency</td>
+                        <td>String (e.g., "118.00")</td>
+                    </tr>
+                    <tr>
+                        <td><code>formatLatitude(lat)</code></td>
+                        <td>Format latitude</td>
+                        <td>String (e.g., "N47°36.5'")</td>
+                    </tr>
+                    <tr>
+                        <td><code>formatLongitude(lon)</code></td>
+                        <td>Format longitude</td>
+                        <td>String (e.g., "W122°18.2'")</td>
+                    </tr>
+                    <tr>
+                        <td><code>normalizeHeading(hdg)</code></td>
+                        <td>Normalize to 0-360</td>
+                        <td>Number</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Aircraft Data Structure</h3>
+            <p>Available through <code>data</code> parameter in <code>update()</code>:</p>
+
+            <pre><code>{
+    latitude: 47.123,
+    longitude: -122.456,
+    altitude: 5000,          // ft MSL
+    groundSpeed: 120,        // kts
+    heading: 270,            // degrees magnetic
+    track: 268,              // degrees true
+    magvar: -15,            // degrees
+    verticalSpeed: 500,     // fpm
+
+    // Radios
+    com1Active: 118.00,
+    com1Standby: 118.00,
+    com2Active: 118.00,
+    com2Standby: 118.00,
+    nav1Active: 108.00,
+    nav1Standby: 108.00,
+    transponder: 1200,
+
+    // Navigation
+    navSource: 'GPS',       // 'GPS', 'NAV1', 'NAV2'
+
+    // Weather
+    windDirection: 270,     // degrees
+    windSpeed: 10,          // kts
+    ambientTemp: 15,        // °C
+    ambientPressure: 29.92, // inHg
+    visibility: 10000,      // meters
+    precipState: 0,         // 0=none, 1-4=levels
+
+    // Time
+    zuluTime: 123456        // seconds since midnight
+}</code></pre>
+
+            <h3>BroadcastChannel Messages</h3>
+            <p>Send messages to other widgets:</p>
+
+            <pre><code>// In your plugin
+const channel = new BroadcastChannel('SimGlass-sync');
+
+// Send custom message
+channel.postMessage({
+    type: 'my-custom-event',
+    data: { ... },
+    source: 'gtn750-mycustom'
+});
+
+// Listen for messages
+channel.onmessage = (event) => {
+    if (event.data.type === 'some-event') {
+        // Handle message
+    }
+};</code></pre>
+        </section>
+
+        <section id="examples">
+            <h2>Example Plugins</h2>
+
+            <h3>Example 1: Simple Calculator Page</h3>
+            <pre><code>class CalculatorPage {
+    constructor(options = {}) {
+        this.display = '0';
+        this.memory = 0;
+        this.operation = null;
+    }
+
+    init() {
+        this.render();
+    }
+
+    update(data) {
+        // Calculator doesn't need aircraft data
+    }
+
+    render() {
+        const display = document.getElementById('calc-display');
+        if (display) {
+            display.textContent = this.display;
+        }
+    }
+
+    inputDigit(digit) {
+        if (this.display === '0') {
+            this.display = String(digit);
+        } else {
+            this.display += String(digit);
+        }
+        this.render();
+    }
+
+    getSoftKeys() {
+        return [
+            { label: '7', action: () => this.inputDigit(7) },
+            { label: '8', action: () => this.inputDigit(8) },
+            { label: '9', action: () => this.inputDigit(9) },
+            { label: '+', action: () => this.setOperation('+') },
+            { label: '4', action: () => this.inputDigit(4) },
+            { label: '5', action: () => this.inputDigit(5) },
+            { label: '6', action: () => this.inputDigit(6) },
+            { label: '-', action: () => this.setOperation('-') },
+            { label: '1', action: () => this.inputDigit(1) },
+            { label: '2', action: () => this.inputDigit(2) },
+            { label: '3', action: () => this.inputDigit(3) },
+            { label: '=', action: () => this.calculate() }
+        ];
+    }
+}</code></pre>
+
+            <h3>Example 2: Flight Notebook Page</h3>
+            <pre><code>class NotebookPage {
+    constructor(options = {}) {
+        this.notes = [];
+        this.loadNotes();
+    }
+
+    init() {
+        this.bindEvents();
+        this.renderNotes();
+    }
+
+    bindEvents() {
+        const addBtn = document.getElementById('note-add');
+        addBtn?.addEventListener('click', () => this.addNote());
+    }
+
+    addNote() {
+        const input = document.getElementById('note-input');
+        if (input && input.value.trim()) {
+            this.notes.push({
+                text: input.value.trim(),
+                timestamp: new Date().toISOString()
+            });
+            input.value = '';
+            this.saveNotes();
+            this.renderNotes();
+        }
+    }
+
+    loadNotes() {
+        const saved = localStorage.getItem('flight-notes');
+        if (saved) {
+            this.notes = JSON.parse(saved);
+        }
+    }
+
+    saveNotes() {
+        localStorage.setItem('flight-notes',
+            JSON.stringify(this.notes));
+    }
+
+    renderNotes() {
+        const container = document.getElementById('notes-list');
+        if (!container) return;
+
+        container.innerHTML = this.notes.map((note, i) => `
+            &lt;div class="note-item"&gt;
+                &lt;div class="note-time"&gt;${new Date(note.timestamp).toLocaleTimeString()}&lt;/div&gt;
+                &lt;div class="note-text"&gt;${note.text}&lt;/div&gt;
+            &lt;/div&gt;
+        `).join('');
+    }
+
+    getSoftKeys() {
+        return [
+            { label: 'ADD', action: () => this.addNote() },
+            { label: 'CLEAR', action: () => {
+                if (confirm('Clear all notes?')) {
+                    this.notes = [];
+                    this.saveNotes();
+                    this.renderNotes();
+                }
+            }}
+        ];
+    }
+}</code></pre>
+
+            <h3>Example 3: Airport Info Overlay</h3>
+            <pre><code>class AirportInfoOverlay {
+    constructor(options = {}) {
+        this.canvas = options.canvas;
+        this.ctx = this.canvas.getContext('2d');
+        this.core = options.core;
+        this.visible = true;
+        this.nearbyAirports = [];
+    }
+
+    async fetchNearbyAirports(lat, lon) {
+        // Fetch from your API
+        const response = await fetch(
+            `/api/airports/nearby?lat=${lat}&lon=${lon}&radius=50`
+        );
+        this.nearbyAirports = await response.json();
+    }
+
+    render(state) {
+        if (!this.visible) return;
+
+        this.ctx.save();
+
+        for (const airport of this.nearbyAirports) {
+            const { x, y } = this.core.latLonToXY(
+                airport.latitude,
+                airport.longitude,
+                state
+            );
+
+            // Draw airport icon
+            this.ctx.fillStyle = '#0066cc';
+            this.ctx.fillRect(x - 3, y - 3, 6, 6);
+
+            // Draw airport identifier
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = '10px Arial';
+            this.ctx.fillText(airport.ident, x + 5, y + 3);
+        }
+
+        this.ctx.restore();
+    }
+}</code></pre>
+        </section>
+
+        <section id="best-practices">
+            <h2>Best Practices</h2>
+
+            <h3>Performance</h3>
+            <ul>
+                <li>Keep <code>update()</code> and <code>render()</code> methods lightweight</li>
+                <li>Debounce expensive operations (database queries, calculations)</li>
+                <li>Cache DOM elements in <code>cacheElements()</code></li>
+                <li>Use <code>requestAnimationFrame</code> for animations</li>
+                <li>Lazy load heavy dependencies</li>
+            </ul>
+
+            <h3>State Management</h3>
+            <ul>
+                <li>Use localStorage for persistent settings</li>
+                <li>Keep plugin state isolated (no global variables)</li>
+                <li>Implement proper <code>destroy()</code> cleanup</li>
+                <li>Save state before unload</li>
+            </ul>
+
+            <h3>User Experience</h3>
+            <ul>
+                <li>Provide clear soft key labels</li>
+                <li>Show loading states for async operations</li>
+                <li>Handle errors gracefully</li>
+                <li>Match GTN750 visual style</li>
+                <li>Test with different screen sizes</li>
+            </ul>
+
+            <h3>Integration</h3>
+            <ul>
+                <li>Use BroadcastChannel for cross-widget communication</li>
+                <li>Follow naming conventions (page-*, *-overlay.js)</li>
+                <li>Document your plugin API</li>
+                <li>Provide examples and tests</li>
+            </ul>
+        </section>
+
+        <section id="debugging">
+            <h2>Debugging Plugins</h2>
+
+            <h3>Enable Debug Mode</h3>
+            <pre><code>// In browser console
+localStorage.setItem('gtn750-debug', 'true');
+location.reload();</code></pre>
+
+            <h3>Common Issues</h3>
+
+            <div class="feature-category">
+                <h3>Plugin Not Loading</h3>
+                <ul>
+                    <li>Check browser console for errors</li>
+                    <li>Verify file path is correct</li>
+                    <li>Ensure class name matches registration</li>
+                    <li>Check ModuleLoader configuration</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Update Not Called</h3>
+                <ul>
+                    <li>Verify page is active</li>
+                    <li>Check that update() method exists</li>
+                    <li>Ensure pageManager has reference to instance</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Soft Keys Not Working</h3>
+                <ul>
+                    <li>Verify getSoftKeys() returns array</li>
+                    <li>Check soft key action functions are bound correctly</li>
+                    <li>Ensure page is registered in pageManager</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer>
+            <p><a href="index.html">← Back to Documentation Index</a> | <a href="development-guide.html">Development Guide</a></p>
+            <p>GTN750 Plugin Development v2.4.0 | Last updated: February 14, 2026</p>
+        </footer>
+    </div>
+</body>
+</html>
