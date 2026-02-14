@@ -1396,15 +1396,15 @@ class GTN750Pane extends SimGlassBase {
         GTNCore.log(`[GTN750] Loading procedure: ${proc.name} (${type})`);
 
         // Load procedure into flight plan
-        if (this.flightPlanModule) {
-            this.flightPlanModule.loadProcedure(type, proc, waypoints);
+        if (this.flightPlanManager) {
+            this.flightPlanManager.loadProcedure(type, proc, waypoints);
 
             // Switch to FPL page to show loaded procedure
             if (this.pageManager) {
-                this.pageManager.setActivePage('fpl');
+                this.pageManager.switchPage('fpl');
             }
         } else {
-            GTNCore.log('[GTN750] Flight plan module not available');
+            GTNCore.log('[GTN750] Flight plan manager not available');
         }
 
         // Auto-enable VNAV if approach has altitude constraints
