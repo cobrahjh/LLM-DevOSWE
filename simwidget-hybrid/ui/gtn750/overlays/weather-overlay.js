@@ -19,6 +19,13 @@ class WeatherOverlay {
             satellite: false
         };
 
+        // Performance optimization: Layer caching
+        this.metarCache = null;
+        this.tafCache = null;
+        this.metarCacheValid = false;
+        this.tafCacheValid = false;
+        this.lastCacheState = { range: 0, lat: 0, lon: 0, width: 0, height: 0, metarCount: 0, tafCount: 0 };
+
         // Sim weather data (updated from widget)
         this.simWeather = {
             precipState: 0,
@@ -315,6 +322,42 @@ class WeatherOverlay {
     }
 
     /**
+     * Invalidate cached weather layers (call when data changes)
+     */
+    invalidateCache() {
+        this.metarCacheValid = false;
+        this.tafCacheValid = false;
+    }
+
+    /**
+     * Check if METAR cache needs regeneration
+     */
+    needsMetarCacheRegen(lat, lon, range, width, height) {
+        const state = this.lastCacheState;
+        return !this.metarCacheValid ||
+               Math.abs(state.lat - lat) > 0.1 ||
+               Math.abs(state.lon - lon) > 0.1 ||
+               Math.abs(state.range - range) > 10 ||
+               state.width !== width ||
+               state.height !== height ||
+               state.metarCount !== this.metarData.size;
+    }
+
+    /**
+     * Check if TAF cache needs regeneration
+     */
+    needsTafCacheRegen(lat, lon, range, width, height) {
+        const state = this.lastCacheState;
+        return !this.tafCacheValid ||
+               Math.abs(state.lat - lat) > 0.1 ||
+               Math.abs(state.lon - lon) > 0.1 ||
+               Math.abs(state.range - range) > 10 ||
+               state.width !== width ||
+               state.height !== height ||
+               state.tafCount !== this.tafData.size;
+    }
+
+    /**
      * Toggle individual weather layer
      */
     toggleLayer(layer) {
@@ -571,7 +614,7 @@ class WeatherOverlay {
     }
 
     /**
-     * Render real radar tiles from RainViewer
+     * Render real radar tiles from RainViewer (with viewport culling)
      */
     renderRadarTiles(ctx, lat, lon, mapSettings) {
         const { range, width, height } = mapSettings;
@@ -592,6 +635,8 @@ class WeatherOverlay {
 
         ctx.globalAlpha = 0.6;
 
+        // Progressive loading: prioritize tiles by distance from center
+        const tilePriorities = [];
         for (let dx = -tilesNeeded; dx <= tilesNeeded; dx++) {
             for (let dy = -tilesNeeded; dy <= tilesNeeded; dy++) {
                 const tileX = centerTile.x + dx;
@@ -606,19 +651,35 @@ class WeatherOverlay {
                 const tileCenterLon = (tileLon + tileLon2) / 2;
 
                 const dist = this.core.calculateDistance(lat, lon, tileCenterLat, tileCenterLon);
-                if (dist > range * 1.5) continue;
+
+                // Aggressive viewport culling: skip tiles outside 1.2x range (was 1.5x)
+                if (dist > range * 1.2) continue;
 
                 const brg = this.core.calculateBearing(lat, lon, tileCenterLat, tileCenterLon);
                 const angle = this.core.toRad(brg);
                 const screenX = cx + Math.sin(angle) * dist * pixelsPerNm;
                 const screenY = cy - Math.cos(angle) * dist * pixelsPerNm;
 
-                const tilePath = `${frame.path}/${this.radarTileSize}/${zoom}/${tileX}/${tileY}/2/1_1.png`;
-                const tileUrl = `${this.radarHost}${tilePath}`;
+                // Viewport culling: skip tiles outside visible area (with margin)
+                const margin = tilePixelSize * 0.5;
+                if (screenX + tilePixelSize + margin < 0 || screenX - tilePixelSize - margin > width ||
+                    screenY + tilePixelSize + margin < 0 || screenY - tilePixelSize - margin > height) {
+                    continue;
+                }
 
-                this.loadAndDrawTile(ctx, tileUrl, screenX - tilePixelSize / 2, screenY - tilePixelSize / 2, tilePixelSize);
+                tilePriorities.push({ tileX, tileY, dist, screenX, screenY });
             }
         }
+
+        // Sort by distance (closest first) for progressive loading
+        tilePriorities.sort((a, b) => a.dist - b.dist);
+
+        // Render sorted tiles
+        tilePriorities.forEach(({ tileX, tileY, screenX, screenY }) => {
+            const tilePath = `${frame.path}/${this.radarTileSize}/${zoom}/${tileX}/${tileY}/2/1_1.png`;
+            const tileUrl = `${this.radarHost}${tilePath}`;
+            this.loadAndDrawTile(ctx, tileUrl, screenX - tilePixelSize / 2, screenY - tilePixelSize / 2, tilePixelSize);
+        });
 
         ctx.globalAlpha = 1.0;
     }
@@ -1175,7 +1236,7 @@ class WeatherOverlay {
     }
 
     /**
-     * Render METAR dots using real data when available — with glow for severe stations
+     * Render METAR dots using real data when available — with glow for severe stations (cached)
      */
     renderMetarDotsReal(ctx, lat, lon, mapSettings) {
         const { range, width, height, orientation, heading } = mapSettings;
@@ -1188,6 +1249,41 @@ class WeatherOverlay {
             ? Array.from(this.metarData.values())
             : this.generateSimulatedMetar(lat, lon, range);
 
+        // Check if we need to regenerate cache
+        if (this.needsMetarCacheRegen(lat, lon, range, width, height)) {
+            // Create off-screen canvas for caching
+            if (!this.metarCache || this.metarCache.width !== width || this.metarCache.height !== height) {
+                this.metarCache = document.createElement('canvas');
+                this.metarCache.width = width;
+                this.metarCache.height = height;
+            }
+
+            const cacheCtx = this.metarCache.getContext('2d');
+            cacheCtx.clearRect(0, 0, width, height);
+
+            // Render to cache
+            this._renderMetarLayer(cacheCtx, stations, lat, lon, cx, cy, pixelsPerNm, rotation, range, width, height);
+
+            // Update cache state
+            this.lastCacheState.lat = lat;
+            this.lastCacheState.lon = lon;
+            this.lastCacheState.range = range;
+            this.lastCacheState.width = width;
+            this.lastCacheState.height = height;
+            this.lastCacheState.metarCount = this.metarData.size;
+            this.metarCacheValid = true;
+        }
+
+        // Draw cached layer (fast!)
+        if (this.metarCache) {
+            ctx.drawImage(this.metarCache, 0, 0);
+        }
+    }
+
+    /**
+     * Internal: Render METAR layer to given context
+     */
+    _renderMetarLayer(ctx, stations, lat, lon, cx, cy, pixelsPerNm, rotation, range, width, height) {
         // Store screen positions for tap detection
         this._metarScreenPositions = [];
 
@@ -1264,7 +1360,7 @@ class WeatherOverlay {
     }
 
     /**
-     * Render TAF markers at airports with forecast data
+     * Render TAF markers at airports with forecast data (cached)
      */
     renderTaf(ctx, lat, lon, mapSettings) {
         const { range, width, height, orientation, heading } = mapSettings;
@@ -1279,6 +1375,37 @@ class WeatherOverlay {
             : [];
 
         if (tafStations.length === 0) return;
+
+        // Check if we need to regenerate cache
+        if (this.needsTafCacheRegen(lat, lon, range, width, height)) {
+            // Create off-screen canvas for caching
+            if (!this.tafCache || this.tafCache.width !== width || this.tafCache.height !== height) {
+                this.tafCache = document.createElement('canvas');
+                this.tafCache.width = width;
+                this.tafCache.height = height;
+            }
+
+            const cacheCtx = this.tafCache.getContext('2d');
+            cacheCtx.clearRect(0, 0, width, height);
+
+            // Render to cache
+            this._renderTafLayer(cacheCtx, tafStations, lat, lon, cx, cy, pixelsPerNm, rotation, range);
+
+            // Update cache state
+            this.lastCacheState.tafCount = this.tafData.size;
+            this.tafCacheValid = true;
+        }
+
+        // Draw cached layer (fast!)
+        if (this.tafCache) {
+            ctx.drawImage(this.tafCache, 0, 0);
+        }
+    }
+
+    /**
+     * Internal: Render TAF layer to given context
+     */
+    _renderTafLayer(ctx, tafStations, lat, lon, cx, cy, pixelsPerNm, rotation, range) {
 
         tafStations.forEach(taf => {
             const dist = this.core.calculateDistance(lat, lon, taf.lat, taf.lon);
@@ -1610,6 +1737,7 @@ class WeatherOverlay {
                     });
                 });
                 this.lastMetarFetch = Date.now();
+                this.metarCacheValid = false; // Invalidate cache on new data
                 GTNCore.log(`[GTN750] Loaded ${data.metars.length} METARs (parsed)`);
             }
         } catch (e) {
@@ -1685,6 +1813,7 @@ class WeatherOverlay {
                     });
                 });
                 this.lastTafFetch = Date.now();
+                this.tafCacheValid = false; // Invalidate cache on new data
                 GTNCore.log(`[GTN750] Loaded ${data.tafs.length} TAFs`);
             }
         } catch (e) {
