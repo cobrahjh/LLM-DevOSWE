@@ -207,9 +207,67 @@ class GTN750Pane extends SimGlassBase {
         this.dataFieldsManager.loadConfig();
         this.mapRenderer.start();
         this.setupCompactToggle();
+        this.restoreState();
 
         // Defer non-critical modules (500ms after initial render)
         this.deferredInit();
+
+        // Check database currency (safety-critical)
+        this.checkDatabaseCurrency();
+    }
+
+    /**
+     * Restore saved state from localStorage
+     */
+    restoreState() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('gtn750-state') || '{}');
+
+            // Restore map settings
+            if (saved.mapRange !== undefined && this.map.ranges.includes(saved.mapRange)) {
+                this.map.range = saved.mapRange;
+            }
+            if (saved.mapOrientation && ['north', 'track', 'heading'].includes(saved.mapOrientation)) {
+                this.map.orientation = saved.mapOrientation;
+            }
+
+            // Restore overlay toggles
+            if (saved.showTerrain !== undefined) this.map.showTerrain = saved.showTerrain;
+            if (saved.showTraffic !== undefined) this.map.showTraffic = saved.showTraffic;
+            if (saved.showWeather !== undefined) this.map.showWeather = saved.showWeather;
+            if (saved.showAirways !== undefined) this.map.showAirways = saved.showAirways;
+
+            // Restore last page (apply after page manager is ready)
+            if (saved.currentPage && this.pageManager) {
+                setTimeout(() => {
+                    this.pageManager.switchPage(saved.currentPage);
+                }, 100);
+            }
+
+            GTNCore.log('[GTN750] State restored from localStorage');
+        } catch (e) {
+            console.warn('[GTN750] Failed to restore state:', e.message);
+        }
+    }
+
+    /**
+     * Save current state to localStorage
+     */
+    saveState() {
+        try {
+            const state = {
+                currentPage: this.currentPage || 'map',
+                mapRange: this.map.range,
+                mapOrientation: this.map.orientation,
+                showTerrain: this.map.showTerrain,
+                showTraffic: this.map.showTraffic,
+                showWeather: this.map.showWeather,
+                showAirways: this.map.showAirways
+            };
+            localStorage.setItem('gtn750-state', JSON.stringify(state));
+        } catch (e) {
+            // Silently fail if localStorage is unavailable
+        }
     }
 
     /**
@@ -1000,6 +1058,7 @@ class GTN750Pane extends SimGlassBase {
                 onRangeChange: (range) => {
                     this.map.range = range;
                     if (this.elements.dfRange) this.elements.dfRange.textContent = range;
+                    this.saveState();
                 },
                 onPan: (offset) => { this.panOffset = offset; },
                 onDataFieldTap: (position, type) => {
@@ -1105,10 +1164,10 @@ class GTN750Pane extends SimGlassBase {
 
     handleSettingChange(key, value) {
         switch (key) {
-            case 'mapOrientation': this.map.orientation = value; break;
-            case 'showTerrain': this.map.showTerrain = value; break;
-            case 'showTraffic': this.map.showTraffic = value; break;
-            case 'showWeather': this.map.showWeather = value; break;
+            case 'mapOrientation': this.map.orientation = value; this.saveState(); break;
+            case 'showTerrain': this.map.showTerrain = value; this.saveState(); break;
+            case 'showTraffic': this.map.showTraffic = value; this.saveState(); break;
+            case 'showWeather': this.map.showWeather = value; this.saveState(); break;
             case 'nightMode': document.body.classList.toggle('night-mode', value); break;
         }
     }
@@ -1196,6 +1255,9 @@ class GTN750Pane extends SimGlassBase {
     }
 
     onPageChange(pageId) {
+        this.currentPage = pageId;
+        this.saveState();
+
         const title = this.elements.pageTitle;
         if (title) {
             const titles = {
@@ -3823,6 +3885,163 @@ class GTN750Pane extends SimGlassBase {
                 this.elements.vnavStatus.style.color = 'var(--gtn-green)';
             }
         }
+    }
+
+    /**
+     * Check navigation database currency and display warnings
+     */
+    async checkDatabaseCurrency() {
+        try {
+            const response = await fetch(`http://${location.hostname}:${this.serverPort}/api/navdb/status`);
+            if (!response.ok) {
+                // Database not available - show warning
+                this.showDatabaseWarning('DATABASE NOT AVAILABLE', 'Install navigation database', '#ff6600');
+                return;
+            }
+
+            const status = await response.json();
+            if (!status.available) {
+                this.showDatabaseWarning('DATABASE NOT AVAILABLE', 'Run: node tools/navdata/build-navdb.js', '#ff6600');
+                return;
+            }
+
+            // Parse AIRAC cycle (format: "2602" = 2026 cycle 02)
+            const cycle = status.airac_cycle;
+            const buildDate = status.build_date;
+
+            if (!cycle || cycle === 'unknown') {
+                return; // No cycle info, can't check expiry
+            }
+
+            // Extract year and cycle number
+            const year = parseInt('20' + cycle.substring(0, 2));
+            const cycleNum = parseInt(cycle.substring(2, 4));
+
+            // AIRAC cycles: 28 days each, 13 cycles per year
+            // Cycle 01 starts on third Thursday of January
+            const cycleStartDate = this.calculateAiracStart(year, cycleNum);
+            const cycleEndDate = new Date(cycleStartDate.getTime() + 28 * 24 * 60 * 60 * 1000);
+            const now = new Date();
+
+            const daysUntilExpiry = Math.floor((cycleEndDate - now) / (24 * 60 * 60 * 1000));
+
+            if (daysUntilExpiry < 0) {
+                // Expired
+                this.showDatabaseWarning(
+                    `AIRAC ${cycle} EXPIRED`,
+                    `Expired ${Math.abs(daysUntilExpiry)} days ago - Update required`,
+                    '#ff0000'
+                );
+            } else if (daysUntilExpiry <= 7) {
+                // Expiring soon
+                this.showDatabaseWarning(
+                    `AIRAC ${cycle}`,
+                    `Expires in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'}`,
+                    '#ffff00'
+                );
+            } else {
+                // Valid - show badge but no warning
+                this.showDatabaseBadge(`AIRAC ${cycle}`, `Valid for ${daysUntilExpiry} days`, '#00ff00');
+            }
+
+        } catch (e) {
+            console.warn('[GTN750] Database currency check failed:', e.message);
+        }
+    }
+
+    /**
+     * Calculate AIRAC cycle effective start date
+     * AIRAC cycles start on third Thursday of January, then every 28 days
+     */
+    calculateAiracStart(year, cycleNum) {
+        // Find third Thursday of January
+        const jan1 = new Date(year, 0, 1);
+        const dayOfWeek = jan1.getDay();
+        const daysUntilThursday = (4 - dayOfWeek + 7) % 7;
+        const firstThursday = new Date(year, 0, 1 + daysUntilThursday);
+        const thirdThursday = new Date(firstThursday.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+        // Add 28 days per cycle
+        const cycleStart = new Date(thirdThursday.getTime() + (cycleNum - 1) * 28 * 24 * 60 * 60 * 1000);
+        return cycleStart;
+    }
+
+    /**
+     * Show database warning banner
+     */
+    showDatabaseWarning(title, message, color) {
+        // Create warning banner if it doesn't exist
+        let banner = document.getElementById('db-warning-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'db-warning-banner';
+            banner.className = 'db-warning-banner';
+            banner.style.cssText = `
+                position: fixed;
+                top: 60px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 10000;
+                background: rgba(0, 0, 0, 0.95);
+                border: 2px solid ${color};
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-family: Consolas, monospace;
+                font-size: 11px;
+                color: ${color};
+                box-shadow: 0 0 12px ${color}88;
+                animation: pulse 2s infinite;
+            `;
+            document.body.appendChild(banner);
+
+            // Add pulse animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.6; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        banner.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 2px;">${title}</div>
+            <div style="font-size: 9px; opacity: 0.8;">${message}</div>
+        `;
+        banner.style.borderColor = color;
+        banner.style.color = color;
+        banner.style.boxShadow = `0 0 12px ${color}88`;
+    }
+
+    /**
+     * Show database status badge (non-intrusive)
+     */
+    showDatabaseBadge(title, message, color) {
+        // Add small badge to PROC/WPT pages instead of banner
+        const badge = document.createElement('div');
+        badge.id = 'db-status-badge';
+        badge.className = 'db-status-badge';
+        badge.style.cssText = `
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid ${color};
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-family: Consolas, monospace;
+            font-size: 8px;
+            color: ${color};
+            opacity: 0.7;
+        `;
+        badge.textContent = title;
+        badge.title = message;
+
+        const existing = document.getElementById('db-status-badge');
+        if (existing) existing.remove();
+        document.body.appendChild(badge);
     }
 
     destroy() {
