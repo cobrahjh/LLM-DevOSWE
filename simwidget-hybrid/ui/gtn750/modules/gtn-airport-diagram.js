@@ -717,11 +717,13 @@ class GTNAirportDiagram {
 
         if (!id1 || !id2) return;
 
-        const fontSize = Math.max(12, 20 * this.viewport.scale);
+        const fontSize = Math.max(14, 24 * this.viewport.scale);
         ctx.font = `bold ${fontSize}px Arial`;
-        ctx.fillStyle = this.colors.runwayMarking;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+
+        // Use enhanced visibility on satellite imagery
+        const useSatellite = this.satelliteEnabled || this.autoSatelliteMode;
 
         // Helper function to normalize angle to keep text upright
         const normalizeAngle = (angle) => {
@@ -733,6 +735,44 @@ class GTNAirportDiagram {
                 normalized += Math.PI;
             }
             return normalized;
+        };
+
+        // Helper to draw text with background for visibility
+        const drawRunwayNumber = (text, x, y) => {
+            const metrics = ctx.measureText(text);
+            const padding = fontSize * 0.3;
+            const width = metrics.width + padding * 2;
+            const height = fontSize + padding * 2;
+
+            if (useSatellite) {
+                // High contrast background for satellite imagery
+                // Dark semi-transparent background
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(-width / 2, -height / 2, width, height);
+
+                // Bright yellow border
+                ctx.strokeStyle = '#FFFF00';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-width / 2, -height / 2, width, height);
+
+                // White text with shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(text, 0, 0);
+
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+            } else {
+                // Standard rendering on diagram
+                ctx.fillStyle = this.colors.runwayMarking;
+                ctx.fillText(text, 0, 0);
+            }
         };
 
         // In track-up mode, compensate for diagram rotation
@@ -750,13 +790,13 @@ class GTNAirportDiagram {
         ctx.save();
         ctx.translate(p1.x, p1.y);
         ctx.rotate(normalizeAngle(textAngle1));
-        ctx.fillText(id1, 0, 0);
+        drawRunwayNumber(id1, 0, 0);
         ctx.restore();
 
         ctx.save();
         ctx.translate(p2.x, p2.y);
         ctx.rotate(normalizeAngle(textAngle2));
-        ctx.fillText(id2, 0, 0);
+        drawRunwayNumber(id2, 0, 0);
         ctx.restore();
     }
 
