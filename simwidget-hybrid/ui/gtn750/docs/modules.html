@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Reference - GTN750 Documentation</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GTN750 Module Reference</h1>
+            <p class="subtitle">Technical documentation for all GTN750 modules</p>
+            <a href="index.html">← Back to Index</a>
+        </header>
+
+        <nav class="doc-nav">
+            <a href="#core">GTNCore</a>
+            <a href="#data-fields">Data Fields</a>
+            <a href="#cdi">CDI</a>
+            <a href="#flight-plan">Flight Plan</a>
+            <a href="#map-renderer">Map Renderer</a>
+            <a href="#airport-diagram">Airport Diagram</a>
+            <a href="#data-handler">Data Handler</a>
+            <a href="#simvar-handler">SimVar Handler</a>
+            <a href="#orchestrator">Orchestrator</a>
+        </nav>
+
+        <!-- GTNCore -->
+        <section id="core">
+            <h2>GTNCore</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-core.js</span>
+                <span class="lines">~226 lines</span>
+                <span class="version">v1.2.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>Core utility module providing math functions, geo calculations, and formatting helpers used across all GTN750 components.</p>
+
+            <h3>Key Methods</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Parameters</th>
+                        <th>Returns</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>haversine(lat1, lon1, lat2, lon2)</code></td>
+                        <td>Four coordinates</td>
+                        <td>number (nm)</td>
+                        <td>Calculate great circle distance</td>
+                    </tr>
+                    <tr>
+                        <td><code>calculateBearing(lat1, lon1, lat2, lon2)</code></td>
+                        <td>Four coordinates</td>
+                        <td>number (degrees)</td>
+                        <td>Calculate initial bearing</td>
+                    </tr>
+                    <tr>
+                        <td><code>formatLatLon(lat, lon)</code></td>
+                        <td>Coordinates</td>
+                        <td>string</td>
+                        <td>Format as N/S E/W string</td>
+                    </tr>
+                    <tr>
+                        <td><code>formatAltitude(feet)</code></td>
+                        <td>number</td>
+                        <td>string</td>
+                        <td>Format with comma separator</td>
+                    </tr>
+                    <tr>
+                        <td><code>formatFrequency(freq)</code></td>
+                        <td>number (MHz)</td>
+                        <td>string</td>
+                        <td>Format COM/NAV frequency</td>
+                    </tr>
+                    <tr>
+                        <td><code>toRad(degrees)</code></td>
+                        <td>number</td>
+                        <td>number</td>
+                        <td>Convert degrees to radians</td>
+                    </tr>
+                    <tr>
+                        <td><code>toDeg(radians)</code></td>
+                        <td>number</td>
+                        <td>number</td>
+                        <td>Convert radians to degrees</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Static Logging</h3>
+            <pre><code>GTNCore.log(message, source = 'GTN750')
+// Centralized logging with timestamp and source</code></pre>
+
+            <h3>Usage Example</h3>
+            <pre><code>const core = new GTNCore();
+const dist = core.haversine(47.4502, -122.3088, 40.6413, -73.7781);
+// Returns: ~2421 nm (Seattle to New York)
+
+const bearing = core.calculateBearing(47.4502, -122.3088, 40.6413, -73.7781);
+// Returns: ~80° (ENE)</code></pre>
+        </section>
+
+        <!-- Data Fields -->
+        <section id="data-fields">
+            <h2>GTNDataFields</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-data-fields.js</span>
+                <span class="lines">~179 lines</span>
+                <span class="version">v1.1.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>Manages the 4 corner data fields with 12 customizable field types (BRG, DIS, DTK, TRK, GS, ALT, VSI, ETE, ETA, FUEL, TEMP, WIND).</p>
+
+            <h3>Available Fields</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Field Code</th>
+                        <th>Label</th>
+                        <th>Format</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>BRG</code></td>
+                        <td>Bearing</td>
+                        <td>XXX°</td>
+                        <td>Calculated to active waypoint</td>
+                    </tr>
+                    <tr>
+                        <td><code>DIS</code></td>
+                        <td>Distance</td>
+                        <td>XX.Xnm</td>
+                        <td>Great circle distance</td>
+                    </tr>
+                    <tr>
+                        <td><code>DTK</code></td>
+                        <td>Desired Track</td>
+                        <td>XXX°</td>
+                        <td>Flight plan leg course</td>
+                    </tr>
+                    <tr>
+                        <td><code>TRK</code></td>
+                        <td>Track</td>
+                        <td>XXX°</td>
+                        <td>Ground track from SimConnect</td>
+                    </tr>
+                    <tr>
+                        <td><code>GS</code></td>
+                        <td>Ground Speed</td>
+                        <td>XXXkt</td>
+                        <td>SimConnect ground speed</td>
+                    </tr>
+                    <tr>
+                        <td><code>ALT</code></td>
+                        <td>Altitude</td>
+                        <td>X,XXXft</td>
+                        <td>Indicated altitude MSL</td>
+                    </tr>
+                    <tr>
+                        <td><code>VSI</code></td>
+                        <td>Vertical Speed</td>
+                        <td>±XXXfpm</td>
+                        <td>Rate of climb/descent</td>
+                    </tr>
+                    <tr>
+                        <td><code>ETE</code></td>
+                        <td>Est. Time Enroute</td>
+                        <td>HH:MM</td>
+                        <td>Time to active waypoint</td>
+                    </tr>
+                    <tr>
+                        <td><code>ETA</code></td>
+                        <td>Est. Time Arrival</td>
+                        <td>HH:MMZ</td>
+                        <td>Arrival time at waypoint</td>
+                    </tr>
+                    <tr>
+                        <td><code>FUEL</code></td>
+                        <td>Fuel Remaining</td>
+                        <td>XX.Xgal</td>
+                        <td>Total fuel quantity</td>
+                    </tr>
+                    <tr>
+                        <td><code>TEMP</code></td>
+                        <td>Outside Air Temp</td>
+                        <td>XX°C</td>
+                        <td>Ambient temperature</td>
+                    </tr>
+                    <tr>
+                        <td><code>WIND</code></td>
+                        <td>Wind</td>
+                        <td>XXX/XX</td>
+                        <td>Direction/Speed in knots</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Methods</h3>
+            <pre><code>setField(corner, fieldType)    // Set field type (0-3, 'BRG'-'WIND')
+getFieldValue(fieldType, data) // Get formatted value
+render(ctx, data)               // Draw all 4 fields on canvas</code></pre>
+        </section>
+
+        <!-- CDI -->
+        <section id="cdi">
+            <h2>GTNCDI</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-cdi.js</span>
+                <span class="lines">~401 lines</span>
+                <span class="version">v1.3.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>Course Deviation Indicator with GPS/NAV1/NAV2 modes, OBS (Omni-Bearing Selector), holding pattern entry, and CDI scaling.</p>
+
+            <h3>CDI Sources</h3>
+            <ul>
+                <li><strong>GPS</strong> - Track to active waypoint (default)</li>
+                <li><strong>NAV1</strong> - VOR/ILS navigation (requires SimConnect)</li>
+                <li><strong>NAV2</strong> - Secondary VOR navigation</li>
+            </ul>
+
+            <h3>CDI Scaling Modes</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Mode</th>
+                        <th>Full Scale Deflection</th>
+                        <th>Activation Distance</th>
+                        <th>Color</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ENR</strong> (Enroute)</td>
+                        <td>±5.0 nm</td>
+                        <td>&gt;30nm from destination</td>
+                        <td>Green</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TERM</strong> (Terminal)</td>
+                        <td>±1.0 nm</td>
+                        <td>Within 30nm of destination</td>
+                        <td>Cyan</td>
+                    </tr>
+                    <tr>
+                        <td><strong>APR</strong> (Approach)</td>
+                        <td>±0.3 nm</td>
+                        <td>Within 2nm with approach loaded</td>
+                        <td>Magenta (pulsing)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Key Methods</h3>
+            <pre><code>setCdiSource(source)           // 'GPS', 'NAV1', 'NAV2'
+toggleCdiSource()               // Cycle through sources
+setObs(degrees)                 // Set OBS course (NAV mode)
+getCdiDeflection(data, fplan)   // Calculate needle position
+getCdiScaling(distToDestNm)     // Determine ENR/TERM/APR mode
+render(ctx, data, width, height) // Draw CDI display</code></pre>
+
+            <h3>OBS Mode</h3>
+            <p>In NAV1/NAV2 modes, OBS allows manual course selection:</p>
+            <pre><code>cdi.setCdiSource('NAV1');
+cdi.setObs(270);  // Track 270° TO the VOR</code></pre>
+        </section>
+
+        <!-- Flight Plan -->
+        <section id="flight-plan">
+            <h2>GTNFlightPlan</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-flight-plan.js</span>
+                <span class="lines">~529 lines</span>
+                <span class="version">v2.1.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>Flight plan management with waypoint sequencing, Direct-To navigation, import/export (.fpl, .pln), and route optimization.</p>
+
+            <h3>Core Features</h3>
+            <ul>
+                <li>Add/remove/reorder waypoints</li>
+                <li>Automatic waypoint sequencing (advance when within 0.3nm)</li>
+                <li>Direct-To activation (shortcut to any waypoint)</li>
+                <li>Flight plan import/export (JSON .fpl, LittleNavMap .pln)</li>
+                <li>Route validation and distance calculations</li>
+                <li>BroadcastChannel sync with other widgets</li>
+            </ul>
+
+            <h3>Key Methods</h3>
+            <pre><code>addWaypoint(waypoint)           // Add to end of route
+insertWaypoint(waypoint, index) // Insert at position
+removeWaypoint(index)           // Remove waypoint
+activateDirectTo(waypoint)      // Navigate direct
+updateSequencing(aircraft)      // Auto-advance waypoints
+getActiveWaypoint()             // Current target waypoint
+getTotalDistance()              // Sum all leg distances
+exportToJson()                  // Export .fpl file
+importFromJson(json)            // Load .fpl file
+importFromPln(xml)              // Load LittleNavMap .pln</code></pre>
+
+            <h3>Waypoint Object Structure</h3>
+            <pre><code>{
+    ident: 'KSEA',           // ICAO identifier
+    lat: 47.4502,            // Latitude
+    lng: -122.3088,          // Longitude (note: 'lng' not 'lon')
+    alt: 433,                // Altitude in feet (optional)
+    type: 'airport',         // 'airport', 'vor', 'ndb', 'fix', 'user'
+    name: 'Seattle-Tacoma',  // Full name (optional)
+    freq: 118.7              // Frequency (VOR/NDB only)
+}</code></pre>
+
+            <h3>Sequencing Logic</h3>
+            <pre><code>// Auto-advance when within 0.3nm of active waypoint
+if (distanceToActiveWpt < 0.3) {
+    activeWaypointIndex++;
+    broadcastRouteUpdate();
+}</code></pre>
+        </section>
+
+        <!-- Map Renderer -->
+        <section id="map-renderer">
+            <h2>GTNMapRenderer</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-map-renderer.js</span>
+                <span class="lines">~799 lines</span>
+                <span class="version">v2.0.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>Canvas-based map renderer with 3-layer caching, multiple orientations, and overlay support. Handles all visual map elements.</p>
+
+            <h3>Performance Features</h3>
+            <ul>
+                <li><strong>3-Layer Caching</strong> - Static (range rings), Route (flight plan), Dynamic (aircraft)</li>
+                <li><strong>Smart Invalidation</strong> - Only regenerate changed layers</li>
+                <li><strong>Range-Based LOD</strong> - Detail level adjusts with zoom</li>
+                <li><strong>~60% faster</strong> rendering vs. full redraw every frame</li>
+            </ul>
+
+            <h3>Map Orientations</h3>
+            <table class="api-table">
+                <tbody>
+                    <tr>
+                        <td><strong>North Up</strong></td>
+                        <td>Fixed north orientation (traditional)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Track Up</strong></td>
+                        <td>Rotates to ground track (heading-stabilized)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Heading Up</strong></td>
+                        <td>Rotates to magnetic heading</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Zoom Levels</h3>
+            <pre><code>ranges = [2, 5, 10, 25, 50, 100, 200]  // nm
+// Cycle with +/- buttons or keyboard shortcuts</code></pre>
+
+            <h3>Rendered Elements</h3>
+            <ul>
+                <li>Range rings with distance labels</li>
+                <li>Compass rose (N/S/E/W markers)</li>
+                <li>Flight plan route with legs and waypoints</li>
+                <li>Active waypoint highlight (magenta circle)</li>
+                <li>Aircraft symbol (white chevron)</li>
+                <li>Desired track line (magenta)</li>
+                <li>Airport/navaid symbols</li>
+                <li>Terrain/traffic/weather overlays (if enabled)</li>
+            </ul>
+
+            <h3>Key Methods</h3>
+            <pre><code>setRange(nm)                    // Set zoom level
+setOrientation(mode)            // 'north', 'track', 'heading'
+invalidateCache()               // Force full redraw
+renderMap(ctx, state)           // Main render loop
+latLonToCanvas(lat, lon, state) // Convert geo to screen coords</code></pre>
+        </section>
+
+        <!-- Airport Diagram -->
+        <section id="airport-diagram">
+            <h2>GTNAirportDiagram</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-airport-diagram.js</span>
+                <span class="lines">~600 lines</span>
+                <span class="version">v1.4.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>SafeTaxi airport surface diagram renderer with real-time aircraft positioning, runway/taxiway layout, and parking spot identification.</p>
+
+            <h3>Data Sources</h3>
+            <ul>
+                <li><strong>SimConnect Facility API</strong> - Runway/taxiway geometry from MSFS</li>
+                <li><strong>NavDB SQLite</strong> - Airport metadata and ILS frequencies</li>
+                <li><strong>Real-time Position</strong> - Aircraft lat/lon for ownship display</li>
+            </ul>
+
+            <h3>Rendered Features</h3>
+            <ul>
+                <li>Runways with numbers and dimensions</li>
+                <li>Taxiways with labels (A, B, C...)</li>
+                <li>Apron/parking areas</li>
+                <li>Buildings and obstacles</li>
+                <li>Ownship aircraft symbol</li>
+                <li>Ground track vector</li>
+            </ul>
+
+            <h3>Color Coding</h3>
+            <table class="api-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Runways</strong></td>
+                        <td>Dark gray (#333)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Taxiways</strong></td>
+                        <td>Medium gray (#555)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Grass/Apron</strong></td>
+                        <td>Green (#2a4a2a)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ownship</strong></td>
+                        <td>Cyan (#00ffff)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Auto-Load Feature</h3>
+            <pre><code>// Automatically loads diagram when:
+// 1. On ground (AGL < 50ft)
+// 2. Within 2nm of airport
+// 3. Diagram not already loaded</code></pre>
+        </section>
+
+        <!-- Data Handler -->
+        <section id="data-handler">
+            <h2>GTNDataHandler</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-data-handler.js</span>
+                <span class="lines">~247 lines</span>
+                <span class="version">v1.2.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>WebSocket client for browser mode. Receives flight data, traffic, and manages radio frequency swapping via backend API.</p>
+
+            <h3>WebSocket Protocol</h3>
+            <pre><code>// Connect to backend
+ws://localhost:8080
+
+// Received data structure
+{
+    type: 'flightData',
+    data: {
+        latitude, longitude, altitude, heading,
+        groundSpeed, verticalSpeed, indicated,
+        fuelTotal, fuelFlow, ...
+    }
+}
+
+{
+    type: 'traffic',
+    aircraft: [{id, lat, lon, alt, heading, callsign}, ...]
+}</code></pre>
+
+            <h3>Radio Frequency API</h3>
+            <pre><code>// Swap COM1 standby to active
+POST /api/radio/com1/swap
+
+// Set NAV1 standby frequency
+POST /api/radio/nav1/set-standby
+Body: { frequency: 110.50 }</code></pre>
+
+            <h3>Key Methods</h3>
+            <pre><code>connect()                       // Open WebSocket
+onFlightData(callback)          // Register data handler
+onTraffic(callback)             // Register traffic handler
+swapFrequency(radio)            // Swap active/standby
+setStandbyFreq(radio, freq)     // Set standby frequency</code></pre>
+        </section>
+
+        <!-- SimVar Handler -->
+        <section id="simvar-handler">
+            <h2>GTNSimVarHandler</h2>
+            <div class="module-meta">
+                <span class="file">modules/gtn-simvar-handler.js</span>
+                <span class="lines">~258 lines</span>
+                <span class="version">v1.1.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>Native MSFS panel mode using Coherent GT SimVar API. Direct access to flight simulator variables without WebSocket overhead.</p>
+
+            <h3>SimVar Access</h3>
+            <pre><code>// Read SimVars directly from MSFS
+Coherent.call('GET_SIMVAR_VALUE', 'PLANE LATITUDE', 'degrees')
+Coherent.call('GET_SIMVAR_VALUE', 'PLANE LONGITUDE', 'degrees')
+Coherent.call('GET_SIMVAR_VALUE', 'INDICATED ALTITUDE', 'feet')</code></pre>
+
+            <h3>Registered SimVars (106 total)</h3>
+            <ul>
+                <li>Position: Latitude, Longitude, Altitude (Indicated/True/AGL)</li>
+                <li>Motion: Ground Speed, Vertical Speed, Heading (Magnetic/True)</li>
+                <li>Flight: Pitch, Bank, Track</li>
+                <li>Navigation: GPS WP Distance/Bearing/ETE/DTK/XTRK</li>
+                <li>Radio: COM1/2, NAV1/2, Transponder, ADF</li>
+                <li>Systems: Fuel, Engine RPM, Flaps, Gear</li>
+                <li>Environment: Wind, OAT, QNH, Visibility</li>
+            </ul>
+
+            <h3>Key Methods</h3>
+            <pre><code>initialize()                    // Register all SimVars
+update()                        // Fetch latest values (30Hz)
+getData()                       // Get current snapshot
+setFrequency(radio, freq)       // Set radio via SimConnect event</code></pre>
+
+            <h3>Auto-Detection</h3>
+            <pre><code>// Automatically uses SimVar handler when:
+if (typeof Coherent !== 'undefined') {
+    handler = new GTNSimVarHandler();
+} else {
+    handler = new GTNDataHandler();  // WebSocket fallback
+}</code></pre>
+        </section>
+
+        <!-- Orchestrator -->
+        <section id="orchestrator">
+            <h2>GTN750Pane (Orchestrator)</h2>
+            <div class="module-meta">
+                <span class="file">pane.js</span>
+                <span class="lines">~1,800 lines</span>
+                <span class="version">v2.4.0</span>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>Main orchestrator that wires all modules together, manages lifecycle, handles user input, and coordinates between modules.</p>
+
+            <h3>Responsibilities</h3>
+            <ul>
+                <li>Module instantiation and dependency injection</li>
+                <li>DOM element caching and distribution</li>
+                <li>Animation frame loop coordination</li>
+                <li>User input routing (mouse, keyboard, touch)</li>
+                <li>State persistence (localStorage)</li>
+                <li>Page management and soft key routing</li>
+                <li>SafeChannel (BroadcastChannel) integration</li>
+                <li>Cleanup and resource management</li>
+            </ul>
+
+            <h3>Module Wiring Pattern</h3>
+            <pre><code>// 1. Create modules with dependencies
+this.core = new GTNCore();
+this.flightPlan = new GTNFlightPlan({ core: this.core });
+this.cdi = new GTNCDI({ core: this.core, flightPlan: this.flightPlan });
+
+// 2. Wire DOM elements
+this.wireModuleElements();
+
+// 3. Start update loop
+this.startAnimationLoop();</code></pre>
+
+            <h3>Lifecycle Hooks</h3>
+            <pre><code>constructor()                   // Initialize modules
+init()                          // Setup DOM, start loops
+destroy()                       // Cleanup timers, listeners
+restoreState()                  // Load from localStorage
+saveState()                     // Persist settings</code></pre>
+
+            <h3>Keyboard Shortcuts</h3>
+            <p>Built-in keyboard navigation (added v2.4.0):</p>
+            <ul>
+                <li><kbd>M/F/P/N/T/W</kbd> - Switch pages</li>
+                <li><kbd>Ctrl+S/L/D</kbd> - Save/Load/Direct-To</li>
+                <li><kbd>+/-</kbd> - Zoom in/out</li>
+                <li><kbd>C</kbd> - Center map</li>
+                <li><kbd>Space</kbd> - Toggle CDI source</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p><a href="index.html">← Back to Documentation Index</a> | <a href="api-reference.html">API Reference</a></p>
+        </footer>
+    </div>
+</body>
+</html>
