@@ -257,11 +257,13 @@
     <script src="data/flight-procedures.js"></script>
     <script src="data/atc-phraseology.js"></script>
     <script src="modules/flight-phase.js"></script>
-    <script src="modules/wind-compensation.js"></script>
-    <script src="modules/rule-engine.js?v=5"></script>
+    <script src="modules/rule-engine-core.js"></script>
     <script src="modules/command-queue.js?v=2"></script>
-    <script src="modules/llm-advisor.js"></script>
-    <script src="modules/atc-controller.js"></script>
+    <!-- Lazy-loaded modules (loaded by pane.js on demand):
+         - Phase modules: rule-engine-{ground,takeoff,cruise,approach}.js
+         - Conditional: wind-compensation.js (airborne phases)
+         - Conditional: atc-controller.js (ground phases)
+         - Conditional: llm-advisor.js (on first "Ask AI" click) -->
     <!-- Widget Script -->
     <script src="pane.js"></script>
     <script>

@@ -57,10 +57,15 @@ class AiAutopilotPane extends SimGlassBase {
             onPhaseChange: (newPhase, oldPhase) => this._onPhaseChange(newPhase, oldPhase)
         });
 
-        this.ruleEngine = new RuleEngine({
-            profile: this.profile,
-            commandQueue: this.commandQueue
-        });
+        // Phase-based lazy loading (Feb 2026 refactoring)
+        this._phaseEngines = {
+            ground: null,      // RuleEngineGround (PREFLIGHT, TAXI)
+            takeoff: null,     // RuleEngineTakeoff (TAKEOFF, DEPARTURE)
+            cruise: null,      // RuleEngineCruise (CLIMB, CRUISE)
+            approach: null     // RuleEngineApproach (DESCENT, APPROACH, LANDING)
+        };
+        this.ruleEngine = null;  // Current active phase engine
+        this._loadedPhaseModules = new Set();
 
         this.llmAdvisor = new LLMAdvisor({
             onAdvisory: (adv) => this._onAdvisory(adv),
@@ -163,6 +168,103 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Initial render
         this._render();
+
+        // Load initial phase module (ground operations)
+        this._loadPhaseModule('PREFLIGHT').catch(err => {
+            console.error('Failed to load initial phase module:', err);
+        });
+    }
+
+    // ── Lazy Loading ──────────────────────────────────────────
+
+    /**
+     * Load phase-specific rule engine module on demand
+     * @param {string} phase - Flight phase (PREFLIGHT, TAXI, TAKEOFF, etc.)
+     */
+    async _loadPhaseModule(phase) {
+        const phaseMap = {
+            'PREFLIGHT': 'ground',
+            'TAXI': 'ground',
+            'TAKEOFF': 'takeoff',
+            'DEPARTURE': 'takeoff',
+            'CLIMB': 'cruise',
+            'CRUISE': 'cruise',
+            'DESCENT': 'approach',
+            'APPROACH': 'approach',
+            'LANDING': 'approach'
+        };
+
+        const moduleKey = phaseMap[phase];
+        if (!moduleKey) {
+            console.warn(`Unknown phase: ${phase}`);
+            return;
+        }
+
+        // Already loaded?
+        if (this._phaseEngines[moduleKey]) {
+            this.ruleEngine = this._phaseEngines[moduleKey];
+            return;
+        }
+
+        const moduleFiles = {
+            ground: 'modules/rule-engine-ground.js',
+            takeoff: 'modules/rule-engine-takeoff.js',
+            cruise: 'modules/rule-engine-cruise.js',
+            approach: 'modules/rule-engine-approach.js'
+        };
+
+        // Load module script
+        try {
+            await this._loadScript(moduleFiles[moduleKey]);
+            this._loadedPhaseModules.add(moduleKey);
+        } catch (err) {
+            console.error(`Failed to load ${moduleKey} module:`, err);
+            return;
+        }
+
+        // Instantiate phase engine
+        const classes = {
+            ground: window.RuleEngineGround,
+            takeoff: window.RuleEngineTakeoff,
+            cruise: window.RuleEngineCruise,
+            approach: window.RuleEngineApproach
+        };
+
+        const EngineClass = classes[moduleKey];
+        if (!EngineClass) {
+            console.error(`${moduleKey} class not found after loading`);
+            return;
+        }
+
+        this._phaseEngines[moduleKey] = new EngineClass({
+            profile: this.profile,
+            commandQueue: this.commandQueue,
+            tuningGetter: () => this._getTakeoffTuning?.() || {},
+            holdsGetter: () => this._getTakeoffHolds?.() || {}
+        });
+
+        // Set as current engine
+        this.ruleEngine = this._phaseEngines[moduleKey];
+
+        // Transfer state from core (if any)
+        if (this.atcController) {
+            this.ruleEngine.setATCController(this.atcController);
+        }
+
+        console.log(`✓ Loaded ${moduleKey} module for ${phase} phase`);
+    }
+
+    /**
+     * Dynamically load a script
+     */
+    _loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
     }
 
     // ── DOM Cache ──────────────────────────────────────────
@@ -1952,7 +2054,10 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
     // ── Module Callbacks ───────────────────────────────────
 
-    _onPhaseChange(newPhase, oldPhase) {
+    async _onPhaseChange(newPhase, oldPhase) {
+        // Load phase-specific module
+        await this._loadPhaseModule(newPhase);
+        
         this._dbg('cmd', `Phase: <span class="dim">${this._esc(oldPhase)}</span> <span class="dim">&rarr;</span> <span class="val">${this._esc(newPhase)}</span>`);
         // Sync cruise alt to rule engine
         this.ruleEngine.setTargetCruiseAlt(this.flightPhase.targetCruiseAlt);

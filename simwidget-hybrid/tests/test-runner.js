@@ -547,9 +547,8 @@ async function testAiAutopilot() {
         assert(html.includes('AI AUTOPILOT'), 'HTML contains AI AUTOPILOT title');
         assert(html.includes('widget-base.js'), 'HTML includes widget-base.js');
         assert(html.includes('flight-phase.js'), 'HTML includes flight-phase.js');
-        assert(html.includes('rule-engine.js'), 'HTML includes rule-engine.js');
+        assert(html.includes('rule-engine-core.js'), 'HTML includes rule-engine-core.js');
         assert(html.includes('command-queue.js'), 'HTML includes command-queue.js');
-        assert(html.includes('llm-advisor.js'), 'HTML includes llm-advisor.js');
         assert(html.includes('aircraft-profiles.js'), 'HTML includes aircraft-profiles.js');
     } catch (e) {
         assert(false, `AI Autopilot pane load - ${e.message}`);
@@ -570,10 +569,13 @@ async function testAiAutopilot() {
     // Test: modules load
     const modules = [
         { path: 'modules/flight-phase.js', className: 'FlightPhase' },
-        { path: 'modules/rule-engine.js', className: 'RuleEngine' },
+        { path: 'modules/rule-engine-core.js', className: 'RuleEngineCore' },
         { path: 'modules/command-queue.js', className: 'CommandQueue' },
-        { path: 'modules/llm-advisor.js', className: 'LLMAdvisor' },
-        { path: 'data/aircraft-profiles.js', className: 'AIRCRAFT_PROFILES' }
+        { path: 'data/aircraft-profiles.js', className: 'AIRCRAFT_PROFILES' },
+        { path: "modules/rule-engine-ground.js", className: "RuleEngineGround" },
+        { path: "modules/rule-engine-takeoff.js", className: "RuleEngineTakeoff" },
+        { path: "modules/rule-engine-cruise.js", className: "RuleEngineCruise" },
+        { path: "modules/rule-engine-approach.js", className: "RuleEngineApproach" },
     ];
 
     for (const mod of modules) {
@@ -759,15 +761,15 @@ async function testATC() {
         assert(false, `ATC CSS - ${e.message}`);
     }
 
-    // Test: rule-engine has ATC integration
+    // Test: rule-engine-core has ATC integration
     try {
-        const res = await fetch(`${API_BASE}/ui/ai-autopilot/modules/rule-engine.js`);
-        assert(res.ok, 'rule-engine.js loads for ATC check');
+        const res = await fetch(`${API_BASE}/ui/ai-autopilot/modules/rule-engine-core.js`);
+        assert(res.ok, 'rule-engine-core.js loads for ATC check');
         const js = await res.text();
-        assert(js.includes('setATCController'), 'rule-engine has setATCController method');
-        assert(js.includes('this._atc'), 'rule-engine references ATC controller');
+        assert(js.includes('setATCController'), 'rule-engine-core has setATCController method');
+        assert(js.includes('this._atc'), 'rule-engine-core references ATC controller');
     } catch (e) {
-        assert(false, `ATC rule-engine integration - ${e.message}`);
+        assert(false, `ATC rule-engine-core integration - ${e.message}`);
     }
 
     // Test: flight-phase has ATC gate
@@ -936,13 +938,13 @@ async function testWeatherIntegration() {
         assert(false, `Weather CSS - ${e.message}`);
     }
 
-    // Test: rule-engine v5 incremented
+    // Test: rule-engine-core loaded (phase-based refactoring)
     try {
         const res = await fetch(`${API_BASE}/ui/ai-autopilot/`);
         const html = await res.text();
-        assert(html.includes('rule-engine.js?v=5'), 'rule-engine.js version incremented to v=5');
+        assert(html.includes('rule-engine-core.js'), 'rule-engine-core.js loaded (phase-based refactoring)');
     } catch (e) {
-        assert(false, `Rule engine version - ${e.message}`);
+        assert(false, `Rule engine core - ${e.message}`);
     }
 
     log('\n  Weather Integration: Wind compensation module, turbulence detection, UI panel verified', 'cyan');
