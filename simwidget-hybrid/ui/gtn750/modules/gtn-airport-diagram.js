@@ -425,7 +425,7 @@ class GTNAirportDiagram {
         const w = this.canvas.width;
         const h = this.canvas.height;
 
-        // Clear canvas
+        // Clear canvas with background
         ctx.fillStyle = this.colors.background;
         ctx.fillRect(0, 0, w, h);
 
@@ -632,9 +632,15 @@ class GTNAirportDiagram {
 
         const ctx = this.staticCache.getContext('2d');
 
-        // Clear cache
-        ctx.fillStyle = this.colors.background;
-        ctx.fillRect(0, 0, w, h);
+        // Clear cache - use transparent if satellite enabled, opaque background otherwise
+        if (this.satelliteEnabled || this.autoSatelliteMode) {
+            // Transparent background to show satellite tiles underneath
+            ctx.clearRect(0, 0, w, h);
+        } else {
+            // Opaque background (normal mode)
+            ctx.fillStyle = this.colors.background;
+            ctx.fillRect(0, 0, w, h);
+        }
 
         // Render static layers in order (back to front)
         this.renderTaxiGraph(ctx);
