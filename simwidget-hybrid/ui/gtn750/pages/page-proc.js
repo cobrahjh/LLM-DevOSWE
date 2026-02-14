@@ -316,6 +316,7 @@ class ProceduresPage {
         // Fallback: empty waypoints if navdb unavailable
         this.previewWaypoints = [];
         this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
+        this.showDetailsPanel(proc, this.previewWaypoints);
     }
 
     /**
