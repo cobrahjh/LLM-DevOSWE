@@ -67,23 +67,11 @@ class AiAutopilotPane extends SimGlassBase {
         this.ruleEngine = null;  // Current active phase engine
         this._loadedPhaseModules = new Set();
 
-        this.llmAdvisor = new LLMAdvisor({
-            onAdvisory: (adv) => this._onAdvisory(adv),
-            onLoading: (loading) => this._onAdvisoryLoading(loading)
-        });
-
-        // ATC Ground Controller
-        this.atcController = typeof ATCController !== 'undefined' ? new ATCController({
-            serverPort: this._serverPort,
-            onInstruction: (text, type) => {
-                this._dbg('cmd', `ATC: <span class="val">${this._esc(text)}</span> <span class="dim">[${type}]</span>`);
-                if (this._voice && this._ttsEnabled) this._voice.speak(text);
-            },
-            onPhaseChange: (from, to) => {
-                this._dbg('cmd', `ATC phase: <span class="dim">${this._esc(from)}</span> → <span class="val">${this._esc(to)}</span>`);
-                this._renderATCPanel();
-            }
-        }) : null;
+        // Phase 2: Conditional module lazy loading (Feb 2026)
+        this._conditionalModules = new Set();  // Track loaded conditional modules
+        this.llmAdvisor = null;         // LLMAdvisor (loaded on first "Ask AI" click)
+        this.atcController = null;      // ATCController (loaded for ground phases)
+        this._windCompLoaded = false;   // WindCompensation (loaded for airborne phases)
 
         // Nav state from GTN750 (via SafeChannel)
         this._navState = null;
@@ -200,6 +188,15 @@ class AiAutopilotPane extends SimGlassBase {
             return;
         }
 
+        // Phase 2: Load conditional modules based on phase type
+        if (moduleKey === 'ground') {
+            // Ground phases: load ATCController
+            await this._loadATCController();
+        } else {
+            // Airborne phases: load WindCompensation
+            await this._loadWindCompensation();
+        }
+
         // Already loaded?
         if (this._phaseEngines[moduleKey]) {
             this.ruleEngine = this._phaseEngines[moduleKey];
@@ -265,6 +262,94 @@ class AiAutopilotPane extends SimGlassBase {
             script.onerror = reject;
             document.head.appendChild(script);
         });
+    }
+
+    // ── Phase 2: Conditional Module Lazy Loading ──────────
+
+    /**
+     * Load ATCController module (only for ground phases)
+     * Saves ~343 lines during airborne operations
+     */
+    async _loadATCController() {
+        if (this.atcController) return;  // Already loaded
+        if (this._conditionalModules.has('atc')) return;  // Loading in progress
+
+        try {
+            await this._loadScript('modules/atc-controller.js');
+            this._conditionalModules.add('atc');
+
+            if (typeof ATCController === 'undefined') {
+                console.error('ATCController class not found after loading');
+                return;
+            }
+
+            this.atcController = new ATCController({
+                serverPort: this._serverPort,
+                onInstruction: (text, type) => {
+                    this._dbg('cmd', `ATC: <span class="val">${this._esc(text)}</span> <span class="dim">[${type}]</span>`);
+                    if (this._voice && this._ttsEnabled) this._voice.speak(text);
+                },
+                onPhaseChange: (from, to) => {
+                    this._dbg('cmd', `ATC phase: <span class="dim">${this._esc(from)}</span> → <span class="val">${this._esc(to)}</span>`);
+                    this._renderATCPanel();
+                }
+            });
+
+            // Set in current rule engine if already loaded
+            if (this.ruleEngine) {
+                this.ruleEngine.setATCController(this.atcController);
+            }
+
+            console.log('✓ Loaded ATCController module (ground phases)');
+        } catch (err) {
+            console.error('Failed to load ATCController:', err);
+        }
+    }
+
+    /**
+     * Load WindCompensation module (only for airborne phases)
+     * Saves ~189 lines during ground operations
+     */
+    async _loadWindCompensation() {
+        if (this._windCompLoaded) return;  // Already loaded
+        if (this._conditionalModules.has('wind')) return;  // Loading in progress
+
+        try {
+            await this._loadScript('modules/wind-compensation.js');
+            this._conditionalModules.add('wind');
+            this._windCompLoaded = true;
+            console.log('✓ Loaded WindCompensation module (airborne phases)');
+        } catch (err) {
+            console.error('Failed to load WindCompensation:', err);
+        }
+    }
+
+    /**
+     * Load LLMAdvisor module (only on first "Ask AI" click)
+     * Saves ~248 lines until user requests AI advisory
+     */
+    async _loadLLMAdvisor() {
+        if (this.llmAdvisor) return;  // Already loaded
+        if (this._conditionalModules.has('llm')) return;  // Loading in progress
+
+        try {
+            await this._loadScript('modules/llm-advisor.js');
+            this._conditionalModules.add('llm');
+
+            if (typeof LLMAdvisor === 'undefined') {
+                console.error('LLMAdvisor class not found after loading');
+                return;
+            }
+
+            this.llmAdvisor = new LLMAdvisor({
+                onAdvisory: (adv) => this._onAdvisory(adv),
+                onLoading: (loading) => this._onAdvisoryLoading(loading)
+            });
+
+            console.log('✓ Loaded LLMAdvisor module (on-demand)');
+        } catch (err) {
+            console.error('Failed to load LLMAdvisor:', err);
+        }
     }
 
     // ── DOM Cache ──────────────────────────────────────────
@@ -406,7 +491,12 @@ class AiAutopilotPane extends SimGlassBase {
         });
 
         // Advisory ask button
-        this.elements.advisoryAsk?.addEventListener('click', () => {
+        this.elements.advisoryAsk?.addEventListener('click', async () => {
+            // Phase 2: Lazy load LLMAdvisor on first click
+            if (!this.llmAdvisor) {
+                await this._loadLLMAdvisor();
+            }
+            if (!this.llmAdvisor) return;  // Load failed
             if (this.llmAdvisor.isRateLimited()) return;
             const phase = this.flightPhase.phase;
             this.llmAdvisor.requestAdvisory(
@@ -1983,10 +2073,12 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             const subPhase2 = serverAP?.subPhase || this.ruleEngine.getTakeoffSubPhase();
             this._trackTakeoffAttempt(data, this.flightPhase.phase, subPhase2);
 
-            // Check LLM advisory triggers
-            const trigger = this.llmAdvisor.checkTriggers(data, this.flightPhase.phase);
-            if (trigger) {
-                this.llmAdvisor.requestAdvisory(trigger, data);
+            // Check LLM advisory triggers (only if loaded)
+            if (this.llmAdvisor) {
+                const trigger = this.llmAdvisor.checkTriggers(data, this.flightPhase.phase);
+                if (trigger) {
+                    this.llmAdvisor.requestAdvisory(trigger, data);
+                }
             }
         }
 
@@ -2119,6 +2211,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     }
 
     _acceptAdvisory() {
+        if (!this.llmAdvisor) return;
         const adv = this.llmAdvisor.getCurrentAdvisory();
         if (!adv) return this._dismissAdvisory();
 
@@ -2359,7 +2452,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     }
 
     _dismissAdvisory() {
-        this.llmAdvisor.clearAdvisory();
+        if (this.llmAdvisor) {
+            this.llmAdvisor.clearAdvisory();
+        }
         if (this.elements.advisoryContent) {
             this.elements.advisoryContent.innerHTML = '<span class="advisory-idle">No active advisories</span>';
         }
@@ -3194,7 +3289,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this._voice = null;
         }
         this.commandQueue.destroy();
-        this.llmAdvisor.destroy();
+        if (this.llmAdvisor) {
+            this.llmAdvisor.destroy();
+        }
         if (super.destroy) super.destroy();
     }
 }
