@@ -165,6 +165,76 @@ Restart-Service sshd
 | ROCK-PC → ai-pc | hjhar | Key | `ssh hjhar@192.168.1.162` |
 | ai-pc → ROCK-PC | hjhariSSH | Password (0812) | `ssh hjhariSSH@192.168.1.192` |
 
+### Port Management
+
+**Problem:** Port conflicts cause service failures and difficult-to-debug issues across the 25+ Hive services.
+
+**Solution:** Use the Port Manager before starting any new service.
+
+#### Port Allocation Process
+
+**BEFORE writing any service code:**
+
+1. **Check availability:**
+   ```bash
+   cd Admin/tools
+   node port-manager.js check 8765
+   ```
+
+2. **Get suggestion (recommended):**
+   ```bash
+   # For hive services (8500-8899)
+   node port-manager.js suggest hive "MyService"
+
+   # For user projects (9000-9999)
+   node port-manager.js suggest user "MyProject"
+   ```
+
+3. **Reserve the port:**
+   ```bash
+   node port-manager.js reserve 8765 "MyService" "C:\path\to\service.js"
+   ```
+
+4. **Update SERVICE-REGISTRY.md** with the new service entry
+
+#### Port Ranges
+
+| Range | Type | Use For |
+|-------|------|---------|
+| 3000-3999 | Core | Oracle and core LLM services |
+| 8000-8099 | SimWidget | SimWidget and flight sim services |
+| 8500-8899 | Hive | Infrastructure and Hive services |
+| 9000-9999 | User | User projects and experiments |
+| 11000-12000 | External | Ollama, LM Studio, external tools |
+
+#### In Service Code
+
+```javascript
+const { checkPort, getPortInfo } = require('../Admin/tools/port-manager');
+
+const PORT = process.env.PORT || 8765;
+
+async function startServer() {
+    // ALWAYS check port before starting
+    const available = await checkPort(PORT);
+    if (!available) {
+        const info = await getPortInfo(PORT);
+        console.error(`❌ Port ${PORT} is already in use`);
+        if (info.reserved) {
+            console.error(`   Reserved by: ${info.reservation.serviceName}`);
+        }
+        process.exit(1);
+    }
+
+    // Start your server
+    server.listen(PORT, () => {
+        console.log(`✓ Service listening on port ${PORT}`);
+    });
+}
+```
+
+**See Also:** [docs/PORT-MANAGEMENT.md](docs/PORT-MANAGEMENT.md) for complete guide
+
 ### Service Lifecycle Management (NSSM)
 
 **Problem:** Services running in terminal windows clutter the desktop, can be accidentally closed, and don't auto-start on boot.
@@ -184,7 +254,8 @@ Restart-Service sshd
 
 ```javascript
 // service.js - Minimum viable service
-const PORT = 8XXX;  // Get assigned port from SERVICE-REGISTRY.md
+const { checkPort } = require('../Admin/tools/port-manager');
+const PORT = 8765;  // Reserved via port-manager.js
 const http = require('http');
 
 const server = http.createServer((req, res) => {

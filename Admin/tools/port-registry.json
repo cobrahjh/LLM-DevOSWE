@@ -1,0 +1,209 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-14T14:20:00.000Z",
+  "ports": {
+    "3002": {
+      "serviceName": "HiveOracle",
+      "scriptPath": "C:\\LLM-Oracle\\oracle.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "core",
+      "description": "Primary LLM oracle service",
+      "nssm": "HiveOracle"
+    },
+    "8080": {
+      "serviceName": "SimWidget",
+      "scriptPath": "C:\\LLM-DevOSWE\\simwidget-hybrid\\backend\\server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "simwidget",
+      "description": "SimConnect bridge and widget server"
+    },
+    "8500": {
+      "serviceName": "MasterOrchestrator",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\orchestrator\\orchestrator.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Service watchdog and health monitor",
+      "nssm": "HiveOrchestrator"
+    },
+    "8585": {
+      "serviceName": "KittBox",
+      "scriptPath": "C:\\DevClaude\\Hivemind\\hive\\agent\\agent-server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Agent UI and command center",
+      "nssm": "HiveAgent"
+    },
+    "8590": {
+      "serviceName": "RemoteSupport",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\remote-support\\service.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Remote command and file operations"
+    },
+    "8600": {
+      "serviceName": "Relay",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\relay\\relay-service.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Message queue and HiveStore backend",
+      "nssm": "HiveRelay"
+    },
+    "8601": {
+      "serviceName": "ClaudeBridge",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\claude-bridge\\bridge-server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Claude Code integration bridge"
+    },
+    "8610": {
+      "serviceName": "SmartRouter",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\claude-bridge\\smart-router.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "LLM routing with fallback"
+    },
+    "8620": {
+      "serviceName": "BrowserBridge",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\browser-extension\\bridge-server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Browser automation and control"
+    },
+    "8621": {
+      "serviceName": "GoogleDrive",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\google-drive\\drive-service.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Google Drive API and backup"
+    },
+    "8700": {
+      "serviceName": "Hivemind",
+      "scriptPath": "C:\\DevClaude\\Hivemind\\index.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Agent coordination and shared brain"
+    },
+    "8701": {
+      "serviceName": "HiveMind",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\hive-mind\\hive-mind-server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Hive Mind monitor service",
+      "nssm": "HiveMindMonitor",
+      "note": "Port conflict with deprecated Terminal Bridge (8701) - resolved"
+    },
+    "8750": {
+      "serviceName": "HiveMesh",
+      "scriptPath": "C:\\DevClaude\\Hivemind\\mesh\\mesh.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Mesh network coordination",
+      "nssm": "HiveMesh"
+    },
+    "8766": {
+      "serviceName": "Kinship",
+      "scriptPath": "C:\\kinship\\server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "user",
+      "description": "Family genealogy service",
+      "nssm": "Kinship"
+    },
+    "8770": {
+      "serviceName": "HivePersonas",
+      "scriptPath": "C:\\DevClaude\\Hivemind\\personas\\personas.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "AI persona management",
+      "nssm": "HivePersonas"
+    },
+    "8771": {
+      "serviceName": "TerminalHub",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\terminal-hub\\terminal-hub-server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Terminal management and streaming",
+      "nssm": "HiveTerminalHub"
+    },
+    "8800": {
+      "serviceName": "HiveImmortalOracle",
+      "scriptPath": "C:\\DevClaude\\Hivemind\\Oracle\\oracle.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Agent orchestration for DevClaude"
+    },
+    "8810": {
+      "serviceName": "HiveBrain",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\hive-brain\\hive-brain.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Device discovery and colony management",
+      "nssm": "HiveBrain"
+    },
+    "8820": {
+      "serviceName": "MasterMind",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\master-mind\\master-mind.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Master orchestration service",
+      "nssm": "HiveMasterMind"
+    },
+    "8830": {
+      "serviceName": "PMS50GTN750",
+      "scriptPath": "C:\\PMS50-Prototype\\server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "user",
+      "description": "PMS50 GTN750 prototype",
+      "nssm": "PMS50GTN750"
+    },
+    "8850": {
+      "serviceName": "HiveOracle",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\hive-oracle\\server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Distributed LLM orchestrator"
+    },
+    "8860": {
+      "serviceName": "MCPBridge",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\mcp-bridge\\server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Model Context Protocol hub"
+    },
+    "8875": {
+      "serviceName": "VoiceAccess",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\voiceaccess\\server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Voice access management and routing"
+    },
+    "8899": {
+      "serviceName": "HiveDashboard",
+      "scriptPath": "C:\\LLM-DevOSWE\\Admin\\hive-dashboard\\server.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "hive",
+      "description": "Hive overview dashboard",
+      "nssm": "HiveDashboard"
+    },
+    "11434": {
+      "serviceName": "Ollama",
+      "scriptPath": "external",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "external",
+      "description": "Local LLM inference (Ollama)"
+    },
+    "1234": {
+      "serviceName": "LMStudio",
+      "scriptPath": "192.168.1.162",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "external",
+      "description": "Remote LLM fallback (ai-pc)"
+    },
+    "3003": {
+      "serviceName": "HiveBridge",
+      "scriptPath": "192.168.1.162:C:\\Hive\\services\\hive-bridge.js",
+      "reservedAt": "2026-02-14T14:20:00.000Z",
+      "serviceType": "external",
+      "description": "Remote Hive bridge (ai-pc)"
+    }
+  }
+}
