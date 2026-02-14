@@ -208,12 +208,226 @@ class GTN750Pane extends SimGlassBase {
         this.mapRenderer.start();
         this.setupCompactToggle();
         this.restoreState();
+        this.initKeyboardShortcuts();
 
         // Defer non-critical modules (500ms after initial render)
         this.deferredInit();
 
         // Check database currency (safety-critical)
         this.checkDatabaseCurrency();
+    }
+
+    /**
+     * Initialize keyboard shortcuts for power users
+     */
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ignore if user is typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            // Ctrl/Cmd shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 's':
+                        e.preventDefault();
+                        this.saveFlightPlan();
+                        break;
+                    case 'l':
+                        e.preventDefault();
+                        this.loadFlightPlan();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        this.activateDirectTo();
+                        break;
+                }
+                return;
+            }
+
+            // Single-key shortcuts (no modifiers)
+            if (!e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'm':
+                        e.preventDefault();
+                        if (this.pageManager) this.pageManager.switchPage('map');
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        if (this.pageManager) this.pageManager.switchPage('fpl');
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        if (this.pageManager) this.pageManager.switchPage('proc');
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        if (this.pageManager) this.pageManager.switchPage('nrst');
+                        break;
+                    case 't':
+                        e.preventDefault();
+                        if (this.pageManager) this.pageManager.switchPage('taxi');
+                        break;
+                    case 'w':
+                        e.preventDefault();
+                        if (this.pageManager) this.pageManager.switchPage('wx');
+                        break;
+                    case ' ':
+                        e.preventDefault();
+                        this.toggleCDISource();
+                        break;
+                    case '+':
+                    case '=':
+                        e.preventDefault();
+                        this.zoomIn();
+                        break;
+                    case '-':
+                    case '_':
+                        e.preventDefault();
+                        this.zoomOut();
+                        break;
+                    case 'c':
+                        e.preventDefault();
+                        this.centerMap();
+                        break;
+                }
+            }
+        });
+
+        GTNCore.log('[GTN750] Keyboard shortcuts initialized');
+    }
+
+    /**
+     * Save flight plan (Ctrl+S handler)
+     */
+    async saveFlightPlan() {
+        if (!this.flightPlanManager?.flightPlan) {
+            this.showNotification('No flight plan to save', 'warning');
+            return;
+        }
+        await this.flightPlanManager.saveFlightPlan();
+        this.showNotification('Flight plan saved', 'success');
+    }
+
+    /**
+     * Load flight plan (Ctrl+L handler)
+     */
+    loadFlightPlan() {
+        if (this.pageManager) {
+            this.pageManager.switchPage('fpl');
+            // Trigger load modal
+            setTimeout(() => {
+                const loadBtn = document.querySelector('[data-action="load-fpl"]');
+                if (loadBtn) loadBtn.click();
+            }, 100);
+        }
+    }
+
+    /**
+     * Activate Direct-To (Ctrl+D handler)
+     */
+    activateDirectTo() {
+        if (this.flightPlanManager) {
+            this.flightPlanManager.showDirectToModal();
+        }
+    }
+
+    /**
+     * Toggle CDI source (Space handler)
+     */
+    toggleCDISource() {
+        if (!this.cdiManager) return;
+
+        const sources = ['GPS', 'NAV1', 'NAV2'];
+        const current = this.data.navSource || 'GPS';
+        const currentIndex = sources.indexOf(current);
+        const nextIndex = (currentIndex + 1) % sources.length;
+        const nextSource = sources[nextIndex];
+
+        this.cdiManager.setSource(nextSource);
+        this.data.navSource = nextSource;
+        this.showNotification(`CDI: ${nextSource}`, 'info');
+    }
+
+    /**
+     * Zoom in (+ handler)
+     */
+    zoomIn() {
+        if (!this.mapControls) return;
+        const currentIndex = this.map.ranges.indexOf(this.map.range);
+        if (currentIndex > 0) {
+            this.map.range = this.map.ranges[currentIndex - 1];
+            this.mapControls.setRange(this.map.range);
+            this.saveState();
+        }
+    }
+
+    /**
+     * Zoom out (- handler)
+     */
+    zoomOut() {
+        if (!this.mapControls) return;
+        const currentIndex = this.map.ranges.indexOf(this.map.range);
+        if (currentIndex < this.map.ranges.length - 1) {
+            this.map.range = this.map.ranges[currentIndex + 1];
+            this.mapControls.setRange(this.map.range);
+            this.saveState();
+        }
+    }
+
+    /**
+     * Center map on aircraft (C handler)
+     */
+    centerMap() {
+        this.panOffset = { x: 0, y: 0 };
+        if (this.mapControls) {
+            this.mapControls.resetPan();
+        }
+    }
+
+    /**
+     * Show brief notification toast
+     */
+    showNotification(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `gtn-toast gtn-toast-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid ${type === 'success' ? '#00ff00' : type === 'warning' ? '#ffff00' : '#00ffff'};
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-family: Consolas, monospace;
+            font-size: 11px;
+            color: ${type === 'success' ? '#00ff00' : type === 'warning' ? '#ffff00' : '#00ffff'};
+            animation: slideIn 0.3s ease-out;
+        `;
+        toast.textContent = message;
+
+        // Add animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+        `;
+        if (!document.getElementById('toast-style')) {
+            style.id = 'toast-style';
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(toast);
+
+        // Remove after 2 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
     }
 
     /**
