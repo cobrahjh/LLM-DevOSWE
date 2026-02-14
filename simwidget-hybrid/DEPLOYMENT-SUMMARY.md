@@ -1,7 +1,7 @@
 # GTN750 v2.3.0 - Deployment Summary
 
 **Date:** 2026-02-07
-**Target:** harold-pc (192.168.1.42)
+**Target:** commander-pc (192.168.1.42)
 **Status:** ✅ **DEPLOYED & VERIFIED**
 
 ---
@@ -12,7 +12,7 @@
 - **URL:** http://localhost:8080/ui/gtn750/
 - **Status:** HTTP 200 OK
 - **Version:** v2.3.0 (from server ui/ directory)
-- **Browser:** Opened successfully on harold-pc
+- **Browser:** Opened successfully on commander-pc
 - **Server:** Running on port 8080
 
 ### **MSFS Native Panel** ✅
@@ -35,7 +35,7 @@
 3. Perfect for testing UI and features
 
 ### **MSFS Native Panel:**
-1. Launch MSFS 2024 on harold-pc
+1. Launch MSFS 2024 on commander-pc
 2. **Tools** → **Virtual File System** → **Actions** → **Rescan**
 3. **Panels** → **SimGlass-GTN750** → **GTN750**
 4. Panel opens inside MSFS with real SimConnect data
@@ -44,7 +44,7 @@
 
 ## ⚡ v2.3.0 Performance Features
 
-**Active on harold-pc:**
+**Active on commander-pc:**
 
 ### **Waypoint Position Caching:**
 - 98% calculation reduction
@@ -82,7 +82,7 @@
 
 ## 📁 File Locations
 
-### **harold-pc:**
+### **commander-pc:**
 
 **Browser Mode (Current):**
 ```
@@ -120,7 +120,7 @@ Release: /releases/tag/v2.3.0
 
 **Deployment:**
 - ✅ Package created (97KB)
-- ✅ Transferred to harold-pc
+- ✅ Transferred to commander-pc
 - ✅ Extracted to Community folder
 - ✅ Installation verified
 - ✅ Browser mode active
@@ -137,13 +137,13 @@ Release: /releases/tag/v2.3.0
 | **Test Coverage** | 100% (core) | ✅ Complete |
 | **Performance** | All targets met | ✅ Optimal |
 | **Documentation** | 1,055 lines | ✅ Comprehensive |
-| **Deployment** | harold-pc verified | ✅ Success |
+| **Deployment** | commander-pc verified | ✅ Success |
 
 ---
 
 ## 🎊 GTN750 v2.3.0 - Production Deployment Complete!
 
-**harold-pc is ready for:**
+**commander-pc is ready for:**
 - ✅ Browser testing (active now)
 - ✅ MSFS 2024 native panel (after VFS rescan)
 - ✅ Full-featured GPS navigation

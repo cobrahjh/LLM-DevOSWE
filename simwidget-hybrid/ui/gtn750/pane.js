@@ -719,6 +719,7 @@ class GTN750Pane extends SimGlassBase {
             vnavManager: this.vnavManager,
             holdingManager: this.holdingManager,
             fuelMonitor: this.fuelMonitor,
+            procedurePreview: this.procedurePreview || null,
             onUpdateDatafields: () => {
                 this.dataFieldsManager.update(this.data, {
                     flightPlan: this.flightPlanManager?.flightPlan || null,

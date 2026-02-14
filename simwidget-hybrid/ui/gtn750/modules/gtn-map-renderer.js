@@ -207,6 +207,11 @@ class GTNMapRenderer {
             state.trafficOverlay.setEnabled(false);
         }
 
+        // Procedure preview (if selected on PROC page)
+        if (state.procedurePreview) {
+            this.renderProcedurePreview(ctx, cx, cy, w, h, state);
+        }
+
         // Aircraft symbol (always at true center)
         this.renderAircraft(ctx, w / 2, h / 2);
 
@@ -1110,6 +1115,129 @@ class GTNMapRenderer {
                 ctx.fillStyle = '#00ffff';
                 ctx.fillText(wp.airway, midX, midY);
             });
+        }
+    }
+
+    /**
+     * Render procedure preview route (dashed cyan lines with altitude constraints)
+     */
+    renderProcedurePreview(ctx, cx, cy, w, h, state) {
+        if (!state.procedurePreview?.waypoints || state.procedurePreview.waypoints.length === 0) {
+            return;
+        }
+
+        const waypoints = state.procedurePreview.waypoints;
+        const rotation = this.getMapRotation(state);
+        const pixelsPerNm = Math.min(w, h) / 2 / state.map.range;
+
+        // Calculate screen positions for all waypoints
+        const positions = waypoints.map(wp => {
+            if (!wp.lat || !wp.lon) return null;
+            return this.core.latLonToCanvas(
+                wp.lat, wp.lon,
+                state.data.latitude, state.data.longitude,
+                rotation, state.map.range,
+                w, h, state.map.orientation === 'north'
+            );
+        });
+
+        // Draw procedure route as dashed cyan lines
+        ctx.strokeStyle = '#00ffff'; // Cyan for procedure preview
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]); // Dashed line
+        ctx.beginPath();
+
+        let started = false;
+        for (let i = 0; i < positions.length; i++) {
+            if (!positions[i]) continue;
+            if (!started) {
+                ctx.moveTo(positions[i].x, positions[i].y);
+                started = true;
+            } else {
+                ctx.lineTo(positions[i].x, positions[i].y);
+            }
+        }
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset to solid
+
+        // Draw waypoint symbols and labels
+        const declutterLevel = state.declutterLevel || 0;
+        for (let i = 0; i < waypoints.length; i++) {
+            if (!positions[i]) continue;
+            const wp = waypoints[i];
+
+            // Waypoint diamond
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            const size = 5;
+            ctx.moveTo(positions[i].x, positions[i].y - size);
+            ctx.lineTo(positions[i].x + size, positions[i].y);
+            ctx.lineTo(positions[i].x, positions[i].y + size);
+            ctx.lineTo(positions[i].x - size, positions[i].y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Waypoint ident (show on first/last and every 3rd waypoint to avoid clutter)
+            if (declutterLevel < 2 && (i === 0 || i === waypoints.length - 1 || i % 3 === 0)) {
+                ctx.fillStyle = '#00ffff';
+                ctx.font = '10px monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText(wp.ident || `WPT${i + 1}`, positions[i].x + 8, positions[i].y - 5);
+
+                // Altitude constraint (if present)
+                if (wp.altitude && wp.altitudeConstraint) {
+                    const altText = this.formatAltitudeConstraint(wp.altitude, wp.altitudeConstraint, wp.altitude2);
+                    ctx.fillStyle = '#ffff00'; // Yellow for altitude constraints
+                    ctx.font = 'bold 9px monospace';
+                    ctx.fillText(altText, positions[i].x + 8, positions[i].y + 10);
+                }
+            }
+        }
+
+        // Procedure type label at start
+        if (state.procedurePreview.type && positions[0]) {
+            const typeLabel = this.getProcedureTypeLabel(state.procedurePreview.type);
+            ctx.fillStyle = '#00ffff';
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(typeLabel, positions[0].x, positions[0].y - 15);
+        }
+
+        // Procedure name label at end
+        if (state.procedurePreview.procedure?.name && positions[positions.length - 1]) {
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            const lastPos = positions[positions.length - 1];
+            ctx.fillText(state.procedurePreview.procedure.name, lastPos.x, lastPos.y + 20);
+        }
+    }
+
+    /**
+     * Format altitude constraint for display
+     */
+    formatAltitudeConstraint(alt1, constraint, alt2) {
+        const altStr = (alt1 / 1000).toFixed(1) + 'K';
+        switch (constraint) {
+            case '@': return `@${altStr}`; // At altitude
+            case '+': return `${altStr}+`; // At or above
+            case '-': return `${altStr}-`; // At or below
+            case 'B': // Between
+                const alt2Str = (alt2 / 1000).toFixed(1) + 'K';
+                return `${alt2Str}-${altStr}`;
+            default: return altStr;
+        }
+    }
+
+    /**
+     * Get procedure type label
+     */
+    getProcedureTypeLabel(type) {
+        switch (type) {
+            case 'dep': return 'DEPARTURE';
+            case 'arr': return 'ARRIVAL';
+            case 'apr': return 'APPROACH';
+            default: return 'PROCEDURE';
         }
     }
 

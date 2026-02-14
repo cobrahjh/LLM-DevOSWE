@@ -4,7 +4,7 @@
     "version": "1.0.0"
   },
   "nodes": {
-    "harold-pc": {
+    "commander-pc": {
       "type": "desktop",
       "role": "development",
       "ip": "localhost",
@@ -79,7 +79,7 @@
   },
   "routing": {
     "primary": "morpu-pc",
-    "fallback": ["harold-pc", "ai-pc"],
+    "fallback": ["commander-pc", "ai-pc"],
     "mobileTarget": "morpu-pc"
   },
   "ports": {

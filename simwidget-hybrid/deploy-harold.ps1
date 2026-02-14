@@ -1,8 +1,8 @@
-# Deploy GTN750 v2.3.0 to harold-pc MSFS 2024 Community folder
-# Target: 192.168.1.42 (harold-pc), User: hjhar
+# Deploy GTN750 v2.3.0 to commander-pc MSFS 2024 Community folder
+# Target: 192.168.1.42 (commander-pc), User: hjhar
 # Uses SSH/SCP (UNC admin shares not accessible from ROCK-PC)
 
-$haroldPC = "192.168.1.42"
+$commanderPC = "192.168.1.42"
 $username = "hjhar"
 $remoteDest = "C:/Users/$username/AppData/Local/Packages/Microsoft.Limitless_8wekyb3d8bbwe/LocalCache/Packages/Community/SimGlass-GTN750"
 $remotePanel = "$remoteDest/html_ui/InGamePanels/GTN750Panel"
@@ -12,8 +12,8 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 if (-not $scriptDir) { $scriptDir = Get-Location }
 Push-Location $scriptDir
 
-Write-Host "Deploying GTN750 v2.3.0 to harold-pc..." -ForegroundColor Cyan
-Write-Host "Target: $username@$haroldPC`:$remoteDest" -ForegroundColor Gray
+Write-Host "Deploying GTN750 v2.3.0 to commander-pc..." -ForegroundColor Cyan
+Write-Host "Target: $username@$commanderPC`:$remoteDest" -ForegroundColor Gray
 Write-Host ""
 
 # Create directory structure via SSH
@@ -61,7 +61,7 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Location: $remoteDest" -ForegroundColor Gray
 Write-Host ""
-Write-Host "Next steps in MSFS 2024 on harold-pc:" -ForegroundColor Cyan
+Write-Host "Next steps in MSFS 2024 on commander-pc:" -ForegroundColor Cyan
 Write-Host "  1. Tools > Virtual File System > Actions > Rescan" -ForegroundColor White
 Write-Host "  2. Check toolbar for GTN750 panel" -ForegroundColor White
 Write-Host "  3. Open GTN750 from panels menu" -ForegroundColor White
