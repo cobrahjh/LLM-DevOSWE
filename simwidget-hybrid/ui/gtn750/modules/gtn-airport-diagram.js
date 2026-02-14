@@ -75,6 +75,16 @@ class GTNAirportDiagram {
         this.lastCacheOffsetX = 0;      // OffsetX when cache was generated
         this.lastCacheOffsetY = 0;      // OffsetY when cache was generated
 
+        // Satellite map tiles (fallback when no diagram data)
+        this.useSatelliteView = false;  // Whether to use satellite tiles
+        this.tileCache = new Map();     // Cache for loaded map tiles
+        this.tileZoomLevel = 16;        // Zoom level for tiles (16 = good detail)
+        this.tileProvider = {
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attribution: 'Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
+            maxZoom: 19
+        };
+
         this._destroyed = false;
     }
 
@@ -117,7 +127,21 @@ class GTNAirportDiagram {
             this.viewport.offsetX = 0;
             this.viewport.offsetY = 0;
 
-            // Auto-scale to fit all runways
+            // Check if we have diagram data (runways or taxiways)
+            const hasRunways = this.airport.runways && this.airport.runways.length > 0;
+            const hasTaxiways = this.taxiGraph && this.taxiGraph.edges && this.taxiGraph.edges.length > 0;
+
+            if (!hasRunways && !hasTaxiways) {
+                // No diagram data - use satellite view
+                this.useSatelliteView = true;
+                this.tileZoomLevel = 16; // Good detail for airports
+                GTNCore.log(`[AirportDiagram] No diagram data for ${icao} - using satellite view`);
+            } else {
+                // Have diagram data - use vector rendering
+                this.useSatelliteView = false;
+            }
+
+            // Auto-scale to fit all runways (or set reasonable default for satellite)
             this.autoScale();
 
             // Invalidate cache for new airport
@@ -294,6 +318,76 @@ class GTNAirportDiagram {
     }
 
     /**
+     * Convert lat/lon to tile coordinates at given zoom level
+     * @param {number} lat - Latitude
+     * @param {number} lon - Longitude
+     * @param {number} zoom - Zoom level
+     * @returns {{x: number, y: number}} Tile coordinates
+     */
+    latLonToTile(lat, lon, zoom) {
+        const n = Math.pow(2, zoom);
+        const latRad = lat * Math.PI / 180;
+        return {
+            x: Math.floor((lon + 180) / 360 * n),
+            y: Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n)
+        };
+    }
+
+    /**
+     * Convert tile coordinates to lat/lon
+     * @param {number} x - Tile X
+     * @param {number} y - Tile Y
+     * @param {number} zoom - Zoom level
+     * @returns {{lat: number, lon: number}} Coordinates
+     */
+    tileToLatLon(x, y, zoom) {
+        const n = Math.pow(2, zoom);
+        const lon = x / n * 360 - 180;
+        const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n)));
+        const lat = latRad * 180 / Math.PI;
+        return { lat, lon };
+    }
+
+    /**
+     * Load a map tile image
+     * @param {number} x - Tile X
+     * @param {number} y - Tile Y
+     * @param {number} z - Zoom level
+     * @returns {Promise<Image>} Loaded tile image
+     */
+    async loadTile(x, y, z) {
+        const key = `${z}/${x}/${y}`;
+
+        // Check cache first
+        if (this.tileCache.has(key)) {
+            return this.tileCache.get(key);
+        }
+
+        // Load tile
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+
+            img.onload = () => {
+                this.tileCache.set(key, img);
+                resolve(img);
+            };
+
+            img.onerror = () => {
+                GTNCore.log(`[AirportDiagram] Failed to load tile ${key}`);
+                reject(new Error(`Failed to load tile ${key}`));
+            };
+
+            const url = this.tileProvider.url
+                .replace('{z}', z)
+                .replace('{x}', x)
+                .replace('{y}', y);
+
+            img.src = url;
+        });
+    }
+
+    /**
      * Update canvas size to match container
      * @returns {boolean} True if size changed
      */
@@ -319,7 +413,7 @@ class GTNAirportDiagram {
     /**
      * Render the complete airport diagram (with caching)
      */
-    render() {
+    async render() {
         if (!this.canvas) return;
 
         // Update canvas size to match container (if changed)
@@ -339,14 +433,15 @@ class GTNAirportDiagram {
             return;
         }
 
-        // Check if airport has actual diagram data
-        const hasRunways = this.airport.runways && this.airport.runways.length > 0;
-        const hasTaxiways = this.taxiGraph && this.taxiGraph.edges && this.taxiGraph.edges.length > 0;
-
-        if (!hasRunways && !hasTaxiways) {
-            this.renderNoDataMessage(ctx,
-                `NO DIAGRAM DATA FOR ${this.airport.icao}`,
-                `${this.airport.name}\nDiagram not available in database`);
+        // Check if we should use satellite view
+        if (this.useSatelliteView) {
+            // Render satellite tiles instead of diagram
+            await this.renderSatelliteTiles(ctx);
+            // Still render ownship and other overlays
+            this.renderOwnship(ctx);
+            this.renderAirportLabel(ctx);
+            this.renderScaleIndicator(ctx);
+            this.renderAttribution(ctx);
             return;
         }
 
@@ -404,6 +499,101 @@ class GTNAirportDiagram {
         ctx.fillStyle = '#888888';
         ctx.font = '12px Arial';
         ctx.fillText('Diagram data only available for major airports', w / 2, h / 2 + 60);
+    }
+
+    /**
+     * Render satellite map tiles
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    async renderSatelliteTiles(ctx) {
+        if (!this.airport) return;
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // Calculate tile coordinates for viewport center
+        const centerTile = this.latLonToTile(
+            this.viewport.centerLat,
+            this.viewport.centerLon,
+            this.tileZoomLevel
+        );
+
+        // Calculate how many tiles we need to cover the canvas
+        // At zoom 16, each tile is 256px representing ~611m at equator
+        const metersPerTile = 40075017 / Math.pow(2, this.tileZoomLevel); // Earth circumference / 2^zoom
+        const pixelsPerMeter = this.viewport.scale;
+        const tilePixelSize = metersPerTile * pixelsPerMeter;
+
+        // If tiles would be too small/large, suggest better zoom level
+        if (tilePixelSize < 128) {
+            this.tileZoomLevel = Math.max(1, this.tileZoomLevel - 1);
+        } else if (tilePixelSize > 512) {
+            this.tileZoomLevel = Math.min(this.tileProvider.maxZoom, this.tileZoomLevel + 1);
+        }
+
+        // Recalculate with adjusted zoom
+        const tilesNeededX = Math.ceil(w / 256) + 2;
+        const tilesNeededY = Math.ceil(h / 256) + 2;
+
+        // Load and render tiles
+        const promises = [];
+        for (let dx = -Math.floor(tilesNeededX / 2); dx <= Math.ceil(tilesNeededX / 2); dx++) {
+            for (let dy = -Math.floor(tilesNeededY / 2); dy <= Math.ceil(tilesNeededY / 2); dy++) {
+                const tileX = centerTile.x + dx;
+                const tileY = centerTile.y + dy;
+
+                // Skip invalid tiles
+                const maxTile = Math.pow(2, this.tileZoomLevel);
+                if (tileX < 0 || tileX >= maxTile || tileY < 0 || tileY >= maxTile) continue;
+
+                // Load tile and render it
+                promises.push(
+                    this.loadTile(tileX, tileY, this.tileZoomLevel).then(img => {
+                        // Get northwest corner of this tile in lat/lon
+                        const nwCorner = this.tileToLatLon(tileX, tileY, this.tileZoomLevel);
+
+                        // Get southeast corner (next tile)
+                        const seCorner = this.tileToLatLon(tileX + 1, tileY + 1, this.tileZoomLevel);
+
+                        // Convert corners to canvas coordinates
+                        const nw = this.latLonToCanvas(nwCorner.lat, nwCorner.lon);
+                        const se = this.latLonToCanvas(seCorner.lat, seCorner.lon);
+
+                        // Calculate tile size in pixels
+                        const tileWidth = Math.abs(se.x - nw.x);
+                        const tileHeight = Math.abs(se.y - nw.y);
+
+                        // Draw tile (use NW corner as position)
+                        ctx.drawImage(img, nw.x, nw.y, tileWidth, tileHeight);
+                    }).catch(err => {
+                        // Silently ignore failed tiles
+                        GTNCore.log(`[AirportDiagram] Tile load failed: ${err.message}`);
+                    })
+                );
+            }
+        }
+
+        await Promise.all(promises);
+    }
+
+    /**
+     * Render attribution text for satellite tiles
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderAttribution(ctx) {
+        if (!this.useSatelliteView) return;
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(w - 200, h - 20, 200, 20);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '9px Arial';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('© Esri, DigitalGlobe', w - 5, h - 5);
     }
 
     /**

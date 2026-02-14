@@ -306,9 +306,9 @@ class SafeTaxiPage {
     /**
      * Render diagram
      */
-    render() {
+    async render() {
         if (this.diagram) {
-            this.diagram.render();
+            await this.diagram.render();
         }
     }
 
