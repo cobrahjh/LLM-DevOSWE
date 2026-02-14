@@ -189,11 +189,10 @@ class RuleEngine {
                     delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', false, 'Disengage AP on ground');
                 }
-                // Prepare aircraft for taxi: engine start, mixture rich, release brake, idle-up throttle
+                // Prepare aircraft for taxi: mixture rich, release brake, idle-up throttle
+                // ENGINE_AUTO_START moved to TAXI phase (RPM-aware retry, handles toggle)
                 {
                     const tt = this._getTakeoffTuning();
-                    // Engine auto-start (cold-and-dark flights have engine off after reload)
-                    this._cmd('ENGINE_AUTO_START', true, 'Engine auto-start');
                     this._cmdValue('MIXTURE_SET', tt.preflightMixture ?? 100, 'Mixture RICH');
                     // Idempotent brake release (server uses LANDING_GEAR_PARKINGBRAKE InputEvent)
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake for taxi');
@@ -220,10 +219,26 @@ class RuleEngine {
                 }
                 this._cmdValue('MIXTURE_SET', 100, 'Mixture RICH for takeoff');
 
-                // On phase entry: engine start + brake release (idempotent — safe after restarts)
+                // Brake release on entry (idempotent via PARKING_BRAKE_SET)
                 if (phaseChanged) {
-                    this._cmd('ENGINE_AUTO_START', true, 'Engine auto-start');
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Release parking brake');
+                }
+                // Engine auto-start: ENGINE_AUTO_START is a TOGGLE, so sending it
+                // when engine is already cranking will STOP the start sequence.
+                // Only send when engine RPM is genuinely low, and retry every 8s
+                // in case the toggle landed in the wrong state.
+                if ((d.engineRpm || 0) < 500) {
+                    if (!this._engineStartAttempt || (Date.now() - this._engineStartAttempt) > 8000) {
+                        this._engineStartAttempt = Date.now();
+                        // Clear BOTH rule engine dedup AND command queue dedup —
+                        // command queue's _isDuplicate() caches ENGINE_AUTO_START=true
+                        // and silently drops retries.
+                        delete this._lastCommands['ENGINE_AUTO_START'];
+                        if (this.commandQueue._currentApState) {
+                            delete this.commandQueue._currentApState['ENGINE_AUTO_START'];
+                        }
+                        this._cmd('ENGINE_AUTO_START', true, 'Engine auto-start (retry)');
+                    }
                 }
 
                 // ATC hold-short gate: if ATC is active and we're at HOLD_SHORT,
@@ -239,7 +254,14 @@ class RuleEngine {
                 // ATC cleared for takeoff: full power to accelerate past 25kt → TAKEOFF phase
                 if (this._atc && this._atc.getPhase() === 'CLEARED_TAKEOFF') {
                     this._cmdValue('PARKING_BRAKE_SET', 0, 'Brake off — cleared for takeoff');
-                    // Capture runway heading for takeoff roll if not already set
+                    // Set runway heading from ATC runway ident (e.g., "RW34C" → 340°).
+                    // MUST override any stale gate heading from PREFLIGHT.
+                    if (this._atc._runway) {
+                        const rwyNum = parseInt(this._atc._runway.replace(/^RW/, ''));
+                        if (!isNaN(rwyNum)) {
+                            this._runwayHeading = rwyNum * 10;
+                        }
+                    }
                     if (!this._runwayHeading) {
                         this._runwayHeading = Math.round(d.heading || 0);
                     }
@@ -307,12 +329,14 @@ class RuleEngine {
                 break;
 
             case 'CLIMB':
-                // On phase entry: engage AP, then wait for it to stabilise before
-                // touching any control surfaces.  Manual-axis commands sent via
-                // InputEvent can override/fight the AP, so we give the AP 5 seconds
-                // to start managing before falling back to manual flight.
+                // On phase entry: release takeoff controls and engage AP.
                 if (phaseChanged) {
-                    this._climbEntryTime = Date.now();
+                    // CRITICAL: zero elevator to release takeoff rotation pitch-up.
+                    // Without this, the nose-up elevator + full power causes a zoom-climb
+                    // to VS 3000+ and stall.
+                    this._cmdValue('AXIS_ELEVATOR_SET', 0, 'Release takeoff elevator');
+                    this._cmdValue('AXIS_RUDDER_SET', 0, 'Release takeoff rudder');
+                    this._cmdValue('STEERING_SET', 0, 'Release nosewheel');
                     // Set heading bug to current heading before engaging AP
                     const climbHdg = Math.round(d.heading || this._runwayHeading || 0);
                     this._cmdValue('HEADING_BUG_SET', climbHdg, 'HDG ' + climbHdg + '\u00B0');
@@ -334,25 +358,21 @@ class RuleEngine {
                     const climbTT = this._getTakeoffTuning();
                     this._cmdValue('THROTTLE_SET', climbTT.climbThrottle ?? 100, 'Climb power');
                 }
+                // Manual flight when AP isn't active.
+                // In MSFS 2024, AP overrides pilot yoke inputs when engaged,
+                // so these commands are harmless if AP is actually active but
+                // the SimVar hasn't updated yet.
                 if (!apState.master) {
-                    const secsSinceEntry = (Date.now() - (this._climbEntryTime || 0)) / 1000;
-                    if (secsSinceEntry < 5) {
-                        // AP engagement grace period — don't send manual axis commands
-                        // that would fight the AP while SimVar feedback is lagging.
-                    } else {
-                        // AP failed to engage after 5s — fly manually with gentle
-                        // proportional control.  Use d.bank (not d.bankAngle).
-                        const climbBank = d.bank || 0;
-                        const climbPitch = d.pitch || 0;
-                        // Wings-level: proportional aileron (0.6 gain, max ±25)
-                        const bankFix = Math.max(-25, Math.min(25, -climbBank * 0.6));
-                        this._cmdValue('AXIS_AILERONS_SET', Math.round(bankFix), `Wings level (bank ${Math.round(climbBank)}°)`);
-                        // Pitch hold ~5° nose-up: proportional elevator
-                        const pitchTarget = 5;
-                        const pitchErr = pitchTarget - climbPitch;
-                        const pitchFix = Math.max(-15, Math.min(15, pitchErr * 1.0));
-                        this._cmdValue('AXIS_ELEVATOR_SET', Math.round(-pitchFix), `Pitch hold (${Math.round(climbPitch)}°)`);
-                    }
+                    const climbBank = d.bank || 0;
+                    const climbPitch = d.pitch || 0;
+                    // Wings-level: proportional aileron (0.6 gain, max ±25)
+                    const bankFix = Math.max(-25, Math.min(25, -climbBank * 0.6));
+                    this._cmdValue('AXIS_AILERONS_SET', Math.round(bankFix), `Wings level (bank ${Math.round(climbBank)}°)`);
+                    // Pitch hold ~7° nose-up for Vy climb: proportional elevator
+                    const pitchTarget = 7;
+                    const pitchErr = pitchTarget - climbPitch;
+                    const pitchFix = Math.max(-20, Math.min(20, pitchErr * 1.5));
+                    this._cmdValue('AXIS_ELEVATOR_SET', Math.round(-pitchFix), `Pitch hold (${Math.round(climbPitch)}°)`);
                     // Keep trying to engage AP
                     delete this._lastCommands['AP_MASTER'];
                     this._cmd('AP_MASTER', true, 'Engage AP for climb');
