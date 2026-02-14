@@ -68,6 +68,13 @@ class GTNAirportDiagram {
             background: '#0a1520'
         };
 
+        // Performance: Static layer caching
+        this.staticCache = null;        // Off-screen canvas for static elements
+        this.cacheValid = false;        // Whether cache needs regeneration
+        this.lastCacheScale = 0;        // Scale when cache was generated
+        this.lastCacheOffsetX = 0;      // OffsetX when cache was generated
+        this.lastCacheOffsetY = 0;      // OffsetY when cache was generated
+
         this._destroyed = false;
     }
 
@@ -112,6 +119,9 @@ class GTNAirportDiagram {
 
             // Auto-scale to fit all runways
             this.autoScale();
+
+            // Invalidate cache for new airport
+            this.invalidateCache();
 
             GTNCore.log(`[AirportDiagram] Loaded ${icao}: ${this.airport.name}`);
             return true;
@@ -307,7 +317,7 @@ class GTNAirportDiagram {
     }
 
     /**
-     * Render the complete airport diagram
+     * Render the complete airport diagram (with caching)
      */
     render() {
         if (!this.canvas || !this.airport) return;
@@ -323,16 +333,66 @@ class GTNAirportDiagram {
         ctx.fillStyle = this.colors.background;
         ctx.fillRect(0, 0, w, h);
 
-        // Render layers in order (back to front)
+        // Check if we need to regenerate static cache
+        const scaleChanged = Math.abs(this.viewport.scale - this.lastCacheScale) > 0.01;
+        const offsetChanged = Math.abs(this.viewport.offsetX - this.lastCacheOffsetX) > 5 ||
+                            Math.abs(this.viewport.offsetY - this.lastCacheOffsetY) > 5;
+
+        if (!this.cacheValid || scaleChanged || offsetChanged) {
+            this.renderStaticLayers();
+            this.cacheValid = true;
+            this.lastCacheScale = this.viewport.scale;
+            this.lastCacheOffsetX = this.viewport.offsetX;
+            this.lastCacheOffsetY = this.viewport.offsetY;
+        }
+
+        // Copy cached static layers to main canvas
+        if (this.staticCache) {
+            ctx.drawImage(this.staticCache, 0, 0);
+        }
+
+        // Render dynamic layers on top (re-rendered every frame)
+        this.renderTaxiRoute(ctx);
+        this.renderOwnship(ctx);
+        this.renderAirportLabel(ctx);
+        this.renderScaleIndicator(ctx);
+    }
+
+    /**
+     * Render static layers to off-screen cache (runways, taxiways, parking)
+     */
+    renderStaticLayers() {
+        if (!this.canvas) return;
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // Create or resize cache canvas
+        if (!this.staticCache || this.staticCache.width !== w || this.staticCache.height !== h) {
+            this.staticCache = document.createElement('canvas');
+            this.staticCache.width = w;
+            this.staticCache.height = h;
+        }
+
+        const ctx = this.staticCache.getContext('2d');
+
+        // Clear cache
+        ctx.fillStyle = this.colors.background;
+        ctx.fillRect(0, 0, w, h);
+
+        // Render static layers in order (back to front)
         this.renderTaxiGraph(ctx);
         this.renderRunways(ctx);
         this.renderHoldShortLines(ctx);
         this.renderParkingPositions(ctx);
         this.renderHotspots(ctx);
-        this.renderTaxiRoute(ctx);
-        this.renderOwnship(ctx);
-        this.renderAirportLabel(ctx);
-        this.renderScaleIndicator(ctx);
+    }
+
+    /**
+     * Invalidate static cache (forces re-render on next frame)
+     */
+    invalidateCache() {
+        this.cacheValid = false;
     }
 
     /**
