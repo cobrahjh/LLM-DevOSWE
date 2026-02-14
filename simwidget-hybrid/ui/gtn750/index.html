@@ -640,8 +640,37 @@
                     <span class="proc-label">Airport:</span>
                     <input type="text" id="proc-apt" placeholder="ICAO" maxlength="4">
                 </div>
-                <div class="gtn-proc-list" id="proc-list">
-                    <div class="gtn-proc-empty">Select airport</div>
+                <div class="gtn-proc-container">
+                    <div class="gtn-proc-list" id="proc-list">
+                        <div class="gtn-proc-empty">Select airport</div>
+                    </div>
+                    <div class="gtn-proc-details-panel" id="proc-details-panel" style="display:none;">
+                        <div class="proc-details-header">
+                            <div class="proc-details-title" id="proc-details-title">PROCEDURE DETAILS</div>
+                            <button class="proc-details-close" id="proc-details-close">✕</button>
+                        </div>
+                        <div class="proc-details-info">
+                            <div class="proc-info-row">
+                                <span class="proc-info-label">Name:</span>
+                                <span class="proc-info-value" id="proc-name-val">—</span>
+                            </div>
+                            <div class="proc-info-row">
+                                <span class="proc-info-label">Type:</span>
+                                <span class="proc-info-value" id="proc-type-val">—</span>
+                            </div>
+                            <div class="proc-info-row">
+                                <span class="proc-info-label">Runway:</span>
+                                <span class="proc-info-value" id="proc-runway-val">—</span>
+                            </div>
+                            <div class="proc-info-row">
+                                <span class="proc-info-label">Distance:</span>
+                                <span class="proc-info-value" id="proc-distance-val">—</span>
+                            </div>
+                        </div>
+                        <div class="proc-details-waypoints" id="proc-waypoints-list">
+                            <!-- Waypoint list will be populated here -->
+                        </div>
+                    </div>
                 </div>
             </div>
 

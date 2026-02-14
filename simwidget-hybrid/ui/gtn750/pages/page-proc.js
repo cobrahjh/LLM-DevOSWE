@@ -41,7 +41,15 @@ class ProceduresPage {
         this.elements = {
             procApt: document.getElementById('proc-apt'),
             procList: document.getElementById('proc-list'),
-            procTabs: document.querySelectorAll('.proc-tab')
+            procTabs: document.querySelectorAll('.proc-tab'),
+            detailsPanel: document.getElementById('proc-details-panel'),
+            detailsClose: document.getElementById('proc-details-close'),
+            detailsTitle: document.getElementById('proc-details-title'),
+            procNameVal: document.getElementById('proc-name-val'),
+            procTypeVal: document.getElementById('proc-type-val'),
+            procRunwayVal: document.getElementById('proc-runway-val'),
+            procDistanceVal: document.getElementById('proc-distance-val'),
+            procWaypointsList: document.getElementById('proc-waypoints-list')
         };
     }
 
@@ -65,6 +73,11 @@ class ProceduresPage {
             tab.addEventListener('click', () => {
                 this.switchType(tab.dataset.type);
             });
+        });
+
+        // Details panel close button
+        this.elements.detailsClose?.addEventListener('click', () => {
+            this.hideDetailsPanel();
         });
     }
 
@@ -90,6 +103,9 @@ class ProceduresPage {
             tab.classList.toggle('active', tab.dataset.type === type);
         });
 
+        // Hide details panel when switching types
+        this.hideDetailsPanel();
+
         // Re-render list
         this.renderProcedureList();
     }
@@ -101,6 +117,7 @@ class ProceduresPage {
         if (!icao || icao.length < 3) return;
 
         this.selectedAirport = icao;
+        this.hideDetailsPanel(); // Hide details when loading new airport
         this.showLoading();
 
         // Try navdb first (local SQLite), then legacy chart-based API
@@ -287,6 +304,7 @@ class ProceduresPage {
                         // Map altitude constraints for VNAV
                         this.previewWaypoints = data.waypoints.map(wp => this.mapAltitudeConstraints(wp));
                         this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
+                        this.showDetailsPanel(proc, this.previewWaypoints);
                         return;
                     }
                 }
@@ -337,6 +355,153 @@ class ProceduresPage {
         }
 
         return mapped;
+    }
+
+    /**
+     * Show procedure details panel with waypoint breakdown
+     * @param {Object} proc - Selected procedure
+     * @param {Array} waypoints - Procedure waypoints with constraints
+     */
+    showDetailsPanel(proc, waypoints) {
+        if (!this.elements.detailsPanel) return;
+
+        // Populate procedure info
+        this.elements.procNameVal.textContent = proc.name || '—';
+        this.elements.procTypeVal.textContent = this.getProcedureTypeLabel(proc) || '—';
+        this.elements.procRunwayVal.textContent = proc.runway || 'ALL';
+
+        // Calculate total distance
+        let totalDistance = 0;
+        for (let i = 0; i < waypoints.length - 1; i++) {
+            const wp1 = waypoints[i];
+            const wp2 = waypoints[i + 1];
+            if (wp1.lat && wp1.lon && wp2.lat && wp2.lon) {
+                totalDistance += this.core.haversineDistance(wp1.lat, wp1.lon, wp2.lat, wp2.lon);
+            }
+        }
+        this.elements.procDistanceVal.textContent = totalDistance > 0 ? `${totalDistance.toFixed(1)} nm` : '—';
+
+        // Render waypoint list with bearings and distances
+        this.renderWaypointList(waypoints);
+
+        // Show panel
+        this.elements.detailsPanel.style.display = 'flex';
+    }
+
+    /**
+     * Hide procedure details panel
+     */
+    hideDetailsPanel() {
+        if (this.elements.detailsPanel) {
+            this.elements.detailsPanel.style.display = 'none';
+        }
+    }
+
+    /**
+     * Render detailed waypoint list with distances, bearings, and constraints
+     * @param {Array} waypoints - Procedure waypoints
+     */
+    renderWaypointList(waypoints) {
+        if (!this.elements.procWaypointsList || !waypoints.length) return;
+
+        let html = '';
+        let cumulativeDistance = 0;
+
+        for (let i = 0; i < waypoints.length; i++) {
+            const wp = waypoints[i];
+            let distance = 0;
+            let bearing = 0;
+
+            // Calculate distance and bearing to next waypoint
+            if (i < waypoints.length - 1) {
+                const nextWp = waypoints[i + 1];
+                if (wp.lat && wp.lon && nextWp.lat && nextWp.lon) {
+                    distance = this.core.haversineDistance(wp.lat, wp.lon, nextWp.lat, nextWp.lon);
+                    bearing = this.core.calculateBearing(wp.lat, wp.lon, nextWp.lat, nextWp.lon);
+                    cumulativeDistance += distance;
+                }
+            }
+
+            // Format altitude constraint
+            let altitudeStr = '—';
+            if (wp.altitude) {
+                const altK = (wp.altitude / 1000).toFixed(1) + 'K';
+                switch (wp.altitudeConstraint) {
+                    case '@':
+                        altitudeStr = `@${altK}`;
+                        break;
+                    case '+':
+                        altitudeStr = `${altK}+`;
+                        break;
+                    case '-':
+                        altitudeStr = `${altK}-`;
+                        break;
+                    case 'B':
+                        if (wp.altitude2) {
+                            const alt2K = (wp.altitude2 / 1000).toFixed(1) + 'K';
+                            altitudeStr = `${alt2K}-${altK}`;
+                        } else {
+                            altitudeStr = `@${altK}`;
+                        }
+                        break;
+                    default:
+                        altitudeStr = `${altK}`;
+                }
+            }
+
+            // Format speed limit
+            let speedStr = '';
+            if (wp.speedLimit && wp.speedLimit > 0) {
+                speedStr = `<span class="proc-wpt-speed">${wp.speedLimit}kt</span>`;
+            }
+
+            html += `
+                <div class="proc-wpt-item">
+                    <div class="proc-wpt-header">
+                        <span class="proc-wpt-ident">${wp.ident}</span>
+                        ${distance > 0 ? `<span class="proc-wpt-distance">${distance.toFixed(1)} nm</span>` : ''}
+                    </div>
+                    <div class="proc-wpt-details">
+                        ${bearing > 0 ? `<span class="proc-wpt-bearing">${String(Math.round(bearing)).padStart(3, '0')}°</span>` : ''}
+                        ${altitudeStr !== '—' ? `<span class="proc-wpt-altitude">${altitudeStr}</span>` : ''}
+                        ${speedStr}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Add total distance summary
+        if (cumulativeDistance > 0) {
+            html += `
+                <div class="proc-wpt-total">
+                    <div class="proc-wpt-total-label">TOTAL DISTANCE</div>
+                    <div class="proc-wpt-total-value">${cumulativeDistance.toFixed(1)} nm</div>
+                </div>
+            `;
+        }
+
+        this.elements.procWaypointsList.innerHTML = html;
+    }
+
+    /**
+     * Get human-readable procedure type label
+     * @param {Object} proc - Procedure object
+     * @returns {string} Type label
+     */
+    getProcedureTypeLabel(proc) {
+        if (proc.approachType) {
+            return proc.approachType; // e.g., "ILS", "RNAV", "VOR"
+        }
+        switch (this.procedureType) {
+            case 'dep':
+                return 'DEPARTURE';
+            case 'arr':
+                return 'ARRIVAL';
+            case 'apr':
+                return 'APPROACH';
+            default:
+                return proc.type || 'UNKNOWN';
+        }
     }
 
     /**
