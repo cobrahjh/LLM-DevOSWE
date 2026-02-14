@@ -4325,6 +4325,84 @@ body {
     transform: scale(0.95);
 }
 
+.taxi-control-btn.active {
+    background: var(--gtn-accent);
+    border-color: var(--gtn-green);
+    color: var(--gtn-green);
+}
+
+.taxi-satellite-controls {
+    position: absolute;
+    bottom: 60px;
+    left: 20px;
+    background: rgba(10, 21, 32, 0.9);
+    border: 1px solid var(--gtn-border);
+    border-radius: 5px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 250px;
+}
+
+.taxi-slider-label {
+    color: var(--gtn-cyan);
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.taxi-opacity-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: linear-gradient(to right, transparent 0%, var(--gtn-cyan) 100%);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.taxi-opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--gtn-cyan);
+    border: 2px solid var(--gtn-bg-panel);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.taxi-opacity-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: var(--gtn-green);
+}
+
+.taxi-opacity-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--gtn-cyan);
+    border: 2px solid var(--gtn-bg-panel);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.taxi-opacity-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    background: var(--gtn-green);
+}
+
+.taxi-opacity-value {
+    color: var(--gtn-cyan);
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: right;
+}
+
 /* Taxi page responsiveness */
 @media (max-width: 800px) {
     .taxi-header {

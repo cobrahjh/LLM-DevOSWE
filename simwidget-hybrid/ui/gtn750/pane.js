@@ -2550,6 +2550,11 @@ class GTN750Pane extends SimGlassBase {
                     this.taxiPage.render();
                 }
                 break;
+            case 'taxi-satellite':
+                if (this.taxiPage && this.taxiPage.elements.satelliteBtn) {
+                    this.taxiPage.elements.satelliteBtn.click();
+                }
+                break;
             case 'user-wpt-new':
                 if (this.userWptPage) {
                     this.userWptPage.showNewForm();

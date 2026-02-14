@@ -76,9 +76,11 @@ class GTNAirportDiagram {
         this.lastCacheOffsetY = 0;      // OffsetY when cache was generated
 
         // Satellite map tiles (fallback when no diagram data)
-        this.useSatelliteView = false;  // Whether to use satellite tiles
-        this.tileCache = new Map();     // Cache for loaded map tiles
-        this.tileZoomLevel = 16;        // Zoom level for tiles (16 = good detail)
+        this.satelliteEnabled = false;   // Manual toggle for satellite view
+        this.satelliteOpacity = 0.8;     // Opacity 0-1 for blending with diagram
+        this.autoSatelliteMode = false;  // True if satellite was auto-enabled (no diagram)
+        this.tileCache = new Map();      // Cache for loaded map tiles
+        this.tileZoomLevel = 16;         // Zoom level for tiles (16 = good detail)
         this.tileProvider = {
             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
             attribution: 'Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
@@ -132,13 +134,13 @@ class GTNAirportDiagram {
             const hasTaxiways = this.taxiGraph && this.taxiGraph.edges && this.taxiGraph.edges.length > 0;
 
             if (!hasRunways && !hasTaxiways) {
-                // No diagram data - use satellite view
-                this.useSatelliteView = true;
+                // No diagram data - auto-enable satellite view
+                this.autoSatelliteMode = true;
                 this.tileZoomLevel = 16; // Good detail for airports
-                GTNCore.log(`[AirportDiagram] No diagram data for ${icao} - using satellite view`);
+                GTNCore.log(`[AirportDiagram] No diagram data for ${icao} - auto-enabling satellite view`);
             } else {
-                // Have diagram data - use vector rendering
-                this.useSatelliteView = false;
+                // Have diagram data - disable auto mode (user can still manually enable)
+                this.autoSatelliteMode = false;
             }
 
             // Auto-scale to fit all runways (or set reasonable default for satellite)
@@ -427,22 +429,29 @@ class GTNAirportDiagram {
         ctx.fillStyle = this.colors.background;
         ctx.fillRect(0, 0, w, h);
 
-        // Check if airport is loaded and has diagram data
+        // Check if airport is loaded
         if (!this.airport) {
             this.renderNoDataMessage(ctx, 'NO AIRPORT LOADED', 'Load an airport using the input above');
             return;
         }
 
-        // Check if we should use satellite view
-        if (this.useSatelliteView) {
-            // Render satellite tiles instead of diagram
-            await this.renderSatelliteTiles(ctx);
-            // Still render ownship and other overlays
+        // Determine if satellite should be shown (manual toggle OR auto mode for missing data)
+        const showSatellite = this.satelliteEnabled || this.autoSatelliteMode;
+
+        // If ONLY satellite (no diagram), render satellite and overlays only
+        if (showSatellite && this.autoSatelliteMode && !this.satelliteEnabled) {
+            // Pure satellite mode (no diagram data)
+            await this.renderSatelliteTiles(ctx, 1.0);
             this.renderOwnship(ctx);
             this.renderAirportLabel(ctx);
             this.renderScaleIndicator(ctx);
             this.renderAttribution(ctx);
             return;
+        }
+
+        // If satellite enabled manually, render it as background layer with opacity
+        if (showSatellite) {
+            await this.renderSatelliteTiles(ctx, this.satelliteOpacity);
         }
 
         // Check if we need to regenerate static cache
@@ -504,12 +513,17 @@ class GTNAirportDiagram {
     /**
      * Render satellite map tiles
      * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {number} opacity - Opacity 0-1 for blending
      */
-    async renderSatelliteTiles(ctx) {
+    async renderSatelliteTiles(ctx, opacity = 1.0) {
         if (!this.airport) return;
 
         const w = this.canvas.width;
         const h = this.canvas.height;
+
+        // Save context state and apply opacity
+        ctx.save();
+        ctx.globalAlpha = opacity;
 
         // Calculate tile coordinates for viewport center
         const centerTile = this.latLonToTile(
@@ -574,6 +588,9 @@ class GTNAirportDiagram {
         }
 
         await Promise.all(promises);
+
+        // Restore context state (opacity)
+        ctx.restore();
     }
 
     /**
@@ -581,7 +598,8 @@ class GTNAirportDiagram {
      * @param {CanvasRenderingContext2D} ctx - Canvas context
      */
     renderAttribution(ctx) {
-        if (!this.useSatelliteView) return;
+        // Show attribution if satellite is enabled (manual or auto)
+        if (!this.satelliteEnabled && !this.autoSatelliteMode) return;
 
         const w = this.canvas.width;
         const h = this.canvas.height;
@@ -1096,6 +1114,34 @@ class GTNAirportDiagram {
         this.viewport.centerLon = this.airport.lon;
         this.viewport.offsetX = 0;
         this.viewport.offsetY = 0;
+    }
+
+    /**
+     * Toggle satellite imagery on/off
+     * @returns {boolean} New satellite state
+     */
+    toggleSatellite() {
+        this.satelliteEnabled = !this.satelliteEnabled;
+        this.invalidateCache(); // Redraw needed
+        GTNCore.log(`[AirportDiagram] Satellite ${this.satelliteEnabled ? 'enabled' : 'disabled'}`);
+        return this.satelliteEnabled;
+    }
+
+    /**
+     * Set satellite opacity
+     * @param {number} opacity - Opacity 0-1
+     */
+    setSatelliteOpacity(opacity) {
+        this.satelliteOpacity = Math.max(0, Math.min(1, opacity));
+        GTNCore.log(`[AirportDiagram] Satellite opacity: ${Math.round(this.satelliteOpacity * 100)}%`);
+    }
+
+    /**
+     * Get current satellite state
+     * @returns {boolean} True if satellite is currently shown
+     */
+    isSatelliteActive() {
+        return this.satelliteEnabled || this.autoSatelliteMode;
     }
 
     /**

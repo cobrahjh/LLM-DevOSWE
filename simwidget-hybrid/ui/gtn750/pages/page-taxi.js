@@ -32,6 +32,10 @@ class SafeTaxiPage {
             autoBtn: document.getElementById('taxi-auto-btn'),
             followBtn: document.getElementById('taxi-follow-btn'),
             trackUpBtn: document.getElementById('taxi-trackup-btn'),
+            satelliteBtn: document.getElementById('taxi-satellite-btn'),
+            satelliteControls: document.getElementById('taxi-satellite-controls'),
+            opacitySlider: document.getElementById('taxi-opacity-slider'),
+            opacityValue: document.getElementById('taxi-opacity-value'),
             statusLabel: document.getElementById('taxi-status')
         };
 
@@ -145,6 +149,45 @@ class SafeTaxiPage {
                     }
 
                     // Re-render with new orientation
+                    this.render();
+                }
+            });
+        }
+
+        // Satellite toggle button
+        if (this.elements.satelliteBtn) {
+            this.elements.satelliteBtn.addEventListener('click', () => {
+                if (this.diagram) {
+                    const enabled = this.diagram.toggleSatellite();
+
+                    // Update button appearance
+                    if (enabled) {
+                        this.elements.satelliteBtn.classList.add('active');
+                        this.elements.satelliteControls.style.display = 'flex';
+                        this.setStatus('Satellite imagery: ON', '#00ff00');
+                    } else {
+                        this.elements.satelliteBtn.classList.remove('active');
+                        this.elements.satelliteControls.style.display = 'none';
+                        this.setStatus('Satellite imagery: OFF', '#ffff00');
+                    }
+
+                    this.render();
+                }
+            });
+        }
+
+        // Satellite opacity slider
+        if (this.elements.opacitySlider) {
+            this.elements.opacitySlider.addEventListener('input', (e) => {
+                if (this.diagram) {
+                    const opacity = parseInt(e.target.value) / 100;
+                    this.diagram.setSatelliteOpacity(opacity);
+
+                    // Update display value
+                    if (this.elements.opacityValue) {
+                        this.elements.opacityValue.textContent = `${e.target.value}%`;
+                    }
+
                     this.render();
                 }
             });
