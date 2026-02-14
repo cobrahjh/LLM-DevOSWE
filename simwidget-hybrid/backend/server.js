@@ -2860,6 +2860,31 @@ app.post('/api/debug/camera', (req, res) => {
     res.json({ debug: cameraSystem.debug });
 });
 
+// Save pasted debug console output
+app.post('/api/debug/save-paste', (req, res) => {
+    try {
+        const { content, timestamp, source } = req.body;
+        const fs = require('fs');
+        const path = require('path');
+
+        const outputPath = path.join(__dirname, '..', 'debug-console.txt');
+        const header = `=== Debug Console Paste ===\nTimestamp: ${timestamp || new Date().toISOString()}\nSource: ${source || 'unknown'}\n${'='.repeat(50)}\n\n`;
+
+        fs.writeFileSync(outputPath, header + content, 'utf8');
+
+        console.log(`[DEBUG] Saved paste to ${outputPath} (${content.length} chars)`);
+        res.json({
+            success: true,
+            file: 'debug-console.txt',
+            size: content.length,
+            path: outputPath
+        });
+    } catch (error) {
+        console.error('[DEBUG] Error saving paste:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug: InputEvent hashes
 app.get('/api/debug/inputevents', (req, res) => {
     const hashes = global.inputEventHashes || {};
