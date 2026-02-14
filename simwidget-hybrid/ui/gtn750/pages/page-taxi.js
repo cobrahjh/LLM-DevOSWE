@@ -272,11 +272,26 @@ class SafeTaxiPage {
 
         this.diagram.updateOwnship(data);
 
+        // Detect if on ground - use multiple methods for reliability
+        const agl = data.agl || data.altitudeAGL || 999;
+        const groundSpeed = data.groundSpeed || 0;
+        const verticalSpeed = Math.abs(data.verticalSpeed || 0);
+
+        // On ground if: (AGL < 50ft OR very low altitude with no climb) AND low speed
+        const onGround = (agl < 50 || (data.altitude < 500 && verticalSpeed < 50)) && groundSpeed < 5;
+
+        // Debug logging (only log state changes to avoid spam)
+        if (!this._lastGroundState || this._lastGroundState !== onGround) {
+            GTNCore.log(`[SafeTaxi] Ground state: ${onGround ? 'ON GROUND' : 'AIRBORNE'} (AGL: ${agl}ft, GS: ${groundSpeed}kts, VS: ${verticalSpeed}fpm)`);
+            this._lastGroundState = onGround;
+        }
+
         // Auto-load nearest airport when on ground
-        if (data.agl < 50 && data.groundSpeed < 5) {
+        if (onGround) {
             // Check if we need to load/reload airport
             if (!this.diagram.airport) {
                 // No airport loaded - load nearest
+                GTNCore.log(`[SafeTaxi] Auto-loading nearest airport...`);
                 this.autoLoadNearestAirport(data.latitude, data.longitude);
             } else {
                 // Airport loaded - check if we're too far away (transitioned to different airport)
