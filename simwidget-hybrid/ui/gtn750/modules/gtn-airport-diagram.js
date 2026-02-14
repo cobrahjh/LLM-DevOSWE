@@ -740,39 +740,33 @@ class GTNAirportDiagram {
         // Helper to draw text with background for visibility
         const drawRunwayNumber = (text, x, y) => {
             const metrics = ctx.measureText(text);
-            const padding = fontSize * 0.3;
+            const padding = fontSize * 0.5;  // Increased padding
             const width = metrics.width + padding * 2;
             const height = fontSize + padding * 2;
 
-            if (useSatellite) {
-                // High contrast background for satellite imagery
-                // Dark semi-transparent background
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(-width / 2, -height / 2, width, height);
+            // Always use enhanced visibility (box background)
+            // Dark background box
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(-width / 2, -height / 2, width, height);
 
-                // Bright yellow border
-                ctx.strokeStyle = '#FFFF00';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(-width / 2, -height / 2, width, height);
+            // Bright yellow border
+            ctx.strokeStyle = '#FFFF00';
+            ctx.lineWidth = 3;  // Thicker border
+            ctx.strokeRect(-width / 2, -height / 2, width, height);
 
-                // White text with shadow
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-                ctx.shadowBlur = 4;
-                ctx.shadowOffsetX = 1;
-                ctx.shadowOffsetY = 1;
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillText(text, 0, 0);
+            // White text with strong shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 1.0)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(text, 0, 0);
 
-                // Reset shadow
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-            } else {
-                // Standard rendering on diagram
-                ctx.fillStyle = this.colors.runwayMarking;
-                ctx.fillText(text, 0, 0);
-            }
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
         };
 
         // In track-up mode, compensate for diagram rotation
