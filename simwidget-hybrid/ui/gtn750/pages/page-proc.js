@@ -297,12 +297,9 @@ class ProceduresPage {
         if (proc.id) {
             try {
                 const url = `http://${location.hostname}:${this.serverPort}/api/navdb/procedure/${proc.id}/legs`;
-                GTNCore.log(`[PROC] Fetching legs for ${proc.name} (ID:${proc.id})`);
                 const response = await fetch(url);
-                GTNCore.log(`[PROC] Response: ${response.status}, OK: ${response.ok}`);
                 if (response.ok) {
                     const data = await response.json();
-                    GTNCore.log(`[PROC] Got ${data.waypoints?.length || 0} waypoints`);
                     if (data.waypoints?.length > 0) {
                         // Map altitude constraints for VNAV
                         this.previewWaypoints = data.waypoints.map(wp => this.mapAltitudeConstraints(wp));
@@ -317,7 +314,6 @@ class ProceduresPage {
         }
 
         // Fallback: empty waypoints if navdb unavailable
-        GTNCore.log(`[PROC] Using fallback (no waypoints)`);
         this.previewWaypoints = [];
         this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
         this.showDetailsPanel(proc, this.previewWaypoints);
@@ -368,7 +364,6 @@ class ProceduresPage {
      * @param {Array} waypoints - Procedure waypoints with constraints
      */
     showDetailsPanel(proc, waypoints) {
-        GTNCore.log(`[PROC] showDetailsPanel: ${proc.name}, ${waypoints?.length || 0} waypoints`);
         if (!this.elements.detailsPanel) return;
 
         // Populate procedure info
