@@ -53,6 +53,17 @@ Quick links:
 - **Identifier search** - Type ICAO code for instant lookup
 - **Runway information** - Length, heading, surface type
 - **Frequency data** - Tower, ATIS, ground frequencies
+- **AIRAC navdb** - Real FAA CIFP data (52,000+ procedures)
+
+### 🛫 Procedures (NEW v2.6.0)
+- **SID/STAR/Approach** - Departure, arrival, and approach procedures
+- **Real AIRAC data** - 13,000+ airports, 52,000+ procedures from FAA CIFP
+- **Procedure preview** - Visualize route on map (cyan dashed line)
+- **Waypoint details** - Distance, bearing, altitude constraints, speed limits
+- **Details panel** - Comprehensive waypoint-by-waypoint breakdown
+- **ILS auto-tune** - One-click NAV1 frequency setup for ILS approaches
+- **Chart integration** - Direct link to approach plates (ChartFox)
+- **Load to flight plan** - Smart insertion (DEP after origin, ARR before dest, APR at end)
 
 ### 🌦️ Map Overlays
 - **Terrain** - Elevation shading with configurable opacity
@@ -81,8 +92,8 @@ Quick links:
 - **MAP** - Moving map with overlays
 - **FPL** - Flight plan management
 - **NRST** - Nearest airports/navaids
-- **TAXI** - SafeTaxi airport surface diagrams (NEW)
-- **PROC** - Departure/arrival/approach procedures (placeholder)
+- **TAXI** - SafeTaxi airport surface diagrams
+- **PROC** - Departure/arrival/approach procedures (NEW v2.6.0)
 - **AUX** - Auxiliary functions
 - **CHARTS** - Approach plate viewer (integration ready)
 - **SYSTEM** - Settings and configuration
