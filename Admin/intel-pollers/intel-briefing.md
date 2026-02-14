@@ -1,42 +1,18 @@
 # Hive Intel Briefing
-**Generated**: 2/13/2026, 8:00:01 AM
-**Period**: Last 7 days (45 approved items)
+**Generated**: 2/14/2026, 8:00:01 AM
+**Period**: Last 7 days (29 approved items)
 
 ---
 
 ## Executive Summary
 
-- **Libraries & SDKs**: 3 items
-- **Software Releases**: 7 items
-- **Other**: 35 items
-
-⭐ **7 high-priority items** (relevance ≥ 80)
+- **Software Releases**: 1 items
+- **Libraries & SDKs**: 1 items
+- **Other**: 27 items
 
 ---
 
 ## Libraries & SDKs
-
-### 🔴 GLM-OCR: Accurate × Fast × Comprehensive
-**Source**: Hacker News | **Relevance**: 85/100
-
-GLM-OCR is an Optical Character Recognition library designed to accurately and quickly extract text from images.
-
-**Analysis**: GLM-OCR could be very useful for Hive's real-time dashboards and monitoring, as well as voice control and accessibility features. It would enable more accurate extraction of data from various sources, improving the overall functionality and user experience.
-
-**URL**: https://github.com/zai-org/GLM-OCR
-
----
-
-### 🟡 agno-agi/dash
-**Source**: GitHub Trending | **Relevance**: 75/100
-
-agno-agi/dash is a self-learning data agent that provides context-based responses.
-
-**Analysis**: This library could be useful for enhancing Hive's AI agent orchestration capabilities, particularly in providing more grounded and contextually relevant responses. It could integrate well with Oracle as the LLM backend to improve the accuracy and relevance of AI-driven interactions within Hive.
-
-**URL**: https://github.com/agno-agi/dash
-
----
 
 ### 🟡 Show HN: Agent framework that generates its own topology and evolves at runtime
 **Source**: Hacker News | **Relevance**: 75/100
@@ -50,72 +26,6 @@ A modular agent framework that dynamically generates its topology and evolves at
 ---
 
 ## Software Releases
-
-### 🔴 GLM-5 scores 50 on the Intelligence Index and is the new open weights leader!
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
-
-GLM-5 is a new open-source language model that scores highly on the Intelligence Index and has become the leader in open weights.
-
-**Analysis**: GLM-5 could be useful for Hive by providing advanced AI capabilities, enhancing the functionality of Claude Code and local LLMs like Ollama/LM Studio. Its improved intelligence index suggests it may offer more sophisticated language understanding and generation, which could benefit various component
-
-**URL**: https://i.redd.it/gauvtw6qfxig1.jpeg
-
----
-
-### 🔴 electron/electron v40.4.0
-**Source**: GitHub Release | **Relevance**: 85/100
-
-electron v40.4.0 is a major release of the Electron framework.
-
-**Analysis**: Electron is a crucial component for Hive, as it powers the MSFS 2024 flight simulation widgets and overlays. Upgrading to Electron v40.4.0 could improve performance, security, and compatibility with newer technologies, making it highly useful for enhancing Hive's capabilities.
-
-**URL**: https://github.com/electron/electron/releases/tag/v40.4.0
-
----
-
-### 🔴 Ring-1T-2.5 released by inclusionAI
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
-
-Ring-1T-2.5 is a large language model (LLM) released by inclusionAI.
-
-**Analysis**: This LLM could be useful for Hive's AI agent orchestration, enhancing its capabilities in natural language processing and understanding.
-
-**URL**: https://huggingface.co/inclusionAI/Ring-1T-2.5-FP8
-
----
-
-### 🔴 Ming-flash-omni-2.0: 100B MoE (6B active) omni-modal model - unified speech/SFX/music generation
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
-
-Ming-flash-omni-2.0 is a large multimodal model capable of unified speech/SFX/music generation.
-
-**Analysis**: This advanced AI model could significantly enhance Hive's capabilities in voice control, accessibility, and AI agent orchestration, providing more natural and diverse interactions.
-
-**URL**: https://huggingface.co/inclusionAI/Ming-flash-omni-2.0
-
----
-
-### 🔴 ollama/ollama v0.16.0
-**Source**: GitHub Release | **Relevance**: 85/100
-
-ollama/ollama v0.16.0 is a local language model that can be integrated into applications for natural language processing tasks.
-
-**Analysis**: This release of ollama could be highly useful for Hive, as it provides an additional local LLM option that can enhance AI agent orchestration capabilities, particularly in scenarios where real-time responses are required without relying on external cloud-based services.
-
-**URL**: https://github.com/ollama/ollama/releases/tag/v0.16.0
-
----
-
-### 🔴 ollama/ollama v0.16.1
-**Source**: GitHub Release | **Relevance**: 85/100
-
-ollama/ollama v0.16.1 is a local language model that can be integrated into applications for natural language processing tasks.
-
-**Analysis**: This release of Ollama could be very useful for Hive as it provides a powerful local LLM that can enhance AI agent orchestration capabilities, including Claude Code and other local LLMs like LM Studio. The integration potential with existing services in Hive, such as KittBox and SimWidget, could sig
-
-**URL**: https://github.com/ollama/ollama/releases/tag/v0.16.1
-
----
 
 ### 🟡 GLM 5 Released
 **Source**: r/LocalLLaMA | **Relevance**: 75/100
@@ -174,61 +84,6 @@ Web UI for Claude Code built on a reverse-engineered WebSocket protocol. Launch 
 
 ---
 
-### 🟢 anthropics/claudes-c-compiler
-**Source**: GitHub Trending | **Relevance**: 65/100
-
-Claude Opus 4.6 wrote a dependency-free C compiler in Rust, with backends targeting x86 (64- and 32-bit), ARM, and RISC-V, capable of compiling a booting Linux kernel.
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/anthropics/claudes-c-compiler
-
----
-
-### 🟢 Show HN: Smooth CLI – Token-efficient browser for AI agents
-**Source**: Hacker News | **Relevance**: 60/100
-
-Show HN: Smooth CLI – Token-efficient browser for AI agents
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://docs.smooth.sh/cli/overview
-
----
-
-### 🟢 Show HN: Slack CLI for Agents
-**Source**: Hacker News | **Relevance**: 60/100
-
-Show HN: Slack CLI for Agents
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/stablyai/agent-slack
-
----
-
-### 🟢 Introducing the Developer Knowledge API and MCP Server
-**Source**: Hacker News | **Relevance**: 60/100
-
-Introducing the Developer Knowledge API and MCP Server
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://developers.googleblog.com/introducing-the-developer-knowledge-api-and-mcp-server/
-
----
-
-### 🟢 anthropics/anthropic-sdk-typescript foundry-sdk-v0.2.3
-**Source**: GitHub Release | **Relevance**: 60/100
-
-foundry-sdk: v0.2.3
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/foundry-sdk-v0.2.3
-
----
-
 ### 🟢 I tested 11 small LLMs on tool-calling judgment — on CPU, no GPU.
 **Source**: r/LocalLLaMA | **Relevance**: 60/100
 
@@ -270,116 +125,6 @@ Tambo 1.0: Open-source toolkit for agents that render React components
 **Analysis**: Auto-scored by keywords (LLM unavailable).
 
 **URL**: https://github.com/tambo-ai/tambo
-
----
-
-### 🟢 BlockRunAI/ClawRouter
-**Source**: GitHub Trending | **Relevance**: 55/100
-
-Smart LLM router — save 78% on inference costs. 30+ models, one wallet, x402 micropayments.
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/BlockRunAI/ClawRouter
-
----
-
-### 🟢 Claude Composer
-**Source**: Hacker News | **Relevance**: 55/100
-
-Claude Composer
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://www.josh.ing/blog/claude-composer
-
----
-
-### 🟢 Moltbook Is Not an AI Society
-**Source**: Dev.to | **Relevance**: 55/100
-
-Moltbook has been circulating as an "AI-only social network" where autonomous agents post, argue,...
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://dev.to/richardpascoe/moltbook-is-not-an-ai-society-4h6d
-
----
-
-### 🟢 Evaluating and mitigating the growing risk of LLM-discovered 0-days
-**Source**: Hacker News | **Relevance**: 55/100
-
-Evaluating and mitigating the growing risk of LLM-discovered 0-days
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://red.anthropic.com/2026/zero-days/
-
----
-
-### 🟢 ollama/ollama v0.15.5
-**Source**: GitHub Release | **Relevance**: 55/100
-
-v0.15.5
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/ollama/ollama/releases/tag/v0.15.5
-
----
-
-### 🟢 electron/electron v40.2.1
-**Source**: GitHub Release | **Relevance**: 55/100
-
-electron v40.2.1
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/electron/electron/releases/tag/v40.2.1
-
----
-
-### 🟢 nodejs/node v25.6.0
-**Source**: GitHub Release | **Relevance**: 55/100
-
-2026-02-03, Version 25.6.0 (Current), @aduh95
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/nodejs/node/releases/tag/v25.6.0
-
----
-
-### 🟢 VoltAgent/awesome-openclaw-skills
-**Source**: GitHub Trending | **Relevance**: 55/100
-
-The awesome collection of OpenClaw Skills. Formerly known as Moltbot, originally Clawdbot.
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/VoltAgent/awesome-openclaw-skills
-
----
-
-### 🟢 DingTalk-Real-AI/dingtalk-moltbot-connector
-**Source**: GitHub Trending | **Relevance**: 55/100
-
-将 钉钉机器人 / 钉钉 DEAP Agent 连接到 OpenClaw Gateway 的OpenClaw Plugin，支持 AI Card 流式响应
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/DingTalk-Real-AI/dingtalk-moltbot-connector
-
----
-
-### 🟢 zarazhangrui/frontend-slides
-**Source**: GitHub Trending | **Relevance**: 55/100
-
-Create beautiful slides on the web using Claude's frontend skills
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/zarazhangrui/frontend-slides
 
 ---
 
@@ -515,12 +260,86 @@ Fast, Sharp & Reliable Agentic Intelligence
 
 ---
 
+### 🟢 Frontier AI agents violate ethical constraints 30–50% of time, pressured by KPIs
+**Source**: Hacker News | **Relevance**: 55/100
+
+Frontier AI agents violate ethical constraints 30–50% of time, pressured by KPIs
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://arxiv.org/abs/2512.20798
+
+---
+
+### 🟢 LLMs as Language Compilers: Lessons from Fortran for the Future of Coding
+**Source**: Hacker News | **Relevance**: 55/100
+
+LLMs as Language Compilers: Lessons from Fortran for the Future of Coding
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://cyber-omelette.com/posts/the-abstraction-rises.html
+
+---
+
+### 🟢 Hugging Face Is Teasing Something Anthropic Related
+**Source**: r/LocalLLaMA | **Relevance**: 55/100
+
+Hugging Face Is Teasing Something Anthropic Related
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://i.redd.it/wvu2vi2jwnig1.png
+
+---
+
+### 🟢 Show HN: Total Recall – write-gated memory for Claude Code
+**Source**: Hacker News | **Relevance**: 55/100
+
+Show HN: Total Recall – write-gated memory for Claude Code
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://github.com/davegoldblatt/total-recall
+
+---
+
+### 🟢 Ex-GitHub CEO launches a new developer platform for AI agents
+**Source**: Hacker News | **Relevance**: 55/100
+
+Ex-GitHub CEO launches a new developer platform for AI agents
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://entire.io/blog/hello-entire-world/
+
+---
+
+### 🟢 I measured the "personality" of 6 open-source LLMs (7B-9B) by probing their hidden states. Here's what I found.
+**Source**: r/LocalLLaMA | **Relevance**: 55/100
+
+I measured the "personality" of 6 open-source LLMs (7B-9B) by probing their hidden states. Here's what I found.
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r11zsa/i_measured_the_personality_of_6_opensource_llms/
+
+---
+
+### 🟢 Show HN: Showboat and Rodney, so agents can demo what they've built
+**Source**: Hacker News | **Relevance**: 55/100
+
+Show HN: Showboat and Rodney, so agents can demo what they've built
+
+**Analysis**: Auto-scored by keywords (LLM unavailable).
+
+**URL**: https://simonwillison.net/2026/Feb/10/showboat-and-rodney/
+
+---
+
 ## Recommended Actions
 
-**Queue for Implementation** (10 items):
-- [ ] GLM-OCR: Accurate × Fast × Comprehensive (relevance: 85)
-- [ ] GLM-5 scores 50 on the Intelligence Index and is the new open weights leader! (relevance: 85)
-- [ ] electron/electron v40.4.0 (relevance: 85)
-- [ ] Ring-1T-2.5 released by inclusionAI (relevance: 85)
-- [ ] Ming-flash-omni-2.0: 100B MoE (6B active) omni-modal model - unified speech/SFX/music generation (relevance: 85)
+**Queue for Implementation** (2 items):
+- [ ] GLM 5 Released (relevance: 75)
+- [ ] Show HN: Agent framework that generates its own topology and evolves at runtime (relevance: 75)
 

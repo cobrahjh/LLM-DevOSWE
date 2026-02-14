@@ -68,6 +68,16 @@
         "other"
       ],
       "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
+    },
+    {
+      "timestamp": "2026-02-14T13:00:01.458Z",
+      "itemCount": 29,
+      "categories": [
+        "release",
+        "library",
+        "other"
+      ],
+      "file": "C:\\LLM-DevOSWE\\Admin\\intel-pollers\\intel-briefing.md"
     }
   ],
   "queued": [
@@ -100,6 +110,6 @@
     "gh-rel-ollama-ollama-285497225",
     "gh-rel-ollama-ollama-285905972"
   ],
-  "lastBriefing": "2026-02-13T13:00:01.465Z",
+  "lastBriefing": "2026-02-14T13:00:01.459Z",
   "lastAutoQueue": "2026-02-13T13:00:01.597Z"
 }
