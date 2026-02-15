@@ -377,6 +377,62 @@ See [TCAS-GUIDE.md](../TCAS-GUIDE.md) for complete TCAS documentation.
 
 See [ALTITUDE-ALERTS-GUIDE.md](../ALTITUDE-ALERTS-GUIDE.md) for complete altitude alerts documentation.
 
+**Fuel Monitor (NEW v3.0.0)**:
+1. Real-time fuel state tracking (safe/marginal/critical)
+2. VFR/IFR reserve calculations (45min/60min required)
+3. Endurance and range calculations based on burn rate averaging
+4. Destination fuel planning (can reach with reserves?)
+5. Low fuel warnings: critical (<reserves), marginal (<warning threshold), insufficient (can't reach destination)
+6. Nearest airports within fuel range query
+
+**Fuel States**:
+- **SAFE** (green): Fuel > reserves + 30min buffer
+- **MARGINAL** (yellow): Fuel > reserves but < warning threshold
+- **CRITICAL** (red): Fuel < reserves (below legal minimum)
+
+**Monitoring Fuel**:
+- GTN750 automatically tracks fuel total, burn rate, endurance, and range
+- Displays in data fields: `FUEL` (remaining gallons), `END` (endurance hours), `RNG` (range nm)
+- Warning thresholds: VFR 45min + 30min buffer, IFR 60min + 30min buffer
+
+**Setting Reserve Type**:
+```javascript
+// Default: VFR (45 minutes)
+fuelMonitor.setReserveType('VFR');
+
+// For IFR operations (60 minutes)
+fuelMonitor.setReserveType('IFR');
+```
+
+**Destination Fuel Planning**:
+1. Set destination waypoint in flight plan
+2. GTN750 calculates: fuel required = (distance / groundSpeed) * burn rate
+3. Adds reserve fuel (VFR 45min or IFR 60min)
+4. Warns if usable fuel < (required + reserves)
+
+**Example**: Cross-country flight to KDEN (200nm)
+- Fuel: 40 gal total, 38 gal usable (95%)
+- Burn rate: 8.5 GPH (averaged over 10 samples)
+- Ground speed: 120 kt
+- Time to KDEN: 200 / 120 = 1.67 hours
+- Fuel required: 1.67 * 8.5 = 14.2 gal
+- VFR reserve: 8.5 * 0.75 = 6.4 gal
+- Total needed: 14.2 + 6.4 = 20.6 gal
+- **Result**: CAN REACH (38 gal > 20.6 gal), fuel at destination: 17.4 gal (includes 6.4 gal reserves)
+
+**Low Fuel Warnings**:
+- **Critical** (<reserves): "CRITICAL FUEL - Land immediately" (red, critical chime)
+- **Marginal** (>reserves, <warning): "Low fuel warning" (yellow, warning chime)
+- **Insufficient for destination**: "Insufficient fuel to reach KDEN with reserves" (amber, warning chime)
+
+**Nearest Airports Within Range**:
+- GTN750 automatically queries airports within current fuel range
+- Range = (usable fuel / avg burn rate) * ground speed
+- Example: 38 gal / 8.5 GPH = 4.5 hrs, 4.5 * 120kt = 540nm range
+- Shows nearest 10 airports within 540nm, sorted by distance
+
+See [FUEL-MONITOR-GUIDE.md](../FUEL-MONITOR-GUIDE.md) for complete fuel monitor documentation.
+
 ### 4. Using the CDI
 
 **GPS Mode** (default):
