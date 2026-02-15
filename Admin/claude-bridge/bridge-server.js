@@ -205,10 +205,15 @@ function callClaudeCLI(message, sessionId) {
         // Build args - use print mode for non-interactive
         const args = ['-p', message];
 
-        const claudePath = process.env.CLAUDE_PATH || 'C:\\Users\\Stone-PC\\AppData\\Roaming\\npm\\claude.cmd';
+        const claudePath = process.env.CLAUDE_PATH || 'C:\\Users\\Stone-PC\\.local\\bin\\claude.exe';
+
+        // Remove CLAUDECODE to allow nested sessions
+        const env = { ...process.env };
+        delete env.CLAUDECODE;
+
         const claude = spawn(claudePath, args, {
-            shell: false,
-            env: { ...process.env },
+            shell: true,
+            env: env,
             cwd: config.workingDir
         });
 
