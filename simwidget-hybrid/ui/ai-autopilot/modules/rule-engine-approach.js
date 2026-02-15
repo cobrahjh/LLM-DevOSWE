@@ -197,3 +197,6 @@ class RuleEngineApproach extends RuleEngineCore {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RuleEngineApproach };
 }
+if (typeof window !== 'undefined') {
+    window.RuleEngineApproach = RuleEngineApproach;
+}

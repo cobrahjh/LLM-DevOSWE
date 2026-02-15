@@ -150,3 +150,6 @@ class RuleEngineCruise extends RuleEngineCore {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RuleEngineCruise };
 }
+if (typeof window !== 'undefined') {
+    window.RuleEngineCruise = RuleEngineCruise;
+}

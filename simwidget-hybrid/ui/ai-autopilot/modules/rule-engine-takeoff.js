@@ -250,7 +250,10 @@ class RuleEngineTakeoff extends RuleEngineCore {
     }
 }
 
-// Export for Node.js
+// Export for Node.js and browser
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RuleEngineTakeoff };
+}
+if (typeof window !== 'undefined') {
+    window.RuleEngineTakeoff = RuleEngineTakeoff;
 }

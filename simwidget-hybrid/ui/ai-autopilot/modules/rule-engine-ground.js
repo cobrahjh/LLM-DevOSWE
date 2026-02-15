@@ -200,7 +200,10 @@ class RuleEngineGround extends RuleEngineCore {
     }
 }
 
-// Export for Node.js (if needed for testing)
+// Export for Node.js and browser
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { RuleEngineGround };
+}
+if (typeof window !== 'undefined') {
+    window.RuleEngineGround = RuleEngineGround;
 }
