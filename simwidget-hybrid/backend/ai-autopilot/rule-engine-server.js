@@ -10,7 +10,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const RuleEngine = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine'));
+const { RuleEngineCore: RuleEngine } = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine-core'));
 const FlightPhase = require(path.join(__dirname, '../../ui/ai-autopilot/modules/flight-phase'));
 const CommandQueue = require(path.join(__dirname, '../../ui/ai-autopilot/modules/command-queue'));
 const { AIRCRAFT_PROFILES, DEFAULT_PROFILE } = require(path.join(__dirname, '../../ui/ai-autopilot/data/aircraft-profiles'));
