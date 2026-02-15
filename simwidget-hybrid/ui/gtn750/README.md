@@ -236,6 +236,36 @@ See [AIRWAYS-GUIDE.md](../AIRWAYS-GUIDE.md) for complete airways documentation.
 
 See [VNAV-GUIDE.md](../VNAV-GUIDE.md) for complete VNAV documentation.
 
+**Holding Patterns (NEW v3.0.0)**:
+1. Load an approach with a holding pattern (e.g., KBIH R12-Z missed approach)
+2. GTN750 detects HM/HA/HF legs automatically
+3. When reaching hold waypoint, entry procedure calculated (DIRECT/TEARDROP/PARALLEL)
+4. Racetrack pattern displayed on map
+5. Follow holding instructions until ATC clears you
+
+**Example**: KBIH R12-Z missed approach hold at BIH VOR
+- Fix: BIH VOR
+- Inbound: 121° (to BIH)
+- Turns: Standard right
+- Leg time: 60 seconds (below 14,000ft)
+- Entry: DIRECT (heading within 70° sector)
+- Procedure: Turn right to outbound (301°), fly 60s, turn right to inbound (121°)
+
+**Holding Display**:
+- **Racetrack Pattern**: Green inbound leg, cyan outbound leg, dashed turn arcs
+- **Fix Marker**: Yellow circle at hold fix
+- **Entry Indicator**: Shows TEARDROP, PARALLEL, or DIRECT entry path
+- **Status Panel**: Current leg (INBOUND/OUTBOUND/TURN), elapsed time, turns remaining
+
+**Manual Hold Entry**:
+1. Select waypoint to hold at
+2. Press `HOLD` soft key (in CDI menu)
+3. Configure: Inbound course, turn direction (R/L), leg time (60s/90s)
+4. Press `ACTIVATE`
+5. Entry procedure calculated automatically
+
+See [HOLDING-GUIDE.md](../HOLDING-GUIDE.md) for complete holding patterns documentation.
+
 ### 4. Using the CDI
 
 **GPS Mode** (default):
