@@ -2064,9 +2064,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     nav: this.ap.navHold,
                     apr: this.ap.aprHold
                 },
-                terrainAlert: this.ruleEngine ? this.ruleEngine.getTerrainAlert() : null,
-                envelopeAlert: this.ruleEngine ? this.ruleEngine.getEnvelopeAlert() : null,
-                envelope: this.ruleEngine ? this.ruleEngine.getEnvelope() : null,
+                terrainAlert: this.ruleEngine?.getTerrainAlert ? this.ruleEngine.getTerrainAlert() : null,
+                envelopeAlert: this.ruleEngine?.getEnvelopeAlert ? this.ruleEngine.getEnvelopeAlert() : null,
+                envelope: this.ruleEngine?.getEnvelope ? this.ruleEngine.getEnvelope() : null,
                 airport: this._nearestAirport ? {
                     icao: this._nearestAirport.icao,
                     name: this._nearestAirport.name,
@@ -2079,7 +2079,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     length: this._activeRunway.length
                 } : null,
                 fplLoaded: !!this._currentPlan,
-                navGuidance: this.ruleEngine ? this.ruleEngine.getNavGuidance() : null,
+                navGuidance: this.ruleEngine?.getNavGuidance ? this.ruleEngine.getNavGuidance() : null,
                 atcPhase: this.atcController ? this.atcController.getPhase() : 'INACTIVE',
                 atcInstruction: this.atcController ? this.atcController.getATCInstruction() : '',
                 atcRoute: this.atcController ? this.atcController.getRoute() : null,
@@ -2673,7 +2673,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this.elements.targetSpd.classList.toggle('active', this.aiEnabled);
         }
         if (this.elements.targetHdg) {
-            const navG = (this.aiEnabled && this.ruleEngine) ? this.ruleEngine.getNavGuidance() : null;
+            const navG = (this.aiEnabled && this.ruleEngine?.getNavGuidance) ? this.ruleEngine.getNavGuidance() : null;
             if (navG && navG.wpIdent) {
                 // Show active waypoint + distance instead of raw heading
                 const distStr = navG.wpDist != null ? ` ${navG.wpDist}nm` : '';
