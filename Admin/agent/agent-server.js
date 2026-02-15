@@ -1548,6 +1548,31 @@ app.get('/api/session-info', (req, res) => {
     });
 });
 
+// Proxy endpoint for relay consumers (avoids CORS issues)
+app.get('/api/relay/consumers', async (req, res) => {
+    try {
+        const relayUrl = 'http://192.168.1.192:8600/api/consumers';
+        const https = require('https');
+        const http = require('http');
+
+        http.get(relayUrl, (response) => {
+            let data = '';
+            response.on('data', chunk => data += chunk);
+            response.on('end', () => {
+                try {
+                    res.json(JSON.parse(data));
+                } catch (e) {
+                    res.status(500).json({ error: 'Failed to parse relay response' });
+                }
+            });
+        }).on('error', (err) => {
+            res.status(500).json({ error: err.message });
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Bridge configuration
 app.get('/api/bridge', (req, res) => {
     res.json({

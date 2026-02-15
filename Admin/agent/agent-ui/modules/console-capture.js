@@ -61,10 +61,16 @@ const ConsoleCapture = (function() {
 
     async function loadActiveSessions() {
         try {
-            // Try network relay first, fallback to localhost
-            const relayUrl = 'http://192.168.1.192:8600/api/consumers';
-            const response = await fetch(relayUrl);
-            const data = await response.json();
+            // Try proxy endpoint first (same-origin, no CORS), fallback to direct relay
+            let response, data;
+            try {
+                response = await fetch('/api/relay/consumers');
+                data = await response.json();
+            } catch (proxyErr) {
+                console.warn('[ConsoleCapture] Proxy failed, trying direct relay:', proxyErr);
+                response = await fetch('http://192.168.1.192:8600/api/consumers');
+                data = await response.json();
+            }
 
             // Get only online consumers
             const onlineConsumers = data.consumers.filter(c => c.isOnline);
