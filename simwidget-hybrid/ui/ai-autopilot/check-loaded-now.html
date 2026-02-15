@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Phase 2 Module Check</title>
+    <style>
+        body {
+            font-family: 'Consolas', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+        .status { padding: 10px; margin: 5px 0; border-radius: 4px; }
+        .loaded { background: #0e4429; border-left: 4px solid #3fb950; }
+        .not-loaded { background: #161b22; border-left: 4px solid #6e7681; }
+        .phase { background: #1f6feb; color: white; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        h1 { color: #58a6ff; }
+        code { background: #161b22; padding: 2px 6px; border-radius: 3px; color: #79c0ff; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Current Module Status</h1>
+    <div id="result">Checking...</div>
+    <script>
+        // Wait a moment for AI Autopilot to load if opened together
+        setTimeout(() => {
+            const opener = window.opener;
+            let targetWindow = opener;
+
+            // If not opened from AI Autopilot, try to find it
+            if (!targetWindow || !targetWindow.widget) {
+                targetWindow = window;
+            }
+
+            const result = document.getElementById('result');
+
+            if (!targetWindow.widget) {
+                result.innerHTML = `
+                    <div class="status not-loaded">
+                        <h2>❌ AI Autopilot Widget Not Found</h2>
+                        <p>Please open this page from the AI Autopilot widget or open both pages:</p>
+                        <ol>
+                            <li>Open: <code>http://192.168.1.42:8080/ui/ai-autopilot/</code></li>
+                            <li>Open browser console (F12)</li>
+                            <li>Run: <code>window.open('test-lazy-loading-live.html')</code></li>
+                        </ol>
+                        <p><strong>Or check modules in console:</strong></p>
+                        <pre style="background:#0d1117; padding:15px; border-radius:6px;">
+console.log('ATCController:', typeof ATCController);
+console.log('WindCompensation:', typeof WindCompensation);
+console.log('LLMAdvisor:', typeof LLMAdvisor);
+console.log('Phase:', window.widget?.flightPhase?.phase);
+                        </pre>
+                    </div>
+                `;
+                return;
+            }
+
+            const widget = targetWindow.widget;
+            const phase = widget.flightPhase?.phase || 'UNKNOWN';
+            const modules = {
+                ATCController: typeof targetWindow.ATCController !== 'undefined',
+                WindCompensation: typeof targetWindow.WindCompensation !== 'undefined',
+                LLMAdvisor: typeof targetWindow.LLMAdvisor !== 'undefined',
+                RuleEngineCore: typeof targetWindow.RuleEngineCore !== 'undefined',
+                RuleEngineGround: typeof targetWindow.RuleEngineGround !== 'undefined'
+            };
+
+            const conditionalMods = Array.from(widget._conditionalModules || []);
+
+            let html = `<div class="phase">
+                <h2>Current Phase: ${phase}</h2>
+                <p>Conditional Modules Loaded: ${conditionalMods.join(', ') || 'None'}</p>
+            </div>`;
+
+            // Core (always loaded)
+            html += `<div class="status ${modules.RuleEngineCore ? 'loaded' : 'not-loaded'}">
+                ${modules.RuleEngineCore ? '✅' : '❌'} <strong>RuleEngineCore</strong> (1,223 lines) - Always loaded
+            </div>`;
+
+            // Phase module
+            html += `<div class="status ${modules.RuleEngineGround ? 'loaded' : 'not-loaded'}">
+                ${modules.RuleEngineGround ? '✅' : '❌'} <strong>RuleEngineGround</strong> (204 lines) - For PREFLIGHT/TAXI
+            </div>`;
+
+            // Conditional: ATCController
+            const atcExpected = ['PREFLIGHT', 'TAXI'].includes(phase);
+            const atcCorrect = modules.ATCController === atcExpected;
+            html += `<div class="status ${modules.ATCController ? 'loaded' : 'not-loaded'}">
+                ${modules.ATCController ? '✅' : '❌'} <strong>ATCController</strong> (343 lines) - Ground phases only
+                ${atcCorrect ? '' : ' <span style="color:#f85149">⚠️ UNEXPECTED</span>'}
+            </div>`;
+
+            // Conditional: WindCompensation
+            const windExpected = !['PREFLIGHT', 'TAXI'].includes(phase);
+            const windCorrect = modules.WindCompensation === windExpected;
+            html += `<div class="status ${modules.WindCompensation ? 'loaded' : 'not-loaded'}">
+                ${modules.WindCompensation ? '✅' : '❌'} <strong>WindCompensation</strong> (189 lines) - Airborne only
+                ${windCorrect ? '' : ' <span style="color:#f85149">⚠️ UNEXPECTED</span>'}
+            </div>`;
+
+            // Conditional: LLMAdvisor
+            html += `<div class="status ${modules.LLMAdvisor ? 'loaded' : 'not-loaded'}">
+                ${modules.LLMAdvisor ? '✅' : '❌'} <strong>LLMAdvisor</strong> (248 lines) - On "Ask AI" click
+                ${modules.LLMAdvisor ? ' <span style="color:#3fb950">(User requested)</span>' : ''}
+            </div>`;
+
+            // Calculate memory
+            let lines = 1223; // Core
+            if (modules.ATCController) lines += 343;
+            if (modules.WindCompensation) lines += 189;
+            if (modules.LLMAdvisor) lines += 248;
+            if (modules.RuleEngineGround) lines += 204;
+
+            html += `<div class="phase" style="background:#1a7f37; margin-top:20px;">
+                <h2>📊 Memory Footprint</h2>
+                <p style="font-size:24px; margin:10px 0;"><strong>${lines.toLocaleString()}</strong> lines loaded</p>
+                <p>Original monolithic: 2,054 lines<br>
+                Savings: <strong>${((1 - lines/2054) * 100).toFixed(1)}%</strong></p>
+            </div>`;
+
+            result.innerHTML = html;
+
+            // Auto-refresh
+            setTimeout(() => location.reload(), 10000);
+
+        }, 1000);
+    </script>
+</body>
+</html>
