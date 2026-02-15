@@ -1518,7 +1518,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             case 'toggle-ai':
                 this.aiEnabled = !this.aiEnabled;
                 if (this.aiEnabled) {
-                    this.ruleEngine.reset();
+                    if (this.ruleEngine) this.ruleEngine.reset();
                     this.commandQueue.clear();
                 }
                 this._render();
@@ -1547,7 +1547,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 // Flight-level phases (PREFLIGHT, TAXI, CLIMB) are managed by FlightPhase
                 // Takeoff sub-phases are managed by the rule engine
                 const subPhases = ['BEFORE_ROLL', 'ROLL', 'ROTATE', 'LIFTOFF', 'INITIAL_CLIMB', 'DEPARTURE'];
-                if (subPhases.includes(phaseId)) {
+                if (subPhases.includes(phaseId) && this.ruleEngine) {
                     this.ruleEngine._takeoffSubPhase = phaseId;
                     if (phaseId === 'ROTATE') this.ruleEngine._rotateStartTime = Date.now();
                 } else if (this.flightPhase) {
@@ -1654,7 +1654,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         if (!data || data.activeIndex == null) return;
 
         // Sync the AI Autopilot's flight plan waypoint index with GTN750
-        if (this.ruleEngine.hasFlightPlan()) {
+        if (this.ruleEngine && this.ruleEngine.hasFlightPlan()) {
             this.ruleEngine.setActiveWaypointIndex(data.activeIndex);
 
             // Log waypoint sequence
@@ -1669,7 +1669,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         this._currentPlan = plan;
         if (plan.cruiseAltitude && plan.cruiseAltitude > 0) {
             this.flightPhase.targetCruiseAlt = plan.cruiseAltitude;
-            this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
+            if (this.ruleEngine) this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
             this._dbg('cmd', `SimBrief plan: cruise <span class="val">${plan.cruiseAltitude}ft</span>`);
         }
         this._renderFplReport();
@@ -1686,17 +1686,17 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // Enable AI if not already enabled
         if (!this.aiEnabled) {
             this.aiEnabled = true;
-            this.ruleEngine.reset();
+            if (this.ruleEngine) this.ruleEngine.reset();
             this.commandQueue.clear();
         }
 
         // Set flight plan in rule engine
-        this.ruleEngine.setFlightPlan(plan);
+        if (this.ruleEngine) this.ruleEngine.setFlightPlan(plan);
 
         // Set cruise altitude
         if (plan.cruiseAltitude && plan.cruiseAltitude > 0) {
             this.flightPhase.targetCruiseAlt = plan.cruiseAltitude;
-            this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
+            if (this.ruleEngine) this.ruleEngine.setTargetCruiseAlt(plan.cruiseAltitude);
         }
 
         // Calculate total distance for TOD
