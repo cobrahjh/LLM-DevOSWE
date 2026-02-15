@@ -1535,6 +1535,19 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Session info - returns PID and session identifier for message routing
+app.get('/api/session-info', (req, res) => {
+    const sessionId = `claude-code-${process.pid}`;
+    res.json({
+        sessionId: sessionId,
+        pid: process.pid,
+        uptime: process.uptime(),
+        platform: process.platform,
+        nodeVersion: process.version,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Bridge configuration
 app.get('/api/bridge', (req, res) => {
     res.json({

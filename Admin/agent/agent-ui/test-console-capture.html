@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Console Capture Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #fff;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2d2d2d;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #3a8eef;
+        }
+        .instructions {
+            background: #2a2a3e;
+            padding: 15px;
+            border-left: 4px solid #4a9eff;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #4a9eff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Console Capture Test</h1>
+
+    <div class="instructions">
+        <h3>📋 Instructions:</h3>
+        <ol>
+            <li>Press <kbd>Ctrl+Shift+L</kbd> to open Console Capture panel</li>
+            <li>Click buttons below to generate console messages</li>
+            <li>Watch the logs appear in the panel</li>
+            <li>Click "Copy from logs above" in the panel</li>
+            <li>Edit the textarea if needed</li>
+            <li>Click "🚀 Send to Hive" to send to task queue</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 1: Basic Logging</h2>
+        <button onclick="testBasicLogs()">Generate Basic Logs</button>
+        <button onclick="testErrorLogs()">Generate Errors</button>
+        <button onclick="testMixedLogs()">Generate Mixed Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Throttle Test Results</h2>
+        <button onclick="generateThrottleResults()">Generate Throttle Test Results</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: JSON Data</h2>
+        <button onclick="logJSONData()">Log JSON Objects</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Rapid Fire (100 logs)</h2>
+        <button onclick="rapidFireTest()">Rapid Fire Test</button>
+    </div>
+
+    <script src="modules/console-capture.js"></script>
+    <script>
+        function testBasicLogs() {
+            console.log('Test log message 1');
+            console.log('Test log message 2');
+            console.log('Test log message 3');
+            console.info('This is an info message');
+            console.log('✅ Basic logs generated!');
+        }
+
+        function testErrorLogs() {
+            console.error('Error: Something went wrong!');
+            console.warn('Warning: This is a warning message');
+            console.error('Critical error: Database connection failed');
+            console.warn('Warning: Low memory detected');
+        }
+
+        function testMixedLogs() {
+            console.log('Starting process...');
+            console.info('Connecting to server...');
+            console.log('Server connected: 192.168.1.162:8080');
+            console.warn('Connection slow: 350ms latency');
+            console.log('Downloading data...');
+            console.error('Download failed: Timeout');
+            console.log('Retrying...');
+            console.log('✅ Download complete!');
+        }
+
+        function generateThrottleResults() {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('Universal Throttling Test Results');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('Date: ' + new Date().toLocaleString());
+            console.log('');
+            console.log('No Throttle:    50 updates (expected ~50)');
+            console.log('1s Throttle:    5 updates (expected ~5)');
+            console.log('60s Throttle:   1 updates (expected 1)');
+            console.log('');
+            console.log('Status: ✅ PASS - Throttling working correctly!');
+            console.log('');
+            console.log('The 60s throttle will continue in background.');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        }
+
+        function logJSONData() {
+            const testData = {
+                status: 'ok',
+                version: '1.14.0',
+                uptime: 2563,
+                simconnect: {
+                    connected: false,
+                    mock: true
+                },
+                camera: {
+                    version: '1.4.0',
+                    state: 'cockpit'
+                }
+            };
+
+            console.log('Server Status:');
+            console.log(testData);
+            console.log('');
+            console.log('SimConnect Details:');
+            console.log(testData.simconnect);
+        }
+
+        function rapidFireTest() {
+            console.log('🚀 Starting rapid fire test...');
+            for (let i = 1; i <= 100; i++) {
+                console.log(`Log entry #${i}: Processing item ${i}`);
+            }
+            console.log('✅ Rapid fire test complete! (100 logs)');
+        }
+
+        // Auto-generate some logs on page load
+        setTimeout(() => {
+            console.log('═══════════════════════════════════════');
+            console.log('📋 Console Capture Test Page Loaded');
+            console.log('═══════════════════════════════════════');
+            console.log('Press Ctrl+Shift+L to open Console Capture');
+            console.log('Click buttons above to generate test logs');
+            console.log('═══════════════════════════════════════');
+        }, 500);
+    </script>
+</body>
+</html>
