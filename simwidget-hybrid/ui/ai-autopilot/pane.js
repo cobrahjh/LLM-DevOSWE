@@ -1615,7 +1615,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         this._navStateTimestamp = Date.now();
 
         // Feed nav data to rule engine
-        this.ruleEngine.setNavState(nav);
+        if (this.ruleEngine) {
+            this.ruleEngine.setNavState(nav);
+        }
 
         // Feed destination distance for TOD calculation
         if (nav.destDistNm != null) {
@@ -2044,7 +2046,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 enabled: this.aiEnabled,
                 autoControls: this._autoControlsEnabled,
                 phase: this.flightPhase.phase,
-                takeoffSubPhase: this._lastTakeoffSubPhase || this.ruleEngine.getTakeoffSubPhase(),
+                takeoffSubPhase: this._lastTakeoffSubPhase || (this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null),
                 targets: {
                     altitude: this.flightPhase.targetCruiseAlt,
                     speed: this.setValues.speed,
@@ -2202,7 +2204,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             }
 
             // ── Takeoff attempt telemetry tracking ──
-            const subPhase2 = serverAP?.subPhase || this.ruleEngine.getTakeoffSubPhase();
+            const subPhase2 = serverAP?.subPhase || (this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null);
             this._trackTakeoffAttempt(data, this.flightPhase.phase, subPhase2);
 
             // Check LLM advisory triggers (only if loaded)
@@ -2308,7 +2310,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     value: entry.value,
                     description: entry.description,
                     phase: this.flightPhase.phase,
-                    subPhase: this.ruleEngine.getTakeoffSubPhase()
+                    subPhase: this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null
                 }
             });
         }
@@ -2622,7 +2624,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     _renderPhase() {
         const phase = this.flightPhase.phase;
         const progress = this.flightPhase.getProgress();
-        const subPhase = this._lastTakeoffSubPhase || this.ruleEngine.getTakeoffSubPhase();
+        const subPhase = this._lastTakeoffSubPhase || (this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null);
 
         if (this.elements.phaseName) {
             const display = (phase === 'TAKEOFF' && subPhase) ? `TAKEOFF \u203A ${subPhase}` : phase;
