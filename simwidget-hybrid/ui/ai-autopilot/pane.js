@@ -2697,7 +2697,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             { el: 'Alt', label: 'ALT', engaged: this.ap.altitudeHold, value: this.setValues.altitude.toLocaleString(), axis: 'ALT' },
             { el: 'Vs',  label: 'VS',  engaged: this.ap.vsHold, value: (this.setValues.vs >= 0 ? '+' : '') + this.setValues.vs, axis: 'VS' },
             { el: 'Spd', label: 'SPD', engaged: this.ap.speedHold, value: this.setValues.speed + ' kt', axis: 'SPD' },
-            { el: 'Nav', label: 'NAV', engaged: this.ap.navHold || this.ap.aprHold, value: this.ap.aprHold ? 'APR' : (this.ap.navHold ? (this.ruleEngine?.getNavGuidance()?.cdiSource || 'ON') : 'OFF'), axis: 'NAV' }
+            { el: 'Nav', label: 'NAV', engaged: this.ap.navHold || this.ap.aprHold, value: this.ap.aprHold ? 'APR' : (this.ap.navHold ? ((this.ruleEngine?.getNavGuidance ? this.ruleEngine.getNavGuidance()?.cdiSource : null) || 'ON') : 'OFF'), axis: 'NAV' }
         ];
 
         for (const row of rows) {
@@ -3335,7 +3335,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // Wind correction angle (if in HDG mode with nav)
         const corrEl = document.getElementById('weather-correction');
         if (corrEl) {
-            const navGuidance = this.ruleEngine?.getNavGuidance();
+            const navGuidance = this.ruleEngine?.getNavGuidance ? this.ruleEngine.getNavGuidance() : null;
             if (navGuidance && navGuidance.interceptHdg && navGuidance.interceptDesc?.includes('wind')) {
                 const match = navGuidance.interceptDesc.match(/wind\s*([\+\-]\d+\.?\d*)/);
                 if (match) {
