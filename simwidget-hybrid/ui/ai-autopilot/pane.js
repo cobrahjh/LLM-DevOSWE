@@ -2206,7 +2206,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             }
 
             // ── Takeoff attempt telemetry tracking ──
-            const subPhase2 = serverAP?.subPhase || (this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null);
+            const subPhase2 = serverAP?.subPhase || (this.ruleEngine?.getTakeoffSubPhase ? this.ruleEngine.getTakeoffSubPhase() : null);
             this._trackTakeoffAttempt(data, this.flightPhase.phase, subPhase2);
 
             // Check LLM advisory triggers (only if loaded)
@@ -2312,7 +2312,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     value: entry.value,
                     description: entry.description,
                     phase: this.flightPhase.phase,
-                    subPhase: this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null
+                    subPhase: this.ruleEngine?.getTakeoffSubPhase ? this.ruleEngine.getTakeoffSubPhase() : null
                 }
             });
         }
@@ -2626,7 +2626,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     _renderPhase() {
         const phase = this.flightPhase.phase;
         const progress = this.flightPhase.getProgress();
-        const subPhase = this._lastTakeoffSubPhase || (this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null);
+        const subPhase = this._lastTakeoffSubPhase || (this.ruleEngine?.getTakeoffSubPhase ? this.ruleEngine.getTakeoffSubPhase() : null);
 
         if (this.elements.phaseName) {
             const display = (phase === 'TAKEOFF' && subPhase) ? `TAKEOFF \u203A ${subPhase}` : phase;
