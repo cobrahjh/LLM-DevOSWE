@@ -20,6 +20,9 @@ class EnvironmentPane extends SimGlassBase {
             isSlew: false
         };
 
+        // Universal throttling system - update once per minute
+        this.uiThrottle = new ThrottleManager(60000);
+
         this.weatherPresets = {
             clear: { name: 'Clear Skies', icon: '☀️', short: 'CLR', desc: 'Perfect VFR conditions' },
             fewclouds: { name: 'Few Clouds', icon: '🌤️', short: 'FEW', desc: '1-2 oktas cloud cover' },
@@ -326,7 +329,11 @@ class EnvironmentPane extends SimGlassBase {
         if (data.inCloud !== undefined) this.data.inCloud = data.inCloud;
         if (data.densityAltitude !== undefined) this.data.densityAltitude = data.densityAltitude;
 
-        this.updateUI();
+        this.throttledUIUpdate();
+    }
+
+    throttledUIUpdate() {
+        this.uiThrottle.throttle(() => this.updateUI());
     }
 
     formatTime(minutes) {
@@ -488,6 +495,10 @@ class EnvironmentPane extends SimGlassBase {
     }
 
     destroy() {
+        // Cleanup throttle manager
+        if (this.uiThrottle) {
+            this.uiThrottle.destroy();
+        }
         // Call parent's destroy() for WebSocket cleanup
         super.destroy();
     }
