@@ -73,6 +73,14 @@ class AiAutopilotPane extends SimGlassBase {
         this.atcController = null;      // ATCController (loaded for ground phases)
         this._windCompLoaded = false;   // WindCompensation (loaded for airborne phases)
 
+        // Performance telemetry for module loading (Phase 2 enhancement)
+        this._perfMetrics = {
+            moduleLoads: [],     // Array of {module, loadTime, success, timestamp, phase}
+            totalLoadTime: 0,    // Cumulative load time across all modules
+            loadAttempts: 0,     // Total number of load attempts
+            loadFailures: 0      // Total number of failed loads
+        };
+
         // Nav state from GTN750 (via SafeChannel)
         this._navState = null;
         this._navStateTimestamp = 0;
@@ -274,12 +282,17 @@ class AiAutopilotPane extends SimGlassBase {
         if (this.atcController) return;  // Already loaded
         if (this._conditionalModules.has('atc')) return;  // Loading in progress
 
+        const startTime = performance.now();
+        this._perfMetrics.loadAttempts++;
+        let success = false;
+
         try {
             await this._loadScript('modules/atc-controller.js');
             this._conditionalModules.add('atc');
 
             if (typeof ATCController === 'undefined') {
                 console.error('ATCController class not found after loading');
+                this._perfMetrics.loadFailures++;
                 return;
             }
 
@@ -300,8 +313,28 @@ class AiAutopilotPane extends SimGlassBase {
                 this.ruleEngine.setATCController(this.atcController);
             }
 
-            console.log('✓ Loaded ATCController module (ground phases)');
+            success = true;
+            const loadTime = performance.now() - startTime;
+            this._perfMetrics.totalLoadTime += loadTime;
+            this._perfMetrics.moduleLoads.push({
+                module: 'ATCController',
+                loadTime: loadTime,
+                success: true,
+                timestamp: Date.now(),
+                phase: this.flightPhase?.phase || 'UNKNOWN'
+            });
+
+            console.log(`✓ Loaded ATCController module in ${loadTime.toFixed(2)}ms (ground phases)`);
         } catch (err) {
+            this._perfMetrics.loadFailures++;
+            this._perfMetrics.moduleLoads.push({
+                module: 'ATCController',
+                loadTime: performance.now() - startTime,
+                success: false,
+                timestamp: Date.now(),
+                phase: this.flightPhase?.phase || 'UNKNOWN',
+                error: err.message
+            });
             console.error('Failed to load ATCController:', err);
         }
     }
@@ -314,12 +347,35 @@ class AiAutopilotPane extends SimGlassBase {
         if (this._windCompLoaded) return;  // Already loaded
         if (this._conditionalModules.has('wind')) return;  // Loading in progress
 
+        const startTime = performance.now();
+        this._perfMetrics.loadAttempts++;
+
         try {
             await this._loadScript('modules/wind-compensation.js');
             this._conditionalModules.add('wind');
             this._windCompLoaded = true;
-            console.log('✓ Loaded WindCompensation module (airborne phases)');
+
+            const loadTime = performance.now() - startTime;
+            this._perfMetrics.totalLoadTime += loadTime;
+            this._perfMetrics.moduleLoads.push({
+                module: 'WindCompensation',
+                loadTime: loadTime,
+                success: true,
+                timestamp: Date.now(),
+                phase: this.flightPhase?.phase || 'UNKNOWN'
+            });
+
+            console.log(`✓ Loaded WindCompensation module in ${loadTime.toFixed(2)}ms (airborne phases)`);
         } catch (err) {
+            this._perfMetrics.loadFailures++;
+            this._perfMetrics.moduleLoads.push({
+                module: 'WindCompensation',
+                loadTime: performance.now() - startTime,
+                success: false,
+                timestamp: Date.now(),
+                phase: this.flightPhase?.phase || 'UNKNOWN',
+                error: err.message
+            });
             console.error('Failed to load WindCompensation:', err);
         }
     }
@@ -332,12 +388,16 @@ class AiAutopilotPane extends SimGlassBase {
         if (this.llmAdvisor) return;  // Already loaded
         if (this._conditionalModules.has('llm')) return;  // Loading in progress
 
+        const startTime = performance.now();
+        this._perfMetrics.loadAttempts++;
+
         try {
             await this._loadScript('modules/llm-advisor.js');
             this._conditionalModules.add('llm');
 
             if (typeof LLMAdvisor === 'undefined') {
                 console.error('LLMAdvisor class not found after loading');
+                this._perfMetrics.loadFailures++;
                 return;
             }
 
@@ -346,10 +406,82 @@ class AiAutopilotPane extends SimGlassBase {
                 onLoading: (loading) => this._onAdvisoryLoading(loading)
             });
 
-            console.log('✓ Loaded LLMAdvisor module (on-demand)');
+            const loadTime = performance.now() - startTime;
+            this._perfMetrics.totalLoadTime += loadTime;
+            this._perfMetrics.moduleLoads.push({
+                module: 'LLMAdvisor',
+                loadTime: loadTime,
+                success: true,
+                timestamp: Date.now(),
+                phase: this.flightPhase?.phase || 'UNKNOWN'
+            });
+
+            console.log(`✓ Loaded LLMAdvisor module in ${loadTime.toFixed(2)}ms (on-demand)`);
         } catch (err) {
+            this._perfMetrics.loadFailures++;
+            this._perfMetrics.moduleLoads.push({
+                module: 'LLMAdvisor',
+                loadTime: performance.now() - startTime,
+                success: false,
+                timestamp: Date.now(),
+                phase: this.flightPhase?.phase || 'UNKNOWN',
+                error: err.message
+            });
             console.error('Failed to load LLMAdvisor:', err);
         }
+    }
+
+    /**
+     * Get performance telemetry for module loading
+     * @returns {Object} Telemetry data with load times and statistics
+     */
+    getTelemetry() {
+        const successfulLoads = this._perfMetrics.moduleLoads.filter(m => m.success);
+        const averageLoadTime = successfulLoads.length > 0
+            ? successfulLoads.reduce((sum, m) => sum + m.loadTime, 0) / successfulLoads.length
+            : 0;
+
+        return {
+            moduleLoads: this._perfMetrics.moduleLoads,
+            totalLoadTime: this._perfMetrics.totalLoadTime,
+            loadAttempts: this._perfMetrics.loadAttempts,
+            loadFailures: this._perfMetrics.loadFailures,
+            successfulLoads: successfulLoads.length,
+            averageLoadTime: averageLoadTime,
+            loadedModules: Array.from(this._conditionalModules),
+            breakdown: {
+                atc: this._perfMetrics.moduleLoads.find(m => m.module === 'ATCController' && m.success),
+                wind: this._perfMetrics.moduleLoads.find(m => m.module === 'WindCompensation' && m.success),
+                llm: this._perfMetrics.moduleLoads.find(m => m.module === 'LLMAdvisor' && m.success)
+            }
+        };
+    }
+
+    /**
+     * Log performance telemetry to console
+     */
+    logTelemetry() {
+        const telemetry = this.getTelemetry();
+        console.group('📊 Module Loading Performance Telemetry');
+        console.log(`Total load attempts: ${telemetry.loadAttempts}`);
+        console.log(`Successful loads: ${telemetry.successfulLoads}`);
+        console.log(`Failed loads: ${telemetry.loadFailures}`);
+        console.log(`Total load time: ${telemetry.totalLoadTime.toFixed(2)}ms`);
+        console.log(`Average load time: ${telemetry.averageLoadTime.toFixed(2)}ms`);
+        console.log(`Loaded modules: ${telemetry.loadedModules.join(', ')}`);
+
+        if (telemetry.moduleLoads.length > 0) {
+            console.group('Module Load Details:');
+            telemetry.moduleLoads.forEach(load => {
+                const status = load.success ? '✅' : '❌';
+                const time = load.loadTime.toFixed(2);
+                const phase = load.phase;
+                const error = load.error ? ` (${load.error})` : '';
+                console.log(`${status} ${load.module}: ${time}ms at ${phase}${error}`);
+            });
+            console.groupEnd();
+        }
+        console.groupEnd();
     }
 
     // ── DOM Cache ──────────────────────────────────────────

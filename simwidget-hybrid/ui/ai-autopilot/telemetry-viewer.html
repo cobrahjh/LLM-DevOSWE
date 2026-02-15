@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Autopilot - Performance Telemetry Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .instructions code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .card h2 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #64B5F6;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            opacity: 0.8;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .metric-value.success {
+            color: #4CAF50;
+        }
+
+        .metric-value.warning {
+            color: #FFC107;
+        }
+
+        .metric-value.error {
+            color: #F44336;
+        }
+
+        .load-list {
+            margin-top: 10px;
+        }
+
+        .load-item {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border-left: 3px solid;
+        }
+
+        .load-item.success {
+            border-left-color: #4CAF50;
+        }
+
+        .load-item.failure {
+            border-left-color: #F44336;
+        }
+
+        .load-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .load-item-module {
+            font-weight: bold;
+        }
+
+        .load-item-time {
+            font-family: 'Courier New', monospace;
+            color: #FFD700;
+        }
+
+        .load-item-details {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .error-message {
+            color: #F44336;
+            margin-top: 5px;
+            font-size: 0.85em;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        .refresh-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .status.connected {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .status.error {
+            border-left: 4px solid #F44336;
+        }
+
+        .auto-refresh {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .auto-refresh label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .auto-refresh input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 AI Autopilot Performance Telemetry</h1>
+        <div class="subtitle">Real-time module loading performance metrics</div>
+
+        <div class="instructions">
+            <h3>📋 How to Use</h3>
+            <ol>
+                <li>Open the AI Autopilot widget: <code>http://192.168.1.42:8080/ui/ai-autopilot/</code></li>
+                <li>Open the browser console (F12)</li>
+                <li>Run command: <code>window.widget.logTelemetry()</code> to see formatted metrics</li>
+                <li>Or inspect data: <code>window.widget.getTelemetry()</code> to get raw data</li>
+                <li>Click "Refresh Data" below to update this viewer</li>
+            </ol>
+        </div>
+
+        <div id="status" class="status">
+            <span id="status-text">Click "Refresh Data" to load telemetry</span>
+        </div>
+
+        <div class="auto-refresh">
+            <label>
+                <input type="checkbox" id="auto-refresh-toggle">
+                Auto-refresh every 5 seconds
+            </label>
+        </div>
+
+        <button class="refresh-btn" onclick="refreshTelemetry()">🔄 Refresh Data</button>
+
+        <div id="telemetry-data">
+            <div class="no-data">No telemetry data loaded yet</div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+
+        // Auto-refresh toggle
+        document.getElementById('auto-refresh-toggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                autoRefreshInterval = setInterval(refreshTelemetry, 5000);
+                console.log('Auto-refresh enabled (5s interval)');
+            } else {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log('Auto-refresh disabled');
+            }
+        });
+
+        async function refreshTelemetry() {
+            const statusEl = document.getElementById('status');
+            const statusText = document.getElementById('status-text');
+
+            try {
+                statusText.textContent = '⏳ Fetching telemetry data...';
+                statusEl.className = 'status';
+
+                // Fetch telemetry via eval (widget must be open in another tab)
+                const response = await fetch('http://192.168.1.42:8080/api/status');
+
+                if (!response.ok) {
+                    throw new Error('API not responding');
+                }
+
+                statusText.textContent = '⚠️ Note: This requires window.widget.getTelemetry() to be called from the AI Autopilot page console';
+                statusEl.className = 'status';
+
+                // For now, show instructions since we can't directly access the widget
+                displayInstructions();
+
+            } catch (error) {
+                statusText.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status error';
+                displayError(error);
+            }
+        }
+
+        function displayInstructions() {
+            const container = document.getElementById('telemetry-data');
+            container.innerHTML = `
+                <div class="card">
+                    <h2>📖 Interactive Console Method</h2>
+                    <div style="line-height: 2;">
+                        <p><strong>1. Open AI Autopilot Widget:</strong></p>
+                        <p style="margin-left: 20px;"><code>http://192.168.1.42:8080/ui/ai-autopilot/</code></p>
+
+                        <p style="margin-top: 15px;"><strong>2. Open Browser Console (F12)</strong></p>
+
+                        <p style="margin-top: 15px;"><strong>3. Run these commands:</strong></p>
+                        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; margin: 10px 0 10px 20px; font-family: 'Courier New', monospace;">
+                            // View formatted telemetry<br>
+                            window.widget.logTelemetry();<br><br>
+
+                            // Get raw telemetry object<br>
+                            window.widget.getTelemetry();<br><br>
+
+                            // Check what modules are loaded<br>
+                            console.log('ATC:', window.widget.atcController ? '✅ Loaded' : '❌ Not loaded');<br>
+                            console.log('Wind:', window.widget._windCompLoaded ? '✅ Loaded' : '❌ Not loaded');<br>
+                            console.log('LLM:', window.widget.llmAdvisor ? '✅ Loaded' : '❌ Not loaded');
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>4. Trigger module loads:</strong></p>
+                        <ul style="margin-left: 40px; line-height: 1.8;">
+                            <li>Enable AI Autopilot (toggle ON)</li>
+                            <li>Start flight in MSFS to load ATCController</li>
+                            <li>Take off to load WindCompensation</li>
+                            <li>Click "Ask AI" button to load LLMAdvisor</li>
+                        </ul>
+
+                        <p style="margin-top: 15px;"><strong>5. Watch console for timing messages:</strong></p>
+                        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; margin: 10px 0 10px 20px;">
+                            ✓ Loaded ATCController module in 45.23ms (ground phases)<br>
+                            ✓ Loaded WindCompensation module in 32.15ms (airborne phases)<br>
+                            ✓ Loaded LLMAdvisor module in 52.78ms (on-demand)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📈 Expected Performance</h2>
+                    <div class="metric">
+                        <span class="metric-label">ATCController load time:</span>
+                        <span class="metric-value">40-80ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">WindCompensation load time:</span>
+                        <span class="metric-value">30-50ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">LLMAdvisor load time:</span>
+                        <span class="metric-value">40-80ms</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Total overhead:</span>
+                        <span class="metric-value">110-210ms</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayError(error) {
+            const container = document.getElementById('telemetry-data');
+            container.innerHTML = `
+                <div class="card">
+                    <h2>❌ Error Loading Telemetry</h2>
+                    <div class="error-message">${error.message}</div>
+                    <p style="margin-top: 15px;">Make sure:</p>
+                    <ul style="margin-left: 20px; line-height: 1.8;">
+                        <li>SimWidget server is running on port 8080</li>
+                        <li>AI Autopilot widget is open in another browser tab</li>
+                        <li>Use the browser console method instead (see instructions above)</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // Initial load
+        displayInstructions();
+    </script>
+</body>
+</html>

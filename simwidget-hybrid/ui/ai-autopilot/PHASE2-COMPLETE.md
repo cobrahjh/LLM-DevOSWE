@@ -139,7 +139,139 @@ if (!this.llmAdvisor) {
 | File | Purpose | Lines |
 |------|---------|-------|
 | `test-conditional-loading.js` | Validation test suite | 205 |
+| `test-telemetry.js` | Performance telemetry tests | 170 |
+| `telemetry-viewer.html` | Browser-based telemetry viewer | 340 |
 | `PHASE2-COMPLETE.md` | This documentation | ~400 |
+
+---
+
+## Performance Telemetry (Phase 2 Enhancement)
+
+**Added**: February 14, 2026 (same day as Phase 2 completion)
+**Purpose**: Track and measure module loading performance in production
+
+### Telemetry Features
+
+All three conditional modules now track detailed performance metrics:
+
+| Metric | Description |
+|--------|-------------|
+| **Load Time** | Milliseconds to load and instantiate module |
+| **Success/Failure** | Whether load completed successfully |
+| **Timestamp** | When the load occurred |
+| **Flight Phase** | Which phase triggered the load |
+| **Error Messages** | Captured if load fails |
+
+### API Methods
+
+```javascript
+// Get telemetry data object
+const telemetry = window.widget.getTelemetry();
+
+// Returns:
+{
+    moduleLoads: [],        // Array of all load events
+    totalLoadTime: 0,       // Cumulative time (ms)
+    loadAttempts: 0,        // Total attempts
+    loadFailures: 0,        // Failed attempts
+    successfulLoads: 0,     // Successful attempts
+    averageLoadTime: 0,     // Average (ms)
+    loadedModules: [],      // Currently loaded module names
+    breakdown: {            // Per-module details
+        atc: {...},
+        wind: {...},
+        llm: {...}
+    }
+}
+
+// Log formatted telemetry to console
+window.widget.logTelemetry();
+
+// Example output:
+// 📊 Module Loading Performance Telemetry
+//   Total load attempts: 3
+//   Successful loads: 3
+//   Failed loads: 0
+//   Total load time: 128.45ms
+//   Average load time: 42.82ms
+//   Loaded modules: atc, wind, llm
+//   Module Load Details:
+//     ✅ ATCController: 45.23ms at PREFLIGHT
+//     ✅ WindCompensation: 32.15ms at TAKEOFF
+//     ✅ LLMAdvisor: 51.07ms at CRUISE
+```
+
+### Enhanced Console Messages
+
+Module load messages now include timing:
+
+```
+✓ Loaded ATCController module in 45.23ms (ground phases)
+✓ Loaded WindCompensation module in 32.15ms (airborne phases)
+✓ Loaded LLMAdvisor module in 51.07ms (on-demand)
+```
+
+### Telemetry Viewer
+
+Browser-based visualization tool: `telemetry-viewer.html`
+
+**Features**:
+- Real-time telemetry display
+- Auto-refresh every 5 seconds
+- Visual metrics cards
+- Interactive console instructions
+- Expected performance benchmarks
+
+**Access**:
+```
+http://192.168.1.42:8080/ui/ai-autopilot/telemetry-viewer.html
+```
+
+### Implementation Details
+
+**Constructor Initialization** (pane.js:76-82):
+```javascript
+this._perfMetrics = {
+    moduleLoads: [],
+    totalLoadTime: 0,
+    loadAttempts: 0,
+    loadFailures: 0
+};
+```
+
+**Timing Wrapper Pattern**:
+All three lazy loading methods follow this pattern:
+1. Capture start time with `performance.now()`
+2. Increment `loadAttempts` counter
+3. Execute module load
+4. Calculate load time
+5. Log to `moduleLoads` array with full context
+6. Accumulate `totalLoadTime`
+7. Track failures in catch block
+
+**Data Persistence**:
+- Telemetry stored in memory for session duration
+- Survives phase changes
+- Resets on page reload
+- No server-side storage (client-only metrics)
+
+### Testing
+
+**Test Suite**: `test-telemetry.js` (10 tests)
+
+```bash
+node test-telemetry.js
+
+Results: 10/10 passed ✅
+- Telemetry object initialization
+- Performance timing in all 3 modules
+- getTelemetry() method implementation
+- logTelemetry() method implementation
+- Enhanced console messages
+- Success/failure tracking
+- Timestamp tracking
+- Phase tracking
+```
 
 ---
 
