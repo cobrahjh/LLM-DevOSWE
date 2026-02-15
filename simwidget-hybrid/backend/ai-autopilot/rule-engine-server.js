@@ -349,7 +349,7 @@ class RuleEngineServer {
         const state = {
             enabled: this._enabled,
             phase: this.flightPhase.phase,
-            subPhase: this.ruleEngine.getTakeoffSubPhase() || null,
+            subPhase: this.ruleEngine?.getTakeoffSubPhase ? this.ruleEngine.getTakeoffSubPhase() : null,
             phaseProgress: this.flightPhase.getProgress(),
             live: this.ruleEngine.live,
             commandLog: this._commandLog.slice(0, 10)
@@ -368,7 +368,7 @@ class RuleEngineServer {
         const state = {
             enabled: true,
             phase: this.flightPhase.phase,
-            subPhase: this.ruleEngine.getTakeoffSubPhase() || null,
+            subPhase: this.ruleEngine?.getTakeoffSubPhase ? this.ruleEngine.getTakeoffSubPhase() : null,
             phaseProgress: this.flightPhase.getProgress(),
             live: {
                 elevator: this.ruleEngine.live.elevator,
