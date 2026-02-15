@@ -1162,7 +1162,20 @@ CRITICAL: Your spoken text is read aloud via TTS. NEVER mention "JSON", "COMMAND
             clearTimeout(timeoutId);
             _perfMetrics.totalErrors++;
             logQueryMetric({ time: Date.now(), durationMs: 0, provider, model, responseLen: 0, error: true });
-            res.status(502).json({ error: err.message });
+
+            // Provide helpful error messages for common failures
+            let errorMsg = err.message;
+            if (err.message.includes('fetch failed') || err.code === 'ECONNREFUSED') {
+                if (provider.startsWith('lmstudio')) {
+                    errorMsg = 'LM Studio is not running. Please start LM Studio or change provider in settings.';
+                } else if (provider.startsWith('ollama')) {
+                    errorMsg = 'Ollama is not running. Please start Ollama or change provider in settings.';
+                } else {
+                    errorMsg = `Unable to reach ${provider} API. Check network connection and provider settings.`;
+                }
+            }
+
+            res.status(502).json({ error: errorMsg });
         }
     });
 
@@ -1436,6 +1449,88 @@ CRITICAL: Your spoken text is read aloud via TTS. NEVER mention "JSON", "COMMAND
             }
         } catch (e) {
             res.status(500).json({ error: e.message });
+        }
+    });
+
+    // ── Say Intentions Voice ATC Integration ────────────────────────────
+    const SayIntentionsAPI = require('./say-intentions-api');
+    const sayIntentions = new SayIntentionsAPI();
+
+    app.get('/api/ai-pilot/atc/voice/status', (req, res) => {
+        res.json({
+            enabled: sayIntentions.isEnabled(),
+            available: true
+        });
+    });
+
+    app.post('/api/ai-pilot/atc/voice/ground', express_json_guard, async (req, res) => {
+        const { airport, runway, position, callsign, route } = req.body;
+        if (!airport || !runway || !callsign) {
+            return res.status(400).json({ error: 'Missing required fields: airport, runway, callsign' });
+        }
+
+        const result = await sayIntentions.requestGroundClearance({
+            airport,
+            runway,
+            position: position || 'parking',
+            callsign,
+            route: route || []
+        });
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(502).json(result);
+        }
+    });
+
+    app.post('/api/ai-pilot/atc/voice/takeoff', express_json_guard, async (req, res) => {
+        const { airport, runway, callsign } = req.body;
+        if (!airport || !runway || !callsign) {
+            return res.status(400).json({ error: 'Missing required fields: airport, runway, callsign' });
+        }
+
+        const result = await sayIntentions.requestTakeoffClearance({
+            airport,
+            runway,
+            callsign
+        });
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(502).json(result);
+        }
+    });
+
+    app.post('/api/ai-pilot/atc/voice/pilot', express_json_guard, async (req, res) => {
+        const { airport, callsign, message, context } = req.body;
+        if (!airport || !callsign || !message) {
+            return res.status(400).json({ error: 'Missing required fields: airport, callsign, message' });
+        }
+
+        const result = await sayIntentions.sendPilotTransmission({
+            airport,
+            callsign,
+            message,
+            context: context || 'ground'
+        });
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(502).json(result);
+        }
+    });
+
+    app.get('/api/ai-pilot/atc/voice/frequency/:airport/:type', async (req, res) => {
+        const { airport, type } = req.params;
+        const result = await sayIntentions.getFrequency(airport.toUpperCase(), type);
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(404).json(result);
         }
     });
 }
