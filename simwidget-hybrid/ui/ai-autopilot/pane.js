@@ -214,10 +214,10 @@ class AiAutopilotPane extends SimGlassBase {
         }
 
         const moduleFiles = {
-            ground: 'modules/rule-engine-ground.js',
-            takeoff: 'modules/rule-engine-takeoff.js',
-            cruise: 'modules/rule-engine-cruise.js',
-            approach: 'modules/rule-engine-approach.js'
+            ground: 'modules/rule-engine-ground.js?v=2',
+            takeoff: 'modules/rule-engine-takeoff.js?v=2',
+            cruise: 'modules/rule-engine-cruise.js?v=2',
+            approach: 'modules/rule-engine-approach.js?v=2'
         };
 
         // Load module script
@@ -2079,7 +2079,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     length: this._activeRunway.length
                 } : null,
                 fplLoaded: !!this._currentPlan,
-                navGuidance: this.ruleEngine.getNavGuidance(),
+                navGuidance: this.ruleEngine ? this.ruleEngine.getNavGuidance() : null,
                 atcPhase: this.atcController ? this.atcController.getPhase() : 'INACTIVE',
                 atcInstruction: this.atcController ? this.atcController.getATCInstruction() : '',
                 atcRoute: this.atcController ? this.atcController.getRoute() : null,
@@ -2673,7 +2673,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this.elements.targetSpd.classList.toggle('active', this.aiEnabled);
         }
         if (this.elements.targetHdg) {
-            const navG = this.aiEnabled ? this.ruleEngine.getNavGuidance() : null;
+            const navG = (this.aiEnabled && this.ruleEngine) ? this.ruleEngine.getNavGuidance() : null;
             if (navG && navG.wpIdent) {
                 // Show active waypoint + distance instead of raw heading
                 const distStr = navG.wpDist != null ? ` ${navG.wpDist}nm` : '';
@@ -2697,7 +2697,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             { el: 'Alt', label: 'ALT', engaged: this.ap.altitudeHold, value: this.setValues.altitude.toLocaleString(), axis: 'ALT' },
             { el: 'Vs',  label: 'VS',  engaged: this.ap.vsHold, value: (this.setValues.vs >= 0 ? '+' : '') + this.setValues.vs, axis: 'VS' },
             { el: 'Spd', label: 'SPD', engaged: this.ap.speedHold, value: this.setValues.speed + ' kt', axis: 'SPD' },
-            { el: 'Nav', label: 'NAV', engaged: this.ap.navHold || this.ap.aprHold, value: this.ap.aprHold ? 'APR' : (this.ap.navHold ? (this.ruleEngine.getNavGuidance()?.cdiSource || 'ON') : 'OFF'), axis: 'NAV' }
+            { el: 'Nav', label: 'NAV', engaged: this.ap.navHold || this.ap.aprHold, value: this.ap.aprHold ? 'APR' : (this.ap.navHold ? (this.ruleEngine?.getNavGuidance()?.cdiSource || 'ON') : 'OFF'), axis: 'NAV' }
         ];
 
         for (const row of rows) {
