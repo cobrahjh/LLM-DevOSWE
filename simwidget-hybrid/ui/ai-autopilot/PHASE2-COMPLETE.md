@@ -281,31 +281,68 @@ console.log('LLMAdvisor:', typeof window.LLMAdvisor !== 'undefined');  // Should
 
 ---
 
-## Future Optimizations (Phase 3)
+## Phase 3 Consideration: Module Unloading (REJECTED)
 
-### Module Unloading
+### Decision: Keep Current Singleton Caching Approach ✅
 
-**Goal**: Free memory by unloading previous phase modules
+**Evaluated**: February 14, 2026
+**Decision**: Do NOT implement module unloading
+**Rationale**: Current Phase 2 approach is optimal
 
-**Strategy**:
-- Keep core module always loaded
-- Unload previous conditional modules when no longer needed
-- Trade-off: Reload cost vs memory savings
+### Why Phase 3 Was Rejected:
 
-**Example**:
-```javascript
-// When transitioning TAXI → TAKEOFF
-_unloadATCController();  // Free 343 lines
-_loadWindCompensation(); // Load 189 lines
-// Net: 154 lines freed
-```
+**1. Real Flight Scenarios Need Cached Modules:**
+- Go-arounds require TAKEOFF → APPROACH cycling
+- Missed approaches need multiple phase modules
+- Touch-and-go practice repeatedly uses LANDING/TAKEOFF
+- Emergency returns require previously-loaded phases
+
+**2. Marginal Benefits:**
+- Potential savings: ~200 lines = ~25KB
+- Current achievement: 52-62% total reduction already met goals
+- Additional complexity not justified for minimal gain
+
+**3. Performance Concerns:**
+- Reload cost: 50-100ms per module
+- Critical during emergencies/go-arounds
+- Singleton pattern provides instant access (0ms)
+
+**4. Industry Best Practice:**
+- Singleton caching is standard for dynamic module loading
+- Simpler code = fewer bugs
+- Predictable behavior = easier debugging
+
+**5. JavaScript Limitations:**
+- No guaranteed immediate garbage collection
+- Memory may not actually be reclaimed
+- Browser keeps references in scope chain
+
+### Final Architecture: Phase 2 (Production-Ready)
+
+**Loading Strategy:**
+- Load on first use (lazy loading)
+- Cache as singletons (keep in memory)
+- Never unload during flight session
+
+**Memory Profile:**
+- Ground: 990 lines (52% reduction from original)
+- Airborne: 783-887 lines (57-62% reduction from original)
+- Peak: ~1,600 lines (vs 2,054 original = 22% peak reduction)
+
+**Conclusion:** Phase 2 achieves optimal balance of memory savings, performance, and reliability. Phase 3 unloading deemed unnecessary.
+
+---
+
+## Future Optimizations (If Needed)
 
 ### Additional Conditional Modules
 
-Analyze pane.js for more conditional candidates:
+If further optimization is ever required, consider:
 - Speech recognition (only when mic clicked)
 - SimBrief importer (only when import clicked)
 - Debug panel components (only when debug enabled)
+
+**However**: Current Phase 2 implementation meets all performance goals.
 
 ---
 
