@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="/ui/shared/widget-customizer.css">
     <link rel="stylesheet" href="/ui/shared/responsive.css">
     <!-- Widget Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
     <div class="widget-container" id="widget-root">
@@ -55,7 +55,10 @@
         <div class="airport-bar" id="airport-bar" style="display:none">
             <span class="airport-icao" id="airport-icao">----</span>
             <span class="airport-name" id="airport-name"></span>
-            <span class="airport-rwy" id="airport-rwy">RWY --</span>
+            <span class="airport-rwy-label">RWY</span>
+            <select class="airport-rwy-select" id="airport-rwy-select" title="Select runway (overrides auto-detection)">
+                <option value="">--</option>
+            </select>
             <span class="airport-elev" id="airport-elev">--- ft</span>
             <span class="airport-dist" id="airport-dist">--.- nm</span>
         </div>
@@ -265,7 +268,7 @@
          - Conditional: atc-controller.js (ground phases)
          - Conditional: llm-advisor.js (on first "Ask AI" click) -->
     <!-- Widget Script -->
-    <script src="pane.js?v=9"></script>
+    <script src="pane.js?v=10"></script>
     <script>
         window.widget = new AiAutopilotPane();
         window.addEventListener('beforeunload', () => window.widget?.destroy());

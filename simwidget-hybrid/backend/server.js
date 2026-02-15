@@ -258,10 +258,12 @@ const sharedUIPath = path.join(__dirname, '../shared-ui');
 app.use('/shared-ui', express.static(sharedUIPath));
 
 // Serve UI directories (listing only in dev mode)
-// No-cache for JS files — prevents stale code after SCP deploys
+// No-cache for JS/HTML/CSS — prevents stale code after deploys and during development
 app.use('/ui', express.static(uiPath, { setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.js') || filePath.endsWith('.html')) {
+    if (filePath.endsWith('.js') || filePath.endsWith('.html') || filePath.endsWith('.css')) {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
     }
 }}));
 if (!isProduction) {

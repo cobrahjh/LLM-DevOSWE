@@ -1,14 +1,52 @@
 # Hive Intel Briefing
-**Generated**: 2/14/2026, 8:00:01 AM
-**Period**: Last 7 days (29 approved items)
+**Generated**: 2/15/2026, 8:00:01 AM
+**Period**: Last 7 days (20 approved items)
 
 ---
 
 ## Executive Summary
 
-- **Software Releases**: 1 items
-- **Libraries & SDKs**: 1 items
-- **Other**: 27 items
+- **Software Releases**: 7 items
+- **New Tools**: 3 items
+- **Libraries & SDKs**: 2 items
+- **Other**: 8 items
+
+⭐ **6 high-priority items** (relevance ≥ 80)
+
+---
+
+## New Tools
+
+### 🔴 GPT-OSS (20B) running 100% locally in your browser on WebGPU
+**Source**: r/LocalLLaMA | **Relevance**: 85/100
+
+GPT-OSS (20B) is a large language model running locally in the browser using WebGPU.
+
+**Analysis**: This tool could be highly useful for Hive by providing advanced AI capabilities, such as Claude Code and local LLMs like Ollama/LM Studio. It would enhance Hive's ability to process and generate text in real-time, making it more powerful for AI agent orchestration and natural language processing tas
+
+**URL**: https://v.redd.it/ioqb4q8jkajg1
+
+---
+
+### 🟡 ComposioHQ/secure-openclaw
+**Source**: GitHub Trending | **Relevance**: 75/100
+
+ComposioHQ/secure-openclaw is a personal AI assistant that integrates with messaging platforms and offers features like Claude integration, persistent memory, and scheduled reminders.
+
+**Analysis**: This tool could be useful for enhancing Hive's AI agent orchestration capabilities by providing a more versatile and integrated AI assistant. It can help in automating responses and tasks through messaging platforms, which is relevant to both real-time dashboards and voice control functionalities.
+
+**URL**: https://github.com/ComposioHQ/secure-openclaw
+
+---
+
+### 🟡 Show HN: Moltis – AI assistant with memory, tools, and self-extending skills
+**Source**: Hacker News | **Relevance**: 75/100
+
+Moltis is an AI assistant with memory and self-extending skills.
+
+**Analysis**: Moltis could be useful for Hive's AI agent orchestration, providing enhanced capabilities for Claude Code and local LLMs like Ollama/LM Studio. Its ability to learn and extend its skills dynamically aligns well with Hive's modular service ecosystem.
+
+**URL**: https://www.moltis.org
 
 ---
 
@@ -25,7 +63,73 @@ A modular agent framework that dynamically generates its topology and evolves at
 
 ---
 
+### 🟡 MiniMaxAI/MiniMax-M2.5 · Hugging Face
+**Source**: r/LocalLLaMA | **Relevance**: 75/100
+
+MiniMaxAI/MiniMax-M2.5 is a large language model (LLM) available through Hugging Face.
+
+**Analysis**: This LLM could be useful for enhancing Hive's AI agent orchestration capabilities, providing more advanced natural language processing and understanding. It could also complement existing local LLMs like Ollama/LM Studio, offering a more comprehensive solution for AI-driven functionalities within th
+
+**URL**: https://huggingface.co/MiniMaxAI/MiniMax-M2.5
+
+---
+
 ## Software Releases
+
+### 🔴 MiniMaxAI MiniMax-M2.5 has 230b parameters and 10b active parameters
+**Source**: r/LocalLLaMA | **Relevance**: 85/100
+
+MiniMaxAI MiniMax-M2.5 is a large language model with 230 billion parameters and 10 billion active parameters.
+
+**Analysis**: This advanced AI model could enhance Hive's capabilities in AI agent orchestration, providing more sophisticated and contextually rich interactions, which would be beneficial for both Claude Code and local LLMs like Ollama/LM Studio.
+
+**URL**: https://openhands.dev/blog/minimax-m2-5-open-weights-models-catch-up-to-claude
+
+---
+
+### 🔴 New DeepSeek update: "DeepSeek Web / APP is currently testing a new long-context model architecture, supporting a 1M context window."
+**Source**: r/LocalLLaMA | **Relevance**: 85/100
+
+DeepSeek has released an update to their Web/APP with a new long-context model architecture supporting a 1M context window.
+
+**Analysis**: This update could be very useful for Hive's AI agent orchestration, especially for Claude Code and local LLMs like Ollama/LM Studio. The increased context window would allow for more complex and nuanced interactions, enhancing the overall functionality of Hive.
+
+**URL**: https://i.redd.it/dg94ujw1c9jg1.jpeg
+
+---
+
+### 🔴 The gap between open-weight and proprietary model intelligence is as small as it has ever been, with Claude Opus 4.6 and GLM-5'
+**Source**: r/LocalLLaMA | **Relevance**: 85/100
+
+Claude Opus 4.6 and GLM-5 are advanced AI models that could enhance Hive's AI agent orchestration capabilities.
+
+**Analysis**: These new AI models represent a significant advancement in open-source model intelligence, which could greatly improve Hive's ability to handle complex tasks and provide more sophisticated overlays and monitoring features.
+
+**URL**: https://i.redd.it/4rozb901icjg1.jpeg
+
+---
+
+### 🔴 GPT-OSS 120b Uncensored Aggressive Release (MXFP4 GGUF)
+**Source**: r/LocalLLaMA | **Relevance**: 85/100
+
+GPT-OSS 120b Uncensored Aggressive Release (MXFP4 GGUF) is a large language model release.
+
+**Analysis**: This advanced LLM could significantly enhance Hive's AI agent orchestration capabilities, providing more sophisticated and contextually rich interactions with Claude Code and local LLMs like Ollama/LM Studio. It may also improve the quality of real-time dashboards and monitoring by offering deeper i
+
+**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r3zuuf/gptoss_120b_uncensored_aggressive_release_mxfp4/
+
+---
+
+### 🔴 electron/electron v40.4.1
+**Source**: GitHub Release | **Relevance**: 85/100
+
+electron v40.4.1 is a release of the Electron framework.
+
+**Analysis**: Electron is a popular framework for building cross-platform desktop applications using web technologies. Updating to Electron v40.4.1 could improve Hive's performance, stability, and compatibility with various platforms, making it more useful for developing MSFS overlays and other components.
+
+**URL**: https://github.com/electron/electron/releases/tag/v40.4.1
+
+---
 
 ### 🟡 GLM 5 Released
 **Source**: r/LocalLLaMA | **Relevance**: 75/100
@@ -38,29 +142,18 @@ GLM 5 is a new version of a local LLM that has been released.
 
 ---
 
+### 🟡 UG student launches Dhi-5B (Trained from Scratch)
+**Source**: r/LocalLLaMA | **Relevance**: 70/100
+
+A student has trained a Dhi-5B model from scratch.
+
+**Analysis**: This could potentially enhance Hive's AI agent orchestration capabilities, providing more diverse and specialized language models for tasks such as Claude Code and local LLMs. The model might also be useful for improving the naturalness of voice control and accessibility features within Hive.
+
+**URL**: https://i.redd.it/5tsgquvue7jg1.png
+
+---
+
 ## Other
-
-### 🟡 Anthropic built a C compiler using a "team of parallel agents", has problems compiling hello world.
-**Source**: r/programming | **Relevance**: 70/100
-
-Anthropic built a C compiler using a "team of parallel agents", has problems compiling hello world.
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://www.anthropic.com/engineering/building-c-compiler
-
----
-
-### 🟡 antonpk1/excalidraw-mcp-app
-**Source**: GitHub Trending | **Relevance**: 70/100
-
-Excalidraw MCP App Server — hand-drawn diagrams for Claude
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/antonpk1/excalidraw-mcp-app
-
----
 
 ### 🟡 A fully local home automation voice assistant using Qwen3 ASR, LLM and TTS on an RTX 5060 Ti with 16GB VRAM
 **Source**: r/LocalLLaMA | **Relevance**: 70/100
@@ -84,28 +177,6 @@ Web UI for Claude Code built on a reverse-engineered WebSocket protocol. Launch 
 
 ---
 
-### 🟢 I tested 11 small LLMs on tool-calling judgment — on CPU, no GPU.
-**Source**: r/LocalLLaMA | **Relevance**: 60/100
-
-I tested 11 small LLMs on tool-calling judgment — on CPU, no GPU.
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1qyg10z/i_tested_11_small_llms_on_toolcalling_judgment_on/
-
----
-
-### 🟢 anthropics/anthropic-sdk-typescript sdk-v0.74.0
-**Source**: GitHub Release | **Relevance**: 60/100
-
-sdk: v0.74.0
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.74.0
-
----
-
 ### 🟢 How Seriously Should We Take State of JS and Other Developer Surveys?
 **Source**: Dev.to | **Relevance**: 60/100
 
@@ -125,61 +196,6 @@ Tambo 1.0: Open-source toolkit for agents that render React components
 **Analysis**: Auto-scored by keywords (LLM unavailable).
 
 **URL**: https://github.com/tambo-ai/tambo
-
----
-
-### 🟢 Coding agents have replaced every framework I used
-**Source**: Hacker News | **Relevance**: 55/100
-
-Coding agents have replaced every framework I used
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://blog.alaindichiappari.dev/p/software-engineering-is-back
-
----
-
-### 🟢 LLMs as natural language compilers: What the history of FORTRAN tells us about the future of coding.
-**Source**: r/programming | **Relevance**: 55/100
-
-LLMs as natural language compilers: What the history of FORTRAN tells us about the future of coding.
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://cyber-omelette.com/posts/the-abstraction-rises.html
-
----
-
-### 🟢 Potential new Qwen and ByteDance Seed models are being tested on the Arena. The “Karp-001” and “Karp-002” models claim to be Qwen-3.5 models. The “Pisces-llm-0206a” and “Pisces-llm-0206b” models claim to be ByteDance models.
-**Source**: r/LocalLLaMA | **Relevance**: 55/100
-
-Potential new Qwen and ByteDance Seed models are being tested on the Arena. The “Karp-001” and “Karp-002” models claim to be Qwen-3.5 models. The “Pisces-llm-0206a” and “Pisces-llm-0206b” models claim
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://i.redd.it/rtrygqo1p2ig1.jpeg
-
----
-
-### 🟢 Software factories and the agentic moment
-**Source**: Hacker News | **Relevance**: 55/100
-
-Software factories and the agentic moment
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://factory.strongdm.ai/
-
----
-
-### 🟢 LLMs as the new high level language
-**Source**: Hacker News | **Relevance**: 55/100
-
-LLMs as the new high level language
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://federicopereiro.com/llm-high/
 
 ---
 
@@ -227,119 +243,12 @@ I built a rough .gguf LLM visualizer
 
 ---
 
-### 🟢 GitHub Agentic Workflows
-**Source**: Hacker News | **Relevance**: 55/100
-
-GitHub Agentic Workflows
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.github.io/gh-aw/
-
----
-
-### 🟢 ollama/ollama v0.15.6
-**Source**: GitHub Release | **Relevance**: 55/100
-
-v0.15.6
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/ollama/ollama/releases/tag/v0.15.6
-
----
-
-### 🟢 stepfun-ai/Step-3.5-Flash
-**Source**: GitHub Trending | **Relevance**: 55/100
-
-Fast, Sharp & Reliable Agentic Intelligence
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/stepfun-ai/Step-3.5-Flash
-
----
-
-### 🟢 Frontier AI agents violate ethical constraints 30–50% of time, pressured by KPIs
-**Source**: Hacker News | **Relevance**: 55/100
-
-Frontier AI agents violate ethical constraints 30–50% of time, pressured by KPIs
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://arxiv.org/abs/2512.20798
-
----
-
-### 🟢 LLMs as Language Compilers: Lessons from Fortran for the Future of Coding
-**Source**: Hacker News | **Relevance**: 55/100
-
-LLMs as Language Compilers: Lessons from Fortran for the Future of Coding
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://cyber-omelette.com/posts/the-abstraction-rises.html
-
----
-
-### 🟢 Hugging Face Is Teasing Something Anthropic Related
-**Source**: r/LocalLLaMA | **Relevance**: 55/100
-
-Hugging Face Is Teasing Something Anthropic Related
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://i.redd.it/wvu2vi2jwnig1.png
-
----
-
-### 🟢 Show HN: Total Recall – write-gated memory for Claude Code
-**Source**: Hacker News | **Relevance**: 55/100
-
-Show HN: Total Recall – write-gated memory for Claude Code
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/davegoldblatt/total-recall
-
----
-
-### 🟢 Ex-GitHub CEO launches a new developer platform for AI agents
-**Source**: Hacker News | **Relevance**: 55/100
-
-Ex-GitHub CEO launches a new developer platform for AI agents
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://entire.io/blog/hello-entire-world/
-
----
-
-### 🟢 I measured the "personality" of 6 open-source LLMs (7B-9B) by probing their hidden states. Here's what I found.
-**Source**: r/LocalLLaMA | **Relevance**: 55/100
-
-I measured the "personality" of 6 open-source LLMs (7B-9B) by probing their hidden states. Here's what I found.
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r11zsa/i_measured_the_personality_of_6_opensource_llms/
-
----
-
-### 🟢 Show HN: Showboat and Rodney, so agents can demo what they've built
-**Source**: Hacker News | **Relevance**: 55/100
-
-Show HN: Showboat and Rodney, so agents can demo what they've built
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://simonwillison.net/2026/Feb/10/showboat-and-rodney/
-
----
-
 ## Recommended Actions
 
-**Queue for Implementation** (2 items):
-- [ ] GLM 5 Released (relevance: 75)
-- [ ] Show HN: Agent framework that generates its own topology and evolves at runtime (relevance: 75)
+**Queue for Implementation** (11 items):
+- [ ] MiniMaxAI MiniMax-M2.5 has 230b parameters and 10b active parameters (relevance: 85)
+- [ ] New DeepSeek update: "DeepSeek Web / APP is currently testing a new long-context model architecture, supporting a 1M context window." (relevance: 85)
+- [ ] The gap between open-weight and proprietary model intelligence is as small as it has ever been, with Claude Opus 4.6 and GLM-5' (relevance: 85)
+- [ ] GPT-OSS 120b Uncensored Aggressive Release (MXFP4 GGUF) (relevance: 85)
+- [ ] GPT-OSS (20B) running 100% locally in your browser on WebGPU (relevance: 85)
 

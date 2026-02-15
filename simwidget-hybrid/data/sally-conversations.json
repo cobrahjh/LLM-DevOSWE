@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "time": "2026-02-15T08:28:41.651Z",
+    "phase": null,
+    "userMessage": "Current altitude 3000 ft, speed 90 kt. What should I do?",
+    "sallyResponse": "Increase throttle to full and pitch up to Vr (55 KIAS) for rotation. Once rotated, engage AP in heading hold and vertical speed mode with a target climb rate of +700 fpm.\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":100}, {\"command\":\"AXIS_ELEVATOR_SET\",\"value\":-25}, {\"command\":\"AP_HDG_HOLD\"}, {\"command\":\"AP_VS_VAR_SET\",\"value\":700}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 16383,
+        "executed": false
+      },
+      {
+        "command": "AXIS_ELEVATOR_SET",
+        "simEvent": "AXIS_ELEVATOR_SET",
+        "value": -8191,
+        "executed": false
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": false
+      },
+      {
+        "command": "AP_VS_VAR_SET",
+        "simEvent": "AP_VS_VAR_SET_ENGLISH",
+        "value": 700,
+        "executed": false
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 4425
+  },
+  {
+    "id": 2,
+    "time": "2026-02-15T08:30:47.397Z",
+    "phase": null,
+    "userMessage": "test",
+    "sallyResponse": "RECOMMEND: Considering there's no previous data, initial values will be conservative to ensure stability.\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":100}, {\"command\":\"AXIS_ELEVATOR_SET\",\"value\":-25}, {\"command\":\"AP_MASTER\"}, {\"command\":\"HEADING_BUG_SET\",\"value\":270}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 16383,
+        "executed": false
+      },
+      {
+        "command": "AXIS_ELEVATOR_SET",
+        "simEvent": "AXIS_ELEVATOR_SET",
+        "value": -8191,
+        "executed": false
+      },
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": false
+      },
+      {
+        "command": "HEADING_BUG_SET",
+        "simEvent": "HEADING_BUG_SET",
+        "value": 270,
+        "executed": false
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 4116
+  },
+  {
+    "id": 3,
+    "time": "2026-02-15T08:30:53.480Z",
+    "phase": null,
+    "userMessage": "test",
+    "sallyResponse": "RECOMMEND: Start by setting a higher throttle during takeoff roll to achieve better acceleration and ground handling. Consider enriching the mixture slightly before Vr. Ensure smooth rotation at Vr and maintain wings level.\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":75}, {\"command\":\"MIXTURE_SET\",\"value\":100}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 12287,
+        "executed": false
+      },
+      {
+        "command": "MIXTURE_SET",
+        "simEvent": "MIXTURE1_SET",
+        "value": 16383,
+        "executed": false
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1705
+  }
+]

@@ -546,7 +546,7 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.airportBar = document.getElementById('airport-bar');
         this.elements.airportIcao = document.getElementById('airport-icao');
         this.elements.airportName = document.getElementById('airport-name');
-        this.elements.airportRwy = document.getElementById('airport-rwy');
+        this.elements.airportRwySelect = document.getElementById('airport-rwy-select');
         this.elements.airportElev = document.getElementById('airport-elev');
         this.elements.airportDist = document.getElementById('airport-dist');
 
@@ -598,6 +598,34 @@ class AiAutopilotPane extends SimGlassBase {
         // SimBrief import
         this.elements.simbriefImport?.addEventListener('click', () => {
             this._importSimBrief();
+        });
+
+        // Runway selector - manual override of auto-detected runway
+        this.elements.airportRwySelect?.addEventListener('change', (e) => {
+            const selectedRwyId = e.target.value;
+            if (!selectedRwyId || !this._nearestAirport) return;
+
+            // Find the selected runway in the airport data
+            const runway = this._nearestAirport.runways?.find(r => r.id === selectedRwyId);
+            if (!runway) return;
+
+            // Update active runway
+            this._activeRunway = {
+                id: runway.id,
+                heading: this._parseRunwayHeading(runway.id),
+                length: runway.length || 0
+            };
+
+            // Update ATCController if loaded
+            if (this.atcController) {
+                this.atcController._runway = this._activeRunway.id;
+                this._dbg('cmd', `Runway manually selected: <span class="val">${this._activeRunway.id}</span> (overrides auto-detect)`);
+            }
+
+            // Update rule engine
+            if (this.ruleEngine) {
+                this.ruleEngine.setActiveRunway(this._activeRunway);
+            }
         });
 
         // Flight plan report collapse toggle
@@ -1931,15 +1959,34 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         if (this.elements.airportElev) this.elements.airportElev.textContent = `${apt.elevation || '---'} ft`;
         if (this.elements.airportDist) this.elements.airportDist.textContent = `${apt.distance?.toFixed(1) || '--.-'} nm`;
 
-        if (this.elements.airportRwy) {
+        // Populate runway dropdown
+        if (this.elements.airportRwySelect && apt.runways) {
+            // Clear existing options except first (placeholder)
+            while (this.elements.airportRwySelect.options.length > 1) {
+                this.elements.airportRwySelect.remove(1);
+            }
+
+            // Add all available runways
+            apt.runways.forEach(runway => {
+                const option = document.createElement('option');
+                option.value = runway.id;
+                option.textContent = `${runway.id} (${this._parseRunwayHeading(runway.id)}°)`;
+                this.elements.airportRwySelect.appendChild(option);
+            });
+
+            // Select the auto-detected runway
             if (rwy) {
-                this.elements.airportRwy.textContent = `RWY ${rwy.id} (${rwy.heading}\u00B0)`;
-                this.elements.airportRwy.classList.remove('no-runway');
+                this.elements.airportRwySelect.value = rwy.id;
             } else {
-                this.elements.airportRwy.textContent = 'RWY --';
-                this.elements.airportRwy.classList.add('no-runway');
+                this.elements.airportRwySelect.value = '';
             }
         }
+    }
+
+    /** Parse runway ID to heading (e.g., "27L" -> 270) */
+    _parseRunwayHeading(rwyId) {
+        const match = rwyId?.match(/^(\d{1,2})/);
+        return match ? parseInt(match[1]) * 10 : 0;
     }
 
     _renderFplReport() {

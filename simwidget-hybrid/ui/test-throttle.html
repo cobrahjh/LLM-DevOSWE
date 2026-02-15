@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Throttle Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #fff; }
+        .test { margin: 20px 0; padding: 15px; background: #2d2d2d; border-radius: 5px; }
+        .title { font-size: 18px; font-weight: bold; color: #4fc3f7; margin-bottom: 10px; }
+        .status { color: #66bb6a; }
+        .update { color: #ffa726; margin: 5px 0; }
+        .info { color: #aaa; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔬 Universal Throttling System Test</h1>
+
+    <div class="test">
+        <div class="title">Test 1: Rapid Fire Updates (No Throttle)</div>
+        <div id="no-throttle">Waiting...</div>
+        <div class="info">Should update on every call (100+ times)</div>
+    </div>
+
+    <div class="test">
+        <div class="title">Test 2: Throttled Updates (1 second interval)</div>
+        <div id="throttled">Waiting...</div>
+        <div class="info">Should update max once per second (~5 times total)</div>
+    </div>
+
+    <div class="test">
+        <div class="title">Test 3: Environment Pane Simulation (60 second interval)</div>
+        <div id="env-throttle">Waiting...</div>
+        <div class="info">Should update max once per minute (will take 60+ seconds)</div>
+    </div>
+
+    <script src="/ui/shared/throttle-utils.js"></script>
+    <script>
+        // Test 1: No throttling
+        let noThrottleCount = 0;
+        const noThrottleEl = document.getElementById('no-throttle');
+
+        // Test 2: 1-second throttle
+        let throttledCount = 0;
+        const throttledEl = document.getElementById('throttled');
+        const throttle1s = new ThrottleManager(1000);
+
+        // Test 3: 60-second throttle (like environment pane)
+        let envThrottleCount = 0;
+        const envThrottleEl = document.getElementById('env-throttle');
+        const throttle60s = new ThrottleManager(60000);
+
+        // Simulate rapid data updates (like WebSocket messages from sim)
+        let iteration = 0;
+        const testInterval = setInterval(() => {
+            iteration++;
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Test 1: Update without throttle
+            noThrottleCount++;
+            noThrottleEl.innerHTML = `<div class="update">Update #${noThrottleCount} at ${timestamp}</div>`;
+
+            // Test 2: Update with 1s throttle
+            throttle1s.throttle(() => {
+                throttledCount++;
+                throttledEl.innerHTML = `<div class="update">Update #${throttledCount} at ${timestamp}</div>
+                    <div class="info">Time until next: ${(throttle1s.getTimeUntilNext() / 1000).toFixed(1)}s</div>`;
+            });
+
+            // Test 3: Update with 60s throttle
+            throttle60s.throttle(() => {
+                envThrottleCount++;
+                envThrottleEl.innerHTML = `<div class="update">Update #${envThrottleCount} at ${timestamp}</div>
+                    <div class="info">Time until next: ${(throttle60s.getTimeUntilNext() / 1000).toFixed(1)}s</div>`;
+            });
+
+            // Stop after 5 seconds (50 iterations)
+            if (iteration >= 50) {
+                clearInterval(testInterval);
+
+                setTimeout(() => {
+                    const resultHTML = `
+                        <div class="test">
+                            <div class="title">✅ Test Results</div>
+                            <div class="status">No Throttle: ${noThrottleCount} updates (expected ~50)</div>
+                            <div class="status">1s Throttle: ${throttledCount} updates (expected ~5)</div>
+                            <div class="status">60s Throttle: ${envThrottleCount} updates (expected 1)</div>
+                            <div class="info" style="margin-top: 15px;">
+                                ${throttledCount >= 4 && throttledCount <= 6 ? '✅ Throttling working correctly!' : '❌ Throttling may have issues'}
+                            </div>
+                            <div class="info">
+                                The 60s throttle will continue in the background - wait 60s and you'll see the second update.
+                            </div>
+                        </div>
+                        <div class="test">
+                            <button onclick="copyResults()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4fc3f7; color: #000; border: none; border-radius: 5px;">📋 Copy Results to Hive</button>
+                            <div id="copy-status" style="margin-top: 10px;"></div>
+                        </div>
+                    `;
+                    document.body.innerHTML += resultHTML;
+
+                    // Auto-save results
+                    window.testResults = {
+                        timestamp: new Date().toISOString(),
+                        noThrottle: noThrottleCount,
+                        throttle1s: throttledCount,
+                        throttle60s: envThrottleCount,
+                        passed: throttledCount >= 4 && throttledCount <= 6,
+                        summary: `Universal Throttling Test Results
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Date: ${new Date().toLocaleString()}
+
+No Throttle:    ${noThrottleCount} updates (expected ~50)
+1s Throttle:    ${throttledCount} updates (expected ~5)
+60s Throttle:   ${envThrottleCount} updates (expected 1)
+
+Status: ${throttledCount >= 4 && throttledCount <= 6 ? '✅ PASS - Throttling working correctly!' : '❌ FAIL - Throttling may have issues'}
+
+The 60s throttle will continue in background.
+Next update in ~${(throttle60s.getTimeUntilNext() / 1000).toFixed(0)} seconds.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                    };
+
+                    window.copyResults = function() {
+                        const textarea = document.createElement('textarea');
+                        textarea.value = window.testResults.summary;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        document.getElementById('copy-status').innerHTML = '<div class="status">✅ Copied to clipboard!</div>';
+
+                        // Also save to Hive
+                        console.log('[ThrottleTest] Saving results to console for Hive...');
+                        console.log(window.testResults.summary);
+                    };
+                }, 100);
+            }
+        }, 100); // Simulate updates every 100ms (like fast WebSocket messages)
+
+        console.log('[ThrottleTest] Running throttle tests...');
+        console.log('[ThrottleTest] ThrottleManager loaded:', typeof ThrottleManager !== 'undefined');
+    </script>
+</body>
+</html>

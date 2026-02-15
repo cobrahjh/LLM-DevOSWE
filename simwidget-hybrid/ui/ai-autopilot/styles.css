@@ -239,18 +239,38 @@
     font-size: 11px;
 }
 
-.airport-rwy {
-    padding: 1px 8px;
-    border-radius: 3px;
-    background: rgba(0, 200, 83, 0.15);
+.airport-rwy-label {
     color: #00c853;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 11px;
 }
 
-.airport-rwy.no-runway {
-    background: rgba(255, 152, 0, 0.1);
-    color: #ff9800;
+.airport-rwy-select {
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(0, 200, 83, 0.15);
+    color: #00c853;
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    font-weight: 700;
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+    min-width: 100px;
+}
+
+.airport-rwy-select:hover {
+    background: rgba(0, 200, 83, 0.25);
+    border-color: rgba(0, 200, 83, 0.5);
+}
+
+.airport-rwy-select:focus {
+    border-color: #00c853;
+    box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.2);
+}
+
+.airport-rwy-select option {
+    background: #1a1a1a;
+    color: #00c853;
 }
 
 .airport-elev {

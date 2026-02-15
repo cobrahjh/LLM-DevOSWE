@@ -1,0 +1,100 @@
+/**
+ * Check KBIH R12-Z specifically
+ */
+
+const Database = require('better-sqlite3');
+const path = require('path');
+
+const dbPath = path.join(__dirname, 'backend', 'data', 'navdb.sqlite');
+
+console.log('🔍 Checking KBIH R12-Z\n');
+
+try {
+    const db = new Database(dbPath, { readonly: true });
+
+    // Get R12-Z procedure
+    const proc = db.prepare(`
+        SELECT id, airport_icao, ident, type, runway, transition
+        FROM procedures
+        WHERE airport_icao = 'KBIH'
+        AND ident = 'R12-Z'
+        LIMIT 1
+    `).get();
+
+    if (!proc) {
+        console.log('❌ R12-Z not found');
+        process.exit(0);
+    }
+
+    console.log(`Procedure: ${proc.ident} (ID: ${proc.id})`);
+    console.log(`Airport: ${proc.airport_icao}, Type: ${proc.type}, Runway: ${proc.runway || 'ALL'}\n`);
+
+    // Get all legs for this procedure
+    const legs = db.prepare(`
+        SELECT
+            seq,
+            fix_ident,
+            path_term,
+            turn_dir,
+            alt_desc,
+            alt1,
+            alt2,
+            speed_limit,
+            course,
+            distance,
+            rec_navaid
+        FROM procedure_legs
+        WHERE procedure_id = ?
+        ORDER BY seq
+    `).all(proc.id);
+
+    console.log(`Total legs: ${legs.length}\n`);
+
+    // Display all legs
+    console.log('Seq  Fix      PathTerm  Alt      Speed  Course  Dist  Navaid');
+    console.log('---  -------  --------  -------  -----  ------  ----  ------');
+    legs.forEach(leg => {
+        const altStr = leg.alt_desc && leg.alt1
+            ? `${leg.alt_desc}${Math.round(leg.alt1 / 100)}`.padEnd(7)
+            : ''.padEnd(7);
+        const speedStr = leg.speed_limit ? leg.speed_limit.toString().padEnd(5) : ''.padEnd(5);
+        const courseStr = leg.course ? leg.course.toFixed(0).padStart(3).padEnd(6) : ''.padEnd(6);
+        const distStr = leg.distance ? leg.distance.toFixed(1).padEnd(4) : ''.padEnd(4);
+
+        console.log(
+            `${leg.seq.toString().padStart(3)}  ` +
+            `${(leg.fix_ident || '').padEnd(7)}  ` +
+            `${(leg.path_term || '??').padEnd(8)}  ` +
+            `${altStr}  ` +
+            `${speedStr}  ` +
+            `${courseStr}  ` +
+            `${distStr}  ` +
+            `${leg.rec_navaid || ''}`
+        );
+    });
+
+    // Check for missed approach indicators
+    const missedPathTerms = ['HM', 'HA', 'HF', 'VM', 'VI', 'CA', 'FA', 'FM'];
+    const missedStartIdx = legs.findIndex(l =>
+        l.seq >= 100 || (l.path_term && missedPathTerms.includes(l.path_term))
+    );
+
+    console.log(`\nMissed approach detection:`);
+    console.log(`  First missed leg index: ${missedStartIdx}`);
+    if (missedStartIdx >= 0) {
+        console.log(`  Approach legs: ${missedStartIdx}`);
+        console.log(`  Missed legs: ${legs.length - missedStartIdx}`);
+        console.log(`\n  Missed approach waypoints:`);
+        legs.slice(missedStartIdx).forEach((leg, idx) => {
+            console.log(`    ${idx + 1}. ${leg.fix_ident || 'N/A'} - ${leg.path_term || '??'} (seq ${leg.seq})`);
+        });
+    } else {
+        console.log(`  ❌ No missed approach detected`);
+    }
+
+    db.close();
+
+} catch (error) {
+    console.error('Error:', error.message);
+    process.exit(1);
+}
