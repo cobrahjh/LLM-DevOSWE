@@ -12,7 +12,8 @@
 
 // Load base class (Node.js environment only, not browser)
 if (typeof RuleEngineCore === 'undefined' && typeof require !== 'undefined' && typeof window === 'undefined') {
-    var { RuleEngineCore } = require('./rule-engine-core.js');
+    const RuleEngineCoreModule = require('./rule-engine-core.js');
+    global.RuleEngineCore = RuleEngineCoreModule.RuleEngineCore;
 }
 
 class RuleEngineGround extends RuleEngineCore {
