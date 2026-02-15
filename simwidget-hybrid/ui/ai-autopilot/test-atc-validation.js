@@ -260,6 +260,7 @@ function defineTests() {
 
     test('getATCInstruction() returns hold-short message', () => {
         const atc = new ATCController();
+        atc._route = {}; // Required for getATCInstruction()
         atc._setPhase('HOLD_SHORT');
         atc._runway = '16R';
         const inst = atc.getATCInstruction();
@@ -269,6 +270,7 @@ function defineTests() {
 
     test('getATCInstruction() returns cleared takeoff message', () => {
         const atc = new ATCController();
+        atc._route = {}; // Required for getATCInstruction()
         atc._setPhase('CLEARED_TAKEOFF');
         atc._runway = '27R';
         const inst = atc.getATCInstruction();
@@ -278,6 +280,7 @@ function defineTests() {
 
     test('getATCInstruction() returns ready for departure', () => {
         const atc = new ATCController();
+        atc._route = {}; // Required for getATCInstruction()
         atc._setPhase('TAKEOFF_CLEARANCE_PENDING');
         atc._runway = '09';
         const inst = atc.getATCInstruction();

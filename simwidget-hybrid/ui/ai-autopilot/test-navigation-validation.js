@@ -110,8 +110,8 @@ if (typeof window !== 'undefined') {
     // Create stubs for browser-only globals
     global.window = { _terrainGrid: null };
     global.WindCompensation = class { reset() {} };
-    RuleEngineCore = require('./modules/rule-engine-core.js');
-    RuleEngineCore = global.window.RuleEngineCore;
+    const ruleEngineModule = require('./modules/rule-engine-core.js');
+    RuleEngineCore = ruleEngineModule.RuleEngineCore;
     defineTests();
     runTests().then(r => process.exit(r.fail > 0 ? 1 : 0));
 }
@@ -234,13 +234,14 @@ function defineTests() {
                 ident: 'KDEN',
                 lat: 39.8617,
                 lon: -104.6731,
-                distNm: 25.5
+                distNm: 25.5,
+                bearing: 15  // Precomputed bearing
             }
         };
 
         const result = engine._getNavHeading({ latitude: 39.0, longitude: -104.7 });
-        assertEquals(result.source, 'DIRECT', 'Should use direct-to waypoint');
-        assertNotNull(result.heading, 'Should return bearing to waypoint');
+        assertEquals(result.source, 'WPT', 'Should use waypoint bearing');
+        assertEquals(result.heading, 15, 'Should return waypoint bearing');
         assert(result.description.includes('KDEN'), 'Description should include waypoint');
     });
 
@@ -477,11 +478,11 @@ function defineTests() {
         assert(bearing >= 0 && bearing < 360, 'Bearing should be in 0-359° range');
     });
 
-    test('_calculateBearing: known route (KDEN to KCOS ~176°)', () => {
+    test('_calculateBearing: known route (KDEN to KCOS ~180°)', () => {
         const engine = new RuleEngineCore();
-        // Denver to Colorado Springs (roughly south-southeast)
+        // Denver to Colorado Springs (roughly south)
         const bearing = engine._calculateBearing(39.8617, -104.6731, 38.8058, -104.7013);
-        assertClose(bearing, 176, 5, 'KDEN to KCOS bearing ≈ 176°');
+        assertClose(bearing, 181, 5, 'KDEN to KCOS bearing ≈ 181° (south)');
     });
 
     // ──────────────────────────────────────────────────────
