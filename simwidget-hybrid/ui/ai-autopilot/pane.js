@@ -2064,9 +2064,9 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     nav: this.ap.navHold,
                     apr: this.ap.aprHold
                 },
-                terrainAlert: this.ruleEngine.getTerrainAlert(),
-                envelopeAlert: this.ruleEngine.getEnvelopeAlert(),
-                envelope: this.ruleEngine.getEnvelope(),
+                terrainAlert: this.ruleEngine ? this.ruleEngine.getTerrainAlert() : null,
+                envelopeAlert: this.ruleEngine ? this.ruleEngine.getEnvelopeAlert() : null,
+                envelope: this.ruleEngine ? this.ruleEngine.getEnvelope() : null,
                 airport: this._nearestAirport ? {
                     icao: this._nearestAirport.icao,
                     name: this._nearestAirport.name,

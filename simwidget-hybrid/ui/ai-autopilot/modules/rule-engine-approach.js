@@ -7,7 +7,7 @@
  * Extracted from rule-engine.js for memory optimization (Feb 2026)
  */
 
-if (typeof RuleEngineCore === 'undefined' && typeof require !== 'undefined') {
+if (typeof RuleEngineCore === 'undefined' && typeof require !== 'undefined' && typeof window === 'undefined') {
     var { RuleEngineCore } = require('./rule-engine-core.js');
 }
 

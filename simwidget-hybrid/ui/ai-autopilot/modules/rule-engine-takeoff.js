@@ -10,8 +10,8 @@
  * Refactored 2026-02-14 for memory optimization via lazy loading.
  */
 
-// Load base class (Node.js environment)
-if (typeof RuleEngineCore === 'undefined' && typeof require !== 'undefined') {
+// Load base class (Node.js environment only, not browser)
+if (typeof RuleEngineCore === 'undefined' && typeof require !== 'undefined' && typeof window === 'undefined') {
     var { RuleEngineCore } = require('./rule-engine-core.js');
 }
 
