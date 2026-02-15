@@ -31,6 +31,13 @@ Quick links:
 - **Distance/bearing** - Real-time calculations to active waypoint
 - **ETE calculation** - Estimated time enroute based on groundspeed
 - **Cross-fill** - Syncs with FlightPlan widget via BroadcastChannel
+- **Airways (NEW v3.0.0)** - Victor & Jet routes with MEA data
+  - 13,000+ airways from FAA CIFP database
+  - Smart suggestions - Finds airways connecting two waypoints
+  - MEA display - Shows Minimum Enroute Altitude for each airway
+  - Map visualization - Airways shown as dashed blue lines
+  - Easy insertion - AWY soft key on FPL page
+  - See [AIRWAYS-GUIDE.md](../AIRWAYS-GUIDE.md) for complete documentation
 
 ### 🧭 CDI & Navigation
 - **Course Deviation Indicator** - Visual needle with ±10° scale
@@ -175,8 +182,29 @@ http://localhost:8080/ui/gtn750/
 
 **Edit Flight Plan**:
 - Click waypoint to select
-- Press `REMOVE` to delete
+- Press `DELETE` to remove
 - Waypoints auto-sequence as you fly
+
+**Insert Airways (NEW v3.0.0)**:
+1. Press `FPL` page button
+2. Click waypoint to select (entry fix)
+3. Press `AWY` soft key
+4. See smart suggestions for airways connecting to next waypoint
+5. Click a suggestion or manually enter:
+   - Airway identifier (e.g., V2, J45)
+   - Entry fix (pre-filled)
+   - Exit fix (pre-filled)
+6. Press `INSERT`
+7. All waypoints along airway inserted automatically
+8. MEA (Minimum Enroute Altitude) shown for each airway
+
+**Example**: Insert V2 airway between KSEA and KPDX
+- Flight plan: KSEA → KPDX
+- Select KSEA → Press AWY
+- See suggestion: "V2 - 3 fixes • MEA 5,000 ft • 121 nm"
+- Click V2 → Inserts SEA → OLM → BTG waypoints
+
+See [AIRWAYS-GUIDE.md](../AIRWAYS-GUIDE.md) for complete airways documentation.
 
 ### 4. Using the CDI
 
@@ -266,10 +294,12 @@ Bottom row of 12 soft keys changes per page:
 ### FPL Page
 | Key | Function |
 |-----|----------|
-| `FMS` | FMS mode (vs. heading) |
+| `DELETE` | Remove selected waypoint |
+| `AWY` | Insert airway (NEW v3.0.0) |
+| `MOVE ▲` | Move waypoint up |
+| `MOVE ▼` | Move waypoint down |
+| `ACTV LEG` | Activate leg to waypoint |
 | `D→` | Direct-To from selected waypoint |
-| `MENU` | Flight plan options |
-| `FPL` | Edit flight plan |
 
 ### NRST Page
 | Key | Function |

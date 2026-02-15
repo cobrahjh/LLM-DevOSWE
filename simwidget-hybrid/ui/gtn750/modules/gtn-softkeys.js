@@ -89,7 +89,7 @@ class GTNSoftKeys {
         // FPL page (waypoint selected)
         this.registerContext('fpl-selected', [
             { label: 'DELETE', action: 'fpl-delete' },
-            { label: 'INSERT', action: 'fpl-insert' },
+            { label: 'AWY', action: 'fpl-airway' },
             { label: 'MOVE\n\u25B2', action: 'fpl-move-up' },
             { label: 'MOVE\n\u25BC', action: 'fpl-move-down' },
             { label: 'ACTV\nLEG', action: 'activate-leg' },
