@@ -38,6 +38,14 @@ Quick links:
   - Map visualization - Airways shown as dashed blue lines
   - Easy insertion - AWY soft key on FPL page
   - See [AIRWAYS-GUIDE.md](../AIRWAYS-GUIDE.md) for complete documentation
+- **VNAV (NEW v3.0.0)** - Vertical Navigation with TOD calculation
+  - Automatic Top of Descent (TOD) calculation
+  - 3° descent profile (configurable 1-6°)
+  - Altitude constraints from CIFP procedures (AT/A/B)
+  - Vertical deviation indicator (±feet from path)
+  - Required VS calculation for constraint compliance
+  - Auto-enable for approaches with altitude restrictions
+  - See [VNAV-GUIDE.md](../VNAV-GUIDE.md) for complete documentation
 
 ### 🧭 CDI & Navigation
 - **Course Deviation Indicator** - Visual needle with ±10° scale
@@ -205,6 +213,28 @@ http://localhost:8080/ui/gtn750/
 - Click V2 → Inserts SEA → OLM → BTG waypoints
 
 See [AIRWAYS-GUIDE.md](../AIRWAYS-GUIDE.md) for complete airways documentation.
+
+**Using VNAV (Vertical Navigation) (NEW v3.0.0)**:
+1. Load a STAR or Approach with altitude constraints
+2. VNAV auto-enables (or press VNAV soft key on MAP/FPL page)
+3. Fly at cruise altitude until TOD (Top of Descent) marker
+4. At TOD, begin descent following vertical deviation indicator
+5. VNAV guides descent to meet all altitude constraints
+
+**Example**: KBIH R12-Z approach
+- Constraints: HEGIT @10,000ft, TEVOC @8,000ft, NEBSE @7,000ft
+- Current: 12,000ft cruise, 30nm from HEGIT
+- VNAV calculates TOD: 23.3nm from current position
+- At TOD: Begin descent, VNAV shows "VNAV PATH"
+- Vertical deviation: ±100ft = on path (green)
+
+**VNAV Display**:
+- **TOD Marker**: Cyan "TOD" label on map at calculated descent point
+- **VNAV Indicator**: "VNAV ARMED" (approaching TOD) or "VNAV PATH" (descending)
+- **Vertical Deviation**: "+200" = 200ft above path, "-150" = 150ft below path
+- **Required VS**: "-650" = need 650fpm descent rate to meet constraint
+
+See [VNAV-GUIDE.md](../VNAV-GUIDE.md) for complete VNAV documentation.
 
 ### 4. Using the CDI
 
