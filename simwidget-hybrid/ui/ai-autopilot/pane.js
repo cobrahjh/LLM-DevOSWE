@@ -2048,7 +2048,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 enabled: this.aiEnabled,
                 autoControls: this._autoControlsEnabled,
                 phase: this.flightPhase.phase,
-                takeoffSubPhase: this._lastTakeoffSubPhase || (this.ruleEngine ? this.ruleEngine.getTakeoffSubPhase() : null),
+                takeoffSubPhase: this._lastTakeoffSubPhase || (this.ruleEngine?.getTakeoffSubPhase ? this.ruleEngine.getTakeoffSubPhase() : null),
                 targets: {
                     altitude: this.flightPhase.targetCruiseAlt,
                     speed: this.setValues.speed,
