@@ -158,7 +158,9 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Wire ATC controller into rule engine and flight phase
         if (this.atcController) {
-            this.ruleEngine.setATCController(this.atcController);
+            if (this.ruleEngine) {
+                this.ruleEngine.setATCController(this.atcController);
+            }
             this.flightPhase.setATCController(this.atcController);
         }
 
