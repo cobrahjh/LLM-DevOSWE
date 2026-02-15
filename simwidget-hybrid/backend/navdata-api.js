@@ -368,14 +368,47 @@ function setupNavdataRoutes(app) {
             ORDER BY seq
         `).all(procId);
 
+        // Detect missed approach legs
+        // Priority 1: seq >= 100 (ARINC 424 standard for missed approach)
+        // Priority 2: HM/HA/HF (holding patterns - strong missed approach indicators)
+        // Note: CA/VM/VI/FA/FM can appear in normal approaches, so not reliable
+        let missedStartSeq = legs.findIndex(l => l.seq >= 100);
+
+        // If no seq >= 100, look for holding patterns
+        if (missedStartSeq === -1) {
+            const holdingPathTerms = ['HM', 'HA', 'HF'];
+            missedStartSeq = legs.findIndex(l =>
+                l.path_term && holdingPathTerms.includes(l.path_term)
+            );
+        }
+
+        const approachLegs = missedStartSeq >= 0 ? legs.slice(0, missedStartSeq) : legs;
+        const missedLegs = missedStartSeq >= 0 ? legs.slice(missedStartSeq) : [];
+
         // Convert to waypoint format for flight plan display
-        const waypoints = legs
+        const waypoints = approachLegs
             .filter(l => l.fix_ident && l.fix_lat !== null)
             .map((l, i) => ({
                 ident: l.fix_ident,
                 lat: l.fix_lat,
                 lon: l.fix_lon,
-                type: i === 0 ? 'IAF' : (i === legs.length - 1 ? 'MAP' : 'WAYPOINT'),
+                type: i === 0 ? 'IAF' : (i === approachLegs.length - 1 ? 'MAP' : 'WAYPOINT'),
+                pathTerm: l.path_term,
+                altDesc: l.alt_desc,
+                alt1: l.alt1,
+                alt2: l.alt2,
+                speedLimit: l.speed_limit,
+                course: l.course
+            }));
+
+        // Convert missed approach legs to waypoints
+        const missedWaypoints = missedLegs
+            .filter(l => l.fix_ident && l.fix_lat !== null)
+            .map(l => ({
+                ident: l.fix_ident,
+                lat: l.fix_lat,
+                lon: l.fix_lon,
+                type: 'MISSED',
                 pathTerm: l.path_term,
                 altDesc: l.alt_desc,
                 alt1: l.alt1,
@@ -393,8 +426,11 @@ function setupNavdataRoutes(app) {
                 runway: proc.runway,
                 transition: proc.transition
             },
-            legs,
+            legs: approachLegs,
             waypoints,
+            hasMissedApproach: missedLegs.length > 0,
+            missedApproachLegs: missedLegs,
+            missedApproachWaypoints: missedWaypoints,
             source: 'navdb'
         });
     });

@@ -1461,14 +1461,17 @@ class GTNMapRenderer {
 
     renderWaypoint(ctx, x, y, waypoint, isActive, isCompleted, declutterLevel) {
         const ident = waypoint.ident || waypoint;
+        const isMissed = waypoint.type === 'MISSED' || waypoint.procedureType === 'MISSED';
 
         let color;
         if (isActive) {
-            color = '#ff00ff';
+            color = isMissed ? '#ffaa00' : '#ff00ff';  // Amber for active missed, magenta for active normal
         } else if (isCompleted) {
             color = 'rgba(128, 128, 128, 0.5)';
+        } else if (isMissed) {
+            color = '#ffff00';  // Yellow for missed approach waypoints
         } else {
-            color = '#00aaff';
+            color = '#00aaff';  // Cyan for normal waypoints
         }
 
         ctx.fillStyle = color;
@@ -1481,7 +1484,7 @@ class GTNMapRenderer {
         ctx.fill();
 
         if (isActive) {
-            ctx.strokeStyle = '#ff00ff';
+            ctx.strokeStyle = isMissed ? '#ffaa00' : '#ff00ff';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(x, y, 10, 0, Math.PI * 2);
@@ -1490,9 +1493,22 @@ class GTNMapRenderer {
 
         // Waypoint identifier
         if (ident && (!isCompleted || (declutterLevel || 0) < 2)) {
-            ctx.fillStyle = isActive ? '#ff00ff' : (isCompleted ? '#888888' : '#00ff00');
+            const labelColor = isActive
+                ? (isMissed ? '#ffaa00' : '#ff00ff')
+                : (isCompleted ? '#888888' : (isMissed ? '#ffff00' : '#00ff00'));
+
+            ctx.fillStyle = labelColor;
             ctx.font = isActive ? 'bold 11px Consolas, monospace' : '10px Consolas, monospace';
             ctx.fillText(ident, x + 8, y + 4);
+
+            // Add "MISSED" badge for missed approach waypoints
+            if (isMissed && !isCompleted && (declutterLevel || 0) < 1) {
+                ctx.fillStyle = 'rgba(255, 170, 0, 0.8)';
+                ctx.fillRect(x + 8, y - 16, 45, 10);
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 8px Consolas, monospace';
+                ctx.fillText('MISSED', x + 10, y - 8);
+            }
         }
 
         // Altitude constraint (if present and not completed)

@@ -2724,6 +2724,38 @@ body {
     opacity: 0.5;
 }
 
+/* Missed Approach Waypoints */
+.gtn-fpl-item.missed-approach {
+    background: rgba(255, 170, 0, 0.08);
+    border-left-color: var(--gtn-amber);
+}
+
+.gtn-fpl-item.missed-approach:hover {
+    background: rgba(255, 170, 0, 0.15);
+}
+
+.gtn-fpl-item.missed-approach.active {
+    border-left-color: var(--gtn-amber);
+    background: rgba(255, 170, 0, 0.12);
+}
+
+.gtn-fpl-item.missed-approach .fpl-ident {
+    color: var(--gtn-yellow);
+}
+
+.fpl-missed-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 4px;
+    background: var(--gtn-amber);
+    color: #000000;
+    font-size: 7px;
+    font-weight: 700;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
 /* FPL Column Header */
 .gtn-fpl-col-header {
     display: grid;
@@ -3167,6 +3199,50 @@ body {
     font-weight: 700;
     color: var(--gtn-cyan);
     font-family: var(--gtn-mono);
+}
+
+/* Missed Approach Controls */
+.proc-missed-approach-controls {
+    padding: 12px;
+    border-top: 1px solid var(--gtn-border);
+    background: rgba(255, 170, 0, 0.05);
+}
+
+.proc-go-around-btn {
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, #aa6600 0%, #ff8800 100%);
+    border: 2px solid var(--gtn-amber);
+    border-radius: 6px;
+    color: var(--gtn-dark);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--gtn-font);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.proc-go-around-btn:hover {
+    background: linear-gradient(180deg, #cc7700 0%, #ffaa00 100%);
+    border-color: #ffcc00;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 136, 0, 0.3);
+}
+
+.proc-go-around-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.go-around-icon {
+    font-size: 18px;
+    line-height: 1;
 }
 
 .gtn-proc-airport {

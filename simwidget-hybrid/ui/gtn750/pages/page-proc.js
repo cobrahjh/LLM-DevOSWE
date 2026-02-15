@@ -20,6 +20,7 @@ class ProceduresPage {
         this.selectedProcedure = null;
         this.previewWaypoints = [];
         this.ilsData = null; // ILS frequency data for selected approach
+        this.missedApproachWaypoints = null; // Missed approach waypoints (if available)
 
         // Elements
         this.elements = {};
@@ -49,7 +50,9 @@ class ProceduresPage {
             procTypeVal: document.getElementById('proc-type-val'),
             procRunwayVal: document.getElementById('proc-runway-val'),
             procDistanceVal: document.getElementById('proc-distance-val'),
-            procWaypointsList: document.getElementById('proc-waypoints-list')
+            procWaypointsList: document.getElementById('proc-waypoints-list'),
+            missedControls: document.getElementById('proc-missed-controls'),
+            goAroundBtn: document.getElementById('proc-go-around-btn')
         };
     }
 
@@ -78,6 +81,11 @@ class ProceduresPage {
         // Details panel close button
         this.elements.detailsClose?.addEventListener('click', () => {
             this.hideDetailsPanel();
+        });
+
+        // GO AROUND button
+        this.elements.goAroundBtn?.addEventListener('click', () => {
+            this.activateMissedApproach();
         });
     }
 
@@ -303,8 +311,14 @@ class ProceduresPage {
                     if (data.waypoints?.length > 0) {
                         // Map altitude constraints for VNAV
                         this.previewWaypoints = data.waypoints.map(wp => this.mapAltitudeConstraints(wp));
+
+                        // Map missed approach waypoints (if available)
+                        const missedWaypoints = data.hasMissedApproach && data.missedApproachWaypoints
+                            ? data.missedApproachWaypoints.map(wp => this.mapAltitudeConstraints(wp))
+                            : null;
+
                         this.onProcedureSelect(proc, this.procedureType, this.previewWaypoints);
-                        this.showDetailsPanel(proc, this.previewWaypoints);
+                        this.showDetailsPanel(proc, this.previewWaypoints, missedWaypoints);
                         return;
                     }
                 }
@@ -362,9 +376,13 @@ class ProceduresPage {
      * Show procedure details panel with waypoint breakdown
      * @param {Object} proc - Selected procedure
      * @param {Array} waypoints - Procedure waypoints with constraints
+     * @param {Array} missedWaypoints - Missed approach waypoints (optional)
      */
-    showDetailsPanel(proc, waypoints) {
+    showDetailsPanel(proc, waypoints, missedWaypoints = null) {
         if (!this.elements.detailsPanel) return;
+
+        // Store missed approach waypoints
+        this.missedApproachWaypoints = missedWaypoints;
 
         // Populate procedure info
         this.elements.procNameVal.textContent = proc.name || '—';
@@ -385,6 +403,15 @@ class ProceduresPage {
         // Render waypoint list with bearings and distances
         this.renderWaypointList(waypoints);
 
+        // Show/hide GO AROUND button based on missed approach availability
+        if (this.elements.missedControls) {
+            if (missedWaypoints && missedWaypoints.length > 0 && this.procedureType === 'apr') {
+                this.elements.missedControls.style.display = 'block';
+            } else {
+                this.elements.missedControls.style.display = 'none';
+            }
+        }
+
         // Show panel
         this.elements.detailsPanel.style.display = 'flex';
     }
@@ -396,6 +423,36 @@ class ProceduresPage {
         if (this.elements.detailsPanel) {
             this.elements.detailsPanel.style.display = 'none';
         }
+    }
+
+    /**
+     * Activate missed approach - load missed approach waypoints into flight plan
+     */
+    activateMissedApproach() {
+        if (!this.missedApproachWaypoints || this.missedApproachWaypoints.length === 0) {
+            GTNCore.log('[GTN750] No missed approach waypoints available');
+            return;
+        }
+
+        GTNCore.log(`[GTN750] Activating missed approach with ${this.missedApproachWaypoints.length} waypoints`);
+
+        // Call the onProcedureLoad callback to load missed approach into flight plan
+        // The flight plan module will handle inserting these waypoints
+        if (this.onProcedureLoad) {
+            // Create a procedure object for the missed approach
+            const missedProcedure = {
+                ...(this.selectedProcedure || {}),
+                name: this.selectedProcedure?.name ? `${this.selectedProcedure.name} (MISSED)` : 'MISSED APPROACH',
+                isMissedApproach: true
+            };
+
+            this.onProcedureLoad(missedProcedure, 'missed', this.missedApproachWaypoints);
+        }
+
+        // Close the details panel
+        this.hideDetailsPanel();
+
+        GTNCore.log('[GTN750] Missed approach activated');
     }
 
     /**

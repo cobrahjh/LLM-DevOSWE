@@ -194,16 +194,19 @@ class FlightPlanPage {
         const row = document.createElement('div');
         row.className = 'gtn-fpl-item';
 
+        const isMissed = wp.type === 'MISSED' || wp.procedureType === 'MISSED';
+
         if (wp.passed) row.classList.add('passed');
         if (index === activeIdx) row.classList.add('active');
         if (index === this.cursorIndex) row.classList.add('cursor');
+        if (isMissed) row.classList.add('missed-approach');  // Add class for styling
 
         // Seq number
         const seq = document.createElement('span');
         seq.className = 'fpl-seq';
         seq.textContent = index + 1;
 
-        // Ident (with airway name if present)
+        // Ident (with airway name if present and missed badge)
         const ident = document.createElement('span');
         ident.className = 'fpl-ident';
         let identText = wp.ident || `WP${index + 1}`;
@@ -211,6 +214,14 @@ class FlightPlanPage {
             identText += ` (${wp.airway})`;
         }
         ident.textContent = identText;
+
+        // Add MISSED badge if this is a missed approach waypoint
+        if (isMissed) {
+            const missedBadge = document.createElement('span');
+            missedBadge.className = 'fpl-missed-badge';
+            missedBadge.textContent = 'MISSED';
+            ident.appendChild(missedBadge);
+        }
 
         // Altitude
         const alt = document.createElement('span');

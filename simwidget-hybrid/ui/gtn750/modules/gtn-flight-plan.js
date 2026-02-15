@@ -837,14 +837,14 @@ class GTNFlightPlan {
         }
 
         // Determine procedure type string for waypoints
-        const procTypeStr = type === 'dep' ? 'SID' : (type === 'arr' ? 'STAR' : 'APPROACH');
+        const procTypeStr = type === 'dep' ? 'SID' : (type === 'arr' ? 'STAR' : (type === 'missed' ? 'MISSED' : 'APPROACH'));
 
         // Convert navdb waypoints to flight plan format
         const fplWaypoints = waypoints.map(wp => ({
             ident: wp.ident,
             lat: wp.lat,
             lng: wp.lon,  // Note: flight plan uses 'lng', navdb uses 'lon'
-            type: wp.type || 'WAYPOINT',
+            type: wp.type || (type === 'missed' ? 'MISSED' : 'WAYPOINT'),
             pathTerm: wp.pathTerm,
             altDesc: wp.altDesc,
             alt1: wp.alt1,
@@ -873,6 +873,12 @@ class GTNFlightPlan {
             case 'apr': // Approach - append to end
                 insertIndex = this.flightPlan.waypoints.length;
                 GTNCore.log(`[GTN750] Loading approach ${procedureName} at index ${insertIndex}`);
+                break;
+
+            case 'missed': // Missed approach - append after current approach
+                // Insert after all existing waypoints (after approach if loaded)
+                insertIndex = this.flightPlan.waypoints.length;
+                GTNCore.log(`[GTN750] Loading missed approach ${procedureName} at index ${insertIndex}`);
                 break;
 
             default:
