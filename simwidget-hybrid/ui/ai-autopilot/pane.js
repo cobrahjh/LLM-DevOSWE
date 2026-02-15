@@ -214,10 +214,10 @@ class AiAutopilotPane extends SimGlassBase {
         }
 
         const moduleFiles = {
-            ground: 'modules/rule-engine-ground.js?v=4',
-            takeoff: 'modules/rule-engine-takeoff.js?v=4',
-            cruise: 'modules/rule-engine-cruise.js?v=4',
-            approach: 'modules/rule-engine-approach.js?v=4'
+            ground: 'modules/rule-engine-ground.js?v=5',
+            takeoff: 'modules/rule-engine-takeoff.js?v=5',
+            cruise: 'modules/rule-engine-cruise.js?v=5',
+            approach: 'modules/rule-engine-approach.js?v=5'
         };
 
         // Load module script
