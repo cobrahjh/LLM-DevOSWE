@@ -304,6 +304,45 @@ See [HOLDING-GUIDE.md](../HOLDING-GUIDE.md) for complete holding patterns docume
 
 See [USER-WAYPOINTS-GUIDE.md](../USER-WAYPOINTS-GUIDE.md) for complete user waypoints documentation.
 
+**TCAS (Traffic Collision Avoidance System) (NEW v3.0.0)**:
+1. TCAS II implementation with Traffic Advisories (TA) and Resolution Advisories (RA)
+2. Altitude-based sensitivity adjustment (detection zones scale with altitude)
+3. Tau calculation (time to closest approach) for threat assessment
+4. RA sense determination (CLIMB/DESCEND commands)
+5. Audio alerts: "Traffic, Traffic" (TA), "Climb, Climb" or "Descend, Descend" (RA)
+
+**Traffic Advisory (TA)**:
+- Triggered: Traffic within 6nm horizontal, ±1,200ft vertical, tau < 20s (at cruise altitude)
+- Audio: "Traffic, Traffic" + chime
+- Visual: Amber circle on traffic display
+- Action: Monitor traffic, prepare for possible RA, **do not maneuver based on TA**
+
+**Resolution Advisory (RA)**:
+- Triggered: Traffic within 3.5nm horizontal, ±800ft vertical, tau < 15s (at cruise altitude)
+- Audio: "Climb, Climb" or "Descend, Descend"
+- Visual: Red square on traffic display
+- Action: **Immediately follow RA command**, notify ATC "Following TCAS RA"
+
+**Example**: Head-on conflict at 8,000ft
+- T-20s: TA "Traffic, Traffic" (5nm, amber circle)
+- T-15s: RA "Descend, Descend" at 2,000 fpm (3.8nm, red square)
+- T-5s: "Clear of Conflict" (traffic passes overhead)
+- Return to assigned altitude, report to ATC
+
+**Sensitivity Modes**:
+- **NORMAL**: Standard sensitivity (default)
+- **ABOVE**: Reduced sensitivity above aircraft (use below Class B)
+- **BELOW**: Reduced sensitivity below aircraft (use over terrain)
+
+**Altitude-Based Detection Zones**:
+| Altitude | TA Horizontal | RA Horizontal |
+|----------|---------------|---------------|
+| < 2,350 ft | 3.3nm | 2.0nm |
+| 2,350 - 5,000 ft | 4.8nm | 2.8nm |
+| > 10,000 ft | 6.0nm | 3.5nm |
+
+See [TCAS-GUIDE.md](../TCAS-GUIDE.md) for complete TCAS documentation.
+
 ### 4. Using the CDI
 
 **GPS Mode** (default):
