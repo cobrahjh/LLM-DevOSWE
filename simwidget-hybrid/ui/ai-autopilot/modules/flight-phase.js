@@ -48,7 +48,7 @@ class FlightPhase {
         const gearDown = d.gearDown !== undefined ? d.gearDown : true;
         const engineRunning = d.engineRunning || false;
 
-        const todNm = this.profile ? (this.targetCruiseAlt - alt) / 1000 * (this.profile.descent.todFactor || 3) : 30;
+        const todNm = this.profile ? (alt - this.fieldElevation) / 1000 * (this.profile.descent.todFactor || 3) : 30;
         const prevPhase = this.phase;
 
         // ── CATCH-UP: detect current flight state on reconnection ──
@@ -57,13 +57,23 @@ class FlightPhase {
         if ((this.phase === 'PREFLIGHT' || this.phase === 'TAXI') && !onGround && agl > 100 && ias > 30) {
             if (alt >= this.targetCruiseAlt - 200) {
                 this._setPhase('CRUISE');
-            } else if (vs > 100) {
+            } else if (vs >= 50) {
+                // Climbing - prioritize over altitude check
                 this._setPhase('CLIMB');
             } else if (agl < 2000) {
+                // Low altitude, not climbing - likely on approach
                 this._setPhase('APPROACH');
             } else {
+                // High altitude, level or slight descent - default to climb
                 this._setPhase('CLIMB');
             }
+        }
+
+        // ── GROUND RESET: if on ground with engine off from airborne phase, reset to PREFLIGHT ──
+        // Exclude LANDING phase (has its own LANDING→TAXI transition)
+        if (onGround && !engineRunning && this.phaseIndex >= 2 && this.phase !== 'LANDING') {
+            // phaseIndex >= 2 means TAKEOFF or later (not PREFLIGHT/TAXI/LANDING)
+            this._setPhase('PREFLIGHT');
         }
 
         switch (this.phase) {
@@ -133,8 +143,8 @@ class FlightPhase {
             case 'LANDING':
                 if (onGround && gs < 30) {
                     this._setPhase('TAXI');
-                } else if (!onGround && agl > 500) {
-                    // Go-around
+                } else if (!onGround && (agl >= 500 || vs > 200)) {
+                    // Go-around: climbing from landing or above 500 AGL
                     this._setPhase('CLIMB');
                 }
                 break;
