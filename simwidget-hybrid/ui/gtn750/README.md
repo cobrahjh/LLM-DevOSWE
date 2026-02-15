@@ -266,6 +266,44 @@ See [VNAV-GUIDE.md](../VNAV-GUIDE.md) for complete VNAV documentation.
 
 See [HOLDING-GUIDE.md](../HOLDING-GUIDE.md) for complete holding patterns documentation.
 
+**User Waypoints (NEW v3.0.0)**:
+1. Create custom navigation waypoints with coordinates and names
+2. Store up to 500 user waypoints in localStorage
+3. 5 categories: VRP (reporting points), POI (points of interest), PVT (private strips), PRC (practice areas), WPT (general)
+4. Search, nearest, import/export (GPX/CSV)
+5. Use in Direct-To, flight plans, and NRST pages
+
+**Create from Current Position**:
+1. Press `USER WPT` soft key
+2. GTN750 pre-fills current lat/lon
+3. Enter identifier (3-5 alphanumeric, e.g., `HOME1`)
+4. Add name and notes (optional)
+5. Select category
+6. Press `SAVE`
+7. Waypoint displayed on map with category icon
+
+**Example**: Save home airport parking spot
+- Identifier: `PARK1`
+- Name: `Airport Parking`
+- Category: POI (yellow star icon)
+- Notes: `Free parking near terminal`
+- Coordinates: Auto-filled from current position
+
+**Navigate to User Waypoint**:
+1. Press `D→` (Direct-To)
+2. Type `PARK1`
+3. GTN750 finds user waypoint (shows ★ icon)
+4. Press `ACTIVATE`
+5. Route to user waypoint displayed
+
+**Import/Export**:
+- **Export GPX**: Backup waypoints to file, compatible with Garmin/Foreflight
+- **Export CSV**: Open in Excel for editing
+- **Import GPX**: Restore from backup or import from GPS device
+- **Import CSV**: Bulk import from spreadsheet
+
+See [USER-WAYPOINTS-GUIDE.md](../USER-WAYPOINTS-GUIDE.md) for complete user waypoints documentation.
+
 ### 4. Using the CDI
 
 **GPS Mode** (default):
