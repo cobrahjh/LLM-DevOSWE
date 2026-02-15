@@ -343,6 +343,40 @@ See [USER-WAYPOINTS-GUIDE.md](../USER-WAYPOINTS-GUIDE.md) for complete user wayp
 
 See [TCAS-GUIDE.md](../TCAS-GUIDE.md) for complete TCAS documentation.
 
+**Altitude Alerts (NEW v3.0.0)**:
+1. Assigned altitude monitoring with 7-state machine
+2. Prevents altitude busts with deviation alerts (>300ft off assigned)
+3. Approach altitude warnings (MDA/DA alerts 100ft before minimums)
+4. Audio chimes: info (approaching), warning (proximity), success (captured), critical (deviation)
+5. Color-coded status display: cyan (armed), yellow (approaching), amber (proximity), green (captured), red (deviation)
+
+**Setting Assigned Altitude**:
+1. Press `ALT` soft key on MAP page
+2. Enter target altitude (e.g., `8500`)
+3. Press `SET`
+4. GTN750 monitors altitude and triggers alerts
+
+**Alert States**:
+- **ARMED** (cyan): Assigned altitude set, >1,000ft deviation
+- **APPROACHING** (yellow): Within 1,000ft of target + info chime
+- **PROXIMITY** (amber): Within 200ft + warning chime
+- **CAPTURED** (green): Within ±100ft + triple success chime
+- **DEVIATION** (red): >300ft off assigned + double critical chime
+
+**Example**: Climb to assigned 8,500ft
+- 5,000ft → ARMED (cyan, no alert)
+- 7,600ft → APPROACHING (yellow, info chime "Approaching 8,500ft")
+- 8,350ft → PROXIMITY (amber, warning chime "150ft to assigned")
+- 8,480ft → CAPTURED (green, triple chime "Captured 8,500ft")
+- 8,850ft → DEVIATION (red, critical chime "Altitude deviation 350ft")
+
+**Approach Minimums**:
+- Load approach → GTN750 auto-sets MDA/DA
+- Warning chime 100ft before MDA/DA during descent
+- Example: KBIH R12-Z MDA 7,000ft → warns at 7,100ft
+
+See [ALTITUDE-ALERTS-GUIDE.md](../ALTITUDE-ALERTS-GUIDE.md) for complete altitude alerts documentation.
+
 ### 4. Using the CDI
 
 **GPS Mode** (default):
