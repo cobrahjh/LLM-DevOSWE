@@ -61,7 +61,9 @@ const ConsoleCapture = (function() {
 
     async function loadActiveSessions() {
         try {
-            const response = await fetch('http://127.0.0.1:8600/api/consumers');
+            // Try network relay first, fallback to localhost
+            const relayUrl = 'http://192.168.1.192:8600/api/consumers';
+            const response = await fetch(relayUrl);
             const data = await response.json();
 
             // Get only online consumers
@@ -496,7 +498,8 @@ const ConsoleCapture = (function() {
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:8600/api/queue', {
+            const relayUrl = 'http://192.168.1.192:8600/api/queue';
+            const response = await fetch(relayUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
