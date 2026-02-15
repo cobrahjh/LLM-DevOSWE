@@ -80,18 +80,24 @@ Comprehensive documentation in `docs/guides/`:
 
 ## 🧪 **Testing**
 
+### Integration Test Report
+
+**📋 [INTEGRATION-TEST-REPORT.md](INTEGRATION-TEST-REPORT.md)** — Comprehensive test results from Feb 15, 2026
+
+**Summary**: 98.1% passing (416/424 tests) with 4 known bugs in FlightPhase module.
+
 ### Validation Test Suites
 
-**258 test cases** across 5 comprehensive suites:
+**199 test cases** across 5 comprehensive suites:
 
-| Suite | Tests | Coverage |
-|-------|-------|----------|
-| **test-phases-validation.js** | 38 | FlightPhase state machine |
-| **test-atc-validation.js** | 65 | ATC controller, phraseology |
-| **test-weather-validation.js** | 53 | Wind triangle, turbulence |
-| **test-navigation-validation.js** | 54 | Course intercept, waypoints |
-| **test-llm-advisor-validation.js** | 48 | Rate limiting, advisories |
-| **TOTAL** | **258** | **100% coverage** ✅ |
+| Suite | Tests | Status | Coverage |
+|-------|-------|--------|----------|
+| **test-phases-validation.js** | 33 | ⚠️ 29/33 | FlightPhase state machine |
+| **test-atc-validation.js** | 50 | ✅ 50/50 | ATC controller, phraseology |
+| **test-weather-validation.js** | 38 | ✅ 38/38 | Wind triangle, turbulence |
+| **test-navigation-validation.js** | 41 | ✅ 41/41 | Course intercept, waypoints |
+| **test-llm-advisor-validation.js** | 37 | ✅ 37/37 | Rate limiting, advisories |
+| **TOTAL** | **199** | **166/199 passing** | **83.4%** ⚠️ |
 
 **Run validation tests:**
 ```bash
