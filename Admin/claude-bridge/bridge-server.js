@@ -212,9 +212,10 @@ function callClaudeCLI(message, sessionId) {
         delete env.CLAUDECODE;
 
         const claude = spawn(claudePath, args, {
-            shell: true,
+            shell: false,  // .exe files don't need shell
             env: env,
-            cwd: config.workingDir
+            cwd: config.workingDir,
+            windowsHide: true
         });
 
         let stdout = '';
