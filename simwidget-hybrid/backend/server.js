@@ -2891,7 +2891,7 @@ app.post('/api/inputevent/:name', (req, res) => {
     if (!hash) return res.status(404).json({ error: `InputEvent ${name} not found` });
     if (!simConnectConnection) return res.status(503).json({ error: 'No SimConnect' });
     try {
-        simConnectConnection.setInputEvent(hash, value);
+        (global.inputEventConnection || simConnectConnection).setInputEvent(hash, value);
         res.json({ success: true, name, value, hash: hash.toString() });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -2932,7 +2932,7 @@ app.post('/api/debug/throttle-test', (req, res) => {
     const hash = global.inputEventHashes?.ENGINE_THROTTLE_1;
     if (hash && (method === 'all' || method === 'inputevent')) {
         try {
-            simConnectConnection.setInputEvent(hash, pct / 100);
+            (global.inputEventConnection || simConnectConnection).setInputEvent(hash, pct / 100);
             results.inputEvent = { ok: true, hash: hash.toString(), value: pct / 100 };
         } catch (e) { results.inputEvent = { error: e.message }; }
     }
@@ -3042,7 +3042,7 @@ function executeCommand(command, value) {
         const hash = global.inputEventHashes?.ENGINE_THROTTLE_1;
         if (hash) {
             try {
-                simConnectConnection.setInputEvent(hash, normalized);
+                (global.inputEventConnection || simConnectConnection).setInputEvent(hash, normalized);
                 // Store for 120Hz re-application (holds value against any remaining hardware)
                 if (percent === 0) {
                     delete _heldAxes.throttle;
@@ -3068,7 +3068,7 @@ function executeCommand(command, value) {
             try {
                 // value: -100 to 100 → -1.0 to 1.0
                 const normalized = Math.max(-1, Math.min(1, (value || 0) / 100));
-                simConnectConnection.setInputEvent(hash, normalized);
+                (global.inputEventConnection || simConnectConnection).setInputEvent(hash, normalized);
                 console.log(`[ElevTrim] InputEvent: ${value}% (${normalized}) via HANDLING_ELEVATORTRIM_WHEEL`);
             } catch (e) {
                 console.error(`[ElevTrim] InputEvent error: ${e.message}`);
@@ -3084,7 +3084,7 @@ function executeCommand(command, value) {
             try {
                 // value: 0 to 100 → 0.0 to 1.0
                 const normalized = Math.max(0, Math.min(1, (value || 0) / 100));
-                simConnectConnection.setInputEvent(hash, normalized);
+                (global.inputEventConnection || simConnectConnection).setInputEvent(hash, normalized);
                 console.log(`[Flaps] InputEvent: ${value}% (${normalized}) via HANDLING_FLAPS`);
             } catch (e) {
                 console.error(`[Flaps] InputEvent error: ${e.message}`);
@@ -3192,7 +3192,7 @@ function executeCommand(command, value) {
             try {
                 // InputEvent toggle: 0 = release, 1 = engage
                 const ieValue = (command === 'PARKING_BRAKE_SET') ? (value ? 1 : 0) : 0;
-                simConnectConnection.setInputEvent(hash, ieValue);
+                (global.inputEventConnection || simConnectConnection).setInputEvent(hash, ieValue);
                 console.log(`[ParkBrake] InputEvent LANDING_GEAR_PARKINGBRAKE: ${ieValue}`);
             } catch (e) {
                 console.error(`[ParkBrake] InputEvent error: ${e.message}`);
@@ -3775,7 +3775,7 @@ function reapplyHeldAxes() {
                 simConnectConnection.transmitClientEvent(0, held.eventId, held.value, 1, 16);
             } else {
                 // InputEvent (throttle, etc.)
-                simConnectConnection.setInputEvent(held.hash, held.value);
+                (global.inputEventConnection || simConnectConnection).setInputEvent(held.hash, held.value);
             }
         } catch (_) {
             // Silently ignore — will retry next tick
@@ -4257,8 +4257,58 @@ async function initSimConnect() {
         console.log('[Throttle] Registered writable throttle definition (ID 14)');
 
         // MSFS 2024 InputEvents — mixture lever uses B: variables, not legacy SimConnect events.
-        // Enumerate input events to find FUEL_MIXTURE_1 hash for setInputEvent().
+        // Enumerate via a SEPARATE SimConnect connection (the main handle's data stream
+        // floods the message queue and the inputEventsList response never arrives).
         global.inputEventHashes = {};
+        (async () => {
+            try {
+                const { handle: ieHandle } = await open('SimGlass-InputEvents', Protocol.KittyHawk, connectOptions);
+                console.log('[InputEvents] Opened dedicated connection for enumeration');
+                ieHandle.on('inputEventsList', recv => {
+                    const events = recv.inputEventDescriptors;
+                    console.log(`[InputEvents] Received ${events.length} input events via dedicated connection`);
+                    for (const e of events) {
+                        global.inputEventHashes[e.name] = e.inputEventIdHash;
+                    }
+                    const keyControls = ['FUEL_MIXTURE_1', 'ENGINE_THROTTLE_1', 'PROCEDURE_AUTOSTART',
+                        'UNKNOWN_TAIL_ELEVATOR', 'UNKNOWN_RUDDER', 'UNKNOWN_AILERON_LEFT', 'UNKNOWN_AILERON_RIGHT',
+                        'HANDLING_ELEVATORTRIM_YOKE', 'HANDLING_ELEVATORTRIM_WHEEL', 'HANDLING_FLAPS',
+                        'LANDING_GEAR_PARKINGBRAKE'];
+                    for (const name of keyControls) {
+                        if (global.inputEventHashes[name]) {
+                            console.log(`[InputEvents] ${name} hash: ${global.inputEventHashes[name]}`);
+                        }
+                    }
+                    // Keep dedicated connection alive — hashes are connection-specific
+                    // Store reference so setInputEvent uses this handle
+                    global.inputEventConnection = ieHandle;
+                    console.log('[InputEvents] Dedicated connection KEPT ALIVE for setInputEvent calls');
+                    if (_heldAxes._pendingThrottle != null && global.inputEventHashes.ENGINE_THROTTLE_1) {
+                        const hash = global.inputEventHashes.ENGINE_THROTTLE_1;
+                        const val = _heldAxes._pendingThrottle;
+                        delete _heldAxes._pendingThrottle;
+                        _heldAxes.throttle = { hash, value: val };
+                        updateHeldAxesTimer();
+                        try {
+                            ieHandle.setInputEvent(hash, val);
+                            console.log(`[Throttle] Applied pending: ${Math.round(val * 100)}% via dedicated connection`);
+                        } catch (e) {
+                            console.error(`[Throttle] Pending apply error: ${e.message}`);
+                        }
+                    }
+                    if (ruleEngineServer && ruleEngineServer.isEnabled()) {
+                        ruleEngineServer.commandQueue.clear();
+                        console.log('[InputEvents] Cleared rule engine dedup cache — commands will re-send');
+                    }
+                });
+                ieHandle.on('exception', ex => console.log('[InputEvents] Exception:', JSON.stringify(ex)));
+                ieHandle.enumerateInputEvents(0);
+            } catch (e) {
+                console.error('[InputEvents] Dedicated connection failed:', e.message);
+            }
+        })();
+
+        // Keep the original handler for the main handle (in case it works in some configurations)
         handle.on('inputEventsList', recv => {
             const events = recv.inputEventDescriptors;
             console.log(`[InputEvents] Received ${events.length} input events`);
@@ -4287,7 +4337,7 @@ async function initSimConnect() {
                 _heldAxes.throttle = { hash, value: val };
                 updateHeldAxesTimer();
                 try {
-                    simConnectConnection.setInputEvent(hash, val);
+                    (global.inputEventConnection || simConnectConnection).setInputEvent(hash, val);
                     console.log(`[Throttle] Applied pending: ${Math.round(val * 100)}% after InputEvent ready`);
                 } catch (e) {
                     console.error(`[Throttle] Pending apply error: ${e.message}`);
@@ -4299,8 +4349,7 @@ async function initSimConnect() {
                 console.log('[InputEvents] Cleared rule engine dedup cache — commands will re-send');
             }
         });
-        handle.enumerateInputEvents(0);
-        console.log('[InputEvents] Enumeration requested');
+        // InputEvents enumeration handled by dedicated connection above
         
         // Request data every 100ms
         handle.requestDataOnSimObject(0, 0, 0, 3, 0); // Period = SIM_FRAME
