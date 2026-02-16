@@ -3186,6 +3186,23 @@ function executeCommand(command, value) {
         // Also fall through to legacy event below (belt and suspenders)
     }
 
+    // MSFS 2024 aircraft ready state - removes chocks, covers, completes preflight
+    // This sets the aircraft to "ready to fly" state, bypassing walk-around
+    if (command === 'SET_AIRCRAFT_READY') {
+        const eventId = eventMap['SET_AIRCRAFT_READY'];
+        if (eventId !== undefined) {
+            try {
+                // Boolean value: true = ready (1), false = not ready (0)
+                const simValue = value ? 1 : 0;
+                simConnectConnection.transmitClientEvent(0, eventId, simValue, 1, 16);
+                console.log(`[AircraftReady] Set aircraft ready state: ${value} (${simValue})`);
+            } catch (e) {
+                console.error(`[AircraftReady] Event error: ${e.message}`);
+            }
+        }
+        return;
+    }
+
     // Differential braking for ground steering — not affected by joystick rudder axis
     if (command === 'AXIS_LEFT_BRAKE_SET' || command === 'AXIS_RIGHT_BRAKE_SET') {
         const brakeEventId = eventMap[command];
@@ -3783,6 +3800,7 @@ async function initSimConnect() {
             'MAGNETO1_BOTH',
             'MAGNETO1_START',
             'ENGINE_AUTO_START',
+            'SET_AIRCRAFT_READY',  // MSFS 2024 - sets aircraft to ready state (removes chocks/covers)
             // Slew mode for flight recorder playback
             'SLEW_TOGGLE',
             'SLEW_ON',
