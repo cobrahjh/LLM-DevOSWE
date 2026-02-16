@@ -2945,6 +2945,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 { id: 'gemma2:latest', name: 'Gemma 2' }
             ],
             'ollama-rockpc': [
+                { id: 'qwen2.5:7b-instruct', name: 'Qwen 2.5 7B Instruct' },
                 { id: 'qwen2.5-coder:32b', name: 'Qwen 2.5 Coder 32B' },
                 { id: 'llama3:8b', name: 'Llama 3 8B' }
             ],
