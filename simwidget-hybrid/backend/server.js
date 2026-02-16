@@ -4385,10 +4385,12 @@ async function initSimConnect() {
                     fd.apVsLock = rb(); fd.apSpdLock = rb();
                     fd.apHdgSet = rf(); fd.apAltSet = rf(); fd.apVsSet = rf(); fd.apSpdSet = rf();
 
-                    // GPS (8 vars)
+                    // GPS (8 vars — GPS WP ETE missing from MSFS 2024 buffer, 7 reads)
                     fd.gpsWpCount = ri(); fd.gpsWpIndex = ri();
-                    fd.gpsWpDistance = rf(); fd.gpsWpEte = rf(); fd.gpsWpBearing = rf();
+                    fd.gpsWpDistance = rf(); fd.gpsWpBearing = rf();
                     fd.gpsLat = rf(); fd.gpsLon = rf(); fd.gpsEte = rf();
+                    fd.gpsWpEte = fd.gpsWpDistance > 0 && fd.groundSpeed > 0
+                        ? (fd.gpsWpDistance / fd.groundSpeed) * 3600 : 0;
 
                     // Fuel (3 vars)
                     fd.fuelTotal = rf(); fd.fuelCapacity = rf(); fd.fuelFlow = rf();
