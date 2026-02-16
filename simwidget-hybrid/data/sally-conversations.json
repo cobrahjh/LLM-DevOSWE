@@ -94,5 +94,695 @@
     "tuning": null,
     "learnings": 0,
     "durationMs": 1705
+  },
+  {
+    "id": 4,
+    "time": "2026-02-16T06:54:56.646Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, AP HDG OFF, AP ALT OFF, AP VS OFF\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":null}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_VAR_SET\",\"value\":null}, {\"command\":\"AP_VS_VAR_SET\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_VAR_SET",
+        "simEvent": "AP_ALT_VAR_SET_ENGLISH",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_VAR_SET",
+        "simEvent": "AP_VS_VAR_SET_ENGLISH",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 4127
+  },
+  {
+    "id": 5,
+    "time": "2026-02-16T06:55:53.655Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, Heading Hold OFF, Altitude Hold OFF, VS Hold OFF.\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":0}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_HOLD\",\"value\":null}, {\"command\":\"AP_VS_HOLD\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_HOLD",
+        "simEvent": "AP_ALT_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_HOLD",
+        "simEvent": "AP_VS_HOLD",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1141
+  },
+  {
+    "id": 6,
+    "time": "2026-02-16T06:56:53.188Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master Off, Heading Hold Off, Altitude Hold Off, VS Hold Off\n\nCOMMANDS_JSON: []",
+    "commands": [],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 681
+  },
+  {
+    "id": 7,
+    "time": "2026-02-16T06:57:53.548Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\n- Mixture set to 10% rich of idle.\n- Throttle set to 1800 RPM as runup.\n\nCOMMANDS_JSON: [{\"command\":\"MIXTURE_SET\",\"value\":10}, {\"command\":\"THROTTLE_SET\",\"value\":1800}]",
+    "commands": [
+      {
+        "command": "MIXTURE_SET",
+        "simEvent": "MIXTURE1_SET",
+        "value": 1638,
+        "executed": true
+      },
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 294894,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1028
+  },
+  {
+    "id": 8,
+    "time": "2026-02-16T06:58:53.831Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\nAP Master: OFF\n\nCOMMANDS_JSON: [{\"command\":\"PARKING_BRAKES\"},{\"command\":\"FLAPS_UP\"}]",
+    "commands": [
+      {
+        "command": "PARKING_BRAKES",
+        "simEvent": "PARKING_BRAKES",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "FLAPS_UP",
+        "simEvent": "FLAPS_UP",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1319
+  },
+  {
+    "id": 9,
+    "time": "2026-02-16T06:59:56.596Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":100}, {\"command\":\"MIXTURE_SET\",\"value\":50}, {\"command\":\"FLAPS_DOWN\"}, {\"command\":\"AP_MASTER\"},{\"command\":\"PARKING_BRAKES\"}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 16383,
+        "executed": true
+      },
+      {
+        "command": "MIXTURE_SET",
+        "simEvent": "MIXTURE1_SET",
+        "value": 8192,
+        "executed": true
+      },
+      {
+        "command": "FLAPS_DOWN",
+        "simEvent": "FLAPS_DOWN",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "PARKING_BRAKES",
+        "simEvent": "PARKING_BRAKES",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 4071
+  },
+  {
+    "id": 10,
+    "time": "2026-02-16T07:00:53.892Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\n- Ensure the flaps are retracted (flaps 0).\n- Set the mixture to rich idle.\n\nCOMMANDS_JSON: [{\"flaps_down\":null},{\"mixture_set\":100}]",
+    "commands": [],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1377
+  },
+  {
+    "id": 11,
+    "time": "2026-02-16T07:01:53.610Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "For preflight, keep Autopilot (AP) off as it is not used on the ground. Ensure all AP commands are set to Off.\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":0}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_HOLD\",\"value\":null}, {\"command\":\"AP_VS_HOLD\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_HOLD",
+        "simEvent": "AP_ALT_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_HOLD",
+        "simEvent": "AP_VS_HOLD",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1089
+  },
+  {
+    "id": 12,
+    "time": "2026-02-16T07:02:53.503Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, HDG Hold OFF, Alt Hold OFF, VS Hold OFF.\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":0}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_HOLD\",\"value\":null}, {\"command\":\"AP_VS_HOLD\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_HOLD",
+        "simEvent": "AP_ALT_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_HOLD",
+        "simEvent": "AP_VS_HOLD",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 988
+  },
+  {
+    "id": 13,
+    "time": "2026-02-16T07:03:53.422Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\nCOMMANDS_JSON: [{\"command\":\"PARKING_BRAKES\"},{\"command\":\"AXIS_ELEVATOR_SET\",\"value\":-10},{\"command\":\"THROTTLE_SET\",\"value\":5}]",
+    "commands": [
+      {
+        "command": "PARKING_BRAKES",
+        "simEvent": "PARKING_BRAKES",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AXIS_ELEVATOR_SET",
+        "simEvent": "AXIS_ELEVATOR_SET",
+        "value": -3277,
+        "executed": true
+      },
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 819,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 909
+  },
+  {
+    "id": 14,
+    "time": "2026-02-16T07:04:56.335Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP is OFF during this phase.\n\nCOMMANDS_JSON: [{\"command\":\"PARKING_BRAKES\"},{\"command\":\"THROTTLE_SET\",\"value\":0}]",
+    "commands": [
+      {
+        "command": "PARKING_BRAKES",
+        "simEvent": "PARKING_BRAKES",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 3819
+  },
+  {
+    "id": 15,
+    "time": "2026-02-16T07:05:54.612Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\n\nCOMMANDS_JSON: [{\"command\":\"PARKING_BRAKES\"},{\"command\":\"FLAPS_DOWN\",\"value\":10}]\n\nSince we are on the ground, all autopilot functions should be off and landing lights activated for visibility checks if needed. The flaps will be set to 10° as part of your preflight checklist to ensure a smooth takeoff roll.\n\nCOMMANDS_JSON: [{\"command\":\"PARKING_BRAKES\"},{\"command\":\"FLAPS_DOWN\",\"value\":10}]",
+    "commands": [
+      {
+        "command": "PARKING_BRAKES",
+        "simEvent": "PARKING_BRAKES",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "FLAPS_DOWN",
+        "simEvent": "FLAPS_DOWN",
+        "value": 10,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 2100
+  },
+  {
+    "id": 16,
+    "time": "2026-02-16T07:06:54.242Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, Heading Hold OFF, Altitude Hold OFF, VS Hold OFF.\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":null}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_HOLD\",\"value\":null}, {\"command\":\"AP_VS_HOLD\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_HOLD",
+        "simEvent": "AP_ALT_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_HOLD",
+        "simEvent": "AP_VS_HOLD",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1722
+  },
+  {
+    "id": 17,
+    "time": "2026-02-16T07:07:53.631Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, AP HDG OFF, AP ALT OFF, AP VS OFF\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":0}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_VAR_SET\",\"value\":null}, {\"command\":\"AP_VS_VAR_SET\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_VAR_SET",
+        "simEvent": "AP_ALT_VAR_SET_ENGLISH",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_VAR_SET",
+        "simEvent": "AP_VS_VAR_SET_ENGLISH",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1114
+  },
+  {
+    "id": 18,
+    "time": "2026-02-16T17:07:05.527Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\n- AP is OFF.\n- Set flaps to 10°.\n\nCOMMANDS_JSON: [{\"command\":\"FLAPS_DOWN\"}, {\"command\":\"AP_MASTER\"}]",
+    "commands": [
+      {
+        "command": "FLAPS_DOWN",
+        "simEvent": "FLAPS_DOWN",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 5362
+  },
+  {
+    "id": 19,
+    "time": "2026-02-16T17:08:01.867Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, Heading Hold OFF, Altitude Hold OFF, VS Hold OFF.\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":0}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_HOLD\",\"value\":null}, {\"command\":\"AP_VS_HOLD\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_HOLD",
+        "simEvent": "AP_ALT_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_HOLD",
+        "simEvent": "AP_VS_HOLD",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1708
+  },
+  {
+    "id": 20,
+    "time": "2026-02-16T17:09:01.269Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\nTAXI_THROTTLE_MIN 10\nTAXI_THROTTLE_MAX 30\nTAXI_HDG_ERROR_THRESHOLD 2\n\nCOMMANDS_JSON: [{\"command\":\"PARKING_BRAKES\",\"value\":null}, {\"command\":\"THROTTLE_SET\",\"value\":10}]",
+    "commands": [
+      {
+        "command": "PARKING_BRAKES",
+        "simEvent": "PARKING_BRAKES",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 1638,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1101
+  },
+  {
+    "id": 21,
+    "time": "2026-02-16T17:10:01.608Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "AP is OFF during preflight and taxi. Ensure all systems are ready for takeoff.\n\nCOMMANDS_JSON: [{\"command\":\"PARKING_BRAKES\"}, {\"command\":\"Landing_Lights_Toggle\"}]",
+    "commands": [
+      {
+        "command": "PARKING_BRAKES",
+        "simEvent": "PARKING_BRAKES",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1441
+  },
+  {
+    "id": 22,
+    "time": "2026-02-16T17:11:01.841Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, AP Heading Hold OFF, AP Altitude Hold OFF, AP Vertical Speed OFF\n\nCOMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":0}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_HOLD\",\"value\":null}, {\"command\":\"AP_VS_HOLD\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_HOLD",
+        "simEvent": "AP_ALT_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_HOLD",
+        "simEvent": "AP_VS_HOLD",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1679
+  },
+  {
+    "id": 23,
+    "time": "2026-02-16T17:12:01.993Z",
+    "phase": null,
+    "userMessage": "Phase: PREFLIGHT. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: AP Master OFF, HDG Hold OFF, ALT Hold OFF, VS Hold OFF.\n\nPREFLIGHT settings are not directly controlled by AP commands. Ensure proper flaps, mixture set, and brakes released before takeoff. COMMANDS_JSON: [{\"command\":\"AP_MASTER\",\"value\":0}, {\"command\":\"AP_HDG_HOLD\",\"value\":null}, {\"command\":\"AP_ALT_HOLD\",\"value\":null}, {\"command\":\"AP_VS_HOLD\",\"value\":null}]",
+    "commands": [
+      {
+        "command": "AP_MASTER",
+        "simEvent": "AP_MASTER",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_HDG_HOLD",
+        "simEvent": "AP_HDG_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_ALT_HOLD",
+        "simEvent": "AP_ALT_HOLD",
+        "value": 0,
+        "executed": true
+      },
+      {
+        "command": "AP_VS_HOLD",
+        "simEvent": "AP_VS_HOLD",
+        "value": 0,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1825
+  },
+  {
+    "id": 24,
+    "time": "2026-02-16T19:23:52.086Z",
+    "phase": null,
+    "userMessage": "Phase: TAXI. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\nTAXI: \n  taxiThrottleMin: 20,\n  taxiThrottleMax: 60,\n  taxiTargetGS: 15\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":100}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 16383,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 3517
+  },
+  {
+    "id": 25,
+    "time": "2026-02-16T19:24:50.317Z",
+    "phase": null,
+    "userMessage": "Phase: TAXI. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\n- Taxi at around 8 KIAS (4 m/s) for better control.\n- Use a moderate rudder bias of -10% to counter P-factor, as the plane will pull left with full power.\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":45}, {\"command\":\"MIXTURE_SET\",\"value\":9}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 7372,
+        "executed": true
+      },
+      {
+        "command": "MIXTURE_SET",
+        "simEvent": "MIXTURE1_SET",
+        "value": 1474,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 1750
+  },
+  {
+    "id": 26,
+    "time": "2026-02-16T19:25:28.803Z",
+    "phase": null,
+    "userMessage": "cleared to take off",
+    "sallyResponse": "RECOMMEND: Engage full throttle, mix 10%, and center all axes. Monitor ground speed and ensure correct runway heading.\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":100}, {\"command\":\"MIXTURE_SET\",\"value\":9}]\n\nLEARNING: [75%] Initial observations show the need to counteract joystick influence for precise control. Effective authority is around 50%.",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 16383,
+        "executed": true
+      },
+      {
+        "command": "MIXTURE_SET",
+        "simEvent": "MIXTURE1_SET",
+        "value": 1474,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 1,
+    "durationMs": 1829
+  },
+  {
+    "id": 27,
+    "time": "2026-02-16T19:25:49.631Z",
+    "phase": null,
+    "userMessage": "Phase: TAXI. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND: Set taxiThrottleMax to 50%. This provides sufficient control while avoiding excessive speed.\n\nTUNING_JSON: {\"taxiThrottleMax\": 50}\n\nLEARNING: [65%] Initial setting needed higher throttle to manage ground steering effectively due to limited joystick authority.\n\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":100}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 16383,
+        "executed": true
+      }
+    ],
+    "tuning": {
+      "taxiThrottleMax": 50
+    },
+    "learnings": 1,
+    "durationMs": 1073
+  },
+  {
+    "id": 28,
+    "time": "2026-02-16T19:26:49.448Z",
+    "phase": null,
+    "userMessage": "Phase: TAXI. Recommend optimal AP settings for current conditions.",
+    "sallyResponse": "RECOMMEND:\nCOMMANDS_JSON: [{\"command\":\"THROTTLE_SET\",\"value\":50}, {\"command\":\"MIXTURE_SET\",\"value\":9}]",
+    "commands": [
+      {
+        "command": "THROTTLE_SET",
+        "simEvent": "THROTTLE_SET",
+        "value": 8192,
+        "executed": true
+      },
+      {
+        "command": "MIXTURE_SET",
+        "simEvent": "MIXTURE1_SET",
+        "value": 1474,
+        "executed": true
+      }
+    ],
+    "tuning": null,
+    "learnings": 0,
+    "durationMs": 895
   }
 ]

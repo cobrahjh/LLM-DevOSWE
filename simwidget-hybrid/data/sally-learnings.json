@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "time": "2026-02-16T19:25:28.802Z",
+    "observation": "Initial observations show the need to counteract joystick influence for precise control. Effective authority is around 50%.",
+    "confidence": 75,
+    "reinforcements": 0,
+    "attemptRef": 0,
+    "category": "control"
+  },
+  {
+    "id": 2,
+    "time": "2026-02-16T19:25:49.630Z",
+    "observation": "Initial setting needed higher throttle to manage ground steering effectively due to limited joystick authority.",
+    "confidence": 65,
+    "reinforcements": 0,
+    "attemptRef": 0,
+    "category": "throttle"
+  }
+]

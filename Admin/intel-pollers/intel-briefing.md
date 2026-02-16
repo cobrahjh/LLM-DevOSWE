@@ -1,30 +1,30 @@
 # Hive Intel Briefing
-**Generated**: 2/15/2026, 8:00:01 AM
+**Generated**: 2/16/2026, 8:00:01 AM
 **Period**: Last 7 days (20 approved items)
 
 ---
 
 ## Executive Summary
 
-- **Software Releases**: 7 items
-- **New Tools**: 3 items
-- **Libraries & SDKs**: 2 items
-- **Other**: 8 items
+- **Software Releases**: 8 items
+- **New Tools**: 4 items
+- **Libraries & SDKs**: 4 items
+- **Other**: 4 items
 
-⭐ **6 high-priority items** (relevance ≥ 80)
+⭐ **5 high-priority items** (relevance ≥ 80)
 
 ---
 
 ## New Tools
 
-### 🔴 GPT-OSS (20B) running 100% locally in your browser on WebGPU
+### 🔴 6-GPU local LLM workstation (≈200GB+ VRAM) – looking for scaling / orchestration advice
 **Source**: r/LocalLLaMA | **Relevance**: 85/100
 
-GPT-OSS (20B) is a large language model running locally in the browser using WebGPU.
+A high-performance local LLM workstation with multiple GPUs and substantial VRAM.
 
-**Analysis**: This tool could be highly useful for Hive by providing advanced AI capabilities, such as Claude Code and local LLMs like Ollama/LM Studio. It would enhance Hive's ability to process and generate text in real-time, making it more powerful for AI agent orchestration and natural language processing tas
+**Analysis**: This tool would significantly enhance Hive's AI agent orchestration capabilities, particularly with Claude Code and other local LLMs like Ollama/LM Studio. The increased computational power could lead to more advanced and efficient language processing, thereby improving the overall performance and f
 
-**URL**: https://v.redd.it/ioqb4q8jkajg1
+**URL**: https://www.reddit.com/gallery/1r4mks7
 
 ---
 
@@ -50,7 +50,29 @@ Moltis is an AI assistant with memory and self-extending skills.
 
 ---
 
+### 🟡 GoSpeak: self-hosted encrypted voice chat I built in Go, just open-sourced it
+**Source**: r/selfhosted | **Relevance**: 70/100
+
+GoSpeak is a self-hosted encrypted voice chat application built in Go.
+
+**Analysis**: GoSpeak could be useful for Hive by providing an additional layer of voice communication capabilities, enhancing the accessibility and interaction features within the ecosystem. The encrypted nature of the tool would also add a security benefit.
+
+**URL**: https://www.reddit.com/r/selfhosted/comments/1r4wigq/gospeak_selfhosted_encrypted_voice_chat_i_built/
+
+---
+
 ## Libraries & SDKs
+
+### 🟡 You can run MiniMax-2.5 locally
+**Source**: r/LocalLLaMA | **Relevance**: 80/100
+
+MiniMax-2.5 is a local LLM library that can run locally.
+
+**Analysis**: This could be useful for Hive's AI agent orchestration, allowing for more efficient and secure local language model operations without relying on cloud-based services.
+
+**URL**: https://i.redd.it/hd369oaucojg1.jpeg
+
+---
 
 ### 🟡 Show HN: Agent framework that generates its own topology and evolves at runtime
 **Source**: Hacker News | **Relevance**: 75/100
@@ -74,18 +96,18 @@ MiniMaxAI/MiniMax-M2.5 is a large language model (LLM) available through Hugging
 
 ---
 
-## Software Releases
+### 🟡 theonlyhennygod/zeroclaw
+**Source**: GitHub Trending | **Relevance**: 75/100
 
-### 🔴 MiniMaxAI MiniMax-M2.5 has 230b parameters and 10b active parameters
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
+ZeroClaw is a Rust library designed for creating high-performance WebSocket servers and clients.
 
-MiniMaxAI MiniMax-M2.5 is a large language model with 230 billion parameters and 10 billion active parameters.
+**Analysis**: ZeroClaw could be very useful for Hive's WebSocket/REST APIs and message queues, as it offers a robust and efficient solution that can handle real-time communication more effectively than existing libraries.
 
-**Analysis**: This advanced AI model could enhance Hive's capabilities in AI agent orchestration, providing more sophisticated and contextually rich interactions, which would be beneficial for both Claude Code and local LLMs like Ollama/LM Studio.
-
-**URL**: https://openhands.dev/blog/minimax-m2-5-open-weights-models-catch-up-to-claude
+**URL**: https://github.com/theonlyhennygod/zeroclaw
 
 ---
+
+## Software Releases
 
 ### 🔴 New DeepSeek update: "DeepSeek Web / APP is currently testing a new long-context model architecture, supporting a 1M context window."
 **Source**: r/LocalLLaMA | **Relevance**: 85/100
@@ -95,17 +117,6 @@ DeepSeek has released an update to their Web/APP with a new long-context model a
 **Analysis**: This update could be very useful for Hive's AI agent orchestration, especially for Claude Code and local LLMs like Ollama/LM Studio. The increased context window would allow for more complex and nuanced interactions, enhancing the overall functionality of Hive.
 
 **URL**: https://i.redd.it/dg94ujw1c9jg1.jpeg
-
----
-
-### 🔴 The gap between open-weight and proprietary model intelligence is as small as it has ever been, with Claude Opus 4.6 and GLM-5'
-**Source**: r/LocalLLaMA | **Relevance**: 85/100
-
-Claude Opus 4.6 and GLM-5 are advanced AI models that could enhance Hive's AI agent orchestration capabilities.
-
-**Analysis**: These new AI models represent a significant advancement in open-source model intelligence, which could greatly improve Hive's ability to handle complex tasks and provide more sophisticated overlays and monitoring features.
-
-**URL**: https://i.redd.it/4rozb901icjg1.jpeg
 
 ---
 
@@ -139,6 +150,39 @@ GLM 5 is a new version of a local LLM that has been released.
 **Analysis**: GLM 5 could potentially improve Hive's AI agent orchestration capabilities, especially if it offers enhanced performance or features compared to previous versions. However, the specific details are not provided in the given information.
 
 **URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r1wl6x/glm_5_released/
+
+---
+
+### 🟡 Heretic 1.2 released: 70% lower VRAM usage with quantization, Magnitude-Preserving Orthogonal Ablation ("derestriction"), broad VL model support, session resumption, and more
+**Source**: r/LocalLLaMA | **Relevance**: 75/100
+
+Heretic 1.2 is a LocalLLaMA release that improves VRAM usage and supports broader VL model architectures.
+
+**Analysis**: This update could be very useful for Hive by reducing the VRAM requirements of AI agents, potentially allowing for more instances or larger models within the same hardware constraints. The support for broader VL models could also enhance the capabilities of the AI agents used in Hive's AI agent orch
+
+**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r4n3as/heretic_12_released_70_lower_vram_usage_with/
+
+---
+
+### 🟡 Qwen3 Coder Next Speedup with Latest Llama.cpp
+**Source**: r/LocalLLaMA | **Relevance**: 75/100
+
+Qwen3 Coder Next Speedup with Latest Llama.cpp is a release of an updated version of Qwen3, likely improving its performance and capabilities.
+
+**Analysis**: This update could be very useful for Hive's AI agent orchestration, potentially enhancing Claude Code and local LLMs like Ollama/LM Studio. Improved speed and efficiency in the backend could lead to better real-time dashboards and monitoring, as well as enhanced voice control and accessibility featu
+
+**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1r50ohq/qwen3_coder_next_speedup_with_latest_llamacpp/
+
+---
+
+### 🟡 The "Pocket Rocket" Returns! 🚀 FlightFX HJet for MSFS 2024 arrives Feb 19 (Free Upgrade for 2020 owners!)
+**Source**: r/flightsim | **Relevance**: 75/100
+
+FlightFX HJet is a new MSFS 2024 flight simulation widget and overlay.
+
+**Analysis**: HJet could enhance Hive's MSFS 2024 capabilities by providing additional widgets and overlays, potentially improving the user experience and realism in simulations.
+
+**URL**: https://www.youtube.com/watch?v=iHZOw8VjIAU
 
 ---
 
@@ -199,56 +243,12 @@ Tambo 1.0: Open-source toolkit for agents that render React components
 
 ---
 
-### 🟢 Prompt injection is killing our self-hosted LLM deployment
-**Source**: r/LocalLLaMA | **Relevance**: 55/100
-
-Prompt injection is killing our self-hosted LLM deployment
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://www.reddit.com/r/LocalLLaMA/comments/1qyljr0/prompt_injection_is_killing_our_selfhosted_llm/
-
----
-
-### 🟢 Beyond agentic coding
-**Source**: Hacker News | **Relevance**: 55/100
-
-Beyond agentic coding
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://haskellforall.com/2026/02/beyond-agentic-coding
-
----
-
-### 🟢 Matchlock – Secures AI agent workloads with a Linux-based sandbox
-**Source**: Hacker News | **Relevance**: 55/100
-
-Matchlock – Secures AI agent workloads with a Linux-based sandbox
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://github.com/jingkaihe/matchlock
-
----
-
-### 🟢 I built a rough .gguf LLM visualizer
-**Source**: r/LocalLLaMA | **Relevance**: 55/100
-
-I built a rough .gguf LLM visualizer
-
-**Analysis**: Auto-scored by keywords (LLM unavailable).
-
-**URL**: https://www.reddit.com/gallery/1qzjbw2
-
----
-
 ## Recommended Actions
 
-**Queue for Implementation** (11 items):
-- [ ] MiniMaxAI MiniMax-M2.5 has 230b parameters and 10b active parameters (relevance: 85)
+**Queue for Implementation** (14 items):
 - [ ] New DeepSeek update: "DeepSeek Web / APP is currently testing a new long-context model architecture, supporting a 1M context window." (relevance: 85)
-- [ ] The gap between open-weight and proprietary model intelligence is as small as it has ever been, with Claude Opus 4.6 and GLM-5' (relevance: 85)
 - [ ] GPT-OSS 120b Uncensored Aggressive Release (MXFP4 GGUF) (relevance: 85)
-- [ ] GPT-OSS (20B) running 100% locally in your browser on WebGPU (relevance: 85)
+- [ ] electron/electron v40.4.1 (relevance: 85)
+- [ ] 6-GPU local LLM workstation (≈200GB+ VRAM) – looking for scaling / orchestration advice (relevance: 85)
+- [ ] You can run MiniMax-2.5 locally (relevance: 80)
 

@@ -60,5 +60,21 @@
     }
   },
   "macros": [],
-  "history": []
+  "history": [
+    {
+      "id": "mlougs7bcd53",
+      "text": "stat",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"stat\""
+      },
+      "persona": "heather",
+      "source": "admin",
+      "timestamp": "2026-02-16T07:19:58.919Z"
+    }
+  ]
 }

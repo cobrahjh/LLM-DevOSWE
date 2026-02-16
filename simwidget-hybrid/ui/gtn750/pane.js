@@ -159,6 +159,9 @@ class GTN750Pane extends SimGlassBase {
         // XPDR control panel
         this.xpdrControl = new GTNXpdrControl({ serverPort: this.serverPort });
 
+        // Notification system (immediate load)
+        this.notification = new GTNNotification();
+
         // Fuel monitor (will be initialized after flight plan manager)
         this.fuelMonitor = null;
 
@@ -391,46 +394,7 @@ class GTN750Pane extends SimGlassBase {
      * Show brief notification toast
      */
     showNotification(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `gtn-toast gtn-toast-${type}`;
-        toast.style.cssText = `
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10001;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid ${type === 'success' ? '#00ff00' : type === 'warning' ? '#ffff00' : '#00ffff'};
-            border-radius: 4px;
-            padding: 8px 16px;
-            font-family: Consolas, monospace;
-            font-size: 11px;
-            color: ${type === 'success' ? '#00ff00' : type === 'warning' ? '#ffff00' : '#00ffff'};
-            animation: slideIn 0.3s ease-out;
-        `;
-        toast.textContent = message;
-
-        // Add animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-                to { transform: translateX(-50%) translateY(0); opacity: 1; }
-            }
-        `;
-        if (!document.getElementById('toast-style')) {
-            style.id = 'toast-style';
-            document.head.appendChild(style);
-        }
-
-        document.body.appendChild(toast);
-
-        // Remove after 2 seconds
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s';
-            setTimeout(() => toast.remove(), 300);
-        }, 2000);
+        this.notification.showNotification(message, type);
     }
 
     /**
@@ -1141,22 +1105,7 @@ class GTN750Pane extends SimGlassBase {
      * @param {string} activeIdent - New active waypoint
      */
     showSequenceNotification(passedIdent, activeIdent) {
-        const notify = document.getElementById('cdi-sequence-notify');
-        if (!notify) return;
-
-        notify.textContent = `${passedIdent} → ${activeIdent}`;
-        notify.style.display = '';
-
-        // Clear any existing timeout
-        if (this._sequenceNotifyTimer) {
-            clearTimeout(this._sequenceNotifyTimer);
-        }
-
-        // Hide after animation completes (2s)
-        this._sequenceNotifyTimer = setTimeout(() => {
-            notify.style.display = 'none';
-            this._sequenceNotifyTimer = null;
-        }, 2000);
+        this.notification.showSequenceNotification(passedIdent, activeIdent);
     }
 
     /**
@@ -1164,26 +1113,7 @@ class GTN750Pane extends SimGlassBase {
      * @param {Object} data - { frequency, runway, airport }
      */
     showIlsTunedNotification(data) {
-        const notify = this.elements.cdiIlsNotify;
-        if (!notify) return;
-
-        const freq = data.frequency?.toFixed(2) || '---';
-        const runway = data.runway || '';
-        const airport = data.airport || '';
-
-        notify.textContent = `ILS ${freq} tuned - ${airport} RWY ${runway}`;
-        notify.style.display = '';
-
-        // Clear any existing timeout
-        if (this._ilsNotifyTimer) {
-            clearTimeout(this._ilsNotifyTimer);
-        }
-
-        // Hide after animation completes (3s)
-        this._ilsNotifyTimer = setTimeout(() => {
-            notify.style.display = 'none';
-            this._ilsNotifyTimer = null;
-        }, 3000);
+        this.notification.showIlsTunedNotification(data);
     }
 
     /**
