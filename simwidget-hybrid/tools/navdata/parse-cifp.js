@@ -755,9 +755,10 @@ async function parseCIFP(cifpPath, dbPath) {
     metaStmt.run('parse_errors', counts.errors.toString());
 
     // Try to extract AIRAC info from the file header
+    // HDR04 contains "VOLUME 2601  EFFECTIVE 22 JAN 2026" — the 4-digit number is the AIRAC cycle
     try {
-        const header = fs.readFileSync(cifpPath, { encoding: 'utf8', flag: 'r' }).substring(0, 500);
-        const cycleMatch = header.match(/(\d{4})/);
+        const header = fs.readFileSync(cifpPath, { encoding: 'utf8', flag: 'r' }).substring(0, 600);
+        const cycleMatch = header.match(/VOLUME\s+(\d{4})/);
         if (cycleMatch) {
             metaStmt.run('airac_cycle', cycleMatch[1]);
         }
