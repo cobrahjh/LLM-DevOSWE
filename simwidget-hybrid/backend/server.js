@@ -3192,23 +3192,12 @@ function executeCommand(command, value) {
         const eventId = eventMap['QUICK_PREFLIGHT'];
         if (eventId !== undefined) {
             try {
-                // Try SimConnect event first
+                // Toggle event - no value needed (simValue = 0)
                 simConnectConnection.transmitClientEvent(0, eventId, 0, 1, 16);
-                console.log(`[QuickPreflight] Sent SimConnect event`);
+                console.log(`[QuickPreflight] Aircraft ready for taxi (chocks/covers removed)`);
             } catch (e) {
                 console.error(`[QuickPreflight] Event error: ${e.message}`);
             }
-        }
-
-        // Also send Ctrl+Q keypress (user's MSFS binding)
-        try {
-            const { exec } = require('child_process');
-            exec('powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^q\')"', (err) => {
-                if (err) console.error(`[QuickPreflight] Key send error: ${err.message}`);
-                else console.log(`[QuickPreflight] Sent Ctrl+Q keypress`);
-            });
-        } catch (e) {
-            console.error(`[QuickPreflight] PowerShell error: ${e.message}`);
         }
         return;
     }
