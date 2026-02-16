@@ -637,6 +637,9 @@ class AiAutopilotPane extends SimGlassBase {
                 length: runway.length || 0
             };
 
+            // Lock manual selection so auto-detect doesn't override
+            this._manualRunwayOverride = true;
+
             // Update ATCController if loaded
             if (this.atcController) {
                 this.atcController._runway = this._activeRunway.id;
@@ -1866,13 +1869,18 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             const changed = !this._nearestAirport || this._nearestAirport.icao !== apt.icao;
             this._nearestAirport = apt;
 
+            // Reset manual override when airport changes
+            if (changed) this._manualRunwayOverride = false;
+
             // Set field elevation for AGL calculations
             if (apt.elevation != null) {
                 this.flightPhase.setFieldElevation(apt.elevation);
             }
 
-            // Determine active runway
-            this._activeRunway = this._detectActiveRunway(apt, d);
+            // Determine active runway (skip if user manually selected)
+            if (!this._manualRunwayOverride) {
+                this._activeRunway = this._detectActiveRunway(apt, d);
+            }
 
             // Feed to rule engine
             this.ruleEngine.setAirportData(apt);
