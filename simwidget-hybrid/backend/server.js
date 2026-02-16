@@ -3339,16 +3339,18 @@ function requireApOwner(req, res, next) {
 }
 
 app.post('/api/ai-autopilot/register', (req, res) => {
-    const { sessionId, hostname } = req.body || {};
+    const { sessionId } = req.body || {};
     if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
 
+    // Use client IP as hostname (not location.hostname which is always the server)
+    const clientIp = (req.ip || req.connection?.remoteAddress || '').replace(/^::ffff:/, '');
     _apEvictStale();
-    _apSessions.set(sessionId, { hostname: hostname || 'unknown', lastHeartbeat: Date.now(), registeredAt: Date.now() });
+    _apSessions.set(sessionId, { hostname: clientIp || 'unknown', lastHeartbeat: Date.now(), registeredAt: Date.now() });
 
     // Claim ownership if no current owner
     if (!_apOwnerSessionId) {
         _apOwnerSessionId = sessionId;
-        console.log(`[AP-Lock] Owner claimed: ${sessionId} (${hostname})`);
+        console.log(`[AP-Lock] Owner claimed: ${sessionId} (${clientIp})`);
     }
 
     const isOwner = _apOwnerSessionId === sessionId;
@@ -3367,7 +3369,8 @@ app.post('/api/ai-autopilot/heartbeat', (req, res) => {
         info.lastHeartbeat = Date.now();
     } else {
         // Re-register (server may have restarted)
-        _apSessions.set(sessionId, { hostname: req.body.hostname || 'unknown', lastHeartbeat: Date.now(), registeredAt: Date.now() });
+        const clientIp = (req.ip || req.connection?.remoteAddress || '').replace(/^::ffff:/, '');
+        _apSessions.set(sessionId, { hostname: clientIp || 'unknown', lastHeartbeat: Date.now(), registeredAt: Date.now() });
     }
 
     // Promote caller if no owner
