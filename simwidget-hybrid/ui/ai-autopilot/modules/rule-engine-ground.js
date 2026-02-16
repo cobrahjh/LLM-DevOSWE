@@ -32,6 +32,11 @@ class RuleEngineGround extends RuleEngineCore {
      * @param {boolean} phaseChanged - true if phase just changed
      */
     _evaluatePhase(phase, d, apState, phaseChanged) {
+        // Reset preflight flag when entering PREFLIGHT phase
+        if (phase === 'PREFLIGHT' && phaseChanged) {
+            this._preflightReadySent = false;
+        }
+
         switch (phase) {
             case 'PREFLIGHT':
                 this._evaluatePreflight(d, apState);
