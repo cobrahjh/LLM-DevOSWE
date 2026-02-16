@@ -120,21 +120,21 @@ class AiAutopilotPane extends SimGlassBase {
         this._voice = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer({ rate: savedRate, pitch: 1.0, volume: this._voiceVolume, voice: savedVoice }) : null;
         this._ttsEnabled = localStorage.getItem('ai-ap-tts') !== 'false';
 
-        // Default voice to Microsoft Emily Online (Natural) if not yet set
+        // Default voice to Google UK English Female if not yet set
         if (!savedVoice && this._voice) {
-            const applyEmilyVoice = () => {
+            const applyDefaultVoice = () => {
                 const voices = window.speechSynthesis?.getVoices() || [];
-                const emily = voices.find(v => v.name.includes('Microsoft Emily Online'));
-                if (emily) {
-                    localStorage.setItem('ai-ap-voice', emily.name);
-                    this._voice.voiceName = emily.name;
-                    this._voice.voice = emily;
+                const preferred = voices.find(v => v.name === 'Google UK English Female');
+                if (preferred) {
+                    localStorage.setItem('ai-ap-voice', preferred.name);
+                    this._voice.voiceName = preferred.name;
+                    this._voice.voice = preferred;
                 }
             };
             if (window.speechSynthesis?.getVoices().length > 0) {
-                applyEmilyVoice();
+                applyDefaultVoice();
             } else if (window.speechSynthesis) {
-                window.speechSynthesis.onvoiceschanged = applyEmilyVoice;
+                window.speechSynthesis.onvoiceschanged = applyDefaultVoice;
             }
         }
 
