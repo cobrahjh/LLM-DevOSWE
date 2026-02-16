@@ -3307,6 +3307,20 @@ app.post('/api/ai-autopilot/enable', (req, res) => {
     setFlightDevicesEnabled(false, (ok) => {
         if (!ok) console.warn('[AI-AP] Flight device disable task failed to start');
     });
+
+    // Send QUICK_PREFLIGHT (Ctrl+Q) to remove chocks/covers on enable
+    setTimeout(() => {
+        try {
+            const { exec } = require('child_process');
+            exec('powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^q\')"', (err) => {
+                if (err) console.error(`[QuickPreflight] SendKeys error: ${err.message}`);
+                else console.log(`[QuickPreflight] Sent Ctrl+Q on autopilot enable`);
+            });
+        } catch (e) {
+            console.error(`[QuickPreflight] Failed: ${e.message}`);
+        }
+    }, 1000); // 1s delay to ensure MSFS is ready
+
     res.json({ success: true, enabled: true });
 });
 
