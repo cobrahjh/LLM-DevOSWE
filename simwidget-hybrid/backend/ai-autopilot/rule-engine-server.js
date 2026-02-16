@@ -38,7 +38,7 @@ class RuleEngineServer {
 
         // Command log for API/broadcast
         this._commandLog = [];
-        this._maxLog = 30;
+        this._maxLog = 100;  // Increased from 30 to capture full PREFLIGHT sequence
 
         // AP state tracking (extracted from flightData each frame)
         this.ap = {
