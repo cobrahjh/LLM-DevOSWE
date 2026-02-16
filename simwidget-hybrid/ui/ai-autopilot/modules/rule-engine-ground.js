@@ -60,6 +60,8 @@ class RuleEngineGround extends RuleEngineCore {
         // Quick preflight: removes chocks, covers, completes preflight
         // Only send once per preflight phase
         if (!this._preflightReadySent) {
+            // Force-clear dedup cache to ensure command sends
+            delete this._lastCommands['QUICK_PREFLIGHT'];
             this._cmd('QUICK_PREFLIGHT', true, 'Quick preflight (removes chocks/covers)');
             this._preflightReadySent = true;
         }
