@@ -2883,6 +2883,21 @@ app.post('/api/debug/save-paste', (req, res) => {
     }
 });
 
+// Trigger any InputEvent by name (e.g., PROCEDURE_AUTOSTART)
+app.post('/api/inputevent/:name', (req, res) => {
+    const name = req.params.name;
+    const value = req.body.value ?? 1;
+    const hash = (global.inputEventHashes || {})[name];
+    if (!hash) return res.status(404).json({ error: `InputEvent ${name} not found` });
+    if (!simConnectConnection) return res.status(503).json({ error: 'No SimConnect' });
+    try {
+        simConnectConnection.setInputEvent(hash, value);
+        res.json({ success: true, name, value, hash: hash.toString() });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Debug: InputEvent hashes
 app.get('/api/debug/inputevents', (req, res) => {
     const hashes = global.inputEventHashes || {};
@@ -4129,43 +4144,17 @@ async function initSimConnect() {
             const allNames = events.map(e => e.name).sort();
             console.log(`[InputEvents] ALL names: ${allNames.join(', ')}`);
             for (const e of events) {
-                // Store hashes for key controls
-                if (e.name === 'FUEL_MIXTURE_1') {
-                    global.inputEventHashes.FUEL_MIXTURE_1 = e.inputEventIdHash;
-                    console.log(`[InputEvents] FUEL_MIXTURE_1 hash: ${e.inputEventIdHash}`);
-                }
-                if (e.name === 'ENGINE_THROTTLE_1') {
-                    global.inputEventHashes.ENGINE_THROTTLE_1 = e.inputEventIdHash;
-                }
-                // Flight control surfaces — MSFS 2024 requires InputEvents
-                if (e.name === 'UNKNOWN_TAIL_ELEVATOR') {
-                    global.inputEventHashes.UNKNOWN_TAIL_ELEVATOR = e.inputEventIdHash;
-                    console.log(`[InputEvents] UNKNOWN_TAIL_ELEVATOR hash: ${e.inputEventIdHash}`);
-                }
-                if (e.name === 'UNKNOWN_RUDDER') {
-                    global.inputEventHashes.UNKNOWN_RUDDER = e.inputEventIdHash;
-                    console.log(`[InputEvents] UNKNOWN_RUDDER hash: ${e.inputEventIdHash}`);
-                }
-                if (e.name === 'UNKNOWN_AILERON_LEFT') {
-                    global.inputEventHashes.UNKNOWN_AILERON_LEFT = e.inputEventIdHash;
-                    console.log(`[InputEvents] UNKNOWN_AILERON_LEFT hash: ${e.inputEventIdHash}`);
-                }
-                if (e.name === 'UNKNOWN_AILERON_RIGHT') {
-                    global.inputEventHashes.UNKNOWN_AILERON_RIGHT = e.inputEventIdHash;
-                    console.log(`[InputEvents] UNKNOWN_AILERON_RIGHT hash: ${e.inputEventIdHash}`);
-                }
-                // HANDLING category — actual flight dynamics (elevator trim, flaps)
-                if (e.name === 'HANDLING_ELEVATORTRIM_YOKE') {
-                    global.inputEventHashes.HANDLING_ELEVATORTRIM_YOKE = e.inputEventIdHash;
-                    console.log(`[InputEvents] HANDLING_ELEVATORTRIM_YOKE hash: ${e.inputEventIdHash}`);
-                }
-                if (e.name === 'HANDLING_ELEVATORTRIM_WHEEL') {
-                    global.inputEventHashes.HANDLING_ELEVATORTRIM_WHEEL = e.inputEventIdHash;
-                    console.log(`[InputEvents] HANDLING_ELEVATORTRIM_WHEEL hash: ${e.inputEventIdHash}`);
-                }
-                if (e.name === 'HANDLING_FLAPS') {
-                    global.inputEventHashes.HANDLING_FLAPS = e.inputEventIdHash;
-                    console.log(`[InputEvents] HANDLING_FLAPS hash: ${e.inputEventIdHash}`);
+                // Store ALL InputEvent hashes for dynamic access
+                global.inputEventHashes[e.name] = e.inputEventIdHash;
+            }
+            // Log key controls for debugging
+            const keyControls = ['FUEL_MIXTURE_1', 'ENGINE_THROTTLE_1', 'PROCEDURE_AUTOSTART',
+                'UNKNOWN_TAIL_ELEVATOR', 'UNKNOWN_RUDDER', 'UNKNOWN_AILERON_LEFT', 'UNKNOWN_AILERON_RIGHT',
+                'HANDLING_ELEVATORTRIM_YOKE', 'HANDLING_ELEVATORTRIM_WHEEL', 'HANDLING_FLAPS',
+                'LANDING_GEAR_PARKINGBRAKE'];
+            for (const name of keyControls) {
+                if (global.inputEventHashes[name]) {
+                    console.log(`[InputEvents] ${name} hash: ${global.inputEventHashes[name]}`);
                 }
             }
             // Apply any pending throttle that was queued before hashes arrived
