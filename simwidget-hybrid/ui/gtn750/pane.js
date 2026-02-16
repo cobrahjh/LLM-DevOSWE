@@ -130,6 +130,9 @@ class GTN750Pane extends SimGlassBase {
         this._compactRafId = null;
         this.gcCompactPage = 'map';
 
+        // UI update throttle (5Hz = 200ms, matches real avionics refresh)
+        this._uiThrottle = new ThrottleManager(200);
+
         // cross-pane sync
         this.syncChannel = new SafeChannel('SimGlass-sync');
 
@@ -736,7 +739,7 @@ class GTN750Pane extends SimGlassBase {
      * Handle incoming sim data from WebSocket
      */
     handleSimData(d) {
-        // Update local data store
+        // Always update data model immediately — map renderer reads this on its own RAF loop
         if (d.latitude !== undefined) this.data.latitude = d.latitude;
         if (d.longitude !== undefined) this.data.longitude = d.longitude;
         if (d.altitudeMSL !== undefined) this.data.altitude = d.altitudeMSL;
@@ -771,7 +774,7 @@ class GTN750Pane extends SimGlassBase {
         if (d.fuelFlow !== undefined) this.data.fuelFlow = d.fuelFlow;
         if (d.fuelCapacity !== undefined) this.data.fuelCapacity = d.fuelCapacity;
 
-        // Update CDI nav data
+        // Always update CDI nav data (critical for navigation accuracy)
         this.cdiManager.updateNav1(d);
         this.cdiManager.updateNav2(d);
         this.cdiManager.updateGps(d);
@@ -779,34 +782,36 @@ class GTN750Pane extends SimGlassBase {
         // Mark sim time available
         if (d.zuluTime) this.dataHandler?.setHasSimTime(true);
 
-        // Update UI through modules
+        // Throttle the UI/module update cascade to 5Hz (200ms)
+        this._uiThrottle.throttle(() => this._updateUI());
+    }
+
+    /**
+     * Perform all UI/module updates (called at throttled rate)
+     */
+    _updateUI() {
         this.dataHandler?.updateUI(this.data, this.cdiManager.nav1);
         this.xpdrControl?.update(this.data);
         this.flightPlanManager?.setPosition(this.data.latitude, this.data.longitude);
         this.flightPlanManager?.setGroundSpeed(this.data.groundSpeed);
         this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager);
 
-        // Update taxi page ownship position (always update for auto-load detection)
         if (this.taxiPage) {
             this.taxiPage.update(this.data);
-            // Only render if page is currently visible
             if (this.pageManager?.getCurrentPageId() === 'taxi') {
                 this.taxiPage.render();
             }
         }
 
-        // Calculate GPS navigation from flight plan
         const gpsNav = this.flightPlanManager?.calculateGpsNavigation(this.data.latitude, this.data.longitude);
-
-        // Calculate VNAV (vertical navigation) from altitude constraints
         const vnav = gpsNav ? this.flightPlanManager?.calculateVNav(this.data.altitude, gpsNav.distance) : null;
 
         this.cdiManager.updateFromSource({
             flightPlan: this.flightPlanManager?.flightPlan || null,
             activeWaypointIndex: this.flightPlanManager?.activeWaypointIndex || 0,
             data: this.data,
-            gpsNav: gpsNav,  // Pass calculated GPS navigation to CDI
-            vnav: vnav       // Pass vertical navigation data
+            gpsNav: gpsNav,
+            vnav: vnav
         });
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.flightPlanManager?.checkApproachPhase(this.data);
@@ -815,7 +820,6 @@ class GTN750Pane extends SimGlassBase {
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
         this.altitudeAlerts?.update(this.data);
 
-        // Update TCAS with traffic data
         if (this.tcas && this.trafficOverlay) {
             const trafficList = Array.from(this.trafficOverlay.targets.values());
             const ownShip = {
@@ -830,10 +834,8 @@ class GTN750Pane extends SimGlassBase {
             this.tcas.update(trafficList, ownShip);
         }
 
-        // Update flight logger with current data
         if (this.flightLogger) {
             this.flightLogger.update(this.data);
-            // Update flight plan in logger if available
             if (this.flightPlanManager?.flightPlan) {
                 this.flightLogger.updateFlightPlan(this.flightPlanManager.flightPlan);
             }
@@ -847,15 +849,12 @@ class GTN750Pane extends SimGlassBase {
         this.updateTimerDisplay();
         this.updateAuxData();
 
-        // Update taxi page (render only if active)
         if (this.taxiPage) {
-            // Always update for auto-load detection (removed from above to avoid duplicate)
             if (this.pageManager?.activePage === 'taxi') {
                 this.taxiPage.render();
             }
         }
 
-        // Update frequency tuner
         if (this.frequencyTuner) {
             this.frequencyTuner.update(this.data);
         }
@@ -4264,6 +4263,7 @@ class GTN750Pane extends SimGlassBase {
         if (this.dataHandler) this.dataHandler.destroy();
         if (this.flightPlanManager) this.flightPlanManager.destroy();
         if (this.xpdrControl) this.xpdrControl.destroy();
+        if (this._uiThrottle) this._uiThrottle.destroy();
 
         // Stop airways fetching
         if (this._airwaysFetchTimer) {
