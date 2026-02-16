@@ -109,6 +109,9 @@ class AiAutopilotPane extends SimGlassBase {
         this._wsCount = 0;
         this._llmLastRt = null;  // last LLM response time in ms
 
+        // Prefill SimBrief pilot ID for testing
+        if (!localStorage.getItem('simbrief-pilot-id')) localStorage.setItem('simbrief-pilot-id', 'kingcobra74');
+
         // Voice announcer for AI advisory TTS
         const savedVoice = localStorage.getItem('ai-ap-voice') || null;
         const savedRate = parseFloat(localStorage.getItem('ai-ap-voice-rate')) || 0.95;
@@ -116,6 +119,24 @@ class AiAutopilotPane extends SimGlassBase {
         this._voiceVolume = isNaN(savedVolume) ? 0.8 : savedVolume;
         this._voice = typeof VoiceAnnouncer !== 'undefined' ? new VoiceAnnouncer({ rate: savedRate, pitch: 1.0, volume: this._voiceVolume, voice: savedVoice }) : null;
         this._ttsEnabled = localStorage.getItem('ai-ap-tts') !== 'false';
+
+        // Default voice to Microsoft Emily Online (Natural) if not yet set
+        if (!savedVoice && this._voice) {
+            const applyEmilyVoice = () => {
+                const voices = window.speechSynthesis?.getVoices() || [];
+                const emily = voices.find(v => v.name.includes('Microsoft Emily Online'));
+                if (emily) {
+                    localStorage.setItem('ai-ap-voice', emily.name);
+                    this._voice.voiceName = emily.name;
+                    this._voice.voice = emily;
+                }
+            };
+            if (window.speechSynthesis?.getVoices().length > 0) {
+                applyEmilyVoice();
+            } else if (window.speechSynthesis) {
+                window.speechSynthesis.onvoiceschanged = applyEmilyVoice;
+            }
+        }
 
         // Cache DOM elements
         this.elements = {};
