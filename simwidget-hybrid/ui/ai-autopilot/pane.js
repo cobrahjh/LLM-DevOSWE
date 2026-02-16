@@ -2228,7 +2228,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 }
             }
             // Update live display values from server
-            if (serverAP.live) {
+            if (serverAP.live && this.ruleEngine && this.ruleEngine.live) {
                 this.ruleEngine.live.elevator = serverAP.live.elevator || 0;
                 this.ruleEngine.live.aileron = serverAP.live.aileron || 0;
                 this.ruleEngine.live.throttle = serverAP.live.throttle || 0;
