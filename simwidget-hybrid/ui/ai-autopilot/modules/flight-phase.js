@@ -46,7 +46,9 @@ class FlightPhase {
         // Require BOTH SimVar AND low AGL. Fallback: very low AGL + no climb.
         const onGround = (d.onGround && agl < 50) || (agl < 15 && Math.abs(vs) < 200);
         const gearDown = d.gearDown !== undefined ? d.gearDown : true;
-        const engineRunning = d.engineRunning || false;
+        // MSFS 2024: engineRunning SimVar is unreliable (shows True even at idle/windmilling).
+        // Use RPM threshold matching rule-engine-ground.js logic (< 500 = off)
+        const engineRunning = (d.engineRpm || 0) >= 500;
 
         const todNm = this.profile ? (alt - this.fieldElevation) / 1000 * (this.profile.descent.todFactor || 3) : 30;
         const prevPhase = this.phase;
