@@ -4095,19 +4095,14 @@ class GTN750Pane extends SimGlassBase {
 
     /**
      * Calculate AIRAC cycle effective start date
-     * AIRAC cycles start on third Thursday of January, then every 28 days
+     * AIRAC follows a fixed 28-day global schedule from a known epoch
      */
     calculateAiracStart(year, cycleNum) {
-        // Find third Thursday of January
-        const jan1 = new Date(year, 0, 1);
-        const dayOfWeek = jan1.getDay();
-        const daysUntilThursday = (4 - dayOfWeek + 7) % 7;
-        const firstThursday = new Date(year, 0, 1 + daysUntilThursday);
-        const thirdThursday = new Date(firstThursday.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-        // Add 28 days per cycle
-        const cycleStart = new Date(thirdThursday.getTime() + (cycleNum - 1) * 28 * 24 * 60 * 60 * 1000);
-        return cycleStart;
+        // Known reference: AIRAC 2601 = January 22, 2026
+        const EPOCH = new Date(Date.UTC(2026, 0, 22)); // 2026-01-22
+        const yearDiff = year - 2026;
+        const cycleDiff = (yearDiff * 13) + (cycleNum - 1);
+        return new Date(EPOCH.getTime() + cycleDiff * 28 * 24 * 60 * 60 * 1000);
     }
 
     /**
