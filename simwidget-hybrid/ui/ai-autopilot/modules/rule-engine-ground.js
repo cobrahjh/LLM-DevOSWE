@@ -34,6 +34,7 @@ class RuleEngineGround extends RuleEngineCore {
     _evaluatePhase(phase, d, apState, phaseChanged) {
         // Reset preflight flag when entering PREFLIGHT phase
         if (phase === 'PREFLIGHT' && phaseChanged) {
+            console.log('[PREFLIGHT] Phase changed - resetting _preflightReadySent flag');
             this._preflightReadySent = false;
         }
 
@@ -69,6 +70,9 @@ class RuleEngineGround extends RuleEngineCore {
             delete this._lastCommands['QUICK_PREFLIGHT'];
             this._cmd('QUICK_PREFLIGHT', true, 'Quick preflight (removes chocks/covers)');
             this._preflightReadySent = true;
+            console.log('[PREFLIGHT] Sent QUICK_PREFLIGHT command');
+        } else {
+            console.log('[PREFLIGHT] Skip QUICK_PREFLIGHT - already sent (flag=true)');
         }
 
         // Prepare aircraft for taxi
