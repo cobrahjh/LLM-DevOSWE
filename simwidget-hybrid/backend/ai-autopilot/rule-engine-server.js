@@ -10,7 +10,11 @@
 
 const path = require('path');
 const fs = require('fs');
-const { RuleEngineCore: RuleEngine } = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine-core'));
+const { RuleEngineCore } = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine-core'));
+const { RuleEngineGround } = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine-ground'));
+const { RuleEngineTakeoff } = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine-takeoff'));
+const { RuleEngineCruise } = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine-cruise'));
+const { RuleEngineApproach } = require(path.join(__dirname, '../../ui/ai-autopilot/modules/rule-engine-approach'));
 const FlightPhase = require(path.join(__dirname, '../../ui/ai-autopilot/modules/flight-phase'));
 const CommandQueue = require(path.join(__dirname, '../../ui/ai-autopilot/modules/command-queue'));
 const { AIRCRAFT_PROFILES, DEFAULT_PROFILE } = require(path.join(__dirname, '../../ui/ai-autopilot/data/aircraft-profiles'));
@@ -60,13 +64,29 @@ class RuleEngineServer {
             }
         });
 
-        // Rule engine — with server-side tuning getter (no localStorage)
-        this.ruleEngine = new RuleEngine({
+        // Rule engines — phase-specific modules (server loads all upfront)
+        const engineOptions = {
             profile: profile,
             commandQueue: this.commandQueue,
             tuningGetter: () => this._getTuning(),
             holdsGetter: () => ({})  // no phase holds on server
-        });
+        };
+
+        this.phaseEngines = {
+            PREFLIGHT: new RuleEngineGround(engineOptions),
+            TAXI: new RuleEngineGround(engineOptions),
+            TAKEOFF: new RuleEngineTakeoff(engineOptions),
+            DEPARTURE: new RuleEngineTakeoff(engineOptions),
+            CLIMB: new RuleEngineCruise(engineOptions),
+            CRUISE: new RuleEngineCruise(engineOptions),
+            DESCENT: new RuleEngineApproach(engineOptions),
+            APPROACH: new RuleEngineApproach(engineOptions),
+            LANDING: new RuleEngineApproach(engineOptions)
+        };
+
+        // Default to core engine for unknown phases
+        this.ruleEngine = new RuleEngineCore(engineOptions);
+        this.currentPhaseEngine = null;
 
         // ── ATC Server Controller ──────────────────────────────────
         this._atc = null;
@@ -88,7 +108,8 @@ class RuleEngineServer {
                     console.log(`[ATC] Phase: ${oldPhase} → ${newPhase}`);
                 }
             });
-            // Wire ATC into rule engine and flight phase so they respect ATC gates
+            // Wire ATC into all phase engines and flight phase so they respect ATC gates
+            Object.values(this.phaseEngines).forEach(engine => engine.setATCController(this._atc));
             this.ruleEngine.setATCController(this._atc);
             this.flightPhase.setATCController(this._atc);
             // Start airport detection polling (every 15s)
@@ -170,11 +191,21 @@ class RuleEngineServer {
         // Update flight phase state machine
         this.flightPhase.update(fd);
 
-        // Sync cruise alt to rule engine
-        this.ruleEngine.setTargetCruiseAlt(this.flightPhase.targetCruiseAlt);
+        // Select appropriate phase engine
+        const phase = this.flightPhase.phase;
+        const phaseEngine = this.phaseEngines[phase] || this.ruleEngine;
 
-        // Run rule engine evaluation
-        this.ruleEngine.evaluate(this.flightPhase.phase, fd, this.ap);
+        // Sync cruise alt to phase engine
+        phaseEngine.setTargetCruiseAlt(this.flightPhase.targetCruiseAlt);
+
+        // Wire ATC controller if phase engine changed
+        if (phaseEngine !== this.currentPhaseEngine) {
+            if (this._atc) phaseEngine.setATCController(this._atc);
+            this.currentPhaseEngine = phaseEngine;
+        }
+
+        // Run phase-specific rule engine evaluation
+        phaseEngine.evaluate(phase, fd, this.ap);
     }
 
     // ── ATC Control Methods ──────────────────────────────────────────
@@ -402,16 +433,22 @@ class RuleEngineServer {
 
     /** Set nav state from GTN750 */
     setNavState(nav) {
+        // Update all phase engines
+        Object.values(this.phaseEngines).forEach(engine => engine.setNavState(nav));
         this.ruleEngine.setNavState(nav);
     }
 
     /** Set airport data */
     setAirportData(airport) {
+        // Update all phase engines
+        Object.values(this.phaseEngines).forEach(engine => engine.setAirportData(airport));
         this.ruleEngine.setAirportData(airport);
     }
 
     /** Set active runway */
     setActiveRunway(runway) {
+        // Update all phase engines
+        Object.values(this.phaseEngines).forEach(engine => engine.setActiveRunway(runway));
         this.ruleEngine.setActiveRunway(runway);
     }
 
