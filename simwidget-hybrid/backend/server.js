@@ -3186,18 +3186,17 @@ function executeCommand(command, value) {
         // Also fall through to legacy event below (belt and suspenders)
     }
 
-    // MSFS 2024 aircraft ready state - removes chocks, covers, completes preflight
+    // MSFS 2024 quick preflight - removes chocks, covers, completes preflight
     // This sets the aircraft to "ready to fly" state, bypassing walk-around
-    if (command === 'SET_AIRCRAFT_READY') {
-        const eventId = eventMap['SET_AIRCRAFT_READY'];
+    if (command === 'QUICK_PREFLIGHT') {
+        const eventId = eventMap['QUICK_PREFLIGHT'];
         if (eventId !== undefined) {
             try {
-                // Boolean value: true = ready (1), false = not ready (0)
-                const simValue = value ? 1 : 0;
-                simConnectConnection.transmitClientEvent(0, eventId, simValue, 1, 16);
-                console.log(`[AircraftReady] Set aircraft ready state: ${value} (${simValue})`);
+                // Toggle event - no value needed (simValue = 0)
+                simConnectConnection.transmitClientEvent(0, eventId, 0, 1, 16);
+                console.log(`[QuickPreflight] Aircraft ready for taxi (chocks/covers removed)`);
             } catch (e) {
-                console.error(`[AircraftReady] Event error: ${e.message}`);
+                console.error(`[QuickPreflight] Event error: ${e.message}`);
             }
         }
         return;
@@ -3800,7 +3799,7 @@ async function initSimConnect() {
             'MAGNETO1_BOTH',
             'MAGNETO1_START',
             'ENGINE_AUTO_START',
-            'SET_AIRCRAFT_READY',  // MSFS 2024 - sets aircraft to ready state (removes chocks/covers)
+            'QUICK_PREFLIGHT',  // MSFS 2024 - quick preflight (removes chocks/covers)
             // Slew mode for flight recorder playback
             'SLEW_TOGGLE',
             'SLEW_ON',

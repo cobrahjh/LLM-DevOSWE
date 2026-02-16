@@ -57,10 +57,10 @@ class RuleEngineGround extends RuleEngineCore {
             this._cmd('AP_MASTER', false, 'Disengage AP on ground');
         }
 
-        // Set aircraft state to READY (removes chocks, covers, completes preflight)
+        // Quick preflight: removes chocks, covers, completes preflight
         // Only send once per preflight phase
         if (!this._preflightReadySent) {
-            this._cmd('SET_AIRCRAFT_READY', true, 'Aircraft ready for taxi (removes chocks/covers)');
+            this._cmd('QUICK_PREFLIGHT', true, 'Quick preflight (removes chocks/covers)');
             this._preflightReadySent = true;
         }
 
