@@ -34,8 +34,9 @@ class RuleEngineGround extends RuleEngineCore {
     _evaluatePhase(phase, d, apState, phaseChanged) {
         // Reset preflight flag when entering PREFLIGHT phase
         if (phase === 'PREFLIGHT' && phaseChanged) {
-            console.log('[PREFLIGHT] Phase changed - resetting _preflightReadySent flag');
             this._preflightReadySent = false;
+            // Send diagnostic command to show flag was reset
+            this._logTimeline('DEBUG_FLAG_RESET', true, `PREFLIGHT entry - flag reset to false`);
         }
 
         switch (phase) {
