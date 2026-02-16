@@ -3187,17 +3187,20 @@ function executeCommand(command, value) {
     }
 
     // MSFS 2024 quick preflight - removes chocks, covers, completes preflight
-    // This sets the aircraft to "ready to fly" state, bypassing walk-around
+    // SimConnect event name doesn't work, use keyboard emulation instead
     if (command === 'QUICK_PREFLIGHT') {
-        const eventId = eventMap['QUICK_PREFLIGHT'];
-        if (eventId !== undefined) {
-            try {
-                // Toggle event - no value needed (simValue = 0)
-                simConnectConnection.transmitClientEvent(0, eventId, 0, 1, 16);
-                console.log(`[QuickPreflight] Aircraft ready for taxi (chocks/covers removed)`);
-            } catch (e) {
-                console.error(`[QuickPreflight] Event error: ${e.message}`);
-            }
+        try {
+            // Send Ctrl+Q via Windows SendKeys (user's MSFS binding)
+            const { exec } = require('child_process');
+            exec('powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^q\')"', (err, stdout, stderr) => {
+                if (err) {
+                    console.error(`[QuickPreflight] SendKeys error: ${err.message}`);
+                } else {
+                    console.log(`[QuickPreflight] Sent Ctrl+Q - covers/chocks removed`);
+                }
+            });
+        } catch (e) {
+            console.error(`[QuickPreflight] Failed to send keypress: ${e.message}`);
         }
         return;
     }
