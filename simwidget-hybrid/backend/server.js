@@ -865,57 +865,49 @@ app.get('/api/weather/radar', async (req, res) => {
 app.get('/api/nearby/airports', async (req, res) => {
     const lat = parseFloat(req.query.lat) || flightData.latitude || 40.6413;
     const lon = parseFloat(req.query.lon) || flightData.longitude || -73.7781;
-    const radius = parseInt(req.query.radius) || 50; // Default 50nm radius
+    const radius = parseInt(req.query.radius) || 50;
 
     // Check cache (based on rounded position)
-    const cacheKey = `nearby_apt_${Math.round(lat)}_${Math.round(lon)}`;
+    const cacheKey = `nearby_apt_${Math.round(lat * 10)}_${Math.round(lon * 10)}`;
     const cached = weatherCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < 300000) { // 5 min cache
+    if (cached && Date.now() - cached.timestamp < 60000) { // 1 min cache
         return res.json(cached.data);
     }
 
+    // Use local navdb (fast, reliable, has runway data)
     try {
-        // Use aviationAPI airports endpoint
-        const apiUrl = `https://api.aviationapi.com/v1/airports?lat=${lat}&lon=${lon}&dist=${radius}`;
-        const response = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
-
-        if (response.ok) {
-            const data = await response.json();
-            // Format airports with distance and bearing
-            const airports = (Array.isArray(data) ? data : Object.values(data).flat())
-                .filter(apt => apt.icao || apt.ident)
-                .map(apt => {
-                    const aptLat = parseFloat(apt.latitude || apt.lat);
-                    const aptLon = parseFloat(apt.longitude || apt.lon);
-                    const dist = calculateDistance(lat, lon, aptLat, aptLon);
-                    const brg = calculateBearing(lat, lon, aptLat, aptLon);
-                    return {
-                        icao: apt.icao || apt.ident,
-                        name: apt.name || apt.facility_name,
-                        type: apt.type || 'AIRPORT',
-                        lat: aptLat,
-                        lon: aptLon,
-                        elevation: apt.elevation || apt.elev,
-                        distance: Math.round(dist * 10) / 10,
-                        bearing: Math.round(brg),
-                        runways: apt.runways || []
-                    };
-                })
-                .filter(apt => apt.distance <= radius)
-                .sort((a, b) => a.distance - b.distance)
-                .slice(0, 25); // Limit to 25 nearest
-
-            const result = { airports, source: 'aviationapi', count: airports.length };
-            weatherCache.set(cacheKey, { data: result, timestamp: Date.now() });
-            return res.json(result);
+        const navRes = await fetch(`http://localhost:${PORT}/api/navdb/nearby/airports?lat=${lat}&lon=${lon}&range=${radius}&limit=25`, { signal: AbortSignal.timeout(3000) });
+        if (navRes.ok) {
+            const navData = await navRes.json();
+            if (navData.items?.length) {
+                // Enrich each airport with runway data
+                const airports = await Promise.all(navData.items.map(async apt => {
+                    try {
+                        const rwyRes = await fetch(`http://localhost:${PORT}/api/navdb/airport/${apt.icao}`, { signal: AbortSignal.timeout(2000) });
+                        if (rwyRes.ok) {
+                            const full = await rwyRes.json();
+                            apt.runways = (full.runways || []).map(r => ({
+                                id: r.ident?.replace(/^RW/, '') || r.id,
+                                length: r.length || 0,
+                                heading: r.heading || 0,
+                                lat: r.lat,
+                                lon: r.lon
+                            }));
+                        }
+                    } catch (_) {}
+                    return apt;
+                }));
+                weatherCache.set(cacheKey, { data: airports, timestamp: Date.now() });
+                return res.json(airports);
+            }
         }
     } catch (e) {
-        console.log('[Nearby] API failed:', e.message);
+        console.log('[Nearby] Navdb lookup failed:', e.message);
     }
 
     // Fallback: generate sample airports around position
     const sampleAirports = generateSampleAirports(lat, lon, radius);
-    res.json({ airports: sampleAirports, source: 'sample', count: sampleAirports.length });
+    res.json(sampleAirports);
 });
 
 // Generate sample airports for demo/fallback
