@@ -109,6 +109,14 @@ class AiAutopilotPane extends SimGlassBase {
         this._wsCount = 0;
         this._llmLastRt = null;  // last LLM response time in ms
 
+        // Session lock — first-come-first-served multi-pane control
+        this._paneSessionId = 'ap-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+        this._paneHostname = location.hostname || 'unknown';
+        this._isSessionOwner = false;
+        this._sessionLocked = false;
+        this._lockOwnerHostname = null;
+        this._heartbeatTimer = null;
+
         // Prefill SimBrief pilot ID for testing
         if (!localStorage.getItem('simbrief-pilot-id')) localStorage.setItem('simbrief-pilot-id', 'kingcobra74');
 
@@ -166,6 +174,9 @@ class AiAutopilotPane extends SimGlassBase {
 
         // Fetch server-side rule engine state (in case it's already running)
         this._fetchServerAIState();
+
+        // Register pane session for multi-pane lock
+        this._registerPaneSession();
 
         // SafeChannel sync — subscribe to GTN750 nav-state and broadcast autopilot-state
         this._initSyncListener();
@@ -597,13 +608,25 @@ class AiAutopilotPane extends SimGlassBase {
     // ── Event Setup ────────────────────────────────────────
 
     _setupEvents() {
-        // Master AI toggle — calls server-side rule engine API
+        // Master AI toggle — calls server-side rule engine API (session-locked)
         this.elements.aiToggle?.addEventListener('click', () => {
+            if (this._sessionLocked) return;  // Read-only mode
             const enabling = !this.aiEnabled;
             const endpoint = enabling ? '/api/ai-autopilot/enable' : '/api/ai-autopilot/disable';
-            fetch(`${window.location.origin}${endpoint}`, { method: 'POST' })
-                .then(r => r.json())
+            this._apFetchPost(endpoint)
+                .then(r => {
+                    if (r.status === 403) {
+                        r.json().then(d => {
+                            this._dbg('cmd', `<span class="err">Locked by ${this._esc(d.ownerHostname || 'another pane')}</span>`);
+                            this._applyLockState({ isOwner: false, ownerHostname: d.ownerHostname });
+                            this._renderLockState();
+                        });
+                        return null;
+                    }
+                    return r.json();
+                })
                 .then(data => {
+                    if (!data) return;
                     this.aiEnabled = data.enabled;
                     this._dbg('cmd', `AI ${this.aiEnabled ? 'ENABLED' : 'DISABLED'} (server-side)`);
                     this._render();
@@ -750,8 +773,9 @@ class AiAutopilotPane extends SimGlassBase {
             this._sendTextQuery();
         });
 
-        // AI Has Controls toggle
+        // AI Has Controls toggle (session-locked)
         this.elements.autoControlsBtn?.addEventListener('click', () => {
+            if (this._sessionLocked) return;  // Read-only mode
             if (!this.aiEnabled) {
                 this.aiEnabled = true;
             }
@@ -2872,6 +2896,14 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                     this.flightPhase.phase = state.phase;
                     this.flightPhase.phaseIndex = this.flightPhase.PHASES.indexOf(state.phase);
                 }
+                // Read lock state from server
+                if (state.lock) {
+                    const isOwner = !state.lock.ownerSessionId || state.lock.ownerSessionId === this._paneSessionId;
+                    this._isSessionOwner = isOwner;
+                    this._sessionLocked = !isOwner;
+                    this._lockOwnerHostname = state.lock.ownerHostname;
+                    this._renderLockState();
+                }
                 this._render();
             }
         } catch (e) {
@@ -3449,7 +3481,144 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         }
     }
 
+    // ── Session Lock (multi-pane first-come-first-served) ──────────────
+
+    async _registerPaneSession() {
+        try {
+            const res = await fetch('/api/ai-autopilot/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: this._paneSessionId, hostname: this._paneHostname })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this._applyLockState(data);
+                this._startSessionHeartbeat();
+            } else {
+                // Server unreachable or error — assume owner (graceful degradation)
+                this._isSessionOwner = true;
+                this._sessionLocked = false;
+            }
+        } catch (e) {
+            console.warn('[AP-Lock] Register failed, assuming owner:', e.message);
+            this._isSessionOwner = true;
+            this._sessionLocked = false;
+        }
+        this._renderLockState();
+    }
+
+    _startSessionHeartbeat() {
+        if (this._heartbeatTimer) clearInterval(this._heartbeatTimer);
+        this._heartbeatTimer = setInterval(() => this._sendSessionHeartbeat(), 5000);
+    }
+
+    async _sendSessionHeartbeat() {
+        try {
+            const res = await fetch('/api/ai-autopilot/heartbeat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: this._paneSessionId, hostname: this._paneHostname })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const wasLocked = this._sessionLocked;
+                this._applyLockState(data);
+                // Detect ownership transition (locked → unlocked promotion)
+                if (wasLocked && !this._sessionLocked) {
+                    this._dbg('cmd', '<span class="ok">Session promoted to owner</span>');
+                }
+                this._renderLockState();
+            }
+        } catch (e) {
+            // Network hiccup — keep current state, heartbeat will retry
+        }
+    }
+
+    _applyLockState(data) {
+        this._isSessionOwner = data.isOwner;
+        this._sessionLocked = !data.isOwner;
+        this._lockOwnerHostname = data.ownerHostname;
+    }
+
+    /**
+     * POST helper that includes session ID in body and header
+     */
+    _apFetchPost(endpoint, body = {}) {
+        return fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-AP-Session': this._paneSessionId
+            },
+            body: JSON.stringify({ ...body, sessionId: this._paneSessionId })
+        });
+    }
+
+    _renderLockState() {
+        // Show/hide lock banner
+        let banner = document.getElementById('ap-lock-banner');
+        if (this._sessionLocked) {
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'ap-lock-banner';
+                banner.className = 'ap-lock-banner';
+                // Insert after widget-header
+                const header = document.querySelector('.widget-header');
+                if (header && header.nextSibling) {
+                    header.parentNode.insertBefore(banner, header.nextSibling);
+                }
+            }
+            banner.textContent = `Controlled by ${this._lockOwnerHostname || 'another pane'} \u2014 read-only mode`;
+            banner.style.display = '';
+        } else if (banner) {
+            banner.style.display = 'none';
+        }
+
+        // Session role badge next to title
+        let badge = document.getElementById('ap-session-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.id = 'ap-session-badge';
+            const title = document.querySelector('.widget-title');
+            if (title) title.parentNode.insertBefore(badge, title.nextSibling);
+        }
+        if (this._sessionLocked) {
+            badge.className = 'ap-session-badge viewer';
+            badge.textContent = 'VIEWER';
+        } else {
+            badge.className = 'ap-session-badge active';
+            badge.textContent = 'ACTIVE';
+        }
+
+        // Disable/enable toggle buttons when locked
+        if (this.elements.aiToggle) {
+            this.elements.aiToggle.disabled = this._sessionLocked;
+            this.elements.aiToggle.style.opacity = this._sessionLocked ? '0.4' : '';
+            this.elements.aiToggle.style.pointerEvents = this._sessionLocked ? 'none' : '';
+        }
+        if (this.elements.autoControlsBtn) {
+            this.elements.autoControlsBtn.disabled = this._sessionLocked;
+            this.elements.autoControlsBtn.style.opacity = this._sessionLocked ? '0.4' : '';
+            this.elements.autoControlsBtn.style.pointerEvents = this._sessionLocked ? 'none' : '';
+        }
+    }
+
     destroy() {
+        // Unregister session on destroy
+        if (this._heartbeatTimer) {
+            clearInterval(this._heartbeatTimer);
+            this._heartbeatTimer = null;
+        }
+        // Use sendBeacon for reliable unregister on page unload
+        try {
+            navigator.sendBeacon(
+                '/api/ai-autopilot/unregister',
+                new Blob([JSON.stringify({ sessionId: this._paneSessionId })], { type: 'application/json' })
+            );
+        } catch (e) {
+            // Best effort
+        }
+
         if (this.atcController) {
             this.atcController.destroy();
             this.atcController = null;

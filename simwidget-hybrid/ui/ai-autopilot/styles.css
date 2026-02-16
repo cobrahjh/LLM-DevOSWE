@@ -106,6 +106,42 @@
     50% { box-shadow: 0 0 14px rgba(255, 152, 0, 0.5); }
 }
 
+/* Session Lock Banner */
+.ap-lock-banner {
+    padding: 6px 12px;
+    background: rgba(239, 83, 80, 0.12);
+    border-bottom: 1px solid rgba(239, 83, 80, 0.3);
+    color: #ef5350;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+/* Session Role Badge (ACTIVE / VIEWER) */
+.ap-session-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 7px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    vertical-align: middle;
+}
+
+.ap-session-badge.active {
+    background: rgba(0, 200, 83, 0.15);
+    border: 1px solid rgba(0, 200, 83, 0.4);
+    color: #00c853;
+}
+
+.ap-session-badge.viewer {
+    background: rgba(239, 83, 80, 0.12);
+    border: 1px solid rgba(239, 83, 80, 0.3);
+    color: #ef5350;
+}
+
 /* Phase Section */
 .phase-section {
     padding: 8px 12px;
@@ -801,6 +837,8 @@
     border-bottom: 1px solid var(--border-color, #1e2a3a);
     min-height: 60px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 10;
 }
 
 .advisory-header {
@@ -1010,13 +1048,15 @@
 }
 
 .advisory-btn {
-    padding: 3px 14px;
+    padding: 6px 18px;
     border: 1px solid #334;
     border-radius: 3px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
+    z-index: 11;
 }
 
 .advisory-btn.accept {

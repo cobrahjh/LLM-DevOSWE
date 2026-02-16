@@ -3298,6 +3298,124 @@ function executeCommand(command, value) {
     }
 }
 
+// ── AI Autopilot Session Lock (first-come-first-served) ──────────────────
+// Prevents multi-pane conflicts — first pane to connect gets exclusive control.
+const _apSessions = new Map();  // sessionId → { hostname, lastHeartbeat, registeredAt }
+let _apOwnerSessionId = null;
+const AP_HEARTBEAT_TIMEOUT = 15000;  // 15s
+
+function _apEvictStale() {
+    const now = Date.now();
+    for (const [sid, info] of _apSessions) {
+        if (now - info.lastHeartbeat > AP_HEARTBEAT_TIMEOUT) {
+            _apSessions.delete(sid);
+            if (_apOwnerSessionId === sid) {
+                _apOwnerSessionId = null;
+                console.log(`[AP-Lock] Owner ${sid} (${info.hostname}) evicted (stale)`);
+            }
+        }
+    }
+}
+
+function _apLockInfo() {
+    const owner = _apOwnerSessionId ? _apSessions.get(_apOwnerSessionId) : null;
+    return {
+        ownerSessionId: _apOwnerSessionId,
+        ownerHostname: owner?.hostname || null
+    };
+}
+
+function requireApOwner(req, res, next) {
+    const sessionId = req.body?.sessionId || req.headers['x-ap-session'];
+    // No sessionId = not a pane (curl/script) — allow through
+    if (!sessionId) return next();
+    // Evict stale sessions first
+    _apEvictStale();
+    // If caller is the owner, proceed
+    if (sessionId === _apOwnerSessionId) return next();
+    // Otherwise, reject
+    const lock = _apLockInfo();
+    return res.status(403).json({ locked: true, ownerHostname: lock.ownerHostname, ownerSessionId: lock.ownerSessionId });
+}
+
+app.post('/api/ai-autopilot/register', (req, res) => {
+    const { sessionId, hostname } = req.body || {};
+    if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
+
+    _apEvictStale();
+    _apSessions.set(sessionId, { hostname: hostname || 'unknown', lastHeartbeat: Date.now(), registeredAt: Date.now() });
+
+    // Claim ownership if no current owner
+    if (!_apOwnerSessionId) {
+        _apOwnerSessionId = sessionId;
+        console.log(`[AP-Lock] Owner claimed: ${sessionId} (${hostname})`);
+    }
+
+    const isOwner = _apOwnerSessionId === sessionId;
+    const lock = _apLockInfo();
+    res.json({ isOwner, ownerSessionId: lock.ownerSessionId, ownerHostname: lock.ownerHostname });
+});
+
+app.post('/api/ai-autopilot/heartbeat', (req, res) => {
+    const { sessionId } = req.body || {};
+    if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
+
+    _apEvictStale();
+
+    const info = _apSessions.get(sessionId);
+    if (info) {
+        info.lastHeartbeat = Date.now();
+    } else {
+        // Re-register (server may have restarted)
+        _apSessions.set(sessionId, { hostname: req.body.hostname || 'unknown', lastHeartbeat: Date.now(), registeredAt: Date.now() });
+    }
+
+    // Promote caller if no owner
+    if (!_apOwnerSessionId) {
+        _apOwnerSessionId = sessionId;
+        console.log(`[AP-Lock] Owner promoted: ${sessionId} (${_apSessions.get(sessionId)?.hostname})`);
+    }
+
+    const isOwner = _apOwnerSessionId === sessionId;
+    const lock = _apLockInfo();
+    res.json({ isOwner, ownerSessionId: lock.ownerSessionId, ownerHostname: lock.ownerHostname });
+});
+
+app.post('/api/ai-autopilot/unregister', (req, res) => {
+    const { sessionId } = req.body || {};
+    if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
+
+    _apSessions.delete(sessionId);
+    if (_apOwnerSessionId === sessionId) {
+        _apOwnerSessionId = null;
+        console.log(`[AP-Lock] Owner ${sessionId} unregistered`);
+        // Auto-promote next session if any
+        _apEvictStale();
+        if (!_apOwnerSessionId && _apSessions.size > 0) {
+            const [nextSid, nextInfo] = _apSessions.entries().next().value;
+            _apOwnerSessionId = nextSid;
+            console.log(`[AP-Lock] Auto-promoted: ${nextSid} (${nextInfo.hostname})`);
+        }
+    }
+
+    res.json({ success: true });
+});
+
+app.get('/api/ai-autopilot/sessions', (req, res) => {
+    _apEvictStale();
+    const sessions = [];
+    for (const [sid, info] of _apSessions) {
+        sessions.push({
+            sessionId: sid,
+            hostname: info.hostname,
+            isOwner: sid === _apOwnerSessionId,
+            staleness: Date.now() - info.lastHeartbeat,
+            registeredAt: info.registeredAt
+        });
+    }
+    res.json({ sessions, ownerSessionId: _apOwnerSessionId });
+});
+
 // ── Server-Side AI Autopilot Rule Engine ──────────────────────────────────
 // Evaluates flight rules directly in Node.js, calling executeCommand() without
 // any browser/WebSocket hop. Eliminates browser cache issues entirely.
@@ -3316,7 +3434,7 @@ const ruleEngineServer = new RuleEngineServer({
 });
 
 // API endpoints for server-side rule engine
-app.post('/api/ai-autopilot/enable', (req, res) => {
+app.post('/api/ai-autopilot/enable', requireApOwner, (req, res) => {
     ruleEngineServer.enable();
     // Auto-disable flight controllers so hardware axes don't override software control
     setFlightDevicesEnabled(false, (ok) => {
@@ -3339,7 +3457,7 @@ app.post('/api/ai-autopilot/enable', (req, res) => {
     res.json({ success: true, enabled: true });
 });
 
-app.post('/api/ai-autopilot/disable', (req, res) => {
+app.post('/api/ai-autopilot/disable', requireApOwner, (req, res) => {
     ruleEngineServer.disable();
     // Re-enable flight controllers for manual flight
     setFlightDevicesEnabled(true, (ok) => {
@@ -3349,10 +3467,11 @@ app.post('/api/ai-autopilot/disable', (req, res) => {
 });
 
 app.get('/api/ai-autopilot/state', (req, res) => {
-    res.json(ruleEngineServer.getState());
+    _apEvictStale();
+    res.json({ ...ruleEngineServer.getState(), lock: _apLockInfo() });
 });
 
-app.post('/api/ai-autopilot/cruise-alt', (req, res) => {
+app.post('/api/ai-autopilot/cruise-alt', requireApOwner, (req, res) => {
     const alt = parseInt(req.body.altitude);
     if (isNaN(alt)) return res.status(400).json({ error: 'altitude required' });
     ruleEngineServer.setCruiseAlt(alt);
@@ -3360,7 +3479,7 @@ app.post('/api/ai-autopilot/cruise-alt', (req, res) => {
 });
 
 // ── ATC Ground Operations API ──────────────────────────────────────────
-app.post('/api/ai-autopilot/request-taxi', async (req, res) => {
+app.post('/api/ai-autopilot/request-taxi', requireApOwner, async (req, res) => {
     try {
         const result = await ruleEngineServer.requestTaxi();
         res.json(result);
@@ -3369,7 +3488,7 @@ app.post('/api/ai-autopilot/request-taxi', async (req, res) => {
     }
 });
 
-app.post('/api/ai-autopilot/cleared-takeoff', (req, res) => {
+app.post('/api/ai-autopilot/cleared-takeoff', requireApOwner, (req, res) => {
     res.json(ruleEngineServer.clearedForTakeoff());
 });
 
@@ -3377,7 +3496,7 @@ app.get('/api/ai-autopilot/atc-state', (req, res) => {
     res.json(ruleEngineServer.getATCState());
 });
 
-app.post('/api/ai-autopilot/atc-deactivate', (req, res) => {
+app.post('/api/ai-autopilot/atc-deactivate', requireApOwner, (req, res) => {
     res.json(ruleEngineServer.deactivateATC());
 });
 
