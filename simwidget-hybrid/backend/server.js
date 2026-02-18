@@ -1605,6 +1605,23 @@ app.post('/api/services', async (req, res) => {
     }
 });
 
+// Phase checklist CRUD
+const PHASE_CHECKLIST_PATH = path.join(__dirname, '../data/phase-checklist.json');
+app.get('/api/ai-autopilot/phase-checklist', (req, res) => {
+    try {
+        const data = fs.existsSync(PHASE_CHECKLIST_PATH)
+            ? JSON.parse(fs.readFileSync(PHASE_CHECKLIST_PATH, 'utf8'))
+            : {};
+        res.json(data);
+    } catch (e) { res.json({}); }
+});
+app.post('/api/ai-autopilot/phase-checklist', (req, res) => {
+    try {
+        fs.writeFileSync(PHASE_CHECKLIST_PATH, JSON.stringify(req.body, null, 2));
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Logs API endpoint
 // Live server log buffer endpoints
 app.get('/api/logs/live', (req, res) => {

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sally Phase Checklist</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 12px; padding: 12px; }
+
+.hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.title { color: #58a6ff; font-size: 15px; font-weight: bold; }
+.badge { font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; }
+.badge.enabled  { background: #0d2a18; border: 1px solid #3fb950; color: #3fb950; }
+.badge.disabled { background: #2a0d0d; border: 1px solid #f85149; color: #f85149; }
+.phase-lbl { font-size: 11px; color: #8b949e; }
+.ts { color: #8b949e; font-size: 10px; margin-left: auto; }
+.btn { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-family: monospace; font-size: 11px; }
+.btn:hover { background: #30363d; }
+.btn.blue  { border-color: #58a6ff; color: #58a6ff; }
+.btn.green { border-color: #3fb950; color: #3fb950; }
+.btn.green:hover { background: #0d2a18; }
+.btn.red   { border-color: #f85149; color: #f85149; }
+.btn.red:hover   { background: #2a0d0d; }
+.auto-label { color: #8b949e; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+
+/* Phase cards */
+.stage { border: 1px solid #30363d; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+.stage.active { border-color: #58a6ff; box-shadow: 0 0 14px rgba(88,166,255,0.2); }
+.stage.done   { border-color: #21262d; opacity: 0.6; }
+
+.stage-hdr { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #161b22; border-bottom: 1px solid #21262d; }
+.stage.active .stage-hdr { background: #0c1c31; border-bottom-color: #1e3a5e; }
+.phase-dot { width: 8px; height: 8px; border-radius: 50%; background: #30363d; flex-shrink: 0; }
+.stage.active .phase-dot { background: #58a6ff; box-shadow: 0 0 6px #58a6ff; }
+.stage.done   .phase-dot { background: #3fb950; }
+.stage-name { font-weight: bold; font-size: 12px; flex: 1; }
+.stage.active .stage-name { color: #58a6ff; }
+.stage.done   .stage-name { color: #3fb950; }
+.sub-pill { font-size: 9px; padding: 1px 6px; border-radius: 3px; background: #0c1c31; border: 1px solid #58a6ff; color: #58a6ff; display: none; }
+
+/* Sub-phase section */
+.sub-section { border-top: 1px solid #21262d; }
+.sub-hdr { padding: 4px 10px; background: #0d1117; border-bottom: 1px solid #21262d; font-size: 9px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+.sub-hdr.active { color: #58a6ff; background: #0c1c31; }
+.sub-dot { width: 5px; height: 5px; border-radius: 50%; background: #30363d; flex-shrink: 0; }
+.sub-hdr.active .sub-dot { background: #58a6ff; }
+
+/* Control table */
+table { width: 100%; border-collapse: collapse; }
+th { color: #8b949e; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; padding: 4px 8px; text-align: left; background: #0d1117; white-space: nowrap; }
+td { padding: 5px 8px; border-top: 1px solid #161b22; font-size: 11px; vertical-align: middle; }
+.c-label  { color: #c9d1d9; }
+.c-target { color: #8b949e; }
+.c-set    { color: #58a6ff; }
+.c-actual { color: #f0f6fc; font-weight: bold; }
+
+/* Last-cmd row highlight */
+@keyframes cmd-pulse { 0%,100% { background: rgba(210,153,34,0.07); } 50% { background: rgba(210,153,34,0.20); } }
+tr.last-cmd { animation: cmd-pulse 1.2s ease-in-out infinite; }
+tr.last-cmd td { border-top-color: rgba(210,153,34,0.3); }
+tr.last-cmd td.c-label { border-left: 2px solid #d29922; padding-left: 6px; }
+
+/* Status dot */
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+.dot.ok   { background: #3fb950; box-shadow: 0 0 4px #3fb950; }
+.dot.warn { background: #d29922; box-shadow: 0 0 4px #d29922; }
+.dot.err  { background: #f85149; box-shadow: 0 0 4px #f85149; }
+.dot.dim  { background: #30363d; }
+
+/* Last cmd bar */
+.lcmd { background: #161b22; border: 1px solid #d29922; border-radius: 5px; padding: 7px 12px; margin-top: 10px; display: none; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lcmd-tag  { font-size: 9px; color: #8b949e; text-transform: uppercase; }
+.lcmd-type { color: #d29922; font-weight: bold; }
+.lcmd-val  { color: #f0f6fc; }
+.lcmd-desc { color: #8b949e; flex: 1; min-width: 120px; }
+.lcmd-ago  { color: #8b949e; font-size: 10px; }
+
+.offline { background: #2a0d0d; border: 1px solid #f85149; border-radius: 4px; padding: 6px 12px; margin-bottom: 8px; color: #f85149; display: none; }
+
+/* Checklist section */
+.cl-section { border-top: 1px solid #21262d; padding: 8px 10px; background: #0a0e14; }
+.cl-section-hdr { font-size: 9px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.cl-list { list-style: none; margin-bottom: 6px; }
+.cl-list:empty::before { content: 'No items — add one below'; color: #484f58; font-size: 10px; display: block; padding: 2px 0 6px; }
+.cl-item { display: flex; align-items: center; gap: 5px; padding: 3px 0; border-bottom: 1px solid #161b22; }
+.cl-item:last-child { border-bottom: none; }
+.cl-item-text { flex: 1; color: #c9d1d9; font-size: 11px; }
+.cl-btn { background: none; border: 1px solid #30363d; color: #8b949e; border-radius: 3px; width: 20px; height: 20px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; line-height: 1; }
+.cl-btn:hover { background: #21262d; color: #c9d1d9; }
+.cl-btn.del:hover { border-color: #f85149; color: #f85149; background: #2a0d0d; }
+.cl-add-row { display: flex; gap: 5px; }
+.cl-input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 3px 7px; font-family: monospace; font-size: 11px; }
+.cl-input:focus { outline: none; border-color: #58a6ff; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="title">Sally Phase Checklist</span>
+  <span class="badge disabled" id="en-badge">OFFLINE</span>
+  <span class="phase-lbl" id="phase-lbl"></span>
+  <button class="btn blue" onclick="poll()">↻ Refresh</button>
+  <label class="auto-label"><input type="checkbox" id="auto" checked onchange="toggleAuto()"> Auto 2s</label>
+  <span class="ts" id="ts"></span>
+</div>
+<div class="offline" id="offline"></div>
+<div id="stages"></div>
+<div class="lcmd" id="lcmd">
+  <span class="lcmd-tag">Last cmd</span>
+  <span class="lcmd-type" id="lcmd-type"></span>
+  <span class="lcmd-val"  id="lcmd-val"></span>
+  <span class="lcmd-desc" id="lcmd-desc"></span>
+  <span class="lcmd-ago"  id="lcmd-ago"></span>
+</div>
+
+<script>
+// ── Phase / control definitions (same as flight monitor) ──────────────────
+const STAGES = [
+  {
+    id: 'PREFLIGHT', label: 'Preflight',
+    controls: [
+      { id:'engine',  label:'Engine RPM',    cmds:['ENGINE_AUTO_START'],
+        target:t=>'≥ 500 RPM', set:(fd,lv,t)=>fd.engineRpm>=500?'Running':'Starting…',
+        actual:fd=>(fd.engineRpm||0)+' RPM', ok:(fd,t)=>(fd.engineRpm||0)>=500 },
+      { id:'mixture', label:'Mixture',       cmds:['MIXTURE_SET','MIXTURE_RICH'],
+        target:t=>'100% RICH', set:(fd,lv,t)=>'100%',
+        actual:fd=>fd.mixture!=null?fd.mixture+'%':'—', ok:(fd,t)=>fd.mixture==null||fd.mixture>=90 },
+      { id:'brake',   label:'Parking Brake', cmds:['PARKING_BRAKE_SET'],
+        target:t=>'OFF', set:(fd,lv,t)=>'OFF',
+        actual:fd=>fd.parkingBrake?'ON':'OFF', ok:(fd,t)=>!fd.parkingBrake },
+      { id:'throttle',label:'Throttle',      cmds:['THROTTLE_SET'],
+        target:t=>(t.preflightThrottle||20)+'%',
+        set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+        actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>Math.abs((fd.throttle||0)-(t.preflightThrottle||20))<12 },
+    ]
+  },
+  {
+    id: 'TAXI', label: 'Taxi',
+    controls: [
+      { id:'brake',   label:'Parking Brake', cmds:['PARKING_BRAKE_SET'],
+        target:t=>'OFF', set:(fd,lv,t)=>'OFF',
+        actual:fd=>fd.parkingBrake?'ON':'OFF', ok:(fd,t)=>!fd.parkingBrake },
+      { id:'throttle',label:'Throttle',      cmds:['THROTTLE_SET'],
+        target:t=>'≤ '+(t.taxiThrottleMax||40)+'%',
+        set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+        actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)<=(t.taxiThrottleMax||40)+5 },
+      { id:'gs',      label:'Ground Speed',  cmds:[],
+        target:t=>'≤ '+(t.taxiTargetGS||12)+' kt',
+        set:(fd,lv,t)=>(t.taxiTargetGS||12)+' kt target',
+        actual:fd=>(fd.gs||0).toFixed(1)+' kt', ok:(fd,t)=>(fd.gs||0)<=(t.taxiTargetGS||12)+3 },
+      { id:'engine',  label:'Engine RPM',    cmds:['ENGINE_AUTO_START'],
+        target:t=>'≥ 500 RPM', set:(fd,lv,t)=>'≥ 500',
+        actual:fd=>(fd.engineRpm||0)+' RPM', ok:(fd,t)=>(fd.engineRpm||0)>=500 },
+    ]
+  },
+  {
+    id: 'TAKEOFF', label: 'Takeoff',
+    subPhases: [
+      { id:'BEFORE_ROLL', label:'Before Roll', controls: [
+          { id:'brake',   label:'Parking Brake', cmds:['PARKING_BRAKE_SET'],
+            target:t=>'OFF', set:(fd,lv,t)=>'OFF',
+            actual:fd=>fd.parkingBrake?'ON':'OFF', ok:(fd,t)=>!fd.parkingBrake },
+          { id:'throttle',label:'Throttle', cmds:['THROTTLE_SET'],
+            target:t=>'0%', set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'0%',
+            actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)<5 },
+          { id:'elevator',label:'Elevator', cmds:['AXIS_ELEVATOR_SET'],
+            target:t=>'~0%', set:(fd,lv,t)=>lv.elevator!=null?lv.elevator.toFixed(1)+'%':'—',
+            actual:fd=>(fd.pitch||0).toFixed(1)+'° pitch', ok:(fd,t)=>Math.abs(fd.pitch||0)<3 },
+        ]},
+      { id:'ROLL', label:'Roll', controls: [
+          { id:'throttle',label:'Throttle', cmds:['THROTTLE_SET'],
+            target:t=>(t.rollThrottle||100)+'%',
+            set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+            actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)>=(t.rollThrottle||100)-5 },
+          { id:'aileron', label:'Aileron', cmds:['AXIS_AILERONS_SET'],
+            target:t=>'Wings level', set:(fd,lv,t)=>lv.aileron!=null?lv.aileron.toFixed(1)+'%':'—',
+            actual:fd=>(fd.bank||0).toFixed(1)+'° bank', ok:(fd,t)=>Math.abs(fd.bank||0)<5 },
+          { id:'speed',   label:'Speed → Vr', cmds:[],
+            target:t=>'≥ '+(t.vrSpeed||55)+' kt',
+            set:(fd,lv,t)=>(t.vrSpeed||55)+' kt Vr',
+            actual:fd=>(fd.speed||0).toFixed(0)+' kt IAS',
+            ok:(fd,t)=>(fd.speed||0)>=(t.vrSpeed||55) },
+        ]},
+      { id:'ROTATE', label:'Rotate', controls: [
+          { id:'throttle',label:'Throttle', cmds:['THROTTLE_SET'],
+            target:t=>'100%', set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+            actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)>=95 },
+          { id:'elevator',label:'Elevator', cmds:['AXIS_ELEVATOR_SET'],
+            target:t=>(t.rotateElevator||-8)+'% (nose up)',
+            set:(fd,lv,t)=>lv.elevator!=null?lv.elevator.toFixed(1)+'%':'—',
+            actual:fd=>(fd.pitch||0).toFixed(1)+'° pitch', ok:(fd,t)=>(fd.pitch||0)>0 },
+        ]},
+      { id:'LIFTOFF', label:'Liftoff', controls: [
+          { id:'throttle',label:'Throttle', cmds:['THROTTLE_SET'],
+            target:t=>(t.liftoffThrottle||100)+'%',
+            set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+            actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)>=95 },
+          { id:'vs',  label:'Vert Speed', cmds:[],
+            target:t=>'> '+(t.liftoffVsThreshold||100)+' fpm',
+            set:(fd,lv,t)=>(t.liftoffVsThreshold||100)+' fpm min',
+            actual:fd=>(fd.verticalSpeed||fd.vs||0).toFixed(0)+' fpm',
+            ok:(fd,t)=>(fd.verticalSpeed||fd.vs||0)>(t.liftoffVsThreshold||100) },
+          { id:'agl', label:'AGL', cmds:[],
+            target:t=>'> '+(t.liftoffClimbAgl||200)+' ft',
+            set:(fd,lv,t)=>(t.liftoffClimbAgl||200)+' ft min',
+            actual:fd=>(fd.agl||fd.altitudeAGL||0).toFixed(0)+' ft',
+            ok:(fd,t)=>(fd.agl||fd.altitudeAGL||0)>(t.liftoffClimbAgl||200) },
+        ]},
+      { id:'INITIAL_CLIMB', label:'Initial Climb', controls: [
+          { id:'throttle',label:'Throttle', cmds:['THROTTLE_SET'],
+            target:t=>(t.climbPhaseThrottle||100)+'%',
+            set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+            actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)>=95 },
+          { id:'speed', label:'Speed → AP', cmds:[],
+            target:t=>'≥ '+(55+(t.handoffSpeedMargin||15))+' kt',
+            set:(fd,lv,t)=>'Vs1 + '+(t.handoffSpeedMargin||15)+' kt',
+            actual:fd=>(fd.speed||0).toFixed(0)+' kt IAS',
+            ok:(fd,t)=>(fd.speed||0)>=55+(t.handoffSpeedMargin||15) },
+          { id:'agl', label:'AGL → AP', cmds:[],
+            target:t=>'≥ '+(t.handoffAgl||500)+' ft',
+            set:(fd,lv,t)=>(t.handoffAgl||500)+' ft min',
+            actual:fd=>(fd.agl||fd.altitudeAGL||0).toFixed(0)+' ft',
+            ok:(fd,t)=>(fd.agl||fd.altitudeAGL||0)>=(t.handoffAgl||500) },
+        ]},
+      { id:'DEPARTURE', label:'Departure', controls: [
+          { id:'ap-master',label:'AP Master', cmds:['AP_MASTER'],
+            target:t=>'ON', set:(fd,lv,t)=>'ON',
+            actual:fd=>fd.apMaster?'ON':'OFF', ok:(fd,t)=>!!fd.apMaster },
+          { id:'flaps', label:'Flaps', cmds:['FLAPS_UP','FLAPS_SET'],
+            target:t=>'UP (0)', set:(fd,lv,t)=>'0',
+            actual:fd=>'Index '+(fd.flapsIndex!=null?fd.flapsIndex:'—'),
+            ok:(fd,t)=>(fd.flapsIndex||0)===0 },
+          { id:'ap-alt', label:'AP Altitude', cmds:['AP_ALT_VAR_SET'],
+            target:t=>(t.departureCruiseAlt||8500)+' ft',
+            set:(fd,lv,t)=>(t.departureCruiseAlt||8500)+' ft',
+            actual:fd=>(fd.altitude||0).toFixed(0)+' ft', ok:(fd,t)=>true },
+        ]},
+    ]
+  },
+  {
+    id: 'CLIMB', label: 'Climb',
+    controls: [
+      { id:'ap-master',label:'AP Master', cmds:['AP_MASTER'],
+        target:t=>'ON', set:(fd,lv,t)=>'ON',
+        actual:fd=>fd.apMaster?'ON':'OFF', ok:(fd,t)=>!!fd.apMaster },
+      { id:'throttle', label:'Throttle', cmds:['THROTTLE_SET'],
+        target:t=>'100%', set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+        actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)>=95 },
+      { id:'ap-alt', label:'AP Altitude', cmds:['AP_ALT_VAR_SET'],
+        target:t=>(t.departureCruiseAlt||8500)+' ft',
+        set:(fd,lv,t)=>(t.departureCruiseAlt||8500)+' ft',
+        actual:fd=>(fd.altitude||0).toFixed(0)+' ft',
+        ok:(fd,t)=>Math.abs((fd.altitude||0)-(t.departureCruiseAlt||8500))<200 },
+    ]
+  },
+  {
+    id: 'CRUISE', label: 'Cruise',
+    controls: [
+      { id:'ap-master',label:'AP Master',  cmds:['AP_MASTER'],
+        target:t=>'ON', set:(fd,lv,t)=>'ON',
+        actual:fd=>fd.apMaster?'ON':'OFF', ok:(fd,t)=>!!fd.apMaster },
+      { id:'ap-alt',  label:'Alt Hold',   cmds:['AP_ALT_HOLD'],
+        target:t=>(t.departureCruiseAlt||8500)+' ft',
+        set:(fd,lv,t)=>(t.departureCruiseAlt||8500)+' ft',
+        actual:fd=>(fd.altitude||0).toFixed(0)+' ft',
+        ok:(fd,t)=>Math.abs((fd.altitude||0)-(t.departureCruiseAlt||8500))<100 },
+      { id:'throttle',label:'Throttle',   cmds:['THROTTLE_SET'],
+        target:t=>'70-90%', set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+        actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)>=65 },
+    ]
+  },
+  {
+    id: 'DESCENT', label: 'Descent',
+    controls: [
+      { id:'ap-master',label:'AP Master', cmds:['AP_MASTER'],
+        target:t=>'ON', set:(fd,lv,t)=>'ON',
+        actual:fd=>fd.apMaster?'ON':'OFF', ok:(fd,t)=>!!fd.apMaster },
+      { id:'ap-vs',   label:'AP VS',     cmds:['AP_VS_VAR_SET_ENGLISH','AP_VS_HOLD','AP_VS_VAR_SET'],
+        target:t=>'-500 fpm', set:(fd,lv,t)=>'-500 fpm',
+        actual:fd=>(fd.verticalSpeed||fd.vs||0).toFixed(0)+' fpm',
+        ok:(fd,t)=>(fd.verticalSpeed||fd.vs||0)<-100 },
+      { id:'throttle',label:'Throttle',  cmds:['THROTTLE_SET'],
+        target:t=>'25-75%', set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+        actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>true },
+    ]
+  },
+  {
+    id: 'APPROACH', label: 'Approach',
+    controls: [
+      { id:'flaps',   label:'Flaps',    cmds:['FLAPS_DOWN','FLAPS_SET'],
+        target:t=>'3', set:(fd,lv,t)=>'Index 3',
+        actual:fd=>'Index '+(fd.flapsIndex!=null?fd.flapsIndex:'—'),
+        ok:(fd,t)=>(fd.flapsIndex||0)>=2 },
+      { id:'ap-spd',  label:'AP Speed', cmds:['AP_SPD_VAR_SET'],
+        target:t=>'65-75 kt Vref', set:(fd,lv,t)=>'70 kt',
+        actual:fd=>(fd.speed||0).toFixed(0)+' kt',
+        ok:(fd,t)=>Math.abs((fd.speed||0)-70)<10 },
+      { id:'throttle',label:'Throttle', cmds:['THROTTLE_SET'],
+        target:t=>'~40%', set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+        actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)<=60 },
+    ]
+  },
+  {
+    id: 'LANDING', label: 'Landing',
+    controls: [
+      { id:'throttle',label:'Throttle',        cmds:['THROTTLE_SET'],
+        target:t=>'0%', set:(fd,lv,t)=>lv.throttle!=null?lv.throttle.toFixed(0)+'%':'—',
+        actual:fd=>(fd.throttle||0)+'%', ok:(fd,t)=>(fd.throttle||0)<10 },
+      { id:'elevator',label:'Elevator (Flare)', cmds:['AXIS_ELEVATOR_SET'],
+        target:t=>'-30% (nose up)', set:(fd,lv,t)=>lv.elevator!=null?lv.elevator.toFixed(1)+'%':'—',
+        actual:fd=>(fd.pitch||0).toFixed(1)+'° pitch', ok:(fd,t)=>(fd.pitch||0)>0 },
+      { id:'gs',      label:'Ground Speed',     cmds:[],
+        target:t=>'→ 0 kt', set:(fd,lv,t)=>'Braking',
+        actual:fd=>(fd.gs||fd.groundSpeed||0).toFixed(1)+' kt',
+        ok:(fd,t)=>(fd.gs||fd.groundSpeed||0)<10 },
+    ]
+  },
+];
+
+// ── Checklist state (keyed by phase id, or "PHASE-SUBPHASE" for takeoff sub-phases) ──
+let checklist = {};
+let currentPhase = '', currentSubPhase = '', lastCmd = null, tuning = {}, live = {};
+let autoTimer = null;
+let saveTimer = null;
+
+// ── Load checklist from server ─────────────────────────────────────────────
+async function loadChecklist() {
+  try {
+    const r = await fetch('/api/ai-autopilot/phase-checklist');
+    if (r.ok) checklist = await r.json();
+  } catch (e) { /* first load, start empty */ }
+}
+
+function saveChecklist() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await fetch('/api/ai-autopilot/phase-checklist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(checklist)
+      });
+    } catch (e) { /* ignore */ }
+  }, 400);
+}
+
+function clKey(stageId, subId) {
+  return subId ? stageId + '-' + subId : stageId;
+}
+
+function getItems(key) {
+  return checklist[key] || [];
+}
+
+function setItems(key, items) {
+  checklist[key] = items;
+  saveChecklist();
+}
+
+// ── Build DOM ─────────────────────────────────────────────────────────────
+function buildStages() {
+  const c = document.getElementById('stages');
+  c.innerHTML = '';
+  for (const stage of STAGES) {
+    const el = document.createElement('div');
+    el.className = 'stage';
+    el.id = 'stage-' + stage.id;
+
+    let h = `<div class="stage-hdr">
+      <div class="phase-dot"></div>
+      <span class="stage-name">${stage.label}</span>
+      <span class="sub-pill" id="spill-${stage.id}"></span>
+    </div>`;
+
+    if (stage.subPhases) {
+      for (const sub of stage.subPhases) {
+        const pfx = stage.id + '-' + sub.id;
+        const key = clKey(stage.id, sub.id);
+        h += `<div class="sub-section" id="subsec-${pfx}">
+          <div class="sub-hdr" id="subhdr-${pfx}">
+            <div class="sub-dot"></div>${sub.label}
+          </div>
+          ${buildTable(sub.controls, pfx)}
+          ${buildChecklist(key)}
+        </div>`;
+      }
+    } else {
+      const key = clKey(stage.id, null);
+      h += buildTable(stage.controls, stage.id);
+      h += buildChecklist(key);
+    }
+
+    el.innerHTML = h;
+    c.appendChild(el);
+  }
+  // Attach add-item listeners
+  document.querySelectorAll('.cl-input').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addItem(input.dataset.key);
+    });
+  });
+}
+
+function buildTable(controls, pfx) {
+  let h = `<table><thead><tr>
+    <th>Control</th><th>Target</th><th>Sally Set</th><th>Actual</th><th style="width:20px"></th>
+  </tr></thead><tbody>`;
+  for (const ctrl of controls) {
+    const id = pfx + '-' + ctrl.id;
+    h += `<tr id="row-${id}">
+      <td class="c-label"  id="cl-${id}">${ctrl.label}</td>
+      <td class="c-target" id="ct-${id}">—</td>
+      <td class="c-set"    id="cs-${id}">—</td>
+      <td class="c-actual" id="ca-${id}">—</td>
+      <td><span class="dot dim" id="cd-${id}"></span></td>
+    </tr>`;
+  }
+  return h + '</tbody></table>';
+}
+
+function buildChecklist(key) {
+  return `<div class="cl-section" id="cl-section-${key}">
+    <div class="cl-section-hdr">Checklist</div>
+    <ul class="cl-list" id="cl-list-${key}"></ul>
+    <div class="cl-add-row">
+      <input class="cl-input" data-key="${key}" placeholder="Add item…" type="text">
+      <button class="btn green" style="padding:3px 10px" onclick="addItem('${key}')">Add</button>
+    </div>
+  </div>`;
+}
+
+function renderChecklist(key) {
+  const ul = document.getElementById('cl-list-' + key);
+  if (!ul) return;
+  const items = getItems(key);
+  ul.innerHTML = items.map((text, i) => `
+    <li class="cl-item">
+      <span class="cl-item-text">${escHtml(text)}</span>
+      <button class="cl-btn" title="Move up"    onclick="moveItem('${key}',${i},-1)" ${i===0?'disabled':''}>↑</button>
+      <button class="cl-btn" title="Move down"  onclick="moveItem('${key}',${i}, 1)" ${i===items.length-1?'disabled':''}>↓</button>
+      <button class="cl-btn del" title="Remove" onclick="removeItem('${key}',${i})">×</button>
+    </li>`).join('');
+}
+
+function renderAllChecklists() {
+  for (const stage of STAGES) {
+    if (stage.subPhases) {
+      for (const sub of stage.subPhases) renderChecklist(clKey(stage.id, sub.id));
+    } else {
+      renderChecklist(clKey(stage.id, null));
+    }
+  }
+}
+
+// ── Checklist mutations ───────────────────────────────────────────────────
+function addItem(key) {
+  const input = document.querySelector(`.cl-input[data-key="${key}"]`);
+  const text = input ? input.value.trim() : '';
+  if (!text) return;
+  const items = getItems(key);
+  items.push(text);
+  setItems(key, items);
+  if (input) input.value = '';
+  renderChecklist(key);
+}
+
+function removeItem(key, idx) {
+  const items = getItems(key);
+  items.splice(idx, 1);
+  setItems(key, items);
+  renderChecklist(key);
+}
+
+function moveItem(key, idx, dir) {
+  const items = getItems(key);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= items.length) return;
+  [items[idx], items[newIdx]] = [items[newIdx], items[idx]];
+  setItems(key, items);
+  renderChecklist(key);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Poll ──────────────────────────────────────────────────────────────────
+async function poll() {
+  try {
+    const [diagRes, sharedRes, tuningRes] = await Promise.allSettled([
+      fetch('/api/ai-autopilot/diagnostics').then(r => r.ok ? r.json() : null),
+      fetch('/api/ai-pilot/shared-state').then(r => r.ok ? r.json() : null),
+      fetch('/api/ai-pilot/tuning').then(r => r.ok ? r.json() : null),
+    ]);
+
+    document.getElementById('offline').style.display = 'none';
+
+    const diag   = diagRes.status   === 'fulfilled' ? diagRes.value   : null;
+    const shared = sharedRes.status === 'fulfilled' ? sharedRes.value : null;
+    const tun    = tuningRes.status === 'fulfilled' ? tuningRes.value : null;
+
+    if (tun)    tuning = tun.tuning || {};
+    if (shared) live   = (shared.autopilot && shared.autopilot.live) || {};
+
+    const fd      = (diag && diag.flightData) || {};
+    const phase   = (diag && diag.phase)    || '';
+    const subPhase= (diag && diag.subPhase) || '';
+    const enabled = !!(diag && diag.enabled);
+    lastCmd       = (diag && diag.lastCmd)  || null;
+
+    currentPhase    = phase;
+    currentSubPhase = subPhase;
+
+    const badge = document.getElementById('en-badge');
+    badge.textContent = enabled ? 'ENABLED' : 'DISABLED';
+    badge.className   = 'badge ' + (enabled ? 'enabled' : 'disabled');
+    document.getElementById('phase-lbl').textContent = phase + (subPhase ? ' › ' + subPhase : '');
+    document.getElementById('ts').textContent = new Date().toLocaleTimeString();
+
+    render(fd);
+    renderLastCmd();
+  } catch(e) {
+    const el = document.getElementById('offline');
+    el.textContent = 'Server offline: ' + e.message;
+    el.style.display = '';
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+const PHASE_ORDER = ['PREFLIGHT','TAXI','TAKEOFF','CLIMB','CRUISE','DESCENT','APPROACH','LANDING'];
+
+function render(fd) {
+  const curIdx = PHASE_ORDER.indexOf(currentPhase);
+
+  for (const stage of STAGES) {
+    const el     = document.getElementById('stage-' + stage.id);
+    const stgIdx = PHASE_ORDER.indexOf(stage.id);
+    const isActive = stage.id === currentPhase;
+    const isDone   = stgIdx < curIdx;
+
+    el.className = 'stage' + (isActive ? ' active' : isDone ? ' done' : '');
+
+    const pill = document.getElementById('spill-' + stage.id);
+    if (pill) {
+      pill.textContent = isActive && currentSubPhase ? currentSubPhase : '';
+      pill.style.display = isActive && currentSubPhase ? '' : 'none';
+    }
+
+    if (stage.subPhases) {
+      for (const sub of stage.subPhases) {
+        const pfx = stage.id + '-' + sub.id;
+        const isActiveSub = isActive && sub.id === currentSubPhase;
+        const hdr = document.getElementById('subhdr-' + pfx);
+        if (hdr) hdr.className = 'sub-hdr' + (isActiveSub ? ' active' : '');
+        renderControls(sub.controls, pfx, fd, isActiveSub);
+      }
+    } else {
+      renderControls(stage.controls, stage.id, fd, isActive);
+    }
+  }
+}
+
+function renderControls(controls, pfx, fd, isActive) {
+  for (const ctrl of controls) {
+    const id = pfx + '-' + ctrl.id;
+    const ct = document.getElementById('ct-' + id);
+    const cs = document.getElementById('cs-' + id);
+    const ca = document.getElementById('ca-' + id);
+    const cd = document.getElementById('cd-' + id);
+    const row= document.getElementById('row-' + id);
+    if (!ct) continue;
+
+    ct.textContent = ctrl.target(tuning);
+    cs.textContent = ctrl.set(fd, live, tuning);
+    ca.textContent = ctrl.actual(fd);
+
+    if (isActive) {
+      const ok = ctrl.ok(fd, tuning);
+      cd.className = 'dot ' + (ok ? 'ok' : 'warn');
+    } else {
+      cd.className = 'dot dim';
+    }
+
+    const isLastCmd = isActive && lastCmd && ctrl.cmds.length > 0 && ctrl.cmds.includes(lastCmd.type);
+    row.className = isLastCmd ? 'last-cmd' : '';
+  }
+}
+
+function renderLastCmd() {
+  const bar = document.getElementById('lcmd');
+  if (!lastCmd) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  document.getElementById('lcmd-type').textContent = lastCmd.type;
+  document.getElementById('lcmd-val').textContent  = '= ' + lastCmd.value;
+  document.getElementById('lcmd-desc').textContent = lastCmd.description || '';
+  const ago = Math.round((Date.now() - lastCmd.time) / 1000);
+  document.getElementById('lcmd-ago').textContent  = ago + 's ago';
+}
+
+function toggleAuto() {
+  clearInterval(autoTimer);
+  if (document.getElementById('auto').checked) autoTimer = setInterval(poll, 2000);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+loadChecklist().then(() => {
+  buildStages();
+  renderAllChecklists();
+  poll();
+  autoTimer = setInterval(poll, 2000);
+});
+</script>
+</body>
+</html>
