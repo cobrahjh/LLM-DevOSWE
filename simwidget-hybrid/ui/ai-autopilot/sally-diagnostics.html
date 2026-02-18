@@ -108,8 +108,20 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 <!-- Last command -->
 <div class="last-cmd" id="last-cmd">Loading...</div>
 
-<!-- Enable/Disable -->
+<!-- Server Status -->
 <div class="section" style="margin-top:10px">
+  <div class="section-title">Server Status</div>
+  <div class="cards" id="srv-cards"><div class="card"><div class="card-label">Server</div><div class="card-val">Loading…</div></div></div>
+  <div class="btn-row" style="margin-top:6px">
+    <button class="btn green sm ctrl-btn" id="srv-start-btn" onclick="startServer()" style="display:none">▶ Start</button>
+    <button class="btn warn sm ctrl-btn" onclick="restartServer()">⟳ Restart</button>
+    <button class="btn red sm ctrl-btn" onclick="stopServer()">■ Stop</button>
+  </div>
+  <div id="srv-msg" style="display:none;margin-top:6px;font-size:10px;color:#d29922"></div>
+</div>
+
+<!-- Enable/Disable -->
+<div class="section">
   <div class="section-title">Sally Control</div>
   <div class="btn-row">
     <button class="btn green ctrl-btn" onclick="api('POST','/api/ai-autopilot/enable')">Enable Sally</button>
@@ -455,6 +467,79 @@ async function applyAllTuning() {
   });
   await api('POST', '/api/ai-pilot/tuning', updates);
 }
+
+// ── Server health ─────────────────────────────────────────────────────────
+let srvOnline = true;
+
+async function pollHealth() {
+  try {
+    const r = await fetch('/api/health');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    srvOnline = true;
+    renderHealth(d);
+  } catch(e) {
+    srvOnline = false;
+    renderHealthOffline();
+  }
+}
+
+function renderHealth(d) {
+  const sc = d.simconnect || {};
+  const mem = d.memory || {};
+  document.getElementById('srv-cards').innerHTML = [
+    card('Server', 'ONLINE', 'ok'),
+    card('Version', d.version || '?', ''),
+    card('Uptime', d.uptimeFormatted || '?', 'ok'),
+    card('SimConnect', sc.connected ? 'CONNECTED' : 'DISCONNECTED', sc.connected ? 'ok' : 'warn'),
+    card('WS Clients', String(d.websocket?.clients ?? '?'), ''),
+    card('Memory', mem.heapUsed || '?', ''),
+  ].join('');
+  document.getElementById('srv-start-btn').style.display = 'none';
+  hideSrvMsg();
+}
+
+function renderHealthOffline() {
+  document.getElementById('srv-cards').innerHTML = card('Server', 'OFFLINE', 'err');
+  document.getElementById('srv-start-btn').style.display = '';
+}
+
+function showSrvMsg(msg) {
+  const el = document.getElementById('srv-msg');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+function hideSrvMsg() {
+  document.getElementById('srv-msg').style.display = 'none';
+}
+
+async function restartServer() {
+  if (!confirm('Restart SimWidget server?')) return;
+  showSrvMsg('Restarting… reconnecting in 5s');
+  try { await fetch('/api/shutdown', { method: 'POST' }); } catch(_) {}
+  let t = 5;
+  const iv = setInterval(() => {
+    t--;
+    if (t <= 0) { clearInterval(iv); location.reload(); }
+    else { showSrvMsg('Restarting… reconnecting in ' + t + 's'); }
+  }, 1000);
+}
+
+async function stopServer() {
+  if (!confirm('Stop SimWidget server? (Orchestrator will auto-restart it)')) return;
+  showSrvMsg('Stopping server…');
+  try { await fetch('/api/shutdown', { method: 'POST' }); } catch(_) {}
+  setTimeout(() => { showSrvMsg('Server stopped — reload to reconnect'); renderHealthOffline(); }, 1000);
+}
+
+async function startServer() {
+  showSrvMsg('Attempting reconnect…');
+  setTimeout(pollHealth, 1000);
+}
+
+pollHealth();
+setInterval(pollHealth, 10000);
 </script>
 </body>
 </html>
