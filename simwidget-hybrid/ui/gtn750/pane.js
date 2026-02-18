@@ -4151,6 +4151,21 @@ class GTN750Pane extends SimGlassBase {
         banner.style.borderColor = color;
         banner.style.color = color;
         banner.style.boxShadow = `0 0 12px ${color}88`;
+
+        // Add UPDATE button for expired/expiring databases
+        if (!banner.querySelector('.db-update-btn')) {
+            const btn = document.createElement('button');
+            btn.className = 'db-update-btn';
+            btn.textContent = 'UPDATE DATABASE';
+            btn.style.cssText = `
+                display: block; margin-top: 6px; padding: 3px 10px;
+                background: transparent; border: 1px solid ${color}; color: ${color};
+                font-family: Consolas, monospace; font-size: 9px; cursor: pointer;
+                border-radius: 2px;
+            `;
+            btn.addEventListener('click', () => this.startDatabaseUpdate());
+            banner.appendChild(btn);
+        }
     }
 
     /**
@@ -4183,7 +4198,68 @@ class GTN750Pane extends SimGlassBase {
         document.body.appendChild(badge);
     }
 
+    /**
+     * Start AIRAC database update via backend
+     */
+    async startDatabaseUpdate() {
+        const baseUrl = `http://${location.hostname}:${this.serverPort}`;
+        try {
+            const res = await fetch(`${baseUrl}/api/navdb/update`, { method: 'POST' });
+            if (res.status === 409) {
+                return; // Already running
+            }
+            if (!res.ok) {
+                this.showDatabaseWarning('UPDATE FAILED', `Server returned ${res.status}`, '#ff0000');
+                return;
+            }
+            // Start polling
+            this.showDatabaseWarning('UPDATING', 'Downloading FAA CIFP data...', '#00ffff');
+            // Disable the update button
+            const btn = document.querySelector('.db-update-btn');
+            if (btn) { btn.disabled = true; btn.textContent = 'UPDATING...'; }
+
+            this._updatePollTimer = setInterval(() => this.pollUpdateStatus(), 1000);
+        } catch (e) {
+            this.showDatabaseWarning('UPDATE FAILED', e.message, '#ff0000');
+        }
+    }
+
+    /**
+     * Poll backend for AIRAC update progress
+     */
+    async pollUpdateStatus() {
+        const baseUrl = `http://${location.hostname}:${this.serverPort}`;
+        try {
+            const res = await fetch(`${baseUrl}/api/navdb/update-status`);
+            const job = await res.json();
+
+            if (job.status === 'complete') {
+                clearInterval(this._updatePollTimer);
+                this._updatePollTimer = null;
+                // Remove banner, re-check currency
+                const banner = document.getElementById('db-warning-banner');
+                if (banner) banner.remove();
+                this.checkDatabaseCurrency();
+            } else if (job.status === 'error') {
+                clearInterval(this._updatePollTimer);
+                this._updatePollTimer = null;
+                this.showDatabaseWarning('UPDATE FAILED', job.message || 'Unknown error', '#ff0000');
+            } else {
+                // Still running — update banner text
+                this.showDatabaseWarning('UPDATING', job.message || job.status, '#00ffff');
+                const btn = document.querySelector('.db-update-btn');
+                if (btn) { btn.disabled = true; btn.textContent = `${job.progress || 0}%`; }
+            }
+        } catch (e) {
+            // Network error during poll — keep trying
+        }
+    }
+
     destroy() {
+        if (this._updatePollTimer) {
+            clearInterval(this._updatePollTimer);
+            this._updatePollTimer = null;
+        }
         if (this.mapRenderer) this.mapRenderer.stop();
         if (this.dataHandler) this.dataHandler.destroy();
         if (this.flightPlanManager) this.flightPlanManager.destroy();

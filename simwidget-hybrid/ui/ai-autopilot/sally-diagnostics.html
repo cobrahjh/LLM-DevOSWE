@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sally Diagnostics</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 12px; padding: 12px; }
+h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
+.top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.title { color: #58a6ff; font-size: 15px; font-weight: bold; }
+.ts { color: #8b949e; font-size: 10px; }
+.auto-label { color: #8b949e; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+
+/* State cards */
+.cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 5px; padding: 8px 10px; min-width: 110px; }
+.card-label { color: #8b949e; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+.card-val { font-size: 14px; font-weight: bold; color: #f0f6fc; }
+.card-val.ok { color: #3fb950; }
+.card-val.warn { color: #d29922; }
+.card-val.err { color: #f85149; }
+
+/* Issues */
+.issues { margin-bottom: 12px; }
+.issue { padding: 7px 10px; border-radius: 4px; margin-bottom: 5px; line-height: 1.4; }
+.issue.ok  { background: #0d2a18; border-left: 3px solid #3fb950; }
+.issue.warn{ background: #2a1f0d; border-left: 3px solid #d29922; }
+.issue.err { background: #2a0d0d; border-left: 3px solid #f85149; }
+.issue-code { font-size: 9px; color: #8b949e; margin-bottom: 1px; }
+
+/* Sections */
+.section { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+.section-title { color: #8b949e; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
+
+/* Buttons */
+.btn { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-family: monospace; font-size: 11px; }
+.btn:hover { background: #30363d; }
+.btn.blue  { border-color: #58a6ff; color: #58a6ff; }
+.btn.blue:hover  { background: #1c3a5e; }
+.btn.green { border-color: #3fb950; color: #3fb950; }
+.btn.green:hover { background: #0d2a18; }
+.btn.red   { border-color: #f85149; color: #f85149; }
+.btn.red:hover   { background: #2a0d0d; }
+.btn.warn  { border-color: #d29922; color: #d29922; }
+.btn.warn:hover  { background: #2a1f0d; }
+.btn.sm { padding: 3px 7px; font-size: 10px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+
+/* Phases */
+.phase-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.phase-btn { padding: 5px 10px; border-radius: 4px; border: 1px solid #30363d; background: #21262d; color: #8b949e; cursor: pointer; font-family: monospace; font-size: 11px; }
+.phase-btn:hover { border-color: #d29922; color: #d29922; background: #2a1f0d; }
+.phase-btn.current { border-color: #3fb950; color: #3fb950; background: #0d2a18; font-weight: bold; }
+.phase-btn.sub { border-style: dashed; }
+
+/* Tuning */
+.tuning-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tuning-row { display: flex; align-items: center; gap: 6px; }
+.tuning-label { color: #8b949e; font-size: 10px; flex: 1; min-width: 140px; }
+.tuning-input { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 3px 6px; font-family: monospace; font-size: 11px; width: 70px; text-align: right; }
+.tuning-input:focus { outline: none; border-color: #58a6ff; }
+.tuning-unit { color: #8b949e; font-size: 10px; width: 20px; }
+.apply-btn { padding: 2px 8px; font-size: 10px; }
+
+/* ATC */
+.atc-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.atc-input { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 3px 6px; font-family: monospace; font-size: 11px; width: 80px; }
+
+/* Last command */
+.last-cmd { color: #8b949e; font-size: 11px; padding: 6px 8px; background: #161b22; border-radius: 4px; border: 1px solid #21262d; }
+.last-cmd span { color: #c9d1d9; }
+
+/* Toast */
+#toast { position: fixed; bottom: 12px; right: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 8px 14px; font-size: 11px; max-width: 300px; z-index: 999; display: none; }
+#toast.ok  { border-color: #3fb950; color: #3fb950; }
+#toast.err { border-color: #f85149; color: #f85149; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="title">Sally Diagnostics</span>
+  <button class="btn blue sm" onclick="poll()">↻ Refresh</button>
+  <label class="auto-label"><input type="checkbox" id="auto" checked onchange="toggleAuto()"> Auto 3s</label>
+  <span class="ts" id="ts"></span>
+</div>
+
+<!-- State cards -->
+<div class="cards" id="cards"></div>
+
+<!-- Issues -->
+<div class="issues" id="issues"></div>
+
+<!-- Last command -->
+<div class="last-cmd" id="last-cmd">Loading...</div>
+
+<!-- Enable/Disable -->
+<div class="section" style="margin-top:10px">
+  <div class="section-title">Sally Control</div>
+  <div class="btn-row">
+    <button class="btn green" onclick="api('POST','/api/ai-autopilot/enable')">Enable Sally</button>
+    <button class="btn red" onclick="api('POST','/api/ai-autopilot/disable')">Disable Sally</button>
+    <button class="btn warn" onclick="api('POST','/api/ai-autopilot/atc-deactivate')">Clear ATC Gate</button>
+    <button class="btn" onclick="api('POST','/api/ai-autopilot/cleared-takeoff')">Cleared for Takeoff</button>
+    <button class="btn" onclick="requestTaxi()">Request Taxi</button>
+    <button class="btn red sm" onclick="if(confirm('Reset all Sally learning?')) api('POST','/api/ai-pilot/reset-learning')">Reset Learning</button>
+  </div>
+</div>
+
+<!-- Force Phase -->
+<div class="section">
+  <div class="section-title">Force Phase</div>
+  <div class="phase-grid" id="phase-grid"></div>
+  <div style="margin-top:6px">
+    <span style="color:#8b949e;font-size:10px;">TAKEOFF sub-phases:</span>
+    <div class="btn-row" style="margin-top:4px" id="subphase-grid"></div>
+  </div>
+</div>
+
+<!-- Cruise Alt -->
+<div class="section">
+  <div class="section-title">Cruise Altitude</div>
+  <div class="atc-row">
+    <input class="atc-input" type="number" id="cruise-alt" value="8500" min="1000" max="45000" step="500">
+    <span class="tuning-unit">ft</span>
+    <button class="btn blue sm" onclick="setCruiseAlt()">Set</button>
+  </div>
+</div>
+
+<!-- Takeoff Tuning -->
+<div class="section">
+  <div class="section-title">Takeoff Tuning <span style="color:#8b949e;font-size:9px">(live — applied immediately)</span></div>
+  <div class="tuning-grid" id="tuning-grid"></div>
+  <div class="btn-row" style="margin-top:8px">
+    <button class="btn green sm" onclick="applyAllTuning()">Apply All</button>
+    <button class="btn sm" onclick="loadTuning()">↻ Reload from server</button>
+    <button class="btn red sm" onclick="if(confirm('Reset tuning to defaults?')) api('POST','/api/ai-pilot/reset-learning').then(()=>loadTuning())">Reset to defaults</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Tuning parameter definitions ──────────────────────────────────────────
+const TUNING_PARAMS = [
+  { key: 'vrSpeed',            label: 'Vr — rotation speed',          unit: 'kt',  min: 40,  max: 80,  step: 1,  def: 55 },
+  { key: 'rotateElevator',     label: 'Rotate elevator (neg=up)',      unit: '%',   min: -20, max: -2,  step: 0.5, def: -8 },
+  { key: 'liftoffElevator',    label: 'Liftoff elevator (neg=up)',     unit: '%',   min: -15, max: -1,  step: 0.5, def: -5 },
+  { key: 'climbElevator',      label: 'Climb elevator (neg=up)',       unit: '%',   min: -12, max: -1,  step: 0.5, def: -4 },
+  { key: 'rollThrottle',       label: 'Roll/BEFORE_ROLL throttle',     unit: '%',   min: 50,  max: 100, step: 1,  def: 100 },
+  { key: 'liftoffThrottle',    label: 'Liftoff throttle',              unit: '%',   min: 80,  max: 100, step: 1,  def: 100 },
+  { key: 'climbPhaseThrottle', label: 'INITIAL_CLIMB throttle',        unit: '%',   min: 80,  max: 100, step: 1,  def: 100 },
+  { key: 'handoffAgl',         label: 'AP handoff altitude',           unit: 'ft',  min: 200, max: 1500,step: 50, def: 500 },
+  { key: 'handoffSpeedMargin', label: 'AP handoff speed margin (Vs1+)', unit: 'kt', min: 5,   max: 30,  step: 1,  def: 15 },
+  { key: 'liftoffClimbAgl',    label: 'LIFTOFF→INITIAL_CLIMB AGL',    unit: 'ft',  min: 50,  max: 500, step: 10, def: 200 },
+  { key: 'liftoffVsThreshold', label: 'LIFTOFF→INITIAL_CLIMB min VS', unit: 'fpm', min: 50,  max: 500, step: 10, def: 100 },
+  { key: 'liftoffBankThreshold',label:'Bank correction threshold',     unit: '°',   min: 1,   max: 10,  step: 0.5, def: 3 },
+  { key: 'liftoffAileronGain', label: 'Aileron correction gain',       unit: 'x',   min: 0.5, max: 8,   step: 0.5, def: 3 },
+  { key: 'liftoffAileronMax',  label: 'Max aileron deflection',        unit: '%',   min: 10,  max: 60,  step: 1,  def: 30 },
+  { key: 'taxiThrottleMax',    label: 'Taxi max throttle',             unit: '%',   min: 20,  max: 60,  step: 1,  def: 40 },
+  { key: 'taxiTargetGS',       label: 'Taxi target ground speed',      unit: 'kt',  min: 5,   max: 20,  step: 1,  def: 12 },
+  { key: 'taxiBreakawayThrottle',label:'Taxi breakaway throttle',      unit: '%',   min: 20,  max: 60,  step: 1,  def: 40 },
+  { key: 'departureVS',        label: 'Departure VS after AP',         unit: 'fpm', min: 200, max: 1000,step: 50, def: 500 },
+  { key: 'departureSpeed',     label: 'Departure target speed (Vy)',   unit: 'kt',  min: 60,  max: 100, step: 1,  def: 74 },
+  { key: 'departureCruiseAlt', label: 'Departure cruise alt target',   unit: 'ft',  min: 1000,max: 45000,step:500,def: 8500 },
+  { key: 'preflightThrottle',  label: 'Preflight idle-up throttle',    unit: '%',   min: 5,   max: 30,  step: 1,  def: 20 },
+];
+
+const PHASES = ['PREFLIGHT','TAXI','TAKEOFF','CLIMB','CRUISE','DESCENT','APPROACH','LANDING'];
+const SUB_PHASES = ['BEFORE_ROLL','ROLL','ROTATE','LIFTOFF','INITIAL_CLIMB','DEPARTURE'];
+
+let currentPhase = '';
+let currentSubPhase = '';
+let autoTimer = null;
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+buildTuningGrid();
+buildPhaseGrid();
+poll();
+loadTuning();
+autoTimer = setInterval(poll, 3000);
+
+function toggleAuto() {
+  const on = document.getElementById('auto').checked;
+  if (on) { clearInterval(autoTimer); autoTimer = setInterval(poll, 3000); }
+  else { clearInterval(autoTimer); autoTimer = null; }
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────
+async function api(method, url, body) {
+  try {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    const d = await r.json();
+    toast(r.ok ? 'ok' : 'err', r.ok ? (d.success !== false ? '✓ ' + url.split('/').pop() : d.error || 'Failed') : (d.error || 'Error ' + r.status));
+    poll();
+    return d;
+  } catch(e) { toast('err', e.message); }
+}
+
+function toast(type, msg) {
+  const el = document.getElementById('toast');
+  el.className = type;
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.display = 'none', 2500);
+}
+
+// ── Poll diagnostics ──────────────────────────────────────────────────────
+async function poll() {
+  try {
+    const r = await fetch('/api/ai-autopilot/diagnostics');
+    const d = await r.json();
+    renderState(d);
+    document.getElementById('ts').textContent = new Date().toLocaleTimeString();
+  } catch(e) {
+    document.getElementById('ts').textContent = '⚠ ' + e.message;
+  }
+}
+
+function renderState(d) {
+  const fd = d.flightData || {};
+  currentPhase = d.phase || '';
+  currentSubPhase = d.subPhase || '';
+
+  // Cards
+  document.getElementById('cards').innerHTML = [
+    card('Sally', d.enabled ? 'ENABLED' : 'DISABLED', d.enabled ? 'ok' : 'err'),
+    card('Phase', currentPhase + (currentSubPhase ? ' › ' + currentSubPhase : ''), currentPhase === 'TAKEOFF' ? 'warn' : (d.enabled ? 'ok' : '')),
+    card('ATC', d.atcPhase, d.atcPhase === 'INACTIVE' ? 'ok' : (d.atcPhase === 'HOLD_SHORT' ? 'warn' : '')),
+    card('Engine RPM', fd.engineRpm, fd.engineRpm >= 500 ? 'ok' : 'err'),
+    card('Ground Speed', fd.gs + ' kt', ''),
+    card('Throttle', fd.throttle + '%', fd.throttle > 10 ? 'ok' : ''),
+    card('AGL', fd.agl + ' ft', ''),
+    card('Parking Brake', fd.parkingBrake ? 'ON' : 'OFF', fd.parkingBrake ? 'err' : 'ok'),
+    card('AP Master', fd.apMaster ? 'ON' : 'OFF', fd.apMaster ? 'ok' : ''),
+  ].join('');
+
+  // Issues
+  document.getElementById('issues').innerHTML = (d.issues || []).map(i => {
+    const cls = i.code === 'OK' ? 'ok' : (i.code.match(/STUCK|ENGINE_OFF|PARKING_BRAKE/) ? 'err' : 'warn');
+    return `<div class="issue ${cls}"><div class="issue-code">${i.code}</div>${i.msg}</div>`;
+  }).join('');
+
+  // Phase buttons highlight
+  document.querySelectorAll('.phase-btn[data-phase]').forEach(btn => {
+    btn.classList.toggle('current', btn.dataset.phase === currentPhase);
+  });
+  document.querySelectorAll('.phase-btn[data-sub]').forEach(btn => {
+    btn.classList.toggle('current', btn.dataset.sub === currentSubPhase);
+  });
+
+  // Last cmd
+  const lc = d.lastCmd;
+  if (lc) {
+    const ago = Math.round((Date.now() - lc.time) / 1000);
+    document.getElementById('last-cmd').innerHTML = `Last: <span>${lc.type}=${lc.value}</span> — ${escHtml(lc.description)} <span style="color:#8b949e">(${ago}s ago)</span>`;
+  } else {
+    document.getElementById('last-cmd').textContent = 'No commands yet';
+  }
+}
+
+function card(label, val, cls) {
+  return `<div class="card"><div class="card-label">${label}</div><div class="card-val ${cls || ''}">${escHtml(String(val))}</div></div>`;
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Phase grid ────────────────────────────────────────────────────────────
+function buildPhaseGrid() {
+  document.getElementById('phase-grid').innerHTML = PHASES.map(p =>
+    `<button class="phase-btn" data-phase="${p}" onclick="forcePhase('${p}')">${p}</button>`
+  ).join('');
+  document.getElementById('subphase-grid').innerHTML = SUB_PHASES.map(s =>
+    `<button class="phase-btn sub" data-sub="${s}" onclick="forceSubPhase('${s}')">${s}</button>`
+  ).join('');
+}
+
+async function forcePhase(phase) {
+  await api('POST', '/api/ai-autopilot/force-phase', { phase });
+}
+
+async function forceSubPhase(sub) {
+  // Sub-phases are set via shared-state broadcast (pane.js handles them)
+  // Also send directly to the rule engine server endpoint if available
+  const r = await fetch('/api/ai-autopilot/force-subphase', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ subPhase: sub })
+  });
+  if (r.ok) { const d = await r.json(); toast('ok', '✓ SubPhase → ' + sub); poll(); }
+  else { toast('warn', 'Sub-phase: use takeoff-tuner.html for sub-phases'); }
+}
+
+// ── Cruise alt ────────────────────────────────────────────────────────────
+async function setCruiseAlt() {
+  const alt = parseInt(document.getElementById('cruise-alt').value);
+  if (isNaN(alt)) return toast('err', 'Enter a valid altitude');
+  await api('POST', '/api/ai-autopilot/cruise-alt', { altitude: alt });
+}
+
+// ── ATC / taxi ────────────────────────────────────────────────────────────
+async function requestTaxi() {
+  const result = await api('POST', '/api/ai-autopilot/request-taxi');
+  if (result?.route) {
+    toast('ok', `Taxi via ${result.route.taxiways?.join(', ') || '?'} → RWY ${result.runway}`);
+  }
+}
+
+// ── Tuning ────────────────────────────────────────────────────────────────
+function buildTuningGrid() {
+  const grid = document.getElementById('tuning-grid');
+  grid.innerHTML = TUNING_PARAMS.map(p => `
+    <div class="tuning-row">
+      <span class="tuning-label">${p.label}</span>
+      <input class="tuning-input" id="t-${p.key}" type="number" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}" title="${p.key}">
+      <span class="tuning-unit">${p.unit}</span>
+      <button class="btn sm apply-btn" onclick="applyOne('${p.key}')">Set</button>
+    </div>
+  `).join('');
+}
+
+async function loadTuning() {
+  try {
+    const r = await fetch('/api/ai-pilot/tuning');
+    const d = await r.json();
+    const t = d.tuning || {};
+    TUNING_PARAMS.forEach(p => {
+      const el = document.getElementById('t-' + p.key);
+      if (el && t[p.key] != null) el.value = t[p.key];
+    });
+  } catch(e) { /* server may be starting */ }
+}
+
+async function applyOne(key) {
+  const el = document.getElementById('t-' + key);
+  if (!el) return;
+  const val = parseFloat(el.value);
+  if (isNaN(val)) return toast('err', 'Invalid value for ' + key);
+  await api('POST', '/api/ai-pilot/tuning', { [key]: val });
+}
+
+async function applyAllTuning() {
+  const updates = {};
+  TUNING_PARAMS.forEach(p => {
+    const el = document.getElementById('t-' + p.key);
+    if (el) {
+      const v = parseFloat(el.value);
+      if (!isNaN(v)) updates[p.key] = v;
+    }
+  });
+  await api('POST', '/api/ai-pilot/tuning', updates);
+}
+</script>
+</body>
+</html>

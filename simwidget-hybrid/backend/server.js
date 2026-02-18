@@ -3503,6 +3503,120 @@ app.post('/api/ai-autopilot/atc-deactivate', requireApOwner, (req, res) => {
     res.json(ruleEngineServer.deactivateATC());
 });
 
+// ── Diagnostics — self-service stuck detection ─────────────────────────────
+app.get('/api/ai-autopilot/diagnostics', (req, res) => {
+    const state = ruleEngineServer.getState();
+    const fd = flightData || {};
+    const atcPhase = state.atc?.phase || 'INACTIVE';
+    const phase = state.phase;
+    const subPhase = state.subPhase;
+    const engineRpm = fd.engineRpm || 0;
+    const gs = fd.groundSpeed || 0;
+    const agl = fd.altitudeAGL || fd.altitude || 0;
+    const throttle = fd.throttle || 0;
+    const parkingBrake = fd.parkingBrake || false;
+    const apMaster = fd.apMaster || false;
+    const issues = [];
+    const resets = [];
+
+    if (!state.enabled) {
+        issues.push({ code: 'NOT_ENABLED', msg: 'Rule engine is disabled — Sally is not flying' });
+        resets.push({ action: 'POST /api/ai-autopilot/enable', label: 'Enable Sally' });
+    }
+
+    if (state.enabled && phase === 'TAXI') {
+        if (engineRpm < 500) {
+            issues.push({ code: 'ENGINE_OFF', msg: `Engine not running (RPM ${Math.round(engineRpm)}) — auto-start retries every 8s` });
+            resets.push({ action: 'POST /api/ai-autopilot/disable then POST /api/ai-autopilot/enable', label: 'Re-enable to restart preflight sequence' });
+        }
+        if (gs < 1 && engineRpm >= 500 && throttle > 10) {
+            issues.push({ code: 'STUCK_GS0', msg: `Engine running, throttle ${Math.round(throttle)}%, but GS=0 — plane physically blocked (gate/nose-in parking)?` });
+            resets.push({ action: 'Manual: reposition aircraft nose-out, then re-enable', label: 'Reposition aircraft' });
+        }
+        if (atcPhase !== 'INACTIVE' && atcPhase !== 'CLEARED_TAKEOFF') {
+            issues.push({ code: 'ATC_GATE', msg: `ATC phase="${atcPhase}" is blocking TAXI→TAKEOFF transition (needs INACTIVE or CLEARED_TAKEOFF)` });
+            resets.push({ action: 'POST /api/ai-autopilot/atc-deactivate', label: 'Clear ATC gate (if already on runway)' });
+            if (atcPhase === 'HOLD_SHORT' || atcPhase === 'TAKEOFF_CLEARANCE_PENDING') {
+                resets.push({ action: 'POST /api/ai-autopilot/cleared-takeoff', label: 'Issue takeoff clearance' });
+            }
+            if (atcPhase === 'PARKED') {
+                resets.push({ action: 'POST /api/ai-autopilot/request-taxi', label: 'Request taxi clearance' });
+            }
+        }
+        if (parkingBrake) {
+            issues.push({ code: 'PARKING_BRAKE', msg: 'Parking brake is ON — Sally sends release but sim may be ignoring it' });
+            resets.push({ action: 'Manual: press B in MSFS to release parking brake', label: 'Release parking brake manually' });
+        }
+    }
+
+    if (state.enabled && phase === 'TAKEOFF') {
+        if (subPhase === 'BEFORE_ROLL' && gs < 1) {
+            issues.push({ code: 'BEFORE_ROLL_STUCK', msg: 'Stuck in BEFORE_ROLL — needs GS > 3kt to advance to ROLL. Engine running?' });
+        }
+        if (subPhase === 'ROTATE' && agl < 5 && gs > 30) {
+            issues.push({ code: 'NOT_LIFTING', msg: `ROTATE phase but AGL=${Math.round(agl)}ft — elevator may not have enough authority (joystick fighting?)` });
+        }
+        if (subPhase === 'INITIAL_CLIMB' && !apMaster) {
+            issues.push({ code: 'AP_NOT_ENGAGED', msg: 'INITIAL_CLIMB: waiting for AP_MASTER to confirm engagement before advancing to DEPARTURE' });
+        }
+        if (atcPhase !== 'INACTIVE' && gs > 25) {
+            issues.push({ code: 'ATC_TAKEOFF_GATE', msg: `ATC phase="${atcPhase}" — should be INACTIVE during TAKEOFF sub-phases` });
+            resets.push({ action: 'POST /api/ai-autopilot/atc-deactivate', label: 'Clear ATC' });
+        }
+    }
+
+    if (state.enabled && (phase === 'PREFLIGHT' || phase === 'TAXI') && agl > 100) {
+        issues.push({ code: 'PHASE_BEHIND', msg: `Flight phase=${phase} but AGL=${Math.round(agl)}ft — Sally thinks she is on the ground but is airborne` });
+        resets.push({ action: 'POST /api/ai-autopilot/force-phase with body {"phase":"CLIMB"}', label: 'Force phase to CLIMB' });
+    }
+
+    if (issues.length === 0 && state.enabled) {
+        issues.push({ code: 'OK', msg: `No issues detected — phase=${phase} subPhase=${subPhase || 'n/a'} atc=${atcPhase}` });
+    }
+
+    res.json({
+        enabled: state.enabled,
+        phase,
+        subPhase,
+        atcPhase,
+        flightData: { engineRpm: Math.round(engineRpm), gs: Math.round(gs * 10) / 10, agl: Math.round(agl), throttle: Math.round(throttle), parkingBrake, apMaster },
+        issues,
+        resets,
+        lastCmd: state.commandLog?.[0] || null
+    });
+});
+
+// ── Force-phase reset (emergency override) ────────────────────────────────
+app.post('/api/ai-autopilot/force-phase', requireApOwner, (req, res) => {
+    const { phase } = req.body || {};
+    const PHASES = ['PREFLIGHT', 'TAXI', 'TAKEOFF', 'CLIMB', 'CRUISE', 'DESCENT', 'APPROACH', 'LANDING'];
+    if (!phase || !PHASES.includes(phase)) {
+        return res.status(400).json({ error: `phase must be one of: ${PHASES.join(', ')}` });
+    }
+    ruleEngineServer.flightPhase.forcePhase(phase);
+    res.json({ success: true, phase: ruleEngineServer.flightPhase.phase });
+});
+
+// ── Force takeoff sub-phase ───────────────────────────────────────────────
+app.post('/api/ai-autopilot/force-subphase', requireApOwner, (req, res) => {
+    const { subPhase } = req.body || {};
+    const SUB_PHASES = ['BEFORE_ROLL', 'ROLL', 'ROTATE', 'LIFTOFF', 'INITIAL_CLIMB', 'DEPARTURE'];
+    if (!subPhase || !SUB_PHASES.includes(subPhase)) {
+        return res.status(400).json({ error: `subPhase must be one of: ${SUB_PHASES.join(', ')}` });
+    }
+    // Must be in TAKEOFF phase for sub-phases
+    const currentPhaseEngine = ruleEngineServer.currentPhaseEngine;
+    if (currentPhaseEngine && typeof currentPhaseEngine._takeoffSubPhase !== 'undefined') {
+        currentPhaseEngine._takeoffSubPhase = subPhase;
+        if (subPhase === 'ROTATE') currentPhaseEngine._rotateStartTime = Date.now();
+    }
+    // Also force the flight phase to TAKEOFF so sub-phases run
+    if (ruleEngineServer.flightPhase.phase !== 'TAKEOFF') {
+        ruleEngineServer.flightPhase.forcePhase('TAKEOFF');
+    }
+    res.json({ success: true, subPhase, phase: ruleEngineServer.flightPhase.phase });
+});
+
 // ── Device Management (flight controller disable/enable for AI autopilot) ──
 // Hardware throttle/joystick axes override ALL software commands in MSFS 2024.
 // Solution: disable flight sim peripherals at Windows PnP level when AI is active.

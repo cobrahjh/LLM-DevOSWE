@@ -8,9 +8,13 @@
 
 const path = require('path');
 const fs = require('fs');
+const { execFile } = require('child_process');
 
 const DB_PATH = path.join(__dirname, 'data', 'navdb.sqlite');
 let db = null;
+
+// ── AIRAC Update Job ─────────────────────────────────────────────
+let updateJob = { status: 'idle', progress: 0, message: null, startedAt: null };
 
 // Earth radius in nautical miles
 const R_NM = 3440.065;
@@ -553,7 +557,62 @@ function setupNavdataRoutes(app) {
         });
     });
 
+    // ── AIRAC Database Update ───────────────────────────────────────
+
+    app.post('/api/navdb/update', (req, res) => {
+        if (updateJob.status !== 'idle' && updateJob.status !== 'complete' && updateJob.status !== 'error') {
+            return res.status(409).json({ error: 'Update already in progress', status: updateJob.status });
+        }
+        runUpdate();
+        res.json({ started: true, message: 'AIRAC database update started' });
+    });
+
+    app.get('/api/navdb/update-status', (req, res) => {
+        res.json({ ...updateJob });
+    });
+
     console.log('[NavDB] API routes registered (/api/navdb/*)');
+}
+
+// ── Run AIRAC Update ─────────────────────────────────────────────
+function runUpdate() {
+    updateJob = { status: 'downloading', progress: 25, message: 'Downloading FAA CIFP data...', startedAt: Date.now() };
+
+    // Close DB so SQLite file can be replaced
+    if (db) {
+        try { db.close(); } catch (e) { /* ignore */ }
+        db = null;
+    }
+
+    const buildScript = path.join(__dirname, '..', 'tools', 'navdata', 'build-navdb.js');
+    const child = execFile('node', [buildScript], { timeout: 300000 }, (err, stdout, stderr) => {
+        if (err) {
+            console.error('[NavDB] Update failed:', err.message);
+            updateJob = { status: 'error', progress: 0, message: err.message, startedAt: updateJob.startedAt };
+        } else {
+            console.log('[NavDB] Update complete');
+            updateJob = { status: 'complete', progress: 100, message: 'AIRAC database updated successfully', startedAt: updateJob.startedAt };
+        }
+        // Reopen DB
+        openDatabase();
+    });
+
+    // Monitor stdout for phase changes
+    child.stdout.on('data', (data) => {
+        const text = data.toString();
+        if (text.includes('[CIFP] Extracting')) {
+            updateJob.status = 'extracting';
+            updateJob.progress = 40;
+            updateJob.message = 'Extracting CIFP archive...';
+        } else if (text.includes('parseCIFP') || text.includes('Parsing') || text.includes('airports')) {
+            updateJob.status = 'parsing';
+            updateJob.progress = 60;
+            updateJob.message = 'Parsing ARINC 424 data into SQLite...';
+        } else if (text.includes('Verification') || text.includes('Verify')) {
+            updateJob.progress = 90;
+            updateJob.message = 'Verifying database...';
+        }
+    });
 }
 
 // ── Helpers ────────────────────────────────────────────────────────

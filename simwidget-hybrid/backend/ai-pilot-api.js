@@ -1286,6 +1286,18 @@ CRITICAL: Your spoken text is read aloud via TTS. NEVER mention "JSON", "COMMAND
         res.json({ tuning: _sharedState.tuning || null });
     });
 
+    // Set individual tuning values (from diagnostics UI or external tool)
+    app.post('/api/ai-pilot/tuning', express_json_guard, (req, res) => {
+        const updates = req.body;
+        if (!updates || typeof updates !== 'object') {
+            return res.status(400).json({ error: 'Body must be a tuning params object' });
+        }
+        _sharedState.tuning = { ...(_sharedState.tuning || {}), ...updates };
+        _sharedState.lastUpdate = Date.now();
+        console.log('[AI-Pilot] Tuning updated via API:', JSON.stringify(updates));
+        res.json({ ok: true, tuning: _sharedState.tuning });
+    });
+
     // Reset all Sally learning — clears learnings, attempts, tuning, and tells browsers to wipe localStorage
     app.post('/api/ai-pilot/reset-learning', (req, res) => {
         // Archive before clearing

@@ -774,22 +774,42 @@ class AiAutopilotPane extends SimGlassBase {
         });
 
         // AI Has Controls toggle (session-locked)
+        // Enabling this button is the single action that gives Sally full control:
+        // it enables the server-side rule engine AND starts the LLM advisory loop.
         this.elements.autoControlsBtn?.addEventListener('click', () => {
             if (this._sessionLocked) return;  // Read-only mode
-            if (!this.aiEnabled) {
-                this.aiEnabled = true;
-            }
-            this._autoControlsEnabled = !this._autoControlsEnabled;
-            if (this._autoControlsEnabled) {
-                this._autoAdvise();  // immediate first run
-                this._autoAdviseTimer = setInterval(() => this._autoAdvise(), this._autoAdviseInterval);
-            } else {
-                if (this._autoAdviseTimer) {
-                    clearInterval(this._autoAdviseTimer);
-                    this._autoAdviseTimer = null;
-                }
-            }
-            this._render();
+            const enabling = !this._autoControlsEnabled;
+            const endpoint = enabling ? '/api/ai-autopilot/enable' : '/api/ai-autopilot/disable';
+            this._apFetchPost(endpoint)
+                .then(r => {
+                    if (r.status === 403) {
+                        r.json().then(d => {
+                            this._dbg('cmd', `<span class="err">Locked by ${this._esc(d.ownerHostname || 'another pane')}</span>`);
+                            this._applyLockState({ isOwner: false, ownerHostname: d.ownerHostname });
+                            this._renderLockState();
+                        });
+                        return null;
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    this.aiEnabled = data.enabled;
+                    this._autoControlsEnabled = enabling && data.enabled;
+                    if (this._autoControlsEnabled) {
+                        this._autoAdvise();  // immediate first run
+                        this._autoAdviseTimer = setInterval(() => this._autoAdvise(), this._autoAdviseInterval);
+                    } else {
+                        if (this._autoAdviseTimer) {
+                            clearInterval(this._autoAdviseTimer);
+                            this._autoAdviseTimer = null;
+                        }
+                    }
+                    this._render();
+                })
+                .catch(err => {
+                    console.error('[AI-AP] AI Has Controls toggle failed:', err);
+                });
         });
     }
 
@@ -1599,20 +1619,28 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 }
                 this._render();
                 break;
-            case 'toggle-controls':
-                if (!this.aiEnabled) this.aiEnabled = true;
-                this._autoControlsEnabled = !this._autoControlsEnabled;
-                if (this._autoControlsEnabled) {
-                    this._autoAdvise();
-                    this._autoAdviseTimer = setInterval(() => this._autoAdvise(), this._autoAdviseInterval);
-                } else {
-                    if (this._autoAdviseTimer) {
-                        clearInterval(this._autoAdviseTimer);
-                        this._autoAdviseTimer = null;
-                    }
-                }
-                this._render();
+            case 'toggle-controls': {
+                const tcEnabling = !this._autoControlsEnabled;
+                const tcEndpoint = tcEnabling ? '/api/ai-autopilot/enable' : '/api/ai-autopilot/disable';
+                this._apFetchPost(tcEndpoint)
+                    .then(r => r.json())
+                    .then(data => {
+                        this.aiEnabled = data.enabled;
+                        this._autoControlsEnabled = tcEnabling && data.enabled;
+                        if (this._autoControlsEnabled) {
+                            this._autoAdvise();
+                            this._autoAdviseTimer = setInterval(() => this._autoAdvise(), this._autoAdviseInterval);
+                        } else {
+                            if (this._autoAdviseTimer) {
+                                clearInterval(this._autoAdviseTimer);
+                                this._autoAdviseTimer = null;
+                            }
+                        }
+                        this._render();
+                    })
+                    .catch(() => this._render());
                 break;
+            }
             case 'import-fpl':
                 this._importSimBrief();
                 break;
