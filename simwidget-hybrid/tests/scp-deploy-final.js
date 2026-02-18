@@ -14,6 +14,7 @@ const FILES = [
     'ui/ai-autopilot/pane.js',
     'ui/ai-autopilot/browser-console-test.js',
     'ui/ai-autopilot/sally-diagnostics.html',
+    'ui/ai-autopilot/sally-flight-monitor.html',
     'backend/ai-pilot-api.js',
     'backend/server.js',
 ];
