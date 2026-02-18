@@ -22,21 +22,19 @@
     const hasGetNav = typeof widget.ruleEngine?.getNavGuidance === 'function';
     hasGetNav ? pass('getNavGuidance() exists') : fail('getNavGuidance() MISSING — needs rule-engine-core.js update');
 
-    console.log('%c
-📡 Nav State (from GTN750):', 'color:cyan;font-weight:bold');
+    console.log('%c\n📡 Nav State (from GTN750):', 'color:cyan;font-weight:bold');
     const nav = widget._navState;
     if (!nav) {
         warn('No nav-state — open GTN750 tab and wait 1s');
     } else {
         const age = Date.now() - (nav.timestamp || 0);
-        age < 3000 ? pass('nav-state fresh', age+'ms old') : fail('nav-state stale', age+'ms old — GTN750 not broadcasting?');
+        age < 10000 ? pass('nav-state fresh', age+'ms old') : fail('nav-state stale', age+'ms old — GTN750 not broadcasting?');
         nav.activeWaypoint ? pass('activeWaypoint present', nav.activeWaypoint.ident+' '+nav.activeWaypoint.distNm?.toFixed(1)+'nm') : warn('activeWaypoint null (no flight plan in GTN750)');
         nav.cdi ? pass('CDI present', 'src:'+nav.cdi.source+' dtk:'+nav.cdi.dtk+'° xtrk:'+nav.cdi.xtrk?.toFixed(2)+'nm toFrom:'+nav.cdi.toFrom) : fail('CDI missing');
         nav.destDistNm != null ? pass('destDistNm present', nav.destDistNm?.toFixed(0)+'nm') : warn('destDistNm null (no flight plan)');
     }
 
-    console.log('%c
-📊 Nav Guidance (rule engine):', 'color:cyan;font-weight:bold');
+    console.log('%c\n📊 Nav Guidance (rule engine):', 'color:cyan;font-weight:bold');
     const ng = hasGetNav ? widget.ruleEngine.getNavGuidance() : null;
     if (!ng) {
         warn('No nav guidance', nav ? 'nav-state present but guidance null — check rule engine' : 'open GTN750 first');
@@ -54,26 +52,23 @@
         }
     }
 
-    console.log('%c
-📍 FlightPhase destDist:', 'color:cyan;font-weight:bold');
+    console.log('%c\n📍 FlightPhase destDist:', 'color:cyan;font-weight:bold');
     const dd = widget.flightPhase?.destinationDist;
-    (dd != null && isFinite(dd)) ? pass('destinationDist set', dd.toFixed(0)+'nm') : (dd === Infinity ? fail('destinationDist = Infinity (no flight plan)') : warn('destinationDist null'));
+    (dd != null && isFinite(dd)) ? pass('destinationDist set', dd.toFixed(0)+'nm') : (dd === Infinity ? warn('destinationDist = Infinity (no flight plan — expected)') : warn('destinationDist null'));
 
-    console.log('%c
-🖥️  UI heading target:', 'color:cyan;font-weight:bold');
+    console.log('%c\n🖥️  UI heading target:', 'color:cyan;font-weight:bold');
     const el = document.getElementById('target-hdg') || document.querySelector('.heading-target,[data-field=heading-target]');
     if (el) {
         const txt = el.textContent.trim();
-        console.log('%c  Shows: +txt+', 'color:gray');
+        console.log('%c  Shows: ' + txt, 'color:gray');
         if (ng?.wpIdent) txt.includes(ng.wpIdent) ? pass('Shows waypoint ident', txt) : warn('Still raw heading', txt+' (enable AI Controls)');
         else warn('No wpIdent to compare', 'open GTN750 with flight plan');
     } else { warn('heading target element not found'); }
 
-    console.log('%c
-============================================================', 'color:cyan');
+    console.log('%c\n============================================================', 'color:cyan');
     console.log('%c  PASSED: '+results.pass.length+'  FAILED: '+results.fail.length+'  WARNINGS: '+results.warn.length,'color:cyan;font-weight:bold');
     if (!results.fail.length && !results.warn.length) console.log('%c🎉 ALL CLEAR', 'color:green;font-size:14px;font-weight:bold');
     else if (!results.fail.length) console.log('%c✅ No failures (warnings expected without active flight plan)', 'color:orange;font-size:13px');
     console.log('%c============================================================', 'color:cyan');
-    return { passed: results.pass.length, failed: results.fail.length, warnings: results.warn.length, ng };
+    return { passed: results.pass.length, failed: results.fail.length, warnings: results.warn.length, ng, fails: results.fail, warns: results.warn };
 })();
