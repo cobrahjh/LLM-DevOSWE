@@ -541,7 +541,8 @@ class RuleEngineCore {
      * @returns {number} intercept heading (degrees)
      */
     _computeInterceptHeading(dtk, xtrk, toFrom) {
-        if (toFrom === 'FROM') return dtk; // past waypoint — just track DTK
+        // Accept both string 'FROM' and SimConnect numeric 2
+        if (toFrom === 'FROM' || toFrom === 2) return dtk; // past waypoint — just track DTK
 
         const absXtrk = Math.abs(xtrk);
         let interceptAngle = 0;
@@ -1070,6 +1071,47 @@ class RuleEngineCore {
     /** Set nav state from GTN750 (called from pane via SafeChannel) */
     setNavState(nav) {
         this._navState = nav || null;
+    }
+
+    /**
+     * Get nav guidance data for UI display and heading decisions.
+     * Returns null if no nav state available.
+     * @returns {{ wpIdent, wpDist, wpBearing, cdiSource, xtrk, dtk, toFrom, navMode, interceptHdg, destDist } | null}
+     */
+    getNavGuidance() {
+        const nav = this._navState;
+        if (!nav) return null;
+
+        const wp = nav.activeWaypoint || null;
+        const cdi = nav.cdi || null;
+
+        // Normalize toFrom: SimConnect sends 1=TO, 2=FROM, 0=inactive. Also handle string 'FROM'.
+        let toFrom = 'TO';
+        const rawToFrom = cdi?.toFrom;
+        if (rawToFrom === 2 || rawToFrom === 'FROM') toFrom = 'FROM';
+        else if (rawToFrom === 0) toFrom = 'INACTIVE';
+
+        // NAV mode: CDI source valid, on TO leg, within 2nm
+        const useNav = !!(cdi?.source && toFrom === 'TO' && Math.abs(cdi.xtrk || 0) <= 2.0);
+
+        // Intercept heading from CDI
+        let interceptHdg = null;
+        if (cdi?.dtk != null) {
+            interceptHdg = this._computeInterceptHeading(cdi.dtk, cdi.xtrk || 0, toFrom);
+        }
+
+        return {
+            wpIdent:    wp?.ident      ?? null,
+            wpDist:     wp?.distNm     ?? null,
+            wpBearing:  wp?.bearingMag ?? null,
+            cdiSource:  cdi?.source    ?? null,
+            xtrk:       cdi?.xtrk     ?? null,
+            dtk:        cdi?.dtk      ?? null,
+            toFrom,
+            navMode:    useNav ? 'NAV' : 'HDG',
+            interceptHdg,
+            destDist:   nav.destDistNm ?? null,
+        };
     }
 
     /** Set flight plan for execution (called from pane when GTN750 sends plan) */

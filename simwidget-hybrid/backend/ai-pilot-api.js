@@ -1214,8 +1214,9 @@ CRITICAL: Your spoken text is read aloud via TTS. NEVER mention "JSON", "COMMAND
     // ── Shared State API (cross-machine pane sync) ───────────────────
     app.post('/api/ai-pilot/shared-state', express_json_guard, (req, res) => {
         const { key, data } = req.body;
-        if (!key || (key !== 'autopilot' && key !== 'nav')) {
-            return res.status(400).json({ error: 'key must be "autopilot" or "nav"' });
+        const VALID_KEYS = ['autopilot', 'nav', 'airport', 'tuning'];
+        if (!key || !VALID_KEYS.includes(key)) {
+            return res.status(400).json({ error: `key must be one of: ${VALID_KEYS.join(', ')}` });
         }
         _sharedState[key] = data;
         _sharedState.lastUpdate = Date.now();
