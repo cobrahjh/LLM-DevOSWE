@@ -3404,6 +3404,33 @@ app.post('/api/ai-autopilot/unregister', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/ai-autopilot/takeover', (req, res) => {
+    const { sessionId } = req.body || {};
+    if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
+
+    _apEvictStale();
+    const clientIp = (req.ip || req.connection?.remoteAddress || '').replace(/^::ffff:/, '');
+
+    // Auto-register if not yet known
+    if (!_apSessions.has(sessionId)) {
+        _apSessions.set(sessionId, { hostname: clientIp || 'unknown', lastHeartbeat: Date.now(), registeredAt: Date.now() });
+    } else {
+        _apSessions.get(sessionId).lastHeartbeat = Date.now();
+    }
+
+    const prevOwner = _apOwnerSessionId;
+    _apOwnerSessionId = sessionId;
+
+    if (prevOwner && prevOwner !== sessionId) {
+        console.log(`[AP-Lock] Takeover: ${sessionId} (${clientIp}) evicted ${prevOwner}`);
+    } else {
+        console.log(`[AP-Lock] Takeover: ${sessionId} (${clientIp}) claimed`);
+    }
+
+    const lock = _apLockInfo();
+    res.json({ isOwner: true, ownerSessionId: lock.ownerSessionId, ownerHostname: lock.ownerHostname });
+});
+
 app.get('/api/ai-autopilot/sessions', (req, res) => {
     _apEvictStale();
     const sessions = [];

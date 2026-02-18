@@ -35,9 +35,10 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 .section-title { color: #8b949e; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
 
 /* Session badge */
-.sd-badge { font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.8px; text-transform: uppercase; }
-.sd-badge.active { background: #0d2a18; border: 1px solid #3fb950; color: #3fb950; }
-.sd-badge.viewer { background: #2a1f0d; border: 1px solid #d29922; color: #d29922; }
+.sd-badge { font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 3px; letter-spacing: 0.8px; text-transform: uppercase; font-family: monospace; }
+.sd-badge.active { background: #0d2a18; border: 1px solid #3fb950; color: #3fb950; cursor: default; }
+.sd-badge.viewer { background: #2a1f0d; border: 1px solid #d29922; color: #d29922; cursor: pointer; }
+.sd-badge.viewer:hover { background: #3a2a0d; border-color: #e6a817; }
 
 /* Lock banner */
 .sd-lock-banner { background: #2a1f0d; border: 1px solid #d29922; border-radius: 5px; color: #d29922; font-size: 11px; padding: 7px 12px; margin-bottom: 10px; display: none; }
@@ -91,7 +92,7 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 
 <div class="top">
   <span class="title">Sally Diagnostics</span>
-  <span class="sd-badge viewer" id="sd-badge">...</span>
+  <button class="sd-badge viewer" id="sd-badge" onclick="takeoverSession()">...</button>
   <button class="btn blue sm" onclick="poll()">↻ Refresh</button>
   <label class="auto-label"><input type="checkbox" id="auto" checked onchange="toggleAuto()"> Auto 3s</label>
   <span class="ts" id="ts"></span>
@@ -202,16 +203,33 @@ function renderLockState() {
   const banner = document.getElementById('sd-lock-banner');
   if (sessionLocked) {
     badge.className = 'sd-badge viewer';
-    badge.textContent = 'VIEWER';
+    badge.innerHTML = '&#9679; VIEWER';
+    badge.title = 'Click to take control';
+    badge.style.cursor = 'pointer';
     banner.textContent = `Controlled by ${lockOwnerHostname || 'another pane'} — read-only mode`;
     banner.style.display = '';
   } else {
     badge.className = 'sd-badge active';
-    badge.textContent = 'ACTIVE';
+    badge.innerHTML = '&#9679; ACTIVE';
+    badge.title = 'You have control';
+    badge.style.cursor = 'default';
     banner.style.display = 'none';
   }
   // Disable/enable all control buttons
   document.querySelectorAll('.ctrl-btn').forEach(b => b.disabled = sessionLocked);
+}
+
+async function takeoverSession() {
+  if (!sessionLocked) return;
+  try {
+    const r = await fetch('/api/ai-autopilot/takeover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: SESSION_ID, hostname: SESSION_HOST })
+    });
+    if (r.ok) { applyLockState(await r.json()); renderLockState(); toast('ok', '✓ Took control'); }
+    else { toast('err', 'Takeover failed'); }
+  } catch(e) { toast('err', e.message); }
 }
 
 window.addEventListener('pagehide', () => {

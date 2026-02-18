@@ -120,26 +120,43 @@
 
 /* Session Role Badge (ACTIVE / VIEWER) */
 .ap-session-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     margin-left: 8px;
-    padding: 1px 7px;
+    padding: 2px 8px;
     border-radius: 3px;
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 1px;
     vertical-align: middle;
+    border: none;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
 }
 
 .ap-session-badge.active {
     background: rgba(0, 200, 83, 0.15);
     border: 1px solid rgba(0, 200, 83, 0.4);
     color: #00c853;
+    cursor: default;
 }
 
 .ap-session-badge.viewer {
     background: rgba(239, 83, 80, 0.12);
     border: 1px solid rgba(239, 83, 80, 0.3);
     color: #ef5350;
+    cursor: pointer;
+}
+
+.ap-session-badge.viewer:hover {
+    background: rgba(239, 83, 80, 0.22);
+    border-color: rgba(239, 83, 80, 0.6);
+}
+
+.ap-session-badge .badge-icon {
+    font-size: 8px;
+    line-height: 1;
 }
 
 /* Phase Section */

@@ -3605,17 +3605,21 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // Session role badge next to title
         let badge = document.getElementById('ap-session-badge');
         if (!badge) {
-            badge = document.createElement('span');
+            badge = document.createElement('button');
             badge.id = 'ap-session-badge';
             const title = document.querySelector('.widget-title');
             if (title) title.parentNode.insertBefore(badge, title.nextSibling);
         }
         if (this._sessionLocked) {
             badge.className = 'ap-session-badge viewer';
-            badge.textContent = 'VIEWER';
+            badge.innerHTML = '<span class="badge-icon">&#9679;</span>VIEWER';
+            badge.title = 'Click to take control';
+            badge.onclick = () => this._takeoverSession();
         } else {
             badge.className = 'ap-session-badge active';
-            badge.textContent = 'ACTIVE';
+            badge.innerHTML = '<span class="badge-icon">&#9679;</span>ACTIVE';
+            badge.title = 'You have control';
+            badge.onclick = null;
         }
 
         // Disable/enable toggle buttons when locked
@@ -3628,6 +3632,24 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this.elements.autoControlsBtn.disabled = this._sessionLocked;
             this.elements.autoControlsBtn.style.opacity = this._sessionLocked ? '0.4' : '';
             this.elements.autoControlsBtn.style.pointerEvents = this._sessionLocked ? 'none' : '';
+        }
+    }
+
+    async _takeoverSession() {
+        try {
+            const res = await fetch('/api/ai-autopilot/takeover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: this._paneSessionId, hostname: this._paneHostname })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this._applyLockState(data);
+                this._renderLockState();
+                this._dbg('cmd', '<span class="ok">Session taken over — now ACTIVE</span>');
+            }
+        } catch (e) {
+            console.warn('[AP-Lock] Takeover failed:', e.message);
         }
     }
 
