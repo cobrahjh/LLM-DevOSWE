@@ -257,6 +257,18 @@ app.use(usageMetrics.middleware());
 const sharedUIPath = path.join(__dirname, '../shared-ui');
 app.use('/shared-ui', express.static(sharedUIPath));
 
+// IP restriction: ai-autopilot UI and API only accessible from commander-pc (.42)
+const COMMANDER_IP = '192.168.1.42';
+function requireCommander(req, res, next) {
+    const ip = (req.ip || req.connection?.remoteAddress || '').replace(/^::ffff:/, '');
+    if (ip === COMMANDER_IP || ip === '127.0.0.1' || ip === '::1') return next();
+    console.log(`[Access] Blocked ${ip} from restricted route ${req.path}`);
+    res.status(403).send('Access restricted to commander-pc');
+}
+app.use('/ui/ai-autopilot', requireCommander);
+app.use('/api/ai-autopilot', requireCommander);
+app.use('/api/ai-pilot', requireCommander);
+
 // Serve UI directories (listing only in dev mode)
 // No-cache for JS/HTML/CSS — prevents stale code after deploys and during development
 app.use('/ui', express.static(uiPath, { setHeaders: (res, filePath) => {
