@@ -15,6 +15,7 @@ const FILES = [
     'ui/ai-autopilot/browser-console-test.js',
     'ui/ai-autopilot/sally-diagnostics.html',
     'backend/ai-pilot-api.js',
+    'backend/server.js',
 ];
 
 function scp(src, dst) {
