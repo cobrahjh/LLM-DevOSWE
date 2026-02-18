@@ -89,9 +89,27 @@ tr.last-cmd td.c-label { border-left: 2px solid #d29922; padding-left: 6px; }
 .cl-btn { background: none; border: 1px solid #30363d; color: #8b949e; border-radius: 3px; width: 20px; height: 20px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; line-height: 1; }
 .cl-btn:hover { background: #21262d; color: #c9d1d9; }
 .cl-btn.del:hover { border-color: #f85149; color: #f85149; background: #2a0d0d; }
-.cl-add-row { display: flex; gap: 5px; }
-.cl-input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 3px 7px; font-family: monospace; font-size: 11px; }
+.cl-add-row { display: flex; gap: 5px; flex-wrap: wrap; align-items: flex-start; }
+.cl-input { flex: 1; min-width: 80px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 3px 7px; font-family: monospace; font-size: 11px; }
 .cl-input:focus { outline: none; border-color: #58a6ff; }
+.cl-select { flex: 1; min-width: 120px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 3px 7px; font-family: monospace; font-size: 11px; }
+.cl-select:focus { outline: none; border-color: #58a6ff; }
+.cl-val-wrap { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 100px; }
+.cl-hint { color: #484f58; font-size: 10px; padding-left: 2px; }
+
+/* Send-to-sim box */
+.scb { background: #0c1420; border: 1px solid #1e3a5e; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+.scb-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.scb-title { font-size: 10px; color: #58a6ff; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+.scb-row { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.scb-sel { flex: 1; min-width: 160px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 4px 8px; font-family: monospace; font-size: 11px; }
+.scb-inp { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 3px; padding: 4px 8px; font-family: monospace; font-size: 11px; width: 120px; }
+.scb-sel:focus, .scb-inp:focus { outline: none; border-color: #58a6ff; }
+.scb-hint { font-size: 10px; color: #484f58; margin-top: 4px; }
+.scb-out { margin-top: 8px; background: #0a0e14; border: 1px solid #21262d; border-radius: 4px; padding: 6px 10px; font-size: 11px; white-space: pre-wrap; display: none; }
+.scb-out.ok  { border-color: #1c4a28; color: #3fb950; }
+.scb-out.err { border-color: #5a1d1d; color: #f85149; }
+.scb-out.inf { border-color: #1e3a5e; color: #8b949e; }
 </style>
 </head>
 <body>
@@ -105,6 +123,25 @@ tr.last-cmd td.c-label { border-left: 2px solid #d29922; padding-left: 6px; }
   <span class="ts" id="ts"></span>
 </div>
 <div class="offline" id="offline"></div>
+
+<!-- ── Send to Sim ─────────────────────────────────────────────────────── -->
+<div class="scb">
+  <div class="scb-hdr">
+    <span class="scb-title">Send to Sim</span>
+  </div>
+  <div class="scb-row">
+    <select class="scb-sel" id="scb-sel" onchange="onScbSelect()">
+      <option value="">— pick command —</option>
+    </select>
+    <input class="scb-inp" id="scb-name" type="text"   placeholder="COMMAND_NAME" style="display:none">
+    <input class="scb-inp" id="scb-val"  type="number" placeholder="value"        style="display:none">
+    <button class="btn blue"  onclick="sendToSim()">Send ▶</button>
+    <button class="btn"       onclick="readFromSim()" id="scb-read-btn" style="display:none">Read</button>
+  </div>
+  <div class="scb-hint" id="scb-hint"></div>
+  <div class="scb-out"  id="scb-out"></div>
+</div>
+
 <div id="stages"></div>
 <div class="lcmd" id="lcmd">
   <span class="lcmd-tag">Last cmd</span>
@@ -318,6 +355,31 @@ const STAGES = [
   },
 ];
 
+// ── Known control catalogue ────────────────────────────────────────────────
+const CONTROL_CATALOGUE = [
+  { label: 'Throttle',         unit: '%',   default: 100,  min: 0,     max: 100   },
+  { label: 'Mixture',          unit: '%',   default: 100,  min: 0,     max: 100   },
+  { label: 'Parking Brake',    options: ['ON','OFF'],       default: 'OFF'         },
+  { label: 'Engine RPM',       unit: 'RPM', default: 800,  min: 0,     max: 2700  },
+  { label: 'Flaps Index',      unit: 'idx', default: 0,    min: 0,     max: 3     },
+  { label: 'Airspeed (IAS)',   unit: 'kt',  default: 70,   min: 40,    max: 300   },
+  { label: 'Ground Speed',     unit: 'kt',  default: 0,    min: 0,     max: 200   },
+  { label: 'Vertical Speed',   unit: 'fpm', default: 0,    min: -5000, max: 5000  },
+  { label: 'Pitch',            unit: '°',   default: 0,    min: -45,   max: 45    },
+  { label: 'Bank',             unit: '°',   default: 0,    min: -90,   max: 90    },
+  { label: 'AGL',              unit: 'ft',  default: 500,  min: 0,     max: 50000 },
+  { label: 'Altitude (MSL)',   unit: 'ft',  default: 8500, min: 0,     max: 41000 },
+  { label: 'Elevator',         unit: '%',   default: 0,    min: -100,  max: 100   },
+  { label: 'Aileron',          unit: '%',   default: 0,    min: -100,  max: 100   },
+  { label: 'AP Master',        options: ['ON','OFF'],       default: 'ON'          },
+  { label: 'AP Altitude',      unit: 'ft',  default: 8500, min: 100,   max: 41000 },
+  { label: 'AP VS',            unit: 'fpm', default: -500, min: -3000, max: 3000  },
+  { label: 'AP Speed',         unit: 'kt',  default: 70,   min: 40,    max: 200   },
+  { label: 'Rotation Speed Vr',unit: 'kt',  default: 55,   min: 40,    max: 120   },
+  { label: 'Flap Retract Speed',unit:'kt',  default: 75,   min: 50,    max: 150   },
+  { label: 'Gear Down Speed',  unit: 'kt',  default: 140,  min: 80,    max: 200   },
+];
+
 // ── Checklist state (keyed by phase id, or "PHASE-SUBPHASE" for takeoff sub-phases) ──
 let checklist = {};
 let currentPhase = '', currentSubPhase = '', lastCmd = null, tuning = {}, live = {};
@@ -420,12 +482,24 @@ function buildTable(controls, pfx) {
 }
 
 function buildChecklist(key) {
+  const opts = CONTROL_CATALOGUE.map((c, i) => {
+    const tag = c.options ? c.options.join('/') : (c.unit || '');
+    return `<option value="${i}">${c.label}${tag ? '  [' + tag + ']' : ''}</option>`;
+  }).join('');
   return `<div class="cl-section" id="cl-section-${key}">
     <div class="cl-section-hdr">Checklist</div>
     <ul class="cl-list" id="cl-list-${key}"></ul>
     <div class="cl-add-row">
-      <input class="cl-input" data-key="${key}" placeholder="Add item…" type="text">
-      <button class="btn green" style="padding:3px 10px" onclick="addItem('${key}')">Add</button>
+      <select class="cl-select" id="cl-sel-${key}" onchange="onCtrlSelect('${key}')">
+        <option value="">— pick control —</option>
+        ${opts}
+        <option value="custom">Custom text…</option>
+      </select>
+      <div class="cl-val-wrap" id="cl-val-wrap-${key}" style="display:none">
+        <input class="cl-input" id="cl-val-${key}" data-key="${key}" type="text" placeholder="Value">
+        <span class="cl-hint" id="cl-hint-${key}"></span>
+      </div>
+      <button class="btn green" style="padding:3px 10px;flex-shrink:0" onclick="addItem('${key}')">Add</button>
     </div>
   </div>`;
 }
@@ -454,14 +528,73 @@ function renderAllChecklists() {
 }
 
 // ── Checklist mutations ───────────────────────────────────────────────────
+function onCtrlSelect(key) {
+  const sel   = document.getElementById('cl-sel-' + key);
+  const wrap  = document.getElementById('cl-val-wrap-' + key);
+  const valEl = document.getElementById('cl-val-' + key);
+  const hint  = document.getElementById('cl-hint-' + key);
+  const selVal = sel ? sel.value : '';
+
+  if (!selVal) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+
+  if (selVal === 'custom') {
+    valEl.type = 'text';
+    valEl.removeAttribute('min'); valEl.removeAttribute('max');
+    valEl.value = '';
+    valEl.placeholder = 'Enter item text…';
+    hint.textContent = '';
+    valEl.focus();
+    return;
+  }
+
+  const ctrl = CONTROL_CATALOGUE[parseInt(selVal, 10)];
+  if (!ctrl) return;
+
+  if (ctrl.options) {
+    valEl.type = 'text';
+    valEl.removeAttribute('min'); valEl.removeAttribute('max');
+    valEl.value = ctrl.default;
+    valEl.placeholder = ctrl.options.join(' / ');
+    hint.textContent = 'options: ' + ctrl.options.join(' | ');
+  } else {
+    valEl.type = 'number';
+    valEl.min = ctrl.min; valEl.max = ctrl.max;
+    valEl.value = ctrl.default;
+    valEl.placeholder = String(ctrl.default);
+    hint.textContent = 'default: ' + ctrl.default + ' ' + ctrl.unit +
+      (ctrl.min != null ? '  |  min: ' + ctrl.min + '  max: ' + ctrl.max : '');
+  }
+  valEl.focus();
+}
+
 function addItem(key) {
-  const input = document.querySelector(`.cl-input[data-key="${key}"]`);
-  const text = input ? input.value.trim() : '';
+  const sel    = document.getElementById('cl-sel-' + key);
+  const valEl  = document.getElementById('cl-val-' + key);
+  const selVal = sel ? sel.value : '';
+  if (!selVal) return;
+
+  let text = '';
+  if (selVal === 'custom') {
+    text = valEl ? valEl.value.trim() : '';
+  } else {
+    const ctrl = CONTROL_CATALOGUE[parseInt(selVal, 10)];
+    if (!ctrl) return;
+    const val = valEl ? valEl.value.trim() : '';
+    if (!val) return;
+    text = ctrl.label + ': ' + val + (ctrl.unit ? ' ' + ctrl.unit : '');
+  }
   if (!text) return;
+
   const items = getItems(key);
   items.push(text);
   setItems(key, items);
-  if (input) input.value = '';
+
+  // reset UI
+  if (sel) sel.value = '';
+  if (valEl) { valEl.value = ''; valEl.type = 'text'; valEl.removeAttribute('min'); valEl.removeAttribute('max'); }
+  document.getElementById('cl-hint-' + key).textContent = '';
+  document.getElementById('cl-val-wrap-' + key).style.display = 'none';
   renderChecklist(key);
 }
 
@@ -603,8 +736,189 @@ function toggleAuto() {
   if (document.getElementById('auto').checked) autoTimer = setInterval(poll, 2000);
 }
 
+// ── Send-to-Sim catalogue ─────────────────────────────────────────────────
+const SIM_COMMANDS = [
+  { cmd:'THROTTLE_SET',          label:'Throttle',              unit:'%',   default:50,    min:0,     max:100,   readVar:'throttle'      },
+  { cmd:'MIXTURE_SET',           label:'Mixture',               unit:'%',   default:100,   min:0,     max:100,   readVar:'mixture'       },
+  { cmd:'PARKING_BRAKE_SET',     label:'Parking Brake',         opts:'0=off | 1=on',        default:0,             readVar:'parkingBrake'  },
+  { cmd:'FLAPS_SET',             label:'Flaps (set index)',      unit:'idx', default:0,     min:0,     max:3,     readVar:'flapsIndex'    },
+  { cmd:'FLAPS_UP',              label:'Flaps Up',              noVal:true,                                        readVar:'flapsIndex'    },
+  { cmd:'FLAPS_DOWN',            label:'Flaps Down',            noVal:true,                                        readVar:'flapsIndex'    },
+  { cmd:'AP_MASTER',             label:'AP Master (toggle)',     noVal:true,                                        readVar:'apMaster'      },
+  { cmd:'AP_ALT_HOLD',           label:'AP Alt Hold (toggle)',   noVal:true,                                        readVar:'apMaster'      },
+  { cmd:'AP_VS_HOLD',            label:'AP VS Hold (toggle)',    noVal:true                                                                },
+  { cmd:'AP_ALT_VAR_SET',        label:'AP Altitude',           unit:'ft',  default:8500,  min:0,     max:41000, readVar:'altitude'      },
+  { cmd:'AP_VS_VAR_SET_ENGLISH', label:'AP Vert Speed',         unit:'fpm', default:-500,  min:-5000, max:5000,  readVar:'verticalSpeed' },
+  { cmd:'AP_SPD_VAR_SET',        label:'AP Speed',              unit:'kt',  default:70,    min:40,    max:200,   readVar:'speed'         },
+  { cmd:'AXIS_ELEVATOR_SET',     label:'Elevator',              unit:'%',   default:0,     min:-100,  max:100                            },
+  { cmd:'AXIS_AILERONS_SET',     label:'Aileron',               unit:'%',   default:0,     min:-100,  max:100                            },
+  { cmd:'ENGINE_AUTO_START',     label:'Engine Auto Start',     noVal:true,                                        readVar:'engineRpm'    },
+  { cmd:'ENGINE_AUTO_SHUTDOWN',  label:'Engine Shutdown',       noVal:true,                                        readVar:'engineRpm'    },
+  { cmd:'GEAR_UP',               label:'Gear Up',               noVal:true                                                               },
+  { cmd:'GEAR_DOWN',             label:'Gear Down',             noVal:true                                                               },
+  { cmd:'LANDING_LIGHTS_TOGGLE', label:'Landing Lights',        noVal:true                                                               },
+  { cmd:'NAV_LIGHTS_TOGGLE',     label:'Nav Lights',            noVal:true                                                               },
+  { cmd:'STROBE_LIGHTS_TOGGLE',  label:'Strobe Lights',         noVal:true                                                               },
+  { cmd:'SIM_RATE_SET',          label:'Sim Rate',              unit:'x',   default:1,     min:0.25,  max:8                              },
+];
+
+function buildSimCmdBox() {
+  const sel = document.getElementById('scb-sel');
+  SIM_COMMANDS.forEach(c => {
+    const tag = c.noVal ? 'event' : c.opts ? c.opts : (c.unit || '');
+    const o = document.createElement('option');
+    o.value = c.cmd;
+    o.textContent = c.label + (tag ? '  [' + tag + ']' : '');
+    sel.appendChild(o);
+  });
+  const custom = document.createElement('option');
+  custom.value = 'custom';
+  custom.textContent = 'Custom…';
+  sel.appendChild(custom);
+
+  document.getElementById('scb-val').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendToSim();
+  });
+  document.getElementById('scb-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendToSim();
+  });
+}
+
+function onScbSelect() {
+  const sel    = document.getElementById('scb-sel');
+  const nameEl = document.getElementById('scb-name');
+  const valEl  = document.getElementById('scb-val');
+  const hint   = document.getElementById('scb-hint');
+  const readBtn= document.getElementById('scb-read-btn');
+  const v = sel.value;
+
+  if (!v) {
+    nameEl.style.display = valEl.style.display = 'none';
+    readBtn.style.display = 'none';
+    hint.textContent = '';
+    return;
+  }
+
+  if (v === 'custom') {
+    nameEl.style.display = '';
+    nameEl.value = '';
+    nameEl.placeholder = 'COMMAND_NAME';
+    valEl.style.display = '';
+    valEl.type = 'text';
+    valEl.value = '';
+    valEl.placeholder = 'value (optional)';
+    valEl.removeAttribute('min'); valEl.removeAttribute('max');
+    readBtn.style.display = 'none';
+    hint.textContent = 'Type command name and value';
+    nameEl.focus();
+    return;
+  }
+
+  nameEl.style.display = 'none';
+  const c = SIM_COMMANDS.find(x => x.cmd === v);
+  if (!c) return;
+
+  if (c.noVal) {
+    valEl.style.display = 'none';
+    valEl.value = '';
+    hint.textContent = 'Event — no value needed';
+  } else if (c.opts) {
+    valEl.style.display = '';
+    valEl.type = 'text';
+    valEl.value = String(c.default);
+    valEl.placeholder = c.opts;
+    valEl.removeAttribute('min'); valEl.removeAttribute('max');
+    hint.textContent = c.opts;
+  } else {
+    valEl.style.display = '';
+    valEl.type = 'number';
+    valEl.min = c.min; valEl.max = c.max;
+    valEl.value = c.default;
+    hint.textContent = 'default: ' + c.default + ' ' + c.unit + '   min: ' + c.min + '   max: ' + c.max;
+    valEl.focus();
+  }
+
+  readBtn.style.display = c.readVar ? '' : 'none';
+}
+
+async function sendToSim() {
+  const sel    = document.getElementById('scb-sel');
+  const nameEl = document.getElementById('scb-name');
+  const valEl  = document.getElementById('scb-val');
+  const out    = document.getElementById('scb-out');
+  const v = sel.value;
+  if (!v) return;
+
+  let cmdName, cmdValue;
+  if (v === 'custom') {
+    cmdName  = nameEl.value.trim().toUpperCase();
+    cmdValue = valEl.value.trim() !== '' ? parseFloat(valEl.value) || valEl.value.trim() : 0;
+  } else {
+    const c = SIM_COMMANDS.find(x => x.cmd === v);
+    if (!c) return;
+    cmdName  = c.cmd;
+    cmdValue = c.noVal ? 0 : (parseFloat(valEl.value) || 0);
+  }
+  if (!cmdName) return;
+
+  out.style.display = '';
+  out.className = 'scb-out inf';
+  out.textContent = 'Sending ' + cmdName + ' = ' + cmdValue + '…';
+
+  try {
+    const r = await fetch('/api/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: cmdName, value: cmdValue })
+    });
+    const data = await r.json();
+
+    if (data.success) {
+      out.className = 'scb-out ok';
+      const flags = Object.entries(data).filter(([k]) => k !== 'success').map(([k,v]) => k + ':' + v).join('  ');
+      out.textContent = '✓ ' + cmdName + ' = ' + cmdValue + (flags ? '  (' + flags + ')' : '');
+      // read back
+      const c = SIM_COMMANDS.find(x => x.cmd === cmdName);
+      if (c && c.readVar) {
+        setTimeout(() => readFromSim(out), 700);
+      }
+    } else {
+      out.className = 'scb-out err';
+      out.textContent = '✗ ' + JSON.stringify(data);
+    }
+  } catch (e) {
+    out.className = 'scb-out err';
+    out.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function readFromSim(outEl) {
+  const sel = document.getElementById('scb-sel');
+  const out = outEl || document.getElementById('scb-out');
+  const c = SIM_COMMANDS.find(x => x.cmd === sel.value);
+  if (!c || !c.readVar) return;
+
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const fd = d.flightData || {};
+    const val = fd[c.readVar];
+    if (val === undefined) return;
+    const display = typeof val === 'boolean' ? (val ? 'ON' : 'OFF') : (typeof val === 'number' ? val.toFixed(2) : val);
+    out.style.display = '';
+    if (!out.className.includes('err')) out.className = 'scb-out ok';
+    out.textContent = (out.textContent ? out.textContent + '\n' : '') +
+      'Read  ' + c.readVar + ' = ' + display + (c.unit ? ' ' + c.unit : '');
+  } catch (e) {
+    out.style.display = '';
+    out.className = 'scb-out err';
+    out.textContent = (out.textContent || '') + '\nRead error: ' + e.message;
+  }
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────
 loadChecklist().then(() => {
+  buildSimCmdBox();
   buildStages();
   renderAllChecklists();
   poll();
