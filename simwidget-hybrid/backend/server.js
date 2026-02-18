@@ -3657,8 +3657,8 @@ app.post('/api/ai-autopilot/force-phase', requireApOwner, (req, res) => {
     if (!phase || !PHASES.includes(phase)) {
         return res.status(400).json({ error: `phase must be one of: ${PHASES.join(', ')}` });
     }
-    ruleEngineServer.flightPhase.forcePhase(phase);
-    res.json({ success: true, phase: ruleEngineServer.flightPhase.phase });
+    ruleEngineServer.flightPhase.setManualPhase(phase);
+    res.json({ success: true, phase: ruleEngineServer.flightPhase.phase, locked: true });
 });
 
 // ── Force takeoff sub-phase ───────────────────────────────────────────────
@@ -3676,7 +3676,7 @@ app.post('/api/ai-autopilot/force-subphase', requireApOwner, (req, res) => {
     }
     // Also force the flight phase to TAKEOFF so sub-phases run
     if (ruleEngineServer.flightPhase.phase !== 'TAKEOFF') {
-        ruleEngineServer.flightPhase.forcePhase('TAKEOFF');
+        ruleEngineServer.flightPhase.setManualPhase('TAKEOFF');
     }
     res.json({ success: true, subPhase, phase: ruleEngineServer.flightPhase.phase });
 });
