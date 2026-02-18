@@ -4069,6 +4069,22 @@ class GTN750Pane extends SimGlassBase {
 
             const daysUntilExpiry = Math.floor((cycleEndDate - now) / (24 * 60 * 60 * 1000));
 
+            // Update status bar AIRAC badge
+            const airacWarn = document.getElementById('airac-warn');
+            if (airacWarn) {
+                if (daysUntilExpiry < 0) {
+                    airacWarn.style.display = '';
+                    airacWarn.textContent = 'DB EXP';
+                    airacWarn.style.color = '#ff4444';
+                } else if (daysUntilExpiry <= 7) {
+                    airacWarn.style.display = '';
+                    airacWarn.textContent = `DB ${daysUntilExpiry}D`;
+                    airacWarn.style.color = '#ffaa00';
+                } else {
+                    airacWarn.style.display = 'none';
+                }
+            }
+
             if (daysUntilExpiry < 0) {
                 // Expired
                 this.showDatabaseWarning(

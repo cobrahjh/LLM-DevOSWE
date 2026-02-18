@@ -19,6 +19,20 @@ let updateJob = { status: 'idle', progress: 0, message: null, startedAt: null };
 // Earth radius in nautical miles
 const R_NM = 3440.065;
 
+// ── AIRAC Cycle Date Computation ────────────────────────────────────
+// Reference: AIRAC 2501 = January 23, 2025 (±1 day accuracy within a few years)
+function airacCycleToDate(cycleStr) {
+    if (!cycleStr || cycleStr === 'unknown') return null;
+    const ref = new Date('2025-01-23T00:00:00Z');
+    const year = parseInt(cycleStr.substring(0, 2)) + 2000;
+    const num  = parseInt(cycleStr.substring(2));
+    if (isNaN(year) || isNaN(num)) return null;
+    const offset = (year - 2025) * 13 + (num - 1);
+    const d = new Date(ref);
+    d.setUTCDate(d.getUTCDate() + offset * 28);
+    return d;
+}
+
 function openDatabase() {
     if (db) return db;
     if (!fs.existsSync(DB_PATH)) return null;
@@ -76,7 +90,31 @@ function requireDb(req, res, next) {
 // ── Route setup ────────────────────────────────────────────────────
 function setupNavdataRoutes(app) {
     // Try to open DB at startup
-    openDatabase();
+    const startupDb = openDatabase();
+
+    // Startup AIRAC expiry check
+    if (startupDb) {
+        try {
+            const meta = {};
+            for (const row of startupDb.prepare('SELECT key, value FROM navdb_meta').iterate()) {
+                meta[row.key] = row.value;
+            }
+            const cycle = meta.airac_cycle;
+            const expiry = airacCycleToDate(cycle);
+            if (expiry) {
+                const expiryWithGrace = new Date(expiry.getTime() + 28 * 86400000);
+                const now = new Date();
+                if (now > expiryWithGrace) {
+                    console.warn(`[NavDB] ⚠️  AIRAC ${cycle} EXPIRED on ${expiry.toDateString()} — update via POST /api/navdb/update`);
+                } else if (now > expiry) {
+                    console.warn(`[NavDB] ⚠️  AIRAC ${cycle} expired ${expiry.toDateString()} — update recommended`);
+                } else {
+                    const daysLeft = Math.ceil((expiry - now) / 86400000);
+                    console.log(`[NavDB] AIRAC ${cycle} — expires ${expiry.toDateString()} (${daysLeft} days)`);
+                }
+            }
+        } catch (e) { /* non-fatal */ }
+    }
 
     // Status / health check
     app.get('/api/navdb/status', (req, res) => {
@@ -90,9 +128,14 @@ function setupNavdataRoutes(app) {
             meta[row.key] = row.value;
         }
 
+        const cycleStart = airacCycleToDate(meta.airac_cycle);
+        const cycleExpiry = cycleStart ? new Date(cycleStart.getTime() + 28 * 86400000) : null;
+
         res.json({
             available: true,
             airac_cycle: meta.airac_cycle || 'unknown',
+            airac_effective: cycleStart ? cycleStart.toISOString() : null,
+            airac_expiry: cycleExpiry ? cycleExpiry.toISOString() : null,
             build_date: meta.build_date,
             source: meta.source,
             counts: {

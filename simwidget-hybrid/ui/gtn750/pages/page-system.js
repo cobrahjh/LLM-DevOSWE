@@ -78,6 +78,7 @@ class SystemPage {
         this.loadSettings();
         this.bindEvents();
         this.updateUI();
+        this.fetchNavdbStatus();
     }
 
     cacheElements() {
@@ -123,7 +124,17 @@ class SystemPage {
             // Status
             gpsStatus: document.getElementById('sys-gps-status'),
             databaseStatus: document.getElementById('sys-database-status'),
-            softwareVersion: document.getElementById('sys-software-version')
+            softwareVersion: document.getElementById('sys-software-version'),
+
+            // Navdata
+            airacCycle: document.getElementById('sys-airac-cycle'),
+            airacExpiry: document.getElementById('sys-airac-expiry'),
+            navdbAirports: document.getElementById('sys-navdb-airports'),
+            navdbUpdateBtn: document.getElementById('sys-navdb-update-btn'),
+            navdbProgressWrap: document.getElementById('sys-navdb-progress-wrap'),
+            navdbProgressFill: document.getElementById('sys-navdb-progress-fill'),
+            navdbProgressText: document.getElementById('sys-navdb-progress-text'),
+            airacWarn: document.getElementById('airac-warn')
         };
     }
 
@@ -214,6 +225,11 @@ class SystemPage {
 
         this.elements.audioVolume?.addEventListener('input', (e) => {
             this.setSetting('audioVolume', parseInt(e.target.value));
+        });
+
+        // Navdata update
+        this.elements.navdbUpdateBtn?.addEventListener('click', () => {
+            this.startNavdbUpdate();
         });
     }
 
@@ -353,14 +369,125 @@ class SystemPage {
     }
 
     /**
-     * Update database status
+     * Fetch navdata status from backend and update UI
      */
-    updateDatabaseStatus(current, expiry) {
-        if (this.elements.databaseStatus) {
-            const isExpired = expiry && new Date(expiry) < new Date();
-            this.elements.databaseStatus.textContent = isExpired ? 'EXPIRED' : 'CURRENT';
-            this.elements.databaseStatus.style.color = isExpired ? '#ff0000' : '#00ff00';
+    async fetchNavdbStatus() {
+        try {
+            const res = await fetch('/api/navdb/status');
+            if (!res.ok) throw new Error('navdb unavailable');
+            const data = await res.json();
+            this.updateDatabaseStatus(data);
+        } catch (e) {
+            if (this.elements.databaseStatus) {
+                this.elements.databaseStatus.textContent = 'UNAVAILABLE';
+                this.elements.databaseStatus.style.color = '#ff6600';
+            }
         }
+    }
+
+    /**
+     * Update database status display from /api/navdb/status response
+     */
+    updateDatabaseStatus(data) {
+        const now = new Date();
+        const expiry = data.airac_expiry ? new Date(data.airac_expiry) : null;
+        const isExpired = expiry && now > expiry;
+        const isWarning = expiry && !isExpired && (expiry - now) < 7 * 86400000; // <7 days left
+
+        if (this.elements.airacCycle) {
+            this.elements.airacCycle.textContent = data.airac_cycle || '—';
+        }
+
+        if (this.elements.databaseStatus) {
+            if (isExpired) {
+                this.elements.databaseStatus.textContent = 'EXPIRED';
+                this.elements.databaseStatus.style.color = '#ff0000';
+            } else if (isWarning) {
+                this.elements.databaseStatus.textContent = 'EXPIRING';
+                this.elements.databaseStatus.style.color = '#ffaa00';
+            } else {
+                this.elements.databaseStatus.textContent = 'CURRENT';
+                this.elements.databaseStatus.style.color = '#00ff00';
+            }
+        }
+
+        if (this.elements.airacExpiry && expiry) {
+            const mo = expiry.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            this.elements.airacExpiry.textContent = mo;
+            this.elements.airacExpiry.style.color = isExpired ? '#ff0000' : isWarning ? '#ffaa00' : '';
+        }
+
+        if (this.elements.navdbAirports && data.counts) {
+            this.elements.navdbAirports.textContent = data.counts.airports.toLocaleString();
+        }
+
+        // Status bar badge
+        if (this.elements.airacWarn) {
+            if (isExpired) {
+                this.elements.airacWarn.style.display = '';
+                this.elements.airacWarn.textContent = 'DB EXP';
+                this.elements.airacWarn.style.color = '#ff4444';
+            } else if (isWarning) {
+                this.elements.airacWarn.style.display = '';
+                this.elements.airacWarn.textContent = 'DB EXP SOON';
+                this.elements.airacWarn.style.color = '#ffaa00';
+            } else {
+                this.elements.airacWarn.style.display = 'none';
+            }
+        }
+    }
+
+    /**
+     * Trigger AIRAC database update and poll for progress
+     */
+    async startNavdbUpdate() {
+        const btn = this.elements.navdbUpdateBtn;
+        const wrap = this.elements.navdbProgressWrap;
+        const fill = this.elements.navdbProgressFill;
+        const txt = this.elements.navdbProgressText;
+
+        if (btn) { btn.disabled = true; btn.textContent = 'UPDATING...'; }
+        if (wrap) wrap.style.display = '';
+        if (fill) fill.style.width = '0%';
+        if (txt) txt.textContent = 'Starting update...';
+
+        try {
+            const startRes = await fetch('/api/navdb/update', { method: 'POST' });
+            if (!startRes.ok) {
+                const err = await startRes.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to start update');
+            }
+        } catch (e) {
+            if (txt) txt.textContent = 'Error: ' + e.message;
+            if (btn) { btn.disabled = false; btn.textContent = 'UPDATE DATABASE'; }
+            return;
+        }
+
+        // Poll status every 3 seconds
+        const poll = setInterval(async () => {
+            try {
+                const statusRes = await fetch('/api/navdb/update-status');
+                const status = await statusRes.json();
+
+                if (fill) fill.style.width = (status.progress || 0) + '%';
+                if (txt) txt.textContent = status.message || status.status;
+
+                if (status.status === 'complete') {
+                    clearInterval(poll);
+                    if (txt) txt.textContent = 'Update complete!';
+                    if (btn) { btn.disabled = false; btn.textContent = 'UPDATE DATABASE'; }
+                    setTimeout(() => {
+                        if (wrap) wrap.style.display = 'none';
+                        this.fetchNavdbStatus();
+                    }, 3000);
+                } else if (status.status === 'error') {
+                    clearInterval(poll);
+                    if (txt) txt.textContent = 'Error: ' + (status.message || 'update failed');
+                    if (txt) txt.style.color = '#ff4444';
+                    if (btn) { btn.disabled = false; btn.textContent = 'UPDATE DATABASE'; }
+                }
+            } catch (e) { /* retry next poll */ }
+        }, 3000);
     }
 
     /**

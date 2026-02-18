@@ -965,6 +965,36 @@
                             </div>
                         </div>
                     </div>
+                    <div class="gtn-sys-section" id="sys-navdata-section">
+                        <div class="sys-title">NAVDATA</div>
+                        <div class="sys-status-grid">
+                            <div class="sys-status-item">
+                                <span class="status-label">AIRAC</span>
+                                <span class="status-value" id="sys-airac-cycle">—</span>
+                            </div>
+                            <div class="sys-status-item">
+                                <span class="status-label">Status</span>
+                                <span class="status-value" id="sys-database-status">—</span>
+                            </div>
+                            <div class="sys-status-item">
+                                <span class="status-label">Expires</span>
+                                <span class="status-value" id="sys-airac-expiry">—</span>
+                            </div>
+                            <div class="sys-status-item">
+                                <span class="status-label">Airports</span>
+                                <span class="status-value" id="sys-navdb-airports">—</span>
+                            </div>
+                        </div>
+                        <div class="sys-navdb-update">
+                            <button class="sys-update-btn" id="sys-navdb-update-btn">UPDATE DATABASE</button>
+                            <div class="sys-navdb-progress-wrap" id="sys-navdb-progress-wrap" style="display:none;">
+                                <div class="sys-navdb-progress-bar">
+                                    <div class="sys-navdb-progress-fill" id="sys-navdb-progress-fill"></div>
+                                </div>
+                                <div class="sys-navdb-progress-text" id="sys-navdb-progress-text">Starting...</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="gtn-sys-section">
                         <button class="sys-reset-btn" id="sys-reset">Reset to Defaults</button>
                     </div>
@@ -1150,6 +1180,7 @@
             <div class="status-left">
                 <span class="status-gps" id="gps-status">GPS 3D</span>
                 <span class="status-conn" id="conn"></span>
+                <span class="airac-warn" id="airac-warn" style="display:none;" title="Navdata expired — go to SYSTEM page to update">DB EXP</span>
             </div>
             <div class="status-center">
                 <span class="status-msg" id="msg">INTEG OK</span>
