@@ -63,6 +63,15 @@ const littleNavMapAPI = new LittleNavMapAPI();
 
 const SERVER_VERSION = '1.14.0';
 
+// ── Process-level crash guards ─────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+    console.error('[SimGlass] UNCAUGHT EXCEPTION — server staying alive:', err.message);
+    console.error(err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[SimGlass] UNHANDLED REJECTION — server staying alive:', reason);
+});
+
 // SimConnect - will be loaded dynamically
 let simConnect = null;
 let simConnectConnection = null;

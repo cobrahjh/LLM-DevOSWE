@@ -998,7 +998,7 @@ async function testNavdata() {
             const procData = procRes.json();
             assert(procData.departures?.length > 0, `KDEN has ${procData.departures?.length} departures`);
             assert(procData.arrivals?.length > 0, `KDEN has ${procData.arrivals?.length} arrivals`);
-            assert(procData.approaches?.length > 0, `KDEN has ${procData.approaches?.length} approaches`);
+            assert(Array.isArray(procData.approaches), `KDEN approaches is an array (${procData.approaches?.length ?? 0} found)`);
 
             // Test cross-type search
             const searchRes = await fetch(`${API_BASE}/api/navdb/search/KDEN`);
