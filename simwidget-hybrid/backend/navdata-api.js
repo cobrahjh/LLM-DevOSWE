@@ -33,6 +33,40 @@ function airacCycleToDate(cycleStr) {
     return d;
 }
 
+// Compute the current effective AIRAC cycle ID from today's date
+function getCurrentAiracCycle() {
+    const ref = new Date('2025-01-23T00:00:00Z');
+    const now = new Date();
+    const daysSinceRef = Math.floor((now - ref) / 86400000);
+    const absIndex = Math.floor(daysSinceRef / 28);
+    const year = 2025 + Math.floor(absIndex / 13);
+    const cycleNum = (absIndex % 13) + 1;
+    const yy = String(year % 100).padStart(2, '0');
+    const nn = String(cycleNum).padStart(2, '0');
+    return yy + nn;
+}
+
+// Build the FAA download URL for a given cycle start date
+function cifpDownloadUrl(cycleStart) {
+    const yy = String(cycleStart.getUTCFullYear() % 100).padStart(2, '0');
+    const mm = String(cycleStart.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(cycleStart.getUTCDate()).padStart(2, '0');
+    return `https://aeronav.faa.gov/Upload_313-d/cifp/CIFP_${yy}${mm}${dd}.zip`;
+}
+
+// HEAD request to check if a URL exists (no download)
+function urlExists(url) {
+    return new Promise((resolve) => {
+        const https = require('https');
+        const req = https.request(url, { method: 'HEAD', headers: { 'User-Agent': 'SimGlass-NavDB/1.0' } }, (res) => {
+            resolve(res.statusCode === 200 || res.statusCode === 302 || res.statusCode === 301);
+        });
+        req.on('error', () => resolve(false));
+        req.setTimeout(8000, () => { req.destroy(); resolve(false); });
+        req.end();
+    });
+}
+
 function openDatabase() {
     if (db) return db;
     if (!fs.existsSync(DB_PATH)) return null;
@@ -612,6 +646,52 @@ function setupNavdataRoutes(app) {
 
     app.get('/api/navdb/update-status', (req, res) => {
         res.json({ ...updateJob });
+    });
+
+    // ── Latest AIRAC Check ──────────────────────────────────────────
+    // Returns the currently effective AIRAC cycle and compares to installed.
+    // Optionally verifies the FAA download URL is reachable (slow path, ?verify=1).
+    app.get('/api/navdb/check-latest', async (req, res) => {
+        const latestCycle = getCurrentAiracCycle();
+        const latestStart = airacCycleToDate(latestCycle);
+        const latestExpiry = latestStart ? new Date(latestStart.getTime() + 28 * 86400000) : null;
+        const downloadUrl = latestStart ? cifpDownloadUrl(latestStart) : null;
+
+        // Get installed cycle from DB
+        let installedCycle = null;
+        let installedExpiry = null;
+        const d = openDatabase();
+        if (d) {
+            try {
+                const meta = {};
+                for (const row of d.prepare('SELECT key, value FROM navdb_meta').iterate()) {
+                    meta[row.key] = row.value;
+                }
+                installedCycle = meta.airac_cycle || null;
+                const installedStart = airacCycleToDate(installedCycle);
+                installedExpiry = installedStart ? new Date(installedStart.getTime() + 28 * 86400000) : null;
+            } catch (e) { /* ignore */ }
+        }
+
+        const updateAvailable = installedCycle !== latestCycle;
+
+        // Optional: verify the FAA file is reachable (adds ~1-3s)
+        let urlReachable = null;
+        if (req.query.verify === '1' && downloadUrl) {
+            urlReachable = await urlExists(downloadUrl);
+        }
+
+        res.json({
+            latest: latestCycle,
+            latest_effective: latestStart ? latestStart.toISOString() : null,
+            latest_expiry: latestExpiry ? latestExpiry.toISOString() : null,
+            download_url: downloadUrl,
+            url_reachable: urlReachable,
+            installed: installedCycle,
+            installed_expiry: installedExpiry ? installedExpiry.toISOString() : null,
+            update_available: updateAvailable,
+            source: 'FAA CIFP (computed from AIRAC epoch)'
+        });
     });
 
     console.log('[NavDB] API routes registered (/api/navdb/*)');

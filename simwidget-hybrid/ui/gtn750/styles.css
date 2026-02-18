@@ -3984,6 +3984,35 @@ body {
     50% { opacity: 0.5; }
 }
 
+.sys-navdb-latest {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 4px 0;
+    font-size: 10px;
+}
+
+.sys-navdb-latest-label {
+    color: var(--gtn-gray);
+}
+
+.sys-navdb-latest-cycle {
+    color: var(--gtn-cyan);
+    font-weight: 600;
+}
+
+.sys-navdb-update-badge {
+    font-size: 9px;
+    font-weight: 700;
+    color: #ffaa00;
+    border: 1px solid #ffaa00;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    animation: airac-blink 1.5s ease-in-out infinite;
+}
+
 /* ===== SETTINGS BUTTON ===== */
 .settings-btn {
     position: fixed;

@@ -79,6 +79,7 @@ class SystemPage {
         this.bindEvents();
         this.updateUI();
         this.fetchNavdbStatus();
+        this.checkLatestAirac();
     }
 
     cacheElements() {
@@ -134,7 +135,10 @@ class SystemPage {
             navdbProgressWrap: document.getElementById('sys-navdb-progress-wrap'),
             navdbProgressFill: document.getElementById('sys-navdb-progress-fill'),
             navdbProgressText: document.getElementById('sys-navdb-progress-text'),
-            airacWarn: document.getElementById('airac-warn')
+            airacWarn: document.getElementById('airac-warn'),
+            navdbLatest: document.getElementById('sys-navdb-latest'),
+            navdbLatestCycle: document.getElementById('sys-navdb-latest-cycle'),
+            navdbUpdateBadge: document.getElementById('sys-navdb-update-badge')
         };
     }
 
@@ -435,6 +439,42 @@ class SystemPage {
                 this.elements.airacWarn.style.display = 'none';
             }
         }
+    }
+
+    /**
+     * Check latest available AIRAC cycle from server and show update badge
+     */
+    async checkLatestAirac() {
+        try {
+            const res = await fetch('/api/navdb/check-latest');
+            if (!res.ok) return;
+            const data = await res.json();
+
+            if (this.elements.navdbLatest) {
+                this.elements.navdbLatest.style.display = '';
+            }
+
+            if (this.elements.navdbLatestCycle) {
+                this.elements.navdbLatestCycle.textContent = data.latest ? 'AIRAC ' + data.latest : '—';
+            }
+
+            if (this.elements.navdbUpdateBadge) {
+                if (data.update_available) {
+                    this.elements.navdbUpdateBadge.style.display = '';
+                    // Flash the update button to draw attention
+                    if (this.elements.navdbUpdateBtn) {
+                        this.elements.navdbUpdateBtn.textContent = 'UPDATE TO AIRAC ' + data.latest;
+                        this.elements.navdbUpdateBtn.style.borderColor = '#ffaa00';
+                        this.elements.navdbUpdateBtn.style.color = '#ffaa00';
+                    }
+                } else {
+                    this.elements.navdbUpdateBadge.style.display = 'none';
+                    if (this.elements.navdbUpdateBtn) {
+                        this.elements.navdbUpdateBtn.textContent = 'UPDATE DATABASE';
+                    }
+                }
+            }
+        } catch (e) { /* non-fatal */ }
     }
 
     /**
