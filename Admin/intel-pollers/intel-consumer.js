@@ -18,7 +18,7 @@ const CONFIG = {
     briefingFile: path.join(__dirname, 'intel-briefing.md'),
     relayUrl: 'http://localhost:8600',
     ollamaUrl: 'http://localhost:11434',
-    autoQueueThreshold: 85, // Auto-queue items with relevance >= 85
+    autoQueueThreshold: 95, // Auto-queue items with relevance >= 95 (raised from 85 to reduce dead letter noise)
     briefingDays: 7, // Include approved items from last N days
 };
 

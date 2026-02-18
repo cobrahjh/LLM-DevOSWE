@@ -138,17 +138,9 @@ const SERVICES = {
         priority: 4,
         autoRestart: true
     },
-    bridge: {
-        id: 'bridge',
-        name: 'Claude Bridge',
-        port: 8601,
-        dir: path.join(PROJECT_ROOT, 'Admin', 'claude-bridge'),
-        start: 'node bridge-server.js',
-        winService: 'simwidgetclaudebridge.exe',  // Windows Service ID
-        healthEndpoint: '/api/health',
-        priority: 5,
-        autoRestart: false
-    },
+    // Claude Bridge (8601) retired 2026-02-18 - superseded by MCP-Bridge (8860)
+    // Spawning claude subprocesses from within a claude session causes nested session errors
+    // MCP-Bridge provides equivalent tool access without this limitation
     keysender: {
         id: 'keysender',
         name: 'KeySender Service',

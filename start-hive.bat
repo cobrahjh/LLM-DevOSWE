@@ -8,8 +8,16 @@ echo     THE HIVE - Unified Startup
 echo  =============================================
 echo.
 
+:: Step 0: Rebuild native modules for current Node version (prevents better-sqlite3 crashes)
+echo  [0/5] Rebuilding native modules for Node %node_ver%...
+pushd C:\LLM-DevOSWE\Admin\relay && npm rebuild better-sqlite3 --quiet >nul 2>&1 && popd
+pushd C:\LLM-DevOSWE\Admin\terminal-hub && npm rebuild better-sqlite3 --quiet >nul 2>&1 && popd
+pushd C:\LLM-DevOSWE\simwidget-hybrid\backend && npm rebuild better-sqlite3 --quiet >nul 2>&1 && popd
+pushd C:\LLM-DevOSWE && npm rebuild better-sqlite3 --quiet >nul 2>&1 && popd
+echo        Done
+
 :: Step 1: Ensure Ollama is running (LLM dependency)
-echo  [1/4] Checking Ollama...
+echo  [1/5] Checking Ollama...
 tasklist /FI "IMAGENAME eq ollama.exe" 2>NUL | find /I /N "ollama.exe">NUL
 if "%ERRORLEVEL%"=="0" (
     echo        Already running
@@ -20,7 +28,7 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 :: Step 2: Start Relay first (message bus - other services depend on it)
-echo  [2/4] Starting Relay (port 8600)...
+echo  [2/5] Starting Relay (port 8600)...
 curl -s http://localhost:8600/api/health >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo        Already running
@@ -30,7 +38,7 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 :: Step 3: Start Oracle (LLM backend + Intel)
-echo  [3/4] Starting Oracle (port 3002)...
+echo  [3/5] Starting Oracle (port 3002)...
 curl -s http://localhost:3002/api/health >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo        Already running
@@ -40,7 +48,7 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 :: Step 4: Start Orchestrator (watchdog - auto-starts all other services)
-echo  [4/4] Starting Master Orchestrator (port 8500)...
+echo  [4/5] Starting Master Orchestrator (port 8500)...
 curl -s http://localhost:8500/api/health >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo        Already running
@@ -74,7 +82,7 @@ curl -s http://localhost:8500/api/health >nul 2>&1 && (echo   [OK] Master-O     
 curl -s http://localhost:8080/api/status >nul 2>&1 && (echo   [OK] SimWidget     :8080) || (echo   [--] SimWidget     :8080)
 curl -s http://localhost:8585/api/health >nul 2>&1 && (echo   [OK] KittBox       :8585) || (echo   [!!] KittBox       :8585 OFFLINE)
 curl -s http://localhost:8590/api/health >nul 2>&1 && (echo   [OK] Remote Supp   :8590) || (echo   [--] Remote Supp   :8590)
-curl -s http://localhost:8601/api/health >nul 2>&1 && (echo   [OK] Claude Bridge :8601) || (echo   [--] Claude Bridge :8601)
+curl -s http://localhost:8860/api/health >nul 2>&1 && (echo   [OK] MCP Bridge    :8860) || (echo   [!!] MCP Bridge    :8860 OFFLINE)
 curl -s http://localhost:8701/api/health >nul 2>&1 && (echo   [OK] Hive-Mind     :8701) || (echo   [!!] Hive-Mind     :8701 OFFLINE)
 curl -s http://localhost:8750/health >nul 2>&1     && (echo   [OK] Hive-Mesh     :8750) || (echo   [--] Hive-Mesh     :8750)
 curl -s http://localhost:8771/api/health >nul 2>&1 && (echo   [OK] Terminal Hub  :8771) || (echo   [!!] Terminal Hub  :8771 OFFLINE)
