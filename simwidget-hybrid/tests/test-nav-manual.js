@@ -5,6 +5,7 @@
 const http = require('http');
 const WebSocket = require('ws');
 const fs = require('fs');
+const { BASE_URL } = require('./config');
 
 let passed = 0, failed = 0;
 const p = (n, d) => { passed++; console.log(`  \x1b[32m✓\x1b[0m ${n}${d ? ' \x1b[90m' + d + '\x1b[0m' : ''}`); };
@@ -12,7 +13,7 @@ const f = (n, d) => { failed++; console.log(`  \x1b[31m✗\x1b[0m ${n}${d ? ' \x
 
 function get(path) {
     return new Promise((resolve, reject) => {
-        http.get(`http://localhost:8080${path}`, res => {
+        http.get(`${BASE_URL}${path}`, res => {
             let b = ''; res.on('data', c => b += c);
             res.on('end', () => { try { resolve({ s: res.statusCode, d: JSON.parse(b) }); } catch { resolve({ s: res.statusCode, d: b }); } });
         }).on('error', reject);
@@ -107,7 +108,7 @@ function intercept(dtk, xtrk, toFrom) {
 
     console.log('\x1b[36m\n── WebSocket: live GPS nav stream ──\x1b[0m');
     await new Promise(resolve => {
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket(BASE_URL.replace('http', 'ws'));
         let n = 0;
         const timer = setTimeout(() => { ws.close(); f('WS timeout — no data in 6s'); resolve(); }, 6000);
         ws.on('open', () => p('WebSocket connected'));

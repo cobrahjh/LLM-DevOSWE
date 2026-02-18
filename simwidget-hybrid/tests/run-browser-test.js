@@ -2,9 +2,13 @@
  * Run browser-console-test.js via Chrome DevTools Protocol
  * Requires Chrome launched with --remote-debugging-port=9222
  * Usage: node tests/run-browser-test.js
+ *
+ * To launch Chrome:
+ *   node -e "const {spawn}=require('child_process'),{CHROME_EXE,CHROME_PROFILE,CDP_PORT,GTN750_URL,AI_AUTOPILOT_URL}=require('./tests/config');const p=spawn(CHROME_EXE,['--remote-debugging-port='+CDP_PORT,'--user-data-dir='+CHROME_PROFILE,'--no-first-run',GTN750_URL,AI_AUTOPILOT_URL],{detached:true,stdio:'ignore'});p.unref();console.log('Chrome PID:',p.pid);"
  */
 const http = require('http');
 const WebSocket = require('ws');
+const { BASE_URL, CDP_PORT } = require('./config');
 
 function get(url) {
     return new Promise((resolve, reject) => {
@@ -17,7 +21,7 @@ function get(url) {
 }
 
 async function main() {
-    const tabs = await get('http://localhost:9222/json');
+    const tabs = await get(`http://localhost:${CDP_PORT}/json`);
     const aiTab = tabs.find(t => t.url.includes('ai-autopilot'));
     const gtnTab = tabs.find(t => t.url.includes('gtn750'));
 
