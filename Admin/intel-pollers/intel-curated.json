@@ -684,8 +684,9 @@
       "category": "release",
       "summary": "Qwen 3.5 is a new version of a local LLM that will be released today.",
       "thoughts": "Qwen 3.5 could be useful for Hive as it represents an updated version of a local LLM, which might enhance AI agent orchestration capabilities within the ecosystem.",
-      "status": "pending",
-      "fetchedAt": "2026-02-16T08:00:18.878Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-16T08:00:18.878Z",
+      "decidedAt": "2026-02-18T06:56:18.760Z"
     },
     {
       "id": "reddit-1r5uhfu",
@@ -701,8 +702,9 @@
       "category": "news",
       "summary": "The cost to train AI models has dropped by 40% per year according to an article by Karpathy.",
       "thoughts": "This news is highly relevant and useful for Hive as it indicates a significant reduction in the financial barriers to implementing advanced AI agents like Claude Code and local LLMs. Lower costs can lead to more widespread adoption of these technologies, enhancing Hive's capabilities in AI agent orc",
-      "status": "pending",
-      "fetchedAt": "2026-02-16T08:00:22.052Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-16T08:00:22.052Z",
+      "decidedAt": "2026-02-18T06:56:28.458Z"
     },
     {
       "id": "reddit-1r5qfb8",
@@ -718,8 +720,9 @@
       "category": "library",
       "summary": "Ling-2.5-1T is a large language model hosted by Hugging Face.",
       "thoughts": "This library could be useful for Hive's AI agent orchestration, providing advanced natural language processing capabilities that can enhance the functionality and user experience of the AI agents within the ecosystem.",
-      "status": "pending",
-      "fetchedAt": "2026-02-16T08:00:24.995Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-16T08:00:24.995Z",
+      "decidedAt": "2026-02-18T06:56:35.628Z"
     },
     {
       "id": "hn-47019329",
@@ -735,8 +738,9 @@
       "category": "tool",
       "summary": "Nerve is a tool that aggregates data from multiple sources into a single API.",
       "thoughts": "Nerve could be very useful for Hive by providing a unified interface to access data from various sources, potentially simplifying the development and maintenance of real-time dashboards, monitoring systems, and other components.",
-      "status": "pending",
-      "fetchedAt": "2026-02-16T20:00:35.205Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-16T20:00:35.205Z",
+      "decidedAt": "2026-02-18T06:56:46.813Z"
     },
     {
       "id": "reddit-1r5h1gj",
@@ -770,8 +774,9 @@
       "category": "release",
       "summary": "Qwen3.5 is a multimodal AI agent designed to enhance natural language understanding and generation.",
       "thoughts": "Qwen3.5 could be highly useful for Hive's AI agent orchestration, potentially improving Claude Code and local LLMs like Ollama/LM Studio by providing more advanced and contextually aware language processing capabilities.",
-      "status": "pending",
-      "fetchedAt": "2026-02-16T14:00:06.434Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-16T14:00:06.434Z",
+      "decidedAt": "2026-02-18T06:56:56.829Z"
     },
     {
       "id": "gh-1141934589",
@@ -18757,9 +18762,9 @@
   "lastFetch": "2026-02-16T20:00:37.700Z",
   "stats": {
     "total": 1075,
-    "approved": 65,
+    "approved": 70,
     "rejected": 0,
-    "pending": 975,
+    "pending": 970,
     "implemented": 0
   }
 }

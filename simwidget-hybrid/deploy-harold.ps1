@@ -3,6 +3,7 @@
 # Uses SSH/SCP (UNC admin shares not accessible from ROCK-PC)
 
 $commanderPC = "192.168.1.42"
+$haroldPC = $commanderPC
 $username = "hjhar"
 $remoteDest = "C:/Users/$username/AppData/Local/Packages/Microsoft.Limitless_8wekyb3d8bbwe/LocalCache/Packages/Community/SimGlass-GTN750"
 $remotePanel = "$remoteDest/html_ui/InGamePanels/GTN750Panel"
