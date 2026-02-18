@@ -34,9 +34,18 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 .section { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
 .section-title { color: #8b949e; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
 
+/* Session badge */
+.sd-badge { font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.8px; text-transform: uppercase; }
+.sd-badge.active { background: #0d2a18; border: 1px solid #3fb950; color: #3fb950; }
+.sd-badge.viewer { background: #2a1f0d; border: 1px solid #d29922; color: #d29922; }
+
+/* Lock banner */
+.sd-lock-banner { background: #2a1f0d; border: 1px solid #d29922; border-radius: 5px; color: #d29922; font-size: 11px; padding: 7px 12px; margin-bottom: 10px; display: none; }
+
 /* Buttons */
 .btn { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-family: monospace; font-size: 11px; }
 .btn:hover { background: #30363d; }
+.btn:disabled { opacity: 0.35; pointer-events: none; cursor: default; }
 .btn.blue  { border-color: #58a6ff; color: #58a6ff; }
 .btn.blue:hover  { background: #1c3a5e; }
 .btn.green { border-color: #3fb950; color: #3fb950; }
@@ -82,10 +91,12 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 
 <div class="top">
   <span class="title">Sally Diagnostics</span>
+  <span class="sd-badge viewer" id="sd-badge">...</span>
   <button class="btn blue sm" onclick="poll()">↻ Refresh</button>
   <label class="auto-label"><input type="checkbox" id="auto" checked onchange="toggleAuto()"> Auto 3s</label>
   <span class="ts" id="ts"></span>
 </div>
+<div class="sd-lock-banner" id="sd-lock-banner"></div>
 
 <!-- State cards -->
 <div class="cards" id="cards"></div>
@@ -100,12 +111,12 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 <div class="section" style="margin-top:10px">
   <div class="section-title">Sally Control</div>
   <div class="btn-row">
-    <button class="btn green" onclick="api('POST','/api/ai-autopilot/enable')">Enable Sally</button>
-    <button class="btn red" onclick="api('POST','/api/ai-autopilot/disable')">Disable Sally</button>
-    <button class="btn warn" onclick="api('POST','/api/ai-autopilot/atc-deactivate')">Clear ATC Gate</button>
-    <button class="btn" onclick="api('POST','/api/ai-autopilot/cleared-takeoff')">Cleared for Takeoff</button>
-    <button class="btn" onclick="requestTaxi()">Request Taxi</button>
-    <button class="btn red sm" onclick="if(confirm('Reset all Sally learning?')) api('POST','/api/ai-pilot/reset-learning')">Reset Learning</button>
+    <button class="btn green ctrl-btn" onclick="api('POST','/api/ai-autopilot/enable')">Enable Sally</button>
+    <button class="btn red ctrl-btn" onclick="api('POST','/api/ai-autopilot/disable')">Disable Sally</button>
+    <button class="btn warn ctrl-btn" onclick="api('POST','/api/ai-autopilot/atc-deactivate')">Clear ATC Gate</button>
+    <button class="btn ctrl-btn" onclick="api('POST','/api/ai-autopilot/cleared-takeoff')">Cleared for Takeoff</button>
+    <button class="btn ctrl-btn" onclick="requestTaxi()">Request Taxi</button>
+    <button class="btn red sm ctrl-btn" onclick="if(confirm('Reset all Sally learning?')) api('POST','/api/ai-pilot/reset-learning')">Reset Learning</button>
   </div>
 </div>
 
@@ -125,7 +136,7 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
   <div class="atc-row">
     <input class="atc-input" type="number" id="cruise-alt" value="8500" min="1000" max="45000" step="500">
     <span class="tuning-unit">ft</span>
-    <button class="btn blue sm" onclick="setCruiseAlt()">Set</button>
+    <button class="btn blue sm ctrl-btn" onclick="setCruiseAlt()">Set</button>
   </div>
 </div>
 
@@ -134,15 +145,83 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
   <div class="section-title">Takeoff Tuning <span style="color:#8b949e;font-size:9px">(live — applied immediately)</span></div>
   <div class="tuning-grid" id="tuning-grid"></div>
   <div class="btn-row" style="margin-top:8px">
-    <button class="btn green sm" onclick="applyAllTuning()">Apply All</button>
+    <button class="btn green sm ctrl-btn" onclick="applyAllTuning()">Apply All</button>
     <button class="btn sm" onclick="loadTuning()">↻ Reload from server</button>
-    <button class="btn red sm" onclick="if(confirm('Reset tuning to defaults?')) api('POST','/api/ai-pilot/reset-learning').then(()=>loadTuning())">Reset to defaults</button>
+    <button class="btn red sm ctrl-btn" onclick="if(confirm('Reset tuning to defaults?')) api('POST','/api/ai-pilot/reset-learning').then(()=>loadTuning())">Reset to defaults</button>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
+// ── Session lock (mirrors ai-autopilot pane.js) ───────────────────────────
+const SESSION_ID = 'diag-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+const SESSION_HOST = location.hostname || 'unknown';
+let sessionLocked = false;
+let lockOwnerHostname = null;
+let heartbeatTimer = null;
+
+async function registerSession() {
+  try {
+    const r = await fetch('/api/ai-autopilot/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: SESSION_ID, hostname: SESSION_HOST })
+    });
+    if (r.ok) {
+      applyLockState(await r.json());
+      heartbeatTimer = setInterval(sendHeartbeat, 5000);
+    } else {
+      // Server error — assume viewer (safe default for diagnostics)
+      applyLockState({ isOwner: false, ownerHostname: 'unknown' });
+    }
+  } catch (e) {
+    applyLockState({ isOwner: false, ownerHostname: 'unknown' });
+  }
+  renderLockState();
+}
+
+async function sendHeartbeat() {
+  try {
+    const r = await fetch('/api/ai-autopilot/heartbeat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: SESSION_ID, hostname: SESSION_HOST })
+    });
+    if (r.ok) { applyLockState(await r.json()); renderLockState(); }
+  } catch (e) { /* keep current state */ }
+}
+
+function applyLockState(data) {
+  sessionLocked = !data.isOwner;
+  lockOwnerHostname = data.ownerHostname || null;
+}
+
+function renderLockState() {
+  const badge = document.getElementById('sd-badge');
+  const banner = document.getElementById('sd-lock-banner');
+  if (sessionLocked) {
+    badge.className = 'sd-badge viewer';
+    badge.textContent = 'VIEWER';
+    banner.textContent = `Controlled by ${lockOwnerHostname || 'another pane'} — read-only mode`;
+    banner.style.display = '';
+  } else {
+    badge.className = 'sd-badge active';
+    badge.textContent = 'ACTIVE';
+    banner.style.display = 'none';
+  }
+  // Disable/enable all control buttons
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.disabled = sessionLocked);
+}
+
+window.addEventListener('pagehide', () => {
+  navigator.sendBeacon(
+    '/api/ai-autopilot/unregister',
+    new Blob([JSON.stringify({ sessionId: SESSION_ID })], { type: 'application/json' })
+  );
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+});
+
 // ── Tuning parameter definitions ──────────────────────────────────────────
 const TUNING_PARAMS = [
   { key: 'vrSpeed',            label: 'Vr — rotation speed',          unit: 'kt',  min: 40,  max: 80,  step: 1,  def: 55 },
@@ -181,6 +260,7 @@ buildPhaseGrid();
 poll();
 loadTuning();
 autoTimer = setInterval(poll, 3000);
+registerSession();
 
 function toggleAuto() {
   const on = document.getElementById('auto').checked;
@@ -190,9 +270,12 @@ function toggleAuto() {
 
 // ── API helpers ───────────────────────────────────────────────────────────
 async function api(method, url, body) {
+  if (method !== 'GET' && sessionLocked) { toast('err', 'Read-only — another pane is active'); return; }
   try {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
-    if (body) opts.body = JSON.stringify(body);
+    if (method !== 'GET') {
+      opts.body = JSON.stringify({ ...(body || {}), sessionId: SESSION_ID });
+    }
     const r = await fetch(url, opts);
     const d = await r.json();
     toast(r.ok ? 'ok' : 'err', r.ok ? (d.success !== false ? '✓ ' + url.split('/').pop() : d.error || 'Failed') : (d.error || 'Error ' + r.status));
@@ -273,10 +356,10 @@ function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 // ── Phase grid ────────────────────────────────────────────────────────────
 function buildPhaseGrid() {
   document.getElementById('phase-grid').innerHTML = PHASES.map(p =>
-    `<button class="phase-btn" data-phase="${p}" onclick="forcePhase('${p}')">${p}</button>`
+    `<button class="phase-btn ctrl-btn" data-phase="${p}" onclick="forcePhase('${p}')">${p}</button>`
   ).join('');
   document.getElementById('subphase-grid').innerHTML = SUB_PHASES.map(s =>
-    `<button class="phase-btn sub" data-sub="${s}" onclick="forceSubPhase('${s}')">${s}</button>`
+    `<button class="phase-btn sub ctrl-btn" data-sub="${s}" onclick="forceSubPhase('${s}')">${s}</button>`
   ).join('');
 }
 
@@ -318,7 +401,7 @@ function buildTuningGrid() {
       <span class="tuning-label">${p.label}</span>
       <input class="tuning-input" id="t-${p.key}" type="number" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}" title="${p.key}">
       <span class="tuning-unit">${p.unit}</span>
-      <button class="btn sm apply-btn" onclick="applyOne('${p.key}')">Set</button>
+      <button class="btn sm apply-btn ctrl-btn" onclick="applyOne('${p.key}')">Set</button>
     </div>
   `).join('');
 }
