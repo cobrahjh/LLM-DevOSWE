@@ -63,7 +63,7 @@ Write-Host ""
 Write-Host "Location: $remoteDest" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Next steps in MSFS 2024 on commander-pc:" -ForegroundColor Cyan
-Write-Host "  1. Tools > Virtual File System > Actions > Rescan" -ForegroundColor White
+Write-Host "  1. Restart MSFS 2024 (no rescan option — filesystem visible but no reload)" -ForegroundColor White
 Write-Host "  2. Check toolbar for GTN750 panel" -ForegroundColor White
 Write-Host "  3. Open GTN750 from panels menu" -ForegroundColor White
 Write-Host ""
