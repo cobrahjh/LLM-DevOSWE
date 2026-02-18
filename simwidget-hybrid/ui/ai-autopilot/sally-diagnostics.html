@@ -58,6 +58,13 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 .btn.sm { padding: 3px 7px; font-size: 10px; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
 
+/* Server output */
+.srv-output { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 6px 8px; height: 160px; overflow-y: auto; font-family: monospace; font-size: 10px; line-height: 1.5; }
+.srv-output .log-line { white-space: pre-wrap; word-break: break-all; }
+.srv-output .log-line.error { color: #f85149; }
+.srv-output .log-line.log { color: #c9d1d9; }
+.srv-output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+
 /* Phases */
 .phase-grid { display: flex; flex-wrap: wrap; gap: 5px; }
 .phase-btn { padding: 5px 10px; border-radius: 4px; border: 1px solid #30363d; background: #21262d; color: #8b949e; cursor: pointer; font-family: monospace; font-size: 11px; }
@@ -118,6 +125,15 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
     <button class="btn red sm ctrl-btn" onclick="stopServer()">■ Stop</button>
   </div>
   <div id="srv-msg" style="display:none;margin-top:6px;font-size:10px;color:#d29922"></div>
+</div>
+
+<!-- Server Output -->
+<div class="section">
+  <div class="srv-output-header">
+    <div class="section-title" style="margin-bottom:0">Server Output</div>
+    <button class="btn red sm ctrl-btn" onclick="clearServerOutput()">Clear</button>
+  </div>
+  <div class="srv-output" id="srv-output"><span style="color:#8b949e">Loading…</span></div>
 </div>
 
 <!-- Enable/Disable -->
@@ -540,6 +556,36 @@ async function startServer() {
 
 pollHealth();
 setInterval(pollHealth, 10000);
+
+// ── Server output log ─────────────────────────────────────────────────────
+let lastLogTotal = 0;
+
+async function pollServerOutput() {
+  try {
+    const r = await fetch('/api/logs/live?limit=200');
+    const d = await r.json();
+    if (d.total === lastLogTotal) return; // no new lines
+    lastLogTotal = d.total;
+    const el = document.getElementById('srv-output');
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
+    el.innerHTML = d.lines.map(entry => {
+      const ts = new Date(entry.t).toLocaleTimeString();
+      return `<div class="log-line ${entry.level}">[${ts}] ${escHtml(entry.line)}</div>`;
+    }).join('');
+    if (atBottom) el.scrollTop = el.scrollHeight;
+  } catch(e) { /* server may be restarting */ }
+}
+
+async function clearServerOutput() {
+  try {
+    await fetch('/api/logs/clear', { method: 'POST' });
+    lastLogTotal = 0;
+    document.getElementById('srv-output').innerHTML = '<span style="color:#8b949e">Cleared</span>';
+  } catch(e) { toast('err', 'Clear failed: ' + e.message); }
+}
+
+pollServerOutput();
+setInterval(pollServerOutput, 3000);
 </script>
 </body>
 </html>

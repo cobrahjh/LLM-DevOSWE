@@ -105,6 +105,19 @@ const wss = new WebSocketServer({ server });
 
 const PORT = 8080;
 
+// In-memory server log buffer (last 500 lines)
+const LOG_BUFFER_MAX = 500;
+const serverLogBuffer = [];
+const _origLog = console.log.bind(console);
+const _origError = console.error.bind(console);
+function _pushLog(level, args) {
+    const line = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+    serverLogBuffer.push({ t: Date.now(), level, line });
+    if (serverLogBuffer.length > LOG_BUFFER_MAX) serverLogBuffer.shift();
+}
+console.log = (...args) => { _origLog(...args); _pushLog('log', args); };
+console.error = (...args) => { _origError(...args); _pushLog('error', args); };
+
 // Initialize usage metrics
 usageMetrics.init('SimGlass Backend');
 
@@ -1593,6 +1606,18 @@ app.post('/api/services', async (req, res) => {
 });
 
 // Logs API endpoint
+// Live server log buffer endpoints
+app.get('/api/logs/live', (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit) || 200, LOG_BUFFER_MAX);
+    res.json({ lines: serverLogBuffer.slice(-limit), total: serverLogBuffer.length });
+});
+
+app.post('/api/logs/clear', (req, res) => {
+    serverLogBuffer.length = 0;
+    console.log('[Logs] Buffer cleared by client');
+    res.json({ success: true });
+});
+
 app.get('/api/logs/:service', (req, res) => {
     const service = req.params.service;
     const logPaths = {
