@@ -471,7 +471,7 @@
 
         // ── WebSocket ──
         function connectWS() {
-            const host = location.hostname || 'localhost';
+            const host = location.hostname || '192.168.1.42';
             const port = location.port || '8080';
             try { ws = new WebSocket(`ws://${host}:${port}`); } catch { return; }
             ws.onopen = function() {
