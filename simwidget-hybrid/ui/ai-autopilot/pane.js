@@ -746,13 +746,9 @@ class AiAutopilotPane extends SimGlassBase {
                 });
         });
 
-        // SimBrief import / Clear flight plan toggle
+        // SimBrief import/reload
         this.elements.simbriefImport?.addEventListener('click', () => {
-            if (this._currentPlan) {
-                this._clearFlightPlan();
-            } else {
-                this._importSimBrief();
-            }
+            this._importSimBrief();
         });
 
         // Runway selector - manual override of auto-detected runway
