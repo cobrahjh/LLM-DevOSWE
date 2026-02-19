@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Documentation - GTN750</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GTN750 Feature Documentation</h1>
+            <p class="subtitle">Detailed explanation of all GTN750 features</p>
+            <a href="index.html">← Back to Index</a>
+        </header>
+
+        <nav class="doc-nav">
+            <a href="#moving-map">Moving Map</a>
+            <a href="#flight-plan">Flight Plan</a>
+            <a href="#cdi">CDI Navigation</a>
+            <a href="#direct-to">Direct-To</a>
+            <a href="#nrst">Nearest</a>
+            <a href="#data-fields">Data Fields</a>
+            <a href="#overlays">Overlays</a>
+            <a href="#softkeys">Soft Keys</a>
+            <a href="#radio">Radio</a>
+            <a href="#xpdr">Transponder</a>
+            <a href="#tcas">TCAS</a>
+        </nav>
+
+        <!-- Moving Map -->
+        <section id="moving-map">
+            <h2>Moving Map Display</h2>
+
+            <h3>Overview</h3>
+            <p>The moving map provides real-time visualization of your aircraft position, flight plan route, and surrounding geography with multiple zoom levels and orientation modes.</p>
+
+            <h3>Zoom Levels</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Range</th>
+                        <th>Use Case</th>
+                        <th>Details Shown</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2 nm</td>
+                        <td>Airport traffic pattern, final approach</td>
+                        <td>Individual taxiways, fine terrain</td>
+                    </tr>
+                    <tr>
+                        <td>5 nm</td>
+                        <td>Departure/arrival, nearby airports</td>
+                        <td>Airport symbols, close navaids</td>
+                    </tr>
+                    <tr>
+                        <td>10 nm</td>
+                        <td>Terminal area navigation</td>
+                        <td>Multiple airports, VORs</td>
+                    </tr>
+                    <tr>
+                        <td>25 nm</td>
+                        <td>Short cross-country legs</td>
+                        <td>Regional view, major navaids</td>
+                    </tr>
+                    <tr>
+                        <td>50 nm</td>
+                        <td>Medium cross-country</td>
+                        <td>Route overview, airports along route</td>
+                    </tr>
+                    <tr>
+                        <td>100 nm</td>
+                        <td>Long cross-country, planning</td>
+                        <td>Major airports only</td>
+                    </tr>
+                    <tr>
+                        <td>200 nm</td>
+                        <td>Strategic overview</td>
+                        <td>Large-scale route visualization</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Orientation Modes</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>North Up</h4>
+                    <p><strong>Icon:</strong> ⬆️ N</p>
+                    <p>Map fixed with north at top. Aircraft symbol rotates to show heading. Traditional paper chart orientation.</p>
+                    <p><strong>Best for:</strong> Strategic planning, comparing with sectional charts</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Track Up</h4>
+                    <p><strong>Icon:</strong> ↑ TRK</p>
+                    <p>Map rotates so your ground track is always pointing up. Compass rose rotates around map.</p>
+                    <p><strong>Best for:</strong> Enroute navigation, wind correction visualization</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Heading Up</h4>
+                    <p><strong>Icon:</strong> ↑ HDG</p>
+                    <p>Map rotates to match magnetic heading. Shows where nose is pointing regardless of wind drift.</p>
+                    <p><strong>Best for:</strong> Approach procedures, precision flying</p>
+                </div>
+            </div>
+
+            <h3>Map Elements</h3>
+            <ul>
+                <li><strong>Aircraft Symbol:</strong> White chevron showing position and heading</li>
+                <li><strong>Range Rings:</strong> Concentric circles at 25%, 50%, 75%, 100% of selected range</li>
+                <li><strong>Compass Rose:</strong> N/S/E/W labels (rotates in Track/Heading modes)</li>
+                <li><strong>Flight Plan Route:</strong> Magenta line connecting waypoints</li>
+                <li><strong>Active Waypoint:</strong> Magenta circle highlight</li>
+                <li><strong>Desired Track Line:</strong> Magenta line from aircraft to active waypoint</li>
+                <li><strong>Waypoint Labels:</strong> ICAO ident and distance/ETE</li>
+            </ul>
+
+            <h3>Controls</h3>
+            <ul>
+                <li><strong>Zoom In/Out:</strong> +/- buttons or keyboard <kbd>+</kbd>/<kbd>-</kbd></li>
+                <li><strong>Center Map:</strong> Returns panning to ownship (<kbd>C</kbd> key)</li>
+                <li><strong>Cycle Orientation:</strong> Click orientation icon or soft key</li>
+                <li><strong>Pan Map:</strong> Click and drag (touch: swipe)</li>
+                <li><strong>Pinch Zoom:</strong> Two-finger pinch on touch devices</li>
+            </ul>
+        </section>
+
+        <!-- Flight Plan -->
+        <section id="flight-plan">
+            <h2>Flight Planning (FPL Page)</h2>
+
+            <h3>Creating a Flight Plan</h3>
+            <ol>
+                <li>Press <kbd>FPL</kbd> button to open Flight Plan page</li>
+                <li>Click <strong>+ Add Waypoint</strong> button</li>
+                <li>Enter ICAO code (e.g., KSEA, PANC, DEN) or user waypoint name</li>
+                <li>Waypoint appears in route list with distance and bearing</li>
+                <li>Repeat to build complete route</li>
+                <li>Press <strong>Activate</strong> to begin navigation</li>
+            </ol>
+
+            <h3>Waypoint Types</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Symbol</th>
+                        <th>Example</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Airport</td>
+                        <td>🛫</td>
+                        <td>KSEA</td>
+                        <td>NavDB (13,472 airports)</td>
+                    </tr>
+                    <tr>
+                        <td>VOR</td>
+                        <td>◇</td>
+                        <td>SEA</td>
+                        <td>NavDB (830 VORs)</td>
+                    </tr>
+                    <tr>
+                        <td>NDB</td>
+                        <td>⬢</td>
+                        <td>HW</td>
+                        <td>NavDB (1,500 NDBs)</td>
+                    </tr>
+                    <tr>
+                        <td>Fix/Intersection</td>
+                        <td>△</td>
+                        <td>HAWKZ</td>
+                        <td>NavDB (69,892 fixes)</td>
+                    </tr>
+                    <tr>
+                        <td>User Waypoint</td>
+                        <td>⭐</td>
+                        <td>MY_SPOT</td>
+                        <td>User-defined lat/lon</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Route Management</h3>
+            <ul>
+                <li><strong>Reorder:</strong> Drag waypoints to new positions</li>
+                <li><strong>Insert:</strong> Click between waypoints to insert new point</li>
+                <li><strong>Remove:</strong> Click ❌ icon next to waypoint</li>
+                <li><strong>Edit Altitude:</strong> Click waypoint → set target altitude</li>
+                <li><strong>View Details:</strong> Click waypoint for full info (freq, runway, coords)</li>
+            </ul>
+
+            <h3>Import/Export</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>.FPL Format (Native)</h4>
+                    <p>JSON format preserving all GTN750 metadata</p>
+                    <pre><code>Save: Click 💾 → filename.fpl
+Load: Click 📂 → select .fpl</code></pre>
+                </div>
+                <div class="feature-card">
+                    <h4>.PLN Format (Little Navmap)</h4>
+                    <p>XML format compatible with Little Navmap flight planner</p>
+                    <pre><code>Export: Flight Plan menu → Export .PLN
+Import: Flight Plan menu → Import .PLN</code></pre>
+                </div>
+            </div>
+
+            <h3>Auto-Sequencing</h3>
+            <p>Waypoints automatically advance when within <strong>0.3 nm</strong> of active waypoint. Audible tone (if enabled) and visual indication when sequencing occurs.</p>
+        </section>
+
+        <!-- CDI Navigation -->
+        <section id="cdi">
+            <h2>CDI Navigation</h2>
+
+            <h3>Overview</h3>
+            <p>The Course Deviation Indicator (CDI) shows lateral deviation from your desired course with automatic sensitivity scaling based on flight phase.</p>
+
+            <h3>CDI Sources</h3>
+            <table class="feature-table">
+                <tbody>
+                    <tr>
+                        <td><strong>GPS</strong></td>
+                        <td>Track to active waypoint in flight plan</td>
+                        <td>Default mode</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NAV1</strong></td>
+                        <td>VOR or ILS navigation via NAV1 radio</td>
+                        <td>Requires tuned frequency</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NAV2</strong></td>
+                        <td>Secondary VOR navigation</td>
+                        <td>Backup navigation source</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>CDI Sensitivity Modes</h3>
+            <div class="cdi-modes">
+                <div class="feature-card">
+                    <h4 style="color: #00ff00;">ENR (Enroute)</h4>
+                    <p><strong>Full Scale:</strong> ±5.0 nm</p>
+                    <p><strong>Active:</strong> &gt;30nm from destination</p>
+                    <p>Wide needle movement for general navigation. Each dot represents ~1nm deviation.</p>
+                </div>
+                <div class="feature-card">
+                    <h4 style="color: #00ffff;">TERM (Terminal)</h4>
+                    <p><strong>Full Scale:</strong> ±1.0 nm</p>
+                    <p><strong>Active:</strong> Within 30nm of destination</p>
+                    <p>Tighter sensitivity for terminal area procedures. 5x more sensitive than ENR.</p>
+                </div>
+                <div class="feature-card">
+                    <h4 style="color: #ff00ff;">APR (Approach)</h4>
+                    <p><strong>Full Scale:</strong> ±0.3 nm</p>
+                    <p><strong>Active:</strong> Within 2nm with approach loaded</p>
+                    <p>Maximum precision for approach navigation. 16x more sensitive than ENR. Pulsing indicator.</p>
+                </div>
+            </div>
+
+            <h3>CDI Display Elements</h3>
+            <ul>
+                <li><strong>Needle:</strong> Shows left/right deviation from course</li>
+                <li><strong>Dots:</strong> 5 dots each side (full deflection at 5 dots)</li>
+                <li><strong>TO/FROM Flag:</strong> Indicates if flying to or from waypoint</li>
+                <li><strong>Course:</strong> Desired track (DTK) in degrees</li>
+                <li><strong>Cross Track Error:</strong> Distance left/right of course (nm)</li>
+                <li><strong>Source Indicator:</strong> GPS/NAV1/NAV2 badge</li>
+                <li><strong>Mode Badge:</strong> ENR/TERM/APR with color coding</li>
+            </ul>
+
+            <h3>OBS (Omni-Bearing Selector)</h3>
+            <p>In NAV1/NAV2 modes, manually select course to/from VOR:</p>
+            <ol>
+                <li>Switch CDI source to NAV1 or NAV2</li>
+                <li>Click <strong>OBS</strong> knob or soft key</li>
+                <li>Rotate to select desired radial (000-359°)</li>
+                <li>CDI shows deviation from selected course</li>
+            </ol>
+        </section>
+
+        <!-- Direct-To -->
+        <section id="direct-to">
+            <h2>Direct-To Navigation</h2>
+
+            <h3>Quick Navigation</h3>
+            <p>Direct-To provides instant navigation to any waypoint without modifying your stored flight plan.</p>
+
+            <h3>Activation Methods</h3>
+            <ol>
+                <li><strong>Soft Key Method:</strong>
+                    <ul>
+                        <li>Press <kbd>D→</kbd> soft key</li>
+                        <li>Enter waypoint identifier</li>
+                        <li>Press <strong>ACTIVATE</strong></li>
+                    </ul>
+                </li>
+                <li><strong>Keyboard Shortcut:</strong> <kbd>Ctrl+D</kbd></li>
+                <li><strong>Map Context Menu:</strong> Right-click waypoint → Direct-To</li>
+                <li><strong>Flight Plan:</strong> Click waypoint in FPL page → Direct-To button</li>
+            </ol>
+
+            <h3>Direct-To vs Flight Plan</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Direct-To</th>
+                        <th>Flight Plan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Activation</td>
+                        <td>Instant (2 clicks)</td>
+                        <td>Build route first</td>
+                    </tr>
+                    <tr>
+                        <td>Waypoint Sequence</td>
+                        <td>Single waypoint only</td>
+                        <td>Multiple waypoints</td>
+                    </tr>
+                    <tr>
+                        <td>Stored Route</td>
+                        <td>Unchanged (temporary)</td>
+                        <td>Saved in FPL</td>
+                    </tr>
+                    <tr>
+                        <td>Auto-Sequencing</td>
+                        <td>Ends at destination</td>
+                        <td>Continues through route</td>
+                    </tr>
+                    <tr>
+                        <td>Use Case</td>
+                        <td>Quick diversion, practice</td>
+                        <td>Planned cross-country</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Canceling Direct-To</h3>
+            <ul>
+                <li>Press <kbd>D→</kbd> soft key → <strong>CANCEL</strong></li>
+                <li>Activate a different Direct-To</li>
+                <li>Activate stored flight plan</li>
+            </ul>
+        </section>
+
+        <!-- Nearest -->
+        <section id="nrst">
+            <h2>Nearest Database (NRST Page)</h2>
+
+            <h3>Overview</h3>
+            <p>Find nearby airports, VORs, NDBs, and intersections sorted by distance from your current position. Critical for emergency diversions.</p>
+
+            <h3>Database Categories</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Airports (APT)</h4>
+                    <p>Shows 10 closest airports with:</p>
+                    <ul>
+                        <li>ICAO identifier</li>
+                        <li>Distance and bearing</li>
+                        <li>Longest runway length</li>
+                        <li>Elevation</li>
+                        <li>Fuel availability</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>VORs</h4>
+                    <p>VOR, VORTAC, and TACAN stations:</p>
+                    <ul>
+                        <li>Station identifier</li>
+                        <li>Frequency</li>
+                        <li>Distance and bearing</li>
+                        <li>Type (VOR/VORTAC/TACAN)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>NDBs</h4>
+                    <p>Non-directional beacons:</p>
+                    <ul>
+                        <li>Station identifier</li>
+                        <li>Frequency (kHz)</li>
+                        <li>Distance and bearing</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>Fixes (INT)</h4>
+                    <p>Named intersections:</p>
+                    <ul>
+                        <li>Fix identifier (5 letters)</li>
+                        <li>Distance and bearing</li>
+                        <li>Associated airways</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Quick Actions</h3>
+            <ul>
+                <li><strong>Direct-To:</strong> Click waypoint → <kbd>D→</kbd> button</li>
+                <li><strong>Add to Flight Plan:</strong> Click waypoint → <strong>ADD TO FPL</strong></li>
+                <li><strong>View Details:</strong> Click waypoint for full information page</li>
+                <li><strong>Tune Frequency:</strong> (VOR/NDB) Click → <strong>TUNE NAV1/NAV2</strong></li>
+            </ul>
+
+            <h3>Emergency Use</h3>
+            <p>In an emergency, NRST page provides fastest access to diversion airports:</p>
+            <ol>
+                <li>Press <kbd>NRST</kbd> button</li>
+                <li>Airports sorted by distance (closest first)</li>
+                <li>Verify runway length adequate for your aircraft</li>
+                <li>Click airport → <kbd>D→</kbd> to navigate direct</li>
+            </ol>
+        </section>
+
+        <!-- Data Fields -->
+        <section id="data-fields">
+            <h2>Data Fields</h2>
+
+            <h3>Overview</h3>
+            <p>Four customizable corner fields display critical flight information. Each field can show any of 12 data types.</p>
+
+            <h3>Available Fields</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Example</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>BRG</strong></td>
+                        <td>Bearing</td>
+                        <td>275°</td>
+                        <td>Magnetic bearing to active waypoint</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DIS</strong></td>
+                        <td>Distance</td>
+                        <td>42.3nm</td>
+                        <td>Great circle distance to waypoint</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DTK</strong></td>
+                        <td>Desired Track</td>
+                        <td>090°</td>
+                        <td>Course along current flight plan leg</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TRK</strong></td>
+                        <td>Track</td>
+                        <td>095°</td>
+                        <td>Actual ground track (heading + wind drift)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>GS</strong></td>
+                        <td>Ground Speed</td>
+                        <td>142kt</td>
+                        <td>Speed over ground</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ALT</strong></td>
+                        <td>Altitude</td>
+                        <td>8,500ft</td>
+                        <td>Indicated altitude MSL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VSI</strong></td>
+                        <td>Vertical Speed</td>
+                        <td>+500fpm</td>
+                        <td>Rate of climb/descent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ETE</strong></td>
+                        <td>Est. Time Enroute</td>
+                        <td>1:23</td>
+                        <td>Time remaining to active waypoint</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ETA</strong></td>
+                        <td>Est. Time Arrival</td>
+                        <td>14:30Z</td>
+                        <td>Arrival time at waypoint (UTC)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>FUEL</strong></td>
+                        <td>Fuel Remaining</td>
+                        <td>24.8gal</td>
+                        <td>Total fuel quantity</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TEMP</strong></td>
+                        <td>Outside Air Temp</td>
+                        <td>-5°C</td>
+                        <td>Ambient temperature</td>
+                    </tr>
+                    <tr>
+                        <td><strong>WIND</strong></td>
+                        <td>Wind</td>
+                        <td>270/15</td>
+                        <td>Direction/Speed in knots</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Customization</h3>
+            <ol>
+                <li>Click on any corner field</li>
+                <li>Select new field type from menu</li>
+                <li>Field updates immediately</li>
+                <li>Settings saved automatically</li>
+            </ol>
+
+            <h3>Recommended Configurations</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>VFR Navigation</h4>
+                    <p>Top-Left: <strong>BRG</strong><br>
+                    Top-Right: <strong>DIS</strong><br>
+                    Bottom-Left: <strong>GS</strong><br>
+                    Bottom-Right: <strong>ALT</strong></p>
+                </div>
+                <div class="feature-card">
+                    <h4>IFR Enroute</h4>
+                    <p>Top-Left: <strong>DTK</strong><br>
+                    Top-Right: <strong>ETE</strong><br>
+                    Bottom-Left: <strong>GS</strong><br>
+                    Bottom-Right: <strong>FUEL</strong></p>
+                </div>
+                <div class="feature-card">
+                    <h4>Cross-Country</h4>
+                    <p>Top-Left: <strong>DIS</strong><br>
+                    Top-Right: <strong>ETA</strong><br>
+                    Bottom-Left: <strong>GS</strong><br>
+                    Bottom-Right: <strong>FUEL</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Map Overlays -->
+        <section id="overlays">
+            <h2>Map Overlays</h2>
+
+            <h3>Available Overlays</h3>
+            <p>Toggle map overlays via soft keys or settings menu. Multiple overlays can be active simultaneously.</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Terrain</h4>
+                    <p>Elevation-based color coding:</p>
+                    <ul>
+                        <li>Green: Sea level to 1,000ft</li>
+                        <li>Yellow: 1,000-3,000ft</li>
+                        <li>Orange: 3,000-6,000ft</li>
+                        <li>Red: 6,000-10,000ft</li>
+                        <li>Brown: &gt;10,000ft</li>
+                    </ul>
+                    <p><em>Performance: ~60% faster with layer caching (v2.4.0)</em></p>
+                </div>
+                <div class="feature-card">
+                    <h4>Traffic (TCAS)</h4>
+                    <p>Real-time traffic display:</p>
+                    <ul>
+                        <li>Yellow triangle: Traffic within 10nm</li>
+                        <li>Altitude difference shown (+1200, -500)</li>
+                        <li>Callsign if available</li>
+                        <li>Collision alerts (red)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>Weather</h4>
+                    <p>NEXRAD radar and METAR stations:</p>
+                    <ul>
+                        <li>Color-coded precipitation</li>
+                        <li>METAR dots (VFR green, IFR red)</li>
+                        <li>Wind barbs</li>
+                        <li>Lightning strikes</li>
+                    </ul>
+                    <p><em>See <a href="user-guide.html#weather">Weather Guide</a> for details</em></p>
+                </div>
+                <div class="feature-card">
+                    <h4>Airways</h4>
+                    <p>Victor and Jet airways:</p>
+                    <ul>
+                        <li>Victor airways (V1-V999)</li>
+                        <li>Jet airways (J1-J999)</li>
+                        <li>Airway intersections</li>
+                        <li>Minimum altitudes</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Soft Keys -->
+        <section id="softkeys">
+            <h2>Soft Keys</h2>
+
+            <h3>Overview</h3>
+            <p>Context-sensitive buttons that change function based on current page. Located on left and right sides of display.</p>
+
+            <h3>Common Soft Keys</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Function</th>
+                        <th>Pages</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><kbd>D→</kbd></td>
+                        <td>Direct-To</td>
+                        <td>All pages</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>FPL</kbd></td>
+                        <td>Flight Plan page</td>
+                        <td>All pages</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>PROC</kbd></td>
+                        <td>Procedures (SID/STAR/Approach)</td>
+                        <td>All pages</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>NRST</kbd></td>
+                        <td>Nearest airports/navaids</td>
+                        <td>All pages</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>MENU</kbd></td>
+                        <td>Page-specific menu</td>
+                        <td>Context-dependent</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>ZOOM+/-</kbd></td>
+                        <td>Map zoom</td>
+                        <td>Map page</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>ORI</kbd></td>
+                        <td>Cycle orientation</td>
+                        <td>Map page</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>TER/TFC/WX</kbd></td>
+                        <td>Toggle overlays</td>
+                        <td>Map page</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Radio Management -->
+        <section id="radio">
+            <h2>Radio Management</h2>
+
+            <h3>Dual COM/NAV Display</h3>
+            <p>GTN750 displays and controls active and standby frequencies for COM1, COM2, NAV1, and NAV2.</p>
+
+            <h3>Frequency Tuning</h3>
+            <ol>
+                <li>Click on standby frequency field</li>
+                <li>Enter new frequency via keypad or knob</li>
+                <li>Click <strong>SWAP</strong> or press <kbd>↔</kbd> to make active</li>
+            </ol>
+
+            <h3>Quick Tune</h3>
+            <p>Airport frequencies auto-populate from NavDB:</p>
+            <ul>
+                <li>View airport details page</li>
+                <li>Click frequency (ATIS, Tower, Ground, etc.)</li>
+                <li>Frequency loaded into standby</li>
+                <li>Swap to make active</li>
+            </ul>
+
+            <h3>Frequency Ranges</h3>
+            <table class="feature-table">
+                <tbody>
+                    <tr>
+                        <td><strong>COM</strong></td>
+                        <td>118.000 - 136.975 MHz</td>
+                        <td>8.33 kHz spacing (25 kHz legacy)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NAV</strong></td>
+                        <td>108.000 - 117.950 MHz</td>
+                        <td>50 kHz spacing</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Transponder -->
+        <section id="xpdr">
+            <h2>Transponder</h2>
+
+            <h3>Squawk Code Entry</h3>
+            <ol>
+                <li>Click transponder code display in status bar</li>
+                <li>Octal keypad appears (0-7 only)</li>
+                <li>Enter 4-digit code</li>
+                <li>Press <strong>ENTER</strong> to confirm</li>
+            </ol>
+
+            <h3>Mode Selection</h3>
+            <table class="feature-table">
+                <tbody>
+                    <tr>
+                        <td><strong>STBY</strong></td>
+                        <td>Standby - Transponder powered but not transmitting</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ON</strong></td>
+                        <td>Mode A - Transmits squawk code only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ALT</strong></td>
+                        <td>Mode C - Transmits code + altitude (required above 10,000ft)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>GND</strong></td>
+                        <td>Ground mode - Low power for surface operations</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>IDENT Function</h3>
+            <p>Press <strong>IDENT</strong> when requested by ATC. Indicator pulses for 18 seconds.</p>
+
+            <h3>VFR Quick-Set</h3>
+            <p>Press <strong>VFR</strong> button to instantly set code to 1200.</p>
+        </section>
+
+        <!-- TCAS -->
+        <section id="tcas">
+            <h2>TCAS Display</h2>
+
+            <h3>Traffic Symbols</h3>
+            <ul>
+                <li><strong>Yellow Triangle:</strong> Proximate traffic (within 10nm)</li>
+                <li><strong>Red Square:</strong> Collision threat (&lt;30 seconds)</li>
+                <li><strong>White Diamond:</strong> Non-threat traffic</li>
+            </ul>
+
+            <h3>Altitude Display</h3>
+            <p>Relative altitude shown next to each target:</p>
+            <ul>
+                <li><strong>+1200:</strong> 1,200ft above you</li>
+                <li><strong>-500:</strong> 500ft below you</li>
+                <li><strong>0:</strong> Same altitude (±100ft)</li>
+            </ul>
+
+            <h3>Alerts</h3>
+            <p>Audio and visual warnings for collision threats:</p>
+            <ul>
+                <li><strong>Traffic Advisory (TA):</strong> Yellow, 40-second warning</li>
+                <li><strong>Resolution Advisory (RA):</strong> Red, 30-second warning with climb/descend guidance</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p><a href="index.html">← Back to Documentation Index</a> | <a href="user-guide.html">User Guide</a></p>
+        </footer>
+    </div>
+</body>
+</html>

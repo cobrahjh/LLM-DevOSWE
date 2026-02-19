@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeTaxi Guide - GTN750</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SafeTaxi Airport Diagrams</h1>
+            <p class="subtitle">Real-time airport surface navigation with precise positioning</p>
+            <p class="version">Feature introduced in v2.4.0</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="index.html">← Back to Index</a>
+            <a href="#overview">Overview</a>
+            <a href="#using">Using SafeTaxi</a>
+            <a href="#features">Features</a>
+            <a href="#controls">Controls</a>
+            <a href="#troubleshooting">Troubleshooting</a>
+        </nav>
+
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>SafeTaxi provides airport surface diagrams with real-time aircraft position display, allowing you to navigate airport taxiways, runways, and parking areas with precision.</p>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>Sub-Meter</h3>
+                    <p>Position Accuracy</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Auto-Load</h3>
+                    <p>Smart Detection</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Track-Up</h3>
+                    <p>Orientation Mode</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Interactive</h3>
+                    <p>Pan & Zoom</p>
+                </div>
+            </div>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li><strong>Web Mercator Projection</strong> - Industry-standard coordinate system for accurate positioning</li>
+                <li><strong>Real-time Ownship Display</strong> - See your exact position and heading on the diagram</li>
+                <li><strong>Smart Auto-Load</strong> - Automatically loads diagram when landing or on ground</li>
+                <li><strong>Dual Orientation</strong> - North-up for planning, Track-up for taxi operations</li>
+                <li><strong>Auto-Follow Mode</strong> - Camera automatically centers on aircraft</li>
+                <li><strong>Safety Features</strong> - Hold-short lines, hotspots, parking positions clearly marked</li>
+            </ul>
+        </section>
+
+        <section id="using">
+            <h2>Using SafeTaxi</h2>
+
+            <h3>Automatic Loading</h3>
+            <p>SafeTaxi automatically loads airport diagrams when:</p>
+            <ul>
+                <li>Aircraft is on the ground (AGL < 50 feet)</li>
+                <li>Ground speed is low (< 5 knots)</li>
+                <li>Valid airport detected within 5nm</li>
+            </ul>
+            <p><em>Once loaded, diagram stays active until you move >5nm away or manually load a different airport</em></p>
+
+            <h3>Manual Loading</h3>
+            <ol>
+                <li>Press <kbd>TAXI</kbd> page button</li>
+                <li>Type airport ICAO code in the input field (e.g., <code>KSEA</code>)</li>
+                <li>Press <kbd>LOAD</kbd> soft key or hit <kbd>Enter</kbd></li>
+                <li>Diagram loads and displays your position</li>
+            </ol>
+
+            <h3>Best Practices</h3>
+            <ul>
+                <li>Use <strong>Track-Up</strong> mode when taxiing (easier to orient)</li>
+                <li>Use <strong>North-Up</strong> mode when planning taxi route</li>
+                <li>Enable <strong>Auto-Follow</strong> to keep aircraft centered during taxi</li>
+                <li>Zoom in close for parking, zoom out for runway crossings</li>
+            </ul>
+        </section>
+
+        <section id="features">
+            <h2>Display Features</h2>
+
+            <h3>Runways</h3>
+            <ul>
+                <li><strong>Runway Numbers</strong> - Always displayed upright for readability (regardless of orientation mode)</li>
+                <li><strong>Threshold Markings</strong> - Clearly visible runway ends</li>
+                <li><strong>Centerlines</strong> - Runway centerline markings</li>
+                <li><strong>Width Indication</strong> - Accurate runway dimensions</li>
+            </ul>
+
+            <h3>Taxiways</h3>
+            <ul>
+                <li><strong>Taxiway Labels</strong> - Alpha, Bravo, Charlie, etc.</li>
+                <li><strong>Centerlines</strong> - Yellow taxiway centerlines</li>
+                <li><strong>Edge Lines</strong> - Taxiway boundaries</li>
+                <li><strong>Connectors</strong> - High-speed exits and connectors</li>
+            </ul>
+
+            <h3>Safety Markings</h3>
+            <ul>
+                <li><strong>Hold-Short Lines</strong> - Red and white striped markings at runway entries</li>
+                <li><strong>Hotspots</strong> - High-risk areas marked in orange (complex intersections, confusing layouts)</li>
+                <li><strong>ILS Critical Areas</strong> - Special protection zones</li>
+            </ul>
+
+            <h3>Parking & Services</h3>
+            <ul>
+                <li><strong>Gates</strong> - Terminal gates with numbers</li>
+                <li><strong>Ramps</strong> - General aviation parking</li>
+                <li><strong>FBO Locations</strong> - Fixed-base operator facilities</li>
+                <li><strong>Parking Spots</strong> - Individual parking positions</li>
+            </ul>
+
+            <h3>Ownship Display</h3>
+            <ul>
+                <li><strong>Aircraft Icon</strong> - Triangle showing your position</li>
+                <li><strong>Heading Indicator</strong> - Shows current track/heading</li>
+                <li><strong>Trail</strong> - Optional breadcrumb trail (future)</li>
+            </ul>
+
+            <h3>Scale Indicator</h3>
+            <p>Dynamic scale bar shows distance reference:</p>
+            <ul>
+                <li>Automatically adjusts based on zoom level</li>
+                <li>Shows distance in feet or nautical miles</li>
+                <li>Updates in real-time as you zoom</li>
+            </ul>
+        </section>
+
+        <section id="controls">
+            <h2>Controls Reference</h2>
+
+            <h3>Soft Keys</h3>
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Button</th>
+                        <th>Function</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><kbd>LOAD</kbd></td>
+                        <td>Load Diagram</td>
+                        <td>Load airport diagram for typed ICAO code</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>CENTER</kbd></td>
+                        <td>Center View</td>
+                        <td>Center diagram on ownship position</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>ZOOM+</kbd></td>
+                        <td>Zoom In</td>
+                        <td>Increase zoom level (closer view)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>ZOOM-</kbd></td>
+                        <td>Zoom Out</td>
+                        <td>Decrease zoom level (wider view)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>AUTO</kbd></td>
+                        <td>Auto-Scale</td>
+                        <td>Automatically fit entire airport in view</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>FOLLOW</kbd></td>
+                        <td>Auto-Follow</td>
+                        <td>Toggle continuous centering on ownship</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>TRK UP</kbd></td>
+                        <td>Track-Up Mode</td>
+                        <td>Toggle between North-Up and Track-Up orientation</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Mouse Controls</h3>
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Function</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Click + Drag</td>
+                        <td>Pan around diagram</td>
+                    </tr>
+                    <tr>
+                        <td>Mouse Wheel Up</td>
+                        <td>Zoom in at cursor position</td>
+                    </tr>
+                    <tr>
+                        <td>Mouse Wheel Down</td>
+                        <td>Zoom out at cursor position</td>
+                    </tr>
+                    <tr>
+                        <td>Double Click</td>
+                        <td>Center on clicked position</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Keyboard Shortcuts</h3>
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Function</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><kbd>+</kbd></td><td>Zoom in</td></tr>
+                    <tr><td><kbd>-</kbd></td><td>Zoom out</td></tr>
+                    <tr><td><kbd>Space</kbd></td><td>Center on ownship</td></tr>
+                    <tr><td><kbd>F</kbd></td><td>Toggle Follow mode</td></tr>
+                    <tr><td><kbd>R</kbd></td><td>Toggle Track-Up orientation</td></tr>
+                    <tr><td><kbd>A</kbd></td><td>Auto-scale diagram</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="orientation">
+            <h2>Orientation Modes</h2>
+
+            <h3>North-Up Mode (Default)</h3>
+            <p><strong>When to use:</strong></p>
+            <ul>
+                <li>Planning taxi route before departure</li>
+                <li>Studying airport layout</li>
+                <li>Matching airport chart orientation</li>
+                <li>Comparing with ATC taxi instructions</li>
+            </ul>
+            <p><strong>Characteristics:</strong></p>
+            <ul>
+                <li>Diagram fixed with north at top</li>
+                <li>Runway numbers match their magnetic orientation</li>
+                <li>Ownship icon rotates to show heading</li>
+            </ul>
+
+            <h3>Track-Up Mode</h3>
+            <p><strong>When to use:</strong></p>
+            <ul>
+                <li>Active taxiing operations</li>
+                <li>Following complex taxi instructions</li>
+                <li>Operating at unfamiliar airports</li>
+                <li>Night or low-visibility operations</li>
+            </ul>
+            <p><strong>Characteristics:</strong></p>
+            <ul>
+                <li>Diagram rotates so aircraft heading points up</li>
+                <li>"What you see is where you go"</li>
+                <li>Runway numbers rotate to stay upright (always readable)</li>
+                <li>More intuitive for active taxi operations</li>
+            </ul>
+        </section>
+
+        <section id="auto-follow">
+            <h2>Auto-Follow Mode</h2>
+            <p>When enabled, the camera automatically centers on your aircraft as you taxi.</p>
+
+            <h3>Benefits</h3>
+            <ul>
+                <li>No manual re-centering needed while taxiing</li>
+                <li>Keeps ownship always in view</li>
+                <li>Works with both North-Up and Track-Up modes</li>
+                <li>Smooth camera movement (no jarring jumps)</li>
+            </ul>
+
+            <h3>Using Auto-Follow</h3>
+            <ol>
+                <li>Press <kbd>FOLLOW</kbd> soft key to enable</li>
+                <li>Camera continuously centers on aircraft</li>
+                <li>Zoom and orientation still manually controllable</li>
+                <li>Press <kbd>FOLLOW</kbd> again to disable</li>
+            </ol>
+
+            <h3>When Auto-Follow Disables</h3>
+            <p>Auto-follow automatically turns off when you:</p>
+            <ul>
+                <li>Manually pan the diagram (click and drag)</li>
+                <li>Zoom in or out (focus on specific area)</li>
+                <li>Press the <kbd>FOLLOW</kbd> button</li>
+            </ul>
+            <p><em>Simply re-enable by pressing <kbd>FOLLOW</kbd> again</em></p>
+        </section>
+
+        <section id="auto-load">
+            <h2>Auto-Load Functionality</h2>
+
+            <h3>How It Works</h3>
+            <p>SafeTaxi intelligently detects when you're on the ground and automatically loads the appropriate airport diagram.</p>
+
+            <h3>Triggering Conditions</h3>
+            <p>All of these must be true for auto-load:</p>
+            <ol>
+                <li><strong>On Ground</strong> - AGL (Above Ground Level) < 50 feet</li>
+                <li><strong>Low Speed</strong> - Ground speed < 5 knots</li>
+                <li><strong>Airport Nearby</strong> - Valid airport within 5 nautical miles</li>
+                <li><strong>No Diagram Loaded</strong> - Or distance to loaded airport > 5nm</li>
+            </ol>
+
+            <h3>Smart Reload Logic</h3>
+            <ul>
+                <li>Diagram stays loaded while at the same airport</li>
+                <li>Automatically reloads if you taxi to a different airport</li>
+                <li>Won't reload during takeoff roll (speed > 5 knots)</li>
+                <li>Won't reload during touch-and-goes (doesn't meet speed criteria)</li>
+            </ul>
+
+            <h3>Manual Override</h3>
+            <p>You can always manually load a different airport:</p>
+            <ol>
+                <li>Type different ICAO code</li>
+                <li>Press <kbd>LOAD</kbd></li>
+                <li>Manual selection overrides auto-load</li>
+            </ol>
+        </section>
+
+        <section id="troubleshooting">
+            <h2>Troubleshooting</h2>
+
+            <div class="feature-category">
+                <h3>Diagram Not Loading</h3>
+                <p><strong>Possible causes:</strong></p>
+                <ul>
+                    <li>Airport code incorrect or not in database</li>
+                    <li>Internet connection required for diagram download</li>
+                    <li>Some small airports don't have published diagrams</li>
+                </ul>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify correct 4-letter ICAO code (e.g., KSEA, not SEA)</li>
+                    <li>Check browser console for error messages</li>
+                    <li>Try a different major airport to test functionality</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Position Not Accurate</h3>
+                <p><strong>Possible causes:</strong></p>
+                <ul>
+                    <li>GPS drift in simulator</li>
+                    <li>Airport diagram geo-referencing offset</li>
+                </ul>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Web Mercator projection is accurate to sub-meter</li>
+                    <li>Position should match your actual location on airport</li>
+                    <li>If consistently offset, may be diagram geo-reference issue</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Auto-Load Not Working</h3>
+                <p><strong>Check these conditions:</strong></p>
+                <ul>
+                    <li>Are you on the ground? (Check AGL < 50ft)</li>
+                    <li>Is ground speed low? (Check GS < 5 knots)</li>
+                    <li>Are you near an airport? (Within 5nm)</li>
+                    <li>Did auto-load already run for this airport?</li>
+                </ul>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Use manual LOAD if auto-load doesn't trigger</li>
+                    <li>Auto-load only triggers once per airport session</li>
+                    <li>Move >5nm away and return to trigger reload</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="tips">
+            <h2>Pro Tips</h2>
+
+            <h3>Taxi Operations</h3>
+            <ul>
+                <li>Enable Track-Up mode before starting taxi</li>
+                <li>Use Auto-Follow to keep aircraft centered</li>
+                <li>Zoom in close when approaching complex intersections</li>
+                <li>Watch for hold-short lines (red/white stripes)</li>
+                <li>Reference runway numbers to confirm correct runway</li>
+            </ul>
+
+            <h3>Planning</h3>
+            <ul>
+                <li>Use North-Up mode to study airport layout</li>
+                <li>Zoom out to see entire airport and identify your parking</li>
+                <li>Note hotspot locations before taxi</li>
+                <li>Match diagram to airport chart for verification</li>
+            </ul>
+
+            <h3>Safety</h3>
+            <ul>
+                <li><strong>Never cross hold-short lines without clearance</strong></li>
+                <li>Extra caution at hotspot locations (marked in orange)</li>
+                <li>Verify runway before crossing or entering</li>
+                <li>Use diagram to confirm position if disoriented</li>
+            </ul>
+        </section>
+
+        <section id="technical">
+            <h2>Technical Details</h2>
+
+            <h3>Coordinate System</h3>
+            <p><strong>Web Mercator (EPSG:3857)</strong></p>
+            <ul>
+                <li>Industry-standard projection used by Google Maps, OpenStreetMap</li>
+                <li>Sub-meter accuracy at most latitudes</li>
+                <li>Conformal projection preserves angles and shapes</li>
+                <li>Optimal for navigation and positioning</li>
+            </ul>
+
+            <h3>Update Rate</h3>
+            <ul>
+                <li>Position updates: 10 Hz (every 100ms)</li>
+                <li>Canvas redraws: 60 FPS (when needed)</li>
+                <li>Smooth, real-time position tracking</li>
+            </ul>
+
+            <h3>Performance</h3>
+            <ul>
+                <li>Canvas-based rendering for efficiency</li>
+                <li>Optimized for 60 FPS even on complex diagrams</li>
+                <li>Lazy loading of diagram data</li>
+                <li>Minimal memory footprint (~2MB per diagram)</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p><a href="index.html">← Back to Documentation Index</a> | <a href="user-guide.html">User Guide</a></p>
+            <p>For more technical details, see <a href="SAFETAXI-IMPROVEMENTS.md">SAFETAXI-IMPROVEMENTS.md</a></p>
+            <p>SafeTaxi Guide v2.4.0 | Last updated: February 14, 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

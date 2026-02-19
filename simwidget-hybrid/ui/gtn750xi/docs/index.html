@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTN750 Documentation</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GTN 750 GPS Widget</h1>
+            <p class="subtitle">Full-featured Garmin GTN 750 GPS emulator for Microsoft Flight Simulator</p>
+            <p class="version">Version 2.4.0 | Last Updated: February 2026</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="#overview">Overview</a>
+            <a href="#getting-started">Getting Started</a>
+            <a href="#features">Features</a>
+            <a href="#modules">Modules</a>
+            <a href="#api">API Reference</a>
+            <a href="#development">Development</a>
+        </nav>
+
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>The GTN 750 is a comprehensive GPS navigation system emulator that provides flight planning, moving map display, navigation aids, and airport information for Microsoft Flight Simulator.</p>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>4,500+</h3>
+                    <p>Lines of Code</p>
+                </div>
+                <div class="stat-box">
+                    <h3>21</h3>
+                    <p>Module Files</p>
+                </div>
+                <div class="stat-box">
+                    <h3>8</h3>
+                    <p>Main Pages</p>
+                </div>
+                <div class="stat-box">
+                    <h3>12</h3>
+                    <p>Data Fields</p>
+                </div>
+            </div>
+
+            <h3>Key Capabilities</h3>
+            <ul>
+                <li><strong>Multi-resolution Moving Map</strong> - 7 zoom levels from 2nm to 200nm</li>
+                <li><strong>Flight Planning</strong> - Full route management with auto-sequencing</li>
+                <li><strong>CDI Navigation</strong> - GPS, NAV1, NAV2 modes with OBS</li>
+                <li><strong>SafeTaxi Diagrams</strong> - Real-time airport surface positioning</li>
+                <li><strong>Radio Management</strong> - COM, NAV, and Transponder control</li>
+                <li><strong>Database Integration</strong> - Airports, VORs, NDBs, intersections</li>
+            </ul>
+        </section>
+
+        <section id="getting-started">
+            <h2>Getting Started</h2>
+
+            <div class="quick-start">
+                <h3>Quick Start Guide</h3>
+                <ol>
+                    <li>
+                        <strong>Access the Widget</strong>
+                        <p>Navigate to <code>http://localhost:8080/ui/gtn750/</code></p>
+                    </li>
+                    <li>
+                        <strong>Verify Connection</strong>
+                        <p>Check for green connection indicator in the header</p>
+                    </li>
+                    <li>
+                        <strong>Create Your First Route</strong>
+                        <p>Press <kbd>FPL</kbd> button → Click <strong>+ Add Waypoint</strong> → Enter ICAO code</p>
+                    </li>
+                    <li>
+                        <strong>Navigate Direct-To</strong>
+                        <p>Press <kbd>D→</kbd> soft key → Enter waypoint → Press <strong>ACTIVATE</strong></p>
+                    </li>
+                </ol>
+            </div>
+
+            <h3>Documentation Index</h3>
+            <div class="doc-grid">
+                <a href="user-guide.html" class="doc-card">
+                    <h4>User Guide</h4>
+                    <p>Complete guide to using all GTN750 features</p>
+                </a>
+                <a href="modules.html" class="doc-card">
+                    <h4>Module Reference</h4>
+                    <p>Technical documentation for all modules</p>
+                </a>
+                <a href="features.html" class="doc-card">
+                    <h4>Feature Documentation</h4>
+                    <p>Detailed explanation of each feature</p>
+                </a>
+                <a href="api-reference.html" class="doc-card">
+                    <h4>API Reference</h4>
+                    <p>Developer API and integration guide</p>
+                </a>
+                <a href="safetaxi.html" class="doc-card">
+                    <h4>SafeTaxi Guide</h4>
+                    <p>Airport diagram functionality</p>
+                </a>
+                <a href="troubleshooting.html" class="doc-card">
+                    <h4>Troubleshooting</h4>
+                    <p>Common issues and solutions</p>
+                </a>
+                <a href="keyboard-shortcuts.html" class="doc-card">
+                    <h4>Keyboard Shortcuts</h4>
+                    <p>Complete keyboard reference</p>
+                </a>
+                <a href="development-guide.html" class="doc-card">
+                    <h4>Development Guide</h4>
+                    <p>Contributing and extending GTN750</p>
+                </a>
+                <a href="plugins.html" class="doc-card">
+                    <h4>Plugin Development</h4>
+                    <p>Create custom pages and modules</p>
+                </a>
+            </div>
+        </section>
+
+        <section id="features">
+            <h2>Features Overview</h2>
+
+            <div class="feature-category">
+                <h3>Navigation & Flight Planning</h3>
+                <ul>
+                    <li><a href="features.html#moving-map">Moving Map Display</a> - Multi-resolution with 3 orientation modes</li>
+                    <li><a href="features.html#flight-plan">Flight Planning</a> - Route management with auto-sequencing</li>
+                    <li><a href="features.html#cdi">CDI Navigation</a> - GPS, NAV1, NAV2 modes with OBS</li>
+                    <li><a href="features.html#direct-to">Direct-To</a> - Instant navigation to any waypoint</li>
+                    <li><a href="features.html#nrst">Nearest Database</a> - Find nearby airports and navaids</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Display & Interface</h3>
+                <ul>
+                    <li><a href="features.html#data-fields">Data Fields</a> - 4 customizable corner displays with 12 field types</li>
+                    <li><a href="features.html#overlays">Map Overlays</a> - Terrain, Traffic, Weather layers</li>
+                    <li><a href="safetaxi.html">SafeTaxi Diagrams</a> - Real-time airport surface positioning</li>
+                    <li><a href="features.html#softkeys">Soft Keys</a> - Context-sensitive button functions</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Radio & Systems</h3>
+                <ul>
+                    <li><a href="features.html#radio">Radio Management</a> - Dual COM/NAV frequency control</li>
+                    <li><a href="features.html#xpdr">Transponder</a> - 4-digit code with mode selection</li>
+                    <li><a href="features.html#tcas">TCAS Display</a> - Traffic alerts and visualization</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="modules">
+            <h2>Module Architecture</h2>
+            <p>The GTN750 uses a modular architecture with clean separation of concerns:</p>
+
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Lines</th>
+                        <th>Purpose</th>
+                        <th>Documentation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>gtn-core.js</code></td>
+                        <td>~150</td>
+                        <td>Math utilities, geo calculations, formatting</td>
+                        <td><a href="modules.html#core">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>gtn-data-fields.js</code></td>
+                        <td>~180</td>
+                        <td>Corner data field management</td>
+                        <td><a href="modules.html#data-fields">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>gtn-cdi.js</code></td>
+                        <td>~400</td>
+                        <td>CDI, OBS, NAV source, holding patterns</td>
+                        <td><a href="modules.html#cdi">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>gtn-flight-plan.js</code></td>
+                        <td>~500</td>
+                        <td>Flight plan, Direct-To, sequencing</td>
+                        <td><a href="modules.html#flight-plan">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>gtn-map-renderer.js</code></td>
+                        <td>~800</td>
+                        <td>Canvas rendering (map, compass, route)</td>
+                        <td><a href="modules.html#map-renderer">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>gtn-airport-diagram.js</code></td>
+                        <td>~600</td>
+                        <td>SafeTaxi diagram rendering</td>
+                        <td><a href="modules.html#airport-diagram">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>gtn-data-handler.js</code></td>
+                        <td>~220</td>
+                        <td>WebSocket data (browser mode)</td>
+                        <td><a href="modules.html#data-handler">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>gtn-simvar-handler.js</code></td>
+                        <td>~150</td>
+                        <td>SimVar API (MSFS native mode)</td>
+                        <td><a href="modules.html#simvar-handler">Details</a></td>
+                    </tr>
+                    <tr>
+                        <td><code>pane.js</code></td>
+                        <td>~1250</td>
+                        <td>Main orchestrator (wires everything together)</td>
+                        <td><a href="modules.html#orchestrator">Details</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="api">
+            <h2>API Reference</h2>
+            <p>The GTN750 provides several APIs for integration:</p>
+
+            <h3>BroadcastChannel API</h3>
+            <p>Cross-widget communication via <code>SimGlass-sync</code> channel:</p>
+            <pre><code>// Route updates
+{
+    type: 'route-update',
+    waypoints: [{ident, lat, lon, altitude}, ...],
+    source: 'gtn750'
+}
+
+// Direct-To activation
+{
+    type: 'direct-to',
+    waypoint: {ident, lat, lon},
+    source: 'gtn750'
+}</code></pre>
+
+            <h3>Module APIs</h3>
+            <ul>
+                <li><a href="api-reference.html#core">GTNCore API</a> - Utility functions</li>
+                <li><a href="api-reference.html#flight-plan">FlightPlan API</a> - Route management</li>
+                <li><a href="api-reference.html#cdi">CDI API</a> - Navigation functions</li>
+                <li><a href="api-reference.html#map">Map Renderer API</a> - Canvas rendering</li>
+            </ul>
+
+            <p><a href="api-reference.html" class="btn">Full API Documentation →</a></p>
+        </section>
+
+        <section id="development">
+            <h2>Development</h2>
+
+            <h3>File Structure</h3>
+            <pre><code>gtn750/
+├── index.html              # Main HTML with canvas
+├── pane.js                 # Orchestrator (1273 lines)
+├── styles.css              # GTN750 styling
+├── modules/                # Core modules (8 files)
+├── overlays/               # Map overlays (4 files)
+├── pages/                  # Page handlers (8 files)
+├── data/                   # Static data
+└── docs/                   # Documentation (you are here)</code></pre>
+
+            <h3>Getting Started with Development</h3>
+            <ol>
+                <li>Read the <a href="development-guide.html">Development Guide</a></li>
+                <li>Review <a href="modules.html">Module Reference</a> for architecture</li>
+                <li>Check <a href="api-reference.html">API Reference</a> for integration points</li>
+                <li>See example implementations in existing pages</li>
+            </ol>
+
+            <h3>Resources</h3>
+            <ul>
+                <li><a href="development-guide.html#adding-page">Adding a New Page</a></li>
+                <li><a href="development-guide.html#adding-field">Adding a Data Field</a></li>
+                <li><a href="development-guide.html#module-comm">Module Communication Patterns</a></li>
+                <li><a href="development-guide.html#testing">Testing Guidelines</a></li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>GTN750 Documentation v2.4.0 | Part of SimWidget Engine | <a href="../README.md">Main README</a></p>
+            <p>Last updated: February 14, 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

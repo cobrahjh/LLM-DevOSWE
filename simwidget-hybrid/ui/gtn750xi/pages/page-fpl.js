@@ -1,0 +1,690 @@
+/**
+ * GTN750 Flight Plan Page - Garmin-style waypoint list with cursor navigation
+ * Follows NearestPage pattern: lazy-loaded, receives refs from orchestrator
+ */
+
+class FlightPlanPage {
+    constructor(options = {}) {
+        this.core = options.core || new GTNCore();
+        this.serverPort = options.serverPort || 8080;
+        this.flightPlanManager = options.flightPlanManager || null;
+        this.softKeys = options.softKeys || null;
+
+        // State
+        this.cursorIndex = -1; // -1 = no cursor selection
+        this.flightPlan = null;
+        this.magvar = 0;
+        this.aircraftData = null;
+
+        // Elements cache
+        this.elements = {};
+        this._initialized = false;
+    }
+
+    init() {
+        if (this._initialized) return;
+        this.cacheElements();
+        this.bindEvents();
+        this._initialized = true;
+    }
+
+    cacheElements() {
+        this.elements = {
+            fplList: document.getElementById('fpl-list'),
+            fplDep: document.getElementById('fpl-dep'),
+            fplArr: document.getElementById('fpl-arr'),
+            fplDist: document.getElementById('fpl-dist'),
+            fplEte: document.getElementById('fpl-ete'),
+            fplProgress: document.getElementById('fpl-progress'),
+            importBtn: document.getElementById('fpl-import-btn'),
+            importMsfsBtn: document.getElementById('fpl-import-msfs-btn'),
+            importSimBtn: document.getElementById('fpl-import-sim-btn')
+        };
+    }
+
+    bindEvents() {
+        // Click outside list to deselect cursor
+        const pageFpl = document.getElementById('page-fpl');
+        if (pageFpl) {
+            pageFpl.addEventListener('click', (e) => {
+                if (!e.target.closest('.gtn-fpl-item') && !e.target.closest('.gtn-fpl-col-header')) {
+                    this.setCursor(-1);
+                }
+            });
+        }
+
+        // Import SimBrief plan
+        if (this.elements.importBtn) {
+            this.elements.importBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.importSimBrief();
+            });
+        }
+
+        // Import MSFS 2024 flight plan (file picker)
+        if (this.elements.importMsfsBtn) {
+            this.elements.importMsfsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.importMSFS2024();
+            });
+        }
+
+        // Load active MSFS 2024 flight plan from sim (auto-detect, no file picker)
+        if (this.elements.importSimBtn) {
+            this.elements.importSimBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.importFromSim();
+            });
+        }
+    }
+
+    async importSimBrief() {
+        const btn = this.elements.importBtn;
+        if (!btn || btn.classList.contains('loading')) return;
+
+        // Check for saved pilot ID
+        let pilotId = localStorage.getItem('simbrief-pilot-id');
+        if (!pilotId) {
+            pilotId = prompt('Enter SimBrief Pilot ID or Username:');
+            if (!pilotId) return;
+            localStorage.setItem('simbrief-pilot-id', pilotId.trim());
+        }
+
+        btn.classList.add('loading');
+        btn.textContent = '... LOADING';
+
+        try {
+            const isNumeric = /^\d+$/.test(pilotId);
+            const param = isNumeric ? 'userid' : 'username';
+            const res = await fetch(`/api/simbrief/ofp?${param}=${encodeURIComponent(pilotId)}`);
+            if (!res.ok) throw new Error('Failed to fetch OFP');
+            const ofp = await res.json();
+            if (ofp.fetch?.status === 'Error') throw new Error(ofp.fetch.error || 'No plan found');
+
+            const navlog = ofp.navlog?.fix || [];
+            const waypoints = navlog.map(fix => ({
+                ident: fix.ident,
+                name: fix.name,
+                type: fix.type,
+                lat: parseFloat(fix.pos_lat),
+                lng: parseFloat(fix.pos_long),
+                altitude: parseInt(fix.altitude_feet) || 0,
+                distanceFromPrev: parseInt(fix.distance) || 0,
+                ete: parseInt(fix.time_leg) || 0
+            }));
+
+            const planData = {
+                departure: ofp.origin?.icao_code,
+                arrival: ofp.destination?.icao_code,
+                waypoints,
+                totalDistance: parseInt(ofp.general?.route_distance) || 0,
+                route: ofp.general?.route || '',
+                altitude: ofp.general?.initial_altitude || 0,
+                source: 'simbrief'
+            };
+
+            // Load into flight plan manager
+            if (this.flightPlanManager) {
+                this.flightPlanManager.handleSyncMessage('simbrief-plan', planData);
+            }
+
+            // Store on server for other panes
+            fetch('/api/ai-pilot/shared-state', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'nav', data: { simbriefPlan: planData } })
+            }).catch(() => {});
+
+            // Broadcast to other panes
+            const ch = new SafeChannel('SimGlass-sync');
+            ch.postMessage({ type: 'simbrief-plan', data: planData });
+            ch.close();
+
+            btn.textContent = '\u2714 LOADED';
+            setTimeout(() => { btn.textContent = '\u2708 IMPORT'; }, 2000);
+        } catch (e) {
+            console.error('[FPL] SimBrief import failed:', e);
+            btn.textContent = '\u2718 FAILED';
+            // Clear saved ID on failure so user can re-enter
+            localStorage.removeItem('simbrief-pilot-id');
+            setTimeout(() => { btn.textContent = '\u2708 IMPORT'; }, 2000);
+        }
+        btn.classList.remove('loading');
+    }
+
+    async importMSFS2024() {
+        const btn = this.elements.importMsfsBtn;
+        if (!btn || btn.classList.contains('loading')) return;
+
+        btn.classList.add('loading');
+        btn.textContent = '... LOADING';
+
+        try {
+            const res = await fetch('/api/msfs/flightplan');
+            if (res.status === 404) {
+                // Auto-detect failed — let user pick the file
+                btn.classList.remove('loading');
+                btn.textContent = '\u2708 LOAD FPL FILE';
+                const planData = await this._pickPlnFile();
+                if (!planData) return;
+                this._loadMsfsPlan(planData, btn);
+                return;
+            }
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `Server returned ${res.status}`);
+            }
+            const plan = await res.json();
+            this._loadMsfsPlan({
+                departure: plan.departure,
+                arrival: plan.arrival,
+                waypoints: plan.waypoints,
+                totalDistance: plan.totalDistance || 0,
+                route: plan.route || '',
+                altitude: plan.cruisingAlt || 0,
+                source: 'msfs2024'
+            }, btn, '\u2708 LOAD FPL FILE');
+        } catch (e) {
+            console.error('[FPL] MSFS 2024 import failed:', e);
+            btn.textContent = '\u2718 FAILED';
+            setTimeout(() => { btn.textContent = '\u2708 LOAD FPL FILE'; }, 2000);
+            btn.classList.remove('loading');
+        }
+    }
+
+    async importFromSim() {
+        const btn = this.elements.importSimBtn;
+        if (!btn || btn.classList.contains('loading')) return;
+
+        btn.classList.add('loading');
+        btn.textContent = '... LOADING';
+
+        try {
+            const res = await fetch('/api/msfs/flightplan');
+            if (res.status === 404) {
+                btn.textContent = '\u2718 NOT FOUND';
+                setTimeout(() => { btn.textContent = '\u2708 FROM SIM'; }, 2000);
+                btn.classList.remove('loading');
+                return;
+            }
+            if (!res.ok) throw new Error(`Server returned ${res.status}`);
+            const plan = await res.json();
+            this._loadMsfsPlan({
+                departure: plan.departure,
+                arrival: plan.arrival,
+                waypoints: plan.waypoints,
+                totalDistance: plan.totalDistance || 0,
+                route: plan.route || '',
+                altitude: plan.cruisingAlt || 0,
+                source: 'msfs2024'
+            }, btn, '\u2708 FROM SIM');
+        } catch (e) {
+            console.error('[FPL] FROM SIM import failed:', e);
+            btn.textContent = '\u2718 FAILED';
+            setTimeout(() => { btn.textContent = '\u2708 FROM SIM'; }, 2000);
+            btn.classList.remove('loading');
+        }
+    }
+
+    _loadMsfsPlan(planData, btn, resetLabel = '\u2708 LOAD FPL FILE') {
+        if (this.flightPlanManager) {
+            this.flightPlanManager.handleSyncMessage('simbrief-plan', planData);
+        }
+        const ch = new SafeChannel('SimGlass-sync');
+        ch.postMessage({ type: 'simbrief-plan', data: planData });
+        ch.close();
+        btn.classList.remove('loading');
+        btn.textContent = '\u2714 LOADED';
+        setTimeout(() => { btn.textContent = resetLabel; }, 2000);
+    }
+
+    _pickPlnFile() {
+        return new Promise((resolve) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pln';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            input.onchange = () => {
+                const file = input.files[0];
+                document.body.removeChild(input);
+                if (!file) return resolve(null);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        resolve(this._parsePln(e.target.result));
+                    } catch (err) {
+                        console.error('[FPL] PLN parse failed:', err);
+                        resolve(null);
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            input.oncancel = () => { document.body.removeChild(input); resolve(null); };
+            input.click();
+        });
+    }
+
+    _parsePln(xml) {
+        const tag = (name) => {
+            const m = xml.match(new RegExp(`<${name}[^>]*>([^<]*)<\/${name}>`));
+            return m ? m[1].trim() : null;
+        };
+        const parsePos = (pos) => {
+            if (!pos) return { lat: 0, lng: 0 };
+            const m = pos.match(/([NS])([\d°' ".]+),([EW])([\d°' ".]+)/);
+            if (!m) return { lat: 0, lng: 0 };
+            const dms = (s) => {
+                const p = s.match(/(\d+)°\s*(\d+)'\s*([\d.]+)"/);
+                if (!p) return parseFloat(s) || 0;
+                return parseInt(p[1]) + parseInt(p[2]) / 60 + parseFloat(p[3]) / 3600;
+            };
+            return {
+                lat: parseFloat((dms(m[2]) * (m[1] === 'S' ? -1 : 1)).toFixed(6)),
+                lng: parseFloat((dms(m[4]) * (m[3] === 'W' ? -1 : 1)).toFixed(6))
+            };
+        };
+
+        const departure = tag('DepartureID');
+        const arrival = tag('DestinationID');
+        const cruisingAlt = parseInt(tag('CruisingAlt')) || 0;
+
+        const wpMatches = [...xml.matchAll(/<ATCWaypoint id="([^"]+)">([\s\S]*?)<\/ATCWaypoint>/g)];
+        const waypoints = wpMatches.map((m) => {
+            const id = m[1];
+            const block = m[2];
+            const typeM = block.match(/<ATCWaypointType>([^<]+)<\/ATCWaypointType>/);
+            const posM = block.match(/<WorldPosition>([^<]+)<\/WorldPosition>/);
+            const { lat, lng } = parsePos(posM ? posM[1] : null);
+            return { ident: id, name: id, type: (typeM ? typeM[1].toLowerCase() : 'fix'), lat, lng, altitude: cruisingAlt };
+        });
+
+        // Calculate leg distances now that all positions are known
+        let totalDistance = 0;
+        for (let i = 1; i < waypoints.length; i++) {
+            const d = this.core.calculateDistance(waypoints[i - 1].lat, waypoints[i - 1].lng, waypoints[i].lat, waypoints[i].lng);
+            waypoints[i].distanceFromPrev = d;
+            totalDistance += d;
+        }
+
+        return {
+            departure, arrival, waypoints,
+            totalDistance: Math.round(totalDistance),
+            route: waypoints.map(w => w.ident).join(' '),
+            altitude: cruisingAlt,
+            source: 'msfs2024'
+        };
+    }
+
+    // ===== RENDERING =====
+
+    render() {
+        this.renderHeader();
+        this.renderList();
+        this.renderProgress();
+    }
+
+    renderHeader() {
+        const wps = this.flightPlan?.waypoints;
+        if (!wps?.length) {
+            if (this.elements.fplDep) this.elements.fplDep.textContent = '----';
+            if (this.elements.fplArr) this.elements.fplArr.textContent = '----';
+            if (this.elements.fplDist) this.elements.fplDist.textContent = '0';
+            if (this.elements.fplEte) this.elements.fplEte.textContent = '--:--';
+            return;
+        }
+
+        if (this.elements.fplDep) this.elements.fplDep.textContent = wps[0].ident || '----';
+        if (this.elements.fplArr) this.elements.fplArr.textContent = wps[wps.length - 1].ident || '----';
+
+        let totalDist = 0;
+        wps.forEach(wp => { if (wp.distanceFromPrev) totalDist += wp.distanceFromPrev; });
+        if (this.elements.fplDist) this.elements.fplDist.textContent = Math.round(totalDist);
+
+        if (this.elements.fplEte) {
+            const gs = this.flightPlanManager?._groundSpeed || 0;
+            if (gs > 0 && totalDist > 0) {
+                const eteMin = (totalDist / gs) * 60;
+                this.elements.fplEte.textContent = this.core.formatEte(eteMin);
+            } else {
+                this.elements.fplEte.textContent = '--:--';
+            }
+        }
+    }
+
+    renderList() {
+        if (!this.elements.fplList) return;
+        this.elements.fplList.textContent = '';
+
+        if (!this.flightPlan?.waypoints?.length) {
+            this.renderEmpty();
+            return;
+        }
+
+        // Column header row
+        const header = document.createElement('div');
+        header.className = 'gtn-fpl-col-header';
+        header.innerHTML = '<span>#</span><span>IDENT</span><span>ALT</span><span>CUM</span><span>LEG</span><span>DTK</span><span>ETE</span>';
+        this.elements.fplList.appendChild(header);
+
+        const activeIdx = this.flightPlanManager?.activeWaypointIndex || 0;
+
+        this.flightPlan.waypoints.forEach((wp, index) => {
+            this.renderRow(wp, index, activeIdx);
+        });
+
+        // Scroll active waypoint into view
+        const items = this.elements.fplList.querySelectorAll('.gtn-fpl-item');
+        if (items[activeIdx]) {
+            items[activeIdx].scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        }
+    }
+
+    renderRow(wp, index, activeIdx) {
+        const row = document.createElement('div');
+        row.className = 'gtn-fpl-item';
+
+        const isMissed = wp.type === 'MISSED' || wp.procedureType === 'MISSED';
+
+        if (wp.passed) row.classList.add('passed');
+        if (index === activeIdx) row.classList.add('active');
+        if (index === this.cursorIndex) row.classList.add('cursor');
+        if (isMissed) row.classList.add('missed-approach');  // Add class for styling
+
+        // Seq number
+        const seq = document.createElement('span');
+        seq.className = 'fpl-seq';
+        seq.textContent = index + 1;
+
+        // Ident (with airway name if present and missed badge)
+        const ident = document.createElement('span');
+        ident.className = 'fpl-ident';
+        let identText = wp.ident || `WP${index + 1}`;
+        if (wp.airway) {
+            identText += ` (${wp.airway})`;
+        }
+        ident.textContent = identText;
+
+        // Add MISSED badge if this is a missed approach waypoint
+        if (isMissed) {
+            const missedBadge = document.createElement('span');
+            missedBadge.className = 'fpl-missed-badge';
+            missedBadge.textContent = 'MISSED';
+            ident.appendChild(missedBadge);
+        }
+
+        // Altitude
+        const alt = document.createElement('span');
+        alt.className = 'fpl-alt';
+        alt.textContent = wp.altitude ? Math.round(wp.altitude).toLocaleString() : '---';
+
+        // Cumulative distance
+        const cumDist = document.createElement('span');
+        cumDist.className = 'fpl-dist';
+        cumDist.textContent = Math.round(this.calcCumulativeDist(index));
+
+        // Leg distance
+        const legDist = document.createElement('span');
+        legDist.className = 'fpl-dist';
+        legDist.textContent = wp.distanceFromPrev ? Math.round(wp.distanceFromPrev) : '-';
+
+        // DTK (desired track)
+        const dtk = document.createElement('span');
+        dtk.className = 'fpl-dtk';
+        const dtkVal = this.calcLegDTK(index);
+        dtk.textContent = dtkVal !== null ? Math.round(dtkVal).toString().padStart(3, '0') + '\u00B0' : '---';
+
+        // ETE
+        const ete = document.createElement('span');
+        ete.className = 'fpl-ete';
+        const gs = this.flightPlanManager?._groundSpeed || 0;
+        if (wp.distanceFromPrev && gs > 0) {
+            ete.textContent = this.calcLegETE(wp.distanceFromPrev, gs);
+        } else {
+            ete.textContent = '--:--';
+        }
+
+        row.appendChild(seq);
+        row.appendChild(ident);
+        row.appendChild(alt);
+        row.appendChild(cumDist);
+        row.appendChild(legDist);
+        row.appendChild(dtk);
+        row.appendChild(ete);
+
+        row.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.setCursor(index);
+        });
+
+        this.elements.fplList.appendChild(row);
+    }
+
+    renderEmpty() {
+        const empty = document.createElement('div');
+        empty.className = 'gtn-fpl-empty';
+
+        const msg = document.createElement('div');
+        msg.textContent = 'No Flight Plan';
+        msg.style.fontSize = '14px';
+        msg.style.marginBottom = '8px';
+
+        const hint = document.createElement('div');
+        hint.textContent = 'Use Direct-To, SimBrief, Load FPL File, or FROM SIM';
+        hint.style.fontSize = '10px';
+        hint.style.color = 'var(--gtn-text-dim)';
+
+        empty.appendChild(msg);
+        empty.appendChild(hint);
+        this.elements.fplList.appendChild(empty);
+    }
+
+    renderProgress() {
+        if (!this.elements.fplProgress || !this.flightPlan?.waypoints) {
+            if (this.elements.fplProgress) this.elements.fplProgress.style.width = '0%';
+            return;
+        }
+        const total = this.flightPlan.waypoints.length;
+        const passed = this.flightPlan.waypoints.filter(wp => wp.passed).length;
+        const progress = total > 0 ? (passed / total) * 100 : 0;
+        this.elements.fplProgress.style.width = progress + '%';
+    }
+
+    // ===== CURSOR =====
+
+    setCursor(index) {
+        const wps = this.flightPlan?.waypoints;
+        if (!wps?.length) {
+            this.cursorIndex = -1;
+            this.updateSoftKeyContext();
+            return;
+        }
+
+        this.cursorIndex = (index >= 0 && index < wps.length) ? index : -1;
+
+        // Update visual state
+        const items = this.elements.fplList?.querySelectorAll('.gtn-fpl-item');
+        if (items) {
+            items.forEach((item, i) => {
+                item.classList.toggle('cursor', i === this.cursorIndex);
+            });
+        }
+
+        // Scroll into view
+        if (this.cursorIndex >= 0 && items?.[this.cursorIndex]) {
+            items[this.cursorIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+
+        this.updateSoftKeyContext();
+    }
+
+    moveCursor(dir) {
+        const wps = this.flightPlan?.waypoints;
+        if (!wps?.length) return;
+
+        let newIdx = this.cursorIndex + dir;
+        newIdx = Math.max(0, Math.min(wps.length - 1, newIdx));
+        this.setCursor(newIdx);
+    }
+
+    // ===== ACTIONS =====
+
+    onNew() {
+        if (this.flightPlanManager) {
+            this.flightPlanManager.showDirectTo();
+        }
+    }
+
+    onDelete() {
+        if (this.cursorIndex < 0 || !this.flightPlanManager) return;
+        this.flightPlanManager.deleteWaypoint(this.cursorIndex);
+
+        // Adjust cursor
+        const wps = this.flightPlan?.waypoints;
+        if (wps?.length) {
+            this.cursorIndex = Math.min(this.cursorIndex, wps.length - 1);
+        } else {
+            this.cursorIndex = -1;
+        }
+        this.updateSoftKeyContext();
+    }
+
+    onInsert() {
+        if (this.cursorIndex < 0 || !this.flightPlanManager) return;
+        this.flightPlanManager.showDirectTo(null, {
+            insertMode: true,
+            insertIndex: this.cursorIndex
+        });
+    }
+
+    onActivateLeg() {
+        if (this.cursorIndex < 0 || !this.flightPlanManager) return;
+        // Set the active waypoint index to cursor position, mark prior as passed
+        this.flightPlanManager.activeWaypointIndex = this.cursorIndex;
+        this.flightPlanManager.activateLeg();
+    }
+
+    onInvert() {
+        if (this.flightPlanManager) {
+            this.flightPlanManager.invertFlightPlan();
+        }
+    }
+
+    onInsertAirway() {
+        if (this.cursorIndex < 0 || !this.flightPlanManager) return;
+        const selectedWp = this.getSelectedWaypoint();
+        if (!selectedWp) return;
+
+        // Get next waypoint in flight plan
+        const nextWp = this.flightPlanManager.flightPlan?.waypoints?.[this.cursorIndex + 1];
+
+        // Get current position for nearby search
+        const lat = this.aircraftData?.latitude ?? selectedWp.lat;
+        const lon = this.aircraftData?.longitude ?? selectedWp.lng ?? selectedWp.lon;
+
+        // Show airway modal with smart suggestions
+        this.flightPlanManager.showAirwaysModal({
+            selectedWp,
+            nextWp,
+            lat,
+            lon
+        });
+    }
+
+    onMoveUp() {
+        if (this.cursorIndex <= 0 || !this.flightPlanManager) return;
+        const success = this.flightPlanManager.moveWaypoint(this.cursorIndex, -1);
+        if (success) {
+            this.cursorIndex--;
+            this.render();
+            this.setCursor(this.cursorIndex);
+        }
+    }
+
+    onMoveDown() {
+        if (this.cursorIndex < 0 || !this.flightPlanManager) return;
+        const wps = this.flightPlan?.waypoints;
+        if (!wps || this.cursorIndex >= wps.length - 1) return;
+
+        const success = this.flightPlanManager.moveWaypoint(this.cursorIndex, 1);
+        if (success) {
+            this.cursorIndex++;
+            this.render();
+            this.setCursor(this.cursorIndex);
+        }
+    }
+
+    onClear() {
+        // Handled by pane.js via fpl-clear soft key action
+    }
+
+    confirmClear() {
+        if (this.flightPlanManager) {
+            this.flightPlanManager.clearFlightPlan();
+            this.cursorIndex = -1;
+            this.render();
+            this.updateSoftKeyContext();
+        }
+    }
+
+    // ===== SOFT KEYS =====
+
+    updateSoftKeyContext() {
+        if (!this.softKeys) return;
+        if (this.cursorIndex >= 0) {
+            this.softKeys.setContext('fpl-selected');
+        } else {
+            this.softKeys.setContext('fpl');
+        }
+    }
+
+    // ===== EXTERNAL UPDATE =====
+
+    update(flightPlan) {
+        this.flightPlan = flightPlan;
+        if (this._initialized) {
+            this.render();
+        }
+    }
+
+    // ===== GETTERS =====
+
+    getSelectedWaypoint() {
+        if (this.cursorIndex < 0 || !this.flightPlan?.waypoints) return null;
+        return this.flightPlan.waypoints[this.cursorIndex] || null;
+    }
+
+    // ===== HELPERS =====
+
+    calcCumulativeDist(upToIndex) {
+        if (!this.flightPlan?.waypoints) return 0;
+        let total = 0;
+        for (let i = 0; i <= upToIndex; i++) {
+            const wp = this.flightPlan.waypoints[i];
+            if (wp.distanceFromPrev) total += wp.distanceFromPrev;
+        }
+        return total;
+    }
+
+    calcLegDTK(index) {
+        if (!this.flightPlan?.waypoints || index <= 0) return null;
+        const from = this.flightPlan.waypoints[index - 1];
+        const to = this.flightPlan.waypoints[index];
+        if (!from?.lat || !from?.lng || !to?.lat || !to?.lng) return null;
+        return this.core.calculateMagneticBearing(from.lat, from.lng, to.lat, to.lng, this.magvar);
+    }
+
+    calcLegETE(distNM, groundSpeedKt) {
+        if (!distNM || !groundSpeedKt || groundSpeedKt <= 0) return '--:--';
+        const eteMin = (distNM / groundSpeedKt) * 60;
+        return this.core.formatEte(eteMin);
+    }
+}
+
+// Export
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FlightPlanPage;
+}

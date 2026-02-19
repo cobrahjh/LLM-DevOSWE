@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTN750 Troubleshooting</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Troubleshooting Guide</h1>
+            <p class="subtitle">Common issues and solutions for GTN 750</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="index.html">← Back to Index</a>
+            <a href="#connection">Connection</a>
+            <a href="#map">Map Issues</a>
+            <a href="#navigation">Navigation</a>
+            <a href="#radio">Radio</a>
+            <a href="#performance">Performance</a>
+        </nav>
+
+        <section id="connection">
+            <h2>Connection Issues</h2>
+
+            <div class="feature-category">
+                <h3>❌ Red Connection Indicator</h3>
+                <p><strong>Symptoms:</strong> Red dot in header, no data updating</p>
+                <p><strong>Causes & Solutions:</strong></p>
+                <ol>
+                    <li>
+                        <strong>Simulator not running</strong>
+                        <p>Start MSFS and load into a flight</p>
+                    </li>
+                    <li>
+                        <strong>WebSocket server down</strong>
+                        <p>Check that server is running on port 8080:<br>
+                        <code>curl http://localhost:8080/api/health</code></p>
+                    </li>
+                    <li>
+                        <strong>SimConnect not connected</strong>
+                        <p>Restart the SimWidget server or check SimConnect configuration</p>
+                    </li>
+                    <li>
+                        <strong>Firewall blocking connection</strong>
+                        <p>Allow Node.js through Windows Firewall for port 8080</p>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="feature-category">
+                <h3>⚠️ Yellow Connection Indicator</h3>
+                <p><strong>Symptoms:</strong> Yellow dot, intermittent updates</p>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Wait 5-10 seconds for reconnection attempt</li>
+                    <li>Refresh the page (Ctrl+R)</li>
+                    <li>Check network connectivity</li>
+                    <li>Restart WebSocket server</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Connected but No Position Data</h3>
+                <p><strong>Symptoms:</strong> Green dot but aircraft not shown on map</p>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify aircraft is loaded and ready to fly (not in menu)</li>
+                    <li>Check that GPS coordinates are valid (not 0, 0)</li>
+                    <li>Zoom out to wider range (50nm or 100nm)</li>
+                    <li>Press Space to re-center map</li>
+                    <li>Check browser console for errors (F12)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="map">
+            <h2>Map Display Issues</h2>
+
+            <div class="feature-category">
+                <h3>Map Not Updating</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Check connection status (should be green)</li>
+                    <li>Verify sim is running and aircraft is active</li>
+                    <li>Clear browser cache (Ctrl+Shift+Delete)</li>
+                    <li>Force reload (Ctrl+F5)</li>
+                    <li>Check console for JavaScript errors</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Map Tiles Not Loading</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Check internet connection (tiles loaded from online sources)</li>
+                    <li>Wait for tiles to download (may take a few seconds)</li>
+                    <li>Zoom to different level to trigger reload</li>
+                    <li>Clear browser cache and reload</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Terrain Overlay Blank</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Ensure zoom level is 50nm or closer (terrain not shown at 100nm+)</li>
+                    <li>Verify terrain database is available on server</li>
+                    <li>Toggle terrain off and on again</li>
+                    <li>Check that opacity is not set to 0</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Aircraft Position Incorrect</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify GPS signal in aircraft (some aircraft require GPS power on)</li>
+                    <li>Check for GPS navigation source conflicts</li>
+                    <li>Restart flight or reposition aircraft</li>
+                    <li>Verify SimConnect is providing correct data</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="navigation">
+            <h2>Navigation & Flight Plan Issues</h2>
+
+            <div class="feature-category">
+                <h3>Flight Plan Not Sequencing</h3>
+                <p><strong>Symptoms:</strong> Waypoints not advancing automatically</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li>
+                        <strong>OBS mode enabled</strong>
+                        <p>Press <kbd>OBS</kbd> button to disable OBS mode</p>
+                    </li>
+                    <li>
+                        <strong>Too far from waypoint</strong>
+                        <p>Sequencing requires being within 0.5nm of waypoint</p>
+                    </li>
+                    <li>
+                        <strong>Altitude constraints</strong>
+                        <p>Some waypoints have altitude restrictions (future feature)</p>
+                    </li>
+                    <li>
+                        <strong>No active leg</strong>
+                        <p>Ensure flight plan is activated or Direct-To is engaged</p>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="feature-category">
+                <h3>CDI Not Moving</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify NAV source is set to GPS (not NAV1/NAV2)</li>
+                    <li>Ensure flight plan has active leg</li>
+                    <li>Check that OBS mode is disabled (unless intentional)</li>
+                    <li>Remember: ±10° scale is wide, small deviations may not be visible</li>
+                    <li>Verify CDI sensitivity setting</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Waypoint Not Found</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify correct ICAO identifier (e.g., KSEA, not SEA)</li>
+                    <li>Check spelling and capitalization</li>
+                    <li>Ensure navigation database is loaded</li>
+                    <li>Try alternate identifiers (some waypoints have multiple names)</li>
+                    <li>Use NRST page to find nearby waypoints</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Route Not Displaying on Map</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify flight plan has at least 2 waypoints</li>
+                    <li>Check that magenta line is not hidden by declutter</li>
+                    <li>Ensure waypoints are within current zoom range</li>
+                    <li>Zoom out to see entire route</li>
+                    <li>Check that route rendering is enabled in settings</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="radio">
+            <h2>Radio & Frequency Issues</h2>
+
+            <div class="feature-category">
+                <h3>Frequencies Not Saving</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify SimConnect is active (required for frequency control)</li>
+                    <li>Check that aircraft radio is powered on</li>
+                    <li>Some aircraft require avionics master switch on</li>
+                    <li>Use radio-stack widget for more reliable frequency control</li>
+                    <li>Verify no other addon is controlling radios</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>NAV Source Not Switching</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Click NAV source indicator multiple times</li>
+                    <li>Some aircraft override GPS/NAV source selection</li>
+                    <li>Check aircraft's HSI/CDI source selector</li>
+                    <li>Verify NAV radio is tuned to valid frequency</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Transponder Code Not Setting</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Enter exactly 4 digits</li>
+                    <li>Press Enter after typing code</li>
+                    <li>Verify ATC transponder is powered on</li>
+                    <li>Check that transponder mode is not OFF</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="safetaxi">
+            <h2>SafeTaxi Diagram Issues</h2>
+
+            <div class="feature-category">
+                <h3>Diagram Not Loading</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify airport ICAO code is correct</li>
+                    <li>Not all airports have published diagrams</li>
+                    <li>Check internet connection (diagrams loaded from FAA)</li>
+                    <li>Try manual LOAD instead of auto-load</li>
+                    <li>Check browser console for error messages</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Ownship Position Incorrect</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify GPS coordinates are accurate (not drifting)</li>
+                    <li>Some airports have slight geo-reference offsets</li>
+                    <li>Check that aircraft is actually at the loaded airport</li>
+                    <li>Web Mercator projection is accurate to sub-meter</li>
+                    <li>Reload diagram if position seems permanently offset</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Auto-Load Not Working</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Verify aircraft is on ground (AGL < 50ft)</li>
+                    <li>Ensure ground speed is low (< 5 knots)</li>
+                    <li>Auto-load only triggers once per airport</li>
+                    <li>Must move >5nm from previous airport to trigger reload</li>
+                    <li>Use manual LOAD if auto-load doesn't trigger</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="performance">
+            <h2>Performance Issues</h2>
+
+            <div class="feature-category">
+                <h3>Low Frame Rate / Stuttering</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Disable unused overlays (terrain, traffic, weather)</li>
+                    <li>Reduce declutter level</li>
+                    <li>Close other browser tabs</li>
+                    <li>Use appropriate zoom level (excessive zoom in/out impacts performance)</li>
+                    <li>Check browser GPU acceleration is enabled</li>
+                    <li>Update graphics drivers</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>High Memory Usage</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Limit flight plan to reasonable number of waypoints (< 50)</li>
+                    <li>Clear browser cache periodically</li>
+                    <li>Restart browser after extended use</li>
+                    <li>Disable traffic overlay if many targets present</li>
+                    <li>Monitor with browser Task Manager (Shift+Esc in Chrome)</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Delayed Updates</h3>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Check WebSocket connection latency</li>
+                    <li>Reduce network congestion</li>
+                    <li>Close bandwidth-heavy applications</li>
+                    <li>Use wired connection instead of WiFi if possible</li>
+                    <li>Verify server is not overloaded</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="browser">
+            <h2>Browser-Specific Issues</h2>
+
+            <div class="feature-category">
+                <h3>Chrome/Edge</h3>
+                <ul>
+                    <li>Enable hardware acceleration: Settings → System → Use hardware acceleration</li>
+                    <li>Clear cache: Ctrl+Shift+Delete → Cached images and files</li>
+                    <li>Disable extensions that may interfere with canvas rendering</li>
+                    <li>Check for WebSocket protocol support</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Firefox</h3>
+                <ul>
+                    <li>Enable WebGL: about:config → webgl.force-enabled = true</li>
+                    <li>Increase canvas size limit if needed</li>
+                    <li>Check that WebSocket is not blocked by privacy settings</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Safari</h3>
+                <ul>
+                    <li>Enable Develop menu: Preferences → Advanced → Show Develop menu</li>
+                    <li>Check WebSocket compatibility</li>
+                    <li>Some features may have limited support</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="diagnostics">
+            <h2>Diagnostic Tools</h2>
+
+            <h3>Browser Console</h3>
+            <p>Press <kbd>F12</kbd> to open Developer Tools and check for:</p>
+            <ul>
+                <li>JavaScript errors (red messages)</li>
+                <li>WebSocket connection status</li>
+                <li>Network requests and failures</li>
+                <li>Performance warnings</li>
+            </ul>
+
+            <h3>Server Health Check</h3>
+            <pre><code># Check if server is running
+curl http://localhost:8080/api/health
+
+# Expected response:
+{"status":"ok","uptime":12345}</code></pre>
+
+            <h3>WebSocket Test</h3>
+            <p>Open browser console and run:</p>
+            <pre><code>// Test WebSocket connection
+const ws = new WebSocket('ws://localhost:8080');
+ws.onopen = () => console.log('WebSocket connected!');
+ws.onerror = (err) => console.error('WebSocket error:', err);</code></pre>
+
+            <h3>localStorage Check</h3>
+            <p>View saved settings in console:</p>
+            <pre><code>// View all GTN750 settings
+console.log(localStorage.getItem('gtn750-settings'));</code></pre>
+        </section>
+
+        <section id="known-issues">
+            <h2>Known Issues</h2>
+
+            <div class="feature-category">
+                <h3>Current Known Issues</h3>
+                <p>See <a href="../KNOWN-ISSUES.md">KNOWN-ISSUES.md</a> for complete list. Notable items:</p>
+                <ul>
+                    <li>MSFS 2024 SimConnect protocol changes may affect some features</li>
+                    <li>Some airports missing from diagram database</li>
+                    <li>Procedures (SID/STAR/Approach) page not yet implemented</li>
+                    <li>Weather overlay requires NEXRAD data source</li>
+                </ul>
+            </div>
+
+            <div class="feature-category">
+                <h3>Workarounds</h3>
+                <ul>
+                    <li>For missing features, see roadmap in README.md</li>
+                    <li>Report new issues on GitHub repository</li>
+                    <li>Check documentation for alternative approaches</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="support">
+            <h2>Getting Help</h2>
+
+            <h3>Documentation</h3>
+            <ul>
+                <li><a href="index.html">Documentation Index</a></li>
+                <li><a href="user-guide.html">User Guide</a></li>
+                <li><a href="../README.md">Main README</a></li>
+                <li><a href="keyboard-shortcuts.html">Keyboard Shortcuts</a></li>
+            </ul>
+
+            <h3>Debug Mode</h3>
+            <p>Enable debug logging in browser console:</p>
+            <pre><code>// Enable debug mode
+localStorage.setItem('gtn750-debug', 'true');
+location.reload();</code></pre>
+
+            <h3>Reporting Issues</h3>
+            <p>When reporting issues, please include:</p>
+            <ul>
+                <li>GTN750 version (shown in header)</li>
+                <li>Browser name and version</li>
+                <li>Operating system</li>
+                <li>MSFS version (2020 or 2024)</li>
+                <li>Steps to reproduce the issue</li>
+                <li>Browser console errors (if any)</li>
+                <li>Screenshots or video if possible</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p><a href="index.html">← Back to Documentation Index</a> | <a href="user-guide.html">User Guide</a></p>
+            <p>GTN750 Troubleshooting Guide v2.4.0 | Last updated: February 14, 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

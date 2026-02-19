@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTN750 User Guide</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GTN 750 User Guide</h1>
+            <p class="subtitle">Complete guide to using the GTN 750 GPS Widget</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="index.html">← Back to Index</a>
+            <a href="#interface">Interface</a>
+            <a href="#navigation">Navigation</a>
+            <a href="#flight-planning">Flight Planning</a>
+            <a href="#radio">Radio</a>
+            <a href="#pages">Pages</a>
+        </nav>
+
+        <section id="interface">
+            <h2>Interface Overview</h2>
+
+            <h3>Main Display Areas</h3>
+            <ul>
+                <li><strong>Header Bar</strong> - Connection status, GPS info, time</li>
+                <li><strong>Data Fields</strong> - 4 customizable corner fields (GS, TRK, ALT, etc.)</li>
+                <li><strong>Map Canvas</strong> - Main moving map display</li>
+                <li><strong>CDI Strip</strong> - Course Deviation Indicator with OBS/NAV source</li>
+                <li><strong>Page Buttons</strong> - MAP, FPL, NRST, TAXI, PROC, AUX, CHARTS, SYSTEM</li>
+                <li><strong>Soft Keys</strong> - 12 context-sensitive buttons at bottom</li>
+            </ul>
+
+            <h3>Connection Status</h3>
+            <p>The connection indicator in the header shows:</p>
+            <ul>
+                <li><span style="color: #10b981;">● Green</span> - Connected to simulator</li>
+                <li><span style="color: #eab308;">● Yellow</span> - Connecting/reconnecting</li>
+                <li><span style="color: #ef4444;">● Red</span> - Disconnected</li>
+            </ul>
+        </section>
+
+        <section id="navigation">
+            <h2>Basic Navigation</h2>
+
+            <h3>Map Controls</h3>
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Zoom In/Out</td>
+                        <td><kbd>+</kbd> / <kbd>-</kbd> buttons<br>Mouse wheel</td>
+                        <td>7 levels: 2nm, 5nm, 10nm, 25nm, 50nm, 100nm, 200nm</td>
+                    </tr>
+                    <tr>
+                        <td>Pan Map</td>
+                        <td>Click and drag</td>
+                        <td>Move map to view different areas</td>
+                    </tr>
+                    <tr>
+                        <td>Re-center</td>
+                        <td>Double-click<br>Crosshair button<br><kbd>Space</kbd></td>
+                        <td>Return to aircraft position</td>
+                    </tr>
+                    <tr>
+                        <td>Change Orientation</td>
+                        <td>Click <strong>TRKU</strong> button</td>
+                        <td>Cycle: North Up → Track Up → Heading Up</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Orientation Modes</h3>
+            <ul>
+                <li><strong>North Up</strong> - Map fixed with north at top</li>
+                <li><strong>Track Up</strong> - Map rotates with ground track</li>
+                <li><strong>Heading Up</strong> - Map rotates with aircraft heading</li>
+            </ul>
+        </section>
+
+        <section id="flight-planning">
+            <h2>Flight Planning</h2>
+
+            <h3>Creating a Flight Plan</h3>
+            <ol>
+                <li>Press <kbd>FPL</kbd> page button</li>
+                <li>Click <strong>+ Add Waypoint</strong> button</li>
+                <li>Type waypoint identifier (e.g., <code>KSEA</code>)</li>
+                <li>Press <kbd>Enter</kbd> to add to flight plan</li>
+                <li>Repeat for all waypoints in your route</li>
+            </ol>
+
+            <h3>Direct-To Navigation</h3>
+            <p>Quick navigation to any waypoint:</p>
+            <ol>
+                <li>Press <kbd>D→</kbd> soft key (or keyboard <kbd>D</kbd>)</li>
+                <li>Type waypoint identifier</li>
+                <li>Press <strong>ACTIVATE</strong> button</li>
+                <li>Map automatically switches to MAP page</li>
+            </ol>
+
+            <h3>Editing Flight Plan</h3>
+            <ul>
+                <li><strong>Remove Waypoint</strong> - Click waypoint, press <strong>REMOVE</strong></li>
+                <li><strong>Insert Waypoint</strong> - Click between waypoints, add new one</li>
+                <li><strong>Clear All</strong> - FPL Menu → Clear Flight Plan</li>
+            </ul>
+
+            <h3>Auto-Sequencing</h3>
+            <p>The GTN750 automatically advances to the next waypoint when:</p>
+            <ul>
+                <li>Within 0.5nm of current waypoint</li>
+                <li>OBS mode is disabled</li>
+                <li>Flight plan has remaining legs</li>
+            </ul>
+        </section>
+
+        <section id="cdi">
+            <h2>CDI & Navigation</h2>
+
+            <h3>Course Deviation Indicator</h3>
+            <p>The CDI shows lateral deviation from desired course:</p>
+            <ul>
+                <li><strong>Needle Position</strong> - ±10° scale, centered when on course</li>
+                <li><strong>TO/FROM</strong> - Arrow indicates direction to waypoint</li>
+                <li><strong>XTK Display</strong> - Cross-track error in nautical miles</li>
+                <li><strong>DTK</strong> - Desired track to waypoint</li>
+                <li><strong>BRG</strong> - Actual bearing to waypoint</li>
+            </ul>
+
+            <h3>Navigation Sources</h3>
+            <p>Click NAV source indicator to change:</p>
+            <ul>
+                <li><strong>GPS</strong> - Follow flight plan (default)</li>
+                <li><strong>NAV1</strong> - Follow VOR/ILS on NAV1 frequency</li>
+                <li><strong>NAV2</strong> - Follow VOR/ILS on NAV2 frequency</li>
+            </ul>
+
+            <h3>OBS Mode</h3>
+            <p>Manual course selection:</p>
+            <ol>
+                <li>Press <kbd>OBS</kbd> soft key (or keyboard <kbd>O</kbd>)</li>
+                <li>CDI freezes on current waypoint</li>
+                <li>Turn OBS knob to set desired course</li>
+                <li>Press <kbd>OBS</kbd> again to resume auto-sequencing</li>
+            </ol>
+        </section>
+
+        <section id="radio">
+            <h2>Radio Management</h2>
+
+            <h3>COM Frequencies</h3>
+            <p><strong>COM1</strong> and <strong>COM2</strong> each have:</p>
+            <ul>
+                <li>Active frequency (currently in use)</li>
+                <li>Standby frequency (ready to swap)</li>
+            </ul>
+
+            <p><strong>To tune:</strong></p>
+            <ol>
+                <li>Click standby frequency</li>
+                <li>Type new frequency (e.g., <code>124.85</code>)</li>
+                <li>Click <strong>⇄</strong> button to swap active/standby</li>
+            </ol>
+
+            <h3>NAV Frequencies</h3>
+            <p>Same procedure as COM frequencies. NAV radios provide:</p>
+            <ul>
+                <li>VOR/ILS navigation signals</li>
+                <li>DME distance information</li>
+                <li>Radial/course guidance</li>
+            </ul>
+
+            <h3>Transponder</h3>
+            <p>Set squawk code:</p>
+            <ol>
+                <li>Click XPDR code display</li>
+                <li>Type 4-digit code (e.g., <code>1200</code>)</li>
+                <li>Press <kbd>Enter</kbd></li>
+            </ol>
+            <p>Modes: <strong>OFF</strong>, <strong>STBY</strong>, <strong>ON</strong>, <strong>ALT</strong></p>
+        </section>
+
+        <section id="pages">
+            <h2>Pages Overview</h2>
+
+            <h3>MAP Page</h3>
+            <p>Moving map display with route visualization</p>
+            <p><strong>Soft Keys:</strong></p>
+            <ul>
+                <li><kbd>TOPO</kbd> - Toggle terrain overlay</li>
+                <li><kbd>TFC</kbd> - Toggle traffic overlay</li>
+                <li><kbd>WX</kbd> - Toggle weather overlay</li>
+                <li><kbd>D→</kbd> - Direct-To dialog</li>
+                <li><kbd>MENU</kbd> - Map options</li>
+            </ul>
+
+            <h3>FPL (Flight Plan) Page</h3>
+            <p>Full flight plan editor with waypoint list</p>
+            <p><strong>Features:</strong></p>
+            <ul>
+                <li>Add/remove waypoints</li>
+                <li>View distance and bearing to each leg</li>
+                <li>Estimated time enroute</li>
+                <li>Total route distance</li>
+            </ul>
+
+            <h3>NRST (Nearest) Page</h3>
+            <p>Find nearby navigation points</p>
+            <p><strong>Tabs:</strong></p>
+            <ul>
+                <li><kbd>APT</kbd> - Nearest airports with runway info</li>
+                <li><kbd>VOR</kbd> - VOR stations with frequency</li>
+                <li><kbd>NDB</kbd> - NDB beacons</li>
+                <li><kbd>INT</kbd> - Intersections</li>
+            </ul>
+
+            <h3>TAXI (SafeTaxi) Page</h3>
+            <p>Airport surface diagrams with real-time position</p>
+            <p><strong>Controls:</strong></p>
+            <ul>
+                <li><kbd>LOAD</kbd> - Load airport diagram</li>
+                <li><kbd>CENTER</kbd> - Center on ownship</li>
+                <li><kbd>ZOOM+/-</kbd> - Zoom in/out</li>
+                <li><kbd>AUTO</kbd> - Auto-scale diagram</li>
+                <li><kbd>FOLLOW</kbd> - Auto-follow mode</li>
+                <li><kbd>TRK UP</kbd> - Track-up orientation</li>
+            </ul>
+            <p><em>See <a href="safetaxi.html">SafeTaxi Guide</a> for details</em></p>
+
+            <h3>PROC (Procedures) Page</h3>
+            <p>Departure, arrival, and approach procedures (future enhancement)</p>
+
+            <h3>AUX (Auxiliary) Page</h3>
+            <p>Additional functions and utilities</p>
+
+            <h3>CHARTS Page</h3>
+            <p>Approach plate viewer (integration ready)</p>
+
+            <h3>SYSTEM Page</h3>
+            <p>Settings and configuration</p>
+            <ul>
+                <li>Display brightness</li>
+                <li>Declutter level</li>
+                <li>Database status</li>
+                <li>System information</li>
+            </ul>
+        </section>
+
+        <section id="data-fields">
+            <h2>Data Field Customization</h2>
+            <p>The 4 corner data fields can be customized to show any of these values:</p>
+
+            <table class="module-table">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Description</th>
+                        <th>Unit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>GS</strong></td><td>Ground Speed</td><td>kt</td></tr>
+                    <tr><td><strong>TRK</strong></td><td>Track</td><td>°</td></tr>
+                    <tr><td><strong>ALT</strong></td><td>Altitude</td><td>ft</td></tr>
+                    <tr><td><strong>VS</strong></td><td>Vertical Speed</td><td>fpm</td></tr>
+                    <tr><td><strong>DTK</strong></td><td>Desired Track</td><td>°</td></tr>
+                    <tr><td><strong>BRG</strong></td><td>Bearing to waypoint</td><td>°</td></tr>
+                    <tr><td><strong>DIS</strong></td><td>Distance to waypoint</td><td>nm</td></tr>
+                    <tr><td><strong>ETE</strong></td><td>Estimated Time Enroute</td><td>mm:ss</td></tr>
+                    <tr><td><strong>ETA</strong></td><td>Estimated Time of Arrival</td><td>HH:MM</td></tr>
+                    <tr><td><strong>FUEL</strong></td><td>Fuel Remaining</td><td>gal</td></tr>
+                    <tr><td><strong>WIND</strong></td><td>Wind direction/speed</td><td>°/kt</td></tr>
+                    <tr><td><strong>TMP</strong></td><td>Outside Air Temperature</td><td>°C</td></tr>
+                </tbody>
+            </table>
+
+            <p><strong>To customize:</strong> Click any data field and select from the menu</p>
+            <p><em>Settings are saved to localStorage and persist between sessions</em></p>
+        </section>
+
+        <section id="tips">
+            <h2>Tips & Best Practices</h2>
+
+            <h3>Flight Planning Tips</h3>
+            <ul>
+                <li>Use Direct-To for quick route changes in flight</li>
+                <li>Enable OBS mode when practicing VOR intercepts</li>
+                <li>Cross-fill routes from SimBrief or FlightPlan widget</li>
+                <li>Monitor XTK to stay on course</li>
+            </ul>
+
+            <h3>Map Usage Tips</h3>
+            <ul>
+                <li>Use terrain overlay when flying in mountainous areas</li>
+                <li>Enable traffic overlay for busy airspace awareness</li>
+                <li>Track Up mode is best for en-route navigation</li>
+                <li>North Up mode is best for approach planning</li>
+            </ul>
+
+            <h3>Performance Tips</h3>
+            <ul>
+                <li>Disable unused overlays to improve performance</li>
+                <li>Lower declutter level in busy areas</li>
+                <li>Use appropriate zoom level for phase of flight</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p><a href="index.html">← Back to Documentation Index</a></p>
+            <p>GTN750 User Guide v2.4.0 | Last updated: February 14, 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

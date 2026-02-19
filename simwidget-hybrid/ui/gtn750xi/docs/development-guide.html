@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTN750 Development Guide</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GTN750 Development Guide</h1>
+            <p class="subtitle">Contributing and extending the GTN750 codebase</p>
+            <nav class="breadcrumb">
+                <a href="index.html">Documentation</a> → Development Guide
+            </nav>
+        </header>
+
+        <nav class="page-nav">
+            <a href="#getting-started">Getting Started</a>
+            <a href="#architecture">Architecture</a>
+            <a href="#adding-page">Adding a Page</a>
+            <a href="#adding-field">Adding a Data Field</a>
+            <a href="#adding-module">Adding a Module</a>
+            <a href="#module-comm">Module Communication</a>
+            <a href="#testing">Testing</a>
+            <a href="#code-style">Code Style</a>
+            <a href="#deployment">Deployment</a>
+        </nav>
+
+        <section id="getting-started">
+            <h2>Getting Started</h2>
+
+            <h3>Development Environment Setup</h3>
+            <ol>
+                <li><strong>Prerequisites</strong>
+                    <ul>
+                        <li>Node.js 16+ (for backend server)</li>
+                        <li>Modern browser (Chrome/Edge recommended for debugging)</li>
+                        <li>MSFS 2020/2024 (optional, mock data available)</li>
+                        <li>Git (for version control)</li>
+                    </ul>
+                </li>
+                <li><strong>Clone Repository</strong>
+                    <pre><code>git clone git@github.com:cobrahjh/LLM-DevOSWE.git
+cd LLM-DevOSWE/simwidget-hybrid</code></pre>
+                </li>
+                <li><strong>Install Dependencies</strong>
+                    <pre><code>npm install</code></pre>
+                </li>
+                <li><strong>Start Development Server</strong>
+                    <pre><code>node server.js</code></pre>
+                </li>
+                <li><strong>Access GTN750</strong>
+                    <p>Navigate to: <code>http://localhost:8080/ui/gtn750/</code></p>
+                </li>
+            </ol>
+
+            <h3>Project Structure</h3>
+            <pre><code>simwidget-hybrid/
+├── backend/
+│   ├── server.js              # Main Express server
+│   ├── simconnect/            # SimConnect integration
+│   └── data/                  # Backend data files
+├── ui/
+│   ├── gtn750/                # GTN750 widget
+│   │   ├── index.html         # Main HTML
+│   │   ├── pane.js            # Orchestrator (~1,434 lines)
+│   │   ├── styles.css         # Styling
+│   │   ├── modules/           # Core modules (9 files)
+│   │   ├── pages/             # Page handlers (5 files)
+│   │   ├── overlays/          # Map overlays (4 files)
+│   │   ├── data/              # Static data
+│   │   └── docs/              # Documentation (you are here)
+│   └── shared/                # Shared libraries
+│       ├── widget-base.js     # SimGlassBase class
+│       ├── safe-channel.js    # BroadcastChannel fallback
+│       └── themes.js          # Theme system
+└── tests/
+    ├── test-runner.js         # Main test suite (230 tests)
+    └── test-gtn750-code-splitting.js</code></pre>
+        </section>
+
+        <section id="architecture">
+            <h2>Architecture Overview</h2>
+
+            <h3>Module System</h3>
+            <p>The GTN750 uses a modular architecture with clean separation of concerns:</p>
+
+            <div class="architecture-diagram">
+                <pre><code>┌─────────────────────────────────────────────┐
+│         GTN750Pane (Orchestrator)           │
+│  - Manages lifecycle                        │
+│  - Wires module elements                    │
+│  - Handles page switching                   │
+└────────────┬────────────────────────────────┘
+             │
+     ┌───────┴───────┬──────────┬──────────┐
+     │               │          │          │
+┌────▼────┐    ┌────▼────┐  ┌─▼──┐   ┌───▼────┐
+│ GTNCore │    │ GTNCdi  │  │Map │   │FlightPl│
+│         │    │         │  │Ren │   │        │
+└─────────┘    └─────────┘  └────┘   └────────┘
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+     ┌────▼────┐          ┌────▼────┐
+     │DataField│          │DataHandl│
+     └─────────┘          └─────────┘</code></pre>
+            </div>
+
+            <h3>Key Principles</h3>
+            <ul>
+                <li><strong>Single Responsibility</strong> - Each module has one clear purpose</li>
+                <li><strong>Dependency Injection</strong> - Modules receive dependencies via constructor</li>
+                <li><strong>State Management</strong> - Orchestrator owns state, modules request snapshots</li>
+                <li><strong>Lifecycle Management</strong> - All modules implement <code>destroy()</code></li>
+                <li><strong>No Direct DOM</strong> - Modules receive cached element references</li>
+            </ul>
+
+            <h3>Data Flow</h3>
+            <pre><code>WebSocket → DataHandler → Orchestrator → Module.update()
+                                      ↓
+                                 MapRenderer.render()
+                                      ↓
+                                   Canvas</code></pre>
+
+            <h3>Module Constructor Pattern</h3>
+            <pre><code>class MyModule {
+    constructor({ core, elements, serverPort }) {
+        this.core = core;           // GTNCore utilities
+        this.elements = elements;   // Cached DOM refs
+        this.serverPort = serverPort;
+        this._destroyed = false;
+    }
+
+    update(data) {
+        if (this._destroyed) return;
+        // Update logic here
+    }
+
+    destroy() {
+        this._destroyed = true;
+        // Clean up timers, listeners, etc.
+    }
+}</code></pre>
+        </section>
+
+        <section id="adding-page">
+            <h2>Adding a New Page</h2>
+
+            <h3>Step 1: Create Page Handler File</h3>
+            <p>Create a new file in <code>pages/</code> directory:</p>
+            <pre><code>// pages/gtn-my-page.js
+
+class GTNMyPage {
+    constructor({ core, elements, serverPort }) {
+        this.core = core;
+        this.elements = elements;
+        this.serverPort = serverPort;
+        this._destroyed = false;
+    }
+
+    /**
+     * Called when page becomes active
+     */
+    onActivate() {
+        console.log('MyPage activated');
+        this._updateDisplay();
+    }
+
+    /**
+     * Called when page becomes inactive
+     */
+    onDeactivate() {
+        console.log('MyPage deactivated');
+    }
+
+    /**
+     * Called on every data update
+     */
+    update(data) {
+        if (this._destroyed) return;
+        this._updateDisplay();
+    }
+
+    /**
+     * Handle soft key press
+     * @param {number} keyIndex - 0-11 (left to right)
+     */
+    handleSoftKey(keyIndex) {
+        switch (keyIndex) {
+            case 0:
+                // First soft key (leftmost)
+                break;
+            case 11:
+                // Last soft key (rightmost)
+                break;
+        }
+    }
+
+    _updateDisplay() {
+        // Update page content
+    }
+
+    destroy() {
+        this._destroyed = true;
+    }
+}
+
+// Export for module system
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GTNMyPage;
+}</code></pre>
+
+            <h3>Step 2: Add HTML Elements</h3>
+            <p>Edit <code>index.html</code> to add your page container:</p>
+            <pre><code>&lt;div id="my-page" class="page" style="display: none;"&gt;
+    &lt;div class="page-header"&gt;
+        &lt;h2&gt;MY PAGE&lt;/h2&gt;
+    &lt;/div&gt;
+    &lt;div class="page-content"&gt;
+        &lt;!-- Your page content here --&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+            <h3>Step 3: Add CSS Styling</h3>
+            <p>Add styles in <code>styles.css</code>:</p>
+            <pre><code>#my-page .page-content {
+    padding: 10px;
+    font-family: monospace;
+}
+
+#my-page .data-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}</code></pre>
+
+            <h3>Step 4: Register Page in Orchestrator</h3>
+            <p>Edit <code>pane.js</code> to load and register your page:</p>
+            <pre><code>// In loadModules() method:
+this.pages.myPage = new GTNMyPage({
+    core: this.core,
+    elements: {
+        container: this.elements.myPageContainer
+    },
+    serverPort: this.serverPort
+});
+
+// In _wireModuleElements() method:
+myPageContainer: document.getElementById('my-page')</code></pre>
+
+            <h3>Step 5: Add Navigation Button</h3>
+            <pre><code>&lt;button class="nav-button" onclick="widget.switchPage('myPage')"&gt;
+    MY PAGE
+&lt;/button&gt;</code></pre>
+        </section>
+
+        <section id="adding-field">
+            <h2>Adding a Data Field</h2>
+
+            <h3>Data Field Types</h3>
+            <p>Data fields appear in the 4 corners of the moving map. Current types:</p>
+            <ul>
+                <li><strong>GS</strong> - Ground Speed</li>
+                <li><strong>TRK</strong> - Track</li>
+                <li><strong>ALT</strong> - Altitude MSL</li>
+                <li><strong>VSI</strong> - Vertical Speed</li>
+                <li><strong>DTK</strong> - Desired Track</li>
+                <li><strong>DIS</strong> - Distance to Waypoint</li>
+                <li><strong>ETE</strong> - Estimated Time Enroute</li>
+                <li><strong>ETA</strong> - Estimated Time of Arrival</li>
+                <li><strong>BRG</strong> - Bearing to Waypoint</li>
+                <li><strong>XTRK</strong> - Cross Track Error</li>
+                <li><strong>TAS</strong> - True Airspeed</li>
+                <li><strong>BLANK</strong> - Empty field</li>
+            </ul>
+
+            <h3>Adding a New Field Type</h3>
+            <p>Edit <code>modules/gtn-data-fields.js</code>:</p>
+            <pre><code>// 1. Add to FIELD_TYPES object:
+static FIELD_TYPES = {
+    // ... existing fields ...
+    FUEL: { label: 'FUEL', description: 'Fuel Remaining' }
+};
+
+// 2. Add format method:
+_formatFuel(data) {
+    const fuel = data.fuelTotalQuantity || 0;
+    return `${fuel.toFixed(1)} GAL`;
+}
+
+// 3. Add to _formatField() switch:
+case 'FUEL':
+    return this._formatFuel(data);
+
+// 4. Add to HTML select dropdown in index.html:
+&lt;option value="FUEL"&gt;FUEL - Fuel Remaining&lt;/option&gt;</code></pre>
+
+            <h3>Data Field Selection UI</h3>
+            <p>Users can click any corner field to change it. The selection is persisted to localStorage.</p>
+        </section>
+
+        <section id="adding-module">
+            <h2>Adding a Module</h2>
+
+            <h3>When to Create a Module</h3>
+            <ul>
+                <li>Feature has >200 lines of code</li>
+                <li>Feature has distinct responsibility</li>
+                <li>Feature needs lifecycle management</li>
+                <li>Feature will be reused</li>
+            </ul>
+
+            <h3>Module Template</h3>
+            <pre><code>// modules/gtn-my-feature.js
+
+class GTNMyFeature {
+    constructor({ core, elements, serverPort }) {
+        this.core = core;
+        this.elements = elements;
+        this.serverPort = serverPort;
+
+        this._destroyed = false;
+        this._updateTimer = null;
+
+        this._init();
+    }
+
+    _init() {
+        // Setup event listeners
+        this.elements.myButton?.addEventListener('click',
+            this._handleClick.bind(this));
+
+        // Start periodic updates if needed
+        this._startUpdates();
+    }
+
+    _startUpdates() {
+        this._updateTimer = setInterval(() => {
+            this._periodicUpdate();
+        }, 1000);
+    }
+
+    _handleClick() {
+        if (this._destroyed) return;
+        // Handle user interaction
+    }
+
+    _periodicUpdate() {
+        if (this._destroyed) return;
+        // Periodic background work
+    }
+
+    /**
+     * Called on every WebSocket data update
+     */
+    update(data) {
+        if (this._destroyed) return;
+        // Process new data
+    }
+
+    /**
+     * Clean up resources
+     */
+    destroy() {
+        this._destroyed = true;
+
+        // Clear timers
+        if (this._updateTimer) {
+            clearInterval(this._updateTimer);
+            this._updateTimer = null;
+        }
+
+        // Remove event listeners
+        this.elements.myButton?.removeEventListener('click',
+            this._handleClick.bind(this));
+    }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GTNMyFeature;
+}</code></pre>
+
+            <h3>Loading the Module</h3>
+            <pre><code>// In pane.js loadModules():
+this.myFeature = new GTNMyFeature({
+    core: this.core,
+    elements: {
+        myButton: this.elements.myButton
+    },
+    serverPort: this.serverPort
+});
+
+// In destroy():
+this.myFeature?.destroy();</code></pre>
+        </section>
+
+        <section id="module-comm">
+            <h2>Module Communication Patterns</h2>
+
+            <h3>1. Orchestrator → Module (Data Push)</h3>
+            <pre><code>// In pane.js onFlightData():
+this.cdi.update(flightData);
+this.flightPlan.update(flightData);
+this.mapRenderer.render();</code></pre>
+
+            <h3>2. Module → Orchestrator (Event Callback)</h3>
+            <pre><code>// Module passes callback to orchestrator:
+class GTNFlightPlan {
+    constructor({ core, elements, onWaypointChange }) {
+        this.onWaypointChange = onWaypointChange;
+    }
+
+    _notifyWaypointChange() {
+        this.onWaypointChange?.(this.activeWaypoint);
+    }
+}
+
+// Orchestrator provides callback:
+this.flightPlan = new GTNFlightPlan({
+    core: this.core,
+    elements: this.elements,
+    onWaypointChange: (wp) => this._handleWaypointChange(wp)
+});</code></pre>
+
+            <h3>3. Module → Module (via Orchestrator)</h3>
+            <pre><code>// DON'T: Direct module access
+this.cdi.setSource(source); // BAD
+
+// DO: Request through orchestrator
+this.onSourceChange?.(source); // Module notifies orchestrator
+// Orchestrator updates all modules:
+this._handleSourceChange(source) {
+    this.cdi.setSource(source);
+    this.flightPlan.updateSource(source);
+}</code></pre>
+
+            <h3>4. Cross-Widget Communication (BroadcastChannel)</h3>
+            <pre><code>// Send message to other widgets:
+this.syncChannel = new SafeChannel('SimGlass-sync');
+this.syncChannel.postMessage({
+    type: 'route-update',
+    waypoints: this.waypoints,
+    source: 'gtn750'
+});
+
+// Receive messages:
+this.syncChannel.addEventListener('message', (event) => {
+    if (event.data.type === 'route-update') {
+        this._handleRouteUpdate(event.data.waypoints);
+    }
+});</code></pre>
+
+            <h3>5. State Snapshots (Renderer Pattern)</h3>
+            <pre><code>// Renderer requests state via callback:
+class GTNMapRenderer {
+    constructor({ getState }) {
+        this.getState = getState;
+    }
+
+    render() {
+        const state = this.getState(); // Fresh snapshot
+        this._drawMap(state.position);
+        this._drawRoute(state.waypoints);
+    }
+}
+
+// Orchestrator provides state getter:
+this.mapRenderer = new GTNMapRenderer({
+    getState: () => ({
+        position: this.position,
+        waypoints: this.flightPlan.getWaypoints(),
+        zoom: this.zoomLevel
+    })
+});</code></pre>
+        </section>
+
+        <section id="testing">
+            <h2>Testing</h2>
+
+            <h3>Test Suite Overview</h3>
+            <pre><code>tests/
+├── test-runner.js                    # Main suite (230 tests)
+├── test-gtn750-code-splitting.js     # Module loading tests
+└── browser-tests/                    # Manual browser tests
+    └── test-gtn750-manual.html</code></pre>
+
+            <h3>Running Tests</h3>
+            <pre><code># Run all tests:
+node tests/test-runner.js
+
+# Run GTN750-specific tests:
+node tests/test-gtn750-code-splitting.js
+
+# Test in browser:
+# 1. Start server: node server.js
+# 2. Open: http://localhost:8080/ui/gtn750/
+# 3. Open DevTools Console
+# 4. Check for errors</code></pre>
+
+            <h3>Writing Tests</h3>
+            <pre><code>// Add to test-runner.js:
+
+async function testMyFeature() {
+    console.log('Testing MyFeature...');
+
+    // Test 1: Module loads
+    const response = await fetch('http://localhost:8080/ui/gtn750/modules/gtn-my-feature.js');
+    if (!response.ok) {
+        throw new Error('Module file not found');
+    }
+
+    // Test 2: API endpoint
+    const apiResponse = await fetch('http://localhost:8080/api/my-feature/status');
+    const data = await apiResponse.json();
+    if (!data.success) {
+        throw new Error('API returned error');
+    }
+
+    console.log('✓ MyFeature tests passed');
+}
+
+// Add to test suite:
+await testMyFeature();</code></pre>
+
+            <h3>Manual Testing Checklist</h3>
+            <ul>
+                <li>✓ Page loads without errors</li>
+                <li>✓ WebSocket connects (green indicator)</li>
+                <li>✓ Data updates in real-time</li>
+                <li>✓ All soft keys work</li>
+                <li>✓ Page navigation works</li>
+                <li>✓ Map renders correctly</li>
+                <li>✓ No console errors</li>
+                <li>✓ localStorage persists settings</li>
+                <li>✓ Works in MSFS in-game panel</li>
+                <li>✓ Works without MSFS (mock data)</li>
+            </ul>
+
+            <h3>Debugging Tips</h3>
+            <pre><code>// Enable verbose logging:
+window.DEBUG_GTN750 = true;
+
+// Check module state:
+console.log(widget.flightPlan.getWaypoints());
+console.log(widget.cdi.getState());
+
+// Monitor WebSocket:
+widget.dataHandler.onData = (data) => {
+    console.log('WebSocket data:', data);
+};</code></pre>
+        </section>
+
+        <section id="code-style">
+            <h2>Code Style Guidelines</h2>
+
+            <h3>Naming Conventions</h3>
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Convention</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Classes</td>
+                        <td>PascalCase with GTN prefix</td>
+                        <td><code>GTNFlightPlan</code></td>
+                    </tr>
+                    <tr>
+                        <td>Methods (public)</td>
+                        <td>camelCase</td>
+                        <td><code>addWaypoint()</code></td>
+                    </tr>
+                    <tr>
+                        <td>Methods (private)</td>
+                        <td>_camelCase (underscore prefix)</td>
+                        <td><code>_updateDisplay()</code></td>
+                    </tr>
+                    <tr>
+                        <td>Constants</td>
+                        <td>UPPER_SNAKE_CASE</td>
+                        <td><code>ZOOM_LEVELS</code></td>
+                    </tr>
+                    <tr>
+                        <td>Variables</td>
+                        <td>camelCase</td>
+                        <td><code>activeWaypoint</code></td>
+                    </tr>
+                    <tr>
+                        <td>Files</td>
+                        <td>kebab-case with gtn prefix</td>
+                        <td><code>gtn-flight-plan.js</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>JSDoc Comments</h3>
+            <pre><code>/**
+ * Calculate great circle distance between two points
+ * @param {number} lat1 - First latitude (degrees)
+ * @param {number} lon1 - First longitude (degrees)
+ * @param {number} lat2 - Second latitude (degrees)
+ * @param {number} lon2 - Second longitude (degrees)
+ * @returns {number} Distance in nautical miles
+ */
+haversine(lat1, lon1, lat2, lon2) {
+    // Implementation
+}</code></pre>
+
+            <h3>Error Handling</h3>
+            <pre><code>// DO: Log errors with context
+try {
+    this._processWaypoint(wp);
+} catch (error) {
+    console.error('Failed to process waypoint:', wp, error);
+    return null;
+}
+
+// DON'T: Silent failure
+try {
+    this._processWaypoint(wp);
+} catch (error) {
+    // Silent - BAD
+}</code></pre>
+
+            <h3>Lifecycle Management</h3>
+            <pre><code>// DO: Store timer references for cleanup
+this._updateTimer = setInterval(() => {
+    this._update();
+}, 1000);
+
+destroy() {
+    if (this._updateTimer) {
+        clearInterval(this._updateTimer);
+        this._updateTimer = null;
+    }
+}
+
+// DON'T: Lose timer references
+setInterval(() => this._update(), 1000); // Can't be cleaned up!</code></pre>
+
+            <h3>Defensive Checks</h3>
+            <pre><code>// DO: Check for destroyed state
+update(data) {
+    if (this._destroyed) return;
+    // Update logic
+}
+
+// DO: Use optional chaining
+this.elements.button?.addEventListener('click', handler);
+
+// DO: Provide defaults
+const speed = data.groundSpeed ?? 0;</code></pre>
+        </section>
+
+        <section id="deployment">
+            <h2>Deployment</h2>
+
+            <h3>Local Testing</h3>
+            <pre><code># 1. Start server:
+node server.js
+
+# 2. Open browser:
+http://localhost:8080/ui/gtn750/
+
+# 3. Test in MSFS (optional):
+# Copy to Community folder:
+C:\Users\[USER]\AppData\Roaming\Microsoft Flight Simulator 2024\Packages\Community\SimGlass-GTN750\</code></pre>
+
+            <h3>Remote Deployment (harold-pc)</h3>
+            <pre><code># Deploy via Git:
+ssh hjhar@192.168.1.42 "cd C:\\LLM-DevOSWE\\simwidget-hybrid; git pull"
+
+# Restart service:
+ssh hjhar@192.168.1.42 "powershell -Command \"Restart-Service simglassmainserver\""
+
+# Verify:
+curl http://192.168.1.42:8080/api/status</code></pre>
+
+            <h3>MSFS Native Package Deployment</h3>
+            <pre><code># Deploy GTN750 to MSFS Community folder:
+cd msfs-gtn750
+./deploy-harold.ps1
+
+# Package structure:
+SimGlass-GTN750/
+├── html_ui/
+│   └── Pages/
+│       └── VCockpit/
+│           └── Instruments/
+│               └── GTN750Panel/
+│                   ├── GTN750Panel.html
+│                   ├── pane.js
+│                   ├── styles.css
+│                   └── modules/ (9 files)
+├── layout.json
+└── manifest.json</code></pre>
+
+            <h3>Pre-Deployment Checklist</h3>
+            <ul>
+                <li>✓ All tests passing (230/230)</li>
+                <li>✓ No console errors in DevTools</li>
+                <li>✓ Git status clean (or changes committed)</li>
+                <li>✓ Documentation updated</li>
+                <li>✓ Version number incremented (if needed)</li>
+                <li>✓ CHANGELOG.md updated</li>
+            </ul>
+
+            <h3>Git Workflow</h3>
+            <pre><code># 1. Check status:
+git status
+
+# 2. Stage changes:
+git add ui/gtn750/
+
+# 3. Commit with co-author:
+git commit -m "feat(gtn750): Add new feature
+
+Co-Authored-By: Claude Sonnet 4.5 &lt;noreply@anthropic.com&gt;"
+
+# 4. Push to remote:
+git push origin master</code></pre>
+
+            <h3>Versioning</h3>
+            <p>Update version in <code>index.html</code>:</p>
+            <pre><code>&lt;p class="version"&gt;Version 2.5.0 | Last Updated: February 2026&lt;/p&gt;</code></pre>
+
+            <h3>Rollback Procedure</h3>
+            <pre><code># View recent commits:
+git log --oneline -5
+
+# Rollback to previous commit:
+git reset --hard HEAD~1
+
+# Force push (use with caution):
+git push origin master --force
+
+# Or revert specific commit:
+git revert &lt;commit-hash&gt;</code></pre>
+        </section>
+
+        <section id="resources">
+            <h2>Additional Resources</h2>
+
+            <h3>Documentation</h3>
+            <ul>
+                <li><a href="index.html">Documentation Index</a></li>
+                <li><a href="modules.html">Module Reference</a></li>
+                <li><a href="api-reference.html">API Reference</a></li>
+                <li><a href="features.html">Feature Documentation</a></li>
+                <li><a href="user-guide.html">User Guide</a></li>
+            </ul>
+
+            <h3>External References</h3>
+            <ul>
+                <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API">MDN Canvas API</a></li>
+                <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSocket">MDN WebSocket API</a></li>
+                <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API">MDN BroadcastChannel API</a></li>
+                <li><a href="https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_SDK.htm">MSFS SimConnect SDK</a></li>
+            </ul>
+
+            <h3>Code Examples</h3>
+            <ul>
+                <li><a href="../modules/gtn-flight-plan.js">Flight Plan Module</a> - Complex state management</li>
+                <li><a href="../modules/gtn-map-renderer.js">Map Renderer</a> - Canvas rendering</li>
+                <li><a href="../modules/gtn-cdi.js">CDI Module</a> - Navigation logic</li>
+                <li><a href="../pages/gtn-proc.js">PROC Page</a> - Page handler example</li>
+            </ul>
+
+            <h3>Getting Help</h3>
+            <ul>
+                <li><strong>GitHub Issues</strong>: <a href="https://github.com/cobrahjh/LLM-DevOSWE/issues">Report bugs or request features</a></li>
+                <li><strong>Documentation</strong>: Check <a href="troubleshooting.html">Troubleshooting Guide</a></li>
+                <li><strong>Code Review</strong>: Submit pull request for review</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Development Guide v2.4.0 | <a href="index.html">Back to Documentation Index</a></p>
+            <p>Last updated: February 14, 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

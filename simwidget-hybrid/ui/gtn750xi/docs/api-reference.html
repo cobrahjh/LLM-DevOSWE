@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference - GTN750</title>
+    <link rel="stylesheet" href="docs-style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GTN750 API Reference</h1>
+            <p class="subtitle">Developer API and integration guide</p>
+            <a href="index.html">← Back to Index</a>
+        </header>
+
+        <nav class="doc-nav">
+            <a href="#core">GTNCore</a>
+            <a href="#flight-plan">FlightPlan</a>
+            <a href="#cdi">CDI</a>
+            <a href="#map">Map Renderer</a>
+            <a href="#broadcast">BroadcastChannel</a>
+            <a href="#rest">REST API</a>
+        </nav>
+
+        <!-- Core API -->
+        <section id="core">
+            <h2>GTNCore API</h2>
+            <p>Utility functions for geo calculations and formatting.</p>
+
+            <h3>Constructor</h3>
+            <pre><code>const core = new GTNCore();</code></pre>
+
+            <h3>Geospatial Methods</h3>
+
+            <div class="api-method">
+                <h4><code>haversine(lat1, lon1, lat2, lon2)</code></h4>
+                <p>Calculate great circle distance between two points.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Parameters:</strong></td>
+                        <td>
+                            <code>lat1</code> (number) - First point latitude<br>
+                            <code>lon1</code> (number) - First point longitude<br>
+                            <code>lat2</code> (number) - Second point latitude<br>
+                            <code>lon2</code> (number) - Second point longitude
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Returns:</strong></td>
+                        <td>number - Distance in nautical miles</td>
+                    </tr>
+                </table>
+                <pre><code>const dist = core.haversine(47.45, -122.31, 40.64, -73.78);
+// Returns: ~2421 nm (Seattle to New York)</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>calculateBearing(lat1, lon1, lat2, lon2)</code></h4>
+                <p>Calculate initial bearing (forward azimuth) from point 1 to point 2.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Returns:</strong></td>
+                        <td>number - Bearing in degrees (0-360, true north)</td>
+                    </tr>
+                </table>
+                <pre><code>const brg = core.calculateBearing(47.45, -122.31, 40.64, -73.78);
+// Returns: ~80° (ENE from Seattle to New York)</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>calculateDistance(lat1, lon1, lat2, lon2)</code></h4>
+                <p>Alias for <code>haversine()</code>. Returns distance in nautical miles.</p>
+            </div>
+
+            <h3>Conversion Methods</h3>
+
+            <div class="api-method">
+                <h4><code>toRad(degrees)</code></h4>
+                <p>Convert degrees to radians.</p>
+                <pre><code>core.toRad(90)  // Returns: 1.5708 (π/2)</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>toDeg(radians)</code></h4>
+                <p>Convert radians to degrees.</p>
+                <pre><code>core.toDeg(Math.PI)  // Returns: 180</code></pre>
+            </div>
+
+            <h3>Formatting Methods</h3>
+
+            <div class="api-method">
+                <h4><code>formatLatLon(lat, lon, format = 'dms')</code></h4>
+                <p>Format coordinates as human-readable string.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Parameters:</strong></td>
+                        <td>
+                            <code>lat</code> - Latitude<br>
+                            <code>lon</code> - Longitude<br>
+                            <code>format</code> - 'dms' (degrees/minutes/seconds) or 'dd' (decimal degrees)
+                        </td>
+                    </tr>
+                </table>
+                <pre><code>core.formatLatLon(47.4502, -122.3088, 'dms')
+// Returns: "N47°27'01\" W122°18'32\""
+
+core.formatLatLon(47.4502, -122.3088, 'dd')
+// Returns: "47.4502°N 122.3088°W"</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>formatAltitude(feet)</code></h4>
+                <p>Format altitude with comma separators.</p>
+                <pre><code>core.formatAltitude(8500)  // Returns: "8,500"
+core.formatAltitude(12345) // Returns: "12,345"</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>formatFrequency(freq)</code></h4>
+                <p>Format radio frequency to 3 decimal places.</p>
+                <pre><code>core.formatFrequency(118.7)  // Returns: "118.700"
+core.formatFrequency(110.5)  // Returns: "110.500"</code></pre>
+            </div>
+
+            <h3>Static Methods</h3>
+
+            <div class="api-method">
+                <h4><code>GTNCore.log(message, source = 'GTN750')</code></h4>
+                <p>Centralized logging with timestamp and source.</p>
+                <pre><code>GTNCore.log('Flight plan loaded', 'FlightPlan');
+// Console: [GTN750] [FlightPlan] Flight plan loaded</code></pre>
+            </div>
+        </section>
+
+        <!-- Flight Plan API -->
+        <section id="flight-plan">
+            <h2>GTNFlightPlan API</h2>
+            <p>Flight plan management and waypoint operations.</p>
+
+            <h3>Constructor</h3>
+            <pre><code>const flightPlan = new GTNFlightPlan({
+    core: coreInstance,
+    serverPort: 8080
+});</code></pre>
+
+            <h3>Waypoint Management</h3>
+
+            <div class="api-method">
+                <h4><code>addWaypoint(waypoint)</code></h4>
+                <p>Add waypoint to end of route.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Parameters:</strong></td>
+                        <td>Waypoint object with {ident, lat, lng, type, alt (optional)}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Returns:</strong></td>
+                        <td>boolean - true if added successfully</td>
+                    </tr>
+                </table>
+                <pre><code>flightPlan.addWaypoint({
+    ident: 'KSEA',
+    lat: 47.4502,
+    lng: -122.3088,
+    type: 'airport',
+    alt: 433
+});</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>insertWaypoint(waypoint, index)</code></h4>
+                <p>Insert waypoint at specific position.</p>
+                <pre><code>// Insert at position 2 (zero-indexed)
+flightPlan.insertWaypoint({ident: 'HAWKZ', lat: 47.5, lng: -122.2, type: 'fix'}, 2);</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>removeWaypoint(index)</code></h4>
+                <p>Remove waypoint at index.</p>
+                <pre><code>flightPlan.removeWaypoint(2);  // Remove 3rd waypoint</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>clearRoute()</code></h4>
+                <p>Remove all waypoints from flight plan.</p>
+            </div>
+
+            <h3>Navigation</h3>
+
+            <div class="api-method">
+                <h4><code>activateDirectTo(waypoint)</code></h4>
+                <p>Navigate direct to waypoint without modifying stored route.</p>
+                <pre><code>flightPlan.activateDirectTo({
+    ident: 'KDEN',
+    lat: 39.8561,
+    lng: -104.6737,
+    type: 'airport'
+});</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>updateSequencing(aircraftData)</code></h4>
+                <p>Auto-advance to next waypoint when within 0.3nm.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Parameters:</strong></td>
+                        <td>Aircraft data with {latitude, longitude}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Returns:</strong></td>
+                        <td>boolean - true if waypoint advanced</td>
+                    </tr>
+                </table>
+                <pre><code>const advanced = flightPlan.updateSequencing({
+    latitude: 47.4502,
+    longitude: -122.3088
+});</code></pre>
+            </div>
+
+            <h3>Data Access</h3>
+
+            <div class="api-method">
+                <h4><code>getActiveWaypoint()</code></h4>
+                <p>Get current target waypoint.</p>
+                <pre><code>const active = flightPlan.getActiveWaypoint();
+// Returns: {ident: 'KSEA', lat: 47.45, lng: -122.31, ...} or null</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>getTotalDistance()</code></h4>
+                <p>Sum of all leg distances in nm.</p>
+            </div>
+
+            <div class="api-method">
+                <h4><code>getWaypoints()</code></h4>
+                <p>Get array of all waypoints.</p>
+            </div>
+
+            <h3>Import/Export</h3>
+
+            <div class="api-method">
+                <h4><code>exportToJson()</code></h4>
+                <p>Export flight plan as JSON (.fpl format).</p>
+                <pre><code>const json = flightPlan.exportToJson();
+// Returns: JSON string with all route data</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>importFromJson(jsonString)</code></h4>
+                <p>Load flight plan from JSON string.</p>
+                <pre><code>const success = flightPlan.importFromJson(jsonData);
+// Returns: true if loaded successfully</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>importFromPln(xmlString)</code></h4>
+                <p>Load Little Navmap .pln file (XML format).</p>
+                <pre><code>const success = flightPlan.importFromPln(plnXml);
+// Parses SimBase.Document XML structure</code></pre>
+            </div>
+        </section>
+
+        <!-- CDI API -->
+        <section id="cdi">
+            <h2>GTNCDI API</h2>
+            <p>Course Deviation Indicator with GPS/NAV modes.</p>
+
+            <h3>Constructor</h3>
+            <pre><code>const cdi = new GTNCDI({
+    core: coreInstance,
+    flightPlan: flightPlanInstance
+});</code></pre>
+
+            <h3>Source Selection</h3>
+
+            <div class="api-method">
+                <h4><code>setCdiSource(source)</code></h4>
+                <p>Set CDI navigation source.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Parameters:</strong></td>
+                        <td>'GPS', 'NAV1', or 'NAV2'</td>
+                    </tr>
+                </table>
+                <pre><code>cdi.setCdiSource('NAV1');  // Switch to VOR navigation</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>toggleCdiSource()</code></h4>
+                <p>Cycle through GPS → NAV1 → NAV2 → GPS.</p>
+            </div>
+
+            <div class="api-method">
+                <h4><code>getCdiSource()</code></h4>
+                <p>Get current source.</p>
+                <pre><code>const source = cdi.getCdiSource();  // Returns: 'GPS', 'NAV1', or 'NAV2'</code></pre>
+            </div>
+
+            <h3>OBS Control</h3>
+
+            <div class="api-method">
+                <h4><code>setObs(degrees)</code></h4>
+                <p>Set Omni-Bearing Selector course (NAV1/NAV2 only).</p>
+                <pre><code>cdi.setObs(270);  // Track 270° on VOR</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>getObs()</code></h4>
+                <p>Get current OBS setting.</p>
+            </div>
+
+            <h3>CDI Calculations</h3>
+
+            <div class="api-method">
+                <h4><code>getCdiDeflection(aircraftData, flightPlan)</code></h4>
+                <p>Calculate CDI needle position.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Returns:</strong></td>
+                        <td>Object with {deflection, toFrom, crossTrack, dtk}</td>
+                    </tr>
+                </table>
+                <pre><code>const cdiData = cdi.getCdiDeflection(data, flightPlan);
+// Returns:
+{
+    deflection: -2.3,    // -5.0 to +5.0 (dots)
+    toFrom: 'TO',        // 'TO', 'FROM', or null
+    crossTrack: -1.2,    // nm (negative = left of course)
+    dtk: 90              // Desired track in degrees
+}</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>getCdiScaling(distToDestNm)</code></h4>
+                <p>Determine CDI sensitivity mode.</p>
+                <pre><code>const scaling = cdi.getCdiScaling(15);
+// Returns: {mode: 'TERM', fsd: 1.0}
+
+// Modes:
+// ENR (Enroute):  fsd = 5.0nm, distance > 30nm
+// TERM (Terminal): fsd = 1.0nm, distance 2-30nm
+// APR (Approach):  fsd = 0.3nm, distance < 2nm + approach loaded</code></pre>
+            </div>
+        </section>
+
+        <!-- Map Renderer API -->
+        <section id="map">
+            <h2>GTNMapRenderer API</h2>
+            <p>Canvas-based map rendering with caching.</p>
+
+            <h3>Constructor</h3>
+            <pre><code>const mapRenderer = new GTNMapRenderer({
+    core: coreInstance,
+    canvas: canvasElement,
+    flightPlan: flightPlanInstance
+});</code></pre>
+
+            <h3>Map Control</h3>
+
+            <div class="api-method">
+                <h4><code>setRange(nm)</code></h4>
+                <p>Set map zoom level.</p>
+                <pre><code>mapRenderer.setRange(50);  // 50nm range
+// Valid ranges: [2, 5, 10, 25, 50, 100, 200]</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>setOrientation(mode)</code></h4>
+                <p>Set map orientation mode.</p>
+                <pre><code>mapRenderer.setOrientation('track');
+// Modes: 'north', 'track', 'heading'</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>invalidateCache()</code></h4>
+                <p>Force full redraw on next render (clears cached layers).</p>
+            </div>
+
+            <h3>Rendering</h3>
+
+            <div class="api-method">
+                <h4><code>renderMap(ctx, state)</code></h4>
+                <p>Main render loop. Call from requestAnimationFrame.</p>
+                <table class="api-table">
+                    <tr>
+                        <td><strong>Parameters:</strong></td>
+                        <td>
+                            <code>ctx</code> - Canvas 2D context<br>
+                            <code>state</code> - Render state object
+                        </td>
+                    </tr>
+                </table>
+                <pre><code>const state = {
+    aircraft: {lat, lon, heading, groundSpeed},
+    map: {range, orientation},
+    flightPlan: flightPlanInstance,
+    canvas: {width, height}
+};
+mapRenderer.renderMap(ctx, state);</code></pre>
+            </div>
+
+            <h3>Coordinate Conversion</h3>
+
+            <div class="api-method">
+                <h4><code>latLonToCanvas(lat, lon, state)</code></h4>
+                <p>Convert geographic coordinates to screen pixels.</p>
+                <pre><code>const {x, y} = mapRenderer.latLonToCanvas(47.45, -122.31, state);
+// Returns: {x: 320, y: 240} (screen coordinates)</code></pre>
+            </div>
+        </section>
+
+        <!-- BroadcastChannel API -->
+        <section id="broadcast">
+            <h2>BroadcastChannel Integration</h2>
+            <p>Cross-widget communication via SafeChannel (BroadcastChannel fallback for MSFS panels).</p>
+
+            <h3>Subscribing to Route Updates</h3>
+            <pre><code>const channel = new SafeChannel('SimGlass-sync');
+
+channel.addEventListener('message', (event) => {
+    const msg = event.data;
+
+    if (msg.type === 'route-update' && msg.source === 'gtn750') {
+        console.log('GTN750 route updated:', msg.waypoints);
+        // msg.waypoints = [{ident, lat, lng, alt}, ...]
+    }
+
+    if (msg.type === 'direct-to' && msg.source === 'gtn750') {
+        console.log('Direct-To activated:', msg.waypoint);
+        // msg.waypoint = {ident, lat, lng}
+    }
+});</code></pre>
+
+            <h3>Message Types</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Trigger</th>
+                        <th>Payload</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>route-update</code></td>
+                        <td>Flight plan modified</td>
+                        <td><code>{type, source, waypoints}</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>direct-to</code></td>
+                        <td>Direct-To activated</td>
+                        <td><code>{type, source, waypoint}</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>nav-state</code></td>
+                        <td>1Hz broadcast</td>
+                        <td><code>{type, source, cdiSource, activeWpt, dtk, xtrk}</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Publishing to GTN750</h3>
+            <pre><code>// Load flight plan from external source
+channel.postMessage({
+    type: 'load-route',
+    source: 'external-planner',
+    waypoints: [
+        {ident: 'KSEA', lat: 47.45, lng: -122.31, type: 'airport'},
+        {ident: 'KDEN', lat: 39.86, lng: -104.67, type: 'airport'}
+    ]
+});
+
+// GTN750 will load these waypoints into flight plan</code></pre>
+        </section>
+
+        <!-- REST API -->
+        <section id="rest">
+            <h2>Backend REST API</h2>
+            <p>HTTP endpoints for radio management and system control.</p>
+
+            <h3>Radio Endpoints</h3>
+
+            <div class="api-method">
+                <h4><code>POST /api/radio/com1/swap</code></h4>
+                <p>Swap COM1 active/standby frequencies.</p>
+                <pre><code>fetch('http://localhost:8080/api/radio/com1/swap', {
+    method: 'POST'
+});
+// Response: {success: true, active: 118.7, standby: 119.1}</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>POST /api/radio/nav1/set-standby</code></h4>
+                <p>Set NAV1 standby frequency.</p>
+                <pre><code>fetch('http://localhost:8080/api/radio/nav1/set-standby', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({frequency: 110.50})
+});
+// Response: {success: true, standby: 110.50}</code></pre>
+            </div>
+
+            <h3>Transponder Endpoints</h3>
+
+            <div class="api-method">
+                <h4><code>POST /api/radio/xpdr/code</code></h4>
+                <p>Set transponder squawk code.</p>
+                <pre><code>fetch('http://localhost:8080/api/radio/xpdr/code', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: 7500})  // Hijacking - don't actually use!
+});
+// Response: {success: true, code: 7500}</code></pre>
+            </div>
+
+            <div class="api-method">
+                <h4><code>POST /api/radio/xpdr/xpndr_state</code></h4>
+                <p>Set transponder mode.</p>
+                <pre><code>// Modes: 0=OFF, 1=STBY, 2=TEST, 3=ON, 4=ALT, 5=GND
+fetch('http://localhost:8080/api/radio/xpdr/xpndr_state', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({mode: 4})  // ALT mode
+});</code></pre>
+            </div>
+
+            <h3>Status Endpoint</h3>
+
+            <div class="api-method">
+                <h4><code>GET /api/status</code></h4>
+                <p>Get complete system status and flight data.</p>
+                <pre><code>const response = await fetch('http://localhost:8080/api/status');
+const status = await response.json();
+// Returns: {connected: true, flightData: {...}, version: '1.14.0'}</code></pre>
+            </div>
+        </section>
+
+        <footer>
+            <p><a href="index.html">← Back to Documentation Index</a> | <a href="modules.html">Module Reference</a></p>
+        </footer>
+    </div>
+</body>
+</html>
