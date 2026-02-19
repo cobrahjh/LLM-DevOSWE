@@ -150,13 +150,21 @@ class FlightPlanPage {
 
         try {
             const res = await fetch('/api/msfs/flightplan');
+            if (res.status === 404) {
+                // Auto-detect failed — let user pick the file
+                btn.classList.remove('loading');
+                btn.textContent = '\u2708 MSFS 2024';
+                const planData = await this._pickPlnFile();
+                if (!planData) return;
+                this._loadMsfsPlan(planData, btn);
+                return;
+            }
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || `Server returned ${res.status}`);
             }
             const plan = await res.json();
-
-            const planData = {
+            this._loadMsfsPlan({
                 departure: plan.departure,
                 arrival: plan.arrival,
                 waypoints: plan.waypoints,
@@ -164,25 +172,98 @@ class FlightPlanPage {
                 route: plan.route || '',
                 altitude: plan.cruisingAlt || 0,
                 source: 'msfs2024'
-            };
-
-            if (this.flightPlanManager) {
-                this.flightPlanManager.handleSyncMessage('simbrief-plan', planData);
-            }
-
-            // Broadcast to other panes
-            const ch = new SafeChannel('SimGlass-sync');
-            ch.postMessage({ type: 'simbrief-plan', data: planData });
-            ch.close();
-
-            btn.textContent = '\u2714 LOADED';
-            setTimeout(() => { btn.textContent = '\u2708 MSFS 2024'; }, 2000);
+            }, btn);
         } catch (e) {
             console.error('[FPL] MSFS 2024 import failed:', e);
-            btn.textContent = '\u2718 NOT FOUND';
+            btn.textContent = '\u2718 FAILED';
             setTimeout(() => { btn.textContent = '\u2708 MSFS 2024'; }, 2000);
+            btn.classList.remove('loading');
         }
+    }
+
+    _loadMsfsPlan(planData, btn) {
+        if (this.flightPlanManager) {
+            this.flightPlanManager.handleSyncMessage('simbrief-plan', planData);
+        }
+        const ch = new SafeChannel('SimGlass-sync');
+        ch.postMessage({ type: 'simbrief-plan', data: planData });
+        ch.close();
         btn.classList.remove('loading');
+        btn.textContent = '\u2714 LOADED';
+        setTimeout(() => { btn.textContent = '\u2708 MSFS 2024'; }, 2000);
+    }
+
+    _pickPlnFile() {
+        return new Promise((resolve) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pln';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            input.onchange = () => {
+                const file = input.files[0];
+                document.body.removeChild(input);
+                if (!file) return resolve(null);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        resolve(this._parsePln(e.target.result));
+                    } catch (err) {
+                        console.error('[FPL] PLN parse failed:', err);
+                        resolve(null);
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            input.oncancel = () => { document.body.removeChild(input); resolve(null); };
+            input.click();
+        });
+    }
+
+    _parsePln(xml) {
+        const tag = (name) => {
+            const m = xml.match(new RegExp(`<${name}[^>]*>([^<]*)<\/${name}>`));
+            return m ? m[1].trim() : null;
+        };
+        const parsePos = (pos) => {
+            if (!pos) return { lat: 0, lng: 0 };
+            const m = pos.match(/([NS])([\d°' ".]+),([EW])([\d°' ".]+)/);
+            if (!m) return { lat: 0, lng: 0 };
+            const dms = (s) => {
+                const p = s.match(/(\d+)°\s*(\d+)'\s*([\d.]+)"/);
+                if (!p) return parseFloat(s) || 0;
+                return parseInt(p[1]) + parseInt(p[2]) / 60 + parseFloat(p[3]) / 3600;
+            };
+            return {
+                lat: parseFloat((dms(m[2]) * (m[1] === 'S' ? -1 : 1)).toFixed(6)),
+                lng: parseFloat((dms(m[4]) * (m[3] === 'W' ? -1 : 1)).toFixed(6))
+            };
+        };
+
+        const departure = tag('DepartureID');
+        const arrival = tag('DestinationID');
+        const cruisingAlt = parseInt(tag('CruisingAlt')) || 0;
+
+        const wpMatches = [...xml.matchAll(/<ATCWaypoint id="([^"]+)">([\s\S]*?)<\/ATCWaypoint>/g)];
+        const waypoints = wpMatches.map((m) => {
+            const id = m[1];
+            const block = m[2];
+            const typeM = block.match(/<ATCWaypointType>([^<]+)<\/ATCWaypointType>/);
+            const posM = block.match(/<WorldPosition>([^<]+)<\/WorldPosition>/);
+            const { lat, lng } = parsePos(posM ? posM[1] : null);
+            return { ident: id, name: id, type: (typeM ? typeM[1].toLowerCase() : 'fix'), lat, lng, altitude: cruisingAlt };
+        });
+
+        return {
+            departure, arrival, waypoints,
+            totalDistance: 0,
+            route: waypoints.map(w => w.ident).join(' '),
+            altitude: cruisingAlt,
+            source: 'msfs2024'
+        };
     }
 
     // ===== RENDERING =====
