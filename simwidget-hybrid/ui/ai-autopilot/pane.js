@@ -2074,8 +2074,24 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             const airports = await res.json();
             if (!airports?.length) return;
 
-            // Pick closest airport
-            const apt = airports[0];
+            // Pick closest airport with hysteresis to prevent constant switching
+            const closestApt = airports[0];
+            let apt = closestApt;
+
+            // If we already have an airport, only switch if new one is significantly closer (2nm threshold)
+            if (this._nearestAirport) {
+                const currentApt = airports.find(a => a.icao === this._nearestAirport.icao);
+                if (currentApt) {
+                    // Current airport still in range - only switch if new one is 2nm+ closer
+                    const distDiff = (currentApt.distance || 0) - (closestApt.distance || 0);
+                    if (distDiff < 2.0) {
+                        // Not significantly closer - keep current airport
+                        apt = currentApt;
+                    }
+                }
+                // If current airport not in range anymore, switch to closest
+            }
+
             const changed = !this._nearestAirport || this._nearestAirport.icao !== apt.icao;
             this._nearestAirport = apt;
 
