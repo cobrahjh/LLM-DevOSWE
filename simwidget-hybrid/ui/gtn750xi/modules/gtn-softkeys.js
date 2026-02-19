@@ -168,7 +168,7 @@ class GTNSoftKeys {
 
         // AUX page
         this.registerContext('aux', [
-            { label: 'TRIP', action: 'aux-trip' },
+            { label: 'TRIP', action: 'goto-trip-planning' },
             { label: 'FUEL', action: 'aux-fuel' },
             { label: 'VCALC', action: 'goto-vcalc' },
             { label: 'TIMER', action: 'aux-timer' },
@@ -182,6 +182,16 @@ class GTNSoftKeys {
             { label: 'TARGET', action: 'vcalc-select-wpt' },
             { label: 'MSG', action: 'vcalc-toggle-msg', toggle: true },
             { label: 'RESET', action: 'vcalc-restore' },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // TRIP PLANNING page
+        this.registerContext('trip-planning', [
+            { label: 'MODE', action: 'trip-toggle-mode' },
+            { label: 'SENSOR', action: 'trip-use-sensor', toggle: true },
+            { label: 'NEXT', action: 'trip-next-leg' },
+            { label: 'PREV', action: 'trip-prev-leg' },
             { label: '', action: null },
             { label: 'BACK', action: 'back' }
         ]);

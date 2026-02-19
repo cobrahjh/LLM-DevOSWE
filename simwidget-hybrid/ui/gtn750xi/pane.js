@@ -819,6 +819,7 @@ class GTN750XiPane extends SimGlassBase {
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.flightPlanManager?.checkApproachPhase(this.data);
         this.updateVcalcPage();
+        this.tripPlanningPage?.update();
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
@@ -2797,6 +2798,11 @@ class GTN750XiPane extends SimGlassBase {
             case 'aux-trip': if (this.auxPage) this.auxPage.showSubpage('trip'); break;
             case 'aux-fuel': if (this.auxPage) this.auxPage.showSubpage('fuel'); break;
             case 'goto-vcalc': if (this.pageManager) this.pageManager.switchPage('vcalc'); break;
+            case 'goto-trip-planning': if (this.pageManager) this.pageManager.switchPage('trip-planning'); break;
+            case 'trip-toggle-mode': if (this.tripPlanningPage) this.tripPlanningPage.toggleMode(); break;
+            case 'trip-use-sensor': if (this.tripPlanningPage) this.tripPlanningPage.toggleUseSensorData(); break;
+            case 'trip-next-leg': if (this.tripPlanningPage) this.tripPlanningPage.nextLeg(); break;
+            case 'trip-prev-leg': if (this.tripPlanningPage) this.tripPlanningPage.prevLeg(); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
             case 'aux-logbook': if (this.auxPage) this.auxPage.showSubpage('logbook'); break;
             case 'logbook-export': if (this.auxPage) this.auxPage.exportLogbook(); break;

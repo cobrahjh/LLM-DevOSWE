@@ -1020,6 +1020,98 @@
                 </div>
             </div>
 
+            <!-- TRIP PLANNING Page -->
+            <div class="gtn-page" id="page-trip-planning" style="display:none;">
+                <div class="trip-container">
+                    <div class="trip-header">
+                        <div class="trip-title">TRIP PLANNING</div>
+                        <button class="trip-mode-btn" id="trip-mode">Point to Point</button>
+                    </div>
+
+                    <!-- Point-to-Point Mode Controls -->
+                    <div class="trip-section trip-ptp-control">
+                        <div class="trip-row">
+                            <span class="trip-label">P. Position</span>
+                            <button class="trip-toggle" id="trip-p-pos">OFF</button>
+                        </div>
+                        <div class="trip-row">
+                            <span class="trip-label">From</span>
+                            <button class="trip-select" id="trip-from-wpt">----</button>
+                        </div>
+                        <div class="trip-row">
+                            <span class="trip-label">To</span>
+                            <button class="trip-select" id="trip-to-wpt">----</button>
+                        </div>
+                    </div>
+
+                    <!-- Flight Plan Mode Controls -->
+                    <div class="trip-section trip-fpl-control" style="display:none;">
+                        <div class="trip-row">
+                            <span class="trip-label">Flight Plan</span>
+                            <button class="trip-select" id="trip-fpl-select">Active FPL</button>
+                        </div>
+                        <div class="trip-row">
+                            <span class="trip-label">Leg</span>
+                            <button class="trip-select" id="trip-leg-select">Cumulative</button>
+                        </div>
+                    </div>
+
+                    <!-- Common Inputs -->
+                    <div class="trip-section">
+                        <div class="trip-row">
+                            <span class="trip-label">Depart Time</span>
+                            <input type="time" id="trip-depart-time" class="trip-input" value="12:00">
+                        </div>
+                        <div class="trip-row">
+                            <span class="trip-label">Depart Date</span>
+                            <input type="date" id="trip-depart-date" class="trip-input">
+                        </div>
+                        <div class="trip-row">
+                            <span class="trip-label">Ground Speed</span>
+                            <input type="number" id="trip-ground-speed" class="trip-input-num" value="120" min="0" max="999" step="5">
+                            <span class="trip-unit">KT</span>
+                        </div>
+                        <div class="trip-row">
+                            <span class="trip-label">Use Sensor Data</span>
+                            <button class="trip-toggle" id="trip-use-sensor">OFF</button>
+                        </div>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div class="trip-section trip-results" id="trip-results">
+                        <div class="trip-results-header">TRIP DATA</div>
+                        <div class="trip-results-grid">
+                            <div class="trip-result-item">
+                                <span class="trip-result-label">DTK</span>
+                                <span class="trip-result-value" id="trip-result-dtk">---°</span>
+                            </div>
+                            <div class="trip-result-item">
+                                <span class="trip-result-label">DIS</span>
+                                <span class="trip-result-value" id="trip-result-dis">--- NM</span>
+                            </div>
+                            <div class="trip-result-item">
+                                <span class="trip-result-label">ETE</span>
+                                <span class="trip-result-value" id="trip-result-ete">--:--</span>
+                            </div>
+                            <div class="trip-result-item">
+                                <span class="trip-result-label">ETA</span>
+                                <span class="trip-result-value" id="trip-result-eta">--:--</span>
+                            </div>
+                            <div class="trip-result-item">
+                                <span class="trip-result-label">ESA</span>
+                                <span class="trip-result-value" id="trip-result-esa">--- FT</span>
+                            </div>
+                            <div class="trip-result-item trip-result-wide">
+                                <span class="trip-result-label">Sunrise/Sunset</span>
+                                <span class="trip-result-value">
+                                    <span id="trip-result-sunrise">--:--</span> / <span id="trip-result-sunset">--:--</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- SYSTEM Page -->
             <div class="gtn-page" id="page-system" style="display:none;">
                 <div class="gtn-sys-scroll">
