@@ -1351,8 +1351,9 @@
       "category": "other",
       "summary": "After nearly 2 years of AI-assisted development — from ChatGPT 3.5 to Claude Code — I kept hitting...",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:54.524Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:54.524Z",
+      "decidedAt": "2026-02-19T17:32:09.679Z"
     },
     {
       "id": "hn-47070446",
@@ -1368,8 +1369,9 @@
       "category": "other",
       "summary": "Stoolap/Node: A Native Node.js Driver That's Surprisingly Fast",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:54.529Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:54.529Z",
+      "decidedAt": "2026-02-19T17:32:14.180Z"
     },
     {
       "id": "gh-rel-anthropics-anthropic-sdk-typescript-287857429",
@@ -1384,8 +1386,9 @@
       "category": "other",
       "summary": "sdk: v0.77.0",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:54.544Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:54.544Z",
+      "decidedAt": "2026-02-19T17:32:16.871Z"
     },
     {
       "id": "gh-1149071982",
@@ -1963,8 +1966,9 @@
       "category": "other",
       "summary": "LLMs grading other LLMs 2",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:40.369Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:40.369Z",
+      "decidedAt": "2026-02-19T17:32:19.627Z"
     },
     {
       "id": "devto-3260191",
@@ -1986,8 +1990,9 @@
       "category": "other",
       "summary": "For a long time, I thought web development was simple.  Frontend. Backend. Done.  HTML, CSS,...",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:40.374Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:40.374Z",
+      "decidedAt": "2026-02-19T17:32:23.942Z"
     },
     {
       "id": "reddit-1r85j05",
@@ -2003,8 +2008,9 @@
       "category": "other",
       "summary": "Flights January and February",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:54.485Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:54.485Z",
+      "decidedAt": "2026-02-19T17:32:27.520Z"
     },
     {
       "id": "devto-3252512",
@@ -2026,8 +2032,9 @@
       "category": "other",
       "summary": "Hundreds of developers have already completed our first DEV Education Track, and today we're excited...",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:54.492Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:54.492Z",
+      "decidedAt": "2026-02-19T17:32:33.224Z"
     },
     {
       "id": "reddit-1r8e5wh",
@@ -2043,8 +2050,9 @@
       "category": "other",
       "summary": "Today's flight from Brussels to Bucharest as ROT372",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:54.504Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:54.504Z",
+      "decidedAt": "2026-02-19T17:32:38.121Z"
     },
     {
       "id": "reddit-1qrqyi0",
@@ -8556,8 +8564,9 @@
       "category": "other",
       "summary": "v0.82.0",
       "thoughts": "Auto-scored by keywords (LLM unavailable).",
-      "status": "pending",
-      "fetchedAt": "2026-02-19T10:02:54.543Z"
+      "status": "approved",
+      "fetchedAt": "2026-02-19T10:02:54.543Z",
+      "decidedAt": "2026-02-19T17:32:40.050Z"
     },
     {
       "id": "hn-46917033",
@@ -20013,9 +20022,9 @@
   "lastFetch": "2026-02-19T10:02:54.544Z",
   "stats": {
     "total": 1143,
-    "approved": 70,
+    "approved": 79,
     "rejected": 0,
-    "pending": 1038,
+    "pending": 1029,
     "implemented": 0
   }
 }
