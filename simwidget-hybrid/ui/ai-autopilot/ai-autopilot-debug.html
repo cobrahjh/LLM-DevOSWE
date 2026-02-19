@@ -549,9 +549,9 @@ function updateFlightDisplay(fd, ap) {
 
   // Engine / Ground
   v('fd-rpm',  Math.round(fd.engineRpm || 0) + ' RPM', (fd.engineRpm||0) >= 500 ? 'ok' : 'err');
-  v('fd-thr',  thr + '%', thr > 50 ? 'ok' : '');
-  document.getElementById('fd-thr-bar').style.width = thr + '%';
-  v('fd-mix',  (fd.mixture != null ? fd.mixture : '—') + '%', (fd.mixture||0) >= 90 ? 'ok' : 'warn');
+  v('fd-thr',  Math.round(thr) + '%', thr > 50 ? 'ok' : '');
+  document.getElementById('fd-thr-bar').style.width = Math.min(100, thr) + '%';
+  v('fd-mix',  (fd.mixture != null ? Math.round(fd.mixture) : '—') + '%', (fd.mixture||0) >= 90 ? 'ok' : 'warn');
   v('fd-brk',  fd.parkingBrake ? 'ON' : 'OFF', fd.parkingBrake ? 'err' : 'ok');
   v('fd-gs',   (fd.groundSpeed||0).toFixed(1) + ' kt');
   v('fd-flaps', fd.flapsIndex != null ? fd.flapsIndex : '—');
