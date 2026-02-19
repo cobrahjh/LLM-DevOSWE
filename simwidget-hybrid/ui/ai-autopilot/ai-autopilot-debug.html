@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Autopilot Debug Console</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; display: flex; flex-direction: column; }
+
+/* ── Header ── */
+.hdr {
+  flex-shrink: 0; padding: 6px 12px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #0d1218; border-bottom: 1px solid #1a2030;
+}
+.hdr-title { color: #4fc3f7; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+.badge { font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; border: 1px solid; }
+.badge-en  { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
+.badge-dis { border-color: #f85149; color: #f85149; background: #2a0d0d; }
+.badge-phase { border-color: #ffab40; color: #ffab40; background: #1a1500; }
+.badge-sub { border-color: #4fc3f7; color: #4fc3f7; background: #001520; }
+.badge-ws-ok  { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
+.badge-ws-err { border-color: #f85149; color: #f85149; background: #2a0d0d; }
+.hdr-stat { font-size: 10px; color: #506070; }
+.hdr-stat span { color: #c0c8d8; }
+.hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn { background: #1a2030; border: 1px solid #2a3040; color: #c0c8d8; border-radius: 3px; padding: 3px 9px; cursor: pointer; font-family: inherit; font-size: 10px; }
+.btn:hover { background: #2a3040; }
+.btn-pause { border-color: #ffab40; color: #ffab40; }
+.btn-pause.active { background: #2a1f0d; }
+.ts { font-size: 10px; color: #404850; }
+
+/* ── Stats bar ── */
+.stats {
+  flex-shrink: 0; padding: 4px 12px;
+  display: flex; gap: 18px; align-items: center;
+  background: #0a0e14; border-bottom: 1px solid #1a2030;
+}
+.stat { display: flex; gap: 5px; align-items: baseline; }
+.stat-lbl { font-size: 9px; color: #506070; text-transform: uppercase; }
+.stat-val { font-size: 13px; color: #e0e8f0; font-weight: bold; }
+.stat-val.ok   { color: #3fb950; }
+.stat-val.warn { color: #ffab40; }
+.stat-val.err  { color: #f85149; }
+.stat-unit { font-size: 9px; color: #506070; }
+
+/* ── Main panels ── */
+.panels { flex: 1; display: flex; overflow: hidden; gap: 1px; background: #1a2030; }
+
+.panel {
+  flex: 1; display: flex; flex-direction: column;
+  background: #080c10; overflow: hidden;
+  min-width: 0;
+}
+.panel-hdr {
+  flex-shrink: 0; padding: 5px 10px;
+  display: flex; align-items: center; gap: 6px;
+  background: #0d1218; border-bottom: 1px solid #1a2030;
+}
+.panel-title { font-size: 10px; font-weight: bold; color: #506070; text-transform: uppercase; letter-spacing: 1px; flex: 1; }
+.panel-title.blue  { color: #4fc3f7; }
+.panel-title.amber { color: #ffab40; }
+.panel-title.green { color: #3fb950; }
+.panel-count { font-size: 9px; color: #404850; }
+.filter-input {
+  background: #080c10; border: 1px solid #1a2030; color: #c0c8d8;
+  border-radius: 2px; padding: 2px 6px; font-size: 10px; font-family: inherit;
+  width: 90px; outline: none;
+}
+.filter-input:focus { border-color: #4fc3f7; }
+.panel-body { flex: 1; overflow-y: auto; }
+
+/* ── Server log panel ── */
+.log-line { padding: 1px 10px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; border-left: 2px solid transparent; }
+.log-line .ts { color: #303840; margin-right: 6px; }
+.log-line.level-log  { color: #8090a0; }
+.log-line.level-error { color: #f85149; border-left-color: #f85149; background: rgba(248,81,73,0.05); }
+.log-line.level-warn  { color: #ffab40; border-left-color: #ffab40; background: rgba(255,171,64,0.05); }
+.log-line.level-cmd   { color: #4fc3f7; border-left-color: #4fc3f7; background: rgba(79,195,247,0.04); }
+.log-line.level-phase { color: #ffab40; border-left-color: #ffab40; background: rgba(255,171,64,0.08); font-weight: bold; }
+.log-line.hl { background: rgba(79,195,247,0.12); }
+
+/* ── Flight input panel ── */
+.fd-grid { padding: 8px 10px; display: flex; flex-direction: column; gap: 0; }
+.fd-section { margin-bottom: 10px; }
+.fd-section-title { font-size: 9px; color: #303840; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #1a2030; }
+.fd-row { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 0; border-bottom: 1px solid #0d1218; }
+.fd-lbl { color: #506070; font-size: 10px; }
+.fd-val { color: #e0e8f0; font-size: 12px; font-weight: bold; text-align: right; }
+.fd-val.ok   { color: #3fb950; }
+.fd-val.warn { color: #ffab40; }
+.fd-val.err  { color: #f85149; }
+.fd-val.dim  { color: #303840; }
+.fd-val.hi   { color: #4fc3f7; }
+
+/* Bar gauge */
+.fd-bar-wrap { display: flex; align-items: center; gap: 6px; }
+.fd-bar { width: 50px; height: 4px; background: #1a2030; border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.fd-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.fd-bar-fill.thr { background: #ffab40; }
+.fd-bar-fill.spd { background: #4fc3f7; }
+.fd-bar-fill.vs-pos { background: #3fb950; }
+.fd-bar-fill.vs-neg { background: #f85149; }
+
+/* AP status grid */
+.ap-grid { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 0; }
+.ap-item { font-size: 9px; padding: 1px 6px; border-radius: 2px; border: 1px solid #1a2030; color: #506070; }
+.ap-item.on { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
+
+/* ── Command output panel ── */
+.cmd-entry {
+  padding: 3px 10px; border-bottom: 1px solid #0d1218;
+  display: grid; grid-template-columns: 70px 1fr 60px 50px; gap: 6px;
+  align-items: baseline;
+}
+.cmd-entry:hover { background: #0d1218; }
+.cmd-ts   { color: #303840; font-size: 10px; }
+.cmd-type { font-size: 11px; font-weight: bold; }
+.cmd-val  { color: #e0e8f0; font-size: 11px; }
+.cmd-src  { color: #404850; font-size: 9px; text-align: right; }
+.cmd-desc { color: #404850; font-size: 9px; grid-column: 2 / 5; padding-top: 0; }
+
+/* Command colors by category */
+.cat-throttle .cmd-type { color: #ffab40; }
+.cat-elevator .cmd-type { color: #ef5350; }
+.cat-rudder   .cmd-type { color: #ab47bc; }
+.cat-aileron  .cmd-type { color: #42a5f5; }
+.cat-ap       .cmd-type { color: #3fb950; }
+.cat-mixture  .cmd-type { color: #ffa726; }
+.cat-flaps    .cmd-type { color: #26c6da; }
+.cat-other    .cmd-type { color: #90a0b0; }
+
+.phase-entry {
+  padding: 4px 10px; border-bottom: 1px solid #0d1218;
+  background: rgba(255,171,64,0.06); border-left: 3px solid #ffab40;
+  display: flex; gap: 8px; align-items: center;
+}
+.phase-entry.sub { border-left-color: #4fc3f7; background: rgba(79,195,247,0.06); }
+.phase-entry .pe-ts { color: #505060; font-size: 10px; flex-shrink: 0; }
+.phase-entry .pe-label { font-size: 9px; color: #506070; text-transform: uppercase; flex-shrink: 0; }
+.phase-entry .pe-val { font-weight: bold; color: #ffab40; }
+.phase-entry.sub .pe-val { color: #4fc3f7; }
+.phase-entry .pe-arrow { color: #303840; }
+
+/* ── Issues bar ── */
+.issues-bar {
+  flex-shrink: 0; padding: 4px 12px;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  background: #0a0e14; border-top: 1px solid #1a2030;
+  min-height: 26px;
+}
+.issues-lbl { font-size: 9px; color: #506070; text-transform: uppercase; flex-shrink: 0; }
+.issue-tag { font-size: 9px; padding: 1px 7px; border-radius: 3px; border: 1px solid; }
+.issue-tag.ok   { border-color: #1c4a28; color: #3fb950; background: #0d2a18; }
+.issue-tag.warn { border-color: #5a4010; color: #ffab40; background: #2a1f0d; }
+.issue-tag.err  { border-color: #5a1d1d; color: #f85149; background: #2a0d0d; }
+.last-cmd-bar { margin-left: auto; font-size: 10px; color: #506070; }
+.last-cmd-bar span { color: #4fc3f7; }
+
+/* ── Scroll to bottom ── */
+.scroll-btn {
+  position: fixed; bottom: 36px; right: 16px;
+  background: #1a2030; border: 1px solid #4fc3f7; color: #4fc3f7;
+  padding: 4px 12px; border-radius: 12px; font-size: 10px;
+  cursor: pointer; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  font-family: inherit; z-index: 10;
+}
+.scroll-btn.show { opacity: 1; pointer-events: auto; }
+
+/* ── cmd rate mini chart ── */
+.cmd-freq { padding: 6px 10px; border-bottom: 1px solid #1a2030; background: #0a0e14; }
+.cmd-freq-title { font-size: 9px; color: #303840; text-transform: uppercase; margin-bottom: 4px; }
+.freq-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.freq-lbl { font-size: 9px; color: #506070; width: 130px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.freq-bar-wrap { flex: 1; height: 5px; background: #1a2030; border-radius: 2px; overflow: hidden; }
+.freq-bar-fill { height: 100%; border-radius: 2px; background: #4fc3f7; transition: width 0.4s; }
+.freq-cnt { font-size: 9px; color: #506070; width: 24px; text-align: right; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <span class="hdr-title">AI AUTOPILOT DEBUG</span>
+  <span class="badge badge-dis" id="en-badge">OFFLINE</span>
+  <span class="badge badge-phase" id="phase-badge" style="display:none"></span>
+  <span class="badge badge-sub"   id="sub-badge"   style="display:none"></span>
+  <span class="badge badge-ws-err" id="ws-badge">WS OFF</span>
+  <div class="hdr-stat">SIM <span id="h-fps">0</span> fps</div>
+  <div class="hdr-stat">CMD <span id="h-cpm">0</span>/min</div>
+  <div class="hdr-stat">LOG <span id="h-log-cnt">0</span> lines</div>
+  <div class="hdr-right">
+    <button class="btn btn-pause" id="btn-pause-all" onclick="togglePauseAll()">⏸ Pause All</button>
+    <button class="btn" onclick="clearAll()">✕ Clear All</button>
+    <button class="btn" onclick="exportCSV()">⬇ Export</button>
+    <span class="ts" id="hdr-ts"></span>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div class="stats">
+  <div class="stat"><span class="stat-lbl">IAS</span><span class="stat-val" id="s-ias">—</span><span class="stat-unit">kt</span></div>
+  <div class="stat"><span class="stat-lbl">AGL</span><span class="stat-val" id="s-agl">—</span><span class="stat-unit">ft</span></div>
+  <div class="stat"><span class="stat-lbl">VS</span><span class="stat-val" id="s-vs">—</span><span class="stat-unit">fpm</span></div>
+  <div class="stat"><span class="stat-lbl">HDG</span><span class="stat-val" id="s-hdg">—</span><span class="stat-unit">°</span></div>
+  <div class="stat"><span class="stat-lbl">THR</span><span class="stat-val" id="s-thr">—</span><span class="stat-unit">%</span></div>
+  <div class="stat"><span class="stat-lbl">PITCH</span><span class="stat-val" id="s-pitch">—</span><span class="stat-unit">°</span></div>
+  <div class="stat"><span class="stat-lbl">BANK</span><span class="stat-val" id="s-bank">—</span><span class="stat-unit">°</span></div>
+  <div class="stat"><span class="stat-lbl">GS</span><span class="stat-val" id="s-gs">—</span><span class="stat-unit">kt</span></div>
+  <div class="stat"><span class="stat-lbl">ALT</span><span class="stat-val" id="s-alt">—</span><span class="stat-unit">ft</span></div>
+  <div class="stat"><span class="stat-lbl">RPM</span><span class="stat-val" id="s-rpm">—</span></div>
+</div>
+
+<!-- Panels -->
+<div class="panels">
+
+  <!-- Left: Server Output -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title blue">Server Output</span>
+      <input class="filter-input" id="log-filter" placeholder="filter…" oninput="filterLog()">
+      <span class="panel-count" id="log-count">0</span>
+      <button class="btn btn-pause" id="btn-log-pause" onclick="togglePanel('log')">⏸</button>
+      <button class="btn" onclick="clearPanel('log')">✕</button>
+    </div>
+    <div class="panel-body" id="log-body"></div>
+  </div>
+
+  <!-- Middle: Flight Input -->
+  <div class="panel" style="flex: 0.7; min-width: 200px;">
+    <div class="panel-hdr">
+      <span class="panel-title amber">Flight Input</span>
+      <span class="panel-count" id="fd-fps">0 fps</span>
+    </div>
+    <div class="panel-body" id="fd-body">
+      <div class="fd-grid">
+
+        <!-- Engine & Ground -->
+        <div class="fd-section">
+          <div class="fd-section-title">Engine / Ground</div>
+          <div class="fd-row"><span class="fd-lbl">Engine RPM</span><span class="fd-val" id="fd-rpm">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Throttle</span>
+            <div class="fd-bar-wrap"><div class="fd-bar"><div class="fd-bar-fill thr" id="fd-thr-bar" style="width:0"></div></div><span class="fd-val" id="fd-thr">—</span></div>
+          </div>
+          <div class="fd-row"><span class="fd-lbl">Mixture</span><span class="fd-val" id="fd-mix">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Parking Brake</span><span class="fd-val" id="fd-brk">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Ground Speed</span><span class="fd-val" id="fd-gs">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Flaps Index</span><span class="fd-val" id="fd-flaps">—</span></div>
+        </div>
+
+        <!-- Flight Dynamics -->
+        <div class="fd-section">
+          <div class="fd-section-title">Flight Dynamics</div>
+          <div class="fd-row"><span class="fd-lbl">IAS</span>
+            <div class="fd-bar-wrap"><div class="fd-bar"><div class="fd-bar-fill spd" id="fd-ias-bar" style="width:0"></div></div><span class="fd-val" id="fd-ias">—</span></div>
+          </div>
+          <div class="fd-row"><span class="fd-lbl">Altitude MSL</span><span class="fd-val" id="fd-alt">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">AGL</span><span class="fd-val" id="fd-agl">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Vert Speed</span><span class="fd-val" id="fd-vs">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Pitch</span><span class="fd-val" id="fd-pitch">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Bank</span><span class="fd-val" id="fd-bank">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Heading</span><span class="fd-val" id="fd-hdg">—</span></div>
+        </div>
+
+        <!-- Flight Controls -->
+        <div class="fd-section">
+          <div class="fd-section-title">Control Surfaces (Sally Set)</div>
+          <div class="fd-row"><span class="fd-lbl">Elevator</span><span class="fd-val hi" id="fd-elev">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Aileron</span><span class="fd-val hi" id="fd-ail">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">Rudder</span><span class="fd-val hi" id="fd-rud">—</span></div>
+        </div>
+
+        <!-- Autopilot -->
+        <div class="fd-section">
+          <div class="fd-section-title">Autopilot</div>
+          <div class="fd-row"><span class="fd-lbl">AP Master</span><span class="fd-val" id="fd-ap">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">AP Alt Set</span><span class="fd-val" id="fd-ap-alt">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">AP VS Set</span><span class="fd-val" id="fd-ap-vs">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">AP Spd Set</span><span class="fd-val" id="fd-ap-spd">—</span></div>
+          <div class="ap-grid" id="fd-ap-modes"></div>
+        </div>
+
+        <!-- Wind -->
+        <div class="fd-section">
+          <div class="fd-section-title">Environment</div>
+          <div class="fd-row"><span class="fd-lbl">Wind</span><span class="fd-val" id="fd-wind">—</span></div>
+          <div class="fd-row"><span class="fd-lbl">OAT</span><span class="fd-val" id="fd-oat">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Command Output -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title green">Command Output</span>
+      <input class="filter-input" id="cmd-filter" placeholder="filter…" oninput="filterCmd()">
+      <span class="panel-count" id="cmd-count">0</span>
+      <button class="btn btn-pause" id="btn-cmd-pause" onclick="togglePanel('cmd')">⏸</button>
+      <button class="btn" onclick="clearPanel('cmd')">✕</button>
+    </div>
+    <!-- Frequency chart -->
+    <div class="cmd-freq" id="cmd-freq-wrap">
+      <div class="cmd-freq-title">Command Frequency (last 60s)</div>
+      <div id="cmd-freq-rows"></div>
+    </div>
+    <div class="panel-body" id="cmd-body"></div>
+  </div>
+
+</div>
+
+<!-- Issues bar -->
+<div class="issues-bar">
+  <span class="issues-lbl">Issues</span>
+  <div id="issues-list" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  <span class="last-cmd-bar" id="last-cmd-bar"></span>
+</div>
+
+<button class="scroll-btn" id="scroll-btn" onclick="scrollToBottom()">↓ latest</button>
+
+<script>
+const BASE = 'http://192.168.1.42:8080';
+
+// ── State ────────────────────────────────────────────────────────────────
+let logEntries  = [];
+let cmdEntries  = [];
+let flightData  = {};
+let pausedLog   = false;
+let pausedCmd   = false;
+let pausedAll   = false;
+let logFilter   = '';
+let cmdFilter   = '';
+let lastLogTotal = 0;
+let lastDiagCmd = null;
+let wsConnected = false;
+let ws = null;
+
+// Stats
+let fpsSamples = [];
+let cpmEntries = []; // timestamps of commands in last 60s
+let cmdFreqMap = {}; // type → count in last 60s
+let freqWindow = 60000;
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+function ts(t) {
+  const d = new Date(t || Date.now());
+  return String(d.getHours()).padStart(2,'0') + ':' +
+         String(d.getMinutes()).padStart(2,'0') + ':' +
+         String(d.getSeconds()).padStart(2,'0') + '.' +
+         String(d.getMilliseconds()).padStart(3,'0');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function categorize(name) {
+  if (!name) return 'other';
+  if (name.includes('THROTTLE') || name === 'MIXTURE_SET') return 'throttle';
+  if (name.includes('ELEVATOR') || name === 'ELEV_TRIM') return 'elevator';
+  if (name.includes('RUDDER')) return 'rudder';
+  if (name.includes('AILERON')) return 'aileron';
+  if (name.startsWith('AP_') || name.includes('HEADING_BUG')) return 'ap';
+  if (name.includes('MIXTURE')) return 'mixture';
+  if (name.includes('FLAPS') || name.includes('GEAR')) return 'flaps';
+  return 'other';
+}
+
+function logLevelClass(level, line) {
+  if (level === 'error') return 'level-error';
+  if (/warn|warning/i.test(line)) return 'level-warn';
+  if (/\[CMD\]|executeCommand|THROTTLE|ELEVATOR|AP_|FLAPS|MIXTURE|AILERON|RUDDER/i.test(line)) return 'level-cmd';
+  if (/phase|PHASE|subphase/i.test(line)) return 'level-phase';
+  return 'level-log';
+}
+
+// ── Log panel ─────────────────────────────────────────────────────────────
+const LOG_MAX = 500;
+
+function addLogLines(lines) {
+  if (pausedLog || pausedAll) return;
+  const body = document.getElementById('log-body');
+  const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 50;
+  let added = 0;
+  for (const entry of lines) {
+    const lc = logLevelClass(entry.level, entry.line);
+    const text = entry.line;
+    if (logFilter && !text.toLowerCase().includes(logFilter)) continue;
+    logEntries.push({ t: entry.t, line: text, lc });
+    if (logEntries.length > LOG_MAX) logEntries.shift();
+    const div = document.createElement('div');
+    div.className = 'log-line ' + lc;
+    div.innerHTML = '<span class="ts">' + ts(entry.t) + '</span>' + esc(text);
+    body.appendChild(div);
+    added++;
+  }
+  // Trim DOM
+  while (body.children.length > LOG_MAX) body.removeChild(body.firstChild);
+  if (atBottom && added > 0) body.scrollTop = body.scrollHeight;
+  document.getElementById('log-count').textContent = body.children.length;
+  document.getElementById('h-log-cnt').textContent = logEntries.length;
+}
+
+function filterLog() {
+  logFilter = document.getElementById('log-filter').value.toLowerCase();
+  const body = document.getElementById('log-body');
+  body.innerHTML = '';
+  logEntries.forEach(e => {
+    if (logFilter && !e.line.toLowerCase().includes(logFilter)) return;
+    const div = document.createElement('div');
+    div.className = 'log-line ' + e.lc;
+    div.innerHTML = '<span class="ts">' + ts(e.t) + '</span>' + esc(e.line);
+    body.appendChild(div);
+  });
+  body.scrollTop = body.scrollHeight;
+  document.getElementById('log-count').textContent = body.children.length;
+}
+
+// ── Command panel ─────────────────────────────────────────────────────────
+const CMD_MAX = 300;
+
+function addCmd(entry) {
+  if (pausedCmd || pausedAll) return;
+  const body = document.getElementById('cmd-body');
+  const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 50;
+  const cat = categorize(entry.type);
+  const txt = JSON.stringify({ type: entry.type, value: entry.value, desc: entry.desc || '' });
+  if (cmdFilter && !txt.toLowerCase().includes(cmdFilter)) { cmdEntries.push(entry); return; }
+  cmdEntries.push(entry);
+  if (cmdEntries.length > CMD_MAX) cmdEntries.shift();
+
+  const div = document.createElement('div');
+  if (entry.isPhase) {
+    div.className = 'phase-entry' + (entry.isSub ? ' sub' : '');
+    div.innerHTML =
+      '<span class="pe-ts">' + ts(entry.time) + '</span>' +
+      '<span class="pe-label">' + (entry.isSub ? 'SUB-PHASE' : 'PHASE') + '</span>' +
+      (entry.from ? '<span class="pe-arrow">' + esc(entry.from) + ' →</span>' : '') +
+      '<span class="pe-val">' + esc(entry.type) + '</span>';
+  } else {
+    div.className = 'cmd-entry cat-' + cat;
+    div.innerHTML =
+      '<span class="cmd-ts">' + ts(entry.time) + '</span>' +
+      '<span class="cmd-type">' + esc(entry.type) + '</span>' +
+      '<span class="cmd-val">= ' + esc(String(entry.value != null ? entry.value : '')) + '</span>' +
+      '<span class="cmd-src">' + esc(entry.src || '') + '</span>' +
+      (entry.desc ? '<span class="cmd-desc">' + esc(entry.desc) + '</span>' : '');
+  }
+  body.appendChild(div);
+  while (body.children.length > CMD_MAX) body.removeChild(body.firstChild);
+  if (atBottom) body.scrollTop = body.scrollHeight;
+  document.getElementById('cmd-count').textContent = body.children.length;
+}
+
+function addPhaseChange(newPhase, oldPhase, isSub) {
+  addCmd({ type: newPhase, from: oldPhase, time: Date.now(), isPhase: true, isSub });
+}
+
+function filterCmd() {
+  cmdFilter = document.getElementById('cmd-filter').value.toLowerCase();
+  const body = document.getElementById('cmd-body');
+  body.innerHTML = '';
+  cmdEntries.forEach(e => {
+    const txt = JSON.stringify(e);
+    if (cmdFilter && !txt.toLowerCase().includes(cmdFilter)) return;
+    addCmd(e); // re-renders
+  });
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Command frequency tracker ────────────────────────────────────────────
+function trackCmd(type) {
+  const now = Date.now();
+  cpmEntries.push(now);
+  // evict old
+  cpmEntries = cpmEntries.filter(t => now - t < freqWindow);
+  cmdFreqMap[type] = (cmdFreqMap[type] || 0) + 1;
+  // evict old from freq every 60s via timer
+}
+
+function updateFreqChart() {
+  // Only keep last 60s of counts — use cpmEntries timestamps aligned to types
+  const rows = Object.entries(cmdFreqMap)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 8);
+  const max = rows.length ? rows[0][1] : 1;
+  const html = rows.map(([type, cnt]) => {
+    const pct = Math.round((cnt / max) * 100);
+    return `<div class="freq-row">
+      <span class="freq-lbl">${esc(type)}</span>
+      <div class="freq-bar-wrap"><div class="freq-bar-fill" style="width:${pct}%"></div></div>
+      <span class="freq-cnt">${cnt}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('cmd-freq-rows').innerHTML = html || '<span style="color:#303840;font-size:9px">no commands yet</span>';
+
+  // CPM stat
+  const now = Date.now();
+  cpmEntries = cpmEntries.filter(t => now - t < freqWindow);
+  const cpm = Math.round(cpmEntries.length);
+  document.getElementById('h-cpm').textContent = cpm;
+}
+
+// Reset freq map every 60s
+setInterval(() => { cmdFreqMap = {}; }, freqWindow);
+
+// ── Flight data display ───────────────────────────────────────────────────
+let prevPhase = '', prevSubPhase = '';
+let lastFrameTime = 0;
+
+function updateFlightDisplay(fd, ap) {
+  const now = Date.now();
+  if (lastFrameTime) {
+    fpsSamples.push(1000 / (now - lastFrameTime));
+    if (fpsSamples.length > 20) fpsSamples.shift();
+    const fps = Math.round(fpsSamples.reduce((a,b)=>a+b,0) / fpsSamples.length);
+    document.getElementById('fd-fps').textContent = fps + ' fps';
+    document.getElementById('h-fps').textContent = fps;
+  }
+  lastFrameTime = now;
+
+  const v = (id, val, cls) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val;
+    if (cls) el.className = 'fd-val ' + cls;
+  };
+
+  const vs = fd.verticalSpeed || 0;
+  const bank = fd.bank || 0;
+  const pitch = fd.pitch || 0;
+  const thr = fd.throttle || 0;
+  const ias = fd.speed || 0;
+  const agl = fd.altitudeAGL || 0;
+
+  // Stats bar
+  setText('s-ias',   Math.round(ias));
+  setText('s-agl',   Math.round(agl));
+  setText('s-vs',    Math.round(vs),    vs > 100 ? 'ok' : vs < -100 ? 'err' : '');
+  setText('s-hdg',   Math.round(fd.heading || 0));
+  setText('s-thr',   Math.round(thr));
+  setText('s-pitch', (pitch).toFixed(1), Math.abs(pitch) > 20 ? 'warn' : '');
+  setText('s-bank',  (bank).toFixed(1),  Math.abs(bank)  > 15 ? 'warn' : '');
+  setText('s-gs',    Math.round(fd.groundSpeed || 0));
+  setText('s-alt',   Math.round(fd.altitude || 0));
+  setText('s-rpm',   Math.round(fd.engineRpm || 0), (fd.engineRpm || 0) >= 500 ? 'ok' : 'err');
+
+  // Engine / Ground
+  v('fd-rpm',  Math.round(fd.engineRpm || 0) + ' RPM', (fd.engineRpm||0) >= 500 ? 'ok' : 'err');
+  v('fd-thr',  thr + '%', thr > 50 ? 'ok' : '');
+  document.getElementById('fd-thr-bar').style.width = thr + '%';
+  v('fd-mix',  (fd.mixture != null ? fd.mixture : '—') + '%', (fd.mixture||0) >= 90 ? 'ok' : 'warn');
+  v('fd-brk',  fd.parkingBrake ? 'ON' : 'OFF', fd.parkingBrake ? 'err' : 'ok');
+  v('fd-gs',   (fd.groundSpeed||0).toFixed(1) + ' kt');
+  v('fd-flaps', fd.flapsIndex != null ? fd.flapsIndex : '—');
+
+  // Flight
+  document.getElementById('fd-ias-bar').style.width = Math.min(100, (ias / 200) * 100) + '%';
+  v('fd-ias',   ias.toFixed(0) + ' kt');
+  v('fd-alt',   Math.round(fd.altitude || 0) + ' ft');
+  v('fd-agl',   Math.round(agl) + ' ft', agl < 50 ? 'warn' : '');
+  v('fd-vs',    Math.round(vs) + ' fpm', vs > 100 ? 'ok' : vs < -100 ? 'err' : '');
+  v('fd-pitch', pitch.toFixed(1) + '°',  Math.abs(pitch) > 20 ? 'warn' : '');
+  v('fd-bank',  bank.toFixed(1) + '°',   Math.abs(bank)  > 15 ? 'warn' : '');
+  v('fd-hdg',   Math.round(fd.heading || 0) + '°');
+
+  // Controls (Sally set values from AP broadcast)
+  const live = (ap && ap.live) || {};
+  v('fd-elev', live.elevator != null ? live.elevator.toFixed(1) + '%' : (fd.elevator||0).toFixed(1) + '%', 'hi');
+  v('fd-ail',  live.aileron  != null ? live.aileron.toFixed(1)  + '%' : (fd.aileron||0).toFixed(1)  + '%', 'hi');
+  v('fd-rud',  live.rudder   != null ? live.rudder.toFixed(1)   + '%' : (fd.rudder||0).toFixed(1)   + '%', 'hi');
+
+  // AP
+  v('fd-ap',     fd.apMaster ? 'ON' : 'OFF', fd.apMaster ? 'ok' : 'dim');
+  v('fd-ap-alt', fd.apAltSet ? Math.round(fd.apAltSet) + ' ft' : '—');
+  v('fd-ap-vs',  fd.apVsSet  ? Math.round(fd.apVsSet)  + ' fpm' : '—');
+  v('fd-ap-spd', fd.apSpdSet ? Math.round(fd.apSpdSet) + ' kt'  : '—');
+
+  const modes = [
+    { label:'HDG', on: fd.apHdgLock },
+    { label:'ALT', on: fd.apAltLock },
+    { label:'VS',  on: fd.apVsLock  },
+    { label:'SPD', on: fd.apSpdLock },
+    { label:'NAV', on: fd.apNavLock },
+    { label:'APR', on: fd.apAprLock },
+    { label:'FD',  on: fd.apFlightDirector },
+    { label:'YD',  on: fd.apYawDamper },
+  ];
+  document.getElementById('fd-ap-modes').innerHTML = modes.map(m =>
+    `<span class="ap-item ${m.on ? 'on' : ''}">${m.label}</span>`
+  ).join('');
+
+  // Wind / env
+  v('fd-wind', Math.round(fd.windDirection||0) + '° / ' + Math.round(fd.windSpeed||0) + ' kt');
+  v('fd-oat',  (fd.ambientTemp != null ? fd.ambientTemp.toFixed(0) : '—') + '°C');
+
+  // Phase tracking (detect changes)
+  const curPhase = (ap && ap.phase) || '';
+  const curSub   = (ap && ap.subPhase) || '';
+  if (curPhase && curPhase !== prevPhase) {
+    addPhaseChange(curPhase, prevPhase, false);
+    prevPhase = curPhase;
+  }
+  if (curSub && curSub !== prevSubPhase) {
+    addPhaseChange(curSub, prevSubPhase, true);
+    prevSubPhase = curSub;
+  }
+
+  // Phase badges
+  const enBadge = document.getElementById('en-badge');
+  const apEnabled = ap && ap.enabled;
+  enBadge.textContent = apEnabled ? 'ENABLED' : 'DISABLED';
+  enBadge.className = 'badge ' + (apEnabled ? 'badge-en' : 'badge-dis');
+
+  const phaseBadge = document.getElementById('phase-badge');
+  const subBadge   = document.getElementById('sub-badge');
+  if (curPhase) { phaseBadge.textContent = curPhase; phaseBadge.style.display = ''; }
+  else            phaseBadge.style.display = 'none';
+  if (curSub)   { subBadge.textContent = curSub;   subBadge.style.display = ''; }
+  else            subBadge.style.display = 'none';
+
+  // Last command (from AP state)
+  const lc = ap && ap.lastCmd;
+  if (lc && (!lastDiagCmd || lastDiagCmd.time !== lc.time)) {
+    lastDiagCmd = lc;
+    trackCmd(lc.type);
+    addCmd({ type: lc.type, value: lc.value, desc: lc.description, time: lc.time, src: curSub || curPhase });
+    const ago = Math.round((Date.now() - lc.time) / 1000);
+    document.getElementById('last-cmd-bar').innerHTML =
+      'Last: <span>' + esc(lc.type) + '=' + esc(String(lc.value)) + '</span> ' +
+      esc(lc.description || '') + ' <span style="color:#303840">' + ago + 's ago</span>';
+  }
+}
+
+function setText(id, val, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val;
+  if (cls !== undefined) el.className = 'stat-val ' + (cls || '');
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+function connectWS() {
+  try { ws = new WebSocket('ws://192.168.1.42:8080'); } catch { return; }
+  ws.onopen = () => {
+    wsConnected = true;
+    const b = document.getElementById('ws-badge');
+    b.textContent = 'WS ON'; b.className = 'badge badge-ws-ok';
+  };
+  ws.onclose = () => {
+    wsConnected = false;
+    const b = document.getElementById('ws-badge');
+    b.textContent = 'WS OFF'; b.className = 'badge badge-ws-err';
+    fpsSamples = [];
+    document.getElementById('fd-fps').textContent = '0 fps';
+    document.getElementById('h-fps').textContent = '0';
+    setTimeout(connectWS, 3000);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'flightData' && msg.data) {
+        flightData = msg.data;
+        const ap = msg.data.aiAutopilot || null;
+        updateFlightDisplay(msg.data, ap);
+      }
+    } catch {}
+  };
+}
+connectWS();
+
+// ── Poll server logs ──────────────────────────────────────────────────────
+async function pollLogs() {
+  try {
+    const r = await fetch(BASE + '/api/logs/live?limit=500');
+    const d = await r.json();
+    if (d.total === lastLogTotal) return;
+    const prevTotal = lastLogTotal;
+    lastLogTotal = d.total;
+    // Only append new lines (approximate: show last batch if buffer rolled)
+    const newLines = prevTotal === 0 ? d.lines : d.lines.slice(-(d.total - prevTotal));
+    if (newLines.length > 0) addLogLines(newLines);
+  } catch {}
+}
+
+// ── Poll diagnostics for issues ───────────────────────────────────────────
+async function pollDiag() {
+  try {
+    const r = await fetch(BASE + '/api/ai-autopilot/diagnostics');
+    if (!r.ok) return;
+    const d = await r.json();
+
+    // Issues
+    const issues = d.issues || [];
+    document.getElementById('issues-list').innerHTML = issues.map(i => {
+      const cls = i.code === 'OK' ? 'ok' : (i.code.match(/ENGINE_OFF|PARKING_BRAKE|STUCK/) ? 'err' : 'warn');
+      return `<span class="issue-tag ${cls}" title="${esc(i.msg)}">${esc(i.code)}</span>`;
+    }).join('');
+
+    document.getElementById('hdr-ts').textContent = new Date().toLocaleTimeString();
+  } catch {}
+}
+
+// ── Panel controls ────────────────────────────────────────────────────────
+function togglePanel(panel) {
+  if (panel === 'log') {
+    pausedLog = !pausedLog;
+    document.getElementById('btn-log-pause').textContent = pausedLog ? '▶' : '⏸';
+    document.getElementById('btn-log-pause').classList.toggle('active', pausedLog);
+  } else {
+    pausedCmd = !pausedCmd;
+    document.getElementById('btn-cmd-pause').textContent = pausedCmd ? '▶' : '⏸';
+    document.getElementById('btn-cmd-pause').classList.toggle('active', pausedCmd);
+  }
+}
+
+function togglePauseAll() {
+  pausedAll = !pausedAll;
+  const btn = document.getElementById('btn-pause-all');
+  btn.textContent = pausedAll ? '▶ Resume All' : '⏸ Pause All';
+  btn.classList.toggle('active', pausedAll);
+}
+
+function clearPanel(panel) {
+  if (panel === 'log') {
+    logEntries = [];
+    document.getElementById('log-body').innerHTML = '';
+    document.getElementById('log-count').textContent = '0';
+  } else {
+    cmdEntries = [];
+    document.getElementById('cmd-body').innerHTML = '';
+    document.getElementById('cmd-count').textContent = '0';
+  }
+}
+
+function clearAll() {
+  clearPanel('log'); clearPanel('cmd');
+  cmdFreqMap = {}; cpmEntries = [];
+  document.getElementById('cmd-freq-rows').innerHTML = '';
+  lastLogTotal = 0;
+}
+
+function scrollToBottom() {
+  document.getElementById('log-body').scrollTop = document.getElementById('log-body').scrollHeight;
+  document.getElementById('cmd-body').scrollTop = document.getElementById('cmd-body').scrollHeight;
+}
+
+// ── Export ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows = ['Type,Timestamp,Category,Value,Description'];
+  logEntries.forEach(e => rows.push(`"log",${new Date(e.t).toISOString()},"${e.lc}","","${e.line.replace(/"/g,'""')}"`));
+  cmdEntries.forEach(e => {
+    if (e.isPhase) rows.push(`"phase",${new Date(e.time).toISOString()},"phase","${e.type}","${e.from||''}→${e.type}"`);
+    else rows.push(`"cmd",${new Date(e.time).toISOString()},"${categorize(e.type)}","${e.value}","${(e.desc||'').replace(/"/g,'""')}"`);
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ai-debug-' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.csv';
+  a.click();
+}
+
+// ── Timers ────────────────────────────────────────────────────────────────
+pollLogs();
+pollDiag();
+setInterval(pollLogs,  2000);
+setInterval(pollDiag,  2000);
+setInterval(updateFreqChart, 3000);
+</script>
+</body>
+</html>

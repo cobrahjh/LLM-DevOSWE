@@ -94,17 +94,7 @@ const SERVICES = {
         priority: 0,
         autoRestart: true
     },
-    simwidget: {
-        id: 'simwidget',
-        name: 'SimWidget Main Server',
-        port: 8080,
-        dir: path.join(PROJECT_ROOT, 'simwidget-hybrid', 'backend'),
-        start: 'node server.js',
-        winService: 'simwidgetmainserver.exe',  // Windows Service ID
-        healthEndpoint: '/api/health',
-        priority: 1,
-        autoRestart: true
-    },
+    // simwidget removed — server runs on commander-pc (.42) only
     agent: {
         id: 'agent',
         name: 'Agent (Kitt)',
