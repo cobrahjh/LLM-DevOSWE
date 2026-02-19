@@ -406,7 +406,7 @@ class RuleEngineCore {
         const brakeSpeedLimit = isTakeoffPhase ? 65 : 30;  // kt
         const minHdgForBrake = isTakeoffPhase ? 1 : 15;    // degrees — taxi: only fine corrections
         const maxHdgForBrake = isTakeoffPhase ? 90 : 30;   // degrees — taxi: no brakes for big turns
-        const useBrakes = d.onGround && gs < brakeSpeedLimit
+        const useBrakes = d.onGround && gs > 2 && gs < brakeSpeedLimit
             && Math.abs(hdgError) > minHdgForBrake
             && Math.abs(hdgError) < maxHdgForBrake;
         if (useBrakes) {
