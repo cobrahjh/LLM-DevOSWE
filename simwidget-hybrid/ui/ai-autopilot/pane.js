@@ -378,6 +378,12 @@ class AiAutopilotPane extends SimGlassBase {
             if (/up|^0$/i.test(raw) || num === 0) return { type: 'FLAPS_UP',   description };
             if (num !== null && num > 0)           return { type: 'FLAPS_DOWN', value: num, description };
         }
+        if (ctrl === 'rudder' && num !== null)
+            return { type: 'AXIS_RUDDER_SET', value: num, description };
+        if ((ctrl === 'left brake' || ctrl === 'l brake') && num !== null)
+            return { type: 'AXIS_LEFT_BRAKE_SET',  value: num, description };
+        if ((ctrl === 'right brake' || ctrl === 'r brake') && num !== null)
+            return { type: 'AXIS_RIGHT_BRAKE_SET', value: num, description };
         return null;
     }
 
@@ -806,13 +812,22 @@ class AiAutopilotPane extends SimGlassBase {
             if (!this.llmAdvisor) {
                 await this._loadLLMAdvisor();
             }
-            if (!this.llmAdvisor) return;  // Load failed
-            if (this.llmAdvisor.isRateLimited()) return;
-            const phase = this.flightPhase.phase;
-            this.llmAdvisor.requestAdvisory(
-                `Current phase: ${phase}. Any recommendations for the current flight situation?`,
-                this._lastFlightData
-            );
+            if (!this.llmAdvisor) {
+                this._renderAdvisory({ text: 'AI module failed to load.', commands: [], error: true });
+                return;
+            }
+            if (this.llmAdvisor.isRateLimited()) {
+                const wait = this.llmAdvisor.cooldownRemaining?.() ?? 30;
+                this._renderAdvisory({ text: `Rate limited — try again in ${wait}s.`, commands: [], error: true });
+                return;
+            }
+            const text = this.elements.advisoryTextInput?.value?.trim();
+            const phase = this.flightPhase?.phase || 'UNKNOWN';
+            const prompt = text
+                ? text
+                : `Current phase: ${phase}. Any recommendations for the current flight situation?`;
+            if (this.elements.advisoryTextInput) this.elements.advisoryTextInput.value = '';
+            this.llmAdvisor.requestAdvisory(prompt, this._lastFlightData);
         });
 
         // Advisory accept/dismiss
@@ -929,11 +944,6 @@ class AiAutopilotPane extends SimGlassBase {
             return;
         }
 
-        // Show input row
-        if (this.elements.advisoryInputRow) {
-            this.elements.advisoryInputRow.style.display = 'flex';
-        }
-
         this._recognition = new SpeechRecognition();
         this._recognition.continuous = false;
         this._recognition.interimResults = true;
@@ -964,16 +974,12 @@ class AiAutopilotPane extends SimGlassBase {
             const text = this.elements.advisoryTextInput?.value?.trim();
             this._recognition = null;
 
+            if (this.elements.advisoryTextInput) {
+                this.elements.advisoryTextInput.placeholder = 'Ask the AI anything...';
+            }
             if (text) {
-                if (this.elements.advisoryTextInput) {
-                    this.elements.advisoryTextInput.placeholder = 'Ask the AI anything...';
-                }
                 this._dbg('llm', `<span class="dim">&#127908;</span> <span class="val">${this._esc(text)}</span>`);
-                this._askAI(text);
-            } else {
-                if (this.elements.advisoryTextInput) {
-                    this.elements.advisoryTextInput.placeholder = 'Ask the AI anything...';
-                }
+                this._sendTextQuery();  // routes through LLMAdvisor with rate-limit check
             }
         };
 
@@ -993,15 +999,20 @@ class AiAutopilotPane extends SimGlassBase {
         this._recognition.start();
     }
 
-    _sendTextQuery() {
+    async _sendTextQuery() {
         const text = this.elements.advisoryTextInput?.value?.trim();
         if (!text) return;
-
+        if (this.elements.advisoryTextInput) this.elements.advisoryTextInput.value = '';
         this._dbg('llm', `<span class="dim">&rarr;</span> <span class="val">${this._esc(text)}</span>`);
-        this._askAI(text);
-        if (this.elements.advisoryTextInput) {
-            this.elements.advisoryTextInput.value = '';
+        // Route through LLMAdvisor so rate-limit, TTS, and command parsing all work
+        if (!this.llmAdvisor) await this._loadLLMAdvisor();
+        if (!this.llmAdvisor) { this._askAI(text); return; }  // fallback
+        if (this.llmAdvisor.isRateLimited()) {
+            const wait = this.llmAdvisor.cooldownRemaining?.() ?? 30;
+            this._renderAdvisory({ text: `Rate limited — try again in ${wait}s.`, commands: [], error: true });
+            return;
         }
+        this.llmAdvisor.requestAdvisory(text, this._lastFlightData);
     }
 
     async _askAI(question) {
