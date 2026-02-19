@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NodeView — Hive Process Monitor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    color: #c8c8c8;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Drag handle */
+  #titlebar {
+    background: #1a1a1a;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: move;
+    -webkit-app-region: drag;
+  }
+  #titlebar .dot { width: 8px; height: 8px; border-radius: 50%; }
+  #titlebar .dot.green  { background: #00e676; box-shadow: 0 0 6px #00e676; }
+  #titlebar .dot.yellow { background: #ffcc00; box-shadow: 0 0 6px #ffcc00; }
+  #titlebar .dot.red    { background: #ff4444; box-shadow: 0 0 6px #ff4444; }
+  #title-text { color: #888; font-size: 11px; flex: 1; text-align: center; letter-spacing: 1px; }
+  #refresh-rate {
+    font-size: 10px; color: #555; cursor: pointer;
+    -webkit-app-region: no-drag;
+  }
+  #refresh-rate:hover { color: #00e676; }
+
+  /* Main content */
+  #content {
+    padding: 6px 8px;
+    overflow-y: auto;
+    max-height: calc(100vh - 30px);
+  }
+
+  /* Section headers */
+  .section-header {
+    color: #444;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 0 3px 0;
+    border-bottom: 1px solid #1e1e1e;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .section-header .count { color: #333; }
+
+  /* Service rows */
+  .svc-row {
+    display: grid;
+    grid-template-columns: 8px 1fr 48px 36px 28px;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border-radius: 3px;
+    transition: background 0.1s;
+  }
+  .svc-row:hover { background: #161616; }
+
+  /* Status dot */
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-ok      { background: #00e676; box-shadow: 0 0 4px #00e676; }
+  .dot-warn    { background: #ffcc00; box-shadow: 0 0 4px #ffcc00; }
+  .dot-err     { background: #ff4444; box-shadow: 0 0 4px #ff4444; }
+  .dot-off     { background: #333; }
+
+  /* Service name */
+  .svc-name { color: #bbb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .svc-name.dead { color: #444; }
+
+  /* Port */
+  .svc-port { color: #555; font-size: 11px; text-align: right; }
+  .svc-port.alive { color: #3a7bd5; }
+
+  /* Restart count */
+  .svc-restarts { color: #555; font-size: 10px; text-align: right; }
+  .svc-restarts.nonzero { color: #ffcc00; }
+
+  /* Action button */
+  .svc-action {
+    background: none; border: 1px solid #2a2a2a; border-radius: 2px;
+    color: #444; font-size: 9px; cursor: pointer; padding: 1px 3px;
+    transition: all 0.15s;
+  }
+  .svc-action:hover { border-color: #555; color: #ccc; }
+
+  /* Node process section */
+  .proc-row {
+    display: grid;
+    grid-template-columns: 8px 1fr 52px 40px;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border-radius: 3px;
+  }
+  .proc-row:hover { background: #161616; }
+  .proc-name { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proc-pid  { color: #333; font-size: 10px; text-align: right; }
+  .proc-cpu  { color: #555; font-size: 10px; text-align: right; }
+
+  /* Stats bar */
+  #statsbar {
+    background: #111;
+    border-top: 1px solid #1e1e1e;
+    padding: 4px 10px;
+    display: flex;
+    gap: 14px;
+    font-size: 10px;
+    color: #444;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+  }
+  #statsbar span { color: #666; }
+  #statsbar .val { color: #3a7bd5; }
+
+  /* Pulse animation for updating */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .updating { animation: pulse 0.6s ease; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0d0d0d; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+
+  /* Error state */
+  .fetch-error { color: #ff4444; font-size: 11px; padding: 8px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="titlebar">
+  <div class="dot green" id="dot-online"></div>
+  <div class="dot yellow" id="dot-warn"></div>
+  <div class="dot red" id="dot-err"></div>
+  <span id="title-text">NODE VIEW</span>
+  <span id="refresh-rate" onclick="cycleInterval()" title="Click to change refresh rate">5s</span>
+</div>
+
+<div id="content">
+  <div id="services-section">
+    <div class="section-header">
+      <span>HIVE SERVICES</span>
+      <span class="count" id="svc-count">—</span>
+    </div>
+    <div id="services-list"><div class="fetch-error">Loading...</div></div>
+  </div>
+
+  <div id="procs-section" style="margin-top:6px;">
+    <div class="section-header">
+      <span>NODE PROCESSES</span>
+      <span class="count" id="proc-count">—</span>
+    </div>
+    <div id="procs-list"></div>
+  </div>
+</div>
+
+<div id="statsbar">
+  <span>OK <span class="val" id="stat-ok">0</span></span>
+  <span>WARN <span class="val" id="stat-warn">0</span></span>
+  <span>DOWN <span class="val" id="stat-down">0</span></span>
+  <span>PROCS <span class="val" id="stat-procs">0</span></span>
+  <span style="margin-left:auto" id="stat-time">—</span>
+</div>
+
+<script>
+const ORCHESTRATOR = 'http://localhost:8500';
+const PROC_API     = 'http://localhost:8500/api/processes';  // may not exist, fallback gracefully
+
+let intervalMs = 5000;
+let intervalHandle = null;
+let lastData = null;
+
+const intervals = [2000, 5000, 10000, 30000];
+let intervalIdx = 1;
+
+function cycleInterval() {
+  intervalIdx = (intervalIdx + 1) % intervals.length;
+  intervalMs = intervals[intervalIdx];
+  document.getElementById('refresh-rate').textContent = intervalMs / 1000 + 's';
+  resetInterval();
+}
+
+function resetInterval() {
+  if (intervalHandle) clearInterval(intervalHandle);
+  intervalHandle = setInterval(refresh, intervalMs);
+}
+
+async function refresh() {
+  try {
+    const r = await fetch(ORCHESTRATOR + '/api/status', { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    renderServices(data.services || {});
+    document.getElementById('dot-online').style.background = '#00e676';
+  } catch (e) {
+    document.getElementById('dot-online').style.background = '#333';
+    document.getElementById('services-list').innerHTML =
+      '<div class="fetch-error">Orchestrator unavailable</div>';
+  }
+
+  // Try to get raw node processes from /api/node-processes if available
+  try {
+    const r2 = await fetch(ORCHESTRATOR + '/api/node-processes', { signal: AbortSignal.timeout(3000) });
+    if (r2.ok) {
+      const procs = await r2.json();
+      renderProcs(procs);
+    }
+  } catch (e) { /* endpoint may not exist */ }
+}
+
+function renderServices(services) {
+  const list = document.getElementById('services-list');
+  const entries = Object.entries(services);
+
+  let ok = 0, warn = 0, down = 0;
+  let html = '';
+
+  entries.forEach(([key, svc]) => {
+    const alive = svc.running && svc.healthy;
+    const starting = svc.running && !svc.healthy;
+    const dead = !svc.running;
+
+    if (alive) ok++;
+    else if (starting) warn++;
+    else down++;
+
+    const dotClass = alive ? 'dot-ok' : starting ? 'dot-warn' : 'dot-off';
+    const nameClass = dead ? 'dead' : '';
+    const portClass = alive ? 'alive' : '';
+    const restartClass = (svc.restartCount > 0) ? 'nonzero' : '';
+
+    html += `<div class="svc-row">
+      <div class="status-dot ${dotClass}"></div>
+      <div class="svc-name ${nameClass}" title="${svc.name}">${svc.name}</div>
+      <div class="svc-port ${portClass}">${svc.port || ''}</div>
+      <div class="svc-restarts ${restartClass}">${svc.restartCount > 0 ? 'R:' + svc.restartCount : ''}</div>
+      <button class="svc-action" onclick="restartSvc('${key}')" title="Restart ${svc.name}">↺</button>
+    </div>`;
+  });
+
+  list.innerHTML = html || '<div class="fetch-error">No services</div>';
+  document.getElementById('svc-count').textContent = entries.length;
+  document.getElementById('stat-ok').textContent = ok;
+  document.getElementById('stat-warn').textContent = warn;
+  document.getElementById('stat-down').textContent = down;
+  document.getElementById('stat-time').textContent = new Date().toLocaleTimeString();
+
+  // Update title bar dots
+  document.getElementById('dot-warn').style.background = warn > 0 ? '#ffcc00' : '#222';
+  document.getElementById('dot-err').style.background  = down > 0  ? '#ff4444' : '#222';
+}
+
+function renderProcs(procs) {
+  const list = document.getElementById('procs-list');
+  if (!procs || !procs.length) {
+    list.innerHTML = '<div style="color:#333;font-size:10px;padding:4px;">No process data</div>';
+    return;
+  }
+  let html = '';
+  procs.forEach(p => {
+    html += `<div class="proc-row">
+      <div class="status-dot dot-ok"></div>
+      <div class="proc-name" title="${p.cmd || p.name}">${p.name || p.cmd || '?'}</div>
+      <div class="proc-pid">${p.pid || ''}</div>
+      <div class="proc-cpu">${p.cpu != null ? p.cpu.toFixed(1) + '%' : ''}</div>
+    </div>`;
+  });
+  list.innerHTML = html;
+  document.getElementById('proc-count').textContent = procs.length;
+  document.getElementById('stat-procs').textContent = procs.length;
+}
+
+async function restartSvc(id) {
+  try {
+    await fetch(`${ORCHESTRATOR}/api/services/${id}/restart`, { method: 'POST' });
+    setTimeout(refresh, 1500);
+  } catch (e) {}
+}
+
+// Initial load
+refresh();
+resetInterval();
+</script>
+</body>
+</html>
