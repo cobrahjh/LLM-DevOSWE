@@ -2642,6 +2642,14 @@ body {
     opacity: 0.5;
     pointer-events: none;
 }
+.fpl-import-msfs-btn {
+    background: rgba(0, 200, 100, 0.2);
+    color: #66ffaa;
+    border-color: rgba(0, 200, 100, 0.4);
+}
+.fpl-import-msfs-btn:hover {
+    background: rgba(0, 200, 100, 0.35);
+}
 
 .fpl-route {
     display: flex;

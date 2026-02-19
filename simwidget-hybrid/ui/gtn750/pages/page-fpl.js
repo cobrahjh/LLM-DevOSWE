@@ -34,7 +34,8 @@ class FlightPlanPage {
             fplDist: document.getElementById('fpl-dist'),
             fplEte: document.getElementById('fpl-ete'),
             fplProgress: document.getElementById('fpl-progress'),
-            importBtn: document.getElementById('fpl-import-btn')
+            importBtn: document.getElementById('fpl-import-btn'),
+            importMsfsBtn: document.getElementById('fpl-import-msfs-btn')
         };
     }
 
@@ -54,6 +55,14 @@ class FlightPlanPage {
             this.elements.importBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.importSimBrief();
+            });
+        }
+
+        // Import MSFS 2024 flight plan
+        if (this.elements.importMsfsBtn) {
+            this.elements.importMsfsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.importMSFS2024();
             });
         }
     }
@@ -128,6 +137,50 @@ class FlightPlanPage {
             // Clear saved ID on failure so user can re-enter
             localStorage.removeItem('simbrief-pilot-id');
             setTimeout(() => { btn.textContent = '\u2708 IMPORT'; }, 2000);
+        }
+        btn.classList.remove('loading');
+    }
+
+    async importMSFS2024() {
+        const btn = this.elements.importMsfsBtn;
+        if (!btn || btn.classList.contains('loading')) return;
+
+        btn.classList.add('loading');
+        btn.textContent = '... LOADING';
+
+        try {
+            const res = await fetch('/api/msfs/flightplan');
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `Server returned ${res.status}`);
+            }
+            const plan = await res.json();
+
+            const planData = {
+                departure: plan.departure,
+                arrival: plan.arrival,
+                waypoints: plan.waypoints,
+                totalDistance: plan.totalDistance || 0,
+                route: plan.route || '',
+                altitude: plan.cruisingAlt || 0,
+                source: 'msfs2024'
+            };
+
+            if (this.flightPlanManager) {
+                this.flightPlanManager.handleSyncMessage('simbrief-plan', planData);
+            }
+
+            // Broadcast to other panes
+            const ch = new SafeChannel('SimGlass-sync');
+            ch.postMessage({ type: 'simbrief-plan', data: planData });
+            ch.close();
+
+            btn.textContent = '\u2714 LOADED';
+            setTimeout(() => { btn.textContent = '\u2708 MSFS 2024'; }, 2000);
+        } catch (e) {
+            console.error('[FPL] MSFS 2024 import failed:', e);
+            btn.textContent = '\u2718 NOT FOUND';
+            setTimeout(() => { btn.textContent = '\u2708 MSFS 2024'; }, 2000);
         }
         btn.classList.remove('loading');
     }

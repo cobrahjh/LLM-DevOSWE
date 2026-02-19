@@ -639,6 +639,113 @@ app.get('/api/flightplan', (req, res) => {
     }
 });
 
+// ── MSFS 2024 Flight Plan Import ────────────────────────────────────────────
+// Searches standard MSFS 2024 PLN locations, returns newest .PLN file parsed.
+app.get('/api/msfs/flightplan', (req, res) => {
+    const os = require('os');
+    const xml = require('fs');
+    const home = os.homedir();
+    const searchDirs = [
+        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024', 'MISSIONS', 'Custom', 'CustomFlight'),
+        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024', 'MISSIONS'),
+        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024'),
+        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator', 'MISSIONS', 'Custom', 'CustomFlight'),
+        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator'),
+        path.join(home, 'AppData', 'Local', 'Packages', 'Microsoft.Limitless_8wekyb3d8bbwe', 'LocalState', 'MISSIONS', 'Custom', 'CustomFlight'),
+    ];
+
+    // Recursively find all .PLN files in a directory (max 3 levels deep)
+    function findPln(dir, depth = 0) {
+        if (depth > 3) return [];
+        let results = [];
+        try {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const e of entries) {
+                const full = path.join(dir, e.name);
+                if (e.isDirectory()) {
+                    results = results.concat(findPln(full, depth + 1));
+                } else if (e.name.toLowerCase().endsWith('.pln')) {
+                    try {
+                        const stat = fs.statSync(full);
+                        results.push({ file: full, mtime: stat.mtimeMs });
+                    } catch (e) { /* skip */ }
+                }
+            }
+        } catch (e) { /* dir not accessible */ }
+        return results;
+    }
+
+    let allPlns = [];
+    for (const dir of searchDirs) {
+        allPlns = allPlns.concat(findPln(dir));
+    }
+
+    if (allPlns.length === 0) {
+        return res.status(404).json({ error: 'No MSFS flight plan (.PLN) found', searched: searchDirs });
+    }
+
+    // Use most recently modified
+    allPlns.sort((a, b) => b.mtime - a.mtime);
+    const { file } = allPlns[0];
+
+    let content;
+    try {
+        content = fs.readFileSync(file, 'utf8');
+    } catch (e) {
+        return res.status(500).json({ error: 'Could not read PLN file', file });
+    }
+
+    // Parse PLN XML using regex (no xml2js dependency needed)
+    function tag(name) {
+        const m = content.match(new RegExp(`<${name}[^>]*>([^<]*)<\/${name}>`));
+        return m ? m[1].trim() : null;
+    }
+
+    // Parse WorldPosition: "N32° 53' 47.82",W97° 2' 27.28",+00000.00"
+    function parsePos(pos) {
+        if (!pos) return { lat: 0, lng: 0 };
+        const m = pos.match(/([NS])([\d°' ".]+),([EW])([\d°' ".]+)/);
+        if (!m) return { lat: 0, lng: 0 };
+        function dms(s) {
+            const p = s.match(/(\d+)°\s*(\d+)'\s*([\d.]+)"/);
+            if (!p) return parseFloat(s) || 0;
+            return parseInt(p[1]) + parseInt(p[2]) / 60 + parseFloat(p[3]) / 3600;
+        }
+        const lat = dms(m[2]) * (m[1] === 'S' ? -1 : 1);
+        const lng = dms(m[4]) * (m[3] === 'W' ? -1 : 1);
+        return { lat: parseFloat(lat.toFixed(6)), lng: parseFloat(lng.toFixed(6)) };
+    }
+
+    const departure = tag('DepartureID');
+    const arrival = tag('DestinationID');
+    const cruisingAlt = parseInt(tag('CruisingAlt')) || 0;
+    const title = tag('Title') || `${departure} to ${arrival}`;
+
+    // Parse ATCWaypoints
+    const wpMatches = [...content.matchAll(/<ATCWaypoint id="([^"]+)">([\s\S]*?)<\/ATCWaypoint>/g)];
+    const waypoints = wpMatches.map((m, i) => {
+        const id = m[1];
+        const block = m[2];
+        const typeM = block.match(/<ATCWaypointType>([^<]+)<\/ATCWaypointType>/);
+        const posM = block.match(/<WorldPosition>([^<]+)<\/WorldPosition>/);
+        const { lat, lng } = parsePos(posM ? posM[1] : null);
+        const type = typeM ? typeM[1].toLowerCase() : 'fix';
+        return { ident: id, name: id, type, lat, lng, altitude: cruisingAlt };
+    });
+
+    res.json({
+        source: 'msfs2024',
+        file: path.basename(file),
+        title,
+        departure,
+        arrival,
+        cruisingAlt,
+        waypoints,
+        totalDistance: 0,
+        route: waypoints.map(w => w.ident).join(' ')
+    });
+});
+
 // Health check endpoint with full system status
 const serverStartTime = Date.now();
 
