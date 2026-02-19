@@ -197,15 +197,20 @@ async function extractZip(zipBuffer) {
 }
 
 async function downloadCIFP() {
-    // Check if we already have a recent file
+    // Check if we already have a file from the current AIRAC cycle
     if (fs.existsSync(CIFP_FILE)) {
         const stats = fs.statSync(CIFP_FILE);
-        const ageDays = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60 * 24);
-        if (ageDays < 28) {
-            console.log(`[CIFP] Using existing FAACIFP18 (${ageDays.toFixed(0)} days old)`);
+        // Compute current AIRAC cycle start date (28-day cycles from known epoch)
+        const epoch = new Date('2026-01-22T00:00:00Z');
+        const daysSinceEpoch = Math.floor((Date.now() - epoch.getTime()) / 86400000);
+        const cyclesSinceEpoch = Math.floor(daysSinceEpoch / 28);
+        const currentCycleStart = new Date(epoch.getTime() + cyclesSinceEpoch * 28 * 86400000);
+        if (stats.mtimeMs >= currentCycleStart.getTime()) {
+            const ageDays = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60 * 24);
+            console.log(`[CIFP] Using existing FAACIFP18 (current cycle, ${ageDays.toFixed(0)} days old)`);
             return CIFP_FILE;
         }
-        console.log(`[CIFP] Existing file is ${ageDays.toFixed(0)} days old, re-downloading...`);
+        console.log(`[CIFP] Existing file is from a previous AIRAC cycle — re-downloading...`);
     }
 
     const url = await findCifpUrl();
