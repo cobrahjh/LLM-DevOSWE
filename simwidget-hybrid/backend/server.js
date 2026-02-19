@@ -1125,9 +1125,8 @@ app.get('/api/nearby/airports', async (req, res) => {
         console.log('[Nearby] Navdb lookup failed:', e.message);
     }
 
-    // Fallback: generate sample airports around position
-    const sampleAirports = generateSampleAirports(lat, lon, radius);
-    res.json(sampleAirports);
+    // No navdb data — return empty array (no fake airports)
+    res.json([]);
 });
 
 // Generate sample airports for demo/fallback
