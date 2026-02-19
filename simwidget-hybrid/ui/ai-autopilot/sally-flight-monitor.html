@@ -448,10 +448,11 @@ function buildTable(controls, pfx) {
 // ── Poll ─────────────────────────────────────────────────────────────────
 async function poll() {
   try {
+    const BASE = 'http://192.168.1.42:8080';
     const [diagRes, sharedRes, tuningRes] = await Promise.allSettled([
-      fetch('/api/ai-autopilot/diagnostics').then(r => r.ok ? r.json() : null),
-      fetch('/api/ai-pilot/shared-state').then(r => r.ok ? r.json() : null),
-      fetch('/api/ai-pilot/tuning').then(r => r.ok ? r.json() : null),
+      fetch(BASE + '/api/ai-autopilot/diagnostics').then(r => r.ok ? r.json() : null),
+      fetch(BASE + '/api/ai-pilot/shared-state').then(r => r.ok ? r.json() : null),
+      fetch(BASE + '/api/ai-pilot/tuning').then(r => r.ok ? r.json() : null),
     ]);
 
     document.getElementById('offline').style.display = 'none';

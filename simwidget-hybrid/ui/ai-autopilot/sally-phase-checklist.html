@@ -386,10 +386,12 @@ let currentPhase = '', currentSubPhase = '', lastCmd = null, tuning = {}, live =
 let autoTimer = null;
 let saveTimer = null;
 
+const BASE = 'http://192.168.1.42:8080';
+
 // ── Load checklist from server ─────────────────────────────────────────────
 async function loadChecklist() {
   try {
-    const r = await fetch('/api/ai-autopilot/phase-checklist');
+    const r = await fetch(BASE + '/api/ai-autopilot/phase-checklist');
     if (r.ok) checklist = await r.json();
   } catch (e) { /* first load, start empty */ }
 }
@@ -398,7 +400,7 @@ function saveChecklist() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
-      await fetch('/api/ai-autopilot/phase-checklist', {
+      await fetch(BASE + '/api/ai-autopilot/phase-checklist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(checklist)
@@ -622,9 +624,9 @@ function escHtml(s) {
 async function poll() {
   try {
     const [diagRes, sharedRes, tuningRes] = await Promise.allSettled([
-      fetch('/api/ai-autopilot/diagnostics').then(r => r.ok ? r.json() : null),
-      fetch('/api/ai-pilot/shared-state').then(r => r.ok ? r.json() : null),
-      fetch('/api/ai-pilot/tuning').then(r => r.ok ? r.json() : null),
+      fetch(BASE + '/api/ai-autopilot/diagnostics').then(r => r.ok ? r.json() : null),
+      fetch(BASE + '/api/ai-pilot/shared-state').then(r => r.ok ? r.json() : null),
+      fetch(BASE + '/api/ai-pilot/tuning').then(r => r.ok ? r.json() : null),
     ]);
 
     document.getElementById('offline').style.display = 'none';
@@ -866,7 +868,7 @@ async function sendToSim() {
   out.textContent = 'Sending ' + cmdName + ' = ' + cmdValue + '…';
 
   try {
-    const r = await fetch('/api/command', {
+    const r = await fetch(BASE + '/api/command', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ command: cmdName, value: cmdValue })
@@ -899,7 +901,7 @@ async function readFromSim(outEl) {
   if (!c || !c.readVar) return;
 
   try {
-    const r = await fetch('/api/status');
+    const r = await fetch(BASE + '/api/status');
     const d = await r.json();
     const fd = d.flightData || {};
     const val = fd[c.readVar];

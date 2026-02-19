@@ -190,9 +190,11 @@ let sessionLocked = false;
 let lockOwnerHostname = null;
 let heartbeatTimer = null;
 
+const BASE = 'http://192.168.1.42:8080';
+
 async function registerSession() {
   try {
-    const r = await fetch('/api/ai-autopilot/register', {
+    const r = await fetch(BASE + '/api/ai-autopilot/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: SESSION_ID, hostname: SESSION_HOST })
@@ -212,7 +214,7 @@ async function registerSession() {
 
 async function sendHeartbeat() {
   try {
-    const r = await fetch('/api/ai-autopilot/heartbeat', {
+    const r = await fetch(BASE + '/api/ai-autopilot/heartbeat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: SESSION_ID, hostname: SESSION_HOST })
@@ -250,7 +252,7 @@ function renderLockState() {
 async function takeoverSession() {
   if (!sessionLocked) return;
   try {
-    const r = await fetch('/api/ai-autopilot/takeover', {
+    const r = await fetch(BASE + '/api/ai-autopilot/takeover', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: SESSION_ID, hostname: SESSION_HOST })
@@ -262,7 +264,7 @@ async function takeoverSession() {
 
 window.addEventListener('pagehide', () => {
   navigator.sendBeacon(
-    '/api/ai-autopilot/unregister',
+    BASE + '/api/ai-autopilot/unregister',
     new Blob([JSON.stringify({ sessionId: SESSION_ID })], { type: 'application/json' })
   );
   if (heartbeatTimer) clearInterval(heartbeatTimer);
@@ -322,7 +324,7 @@ async function api(method, url, body) {
     if (method !== 'GET') {
       opts.body = JSON.stringify({ ...(body || {}), sessionId: SESSION_ID });
     }
-    const r = await fetch(url, opts);
+    const r = await fetch(BASE + url, opts);
     const d = await r.json();
     toast(r.ok ? 'ok' : 'err', r.ok ? (d.success !== false ? '✓ ' + url.split('/').pop() : d.error || 'Failed') : (d.error || 'Error ' + r.status));
     poll();
@@ -342,7 +344,7 @@ function toast(type, msg) {
 // ── Poll diagnostics ──────────────────────────────────────────────────────
 async function poll() {
   try {
-    const r = await fetch('/api/ai-autopilot/diagnostics');
+    const r = await fetch(BASE + '/api/ai-autopilot/diagnostics');
     const d = await r.json();
     renderState(d);
     document.getElementById('ts').textContent = new Date().toLocaleTimeString();
@@ -416,7 +418,7 @@ async function forcePhase(phase) {
 async function forceSubPhase(sub) {
   // Sub-phases are set via shared-state broadcast (pane.js handles them)
   // Also send directly to the rule engine server endpoint if available
-  const r = await fetch('/api/ai-autopilot/force-subphase', {
+  const r = await fetch(BASE + '/api/ai-autopilot/force-subphase', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ subPhase: sub })
   });
@@ -454,7 +456,7 @@ function buildTuningGrid() {
 
 async function loadTuning() {
   try {
-    const r = await fetch('/api/ai-pilot/tuning');
+    const r = await fetch(BASE + '/api/ai-pilot/tuning');
     const d = await r.json();
     const t = d.tuning || {};
     TUNING_PARAMS.forEach(p => {
@@ -489,7 +491,7 @@ let srvOnline = true;
 
 async function pollHealth() {
   try {
-    const r = await fetch('/api/health');
+    const r = await fetch(BASE + '/api/health');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     srvOnline = true;
@@ -533,7 +535,7 @@ function hideSrvMsg() {
 async function restartServer() {
   if (!confirm('Restart SimWidget server?')) return;
   showSrvMsg('Restarting… reconnecting in 5s');
-  try { await fetch('/api/shutdown', { method: 'POST' }); } catch(_) {}
+  try { await fetch(BASE + '/api/shutdown', { method: 'POST' }); } catch(_) {}
   let t = 5;
   const iv = setInterval(() => {
     t--;
@@ -545,7 +547,7 @@ async function restartServer() {
 async function stopServer() {
   if (!confirm('Stop SimWidget server? (Orchestrator will auto-restart it)')) return;
   showSrvMsg('Stopping server…');
-  try { await fetch('/api/shutdown', { method: 'POST' }); } catch(_) {}
+  try { await fetch(BASE + '/api/shutdown', { method: 'POST' }); } catch(_) {}
   setTimeout(() => { showSrvMsg('Server stopped — reload to reconnect'); renderHealthOffline(); }, 1000);
 }
 
@@ -562,7 +564,7 @@ let lastLogTotal = 0;
 
 async function pollServerOutput() {
   try {
-    const r = await fetch('/api/logs/live?limit=200');
+    const r = await fetch(BASE + '/api/logs/live?limit=200');
     const d = await r.json();
     if (d.total === lastLogTotal) return; // no new lines
     lastLogTotal = d.total;
@@ -578,7 +580,7 @@ async function pollServerOutput() {
 
 async function clearServerOutput() {
   try {
-    await fetch('/api/logs/clear', { method: 'POST' });
+    await fetch(BASE + '/api/logs/clear', { method: 'POST' });
     lastLogTotal = 0;
     document.getElementById('srv-output').innerHTML = '<span style="color:#8b949e">Cleared</span>';
   } catch(e) { toast('err', 'Clear failed: ' + e.message); }

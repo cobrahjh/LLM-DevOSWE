@@ -430,11 +430,12 @@
             climbElevator: 'AXIS_ELEVATOR_SET',
         };
 
+        const BASE = 'http://192.168.1.42:8080';
+
         function sendDirectCommand(key, value) {
             const cmd = DIRECT_CMD_MAP[key];
             if (!cmd) return;
-            const port = location.port || '8080';
-            fetch(`${location.protocol}//${location.hostname}:${port}/api/ai-pilot/command`, {
+            fetch(BASE + '/api/ai-pilot/command', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: cmd, value: value })
@@ -471,9 +472,7 @@
 
         // ── WebSocket ──
         function connectWS() {
-            const host = location.hostname || '192.168.1.42';
-            const port = location.port || '8080';
-            try { ws = new WebSocket(`ws://${host}:${port}`); } catch { return; }
+            try { ws = new WebSocket('ws://192.168.1.42:8080'); } catch { return; }
             ws.onopen = function() {
                 wsConnected = true;
                 const el = document.getElementById('ls-conn');
@@ -862,7 +861,7 @@
         // ── Buttons ──
         document.getElementById('btn-clear-convos').addEventListener('click', function() {
             if (!confirm('Clear conversation log?\n\nOld conversations will be archived to a timestamped file.')) return;
-            fetch('/api/ai-pilot/conversations', { method: 'DELETE' })
+            fetch(BASE + '/api/ai-pilot/conversations', { method: 'DELETE' })
                 .then(r => r.json())
                 .then(res => showToast(res.ok ? 'Conversations archived & cleared' : 'Failed'))
                 .catch(() => showToast('Failed — server error'));
@@ -870,7 +869,7 @@
 
         document.getElementById('btn-nuke').addEventListener('click', function() {
             if (!confirm('Reset ALL Sally learning?\n\nThis clears:\n- All learnings & observations\n- All takeoff attempt history\n- All tuner overrides\n- LocalStorage tuning on all browsers')) return;
-            fetch('/api/ai-pilot/reset-learning', { method: 'POST' })
+            fetch(BASE + '/api/ai-pilot/reset-learning', { method: 'POST' })
                 .then(r => r.json())
                 .then(res => {
                     // Also reset local tuner to defaults
