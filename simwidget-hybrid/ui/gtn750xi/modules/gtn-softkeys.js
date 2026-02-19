@@ -169,7 +169,7 @@ class GTNSoftKeys {
         // AUX page
         this.registerContext('aux', [
             { label: 'TRIP', action: 'goto-trip-planning' },
-            { label: 'FUEL', action: 'aux-fuel' },
+            { label: 'FUEL', action: 'goto-fuel-planning' },
             { label: 'VCALC', action: 'goto-vcalc' },
             { label: 'TIMER', action: 'aux-timer' },
             { label: 'LOGBK', action: 'aux-logbook' },
@@ -192,6 +192,16 @@ class GTNSoftKeys {
             { label: 'SENSOR', action: 'trip-use-sensor', toggle: true },
             { label: 'NEXT', action: 'trip-next-leg' },
             { label: 'PREV', action: 'trip-prev-leg' },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // FUEL PLANNING page
+        this.registerContext('fuel-planning', [
+            { label: 'MODE', action: 'fuel-toggle-mode' },
+            { label: 'SENSOR', action: 'fuel-use-sensor', toggle: true },
+            { label: 'NEXT', action: 'fuel-next-leg' },
+            { label: 'PREV', action: 'fuel-prev-leg' },
             { label: '', action: null },
             { label: 'BACK', action: 'back' }
         ]);

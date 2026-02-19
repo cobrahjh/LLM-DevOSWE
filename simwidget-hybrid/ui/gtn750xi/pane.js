@@ -118,6 +118,7 @@ class GTN750XiPane extends SimGlassBase {
         this.auxPage = null;
         this.vcalcPage = null;
         this.tripPlanningPage = null;
+        this.fuelPlanningPage = null;
         this.chartsPage = null;
         this.nearestPage = null;
         this.systemPage = null;
@@ -609,6 +610,7 @@ class GTN750XiPane extends SimGlassBase {
             aux: 'pages/page-aux.js',
             vcalc: 'pages/page-vcalc.js',
             'trip-planning': 'pages/page-trip-planning.js',
+            'fuel-planning': 'pages/page-fuel-planning.js',
             system: 'pages/page-system.js',
             taxi: 'pages/page-taxi.js',
             'user-wpt': 'pages/page-user-wpt.js'
@@ -820,6 +822,7 @@ class GTN750XiPane extends SimGlassBase {
         this.flightPlanManager?.checkApproachPhase(this.data);
         this.updateVcalcPage();
         this.tripPlanningPage?.update();
+        this.fuelPlanningPage?.update();
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
@@ -1317,6 +1320,16 @@ class GTN750XiPane extends SimGlassBase {
                     });
                 }
                 break;
+            case 'fuel-planning':
+                if (!this.fuelPlanningPage && typeof FuelPlanningPage !== 'undefined') {
+                    this.fuelPlanningPage = new FuelPlanningPage({
+                        core: this.core,
+                        serverPort: this.serverPort,
+                        flightPlanManager: this.flightPlanManager,
+                        getData: () => this.data
+                    });
+                }
+                break;
             case 'charts':
                 if (!this.chartsPage && typeof ChartsPage !== 'undefined') {
                     this.chartsPage = new ChartsPage({
@@ -1513,7 +1526,7 @@ class GTN750XiPane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'trip-planning', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'trip-planning', 'fuel-planning', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -1554,6 +1567,12 @@ class GTN750XiPane extends SimGlassBase {
             if (this.tripPlanningPage) {
                 this.tripPlanningPage.init();
                 this.tripPlanningPage.render();
+            }
+        }
+        if (pageId === 'fuel-planning') {
+            if (this.fuelPlanningPage) {
+                this.fuelPlanningPage.init();
+                this.fuelPlanningPage.render();
             }
         }
         if (pageId === 'taxi') {
@@ -2799,10 +2818,15 @@ class GTN750XiPane extends SimGlassBase {
             case 'aux-fuel': if (this.auxPage) this.auxPage.showSubpage('fuel'); break;
             case 'goto-vcalc': if (this.pageManager) this.pageManager.switchPage('vcalc'); break;
             case 'goto-trip-planning': if (this.pageManager) this.pageManager.switchPage('trip-planning'); break;
+            case 'goto-fuel-planning': if (this.pageManager) this.pageManager.switchPage('fuel-planning'); break;
             case 'trip-toggle-mode': if (this.tripPlanningPage) this.tripPlanningPage.toggleMode(); break;
             case 'trip-use-sensor': if (this.tripPlanningPage) this.tripPlanningPage.toggleUseSensorData(); break;
             case 'trip-next-leg': if (this.tripPlanningPage) this.tripPlanningPage.nextLeg(); break;
             case 'trip-prev-leg': if (this.tripPlanningPage) this.tripPlanningPage.prevLeg(); break;
+            case 'fuel-toggle-mode': if (this.fuelPlanningPage) this.fuelPlanningPage.toggleMode(); break;
+            case 'fuel-use-sensor': if (this.fuelPlanningPage) this.fuelPlanningPage.toggleUseSensorData(); break;
+            case 'fuel-next-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.nextLeg(); break;
+            case 'fuel-prev-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.prevLeg(); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
             case 'aux-logbook': if (this.auxPage) this.auxPage.showSubpage('logbook'); break;
             case 'logbook-export': if (this.auxPage) this.auxPage.exportLogbook(); break;

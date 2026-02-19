@@ -1112,6 +1112,101 @@
                 </div>
             </div>
 
+            <!-- FUEL PLANNING Page -->
+            <div class="gtn-page" id="page-fuel-planning" style="display:none;">
+                <div class="fuel-container">
+                    <div class="fuel-header">
+                        <div class="fuel-title">FUEL PLANNING</div>
+                        <button class="fuel-mode-btn" id="fuel-mode">Point to Point</button>
+                    </div>
+
+                    <!-- Point-to-Point Mode Controls -->
+                    <div class="fuel-section fuel-ptp-control">
+                        <div class="fuel-row">
+                            <span class="fuel-label">P. Position</span>
+                            <button class="fuel-toggle" id="fuel-p-pos">OFF</button>
+                        </div>
+                        <div class="fuel-row">
+                            <span class="fuel-label">From</span>
+                            <button class="fuel-select" id="fuel-from-wpt">----</button>
+                        </div>
+                        <div class="fuel-row">
+                            <span class="fuel-label">To</span>
+                            <button class="fuel-select" id="fuel-to-wpt">----</button>
+                        </div>
+                    </div>
+
+                    <!-- Flight Plan Mode Controls -->
+                    <div class="fuel-section fuel-fpl-control" style="display:none;">
+                        <div class="fuel-row">
+                            <span class="fuel-label">Flight Plan</span>
+                            <button class="fuel-select" id="fuel-fpl-select">Active FPL</button>
+                        </div>
+                        <div class="fuel-row">
+                            <span class="fuel-label">Leg</span>
+                            <button class="fuel-select" id="fuel-leg-select">Cumulative</button>
+                        </div>
+                    </div>
+
+                    <!-- Common Inputs -->
+                    <div class="fuel-section">
+                        <div class="fuel-row">
+                            <span class="fuel-label">EST Fuel Remaining</span>
+                            <input type="number" id="fuel-est-remaining" class="fuel-input-num" value="50.0" min="0" max="999" step="0.1">
+                            <span class="fuel-unit">GAL</span>
+                        </div>
+                        <div class="fuel-row">
+                            <span class="fuel-label">Fuel Flow</span>
+                            <input type="number" id="fuel-flow" class="fuel-input-num" value="10.0" min="0" max="99" step="0.1">
+                            <span class="fuel-unit">GPH</span>
+                        </div>
+                        <div class="fuel-row">
+                            <span class="fuel-label">Ground Speed</span>
+                            <input type="number" id="fuel-ground-speed" class="fuel-input-num" value="120" min="0" max="999" step="5">
+                            <span class="fuel-unit">KT</span>
+                        </div>
+                        <div class="fuel-row">
+                            <span class="fuel-label">Use Sensor Data</span>
+                            <button class="fuel-toggle" id="fuel-use-sensor">OFF</button>
+                        </div>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div class="fuel-section fuel-results">
+                        <div class="fuel-results-header">FUEL DATA</div>
+                        <div class="fuel-results-grid">
+                            <div class="fuel-result-item">
+                                <span class="fuel-result-label">Fuel Req to Dest</span>
+                                <span class="fuel-result-value" id="fuel-result-required">--- GAL</span>
+                            </div>
+                            <div class="fuel-result-item">
+                                <span class="fuel-result-label">Fuel at Dest</span>
+                                <span class="fuel-result-value" id="fuel-result-after">--- GAL</span>
+                            </div>
+                            <div class="fuel-result-item">
+                                <span class="fuel-result-label">Reserve at Dest</span>
+                                <span class="fuel-result-value" id="fuel-result-reserve">--:--:--</span>
+                            </div>
+                            <div class="fuel-result-item">
+                                <span class="fuel-result-label">Range</span>
+                                <span class="fuel-result-value" id="fuel-result-range">--- NM</span>
+                            </div>
+                            <div class="fuel-result-item">
+                                <span class="fuel-result-label">Efficiency</span>
+                                <span class="fuel-result-value" id="fuel-result-efficiency">--- NM/GAL</span>
+                            </div>
+                            <div class="fuel-result-item">
+                                <span class="fuel-result-label">Endurance</span>
+                                <span class="fuel-result-value" id="fuel-result-endurance">--:--:--</span>
+                            </div>
+                        </div>
+                        <div class="fuel-note">
+                            <small>⚠️ For planning purposes only. Not an indication of actual fuel quantity.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- SYSTEM Page -->
             <div class="gtn-page" id="page-system" style="display:none;">
                 <div class="gtn-sys-scroll">
