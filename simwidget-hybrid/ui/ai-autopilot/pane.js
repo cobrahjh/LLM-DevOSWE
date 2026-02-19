@@ -66,6 +66,7 @@ class AiAutopilotPane extends SimGlassBase {
         };
         this.ruleEngine = null;  // Current active phase engine
         this._loadedPhaseModules = new Set();
+        this._checklistData = {};  // Phase checklist loaded from server
 
         // Phase 2: Conditional module lazy loading (Feb 2026)
         this._conditionalModules = new Set();  // Track loaded conditional modules
@@ -203,6 +204,9 @@ class AiAutopilotPane extends SimGlassBase {
         this._loadPhaseModule('PREFLIGHT').catch(err => {
             console.error('Failed to load initial phase module:', err);
         });
+
+        // Load phase checklist from server
+        this._loadChecklist();
     }
 
     // ── Lazy Loading ──────────────────────────────────────────
@@ -278,7 +282,11 @@ class AiAutopilotPane extends SimGlassBase {
         this._phaseEngines[moduleKey] = new EngineClass({
             profile: this.profile,
             commandQueue: this.commandQueue,
-            tuningGetter: () => this._getTakeoffTuning?.() || {},
+            tuningGetter: () => {
+                const base = this._getTakeoffTuning?.() || {};
+                const cl   = this._getChecklistTuning(this.flightPhase?.phase);
+                return Object.assign({}, base, cl);
+            },
             holdsGetter: () => this._getTakeoffHolds?.() || {}
         });
 
@@ -291,6 +299,99 @@ class AiAutopilotPane extends SimGlassBase {
         }
 
         console.log(`✓ Loaded ${moduleKey} module for ${phase} phase`);
+    }
+
+    // ── Phase Checklist Integration ────────────────────────────
+
+    /** Fetch phase checklist JSON from server */
+    async _loadChecklist() {
+        try {
+            const r = await fetch('/api/ai-autopilot/phase-checklist');
+            if (r.ok) this._checklistData = await r.json();
+        } catch (e) {
+            console.warn('[Checklist] Failed to load:', e.message);
+        }
+    }
+
+    /** Parse "Control: Value" string into { ctrl, raw, num } */
+    _parseChecklistItem(item) {
+        const m = String(item).match(/^([^:]+):\s*(.+)$/);
+        if (!m) return null;
+        const ctrl = m[1].trim().toLowerCase();
+        const raw  = m[2].trim();
+        const num  = parseFloat(raw);
+        return { ctrl, raw, num: isNaN(num) ? null : num };
+    }
+
+    /**
+     * Convert checklist items for a given phase into tuning key overrides.
+     * These are merged into the tuningGetter so all rule engines pick them up.
+     */
+    _getChecklistTuning(phase) {
+        if (!this._checklistData || !phase) return {};
+        const items = this._checklistData[phase] || [];
+        const out = {};
+        const MAP = {
+            PREFLIGHT:   { throttle: 'preflightThrottle',  mixture: 'preflightMixture' },
+            TAXI:        { throttle: 'taxiThrottleMax',    'target speed': 'taxiTargetGS', mixture: 'preflightMixture' },
+            TAKEOFF:     { throttle: 'rollThrottle',       mixture: 'beforeRollMixture', 'target speed': 'vrSpeed' },
+            BEFORE_ROLL: { throttle: 'rollThrottle',       mixture: 'beforeRollMixture' },
+            CLIMB:       { 'target altitude': 'targetCruiseAlt', 'target speed': 'climbSpeed' },
+            CRUISE:      { 'target altitude': 'targetCruiseAlt', 'target speed': 'cruiseSpeed' },
+            DESCENT:     { 'target altitude': 'targetCruiseAlt', 'target speed': 'descentSpeed' },
+            APPROACH:    { 'target speed': 'approachSpeed' },
+        };
+        const map = MAP[phase] || {};
+        for (const item of items) {
+            const p = this._parseChecklistItem(item);
+            if (!p || p.num === null) continue;
+            const key = map[p.ctrl];
+            if (key) out[key] = p.num;
+        }
+        return out;
+    }
+
+    /** Convert one checklist item string to a command object, or null if not actionable */
+    _checklistItemToCommand(item) {
+        const p = this._parseChecklistItem(item);
+        if (!p) return null;
+        const { ctrl, raw, num } = p;
+        const description = `Checklist: ${item}`;
+        if (ctrl === 'throttle' && num !== null)
+            return { type: 'THROTTLE_SET', value: num, description };
+        if (ctrl === 'mixture') {
+            if (num !== null)            return { type: 'MIXTURE_SET',         value: num, description };
+            if (/rich/i.test(raw))       return { type: 'MIXTURE_RICH',                    description };
+            if (/lean/i.test(raw))       return { type: 'MIXTURE_LEAN',                    description };
+        }
+        if (ctrl === 'parking brake') {
+            if (/off|release/i.test(raw)) return { type: 'PARKING_BRAKE_SET', value: 0, description };
+            if (/on|set/i.test(raw))      return { type: 'PARKING_BRAKE_SET', value: 1, description };
+        }
+        if (ctrl === 'target altitude' && num !== null)
+            return { type: 'AP_ALT_VAR_SET_ENGLISH', value: num, description };
+        if ((ctrl === 'target speed' || ctrl === 'target airspeed') && num !== null)
+            return { type: 'AP_SPD_VAR_SET', value: num, description };
+        if (ctrl === 'target vs' && num !== null)
+            return { type: 'AP_VS_VAR_SET_ENGLISH', value: num, description };
+        if (ctrl === 'flaps') {
+            if (/up|^0$/i.test(raw) || num === 0) return { type: 'FLAPS_UP',   description };
+            if (num !== null && num > 0)           return { type: 'FLAPS_DOWN', value: num, description };
+        }
+        return null;
+    }
+
+    /** At phase entry: enqueue all actionable commands from the phase's checklist */
+    _executeChecklistPhase(phase) {
+        if (!this._checklistData || !this.commandQueue) return;
+        const items = this._checklistData[phase] || [];
+        let count = 0;
+        for (const item of items) {
+            const cmd = this._checklistItemToCommand(item);
+            if (cmd) { this.commandQueue.enqueue(cmd); count++; }
+        }
+        if (count > 0)
+            console.log(`[Checklist] ${phase}: queued ${count} command(s) from checklist`);
     }
 
     /**
@@ -2413,12 +2514,16 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
     async _onPhaseChange(newPhase, oldPhase) {
         // Load phase-specific module
         await this._loadPhaseModule(newPhase);
-        
+
         this._dbg('cmd', `Phase: <span class="dim">${this._esc(oldPhase)}</span> <span class="dim">&rarr;</span> <span class="val">${this._esc(newPhase)}</span>`);
         // Sync cruise alt to rule engine
         this.ruleEngine.setTargetCruiseAlt(this.flightPhase.targetCruiseAlt);
         this._lastTakeoffSubPhase = null;
         this._render();
+
+        // Reload checklist and execute phase-start commands
+        await this._loadChecklist();
+        this._executeChecklistPhase(newPhase);
         // Broadcast phase change for tuner control log
         if (this.syncChannel) {
             this.syncChannel.postMessage({

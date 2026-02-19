@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rule Engine I/O Monitor</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New',monospace; font-size: 11px; display: flex; flex-direction: column; }
+
+/* ── Header ── */
+.hdr { flex-shrink: 0; padding: 5px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #0b1018; border-bottom: 1px solid #1a2030; }
+.hdr-title { color: #4fc3f7; font-size: 13px; font-weight: bold; letter-spacing: 1px; }
+.badge { font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; border: 1px solid; }
+.badge-en  { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
+.badge-dis { border-color: #f85149; color: #f85149; background: #2a0d0d; }
+.badge-phase { border-color: #ffab40; color: #ffab40; background: #1a1500; }
+.badge-sub   { border-color: #4fc3f7; color: #4fc3f7; background: #001520; }
+.badge-ws-ok  { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
+.badge-ws-err { border-color: #f85149; color: #f85149; background: #2a0d0d; }
+.hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.hdr-stat { font-size: 10px; color: #506070; }
+.hdr-stat span { color: #c0c8d8; }
+
+/* ── Tabs ── */
+.tabs { flex-shrink: 0; display: flex; background: #0b1018; border-bottom: 2px solid #1a2030; }
+.tab { padding: 6px 16px; cursor: pointer; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #404850; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.tab:hover { color: #7080a0; }
+.tab.active { color: #4fc3f7; border-bottom-color: #4fc3f7; }
+
+/* ── Content area ── */
+.content { flex: 1; overflow: hidden; display: flex; }
+.tab-panel { display: none; flex: 1; overflow: hidden; }
+.tab-panel.active { display: flex; }
+
+/* ── Shared two-column layout ── */
+.two-col { display: flex; flex: 1; overflow: hidden; gap: 1px; background: #1a2030; }
+.col { flex: 1; overflow-y: auto; background: #070b0f; min-width: 0; }
+.col.narrow { flex: 0.6; min-width: 180px; }
+
+/* ── Section headers ── */
+.sec { padding: 5px 10px 3px; border-bottom: 1px solid #1a2030; background: #0b1018; }
+.sec-title { font-size: 9px; color: #3a4858; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── Value rows ── */
+.vrow { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 10px; border-bottom: 1px solid #0d1218; }
+.vrow:hover { background: #0d1218; }
+.vl { color: #4a5868; font-size: 10px; min-width: 120px; flex-shrink: 0; }
+.vv { color: #d0d8e8; font-size: 11px; font-weight: bold; text-align: right; }
+.vv.ok   { color: #3fb950; }
+.vv.warn { color: #ffab40; }
+.vv.err  { color: #f85149; }
+.vv.dim  { color: #303840; }
+.vv.hi   { color: #4fc3f7; }
+.vv.purple { color: #ce93d8; }
+
+/* ── Command log ── */
+.cmd-log { flex: 1; overflow-y: auto; background: #070b0f; }
+.cmd-row { display: grid; grid-template-columns: 65px 1fr 70px 55px; gap: 5px; padding: 2px 10px; border-bottom: 1px solid #0d1218; align-items: baseline; }
+.cmd-row:hover { background: #0d1218; }
+.cr-ts   { color: #303840; font-size: 9px; }
+.cr-type { font-size: 11px; font-weight: bold; }
+.cr-val  { color: #d0d8e8; font-size: 11px; text-align: right; }
+.cr-src  { color: #3a4858; font-size: 9px; text-align: right; }
+.cr-desc { color: #3a4858; font-size: 9px; grid-column: 2 / 5; }
+.cat-throttle .cr-type { color: #ffab40; }
+.cat-elevator .cr-type { color: #ef5350; }
+.cat-rudder   .cr-type { color: #ab47bc; }
+.cat-aileron  .cr-type { color: #42a5f5; }
+.cat-ap       .cr-type { color: #3fb950; }
+.cat-mixture  .cr-type { color: #ffa726; }
+.cat-flaps    .cr-type { color: #26c6da; }
+.cat-other    .cr-type { color: #6a7a8a; }
+
+/* ── AP mode chips ── */
+.ap-chips { display: flex; flex-wrap: wrap; gap: 3px; padding: 5px 10px; }
+.ap-chip { font-size: 9px; padding: 1px 7px; border-radius: 2px; border: 1px solid #1a2030; color: #3a4858; }
+.ap-chip.on { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
+
+/* ── Safety envelope ── */
+.env-row { display: flex; justify-content: space-between; padding: 2px 10px; border-bottom: 1px solid #0d1218; }
+.env-name { color: #4a5868; font-size: 10px; }
+.env-val  { font-size: 10px; font-weight: bold; }
+
+/* ── Gauge bar ── */
+.gauge-wrap { display: flex; align-items: center; gap: 5px; }
+.gauge-bar  { width: 55px; height: 4px; background: #1a2030; border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.gauge-fill { height: 100%; border-radius: 2px; transition: width 0.3s; background: #4fc3f7; }
+.gauge-fill.thr   { background: #ffab40; }
+.gauge-fill.spd   { background: #4fc3f7; }
+.gauge-fill.pos   { background: #3fb950; }
+.gauge-fill.neg   { background: #f85149; }
+.gauge-fill.mix   { background: #ffa726; }
+
+/* ── Engine status panels ── */
+.engine-cards { display: flex; gap: 1px; background: #1a2030; flex-shrink: 0; }
+.engine-card { flex: 1; padding: 5px 10px; background: #0b1018; }
+.ec-title { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #303840; margin-bottom: 3px; }
+.ec-title.active { color: #ffab40; }
+.ec-phases { font-size: 9px; color: #303840; }
+.ec-phases .active-p { color: #4fc3f7; font-weight: bold; }
+
+/* ── Timeline ── */
+.tl-row { display: grid; grid-template-columns: 55px 55px 70px 1fr 60px; gap: 4px; padding: 2px 10px; border-bottom: 1px solid #0d1218; align-items: baseline; font-size: 10px; }
+.tl-row:hover { background: #0d1218; }
+.tl-t    { color: #303840; }
+.tl-ph   { color: #ffab40; }
+.tl-sub  { color: #4fc3f7; }
+.tl-cmd  { font-weight: bold; }
+.tl-val  { color: #7080a0; text-align: right; }
+.cat-throttle .tl-cmd { color: #ffab40; }
+.cat-elevator .tl-cmd { color: #ef5350; }
+.cat-rudder   .tl-cmd { color: #ab47bc; }
+.cat-aileron  .tl-cmd { color: #42a5f5; }
+.cat-ap       .tl-cmd { color: #3fb950; }
+.cat-mixture  .tl-cmd { color: #ffa726; }
+.cat-flaps    .tl-cmd { color: #26c6da; }
+.cat-other    .tl-cmd { color: #6a7a8a; }
+
+/* ── Issues ── */
+.issues-bar { flex-shrink: 0; padding: 3px 12px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; background: #0a0e14; border-top: 1px solid #1a2030; min-height: 24px; }
+.issues-lbl { font-size: 9px; color: #3a4858; text-transform: uppercase; flex-shrink: 0; }
+.issue-tag { font-size: 9px; padding: 1px 6px; border-radius: 3px; border: 1px solid; }
+.issue-tag.ok   { border-color: #1c4a28; color: #3fb950; background: #0d2a18; }
+.issue-tag.warn { border-color: #5a4010; color: #ffab40; background: #2a1f0d; }
+.issue-tag.err  { border-color: #5a1d1d; color: #f85149; background: #2a0d0d; }
+
+/* scroll hint */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a2030; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <span class="hdr-title">RULE ENGINE I/O</span>
+  <span class="badge badge-dis" id="en-badge">OFFLINE</span>
+  <span class="badge badge-phase" id="phase-badge" style="display:none"></span>
+  <span class="badge badge-sub"   id="sub-badge"   style="display:none"></span>
+  <span class="badge badge-ws-err" id="ws-badge">WS OFF</span>
+  <div class="hdr-stat">SIM <span id="h-fps">0</span> fps</div>
+  <div class="hdr-stat">IAS <span id="h-ias">—</span> kt</div>
+  <div class="hdr-stat">ALT <span id="h-alt">—</span> ft</div>
+  <div class="hdr-stat">VS <span id="h-vs">—</span> fpm</div>
+  <div class="hdr-stat">PITCH <span id="h-pitch">—</span>°</div>
+  <div class="hdr-right">
+    <span style="font-size:10px;color:#303840" id="hdr-ts"></span>
+  </div>
+</div>
+
+<!-- Engine cards (always visible) -->
+<div class="engine-cards">
+  <div class="engine-card">
+    <div class="ec-title" id="ec-ground">Ground</div>
+    <div class="ec-phases">
+      <span id="ep-preflight">PREFLIGHT</span> · <span id="ep-taxi">TAXI</span>
+    </div>
+  </div>
+  <div class="engine-card">
+    <div class="ec-title" id="ec-takeoff">Takeoff</div>
+    <div class="ec-phases">
+      <span id="ep-takeoff">TAKEOFF</span> · <span id="ep-departure">DEPARTURE</span>
+    </div>
+  </div>
+  <div class="engine-card">
+    <div class="ec-title" id="ec-cruise">Cruise</div>
+    <div class="ec-phases">
+      <span id="ep-climb">CLIMB</span> · <span id="ep-cruise">CRUISE</span>
+    </div>
+  </div>
+  <div class="engine-card">
+    <div class="ec-title" id="ec-approach">Approach</div>
+    <div class="ec-phases">
+      <span id="ep-descent">DESCENT</span> · <span id="ep-approach">APPROACH</span> · <span id="ep-landing">LANDING</span>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('inputs')">Inputs</div>
+  <div class="tab" onclick="showTab('outputs')">Outputs</div>
+  <div class="tab" onclick="showTab('ap')">Autopilot</div>
+  <div class="tab" onclick="showTab('safety')">Safety</div>
+  <div class="tab" onclick="showTab('timeline')">Timeline</div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- INPUTS tab -->
+  <div class="tab-panel active" id="tab-inputs">
+    <div class="two-col">
+      <!-- Left: flight dynamics -->
+      <div class="col">
+        <div class="sec"><span class="sec-title">Flight Dynamics</span></div>
+        <div class="vrow"><span class="vl">IAS</span>          <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill spd" id="g-ias" style="width:0"></div></div><span class="vv" id="i-ias">—</span></div></div>
+        <div class="vrow"><span class="vl">Altitude MSL</span> <span class="vv" id="i-alt">—</span></div>
+        <div class="vrow"><span class="vl">Altitude AGL</span> <span class="vv" id="i-agl">—</span></div>
+        <div class="vrow"><span class="vl">Vertical Speed</span><span class="vv" id="i-vs">—</span></div>
+        <div class="vrow"><span class="vl">Pitch</span>        <span class="vv" id="i-pitch">—</span></div>
+        <div class="vrow"><span class="vl">Bank</span>         <span class="vv" id="i-bank">—</span></div>
+        <div class="vrow"><span class="vl">Heading</span>     <span class="vv" id="i-hdg">—</span></div>
+        <div class="vrow"><span class="vl">Ground Speed</span> <span class="vv" id="i-gs">—</span></div>
+        <div class="vrow"><span class="vl">On Ground</span>   <span class="vv" id="i-gnd">—</span></div>
+
+        <div class="sec"><span class="sec-title">Engine / Systems</span></div>
+        <div class="vrow"><span class="vl">Engine RPM</span>
+          <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill" id="g-rpm" style="width:0;background:#3fb950"></div></div><span class="vv" id="i-rpm">—</span></div></div>
+        <div class="vrow"><span class="vl">Throttle</span>
+          <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill thr" id="g-thr" style="width:0"></div></div><span class="vv" id="i-thr">—</span></div></div>
+        <div class="vrow"><span class="vl">Mixture</span>
+          <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill mix" id="g-mix" style="width:0"></div></div><span class="vv" id="i-mix">—</span></div></div>
+        <div class="vrow"><span class="vl">Flaps Index</span> <span class="vv" id="i-flaps">—</span></div>
+        <div class="vrow"><span class="vl">Gear Down</span>   <span class="vv" id="i-gear">—</span></div>
+        <div class="vrow"><span class="vl">Parking Brake</span><span class="vv" id="i-brk">—</span></div>
+        <div class="vrow"><span class="vl">Fuel Total</span>  <span class="vv" id="i-fuel">—</span></div>
+      </div>
+
+      <!-- Right: environment + position -->
+      <div class="col narrow">
+        <div class="sec"><span class="sec-title">Environment</span></div>
+        <div class="vrow"><span class="vl">Wind Dir</span>   <span class="vv" id="i-wdir">—</span></div>
+        <div class="vrow"><span class="vl">Wind Speed</span> <span class="vv" id="i-wspd">—</span></div>
+        <div class="vrow"><span class="vl">OAT</span>        <span class="vv" id="i-oat">—</span></div>
+        <div class="vrow"><span class="vl">Density Alt</span><span class="vv" id="i-da">—</span></div>
+        <div class="vrow"><span class="vl">In Cloud</span>   <span class="vv" id="i-cloud">—</span></div>
+
+        <div class="sec"><span class="sec-title">Position</span></div>
+        <div class="vrow"><span class="vl">Latitude</span>  <span class="vv" id="i-lat">—</span></div>
+        <div class="vrow"><span class="vl">Longitude</span> <span class="vv" id="i-lon">—</span></div>
+
+        <div class="sec"><span class="sec-title">Sally Live State</span></div>
+        <div class="vrow"><span class="vl">Elevator</span>   <span class="vv hi" id="i-elev">—</span></div>
+        <div class="vrow"><span class="vl">Aileron</span>    <span class="vv hi" id="i-ail">—</span></div>
+        <div class="vrow"><span class="vl">Rudder</span>     <span class="vv hi" id="i-rud">—</span></div>
+        <div class="vrow"><span class="vl">Target Pitch</span><span class="vv purple" id="i-tpitch">—</span></div>
+        <div class="vrow"><span class="vl">Pitch Error</span> <span class="vv purple" id="i-perr">—</span></div>
+        <div class="vrow"><span class="vl">Safety Active</span><span class="vv" id="i-safe">—</span></div>
+        <div class="vrow"><span class="vl">Safety Reason</span><span class="vv warn" id="i-sreason">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTPUTS tab -->
+  <div class="tab-panel" id="tab-outputs">
+    <div class="two-col">
+      <!-- Left: control surface outputs -->
+      <div class="col narrow">
+        <div class="sec"><span class="sec-title">Active Control Outputs</span></div>
+        <div class="vrow"><span class="vl">ELEVATOR</span>   <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill" id="go-elev-bar" style="width:50%;background:#ef5350"></div></div><span class="vv hi" id="go-elev">—</span></div></div>
+        <div class="vrow"><span class="vl">AILERON</span>    <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill" id="go-ail-bar" style="width:50%;background:#42a5f5"></div></div><span class="vv hi" id="go-ail">—</span></div></div>
+        <div class="vrow"><span class="vl">RUDDER</span>     <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill" id="go-rud-bar" style="width:50%;background:#ab47bc"></div></div><span class="vv hi" id="go-rud">—</span></div></div>
+        <div class="vrow"><span class="vl">THROTTLE</span>   <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill thr" id="go-thr-bar" style="width:0"></div></div><span class="vv" id="go-thr">—</span></div></div>
+        <div class="vrow"><span class="vl">MIXTURE</span>    <div class="gauge-wrap"><div class="gauge-bar"><div class="gauge-fill mix" id="go-mix-bar" style="width:0"></div></div><span class="vv" id="go-mix">—</span></div></div>
+        <div class="vrow"><span class="vl">L BRAKE</span>    <span class="vv" id="go-lbrk">—</span></div>
+        <div class="vrow"><span class="vl">R BRAKE</span>    <span class="vv" id="go-rbrk">—</span></div>
+        <div class="vrow"><span class="vl">STEERING</span>   <span class="vv" id="go-steer">—</span></div>
+        <div class="vrow"><span class="vl">FLAPS</span>      <span class="vv" id="go-flaps">—</span></div>
+
+        <div class="sec"><span class="sec-title">Last Command</span></div>
+        <div class="vrow"><span class="vl">Type</span>  <span class="vv" id="go-lctype">—</span></div>
+        <div class="vrow"><span class="vl">Value</span> <span class="vv" id="go-lcval">—</span></div>
+        <div class="vrow"><span class="vl">Desc</span>  <span class="vv" id="go-lcdesc" style="font-size:9px;color:#506070">—</span></div>
+        <div class="vrow"><span class="vl">Age</span>   <span class="vv" id="go-lcage">—</span></div>
+      </div>
+
+      <!-- Right: command stream -->
+      <div class="col">
+        <div class="sec" style="display:flex;align-items:center;gap:8px">
+          <span class="sec-title" style="flex:1">Command Stream</span>
+          <button onclick="clearCmds()" style="background:#0d1218;border:1px solid #1a2030;color:#506070;border-radius:2px;padding:1px 7px;font-size:9px;cursor:pointer;font-family:inherit">Clear</button>
+        </div>
+        <div class="cmd-log" id="cmd-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTOPILOT tab -->
+  <div class="tab-panel" id="tab-ap">
+    <div class="two-col">
+      <div class="col narrow">
+        <div class="sec"><span class="sec-title">AP Mode Status</span></div>
+        <div class="ap-chips" id="ap-chips"></div>
+
+        <div class="sec"><span class="sec-title">AP Set Values</span></div>
+        <div class="vrow"><span class="vl">Heading Bug</span><span class="vv" id="ap-hdg">—</span></div>
+        <div class="vrow"><span class="vl">Target Alt</span> <span class="vv" id="ap-alt">—</span></div>
+        <div class="vrow"><span class="vl">Target VS</span>  <span class="vv" id="ap-vs">—</span></div>
+        <div class="vrow"><span class="vl">Target Speed</span><span class="vv" id="ap-spd">—</span></div>
+
+        <div class="sec"><span class="sec-title">NAV State</span></div>
+        <div class="vrow"><span class="vl">NAV CDI</span>     <span class="vv" id="nav-cdi">—</span></div>
+        <div class="vrow"><span class="vl">NAV GSI</span>     <span class="vv" id="nav-gsi">—</span></div>
+        <div class="vrow"><span class="vl">Has Localizer</span><span class="vv" id="nav-loc">—</span></div>
+        <div class="vrow"><span class="vl">Has G/S</span>    <span class="vv" id="nav-gs">—</span></div>
+
+        <div class="sec"><span class="sec-title">Sally Phase Targets</span></div>
+        <div class="vrow"><span class="vl">Phase</span>       <span class="vv warn" id="pt-phase">—</span></div>
+        <div class="vrow"><span class="vl">Sub-Phase</span>  <span class="vv hi" id="pt-sub">—</span></div>
+        <div class="vrow"><span class="vl">Cruise Alt</span> <span class="vv" id="pt-calt">—</span></div>
+        <div class="vrow"><span class="vl">Enabled</span>    <span class="vv" id="pt-en">—</span></div>
+      </div>
+
+      <div class="col">
+        <div class="sec"><span class="sec-title">Flight Envelope</span></div>
+        <div class="vrow"><span class="vl">Stall Speed Vs0</span><span class="vv" id="fe-vs0">—</span></div>
+        <div class="vrow"><span class="vl">Stall Speed Vs1</span><span class="vv" id="fe-vs1">—</span></div>
+        <div class="vrow"><span class="vl">Maneuvering Va</span><span class="vv" id="fe-va">—</span></div>
+        <div class="vrow"><span class="vl">Stall Margin</span>  <span class="vv" id="fe-margin">—</span></div>
+        <div class="vrow"><span class="vl">Load Factor</span>  <span class="vv" id="fe-lf">—</span></div>
+        <div class="vrow"><span class="vl">Envelope Alert</span><span class="vv" id="fe-alert">—</span></div>
+
+        <div class="sec"><span class="sec-title">Safety Monitor</span></div>
+        <div class="vrow"><span class="vl">Safety Active</span><span class="vv" id="sm-active">—</span></div>
+        <div class="vrow"><span class="vl">Reason</span>      <span class="vv warn" id="sm-reason">—</span></div>
+        <div class="vrow"><span class="vl">Escalation</span> <span class="vv" id="sm-esc">—</span></div>
+        <div class="vrow"><span class="vl">Correction</span> <span class="vv" id="sm-corr">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAFETY tab -->
+  <div class="tab-panel" id="tab-safety">
+    <div class="two-col">
+      <div class="col">
+        <div class="sec"><span class="sec-title">Diagnostics Issues</span></div>
+        <div id="diag-issues" style="padding:6px 10px;display:flex;gap:6px;flex-wrap:wrap"></div>
+
+        <div class="sec"><span class="sec-title">Envelope Alerts</span></div>
+        <div class="vrow"><span class="vl">BANK</span>       <span class="vv" id="sa-bank">—</span></div>
+        <div class="vrow"><span class="vl">STALL</span>      <span class="vv" id="sa-stall">—</span></div>
+        <div class="vrow"><span class="vl">STALL_WARN</span> <span class="vv" id="sa-stallwarn">—</span></div>
+        <div class="vrow"><span class="vl">OVERSPEED</span>  <span class="vv" id="sa-overspeed">—</span></div>
+        <div class="vrow"><span class="vl">PITCH</span>      <span class="vv" id="sa-pitch">—</span></div>
+
+        <div class="sec"><span class="sec-title">Phase Decision Log</span></div>
+        <div id="safety-log" style="max-height:200px;overflow-y:auto"></div>
+      </div>
+
+      <div class="col narrow">
+        <div class="sec"><span class="sec-title">Aircraft Profile</span></div>
+        <div class="vrow"><span class="vl">Vs0 (flaps)</span>  <span class="vv" id="pr-vs0">—</span></div>
+        <div class="vrow"><span class="vl">Vs1 (clean)</span>  <span class="vv" id="pr-vs1">—</span></div>
+        <div class="vrow"><span class="vl">Vr (rotate)</span>  <span class="vv" id="pr-vr">—</span></div>
+        <div class="vrow"><span class="vl">Vy (climb)</span>   <span class="vv" id="pr-vy">—</span></div>
+        <div class="vrow"><span class="vl">Vcruise</span>      <span class="vv" id="pr-vc">—</span></div>
+        <div class="vrow"><span class="vl">Vne</span>          <span class="vv" id="pr-vne">—</span></div>
+        <div class="vrow"><span class="vl">Vfe</span>          <span class="vv" id="pr-vfe">—</span></div>
+        <div class="vrow"><span class="vl">Max Weight</span>   <span class="vv" id="pr-wt">—</span></div>
+        <div class="vrow"><span class="vl">Empty Weight</span> <span class="vv" id="pr-ew">—</span></div>
+        <div class="vrow"><span class="vl">Fuel lbs/gal</span><span class="vv" id="pr-fwt">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMELINE tab -->
+  <div class="tab-panel" id="tab-timeline">
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="sec" style="display:flex;align-items:center;gap:8px">
+        <span class="sec-title" style="flex:1">Command Timeline</span>
+        <button onclick="clearTimeline()" style="background:#0d1218;border:1px solid #1a2030;color:#506070;border-radius:2px;padding:1px 7px;font-size:9px;cursor:pointer;font-family:inherit">Clear</button>
+      </div>
+      <div style="display:flex;padding:2px 10px;background:#0b1018;border-bottom:1px solid #1a2030;gap:4px;font-size:9px;color:#3a4858">
+        <span style="width:55px">Time(s)</span>
+        <span style="width:55px">Phase</span>
+        <span style="width:70px">Sub</span>
+        <span style="flex:1">Command</span>
+        <span style="width:60px;text-align:right">Value</span>
+      </div>
+      <div style="flex:1;overflow-y:auto" id="timeline-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Issues bar -->
+<div class="issues-bar">
+  <span class="issues-lbl">Issues</span>
+  <div id="issues-list" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+</div>
+
+<script>
+const BASE = 'http://192.168.1.42:8080';
+
+// ── State ────────────────────────────────────────────────────────────────
+let fd = {};
+let apState = {};
+let cmdLog = [];
+let timeline = [];
+let wsConn = false;
+let ws = null;
+let lastCmdTime = null;
+let fpsSamples = [];
+let lastFrameTime = 0;
+let lastDiagCmd = null;
+let prevPhase = '', prevSub = '';
+const CMD_MAX = 400;
+
+// ── Utilities ────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ts(t) {
+  const d = new Date(t || Date.now());
+  return String(d.getHours()).padStart(2,'0') + ':' +
+         String(d.getMinutes()).padStart(2,'0') + ':' +
+         String(d.getSeconds()).padStart(2,'0');
+}
+function fmt(v, unit, dec=0) {
+  if (v == null) return '—';
+  const n = typeof v === 'number' ? (dec ? v.toFixed(dec) : Math.round(v)) : v;
+  return unit ? n + ' ' + unit : String(n);
+}
+function cls(v, okMin, warnMin) {
+  if (v == null) return '';
+  if (v >= okMin) return 'ok';
+  if (v >= warnMin) return 'warn';
+  return 'err';
+}
+function categorize(name) {
+  if (!name) return 'other';
+  if (/THROTTLE/.test(name)) return 'throttle';
+  if (/ELEVATOR|ELEV_TRIM/.test(name)) return 'elevator';
+  if (/RUDDER|STEERING/.test(name)) return 'rudder';
+  if (/AILERON/.test(name)) return 'aileron';
+  if (/^AP_|HEADING_BUG/.test(name)) return 'ap';
+  if (/MIXTURE/.test(name)) return 'mixture';
+  if (/FLAPS|GEAR|BRAKE/.test(name)) return 'flaps';
+  return 'other';
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const ids = ['inputs','outputs','ap','safety','timeline'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// ── Set helpers ───────────────────────────────────────────────────────────
+function sv(id, val, clsName) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val == null ? '—' : val;
+  if (clsName !== undefined) el.className = 'vv ' + (clsName || '');
+}
+function setBar(id, pct, extra) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.width = Math.min(100, Math.max(0, pct)) + '%';
+  if (extra) el.className = 'gauge-fill ' + extra;
+}
+function setCtrBar(id, val, max) {
+  // Centered bar: 0 = 50%, +max = 100%, -max = 0%
+  const pct = 50 + (val / max) * 50;
+  setBar(id, pct);
+}
+
+// ── Phase engine cards ────────────────────────────────────────────────────
+const PHASE_ENGINE = {
+  PREFLIGHT:'ground', TAXI:'ground',
+  TAKEOFF:'takeoff', DEPARTURE:'takeoff',
+  CLIMB:'cruise', CRUISE:'cruise',
+  DESCENT:'approach', APPROACH:'approach', LANDING:'approach'
+};
+const PHASE_SPANS = {
+  PREFLIGHT:'ep-preflight', TAXI:'ep-taxi',
+  TAKEOFF:'ep-takeoff', DEPARTURE:'ep-departure',
+  CLIMB:'ep-climb', CRUISE:'ep-cruise',
+  DESCENT:'ep-descent', APPROACH:'ep-approach', LANDING:'ep-landing'
+};
+const ENGINE_TITLES = { ground:'ec-ground', takeoff:'ec-takeoff', cruise:'ec-cruise', approach:'ec-approach' };
+
+function updateEngineCards(phase, sub) {
+  // Reset all
+  Object.values(ENGINE_TITLES).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'ec-title';
+  });
+  Object.values(PHASE_SPANS).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = '';
+  });
+  if (!phase) return;
+  const eng = PHASE_ENGINE[phase];
+  if (eng) {
+    const ec = document.getElementById(ENGINE_TITLES[eng]);
+    if (ec) ec.className = 'ec-title active';
+  }
+  const sp = PHASE_SPANS[phase];
+  if (sp) {
+    const el = document.getElementById(sp);
+    if (el) el.className = 'active-p';
+  }
+  // sub-phase badge
+  const subEl = document.getElementById('ep-' + (sub || '').toLowerCase());
+  if (subEl) subEl.className = 'active-p';
+}
+
+// ── Update Inputs tab ─────────────────────────────────────────────────────
+function updateInputs(d, ap) {
+  const ias = d.speed || 0;
+  const vs  = d.verticalSpeed || 0;
+  const pitch = d.pitch || 0;
+  const bank  = d.bank  || 0;
+  const thr   = d.throttle || 0;
+  const mix   = d.mixture || 0;
+  const agl   = d.altitudeAGL || 0;
+
+  sv('i-ias',   fmt(ias, 'kt'));
+  setBar('g-ias', (ias / 200) * 100, 'spd');
+  sv('i-alt',   fmt(d.altitude, 'ft'));
+  sv('i-agl',   fmt(agl, 'ft'), agl < 50 ? 'warn' : '');
+  sv('i-vs',    fmt(vs, 'fpm'), vs > 100 ? 'ok' : vs < -500 ? 'warn' : '');
+  sv('i-pitch', fmt(pitch, '°', 1), Math.abs(pitch) > 20 ? 'warn' : '');
+  sv('i-bank',  fmt(bank, '°', 1),  Math.abs(bank)  > 15 ? 'warn' : '');
+  sv('i-hdg',   fmt(d.heading, '°'));
+  sv('i-gs',    fmt(d.groundSpeed, 'kt', 1));
+  sv('i-gnd',   d.onGround ? 'YES' : 'NO', d.onGround ? 'warn' : 'ok');
+
+  sv('i-rpm',   fmt(d.engineRpm, 'RPM'), (d.engineRpm||0) >= 500 ? 'ok' : 'err');
+  setBar('g-rpm', Math.min(100,(d.engineRpm||0)/30), '');
+  sv('i-thr',   fmt(Math.round(thr), '%'), thr > 50 ? 'ok' : '');
+  setBar('g-thr', thr, 'thr');
+  sv('i-mix',   fmt(Math.round(mix), '%'), mix >= 90 ? 'ok' : 'warn');
+  setBar('g-mix', mix, 'mix');
+  sv('i-flaps', d.flapsIndex != null ? d.flapsIndex : '—');
+  sv('i-gear',  d.gearDown ? 'DOWN' : 'UP', d.gearDown ? '' : 'warn');
+  sv('i-brk',   d.parkingBrake ? 'SET' : 'OFF', d.parkingBrake ? 'err' : 'ok');
+  sv('i-fuel',  fmt(d.fuelTotal, 'gal', 1));
+
+  sv('i-wdir',  fmt(d.windDirection, '°'));
+  sv('i-wspd',  fmt(d.windSpeed, 'kt'));
+  sv('i-oat',   fmt(d.ambientTemp != null ? d.ambientTemp.toFixed(0) : null, '°C'));
+  sv('i-da',    fmt(d.densityAltitude, 'ft'));
+  sv('i-cloud', d.inCloud ? 'YES' : 'NO');
+  sv('i-lat',   d.latitude  != null ? d.latitude.toFixed(4)  : '—');
+  sv('i-lon',   d.longitude != null ? d.longitude.toFixed(4) : '—');
+
+  // Sally live state
+  const live = (ap && ap.live) || {};
+  sv('i-elev',   live.elevator   != null ? live.elevator.toFixed(1)   + '%' : '—', 'hi');
+  sv('i-ail',    live.aileron    != null ? live.aileron.toFixed(1)    + '%' : '—', 'hi');
+  sv('i-rud',    live.rudder     != null ? live.rudder.toFixed(1)     + '%' : '—', 'hi');
+  sv('i-tpitch', live.targetPitch!= null ? live.targetPitch.toFixed(1)+ '°' : '—', 'purple');
+  sv('i-perr',   live.pitchError != null ? live.pitchError.toFixed(1) + '°' : '—', 'purple');
+  const safeActive = live.safetyActive;
+  sv('i-safe',   safeActive ? 'YES' : 'NO', safeActive ? 'err' : 'ok');
+  sv('i-sreason',live.safetyReason || '—', live.safetyReason ? 'warn' : 'dim');
+}
+
+// ── Update Outputs tab ────────────────────────────────────────────────────
+function updateOutputs(ap) {
+  const live = (ap && ap.live) || {};
+  const lc   = ap && ap.lastCmd;
+
+  sv('go-elev',  live.elevator  != null ? live.elevator.toFixed(1)  + '%' : '—', 'hi');
+  setCtrBar('go-elev-bar', live.elevator || 0, 100);
+  sv('go-ail',   live.aileron   != null ? live.aileron.toFixed(1)   + '%' : '—', 'hi');
+  setCtrBar('go-ail-bar',  live.aileron  || 0, 100);
+  sv('go-rud',   live.rudder    != null ? live.rudder.toFixed(1)    + '%' : '—', 'hi');
+  setCtrBar('go-rud-bar',  live.rudder   || 0, 100);
+  sv('go-thr',   live.throttle  != null ? Math.round(live.throttle) + '%' : '—');
+  setBar('go-thr-bar', live.throttle || 0, 'thr');
+  sv('go-mix',   live.mixture   != null ? Math.round(live.mixture)  + '%' : '—');
+  setBar('go-mix-bar', live.mixture  || 0, 'mix');
+  sv('go-lbrk',  live.lBrake    != null ? live.lBrake.toFixed(0)   + '%' : '—');
+  sv('go-rbrk',  live.rBrake    != null ? live.rBrake.toFixed(0)   + '%' : '—');
+  sv('go-steer', live.steering  != null ? live.steering.toFixed(1)  + '%' : '—');
+  sv('go-flaps', live.flapsIndex!= null ? live.flapsIndex           : '—');
+
+  if (lc) {
+    sv('go-lctype', lc.type || '—');
+    sv('go-lcval',  lc.value != null ? String(lc.value) : '—');
+    sv('go-lcdesc', lc.description || '—');
+    const ago = Math.round((Date.now() - lc.time) / 1000);
+    sv('go-lcage',  ago + 's ago', ago < 5 ? 'ok' : ago < 30 ? '' : 'dim');
+  }
+}
+
+// ── Update AP tab ─────────────────────────────────────────────────────────
+function updateAP(d, ap) {
+  // AP chips
+  const modes = [
+    { label:'MASTER', on: d.apMaster },
+    { label:'HDG',    on: d.apHdgLock },
+    { label:'ALT',    on: d.apAltLock },
+    { label:'VS',     on: d.apVsLock  },
+    { label:'SPD',    on: d.apSpdLock },
+    { label:'NAV',    on: d.apNavLock },
+    { label:'APR',    on: d.apAprLock },
+    { label:'FD',     on: d.apFlightDirector },
+    { label:'YD',     on: d.apYawDamper },
+  ];
+  document.getElementById('ap-chips').innerHTML = modes.map(m =>
+    `<span class="ap-chip ${m.on ? 'on' : ''}">${m.label}</span>`
+  ).join('');
+
+  sv('ap-hdg', fmt(d.apHdgSet, '°'));
+  sv('ap-alt', fmt(d.apAltSet, 'ft'));
+  sv('ap-vs',  fmt(d.apVsSet,  'fpm'));
+  sv('ap-spd', fmt(d.apSpdSet, 'kt'));
+
+  sv('nav-cdi', d.navCdi != null ? d.navCdi.toFixed(2) : '—');
+  sv('nav-gsi', d.navGsi != null ? d.navGsi.toFixed(2) : '—');
+  sv('nav-loc', d.navHasLocalizer ? 'YES' : 'NO', d.navHasLocalizer ? 'ok' : 'dim');
+  sv('nav-gs',  d.navHasGlideSlope ? 'YES' : 'NO', d.navHasGlideSlope ? 'ok' : 'dim');
+
+  sv('pt-phase', (ap && ap.phase)    || '—', 'warn');
+  sv('pt-sub',   (ap && ap.subPhase) || '—', 'hi');
+  sv('pt-calt',  ap && ap.targetCruiseAlt ? fmt(ap.targetCruiseAlt, 'ft') : '—');
+  sv('pt-en',    ap && ap.enabled ? 'YES' : 'NO', ap && ap.enabled ? 'ok' : 'err');
+
+  // Envelope
+  const env = (ap && ap.live && ap.live.envelope) || {};
+  sv('fe-vs0',    fmt(env.vs0,   'kt'));
+  sv('fe-vs1',    fmt(env.vs1,   'kt'));
+  sv('fe-va',     fmt(env.va,    'kt'));
+  sv('fe-margin', env.stallMargin != null ? fmt(env.stallMargin, 'kt', 1) : '—',
+     env.stallMargin > 20 ? 'ok' : env.stallMargin > 10 ? 'warn' : 'err');
+  sv('fe-lf',     env.loadFactor != null ? env.loadFactor.toFixed(2) + 'g' : '—');
+  sv('fe-alert',  env.alert || '—', env.alert ? 'err' : 'dim');
+
+  const live = (ap && ap.live) || {};
+  sv('sm-active', live.safetyActive ? 'YES' : 'NO', live.safetyActive ? 'err' : 'ok');
+  sv('sm-reason', live.safetyReason || '—', live.safetyReason ? 'warn' : 'dim');
+  sv('sm-esc',    live.safetyEscalation != null ? live.safetyEscalation : '—');
+  sv('sm-corr',   live.safetyCorrection != null ? live.safetyCorrection.toFixed(1) + '%' : '—');
+}
+
+// ── Command stream ────────────────────────────────────────────────────────
+function addCmd(entry) {
+  cmdLog.unshift(entry);
+  if (cmdLog.length > CMD_MAX) cmdLog.pop();
+  renderCmdLog();
+}
+
+function renderCmdLog() {
+  const body = document.getElementById('cmd-log');
+  const atBottom = body.scrollTop < 40;
+  body.innerHTML = cmdLog.slice(0, 100).map(e => {
+    const cat = categorize(e.type);
+    return `<div class="cmd-row cat-${cat}">
+      <span class="cr-ts">${ts(e.time)}</span>
+      <span class="cr-type">${esc(e.type || '')}</span>
+      <span class="cr-val">${e.value != null ? esc(String(e.value)) : ''}</span>
+      <span class="cr-src">${esc(e.src || e.phase || '')}</span>
+      ${e.description ? `<span class="cr-desc">${esc(e.description)}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function clearCmds() { cmdLog = []; renderCmdLog(); }
+
+// ── Timeline ──────────────────────────────────────────────────────────────
+function addTimeline(entry) {
+  timeline.unshift(entry);
+  if (timeline.length > 500) timeline.pop();
+  renderTimeline();
+}
+
+function renderTimeline() {
+  const body = document.getElementById('timeline-body');
+  body.innerHTML = timeline.slice(0, 200).map(e => {
+    const cat = categorize(e.cmd);
+    const t = e.t != null ? e.t.toFixed(1) : '—';
+    return `<div class="tl-row cat-${cat}">
+      <span class="tl-t">${t}s</span>
+      <span class="tl-ph">${esc(e.phase || '')}</span>
+      <span class="tl-sub">${esc(e.sub || '')}</span>
+      <span class="tl-cmd">${esc(e.cmd || '')}</span>
+      <span class="tl-val">${e.val != null ? esc(String(e.val)) : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function clearTimeline() { timeline = []; renderTimeline(); }
+
+// ── Header + badges ───────────────────────────────────────────────────────
+function updateHeader(d, ap) {
+  const now = Date.now();
+  if (lastFrameTime) {
+    fpsSamples.push(1000 / (now - lastFrameTime));
+    if (fpsSamples.length > 20) fpsSamples.shift();
+    const fps = Math.round(fpsSamples.reduce((a,b)=>a+b,0) / fpsSamples.length);
+    document.getElementById('h-fps').textContent = fps;
+  }
+  lastFrameTime = now;
+
+  document.getElementById('h-ias').textContent = fmt(d.speed, null);
+  document.getElementById('h-alt').textContent = fmt(d.altitude, null);
+  document.getElementById('h-vs').textContent  = fmt(d.verticalSpeed, null);
+  document.getElementById('h-pitch').textContent = fmt(d.pitch, null, 1);
+
+  const enEl = document.getElementById('en-badge');
+  const enabled = ap && ap.enabled;
+  enEl.textContent = enabled ? 'ENABLED' : 'DISABLED';
+  enEl.className = 'badge ' + (enabled ? 'badge-en' : 'badge-dis');
+
+  const phase = (ap && ap.phase) || '';
+  const sub   = (ap && ap.subPhase) || '';
+  const pEl = document.getElementById('phase-badge');
+  const sEl = document.getElementById('sub-badge');
+  if (phase) { pEl.textContent = phase; pEl.style.display = ''; } else pEl.style.display = 'none';
+  if (sub)   { sEl.textContent = sub;   sEl.style.display = ''; } else sEl.style.display = 'none';
+
+  updateEngineCards(phase, sub);
+
+  document.getElementById('hdr-ts').textContent = new Date().toLocaleTimeString();
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+function connectWS() {
+  try { ws = new WebSocket('ws://192.168.1.42:8080'); } catch { return; }
+  ws.onopen = () => {
+    wsConn = true;
+    const b = document.getElementById('ws-badge');
+    b.textContent = 'WS ON'; b.className = 'badge badge-ws-ok';
+  };
+  ws.onclose = () => {
+    wsConn = false;
+    const b = document.getElementById('ws-badge');
+    b.textContent = 'WS OFF'; b.className = 'badge badge-ws-err';
+    fpsSamples = [];
+    setTimeout(connectWS, 3000);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'flightData' && msg.data) {
+        fd = msg.data;
+        const ap = msg.data.aiAutopilot || null;
+        apState = ap || {};
+        updateHeader(fd, ap);
+        updateInputs(fd, ap);
+        updateOutputs(ap);
+        updateAP(fd, ap);
+
+        // Detect new command
+        const lc = ap && ap.lastCmd;
+        if (lc && (!lastDiagCmd || lastDiagCmd.time !== lc.time)) {
+          lastDiagCmd = lc;
+          addCmd({ type: lc.type, value: lc.value, description: lc.description, time: lc.time, phase: ap.phase, src: ap.subPhase || ap.phase });
+        }
+
+        // Detect phase changes → add to timeline as marker
+        const curPhase = (ap && ap.phase) || '';
+        const curSub   = (ap && ap.subPhase) || '';
+        if (curPhase !== prevPhase) { prevPhase = curPhase; }
+        if (curSub   !== prevSub)   { prevSub   = curSub;   }
+      }
+    } catch {}
+  };
+}
+connectWS();
+
+// ── Poll diagnostics ──────────────────────────────────────────────────────
+async function pollDiag() {
+  try {
+    const r = await fetch(BASE + '/api/ai-autopilot/diagnostics');
+    if (!r.ok) return;
+    const d = await r.json();
+
+    // Issues bar
+    const issues = d.issues || [];
+    const listEl = document.getElementById('issues-list');
+    listEl.innerHTML = issues.map(i => {
+      const cls2 = i.code === 'OK' ? 'ok' : (i.code.match(/ENGINE_OFF|BRAKE|STUCK/) ? 'err' : 'warn');
+      return `<span class="issue-tag ${cls2}" title="${esc(i.msg||'')}">${esc(i.code)}</span>`;
+    }).join('');
+
+    // Safety tab issues
+    const diagEl = document.getElementById('diag-issues');
+    diagEl.innerHTML = issues.map(i => {
+      const cls2 = i.code === 'OK' ? 'ok' : (i.code.match(/ENGINE_OFF|BRAKE|STUCK/) ? 'err' : 'warn');
+      return `<span class="issue-tag ${cls2}">${esc(i.code)}: ${esc(i.msg||'')}</span>`;
+    }).join('');
+
+    // Timeline from diagnostics if available
+    if (d.timeline && Array.isArray(d.timeline)) {
+      // Add new timeline entries not already in our log
+      const existing = new Set(timeline.map(t => t.t + '|' + t.cmd));
+      d.timeline.forEach(entry => {
+        const key = entry.t + '|' + entry.cmd;
+        if (!existing.has(key)) addTimeline(entry);
+      });
+    }
+
+    // Aircraft profile
+    const profile = d.profile;
+    if (profile) {
+      sv('pr-vs0', fmt(profile.vs0,     'kt'));
+      sv('pr-vs1', fmt(profile.vs1,     'kt'));
+      sv('pr-vr',  fmt(profile.vr,      'kt'));
+      sv('pr-vy',  fmt(profile.vy,      'kt'));
+      sv('pr-vc',  fmt(profile.vcruise, 'kt'));
+      sv('pr-vne', fmt(profile.vne,     'kt'));
+      sv('pr-vfe', fmt(profile.vfe,     'kt'));
+      sv('pr-wt',  fmt(profile.maxWeight, 'lbs'));
+      sv('pr-ew',  fmt(profile.emptyWeight,'lbs'));
+      sv('pr-fwt', fmt(profile.fuelWeightPerGallon,'lbs/gal'));
+    }
+  } catch {}
+}
+
+setInterval(pollDiag, 2000);
+pollDiag();
+</script>
+</body>
+</html>
