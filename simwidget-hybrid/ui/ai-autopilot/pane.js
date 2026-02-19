@@ -2011,7 +2011,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
     /** Clear current flight plan and detect nearest runway */
     _clearFlightPlan() {
-        const btn = this.elements.simbriefImport;
+        const btn = this.elements.clearPlan;
 
         // Clear flight plan state
         this._currentPlan = null;
@@ -2038,7 +2038,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         // Update button text
         if (btn) {
             btn.textContent = '\u2713 CLEARED';
-            setTimeout(() => { btn.textContent = '\u2708 FPL'; }, 2000);
+            setTimeout(() => { btn.textContent = '\u2715 CLR'; }, 2000);
         }
 
         // Log action
