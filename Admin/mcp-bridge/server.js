@@ -103,7 +103,8 @@ class MCPClient {
       this.process = spawn(this.config.command, this.config.args, {
         env,
         stdio: ['pipe', 'pipe', 'pipe'],
-        shell: true
+        shell: true,
+        windowsHide: true
       });
 
       this.process.stdout.on('data', (data) => {

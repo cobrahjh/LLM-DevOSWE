@@ -99,7 +99,7 @@ class ServiceManager {
                     cwd: svc.cwd,
                     stdio: 'pipe',
                     detached: false,
-                    shell: true
+                    windowsHide: true
                 });
 
                 devProcesses[serviceName] = proc;

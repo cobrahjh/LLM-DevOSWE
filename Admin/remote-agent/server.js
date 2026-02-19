@@ -176,7 +176,8 @@ const server = http.createServer((req, res) => {
                 const child = spawn('node', [startScript], {
                     cwd: startCwd,
                     detached: true,
-                    stdio: 'ignore'
+                    stdio: 'ignore',
+                    windowsHide: true
                 });
                 child.unref();
 
