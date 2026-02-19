@@ -1,33 +1,100 @@
-# GTN750 Glass v3.0+ - Known Issues
+# GTN750Xi Glass v1.0+ - Known Issues
 
 **Last Updated:** 2026-02-19
-**Status:** Production Ready ✅
+**Status:** Experimental Build ⚠️
 
 ---
 
-## 🟢 Non-Critical Issues (Cosmetic/Performance)
+## 🆕 GTN750Xi Specific
 
-### Weather Overlay Load Time
+### VCALC - New Feature
 
-**Issue:** Weather overlay loads in ~124ms
-**Target:** <100ms
-**Impact:** Low - One-time load, not visible to user
-**Workaround:** None needed
-**Fix Planned:** Progressive tile loading (center first, spiral out)
+**Status:** Just implemented (2026-02-19), not yet flight tested
+**What works:** Time to TOD calculation, VS required, profile settings, status messages
+**Missing:**
+- Real-flight validation
+- Integration with Messages page for TOD advisories
+- SUSP/OBS/Vectors-to-Final inhibit logic (partial)
+- FAF detection for post-FAF inhibit
 
 ---
 
-## 🟡 Implemented But Untested / Incomplete
+## 🟡 Inherited - Untested Features
+
+### Trip Planning Utilities
+
+**Status:** Incomplete — AUX page has basic trip data, missing full Utilities > Trip Planning page
+**Missing:**
+- Point-to-Point mode (From/To waypoint selection)
+- Flight Plan mode with leg selector
+- ESA (En Route Safe Altitude) calculation
+- Sunrise/Sunset times at destination
+- Departure Date/Time inputs
+
+**What exists:** Distance Rem, Time Rem, ETA, Fuel Req displayed on AUX page
+
+---
+
+### Fuel Planning Utilities
+
+**Status:** Incomplete — Fuel monitor exists, missing full Utilities > Fuel Planning page
+**Missing:**
+- Point-to-Point and Flight Plan modes
+- EST Fuel Remaining input with live countdown
+- Fuel after leg, Reserve after leg calculations
+- Range, Efficiency, Endurance outputs
+- Next/Prev leg navigation
+
+**What exists:** Fuel monitor module with basic calculations
+
+---
+
+### DALT/TAS/Wind Calculator
+
+**Status:** Not implemented
+**Needed:**
+- Inputs: Indicated ALT, BARO, CAS, TAT/RAT, HDG, TRK, Ground Speed
+- Outputs: Density Altitude, TAS, Wind Direction/Speed, Headwind Component
+- Use Sensor Data toggle
+
+**Workaround:** Weather page shows some wind data from METAR/sim
+
+---
+
+### RAIM Prediction
+
+**Status:** Not implemented
+**Needed:**
+- Waypoint Identifier input
+- Arrival Date/Time inputs
+- Compute RAIM button
+- Status output: RAIM Available / Unavailable / Computing
+
+**Impact:** Low — WAAS assumed available in sim
+
+---
+
+### Checklists
+
+**Status:** Not implemented
+**Needed:**
+- SD card file loading simulation (chklist.ace format)
+- Group/Checklist selector
+- Checkbox UI with completion status
+- Clear Current/Clear All functions
+
+**Impact:** Medium — useful for pre-flight/landing sim realism
+
+---
 
 ### VNAV (Vertical Navigation)
 
 **Status:** Fully coded (`modules/gtn-vnav.js`, 360 lines), not validated with real flights
 **Missing:**
 - Integration testing with real STAR/approach data
-- User documentation
+- VNAV/VCALC mutual exclusivity enforcement
 
 **What works:** TOD calculation, altitude constraint parsing, vertical deviation indicator, required VS, TOD marker on map, auto-enable for approaches
-**Test:** `new AdvancedFeaturesTest().runAll()` in browser console
 
 ---
 
@@ -46,10 +113,9 @@
 
 **Status:** Storage and management implemented (`modules/gtn-user-waypoints.js`, 450 lines)
 **Missing:**
-- Page not wired into main navigation menu
 - Backend SQLite storage (currently localStorage only)
 
-**What works:** Create from lat/lon or current position, display in NRST, use in flight plans, GPX import/export
+**What works:** Create from lat/lon or current position, display in NRST, use in flight plans, GPX import/export, page wired into navigation
 
 ---
 
@@ -79,39 +145,21 @@
 **Status:** Calculations implemented (`modules/gtn-fuel-monitor.js`, 410 lines), no live data
 **Missing:**
 - Real fuel data from SimConnect (currently mock values)
-- UI panel integration
+- Full Fuel Planning utility page
 
 **What works:** Flow calculation, range/endurance estimation, reserves monitoring, low fuel warnings
 
 ---
 
-## 🔴 Not Implemented
+## 🟢 Non-Critical Issues
 
-### Flight Plan Save/Load
+### Weather Overlay Load Time
 
-**Status:** Soft keys exist, no backend
-**Needed:** `POST /api/gtn750/save-fpl` / `POST /api/gtn750/load-fpl`, Garmin `.fpl` XML or JSON format, file picker UI
-
----
-
-### Weather Radar (NEXRAD)
-
-**Status:** WX soft key exists, no data source
-**Needed:** NEXRAD data API, precipitation overlay, color-coded intensity, declutter integration
-
----
-
-### Charts Integration
-
-**Status:** CHARTS page links to ChartFox only
-**Needed:** Embedded approach plates (PDF viewer), chart download/cache, zoom/pan controls
-
----
-
-### Airspace Boundaries
-
-**Status:** Not started
-**Needed:** Class B/C/D boundary data, polygon rendering, altitude-based display filtering
+**Issue:** Weather overlay loads in ~124ms
+**Target:** <100ms
+**Impact:** Low - One-time load, not visible to user
+**Workaround:** None needed
+**Fix Planned:** Progressive tile loading (center first, spiral out)
 
 ---
 
@@ -139,85 +187,11 @@
 
 ---
 
-## ✅ Resolved Issues
-
-### Procedures (SID/STAR/Approach) ✅
-- **Was:** Not implemented
-- **Now:** 52,000+ procedures from FAA CIFP, full SID/STAR/Approach loading, altitude/speed constraints, missed approach with GO AROUND button and auto waypoint insertion, ILS auto-tuning
-- **Resolved:** Multiple commits (365ac12 → 0681621)
-
-### Airways ✅
-- **Was:** Not implemented
-- **Now:** 13,000+ Victor & Jet routes, airway selection in FPL, auto-insert intermediate waypoints, smart suggestions, map display
-- **Resolved:** Multiple commits (c5d0bef → 40f4642)
-
-### AIRAC Database ✅
-- **Was:** Not implemented — ad-hoc server API lookups only
-- **Now:** Full SQLite navdata with FAA CIFP pipeline, AIRAC cycle metadata, expiry tracking, spatial queries, auto-update check endpoint
-- **Resolved:** `745584e`, `12f04a1`, `cd4e137`
-
-### VNAV TOD Calculation ✅
-- **Was:** Design phase
-- **Now:** TOD calc, vertical profile, altitude constraints, speed coupling all implemented in `gtn-vnav.js`
-- **Resolved:** `fbc9d3b`, `e799ae4`
-
-### Null Crashes on Lazy-Loaded Modules ✅
-- **Was:** handleSimData, _getCdiState, initSyncListener, bindEvents crashed on first WebSocket message
-- **Now:** All lazy-loaded module access uses optional chaining
-- **Resolved:** v2.3.0 (commit d55832b)
-
-### Page Classes Created Before Scripts Loaded ✅
-- **Was:** initOverlays instantiated pages before their scripts were loaded
-- **Now:** _ensurePageInstance() creates page instances on first visit after script load
-- **Resolved:** v2.3.0 (commit d55832b)
-
-### RAF Double-Start and Resource Leaks ✅
-- **Was:** Render loops could double-start, resize/beforeunload handlers never cleaned up
-- **Now:** RAF IDs tracked and cancelled, stored handler refs removed in destroy()
-- **Resolved:** v2.3.0 (commit d55832b)
-
-### Performance Spikes ✅
-- **Was:** Frame time spiked to 23ms with all overlays active
-- **Now:** Waypoint position caching (98% calc reduction), avg 16.8→14.5ms, 95th 21.2→18.9ms
-- **Resolved:** v2.3.0 (commit 0a752f8)
-
-### Traffic Memory Growth ✅
-- **Was:** Traffic history accumulated unbounded, reaching 11.2MB after 10 minutes
-- **Now:** Circular buffer, max 100 targets, 30s stale cleanup, hard ceiling ~10MB
-- **Resolved:** v2.3.0 (commit 0a752f8)
-
-### Code Quality ✅
-- **Was:** Magic numbers, 5% JSDoc coverage, 0% test coverage
-- **Now:** All constants named, 80% JSDoc, 38 unit tests (100% pass), maintainability 7.2→9.1
-- **Resolved:** v2.2.0 (commit 507d749)
-
-### Code Splitting ✅
-- **Was:** 17 scripts loaded immediately, 2-second initial load
-- **Now:** 13 critical scripts, 500ms deferred, 40% faster load
-- **Resolved:** v2.1.0 (commit 8ec0bf1)
-
-### Duplicate WebSocket Code ✅
-- **Was:** Each widget reimplemented WebSocket connection
-- **Now:** SimGlassBase provides standardized connection
-- **Resolved:** v2.0.0
-
-### Silent Error Swallowing ✅
-- **Was:** 43 empty catch blocks across codebase
-- **Now:** All errors logged with telemetry
-- **Resolved:** v2.0.0
-
-### Memory Leaks (RAF/Timers) ✅
-- **Was:** requestAnimationFrame loops never stopped
-- **Now:** Proper destroy() pattern with cleanup
-- **Resolved:** v2.0.0
-
----
-
 ## 🐛 Bug Tracker
 
 Report issues at: https://github.com/cobrahjh/LLM-DevOSWE/issues
 
-**Labels:** `gtn750`, `performance`, `enhancement`, `bug`, `documentation`
+**Labels:** `gtn750xi`, `vcalc`, `utilities`, `performance`, `enhancement`, `bug`, `documentation`
 
 ---
 
@@ -229,14 +203,12 @@ Report issues at: https://github.com/cobrahjh/LLM-DevOSWE/issues
 - Memory usage (initial, peak, after 30min)
 - Error rates by module
 
-**Dashboard:** http://192.168.1.42:8080/ui/gtn750/performance-dashboard.html
+**Dashboard:** http://192.168.1.42:8080/ui/gtn750xi/performance-dashboard.html
 
 ### Health Checks
 
 ```bash
 curl http://192.168.1.42:8080/api/health
-npm test -- --grep "GTN750"
-du -sh ui/gtn750/*.js ui/gtn750/modules/*.js
 ```
 
 ---
@@ -252,7 +224,7 @@ du -sh ui/gtn750/*.js ui/gtn750/modules/*.js
 ### Waypoint Sequencing Issues
 1. Check OBS mode: should be OFF for auto-sequencing
 2. Verify ground speed: must be >15kt
-3. Check distance threshold: `console.log(threshold)` in checkWaypointSequencing
+3. Check distance threshold
 4. Verify track error: should be <120° or distance <0.2nm
 
 ### CDI Needle Stuck
@@ -261,29 +233,26 @@ du -sh ui/gtn750/*.js ui/gtn750/modules/*.js
 3. Check signal: NAV1/NAV2 require signal >10%
 4. Test with OBS mode toggle
 
-### Performance Issues
-1. Disable overlays: Terrain/Traffic/Weather toggles
-2. Reduce map range: lower zoom = fewer calculations
-3. Check frame time: F12 → Performance → Record
-4. Monitor memory: F12 → Memory → Take snapshot
+### VCALC Not Calculating
+1. Verify VCALC is enabled (ENABLE soft key active)
+2. Check ground speed: must be >35kt
+3. Ensure flight plan is active with waypoints
+4. Verify target waypoint is set
+5. Check OBS/SUSP mode is not active
 
 ---
 
 ## 📊 Version Compatibility
 
-| GTN750 Version | SimGlassBase | Node.js | MSFS |
-|----------------|--------------|---------|------|
-| v3.0+ (current) | v2.0.0+ | 18.0+ | 2020/2024 |
-| v2.3.0 | v2.0.0+ | 18.0+ | 2020/2024 |
-| v2.2.0 | v2.0.0+ | 18.0+ | 2020/2024 |
-| v2.1.0 | v2.0.0+ | 18.0+ | 2020/2024 |
-| v2.0.0 | v2.0.0 | 18.0+ | 2020/2024 |
-| v1.5.0 | v1.1.0 | 16.0+ | 2020 |
+| GTN750Xi Version | Base GTN750 | SimGlassBase | Node.js | MSFS |
+|------------------|-------------|--------------|---------|------|
+| v1.0+ (current) | v3.0+ | v2.0.0+ | 18.0+ | 2020/2024 |
 
-**Breaking Changes:**
-- v2.0.0: SimGlassBase migration (localStorage keys changed)
-- v2.1.0: Code splitting (module loader required)
-- v2.3.0: Page instances lazy-created (no longer available at initOverlays time)
+**GTN750Xi Differences:**
+- Independent versioning from GTN750
+- Experimental features (VCALC, enhanced utilities)
+- Same codebase foundation, parallel deployment
+- Access: `/ui/gtn750xi/` vs `/ui/gtn750/`
 
 ---
 
@@ -293,14 +262,16 @@ Before reporting an issue:
 1. Check this document for known issues
 2. Verify you're on the latest version
 3. Test in Chrome/Edge (Safari has known limitations)
-4. Include browser console errors in report
-5. Provide reproduction steps
+4. Specify if issue is GTN750Xi-specific or inherited
+5. Include browser console errors in report
+6. Provide reproduction steps
 
 **Template:**
 ```markdown
-**GTN750 Version:** v3.0+
+**GTN750Xi Version:** v1.0+
 **Browser:** Chrome 131
 **MSFS Version:** 2024
+**Feature:** VCALC / Trip Planning / etc.
 **Issue:** Brief description
 **Steps to Reproduce:**
 1. Step one
