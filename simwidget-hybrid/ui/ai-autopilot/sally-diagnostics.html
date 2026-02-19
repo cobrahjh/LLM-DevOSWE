@@ -442,14 +442,19 @@ async function requestTaxi() {
 }
 
 // ── Tuning ────────────────────────────────────────────────────────────────
+const _tuneTimers = {};
+function debouncedApply(key) {
+  clearTimeout(_tuneTimers[key]);
+  _tuneTimers[key] = setTimeout(() => applyOne(key), 600);
+}
+
 function buildTuningGrid() {
   const grid = document.getElementById('tuning-grid');
   grid.innerHTML = TUNING_PARAMS.map(p => `
     <div class="tuning-row">
       <span class="tuning-label">${p.label}</span>
-      <input class="tuning-input" id="t-${p.key}" type="number" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}" title="${p.key}">
+      <input class="tuning-input" id="t-${p.key}" type="number" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}" title="${p.key}" oninput="debouncedApply('${p.key}')">
       <span class="tuning-unit">${p.unit}</span>
-      <button class="btn sm apply-btn ctrl-btn" onclick="applyOne('${p.key}')">Set</button>
     </div>
   `).join('');
 }
