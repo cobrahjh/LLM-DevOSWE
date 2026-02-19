@@ -258,6 +258,21 @@ class GTNMapRenderer {
         if ((state.declutterLevel || 0) < 2) {
             this.renderRangeRings(ctx, cx, cy, w, h, state);
         }
+
+        // NAV Range Ring (user-configurable distance reference)
+        if (state.systemSettings?.navRangeRing) {
+            this.renderNavRangeRing(ctx, cx, cy, w, h, state);
+        }
+
+        // Track Vector (future track projection line)
+        if (state.systemSettings?.trackVector && state.data?.groundSpeed > 30) {
+            this.renderTrackVector(ctx, cx, cy, w, h, state);
+        }
+
+        // Runway Extensions (5nm centerline projection for visual approaches)
+        if (state.systemSettings?.runwayExtensions && state.destinationRunways) {
+            this.renderRunwayExtensions(ctx, cx, cy, w, h, state);
+        }
     }
 
     /**
@@ -1746,6 +1761,152 @@ class GTNMapRenderer {
             );
         }
 
+        ctx.restore();
+    }
+
+    /**
+     * Render NAV Range Ring — user-configurable distance reference circle
+     */
+    renderNavRangeRing(ctx, cx, cy, w, h, state) {
+        const distance = state.systemSettings?.navRangeRingDistance || 10; // nm
+        const pixelsPerNm = Math.min(w, h) / 2 / state.map.range;
+        const radius = distance * pixelsPerNm;
+
+        // Skip if ring is outside visible map
+        if (radius < 5 || radius > Math.max(w, h)) return;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 200, 255, 0.7)'; // Cyan for NAV reference
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+
+        // Label
+        if ((state.declutterLevel || 0) < 1) {
+            ctx.font = 'bold 10px Consolas, monospace';
+            ctx.fillStyle = 'rgba(0, 200, 255, 0.9)';
+            ctx.textAlign = 'center';
+            ctx.fillText(`NAV ${distance}nm`, cx, cy - radius - 8);
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Render Track Vector — dashed line showing future aircraft position
+     * Based on current groundspeed and track
+     */
+    renderTrackVector(ctx, cx, cy, w, h, state) {
+        const gs = state.data?.groundSpeed || 0;
+        const track = state.data?.track || 0;
+
+        if (gs < 30) return; // Hidden below 30kt per Garmin spec
+
+        const lengthSeconds = state.systemSettings?.trackVectorLength || 60;
+        const distanceNm = (gs / 3600) * lengthSeconds; // nm traveled in N seconds
+
+        const pixelsPerNm = Math.min(w, h) / 2 / state.map.range;
+        const lengthPixels = distanceNm * pixelsPerNm;
+
+        // Calculate endpoint based on track
+        const rotation = this.getMapRotation(state) * Math.PI / 180;
+        const trackRad = (track * Math.PI / 180) - rotation;
+
+        const endX = cx + Math.sin(trackRad) * lengthPixels;
+        const endY = cy - Math.cos(trackRad) * lengthPixels;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)'; // Yellow track vector
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]);
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+
+        // Arrow tip
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - Math.sin(trackRad + 0.3) * 8, endY + Math.cos(trackRad + 0.3) * 8);
+        ctx.lineTo(endX - Math.sin(trackRad - 0.3) * 8, endY + Math.cos(trackRad - 0.3) * 8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    /**
+     * Render Runway Extensions — 5nm centerline projection for visual approaches
+     * Per Garmin GTN750Xi Pilot's Guide section 3-21
+     */
+    renderRunwayExtensions(ctx, cx, cy, w, h, state) {
+        if (!state.destinationRunways || !state.destinationRunways.length) return;
+
+        const extensionLength = 5; // nm per Garmin spec
+        const pixelsPerNm = Math.min(w, h) / 2 / state.map.range;
+        const extensionPixels = extensionLength * pixelsPerNm;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 0, 255, 0.6)'; // Magenta for runway extensions
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]);
+
+        const rotation = this.getMapRotation(state) * Math.PI / 180;
+
+        state.destinationRunways.forEach(rwy => {
+            // Calculate runway threshold position
+            const thresholdPos = GTNCore.latLonToCanvas(
+                rwy.lat, rwy.lon,
+                state.data.latitude, state.data.longitude,
+                state.map.range, w, h, rotation
+            );
+
+            if (!thresholdPos) return;
+
+            const threshX = cx + thresholdPos.x;
+            const threshY = cy + thresholdPos.y;
+
+            // Skip if threshold is off-screen
+            if (threshX < -extensionPixels || threshX > w + extensionPixels ||
+                threshY < -extensionPixels || threshY > h + extensionPixels) return;
+
+            // Calculate extension endpoint based on runway heading
+            const headingRad = (rwy.heading * Math.PI / 180) - rotation;
+            const endX = threshX + Math.sin(headingRad) * extensionPixels;
+            const endY = threshY - Math.cos(headingRad) * extensionPixels;
+
+            // Draw extension line
+            ctx.beginPath();
+            ctx.moveTo(threshX, threshY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Label at midpoint
+            if ((state.declutterLevel || 0) < 1) {
+                const midX = (threshX + endX) / 2;
+                const midY = (threshY + endY) / 2;
+
+                ctx.save();
+                ctx.translate(midX, midY);
+                ctx.rotate(headingRad);
+                ctx.fillStyle = 'rgba(255, 0, 255, 0.9)';
+                ctx.font = '10px Consolas, monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(rwy.name, 0, -5);
+                ctx.restore();
+            }
+        });
+
+        ctx.setLineDash([]);
         ctx.restore();
     }
 }

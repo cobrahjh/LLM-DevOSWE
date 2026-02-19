@@ -108,6 +108,15 @@ class GTN750Pane extends SimGlassBase {
         this._trafficRafId = null;
         this._weatherRafId = null;
 
+        // Destination runway data for runway extensions overlay
+        this.destinationRunways = null;
+        this._lastDestinationIcao = null;
+
+        // Auto Zoom state
+        this._autoZoomActive = false;
+        this._autoZoomOverridden = false;
+        this._lastAutoZoomWaypointIndex = -1;
+
         // Handler refs for cleanup
         this._resizeHandler = () => { this.resizeCanvas(); this._applyDeviceSize(); };
         this._beforeUnloadHandler = () => this.destroy();
@@ -383,6 +392,9 @@ class GTN750Pane extends SimGlassBase {
             this.map.range = this.map.ranges[currentIndex - 1];
             this.mapControls.setRange(this.map.range);
             this.saveState();
+            this._checkNorthUpAbove();
+            // Manual zoom overrides auto zoom
+            this._autoZoomOverridden = true;
         }
     }
 
@@ -396,6 +408,33 @@ class GTN750Pane extends SimGlassBase {
             this.map.range = this.map.ranges[currentIndex + 1];
             this.mapControls.setRange(this.map.range);
             this.saveState();
+            this._checkNorthUpAbove();
+            // Manual zoom overrides auto zoom
+            this._autoZoomOverridden = true;
+        }
+    }
+
+    /**
+     * North Up Above — auto-switch to North Up when zoomed out beyond threshold
+     * Per Garmin GTN750Xi Pilot's Guide section 3-9
+     */
+    _checkNorthUpAbove() {
+        const settings = this.systemPage?.getSettings();
+        if (!settings?.northUpAboveEnabled) return;
+
+        const threshold = settings.northUpAbove || 50; // nm
+        const previousOrientation = this._northUpAboveState || this.map.orientation;
+
+        if (this.map.range >= threshold && this.map.orientation !== 'north') {
+            // Switched above threshold — save previous orientation and switch to North Up
+            this._northUpAboveState = this.map.orientation;
+            this.map.orientation = 'north';
+            GTNCore.log(`[GTN750] North Up Above: Switched to North Up at ${this.map.range}nm`);
+        } else if (this.map.range < threshold && this._northUpAboveState && this.map.orientation === 'north') {
+            // Switched below threshold — restore previous orientation
+            this.map.orientation = this._northUpAboveState;
+            this._northUpAboveState = null;
+            GTNCore.log(`[GTN750] North Up Above: Restored ${this.map.orientation} orientation at ${this.map.range}nm`);
         }
     }
 
@@ -706,6 +745,8 @@ class GTN750Pane extends SimGlassBase {
             holdingManager: this.holdingManager,
             fuelMonitor: this.fuelMonitor,
             procedurePreview: this.procedurePreview || null,
+            systemSettings: this.systemPage?.getSettings() || {},
+            destinationRunways: this.destinationRunways,
             onUpdateDatafields: () => {
                 this.dataFieldsManager.update(this.data, {
                     flightPlan: this.flightPlanManager?.flightPlan || null,
@@ -756,6 +797,12 @@ class GTN750Pane extends SimGlassBase {
         if (d.fuelTotal !== undefined) this.data.fuelTotal = d.fuelTotal;
         if (d.fuelFlow !== undefined) this.data.fuelFlow = d.fuelFlow;
         if (d.fuelCapacity !== undefined) this.data.fuelCapacity = d.fuelCapacity;
+
+        // Check if destination changed and fetch runway data
+        this._updateDestinationRunways();
+
+        // Auto Zoom logic
+        this._updateAutoZoom();
 
         // Always update CDI nav data (critical for navigation accuracy)
         this.cdiManager.updateNav1(d);
@@ -845,6 +892,127 @@ class GTN750Pane extends SimGlassBase {
         if (this.frequencyTuner) {
             this.frequencyTuner.update(this.data);
         }
+    }
+
+    /**
+     * Update destination runway data for runway extensions overlay
+     * Fetches runway info when destination airport changes
+     */
+    async _updateDestinationRunways() {
+        if (!this.flightPlanManager?.flightPlan?.waypoints?.length) {
+            this.destinationRunways = null;
+            this._lastDestinationIcao = null;
+            return;
+        }
+
+        const waypoints = this.flightPlanManager.flightPlan.waypoints;
+        const destination = waypoints[waypoints.length - 1];
+
+        // Only fetch if destination changed and it's an airport
+        if (!destination.icao || destination.icao === this._lastDestinationIcao) return;
+        if (destination.type && destination.type !== 'airport') return;
+
+        this._lastDestinationIcao = destination.icao;
+
+        try {
+            const res = await fetch(`/api/navdb/airport/${destination.icao}/runways`);
+            if (!res.ok) {
+                this.destinationRunways = null;
+                return;
+            }
+
+            const runways = await res.json();
+
+            // Transform to format needed by renderer: { lat, lon, heading, name }
+            this.destinationRunways = runways.map(rwy => ({
+                lat: rwy.lat || rwy.latitude || destination.lat,
+                lon: rwy.lon || rwy.longitude || destination.lng,
+                heading: parseFloat(rwy.heading || rwy.true_heading || 0),
+                name: rwy.name || rwy.runway_name || rwy.ident || '??'
+            }));
+
+            GTNCore.log(`[GTN750] Loaded ${this.destinationRunways.length} runways for ${destination.icao}`);
+        } catch (e) {
+            GTNCore.log(`[GTN750] Failed to fetch runways for ${destination.icao}: ${e.message}`, 'WARN');
+            this.destinationRunways = null;
+        }
+    }
+
+    /**
+     * Auto Zoom — automatically adjusts map range to show next waypoint
+     * Per Garmin GTN750Xi Pilot's Guide section 3-11
+     * Resumes when: waypoint sequences, ground→air transition, or manual zoom matches auto range
+     */
+    _updateAutoZoom() {
+        const settings = this.systemPage?.getSettings();
+        if (!settings?.autoZoom) return;
+
+        const activeIndex = this.flightPlanManager?.activeWaypointIndex;
+        const waypoints = this.flightPlanManager?.flightPlan?.waypoints;
+
+        if (!waypoints || activeIndex === undefined || activeIndex >= waypoints.length) {
+            this._autoZoomActive = false;
+            return;
+        }
+
+        // Resume auto zoom when waypoint sequences
+        if (activeIndex !== this._lastAutoZoomWaypointIndex) {
+            this._autoZoomOverridden = false;
+            this._lastAutoZoomWaypointIndex = activeIndex;
+        }
+
+        // Resume auto zoom when manual zoom matches calculated auto zoom range
+        const nextWp = waypoints[activeIndex];
+        if (nextWp && this._autoZoomOverridden) {
+            const distance = GTNCore.distance(
+                this.data.latitude, this.data.longitude,
+                nextWp.lat, nextWp.lng
+            );
+            const idealRange = this._calculateAutoZoomRange(distance, settings);
+            if (Math.abs(this.map.range - idealRange) < 0.1) {
+                this._autoZoomOverridden = false;
+            }
+        }
+
+        if (this._autoZoomOverridden) return;
+
+        // Calculate ideal range to show next waypoint
+        if (!nextWp) return;
+
+        const distance = GTNCore.distance(
+            this.data.latitude, this.data.longitude,
+            nextWp.lat, nextWp.lng
+        );
+
+        const newRange = this._calculateAutoZoomRange(distance, settings);
+
+        if (newRange !== this.map.range) {
+            this.map.range = newRange;
+            if (this.mapControls) {
+                this.mapControls.setRange(this.map.range);
+            }
+            this._autoZoomActive = true;
+        }
+    }
+
+    /**
+     * Calculate auto zoom range based on distance to next waypoint
+     */
+    _calculateAutoZoomRange(distance, settings) {
+        const minRange = settings.autoZoomMin || 2;
+        const maxRange = settings.autoZoomMax || 100;
+
+        // Find smallest range that fits the waypoint with 20% margin
+        const targetDistance = distance * 1.2;
+
+        for (const range of this.map.ranges) {
+            if (range >= targetDistance && range >= minRange && range <= maxRange) {
+                return range;
+            }
+        }
+
+        // Default to max if waypoint is beyond max range
+        return Math.min(maxRange, this.map.ranges[this.map.ranges.length - 1]);
     }
 
     updateAuxData() {

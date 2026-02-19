@@ -31,6 +31,24 @@ class SystemPage {
             showAirspace: true,
             showNavaids: true,
 
+            // Range Rings & Overlays
+            navRangeRing: false,
+            navRangeRingDistance: 10,  // nm
+            trackVector: false,
+            trackVectorLength: 60,     // seconds
+
+            // Auto Features
+            northUpAbove: 50,          // nm - switch to North Up above this range
+            northUpAboveEnabled: true,
+
+            // Visual Approach Aids
+            runwayExtensions: true,    // 5nm centerline projection
+
+            // Auto Zoom
+            autoZoom: false,
+            autoZoomMin: 2,            // nm
+            autoZoomMax: 100           // nm
+
             // Data Fields
             dataFieldTL: 'gs',
             dataFieldTR: 'trk',
@@ -106,6 +124,12 @@ class SystemPage {
             showAirways: document.getElementById('sys-show-airways'),
             showAirspace: document.getElementById('sys-show-airspace'),
             showNavaids: document.getElementById('sys-show-navaids'),
+
+            // Range rings & overlays
+            navRangeRing: document.getElementById('sys-nav-range-ring'),
+            navRangeRingDistance: document.getElementById('sys-nav-range-ring-distance'),
+            trackVector: document.getElementById('sys-track-vector'),
+            trackVectorLength: document.getElementById('sys-track-vector-length'),
 
             // Data fields
             dataFieldTL: document.getElementById('sys-df-tl'),
@@ -194,11 +218,21 @@ class SystemPage {
         });
 
         // Map feature checkboxes
-        const featureCheckboxes = ['showTerrain', 'showTraffic', 'showWeather', 'showAirways', 'showAirspace', 'showNavaids'];
+        const featureCheckboxes = ['showTerrain', 'showTraffic', 'showWeather', 'showAirways', 'showAirspace', 'showNavaids', 'navRangeRing', 'trackVector'];
         featureCheckboxes.forEach(key => {
             this.elements[key]?.addEventListener('change', (e) => {
                 this.setSetting(key, e.target.checked);
             });
+        });
+
+        // Range ring distance
+        this.elements.navRangeRingDistance?.addEventListener('change', (e) => {
+            this.setSetting('navRangeRingDistance', parseFloat(e.target.value));
+        });
+
+        // Track vector length
+        this.elements.trackVectorLength?.addEventListener('change', (e) => {
+            this.setSetting('trackVectorLength', parseInt(e.target.value));
         });
 
         // Data field selects
@@ -291,6 +325,12 @@ class SystemPage {
         if (this.elements.showAirways) this.elements.showAirways.checked = this.settings.showAirways;
         if (this.elements.showAirspace) this.elements.showAirspace.checked = this.settings.showAirspace;
         if (this.elements.showNavaids) this.elements.showNavaids.checked = this.settings.showNavaids;
+
+        // Range rings & overlays
+        if (this.elements.navRangeRing) this.elements.navRangeRing.checked = this.settings.navRangeRing;
+        if (this.elements.navRangeRingDistance) this.elements.navRangeRingDistance.value = this.settings.navRangeRingDistance;
+        if (this.elements.trackVector) this.elements.trackVector.checked = this.settings.trackVector;
+        if (this.elements.trackVectorLength) this.elements.trackVectorLength.value = this.settings.trackVectorLength;
 
         // Data fields - populate options
         this.populateDataFieldSelects();
@@ -552,6 +592,10 @@ class SystemPage {
             showAirways: false,
             showAirspace: true,
             showNavaids: true,
+            navRangeRing: false,
+            navRangeRingDistance: 10,
+            trackVector: false,
+            trackVectorLength: 60,
             dataFieldTL: 'gs',
             dataFieldTR: 'trk',
             dataFieldBL: 'alt',
