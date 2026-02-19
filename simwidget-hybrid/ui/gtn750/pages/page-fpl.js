@@ -153,7 +153,7 @@ class FlightPlanPage {
             if (res.status === 404) {
                 // Auto-detect failed — let user pick the file
                 btn.classList.remove('loading');
-                btn.textContent = '\u2708 MSFS 2024';
+                btn.textContent = '\u2708 LOAD FPL FILE';
                 const planData = await this._pickPlnFile();
                 if (!planData) return;
                 this._loadMsfsPlan(planData, btn);
@@ -176,7 +176,7 @@ class FlightPlanPage {
         } catch (e) {
             console.error('[FPL] MSFS 2024 import failed:', e);
             btn.textContent = '\u2718 FAILED';
-            setTimeout(() => { btn.textContent = '\u2708 MSFS 2024'; }, 2000);
+            setTimeout(() => { btn.textContent = '\u2708 LOAD FPL FILE'; }, 2000);
             btn.classList.remove('loading');
         }
     }
@@ -190,7 +190,7 @@ class FlightPlanPage {
         ch.close();
         btn.classList.remove('loading');
         btn.textContent = '\u2714 LOADED';
-        setTimeout(() => { btn.textContent = '\u2708 MSFS 2024'; }, 2000);
+        setTimeout(() => { btn.textContent = '\u2708 LOAD FPL FILE'; }, 2000);
     }
 
     _pickPlnFile() {
