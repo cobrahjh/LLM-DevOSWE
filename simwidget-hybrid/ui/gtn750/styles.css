@@ -2650,6 +2650,14 @@ body {
 .fpl-import-msfs-btn:hover {
     background: rgba(0, 200, 100, 0.35);
 }
+.fpl-import-sim-btn {
+    background: rgba(255, 180, 0, 0.2);
+    color: #ffcc44;
+    border-color: rgba(255, 180, 0, 0.4);
+}
+.fpl-import-sim-btn:hover {
+    background: rgba(255, 180, 0, 0.35);
+}
 
 .fpl-route {
     display: flex;
