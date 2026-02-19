@@ -49,6 +49,89 @@
 
 ---
 
+### Trip Planning ⭐ NEW
+
+**What it is:** Planning utility that calculates DTK, DIS, ETE, ETA, ESA, and sunrise/sunset times for direct courses or flight plan legs. Per Garmin GTN 750Xi Pilot's Guide Section 4 (pages 4-7 to 4-10).
+
+**Two Modes:**
+1. **Point-to-Point Mode:**
+   - From/To waypoint selection from database
+   - P. Position toggle (uses current aircraft coordinates as From waypoint)
+   - Departure Date/Time inputs
+   - Ground Speed input or Use Sensor Data
+2. **Flight Plan Mode:**
+   - Active flight plan (catalog TBD)
+   - Leg selector (cumulative or specific leg)
+   - Next/Prev navigation through legs
+   - Departure Date/Time inputs
+   - Ground Speed or Use Sensor Data
+
+**Calculated Outputs:**
+- **DTK** (Desired Track) — Magnetic bearing to destination
+- **DIS** (Distance) — Nautical miles
+- **ETE** (Estimated Time Enroute) — HH:MM format
+- **ETA** (Estimated Time of Arrival) — Point-to-Point: ETA = ETE + depart time; Active FPL: ETA = now + ETE; Catalog: ETA = depart time + ETE
+- **ESA** (En Route Safe Altitude) — Simplified: max(from elevation, to elevation) + 1000ft
+- **Sunrise/Sunset** — Approximate solar calculation at destination coordinates
+
+**Features:**
+- Auto-calculate on entry (GTN 750Xi style)
+- Settings persist to localStorage
+- Dashes when leg completed or data invalid
+
+**Access:** AUX page > TRIP soft key
+**Soft Keys:** MODE, SENSOR, NEXT, PREV, BACK
+
+**Files:**
+- `pages/page-trip-planning.js` (390 lines) — TripPlanningPage class
+- Updated: `index.html`, `pane.js`, `modules/gtn-softkeys.js`, `styles.css`
+
+---
+
+### Fuel Planning ⭐ NEW
+
+**What it is:** Planning utility that calculates fuel required, reserves, range, efficiency, and endurance. Per Garmin GTN 750Xi Pilot's Guide Section 4 (pages 4-11 to 4-14).
+
+**Two Modes:**
+1. **Point-to-Point Mode:**
+   - From/To waypoint selection
+   - P. Position toggle
+   - EST Fuel Remaining (GAL) — decrements in real-time every second
+   - Fuel Flow (GPH)
+   - Ground Speed or Use Sensor Data
+2. **Flight Plan Mode:**
+   - Active flight plan (catalog TBD)
+   - Leg selector (cumulative or specific leg)
+   - Next/Prev navigation
+   - EST Fuel Remaining, Fuel Flow, Ground Speed inputs
+   - Use Sensor Data toggle
+
+**Calculated Outputs:**
+- **Fuel Required** — Gallons needed to reach destination
+- **Fuel at Destination** — EST Fuel Remaining - Fuel Required
+- **Reserve at Destination** — Time remaining in HH:MM:SS format
+- **Range** — Total distance possible with current fuel (NM)
+- **Efficiency** — Nautical miles per gallon (NM/GAL)
+- **Endurance** — Total flight time possible with current fuel (HH:MM:SS)
+
+**Features:**
+- Real-time fuel countdown (EST Fuel Remaining decrements once per second based on fuel flow)
+- Use Sensor Data pulls fuelTotal, fuelFlow, groundSpeed from MSFS sim
+- Auto-calculate on entry (GTN 750Xi style)
+- Settings persist to localStorage
+- "For planning purposes only" disclaimer
+
+**Access:** AUX page > FUEL soft key
+**Soft Keys:** MODE, SENSOR, NEXT, PREV, BACK
+
+**Files:**
+- `pages/page-fuel-planning.js` (374 lines) — FuelPlanningPage class
+- Updated: `index.html`, `pane.js`, `modules/gtn-softkeys.js`, `styles.css`
+
+**Note:** Fuel Range Ring integration (mentioned in Pilot's Guide) not yet wired to map display.
+
+---
+
 ## Inherited from GTN 750 v3.0+
 
 All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750Xi v1.0+. See sections below for full history.
@@ -186,22 +269,13 @@ All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750
 
 ## GTN750Xi Roadmap
 
-### Planned - Planning Utilities (Phase 2)
+### Completed - Planning Utilities ✅
 
-**Trip Planning Page**
-- Point-to-Point mode (From/To waypoint selection, P.Position support)
-- Flight Plan mode with leg selector
-- ESA (En Route Safe Altitude) calculation
-- Sunrise/Sunset times at destination
-- Departure Date/Time inputs
-- Next/Prev leg navigation
+**Trip Planning** — ✅ Implemented (commit 9325a0b)
+**Fuel Planning** — ✅ Implemented (commit 63868c0)
+**VCALC** — ✅ Implemented (commit 75a2939)
 
-**Fuel Planning Page**
-- Point-to-Point and Flight Plan modes
-- EST Fuel Remaining with live countdown
-- Fuel after leg, Reserve after leg
-- Range, Efficiency, Endurance outputs
-- Integration with existing fuel monitor module
+### Planned - Additional Utilities (Phase 2)
 
 **DALT/TAS/Wind Calculator**
 - Density Altitude calculator
@@ -223,13 +297,25 @@ All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750
 - Checkbox completion tracking
 - Clear Current/Clear All functions
 
-### Planned - VCALC Enhancements (Phase 4)
+### Planned - Enhancements (Phase 4)
 
+**VCALC Enhancements:**
 - Messages page integration for TOD advisories
 - SUSP/Vectors-to-Final mode inhibit logic
 - FAF detection for post-FAF inhibit
 - VNAV/VCALC mutual exclusivity enforcement
 - Map display of VCALC descent profile
+
+**Trip Planning Enhancements:**
+- Catalog flight plan selection
+- Accurate ESA with terrain database
+- Time zone support (Local vs UTC)
+- Waypoint picker modal UI
+
+**Fuel Planning Enhancements:**
+- Catalog flight plan selection
+- Fuel Range Ring integration on map
+- Waypoint picker modal UI
 
 ---
 

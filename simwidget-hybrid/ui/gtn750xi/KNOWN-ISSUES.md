@@ -5,47 +5,51 @@
 
 ---
 
-## 🆕 GTN750Xi Specific
+## 🆕 GTN750Xi Specific - New Features
 
-### VCALC - New Feature
+### VCALC (Vertical Calculator) ⭐
 
-**Status:** Just implemented (2026-02-19), not yet flight tested
-**What works:** Time to TOD calculation, VS required, profile settings, status messages
+**Status:** Implemented (2026-02-19), not yet flight tested
+**What works:** Time to TOD calculation, VS required, profile settings (Target ALT, VS Profile, Offset, Target Waypoint), status messages, enable/disable toggle
 **Missing:**
 - Real-flight validation
 - Integration with Messages page for TOD advisories
 - SUSP/OBS/Vectors-to-Final inhibit logic (partial)
 - FAF detection for post-FAF inhibit
+- VNAV/VCALC mutual exclusivity enforcement
+
+**Access:** AUX page > VCALC soft key
+
+---
+
+### Trip Planning ⭐
+
+**Status:** Implemented (2026-02-19), not yet flight tested
+**What works:** Point-to-Point mode (From/To waypoints, P.Position), Flight Plan mode (Active FPL, leg selector), DTK/DIS/ETE/ETA calculations, ESA estimation, Sunrise/Sunset times, Use Sensor Data toggle, Next/Prev leg navigation
+**Missing:**
+- Real-flight validation
+- Catalog flight plan selection (currently Active FPL only)
+- Accurate ESA calculation (requires terrain database; currently uses max elevation + 1000ft)
+- Time zone handling for Local vs UTC (currently approximate)
+
+**Access:** AUX page > TRIP soft key
+
+---
+
+### Fuel Planning ⭐
+
+**Status:** Implemented (2026-02-19), not yet flight tested
+**What works:** Point-to-Point mode, Flight Plan mode, EST Fuel Remaining with real-time countdown, Fuel Required/After/Reserve calculations, Range/Efficiency/Endurance outputs, Use Sensor Data toggle, Next/Prev leg navigation
+**Missing:**
+- Real-flight validation
+- Catalog flight plan selection (currently Active FPL only)
+- Fuel Range Ring integration on map (mentioned in guide but not wired)
+
+**Access:** AUX page > FUEL soft key
 
 ---
 
 ## 🟡 Inherited - Untested Features
-
-### Trip Planning Utilities
-
-**Status:** Incomplete — AUX page has basic trip data, missing full Utilities > Trip Planning page
-**Missing:**
-- Point-to-Point mode (From/To waypoint selection)
-- Flight Plan mode with leg selector
-- ESA (En Route Safe Altitude) calculation
-- Sunrise/Sunset times at destination
-- Departure Date/Time inputs
-
-**What exists:** Distance Rem, Time Rem, ETA, Fuel Req displayed on AUX page
-
----
-
-### Fuel Planning Utilities
-
-**Status:** Incomplete — Fuel monitor exists, missing full Utilities > Fuel Planning page
-**Missing:**
-- Point-to-Point and Flight Plan modes
-- EST Fuel Remaining input with live countdown
-- Fuel after leg, Reserve after leg calculations
-- Range, Efficiency, Endurance outputs
-- Next/Prev leg navigation
-
-**What exists:** Fuel monitor module with basic calculations
 
 ---
 
