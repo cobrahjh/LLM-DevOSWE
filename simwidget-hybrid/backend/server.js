@@ -376,6 +376,7 @@ app.get('/', (req, res) => {
                 <li><a href="/ui/radio-stack/">📻 Radio Stack</a></li>
                 <li><a href="/ui/environment/">🌤️ Environment</a></li>
                 <li><a href="/ui/gtn750/">🗺️ GTN750</a></li>
+                <li><a href="/ui/gtn750xi/">🗺️ GTN750Xi</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/wasm-camera/">🎬 WASM Camera</a></li>
                 <li><a href="/ui/checklist-widget/">✅ Checklist</a> <span class="new-badge">NEW</span></li>
                 <li><a href="/ui/map-widget/">🗺️ Map</a> <span class="new-badge">NEW</span></li>
@@ -466,6 +467,9 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
+
+// Convenient shortcuts for testing
+app.get('/gtn750xi', (req, res) => res.redirect('/ui/gtn750xi/index.html'));
 
 // Initialize plugin system
 pluginLoader.discover();
