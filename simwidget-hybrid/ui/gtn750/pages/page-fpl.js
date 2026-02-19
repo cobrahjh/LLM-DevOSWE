@@ -13,6 +13,8 @@ class FlightPlanPage {
         // State
         this.cursorIndex = -1; // -1 = no cursor selection
         this.flightPlan = null;
+        this.magvar = 0;
+        this.aircraftData = null;
 
         // Elements cache
         this.elements = {};
@@ -300,9 +302,17 @@ class FlightPlanPage {
             return { ident: id, name: id, type: (typeM ? typeM[1].toLowerCase() : 'fix'), lat, lng, altitude: cruisingAlt };
         });
 
+        // Calculate leg distances now that all positions are known
+        let totalDistance = 0;
+        for (let i = 1; i < waypoints.length; i++) {
+            const d = this.core.calculateDistance(waypoints[i - 1].lat, waypoints[i - 1].lng, waypoints[i].lat, waypoints[i].lng);
+            waypoints[i].distanceFromPrev = d;
+            totalDistance += d;
+        }
+
         return {
             departure, arrival, waypoints,
-            totalDistance: 0,
+            totalDistance: Math.round(totalDistance),
             route: waypoints.map(w => w.ident).join(' '),
             altitude: cruisingAlt,
             source: 'msfs2024'
@@ -457,7 +467,7 @@ class FlightPlanPage {
         msg.style.marginBottom = '8px';
 
         const hint = document.createElement('div');
-        hint.textContent = 'Use Direct-To or load a SimBrief plan';
+        hint.textContent = 'Use Direct-To, SimBrief, Load FPL File, or FROM SIM';
         hint.style.fontSize = '10px';
         hint.style.color = 'var(--gtn-text-dim)';
 
@@ -566,8 +576,8 @@ class FlightPlanPage {
         const nextWp = this.flightPlanManager.flightPlan?.waypoints?.[this.cursorIndex + 1];
 
         // Get current position for nearby search
-        const lat = this.aircraftData?.latitude || selectedWp.lat;
-        const lon = this.aircraftData?.longitude || selectedWp.lng || selectedWp.lon;
+        const lat = this.aircraftData?.latitude ?? selectedWp.lat;
+        const lon = this.aircraftData?.longitude ?? selectedWp.lng ?? selectedWp.lon;
 
         // Show airway modal with smart suggestions
         this.flightPlanManager.showAirwaysModal({
@@ -602,12 +612,7 @@ class FlightPlanPage {
     }
 
     onClear() {
-        if (!this.flightPlanManager?.flightPlan?.waypoints?.length) return;
-
-        // Trigger confirmation modal (will be handled by main pane)
-        if (this.onClearRequested) {
-            this.onClearRequested();
-        }
+        // Handled by pane.js via fpl-clear soft key action
     }
 
     confirmClear() {
@@ -663,8 +668,7 @@ class FlightPlanPage {
         const from = this.flightPlan.waypoints[index - 1];
         const to = this.flightPlan.waypoints[index];
         if (!from?.lat || !from?.lng || !to?.lat || !to?.lng) return null;
-        const trueBrg = this.core.calculateBearing(from.lat, from.lng, to.lat, to.lng);
-        return trueBrg;
+        return this.core.calculateMagneticBearing(from.lat, from.lng, to.lat, to.lng, this.magvar);
     }
 
     calcLegETE(distNM, groundSpeedKt) {

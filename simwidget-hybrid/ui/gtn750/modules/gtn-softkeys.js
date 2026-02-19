@@ -80,20 +80,20 @@ class GTNSoftKeys {
         this.registerContext('fpl', [
             { label: 'SAVE', action: 'save-fpl' },
             { label: 'LOAD', action: 'load-fpl' },
-            { label: 'FLY\nPLAN', action: 'fly-plan' },
+            { label: 'INVERT', action: 'fpl-invert' },
             { label: 'VNAV', action: 'toggle-vnav', toggle: true },
-            { label: 'INFO', action: 'fpl-info' },
+            { label: 'CLEAR', action: 'fpl-clear' },
             { label: 'D\u2192', action: 'direct-to' }
         ]);
 
         // FPL page (waypoint selected)
         this.registerContext('fpl-selected', [
             { label: 'DELETE', action: 'fpl-delete' },
+            { label: 'INSERT', action: 'fpl-insert' },
             { label: 'AWY', action: 'fpl-airway' },
             { label: 'MOVE\n\u25B2', action: 'fpl-move-up' },
             { label: 'MOVE\n\u25BC', action: 'fpl-move-down' },
-            { label: 'ACTV\nLEG', action: 'activate-leg' },
-            { label: 'D\u2192', action: 'direct-to' }
+            { label: 'ACTV\nLEG', action: 'activate-leg' }
         ]);
 
         // WPT page

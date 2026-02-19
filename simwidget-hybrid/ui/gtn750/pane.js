@@ -250,6 +250,14 @@ class GTN750Pane extends SimGlassBase {
                 return;
             }
 
+            // Arrow key cursor navigation on FPL page
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+                if (this.pageManager?.getCurrentPageId() === 'fpl' && this.fplPage) {
+                    if (e.key === 'ArrowDown') { e.preventDefault(); this.fplPage.moveCursor(1); return; }
+                    if (e.key === 'ArrowUp') { e.preventDefault(); this.fplPage.moveCursor(-1); return; }
+                }
+            }
+
             // Single-key shortcuts (no modifiers)
             if (!e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
                 switch (e.key.toLowerCase()) {
@@ -758,6 +766,10 @@ class GTN750Pane extends SimGlassBase {
         this.xpdrControl?.update(this.data);
         this.flightPlanManager?.setPosition(this.data.latitude, this.data.longitude);
         this.flightPlanManager?.setGroundSpeed(this.data.groundSpeed);
+        if (this.fplPage) {
+            this.fplPage.aircraftData = { latitude: this.data.latitude, longitude: this.data.longitude };
+            this.fplPage.magvar = this.data.magvar || 0;
+        }
         this.flightPlanManager?.updateWaypointDisplay(this.data, this.cdiManager);
 
         if (this.taxiPage) {
@@ -2669,6 +2681,7 @@ class GTN750Pane extends SimGlassBase {
             case 'fpl-airway': if (this.fplPage) this.fplPage.onInsertAirway(); break;
             case 'fpl-move-up': if (this.fplPage) this.fplPage.onMoveUp(); break;
             case 'fpl-move-down': if (this.fplPage) this.fplPage.onMoveDown(); break;
+            case 'fpl-invert': if (this.fplPage) this.fplPage.onInvert(); break;
             case 'fpl-clear': this.showClearFlightPlanConfirm(); break;
             case 'fly-plan': this.sendFlightPlanToAutopilot(); break;
             case 'save-fpl': this.showSaveFlightPlanModal(); break;
