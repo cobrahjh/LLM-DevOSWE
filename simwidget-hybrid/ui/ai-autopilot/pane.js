@@ -746,9 +746,13 @@ class AiAutopilotPane extends SimGlassBase {
                 });
         });
 
-        // SimBrief import
+        // SimBrief import / Clear flight plan toggle
         this.elements.simbriefImport?.addEventListener('click', () => {
-            this._importSimBrief();
+            if (this._currentPlan) {
+                this._clearFlightPlan();
+            } else {
+                this._importSimBrief();
+            }
         });
 
         // Runway selector - manual override of auto-detected runway
@@ -2001,6 +2005,49 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             setTimeout(() => { btn.textContent = '\u2708 FPL'; }, 2000);
         }
         btn.classList.remove('loading');
+    }
+
+    /** Clear current flight plan and detect nearest runway */
+    _clearFlightPlan() {
+        const btn = this.elements.simbriefImport;
+
+        // Clear flight plan state
+        this._currentPlan = null;
+
+        // Hide flight plan report
+        if (this.elements.fplReport) {
+            this.elements.fplReport.style.display = 'none';
+        }
+
+        // Clear flight plan in rule engine
+        if (this.ruleEngine) {
+            this.ruleEngine.setFlightPlan(null);
+        }
+
+        // Clear cruise altitude
+        this.flightPhase.targetCruiseAlt = 0;
+        if (this.ruleEngine) {
+            this.ruleEngine.setTargetCruiseAlt(0);
+        }
+
+        // Force immediate airport/runway detection
+        this._pollNearestAirport();
+
+        // Update button text
+        if (btn) {
+            btn.textContent = '\u2713 CLEARED';
+            setTimeout(() => { btn.textContent = '\u2708 FPL'; }, 2000);
+        }
+
+        // Log action
+        this._dbg('cmd', '<span class="val">Flight plan cleared</span> - nearest runway detection active');
+
+        // Broadcast to other panes
+        if (window.SafeChannel) {
+            window.SafeChannel.broadcast('simbrief-plan', null);
+        }
+
+        this._render();
     }
 
     // ── Airport/Runway Awareness ────────────────────────────
