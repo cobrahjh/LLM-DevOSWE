@@ -31,6 +31,24 @@ class SystemPage {
             showAirspace: true,
             showNavaids: true,
 
+            // Range Rings & Overlays
+            navRangeRing: false,
+            navRangeRingDistance: 10,  // nm
+            trackVector: false,
+            trackVectorLength: 60,     // seconds
+
+            // Auto Features
+            northUpAbove: 50,          // nm - switch to North Up above this range
+            northUpAboveEnabled: true,
+
+            // Visual Approach Aids
+            runwayExtensions: true,    // 5nm centerline projection
+
+            // Auto Zoom
+            autoZoom: false,
+            autoZoomMin: 2,            // nm
+            autoZoomMax: 100,          // nm
+
             // Data Fields
             dataFieldTL: 'gs',
             dataFieldTR: 'trk',
