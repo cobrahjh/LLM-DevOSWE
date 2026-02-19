@@ -3852,6 +3852,182 @@ body {
     cursor: pointer;
 }
 
+/* VCALC Page */
+.vcalc-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+    gap: 12px;
+}
+
+.vcalc-section {
+    background: var(--gtn-bg);
+    border: 1px solid var(--gtn-border);
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.vcalc-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gtn-cyan);
+    margin-bottom: 12px;
+}
+
+.vcalc-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vcalc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vcalc-label {
+    flex: 1;
+    font-size: 11px;
+    color: var(--gtn-gray);
+}
+
+.vcalc-input {
+    width: 100px;
+    padding: 6px 8px;
+    background: var(--gtn-dark);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-green);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--gtn-mono);
+    border-radius: 4px;
+    text-align: right;
+}
+
+.vcalc-unit {
+    font-size: 10px;
+    color: var(--gtn-gray);
+    width: 40px;
+}
+
+.vcalc-toggle, .vcalc-select {
+    padding: 6px 12px;
+    background: var(--gtn-accent);
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.vcalc-toggle:hover, .vcalc-select:hover {
+    background: var(--gtn-accent-hover, #0a5a7a);
+}
+
+.vcalc-toggle.disabled {
+    background: var(--gtn-border);
+    cursor: not-allowed;
+}
+
+.vcalc-output {
+    background: var(--gtn-dark);
+}
+
+.vcalc-status-bar, .vcalc-vs-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gtn-border);
+}
+
+.vcalc-status-label, .vcalc-vs-label {
+    font-size: 11px;
+    color: var(--gtn-gray);
+}
+
+.vcalc-status-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gtn-white);
+}
+
+.vcalc-vs-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gtn-green);
+    font-family: var(--gtn-mono);
+}
+
+.vcalc-data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 10px;
+}
+
+.vcalc-data-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vcalc-data-label {
+    font-size: 10px;
+    color: var(--gtn-gray);
+}
+
+.vcalc-data-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gtn-green);
+    font-family: var(--gtn-mono);
+}
+
+.vcalc-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vcalc-setup-row {
+    display: flex;
+    align-items: center;
+}
+
+.vcalc-checkbox-label {
+    font-size: 11px;
+    color: var(--gtn-white);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.vcalc-checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.vcalc-btn {
+    padding: 8px 16px;
+    background: var(--gtn-accent);
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.vcalc-btn:hover {
+    background: var(--gtn-accent-hover, #0a5a7a);
+}
+
 /* System Page */
 .gtn-sys-scroll {
     flex: 1;

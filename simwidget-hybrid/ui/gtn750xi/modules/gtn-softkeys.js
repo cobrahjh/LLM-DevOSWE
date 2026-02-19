@@ -169,10 +169,20 @@ class GTNSoftKeys {
         // AUX page
         this.registerContext('aux', [
             { label: 'TRIP', action: 'aux-trip' },
-            { label: 'LOGBK', action: 'aux-logbook' },
+            { label: 'FUEL', action: 'aux-fuel' },
+            { label: 'VCALC', action: 'goto-vcalc' },
             { label: 'TIMER', action: 'aux-timer' },
-            { label: 'CALC', action: 'aux-calc' },
-            { label: 'EXPORT', action: 'logbook-export' },
+            { label: 'LOGBK', action: 'aux-logbook' },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // VCALC page
+        this.registerContext('vcalc', [
+            { label: 'ENABLE', action: 'vcalc-enable', toggle: true },
+            { label: 'TARGET', action: 'vcalc-select-wpt' },
+            { label: 'MSG', action: 'vcalc-toggle-msg', toggle: true },
+            { label: 'RESET', action: 'vcalc-restore' },
+            { label: '', action: null },
             { label: 'BACK', action: 'back' }
         ]);
 

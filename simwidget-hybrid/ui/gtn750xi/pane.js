@@ -116,6 +116,7 @@ class GTN750XiPane extends SimGlassBase {
         this.fplPage = null;
         this.proceduresPage = null;
         this.auxPage = null;
+        this.vcalcPage = null;
         this.chartsPage = null;
         this.nearestPage = null;
         this.systemPage = null;
@@ -599,6 +600,7 @@ class GTN750XiPane extends SimGlassBase {
             charts: 'pages/page-charts.js',
             nrst: 'pages/page-nrst.js',
             aux: 'pages/page-aux.js',
+            vcalc: 'pages/page-vcalc.js',
             system: 'pages/page-system.js',
             taxi: 'pages/page-taxi.js',
             'user-wpt': 'pages/page-user-wpt.js'
@@ -802,6 +804,7 @@ class GTN750XiPane extends SimGlassBase {
         });
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.flightPlanManager?.checkApproachPhase(this.data);
+        this.updateVcalcPage();
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
@@ -1280,6 +1283,15 @@ class GTN750XiPane extends SimGlassBase {
                     }
                 }
                 break;
+            case 'vcalc':
+                if (!this.vcalcPage && typeof VcalcPage !== 'undefined') {
+                    this.vcalcPage = new VcalcPage({
+                        core: this.core,
+                        flightPlanManager: this.flightPlanManager,
+                        getData: () => this.data
+                    });
+                }
+                break;
             case 'charts':
                 if (!this.chartsPage && typeof ChartsPage !== 'undefined') {
                     this.chartsPage = new ChartsPage({
@@ -1476,7 +1488,7 @@ class GTN750XiPane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -1505,6 +1517,13 @@ class GTN750XiPane extends SimGlassBase {
         if (pageId === 'aux') {
             if (this.auxPage) this.auxPage.init();
             this.updateAuxPageData();
+        }
+        if (pageId === 'vcalc') {
+            if (this.vcalcPage) {
+                this.vcalcPage.init();
+                this.vcalcPage.enable();
+                this.vcalcPage.render();
+            }
         }
         if (pageId === 'taxi') {
             if (this.taxiPage) {
@@ -1568,6 +1587,11 @@ class GTN750XiPane extends SimGlassBase {
             if (this.elements.auxEta) this.elements.auxEta.textContent = tripData.eta;
             if (this.elements.auxFuel) this.elements.auxFuel.textContent = `${tripData.fuelRequired} GAL`;
         }
+    }
+
+    updateVcalcPage() {
+        if (!this.vcalcPage || this.pageManager?.getCurrentPageId() !== 'vcalc') return;
+        this.vcalcPage.update();
     }
 
     // ===== CANVAS SETUP =====
@@ -2741,11 +2765,15 @@ class GTN750XiPane extends SimGlassBase {
             case 'preview-proc': this.previewProcedure(); break;
             case 'view-proc-chart': if (this.proceduresPage) this.proceduresPage.viewChart(); break;
             case 'aux-trip': if (this.auxPage) this.auxPage.showSubpage('trip'); break;
-            case 'aux-util': if (this.auxPage) this.auxPage.showSubpage('util'); break;
+            case 'aux-fuel': if (this.auxPage) this.auxPage.showSubpage('fuel'); break;
+            case 'goto-vcalc': if (this.pageManager) this.pageManager.switchPage('vcalc'); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
-            case 'aux-calc': if (this.auxPage) this.auxPage.showSubpage('calc'); break;
             case 'aux-logbook': if (this.auxPage) this.auxPage.showSubpage('logbook'); break;
             case 'logbook-export': if (this.auxPage) this.auxPage.exportLogbook(); break;
+            case 'vcalc-enable': if (this.vcalcPage) { this.vcalcPage.enabled ? this.vcalcPage.disable() : this.vcalcPage.enable(); } break;
+            case 'vcalc-select-wpt': if (this.vcalcPage) this.vcalcPage.selectTargetWaypoint(); break;
+            case 'vcalc-toggle-msg': if (this.vcalcPage) { this.vcalcPage.settings.displayMessages = !this.vcalcPage.settings.displayMessages; this.vcalcPage.saveSettings(); this.vcalcPage.render(); } break;
+            case 'vcalc-restore': if (this.vcalcPage) this.vcalcPage.restoreDefaults(); break;
             case 'traffic-operate': case 'traffic-standby': case 'traffic-test':
                 this.setTrafficMode(action.split('-')[1]); break;
             case 'wx-simRadar': case 'wx-nexrad': case 'wx-metar': case 'wx-taf': case 'wx-satellite': case 'wx-winds': case 'wx-lightning':

@@ -940,6 +940,86 @@
                 </div>
             </div>
 
+            <!-- VCALC Page -->
+            <div class="gtn-page" id="page-vcalc" style="display:none;">
+                <div class="vcalc-container">
+                    <div class="vcalc-section">
+                        <div class="vcalc-title">VERTICAL CALCULATOR</div>
+
+                        <!-- Profile Inputs -->
+                        <div class="vcalc-profile">
+                            <div class="vcalc-row">
+                                <span class="vcalc-label">Target ALT</span>
+                                <input type="number" id="vcalc-target-alt" class="vcalc-input" value="3000" min="0" max="60000" step="100">
+                                <span class="vcalc-unit">FT</span>
+                            </div>
+
+                            <div class="vcalc-row">
+                                <span class="vcalc-label">Altitude Type</span>
+                                <button class="vcalc-toggle" id="vcalc-alt-type">MSL</button>
+                            </div>
+
+                            <div class="vcalc-row">
+                                <span class="vcalc-label">VS Profile</span>
+                                <input type="number" id="vcalc-vs-profile" class="vcalc-input" value="500" min="100" max="2000" step="50">
+                                <span class="vcalc-unit">FPM</span>
+                            </div>
+
+                            <div class="vcalc-row">
+                                <span class="vcalc-label">Offset</span>
+                                <input type="number" id="vcalc-offset" class="vcalc-input" value="5" min="0" max="50" step="0.5">
+                                <span class="vcalc-unit">NM</span>
+                            </div>
+
+                            <div class="vcalc-row">
+                                <span class="vcalc-label">Before/After</span>
+                                <button class="vcalc-toggle" id="vcalc-offset-dir">Before</button>
+                            </div>
+
+                            <div class="vcalc-row">
+                                <span class="vcalc-label">Target Waypoint</span>
+                                <button class="vcalc-select" id="vcalc-target-wpt">----</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Display -->
+                    <div class="vcalc-section vcalc-output">
+                        <div class="vcalc-status-bar">
+                            <span class="vcalc-status-label">Status</span>
+                            <span class="vcalc-status-value" id="vcalc-status">Inactive</span>
+                        </div>
+                        <div class="vcalc-vs-bar">
+                            <span class="vcalc-vs-label">VS Required</span>
+                            <span class="vcalc-vs-value" id="vcalc-vs-required">--- FPM</span>
+                        </div>
+                        <div class="vcalc-data-grid">
+                            <div class="vcalc-data-item">
+                                <span class="vcalc-data-label">Time to TOD</span>
+                                <span class="vcalc-data-value" id="vcalc-time-tod">--:--</span>
+                            </div>
+                            <div class="vcalc-data-item">
+                                <span class="vcalc-data-label">Dist to TOD</span>
+                                <span class="vcalc-data-value" id="vcalc-dist-tod">--- NM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Setup Controls -->
+                    <div class="vcalc-section vcalc-setup">
+                        <div class="vcalc-setup-row">
+                            <label class="vcalc-checkbox-label">
+                                <input type="checkbox" id="vcalc-display-messages" checked>
+                                Display Messages
+                            </label>
+                        </div>
+                        <div class="vcalc-setup-row">
+                            <button class="vcalc-btn" id="vcalc-restore-defaults">Restore Defaults</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- SYSTEM Page -->
             <div class="gtn-page" id="page-system" style="display:none;">
                 <div class="gtn-sys-scroll">
