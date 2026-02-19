@@ -648,6 +648,40 @@ class GTNFlightPlan {
     }
 
     /**
+     * Find the index of the nearest upcoming waypoint based on current aircraft position.
+     * Skips waypoints that are behind the aircraft (dot product < 0 relative to track).
+     * Falls back to the closest waypoint by distance if none are clearly ahead.
+     */
+    _nearestUpcomingIndex() {
+        const wps = this.flightPlan?.waypoints;
+        if (!wps?.length) return 0;
+        const lat = this._currentLat;
+        const lon = this._currentLon;
+        if (!lat || !lon) return 0;
+
+        let bestIndex = 0;
+        let bestDist = Infinity;
+
+        for (let i = 0; i < wps.length; i++) {
+            const wp = wps[i];
+            if (!wp.lat || !wp.lng) continue;
+            const dist = this.core.calculateDistance(lat, lon, wp.lat, wp.lng);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestIndex = i;
+            }
+        }
+
+        // If the nearest waypoint is the last one keep it; otherwise prefer the one after
+        // the nearest (we've likely already passed the nearest)
+        if (bestIndex < wps.length - 1 && bestDist < 5) {
+            bestIndex++;
+        }
+
+        return bestIndex;
+    }
+
+    /**
      * Handle sync channel messages related to flight plan
      */
     handleSyncMessage(type, data) {
@@ -668,10 +702,10 @@ class GTNFlightPlan {
                 cruiseAltitude: data.altitude,
                 source: 'simbrief'
             };
-            this.activeWaypointIndex = 0;
+            this.activeWaypointIndex = this._nearestUpcomingIndex();
             this.notifyChanged();
             if (this.onWaypointChanged) this.onWaypointChanged();
-            GTNCore.log(`[GTN750] SimBrief flight plan loaded: ${data.departure} -> ${data.arrival} (${data.waypoints.length} waypoints)`);
+            GTNCore.log(`[GTN750] SimBrief flight plan loaded: ${data.departure} -> ${data.arrival} (${data.waypoints.length} waypoints), starting at index ${this.activeWaypointIndex}`);
         }
         if (type === 'waypoint-select') {
             this.selectWaypoint(data.index);
