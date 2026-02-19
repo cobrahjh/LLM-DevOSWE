@@ -2055,6 +2055,13 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         const d = this._lastFlightData;
         if (!d || !d.latitude || !d.longitude) return;
 
+        // Validate coordinates are valid (not 0,0 or out of range)
+        const lat = parseFloat(d.latitude);
+        const lon = parseFloat(d.longitude);
+        if (isNaN(lat) || isNaN(lon)) return;
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return;
+        if (Math.abs(lat) < 0.01 && Math.abs(lon) < 0.01) return; // Reject 0,0 coordinates
+
         // Only poll when below 10000 AGL (relevant for takeoff/approach/landing)
         const agl = d.altitudeAGL || 0;
         if (agl > 10000) {
