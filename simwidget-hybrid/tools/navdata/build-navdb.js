@@ -93,11 +93,14 @@ async function main() {
     // Step 2: Parse
     const counts = await parseCIFP(CIFP_FILE, DB_PATH);
 
-    // Step 3: Verify
-    if (doVerify || true) { // Always verify
-        console.log('\n=== Verification ===\n');
-        const ok = await verify();
-        console.log(`\n${ok ? 'BUILD SUCCESSFUL' : 'BUILD COMPLETE (some verifications failed)'}`);
+    // Step 3: Verify (always runs — exits with code 1 on failure so caller knows)
+    console.log('\n=== Verification ===\n');
+    const ok = await verify();
+    if (ok) {
+        console.log('\nBUILD SUCCESSFUL');
+    } else {
+        console.error('\nBUILD FAILED: verification checks did not pass');
+        process.exit(1);
     }
 }
 

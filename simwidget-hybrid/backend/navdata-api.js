@@ -701,24 +701,42 @@ function setupNavdataRoutes(app) {
 function runUpdate() {
     updateJob = { status: 'downloading', progress: 25, message: 'Downloading FAA CIFP data...', startedAt: Date.now() };
 
+    const BACKUP_PATH = DB_PATH + '.bak';
+
+    // Back up existing DB before touching it
+    if (fs.existsSync(DB_PATH)) {
+        try { fs.copyFileSync(DB_PATH, BACKUP_PATH); } catch (e) { /* best-effort */ }
+    }
+
     // Close DB so SQLite file can be replaced
     if (db) {
         try { db.close(); } catch (e) { /* ignore */ }
         db = null;
     }
 
+    let stderrBuf = '';
     const buildScript = path.join(__dirname, '..', 'tools', 'navdata', 'build-navdb.js');
-    const child = execFile('node', [buildScript], { timeout: 300000 }, (err, stdout, stderr) => {
+    const child = execFile('node', [buildScript], { timeout: 300000 }, (err) => {
         if (err) {
-            console.error('[NavDB] Update failed:', err.message);
-            updateJob = { status: 'error', progress: 0, message: err.message, startedAt: updateJob.startedAt };
+            const detail = stderrBuf.trim().split('\n').pop() || err.message;
+            console.error('[NavDB] Update failed:', detail);
+            updateJob = { status: 'error', progress: 0, message: detail, startedAt: updateJob.startedAt };
+            // Restore backup so the server keeps working
+            if (fs.existsSync(BACKUP_PATH)) {
+                try { fs.copyFileSync(BACKUP_PATH, DB_PATH); } catch (e) { /* ignore */ }
+            }
         } else {
             console.log('[NavDB] Update complete');
             updateJob = { status: 'complete', progress: 100, message: 'AIRAC database updated successfully', startedAt: updateJob.startedAt };
+            // Remove backup now that the new DB is confirmed good
+            try { fs.unlinkSync(BACKUP_PATH); } catch (e) { /* ignore */ }
         }
         // Reopen DB
         openDatabase();
     });
+
+    // Capture stderr for meaningful error messages
+    child.stderr.on('data', (data) => { stderrBuf += data.toString(); });
 
     // Monitor stdout for phase changes
     child.stdout.on('data', (data) => {
