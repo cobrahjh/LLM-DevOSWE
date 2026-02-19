@@ -642,17 +642,28 @@ app.get('/api/flightplan', (req, res) => {
 // ── MSFS 2024 Flight Plan Import ────────────────────────────────────────────
 // Searches standard MSFS 2024 PLN locations, returns newest .PLN file parsed.
 app.get('/api/msfs/flightplan', (req, res) => {
-    const os = require('os');
-    const xml = require('fs');
-    const home = os.homedir();
-    const searchDirs = [
-        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024', 'MISSIONS', 'Custom', 'CustomFlight'),
-        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024', 'MISSIONS'),
-        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024'),
-        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator', 'MISSIONS', 'Custom', 'CustomFlight'),
-        path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator'),
-        path.join(home, 'AppData', 'Local', 'Packages', 'Microsoft.Limitless_8wekyb3d8bbwe', 'LocalState', 'MISSIONS', 'Custom', 'CustomFlight'),
-    ];
+    // Build list of candidate home directories — server may run as SYSTEM so
+    // os.homedir() returns the system profile; enumerate C:\Users\* instead.
+    const usersRoot = 'C:\\Users';
+    const homes = [];
+    try {
+        fs.readdirSync(usersRoot, { withFileTypes: true })
+            .filter(e => e.isDirectory() && !['Public', 'Default', 'Default User', 'All Users'].includes(e.name))
+            .forEach(e => homes.push(path.join(usersRoot, e.name)));
+    } catch (e) { /* fallback */ }
+    if (!homes.length) homes.push(require('os').homedir());
+
+    const searchDirs = [];
+    for (const home of homes) {
+        searchDirs.push(
+            path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024', 'MISSIONS', 'Custom', 'CustomFlight'),
+            path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024', 'MISSIONS'),
+            path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator 2024'),
+            path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator', 'MISSIONS', 'Custom', 'CustomFlight'),
+            path.join(home, 'AppData', 'Roaming', 'Microsoft Flight Simulator'),
+            path.join(home, 'AppData', 'Local', 'Packages', 'Microsoft.Limitless_8wekyb3d8bbwe', 'LocalState', 'MISSIONS', 'Custom', 'CustomFlight'),
+        );
+    }
 
     // Recursively find all .PLN files in a directory (max 3 levels deep)
     function findPln(dir, depth = 0) {
@@ -718,12 +729,13 @@ app.get('/api/msfs/flightplan', (req, res) => {
 
     const departure = tag('DepartureID');
     const arrival = tag('DestinationID');
-    const cruisingAlt = parseInt(tag('CruisingAlt')) || 0;
+    const rawAlt = parseFloat(tag('CruisingAlt') || '0');
+    const cruisingAlt = rawAlt < 0 ? 0 : Math.round(rawAlt);
     const title = tag('Title') || `${departure} to ${arrival}`;
 
     // Parse ATCWaypoints
     const wpMatches = [...content.matchAll(/<ATCWaypoint id="([^"]+)">([\s\S]*?)<\/ATCWaypoint>/g)];
-    const waypoints = wpMatches.map((m, i) => {
+    let waypoints = wpMatches.map((m) => {
         const id = m[1];
         const block = m[2];
         const typeM = block.match(/<ATCWaypointType>([^<]+)<\/ATCWaypointType>/);
@@ -732,6 +744,29 @@ app.get('/api/msfs/flightplan', (req, res) => {
         const type = typeM ? typeM[1].toLowerCase() : 'fix';
         return { ident: id, name: id, type, lat, lng, altitude: cruisingAlt };
     });
+
+    // If no ATCWaypoints, synthesise departure + arrival from navdb
+    if (waypoints.length === 0 && (departure || arrival)) {
+        const navDB = path.join(__dirname, 'data', 'navdb.sqlite');
+        try {
+            const Database = require('better-sqlite3');
+            const ndb = new Database(navDB, { readonly: true, fileMustExist: true });
+            const lookup = (icao) => ndb.prepare('SELECT lat, lon FROM airports WHERE icao = ?').get(icao);
+            if (departure) {
+                const row = lookup(departure);
+                waypoints.push({ ident: departure, name: departure, type: 'airport', lat: row ? row.lat : 0, lng: row ? row.lon : 0, altitude: 0 });
+            }
+            if (arrival && arrival !== departure) {
+                const row = lookup(arrival);
+                waypoints.push({ ident: arrival, name: arrival, type: 'airport', lat: row ? row.lat : 0, lng: row ? row.lon : 0, altitude: cruisingAlt });
+            }
+            ndb.close();
+        } catch (e) {
+            // navdb unavailable — push bare entries so flight plan manager at least knows the airports
+            if (departure) waypoints.push({ ident: departure, name: departure, type: 'airport', lat: 0, lng: 0, altitude: 0 });
+            if (arrival && arrival !== departure) waypoints.push({ ident: arrival, name: arrival, type: 'airport', lat: 0, lng: 0, altitude: 0 });
+        }
+    }
 
     res.json({
         source: 'msfs2024',
