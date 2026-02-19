@@ -59,11 +59,6 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
 
 /* Server output */
-.srv-output { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; padding: 6px 8px; height: 160px; overflow-y: auto; font-family: monospace; font-size: 10px; line-height: 1.5; }
-.srv-output .log-line { white-space: pre-wrap; word-break: break-all; }
-.srv-output .log-line.error { color: #f85149; }
-.srv-output .log-line.log { color: #c9d1d9; }
-.srv-output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
 
 /* Phases */
 .phase-grid { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -115,25 +110,14 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 <!-- Last command -->
 <div class="last-cmd" id="last-cmd">Loading...</div>
 
-<!-- Server Status -->
-<div class="section" style="margin-top:10px">
-  <div class="section-title">Server Status</div>
-  <div class="cards" id="srv-cards"><div class="card"><div class="card-label">Server</div><div class="card-val">Loading…</div></div></div>
-  <div class="btn-row" style="margin-top:6px">
-    <button class="btn green sm ctrl-btn" id="srv-start-btn" onclick="startServer()" style="display:none">▶ Start</button>
-    <button class="btn warn sm ctrl-btn" onclick="restartServer()">⟳ Restart</button>
-    <button class="btn red sm ctrl-btn" onclick="stopServer()">■ Stop</button>
-  </div>
-  <div id="srv-msg" style="display:none;margin-top:6px;font-size:10px;color:#d29922"></div>
-</div>
-
-<!-- Server Output -->
-<div class="section">
-  <div class="srv-output-header">
-    <div class="section-title" style="margin-bottom:0">Server Output</div>
-    <button class="btn red sm ctrl-btn" onclick="clearServerOutput()">Clear</button>
-  </div>
-  <div class="srv-output" id="srv-output"><span style="color:#8b949e">Loading…</span></div>
+<!-- Server Status (compact) -->
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px 10px;margin-top:10px;margin-bottom:10px">
+  <span style="font-size:9px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;flex-shrink:0">Server</span>
+  <div id="srv-cards" style="display:flex;gap:6px;flex-wrap:wrap;flex:1"></div>
+  <div id="srv-msg" style="display:none;font-size:10px;color:#d29922"></div>
+  <button class="btn green sm ctrl-btn" id="srv-start-btn" onclick="startServer()" style="display:none">▶ Start</button>
+  <button class="btn warn sm ctrl-btn" onclick="restartServer()">⟳ Restart</button>
+  <button class="btn red sm ctrl-btn" onclick="stopServer()">■ Stop</button>
 </div>
 
 <!-- Enable/Disable -->
@@ -532,23 +516,28 @@ async function pollHealth() {
   }
 }
 
+function chip(label, val, cls) {
+  const colors = { ok: '#3fb950', warn: '#d29922', err: '#f85149', '': '#8b949e' };
+  const col = colors[cls] || colors[''];
+  return `<span style="font-size:10px;font-family:monospace;color:#8b949e">${label}: <strong style="color:${col}">${val}</strong></span>`;
+}
+
 function renderHealth(d) {
   const sc = d.simconnect || {};
   const mem = d.memory || {};
   document.getElementById('srv-cards').innerHTML = [
-    card('Server', 'ONLINE', 'ok'),
-    card('Version', d.version || '?', ''),
-    card('Uptime', d.uptimeFormatted || '?', 'ok'),
-    card('SimConnect', sc.connected ? 'CONNECTED' : 'DISCONNECTED', sc.connected ? 'ok' : 'warn'),
-    card('WS Clients', String(d.websocket?.clients ?? '?'), ''),
-    card('Memory', mem.heapUsed || '?', ''),
+    chip('v', d.version || '?', ''),
+    chip('up', d.uptimeFormatted || '?', 'ok'),
+    chip('SimConnect', sc.connected ? 'OK' : 'OFF', sc.connected ? 'ok' : 'warn'),
+    chip('WS', String(d.websocket?.clients ?? '?'), ''),
+    chip('mem', mem.heapUsed || '?', ''),
   ].join('');
   document.getElementById('srv-start-btn').style.display = 'none';
   hideSrvMsg();
 }
 
 function renderHealthOffline() {
-  document.getElementById('srv-cards').innerHTML = card('Server', 'OFFLINE', 'err');
+  document.getElementById('srv-cards').innerHTML = chip('Server', 'OFFLINE', 'err');
   document.getElementById('srv-start-btn').style.display = '';
 }
 
@@ -589,35 +578,6 @@ async function startServer() {
 pollHealth();
 setInterval(pollHealth, 10000);
 
-// ── Server output log ─────────────────────────────────────────────────────
-let lastLogTotal = 0;
-
-async function pollServerOutput() {
-  try {
-    const r = await fetch(BASE + '/api/logs/live?limit=200');
-    const d = await r.json();
-    if (d.total === lastLogTotal) return; // no new lines
-    lastLogTotal = d.total;
-    const el = document.getElementById('srv-output');
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
-    el.innerHTML = d.lines.map(entry => {
-      const ts = new Date(entry.t).toLocaleTimeString();
-      return `<div class="log-line ${entry.level}">[${ts}] ${escHtml(entry.line)}</div>`;
-    }).join('');
-    if (atBottom) el.scrollTop = el.scrollHeight;
-  } catch(e) { /* server may be restarting */ }
-}
-
-async function clearServerOutput() {
-  try {
-    await fetch(BASE + '/api/logs/clear', { method: 'POST' });
-    lastLogTotal = 0;
-    document.getElementById('srv-output').innerHTML = '<span style="color:#8b949e">Cleared</span>';
-  } catch(e) { toast('err', 'Clear failed: ' + e.message); }
-}
-
-pollServerOutput();
-setInterval(pollServerOutput, 3000);
 </script>
 </body>
 </html>
