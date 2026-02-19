@@ -171,7 +171,17 @@ h2 { color: #58a6ff; font-size: 13px; font-weight: bold; margin: 0 0 10px; }
 
 <!-- Takeoff Tuning -->
 <div class="section">
-  <div class="section-title">Takeoff Tuning <span style="color:#8b949e;font-size:9px">(live — applied immediately)</span></div>
+  <div class="section-title" style="display:flex;align-items:center;gap:10px">
+    Takeoff Tuning
+    <span style="color:#8b949e;font-size:9px">(auto-save after</span>
+    <select id="debounce-ms" style="background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:3px;padding:1px 4px;font-size:10px;font-family:monospace" onchange="saveDebounceMs()">
+      <option value="600">600ms</option>
+      <option value="1000">1000ms</option>
+      <option value="3000">3000ms</option>
+      <option value="6000">6000ms</option>
+    </select>
+    <span style="color:#8b949e;font-size:9px">)</span>
+  </div>
   <div class="tuning-grid" id="tuning-grid"></div>
   <div class="btn-row" style="margin-top:8px">
     <button class="btn green sm ctrl-btn" onclick="applyAllTuning()">Apply All</button>
@@ -305,6 +315,7 @@ let autoTimer = null;
 // ── Boot ──────────────────────────────────────────────────────────────────
 buildTuningGrid();
 buildPhaseGrid();
+loadDebounceMs();
 poll();
 loadTuning();
 autoTimer = setInterval(poll, 3000);
@@ -443,9 +454,23 @@ async function requestTaxi() {
 
 // ── Tuning ────────────────────────────────────────────────────────────────
 const _tuneTimers = {};
+function getDebounceMs() {
+  const sel = document.getElementById('debounce-ms');
+  return sel ? parseInt(sel.value) : 600;
+}
+function saveDebounceMs() {
+  const sel = document.getElementById('debounce-ms');
+  if (sel) localStorage.setItem('tuneDebounceMs', sel.value);
+}
+function loadDebounceMs() {
+  const saved = localStorage.getItem('tuneDebounceMs');
+  if (!saved) return;
+  const sel = document.getElementById('debounce-ms');
+  if (sel) sel.value = saved;
+}
 function debouncedApply(key) {
   clearTimeout(_tuneTimers[key]);
-  _tuneTimers[key] = setTimeout(() => applyOne(key), 600);
+  _tuneTimers[key] = setTimeout(() => applyOne(key), getDebounceMs());
 }
 
 function buildTuningGrid() {
