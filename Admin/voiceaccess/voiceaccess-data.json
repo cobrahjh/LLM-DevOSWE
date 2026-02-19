@@ -75,6 +75,21 @@
       "persona": "heather",
       "source": "admin",
       "timestamp": "2026-02-16T07:19:58.919Z"
+    },
+    {
+      "id": "mlt9fpvuziip",
+      "text": "hello",
+      "parsed": {
+        "type": "passthrough",
+        "target": "claude"
+      },
+      "result": {
+        "success": true,
+        "response": "Sent to claude: \"hello\""
+      },
+      "persona": "heather",
+      "source": "dashboard",
+      "timestamp": "2026-02-19T09:30:08.202Z"
     }
   ]
 }
