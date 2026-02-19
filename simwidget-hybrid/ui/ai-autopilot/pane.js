@@ -2032,9 +2032,6 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             this.ruleEngine.setTargetCruiseAlt(0);
         }
 
-        // Force immediate airport/runway detection
-        this._pollNearestAirport();
-
         // Update button text
         if (btn) {
             btn.textContent = '\u2713 CLEARED';
@@ -2042,7 +2039,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
         }
 
         // Log action
-        this._dbg('cmd', '<span class="val">Flight plan cleared</span> - nearest runway detection active');
+        this._dbg('cmd', '<span class="val">Flight plan cleared</span>');
 
         // Broadcast to other panes
         if (window.SafeChannel) {
