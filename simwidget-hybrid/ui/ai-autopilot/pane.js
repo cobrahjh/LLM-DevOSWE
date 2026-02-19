@@ -680,6 +680,7 @@ class AiAutopilotPane extends SimGlassBase {
         this.elements.dsCmd = document.getElementById('ds-cmd');
         this.elements.dsLlmRt = document.getElementById('ds-llm-rt');
         this.elements.simbriefImport = document.getElementById('simbrief-import');
+        this.elements.clearPlan = document.getElementById('clear-plan');
 
         // Airport bar
         this.elements.airportBar = document.getElementById('airport-bar');
@@ -749,6 +750,11 @@ class AiAutopilotPane extends SimGlassBase {
         // SimBrief import/reload
         this.elements.simbriefImport?.addEventListener('click', () => {
             this._importSimBrief();
+        });
+
+        // Clear flight plan and detect nearest runway
+        this.elements.clearPlan?.addEventListener('click', () => {
+            this._clearFlightPlan();
         });
 
         // Runway selector - manual override of auto-detected runway
