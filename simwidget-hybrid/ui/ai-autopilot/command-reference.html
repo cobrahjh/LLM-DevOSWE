@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command & Control Reference</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New',monospace; font-size: 11px; display: flex; flex-direction: column; }
+
+/* ── Header ── */
+.hdr { flex-shrink: 0; padding: 5px 12px; display: flex; align-items: center; gap: 10px; background: #0b1018; border-bottom: 1px solid #1a2030; }
+.hdr-title { color: #4fc3f7; font-size: 13px; font-weight: bold; letter-spacing: 1px; }
+.badge { font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; border: 1px solid; }
+.badge-ws-ok  { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
+.badge-ws-err { border-color: #f85149; color: #f85149; background: #2a0d0d; }
+.hdr-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.search { background: #0d1218; border: 1px solid #1a2030; color: #c0c8d8; border-radius: 3px; padding: 3px 8px; font-size: 11px; font-family: inherit; width: 180px; outline: none; }
+.search:focus { border-color: #4fc3f7; }
+.hdr-stat { font-size: 10px; color: #506070; }
+.hdr-stat span { color: #c0c8d8; }
+
+/* ── Layout ── */
+.body { flex: 1; display: flex; overflow: hidden; gap: 1px; background: #1a2030; }
+.col-left  { width: 380px; flex-shrink: 0; overflow-y: auto; background: #070b0f; }
+.col-mid   { flex: 1; overflow-y: auto; background: #070b0f; min-width: 0; }
+.col-right { width: 340px; flex-shrink: 0; overflow-y: auto; background: #070b0f; }
+
+/* ── Command state board (third column) ── */
+.csb-hdr { padding: 5px 10px 4px; background: #0b1018; border-bottom: 1px solid #1a2030; position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 6px; }
+.csb-row { display: grid; grid-template-columns: 1fr 64px 46px 36px; gap: 4px; padding: 3px 10px; border-bottom: 1px solid #0d1218; align-items: center; cursor: default; }
+.csb-row:hover { background: #0d1218; }
+.csb-row.flash { background: rgba(79,195,247,0.10); }
+.csb-name { font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.csb-name.ctrl { color: #ef5350; }
+.csb-name.ap   { color: #3fb950; }
+.csb-name.eng  { color: #ffa726; }
+.csb-name.nav  { color: #42a5f5; }
+.csb-name.sys  { color: #ce93d8; }
+.csb-val  { font-size: 11px; font-weight: bold; color: #4fc3f7; text-align: right; }
+.csb-val.dim  { color: #252f38; }
+.csb-val.ok   { color: #3fb950; }
+.csb-val.warn { color: #ffab40; }
+.csb-val.err  { color: #f85149; }
+.csb-ago  { font-size: 9px; color: #303840; text-align: right; }
+.csb-cnt  { font-size: 9px; color: #303840; text-align: right; }
+.csb-subhdr { padding: 3px 10px 2px; background: #090d12; border-bottom: 1px solid #0d1218; }
+.csb-subhdr span { font-size: 9px; color: #252f38; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── Section ── */
+.section { margin-bottom: 0; }
+.sec-hdr { padding: 5px 10px 4px; background: #0b1018; border-bottom: 1px solid #1a2030; position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 6px; }
+.sec-title { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+.sec-title.ctrl  { color: #ef5350; }
+.sec-title.ap    { color: #3fb950; }
+.sec-title.eng   { color: #ffa726; }
+.sec-title.nav   { color: #42a5f5; }
+.sec-title.sys   { color: #ce93d8; }
+.sec-title.in    { color: #4fc3f7; }
+.sec-count { font-size: 9px; color: #303840; margin-left: auto; }
+
+/* ── Command row ── */
+.cmd-row { display: grid; grid-template-columns: 200px 80px 60px 1fr; gap: 6px; padding: 3px 10px; border-bottom: 1px solid #0d1218; align-items: center; }
+.cmd-row:hover { background: #0d1218; }
+.cmd-row.hidden { display: none; }
+.cmd-name { font-size: 11px; font-weight: bold; }
+.cmd-name.ctrl  { color: #ef5350; }
+.cmd-name.ap    { color: #3fb950; }
+.cmd-name.eng   { color: #ffa726; }
+.cmd-name.nav   { color: #42a5f5; }
+.cmd-name.sys   { color: #ce93d8; }
+.cmd-range { font-size: 9px; color: #506070; }
+.cmd-live  { font-size: 11px; font-weight: bold; color: #4fc3f7; text-align: right; }
+.cmd-live.ok   { color: #3fb950; }
+.cmd-live.warn { color: #ffab40; }
+.cmd-live.err  { color: #f85149; }
+.cmd-live.dim  { color: #303840; }
+.cmd-desc { font-size: 9px; color: #3a4858; }
+.cmd-ago  { font-size: 9px; color: #303840; }
+
+/* ── Activity dot ── */
+.act-dot { width: 6px; height: 6px; border-radius: 50%; background: #1a2030; flex-shrink: 0; transition: background 0.4s; }
+.act-dot.active { background: #4fc3f7; }
+.act-dot.recent { background: #ffab40; }
+
+/* ── Input (flight data) rows ── */
+.inp-row { display: grid; grid-template-columns: 180px 90px 90px 1fr; gap: 6px; padding: 3px 10px; border-bottom: 1px solid #0d1218; align-items: center; }
+.inp-row:hover { background: #0d1218; }
+.inp-row.hidden { display: none; }
+.inp-name { font-size: 10px; color: #506070; }
+.inp-val  { font-size: 11px; font-weight: bold; color: #4fc3f7; text-align: right; }
+.inp-val.ok   { color: #3fb950; }
+.inp-val.warn { color: #ffab40; }
+.inp-val.err  { color: #f85149; }
+.inp-val.dim  { color: #303840; }
+.inp-unit { font-size: 9px; color: #3a4858; }
+.inp-desc { font-size: 9px; color: #303840; }
+
+/* ── Gauge bar in row ── */
+.mini-bar-wrap { width: 50px; height: 4px; background: #1a2030; border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 4px; }
+.mini-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; background: #4fc3f7; }
+
+/* ── Last fired banner ── */
+.last-fired { flex-shrink: 0; padding: 3px 12px; background: #0a0e14; border-top: 1px solid #1a2030; display: flex; gap: 10px; align-items: center; min-height: 24px; font-size: 10px; }
+.lf-lbl { color: #3a4858; text-transform: uppercase; font-size: 9px; flex-shrink: 0; }
+.lf-val { color: #4fc3f7; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a2030; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <span class="hdr-title">COMMAND &amp; CONTROL REFERENCE</span>
+  <span class="badge badge-ws-err" id="ws-badge">WS OFF</span>
+  <div class="hdr-stat">Phase <span id="h-phase">—</span></div>
+  <div class="hdr-stat">Sub <span id="h-sub">—</span></div>
+  <div class="hdr-right">
+    <input class="search" id="search" placeholder="Search commands…" oninput="filterAll()">
+    <div class="hdr-stat">Last: <span id="h-last">—</span></div>
+  </div>
+</div>
+
+<div class="body">
+
+  <!-- Left: Commands & Controls -->
+  <div class="col-left">
+
+    <!-- Control Surfaces -->
+    <div class="section" id="sec-ctrl">
+      <div class="sec-hdr">
+        <span class="sec-title ctrl">Control Surfaces</span>
+        <span class="sec-count" id="cnt-ctrl"></span>
+      </div>
+      <!-- name | range | live | desc -->
+      <div class="cmd-row" data-cmd="AXIS_ELEVATOR_SET">
+        <span class="cmd-name ctrl">AXIS_ELEVATOR_SET</span>
+        <span class="cmd-range">−100 → +100 %</span>
+        <span class="cmd-live dim" id="live-AXIS_ELEVATOR_SET">—</span>
+        <span class="cmd-desc">Elevator position. Negative = nose up.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AXIS_AILERONS_SET">
+        <span class="cmd-name ctrl">AXIS_AILERONS_SET</span>
+        <span class="cmd-range">−100 → +100 %</span>
+        <span class="cmd-live dim" id="live-AXIS_AILERONS_SET">—</span>
+        <span class="cmd-desc">Aileron position. Positive = roll left.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AXIS_RUDDER_SET">
+        <span class="cmd-name ctrl">AXIS_RUDDER_SET</span>
+        <span class="cmd-range">−100 → +100 %</span>
+        <span class="cmd-live dim" id="live-AXIS_RUDDER_SET">—</span>
+        <span class="cmd-desc">Rudder position. Differential + P-factor bias.</span>
+      </div>
+      <div class="cmd-row" data-cmd="STEERING_SET">
+        <span class="cmd-name ctrl">STEERING_SET</span>
+        <span class="cmd-range">angle °</span>
+        <span class="cmd-live dim" id="live-STEERING_SET">—</span>
+        <span class="cmd-desc">Nosewheel steering. Used below ~30 kt GS.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AXIS_LEFT_BRAKE_SET">
+        <span class="cmd-name ctrl">AXIS_LEFT_BRAKE_SET</span>
+        <span class="cmd-range">0 → 100 %</span>
+        <span class="cmd-live dim" id="live-AXIS_LEFT_BRAKE_SET">—</span>
+        <span class="cmd-desc">Left wheel brake. Differential braking for ground steering.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AXIS_RIGHT_BRAKE_SET">
+        <span class="cmd-name ctrl">AXIS_RIGHT_BRAKE_SET</span>
+        <span class="cmd-range">0 → 100 %</span>
+        <span class="cmd-live dim" id="live-AXIS_RIGHT_BRAKE_SET">—</span>
+        <span class="cmd-desc">Right wheel brake. Differential braking for ground steering.</span>
+      </div>
+      <div class="cmd-row" data-cmd="ELEV_TRIM_UP">
+        <span class="cmd-name ctrl">ELEV_TRIM_UP</span>
+        <span class="cmd-range">toggle</span>
+        <span class="cmd-live dim" id="live-ELEV_TRIM_UP">—</span>
+        <span class="cmd-desc">Elevator trim nose-up. Fired during ROTATE sub-phase.</span>
+      </div>
+    </div>
+
+    <!-- Engine -->
+    <div class="section" id="sec-eng">
+      <div class="sec-hdr">
+        <span class="sec-title eng">Engine / Fuel</span>
+        <span class="sec-count" id="cnt-eng"></span>
+      </div>
+      <div class="cmd-row" data-cmd="THROTTLE_SET">
+        <span class="cmd-name eng">THROTTLE_SET</span>
+        <span class="cmd-range">0 → 100 %</span>
+        <span class="cmd-live dim" id="live-THROTTLE_SET">—</span>
+        <span class="cmd-desc">Engine throttle lever position.</span>
+      </div>
+      <div class="cmd-row" data-cmd="MIXTURE_SET">
+        <span class="cmd-name eng">MIXTURE_SET</span>
+        <span class="cmd-range">0 → 100 %</span>
+        <span class="cmd-live dim" id="live-MIXTURE_SET">—</span>
+        <span class="cmd-desc">Mixture lever position (% full rich).</span>
+      </div>
+      <div class="cmd-row" data-cmd="MIXTURE_RICH">
+        <span class="cmd-name eng">MIXTURE_RICH</span>
+        <span class="cmd-range">toggle</span>
+        <span class="cmd-live dim" id="live-MIXTURE_RICH">—</span>
+        <span class="cmd-desc">Set mixture to full rich.</span>
+      </div>
+      <div class="cmd-row" data-cmd="MIXTURE_LEAN">
+        <span class="cmd-name eng">MIXTURE_LEAN</span>
+        <span class="cmd-range">toggle</span>
+        <span class="cmd-live dim" id="live-MIXTURE_LEAN">—</span>
+        <span class="cmd-desc">Set mixture to lean.</span>
+      </div>
+      <div class="cmd-row" data-cmd="ENGINE_AUTO_START">
+        <span class="cmd-name eng">ENGINE_AUTO_START</span>
+        <span class="cmd-range">toggle</span>
+        <span class="cmd-live dim" id="live-ENGINE_AUTO_START">—</span>
+        <span class="cmd-desc">Auto-start engine. Retried every 8 s if RPM &lt; 500.</span>
+      </div>
+    </div>
+
+    <!-- Autopilot Modes -->
+    <div class="section" id="sec-ap">
+      <div class="sec-hdr">
+        <span class="sec-title ap">Autopilot Modes</span>
+        <span class="sec-count" id="cnt-ap"></span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_MASTER">
+        <span class="cmd-name ap">AP_MASTER</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_MASTER">—</span>
+        <span class="cmd-desc">Autopilot master on/off.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_HDG_HOLD">
+        <span class="cmd-name ap">AP_HDG_HOLD</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_HDG_HOLD">—</span>
+        <span class="cmd-desc">Heading hold mode.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_ALT_HOLD">
+        <span class="cmd-name ap">AP_ALT_HOLD</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_ALT_HOLD">—</span>
+        <span class="cmd-desc">Altitude hold mode.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_VS_HOLD">
+        <span class="cmd-name ap">AP_VS_HOLD</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_VS_HOLD">—</span>
+        <span class="cmd-desc">Vertical speed hold mode.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_APR_HOLD">
+        <span class="cmd-name ap">AP_APR_HOLD</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_APR_HOLD">—</span>
+        <span class="cmd-desc">Approach/ILS hold mode.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_BC_HOLD">
+        <span class="cmd-name ap">AP_BC_HOLD</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_BC_HOLD">—</span>
+        <span class="cmd-desc">Back-course hold mode.</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_PANEL_SPEED_HOLD">
+        <span class="cmd-name ap">AP_PANEL_SPEED_HOLD</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_PANEL_SPEED_HOLD">—</span>
+        <span class="cmd-desc">Airspeed hold (autothrottle).</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_VNAV">
+        <span class="cmd-name ap">AP_VNAV</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-AP_VNAV">—</span>
+        <span class="cmd-desc">Vertical NAV mode.</span>
+      </div>
+    </div>
+
+    <!-- Autopilot Values -->
+    <div class="section" id="sec-nav">
+      <div class="sec-hdr">
+        <span class="sec-title nav">Autopilot Set Values</span>
+        <span class="sec-count" id="cnt-nav"></span>
+      </div>
+      <div class="cmd-row" data-cmd="HEADING_BUG_SET">
+        <span class="cmd-name nav">HEADING_BUG_SET</span>
+        <span class="cmd-range">0 → 359 °</span>
+        <span class="cmd-live dim" id="live-HEADING_BUG_SET">—</span>
+        <span class="cmd-desc">AP heading bug (degrees magnetic).</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_ALT_VAR_SET_ENGLISH">
+        <span class="cmd-name nav">AP_ALT_VAR_SET_ENGLISH</span>
+        <span class="cmd-range">0 → 41000 ft</span>
+        <span class="cmd-live dim" id="live-AP_ALT_VAR_SET_ENGLISH">—</span>
+        <span class="cmd-desc">AP target altitude (feet MSL).</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_VS_VAR_SET_ENGLISH">
+        <span class="cmd-name nav">AP_VS_VAR_SET_ENGLISH</span>
+        <span class="cmd-range">−6000 → +6000 fpm</span>
+        <span class="cmd-live dim" id="live-AP_VS_VAR_SET_ENGLISH">—</span>
+        <span class="cmd-desc">AP target vertical speed (fpm).</span>
+      </div>
+      <div class="cmd-row" data-cmd="AP_SPD_VAR_SET">
+        <span class="cmd-name nav">AP_SPD_VAR_SET</span>
+        <span class="cmd-range">0 → 300 kt</span>
+        <span class="cmd-live dim" id="live-AP_SPD_VAR_SET">—</span>
+        <span class="cmd-desc">AP target airspeed (knots IAS).</span>
+      </div>
+    </div>
+
+    <!-- Systems -->
+    <div class="section" id="sec-sys">
+      <div class="sec-hdr">
+        <span class="sec-title sys">Systems</span>
+        <span class="sec-count" id="cnt-sys"></span>
+      </div>
+      <div class="cmd-row" data-cmd="FLAPS_UP">
+        <span class="cmd-name sys">FLAPS_UP</span>
+        <span class="cmd-range">toggle</span>
+        <span class="cmd-live dim" id="live-FLAPS_UP">—</span>
+        <span class="cmd-desc">Retract flaps one position.</span>
+      </div>
+      <div class="cmd-row" data-cmd="FLAPS_DOWN">
+        <span class="cmd-name sys">FLAPS_DOWN</span>
+        <span class="cmd-range">count / bool</span>
+        <span class="cmd-live dim" id="live-FLAPS_DOWN">—</span>
+        <span class="cmd-desc">Extend flaps. Value = number of notches.</span>
+      </div>
+      <div class="cmd-row" data-cmd="PARKING_BRAKE_SET">
+        <span class="cmd-name sys">PARKING_BRAKE_SET</span>
+        <span class="cmd-range">0 = off · 1 = on</span>
+        <span class="cmd-live dim" id="live-PARKING_BRAKE_SET">—</span>
+        <span class="cmd-desc">Parking brake state.</span>
+      </div>
+      <div class="cmd-row" data-cmd="LANDING_LIGHTS_TOGGLE">
+        <span class="cmd-name sys">LANDING_LIGHTS_TOGGLE</span>
+        <span class="cmd-range">toggle</span>
+        <span class="cmd-live dim" id="live-LANDING_LIGHTS_TOGGLE">—</span>
+        <span class="cmd-desc">Toggle landing lights. Off after departure.</span>
+      </div>
+      <div class="cmd-row" data-cmd="QUICK_PREFLIGHT">
+        <span class="cmd-name sys">QUICK_PREFLIGHT</span>
+        <span class="cmd-range">boolean</span>
+        <span class="cmd-live dim" id="live-QUICK_PREFLIGHT">—</span>
+        <span class="cmd-desc">Remove chocks/covers. Sent once at PREFLIGHT.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Middle: Flight Data Inputs -->
+  <div class="col-mid">
+    <div class="section">
+      <div class="sec-hdr">
+        <span class="sec-title in">Flight Data Inputs (SimConnect → Rule Engine)</span>
+      </div>
+
+      <!-- Flight Dynamics -->
+      <div class="sec-hdr" style="position:relative;background:#090d12;padding-left:20px">
+        <span style="font-size:9px;color:#303840;text-transform:uppercase;letter-spacing:1px">Flight Dynamics</span>
+      </div>
+      <div class="inp-row" data-inp="speed">
+        <span class="inp-name">AIRSPEED INDICATED</span>
+        <span class="inp-val dim" id="in-speed">—</span>
+        <span class="inp-unit">kt IAS</span>
+        <span class="inp-desc">fd.speed — primary speed reference for all engines</span>
+      </div>
+      <div class="inp-row" data-inp="groundSpeed">
+        <span class="inp-name">GROUND VELOCITY</span>
+        <span class="inp-val dim" id="in-gs">—</span>
+        <span class="inp-unit">kt</span>
+        <span class="inp-desc">fd.groundSpeed — takeoff roll transitions, taxi throttle</span>
+      </div>
+      <div class="inp-row" data-inp="altitude">
+        <span class="inp-name">INDICATED ALTITUDE</span>
+        <span class="inp-val dim" id="in-alt">—</span>
+        <span class="inp-unit">ft MSL</span>
+        <span class="inp-desc">fd.altitude — density factor for control authority</span>
+      </div>
+      <div class="inp-row" data-inp="altitudeAGL">
+        <span class="inp-name">ALTITUDE ABOVE GROUND</span>
+        <span class="inp-val dim" id="in-agl">—</span>
+        <span class="inp-unit">ft AGL</span>
+        <span class="inp-desc">fd.altitudeAGL — phase transitions, flap schedule</span>
+      </div>
+      <div class="inp-row" data-inp="verticalSpeed">
+        <span class="inp-name">VERTICAL SPEED</span>
+        <span class="inp-val dim" id="in-vs">—</span>
+        <span class="inp-unit">fpm</span>
+        <span class="inp-desc">fd.verticalSpeed — VS adaptation, envelope monitoring</span>
+      </div>
+      <div class="inp-row" data-inp="pitch">
+        <span class="inp-name">PLANE PITCH DEGREES</span>
+        <span class="inp-val dim" id="in-pitch">—</span>
+        <span class="inp-unit">°</span>
+        <span class="inp-desc">fd.pitch — primary pitch control feedback</span>
+      </div>
+      <div class="inp-row" data-inp="bank">
+        <span class="inp-name">PLANE BANK DEGREES</span>
+        <span class="inp-val dim" id="in-bank">—</span>
+        <span class="inp-unit">°</span>
+        <span class="inp-desc">fd.bank — aileron control feedback, envelope</span>
+      </div>
+      <div class="inp-row" data-inp="heading">
+        <span class="inp-name">PLANE HEADING TRUE</span>
+        <span class="inp-val dim" id="in-hdg">—</span>
+        <span class="inp-unit">°</span>
+        <span class="inp-desc">fd.heading — ground steering, heading bug</span>
+      </div>
+
+      <!-- Engine & Systems -->
+      <div class="sec-hdr" style="position:relative;background:#090d12;padding-left:20px">
+        <span style="font-size:9px;color:#303840;text-transform:uppercase;letter-spacing:1px">Engine &amp; Systems</span>
+      </div>
+      <div class="inp-row" data-inp="throttle">
+        <span class="inp-name">THROTTLE LEVER POSITION</span>
+        <span class="inp-val dim" id="in-thr">—</span>
+        <span class="inp-unit">%</span>
+        <span class="inp-desc">fd.throttle — P-factor bias trigger (&gt;50%), diagnostics</span>
+      </div>
+      <div class="inp-row" data-inp="mixture">
+        <span class="inp-name">MIXTURE LEVER POSITION</span>
+        <span class="inp-val dim" id="in-mix">—</span>
+        <span class="inp-unit">%</span>
+        <span class="inp-desc">fd.mixture — displayed, used in envelope weight calc</span>
+      </div>
+      <div class="inp-row" data-inp="engineRpm">
+        <span class="inp-name">ENG RPM</span>
+        <span class="inp-val dim" id="in-rpm">—</span>
+        <span class="inp-unit">RPM</span>
+        <span class="inp-desc">fd.engineRpm — engine start retry trigger (&lt;500)</span>
+      </div>
+      <div class="inp-row" data-inp="flapsIndex">
+        <span class="inp-name">FLAPS INDEX</span>
+        <span class="inp-val dim" id="in-flaps">—</span>
+        <span class="inp-unit">0–4</span>
+        <span class="inp-desc">fd.flapsIndex — flap schedule in approach</span>
+      </div>
+      <div class="inp-row" data-inp="gearDown">
+        <span class="inp-name">GEAR POSITION</span>
+        <span class="inp-val dim" id="in-gear">—</span>
+        <span class="inp-unit">bool</span>
+        <span class="inp-desc">fd.gearDown — gear state monitoring</span>
+      </div>
+      <div class="inp-row" data-inp="parkingBrake">
+        <span class="inp-name">BRAKE PARKING INDICATOR</span>
+        <span class="inp-val dim" id="in-brk">—</span>
+        <span class="inp-unit">bool</span>
+        <span class="inp-desc">fd.parkingBrake — diagnostics, STUCK_GS0 check</span>
+      </div>
+      <div class="inp-row" data-inp="onGround">
+        <span class="inp-name">SIM ON GROUND</span>
+        <span class="inp-val dim" id="in-gnd">—</span>
+        <span class="inp-unit">bool</span>
+        <span class="inp-desc">fd.onGround — ROTATE→LIFTOFF transition, brake logic</span>
+      </div>
+      <div class="inp-row" data-inp="fuelTotal">
+        <span class="inp-name">FUEL TOTAL QUANTITY</span>
+        <span class="inp-val dim" id="in-fuel">—</span>
+        <span class="inp-unit">gal</span>
+        <span class="inp-desc">fd.fuelTotal — weight estimation for stall speed</span>
+      </div>
+
+      <!-- Autopilot feedback -->
+      <div class="sec-hdr" style="position:relative;background:#090d12;padding-left:20px">
+        <span style="font-size:9px;color:#303840;text-transform:uppercase;letter-spacing:1px">Autopilot Feedback</span>
+      </div>
+      <div class="inp-row" data-inp="apMaster">
+        <span class="inp-name">AUTOPILOT MASTER</span>
+        <span class="inp-val dim" id="in-apm">—</span>
+        <span class="inp-unit">bool</span>
+        <span class="inp-desc">fd.apMaster — AP state reference</span>
+      </div>
+      <div class="inp-row" data-inp="apHdgSet">
+        <span class="inp-name">AP HEADING BUG</span>
+        <span class="inp-val dim" id="in-aphdg">—</span>
+        <span class="inp-unit">°</span>
+        <span class="inp-desc">fd.apHdgSet — current heading bug</span>
+      </div>
+      <div class="inp-row" data-inp="apAltSet">
+        <span class="inp-name">AP ALTITUDE SET</span>
+        <span class="inp-val dim" id="in-apalt">—</span>
+        <span class="inp-unit">ft</span>
+        <span class="inp-desc">fd.apAltSet — current altitude target</span>
+      </div>
+      <div class="inp-row" data-inp="apVsSet">
+        <span class="inp-name">AP VS SET</span>
+        <span class="inp-val dim" id="in-apvs">—</span>
+        <span class="inp-unit">fpm</span>
+        <span class="inp-desc">fd.apVsSet — current VS target</span>
+      </div>
+      <div class="inp-row" data-inp="apSpdSet">
+        <span class="inp-name">AP SPEED SET</span>
+        <span class="inp-val dim" id="in-apspd">—</span>
+        <span class="inp-unit">kt</span>
+        <span class="inp-desc">fd.apSpdSet — current speed target</span>
+      </div>
+
+      <!-- Environment -->
+      <div class="sec-hdr" style="position:relative;background:#090d12;padding-left:20px">
+        <span style="font-size:9px;color:#303840;text-transform:uppercase;letter-spacing:1px">Environment</span>
+      </div>
+      <div class="inp-row" data-inp="windDirection">
+        <span class="inp-name">AMBIENT WIND DIRECTION</span>
+        <span class="inp-val dim" id="in-wdir">—</span>
+        <span class="inp-unit">°</span>
+        <span class="inp-desc">fd.windDirection — wind compensation module</span>
+      </div>
+      <div class="inp-row" data-inp="windSpeed">
+        <span class="inp-name">AMBIENT WIND VELOCITY</span>
+        <span class="inp-val dim" id="in-wspd">—</span>
+        <span class="inp-unit">kt</span>
+        <span class="inp-desc">fd.windSpeed — wind compensation module</span>
+      </div>
+      <div class="inp-row" data-inp="ambientTemp">
+        <span class="inp-name">AMBIENT TEMPERATURE</span>
+        <span class="inp-val dim" id="in-oat">—</span>
+        <span class="inp-unit">°C</span>
+        <span class="inp-desc">fd.ambientTemp — density altitude, perf calcs</span>
+      </div>
+      <div class="inp-row" data-inp="densityAltitude">
+        <span class="inp-name">DENSITY ALTITUDE</span>
+        <span class="inp-val dim" id="in-da">—</span>
+        <span class="inp-unit">ft</span>
+        <span class="inp-desc">fd.densityAltitude — perf scaling</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Command State Board -->
+  <div class="col-right">
+    <div class="csb-hdr">
+      <span class="sec-title" style="color:#4fc3f7">All Commands</span>
+      <span style="font-size:9px;color:#303840;margin-left:4px">name · last value · age · count</span>
+    </div>
+
+    <div class="csb-subhdr"><span>Control Surfaces</span></div>
+    <div class="csb-row" id="csb-AXIS_ELEVATOR_SET">      <span class="csb-name ctrl">AXIS_ELEVATOR_SET</span>     <span class="csb-val dim" id="cv-AXIS_ELEVATOR_SET">—</span>     <span class="csb-ago" id="ca-AXIS_ELEVATOR_SET">never</span>     <span class="csb-cnt" id="cc-AXIS_ELEVATOR_SET">0</span></div>
+    <div class="csb-row" id="csb-AXIS_AILERONS_SET">       <span class="csb-name ctrl">AXIS_AILERONS_SET</span>      <span class="csb-val dim" id="cv-AXIS_AILERONS_SET">—</span>      <span class="csb-ago" id="ca-AXIS_AILERONS_SET">never</span>      <span class="csb-cnt" id="cc-AXIS_AILERONS_SET">0</span></div>
+    <div class="csb-row" id="csb-AXIS_RUDDER_SET">         <span class="csb-name ctrl">AXIS_RUDDER_SET</span>        <span class="csb-val dim" id="cv-AXIS_RUDDER_SET">—</span>        <span class="csb-ago" id="ca-AXIS_RUDDER_SET">never</span>        <span class="csb-cnt" id="cc-AXIS_RUDDER_SET">0</span></div>
+    <div class="csb-row" id="csb-STEERING_SET">            <span class="csb-name ctrl">STEERING_SET</span>           <span class="csb-val dim" id="cv-STEERING_SET">—</span>           <span class="csb-ago" id="ca-STEERING_SET">never</span>           <span class="csb-cnt" id="cc-STEERING_SET">0</span></div>
+    <div class="csb-row" id="csb-AXIS_LEFT_BRAKE_SET">     <span class="csb-name ctrl">AXIS_LEFT_BRAKE_SET</span>    <span class="csb-val dim" id="cv-AXIS_LEFT_BRAKE_SET">—</span>    <span class="csb-ago" id="ca-AXIS_LEFT_BRAKE_SET">never</span>    <span class="csb-cnt" id="cc-AXIS_LEFT_BRAKE_SET">0</span></div>
+    <div class="csb-row" id="csb-AXIS_RIGHT_BRAKE_SET">    <span class="csb-name ctrl">AXIS_RIGHT_BRAKE_SET</span>   <span class="csb-val dim" id="cv-AXIS_RIGHT_BRAKE_SET">—</span>   <span class="csb-ago" id="ca-AXIS_RIGHT_BRAKE_SET">never</span>   <span class="csb-cnt" id="cc-AXIS_RIGHT_BRAKE_SET">0</span></div>
+    <div class="csb-row" id="csb-ELEV_TRIM_UP">            <span class="csb-name ctrl">ELEV_TRIM_UP</span>           <span class="csb-val dim" id="cv-ELEV_TRIM_UP">—</span>           <span class="csb-ago" id="ca-ELEV_TRIM_UP">never</span>           <span class="csb-cnt" id="cc-ELEV_TRIM_UP">0</span></div>
+
+    <div class="csb-subhdr"><span>Engine / Fuel</span></div>
+    <div class="csb-row" id="csb-THROTTLE_SET">            <span class="csb-name eng">THROTTLE_SET</span>           <span class="csb-val dim" id="cv-THROTTLE_SET">—</span>           <span class="csb-ago" id="ca-THROTTLE_SET">never</span>           <span class="csb-cnt" id="cc-THROTTLE_SET">0</span></div>
+    <div class="csb-row" id="csb-MIXTURE_SET">             <span class="csb-name eng">MIXTURE_SET</span>            <span class="csb-val dim" id="cv-MIXTURE_SET">—</span>            <span class="csb-ago" id="ca-MIXTURE_SET">never</span>            <span class="csb-cnt" id="cc-MIXTURE_SET">0</span></div>
+    <div class="csb-row" id="csb-MIXTURE_RICH">            <span class="csb-name eng">MIXTURE_RICH</span>           <span class="csb-val dim" id="cv-MIXTURE_RICH">—</span>           <span class="csb-ago" id="ca-MIXTURE_RICH">never</span>           <span class="csb-cnt" id="cc-MIXTURE_RICH">0</span></div>
+    <div class="csb-row" id="csb-MIXTURE_LEAN">            <span class="csb-name eng">MIXTURE_LEAN</span>           <span class="csb-val dim" id="cv-MIXTURE_LEAN">—</span>           <span class="csb-ago" id="ca-MIXTURE_LEAN">never</span>           <span class="csb-cnt" id="cc-MIXTURE_LEAN">0</span></div>
+    <div class="csb-row" id="csb-ENGINE_AUTO_START">       <span class="csb-name eng">ENGINE_AUTO_START</span>      <span class="csb-val dim" id="cv-ENGINE_AUTO_START">—</span>      <span class="csb-ago" id="ca-ENGINE_AUTO_START">never</span>      <span class="csb-cnt" id="cc-ENGINE_AUTO_START">0</span></div>
+
+    <div class="csb-subhdr"><span>Autopilot Modes</span></div>
+    <div class="csb-row" id="csb-AP_MASTER">              <span class="csb-name ap">AP_MASTER</span>              <span class="csb-val dim" id="cv-AP_MASTER">—</span>              <span class="csb-ago" id="ca-AP_MASTER">never</span>              <span class="csb-cnt" id="cc-AP_MASTER">0</span></div>
+    <div class="csb-row" id="csb-AP_HDG_HOLD">            <span class="csb-name ap">AP_HDG_HOLD</span>            <span class="csb-val dim" id="cv-AP_HDG_HOLD">—</span>            <span class="csb-ago" id="ca-AP_HDG_HOLD">never</span>            <span class="csb-cnt" id="cc-AP_HDG_HOLD">0</span></div>
+    <div class="csb-row" id="csb-AP_ALT_HOLD">            <span class="csb-name ap">AP_ALT_HOLD</span>            <span class="csb-val dim" id="cv-AP_ALT_HOLD">—</span>            <span class="csb-ago" id="ca-AP_ALT_HOLD">never</span>            <span class="csb-cnt" id="cc-AP_ALT_HOLD">0</span></div>
+    <div class="csb-row" id="csb-AP_VS_HOLD">             <span class="csb-name ap">AP_VS_HOLD</span>             <span class="csb-val dim" id="cv-AP_VS_HOLD">—</span>             <span class="csb-ago" id="ca-AP_VS_HOLD">never</span>             <span class="csb-cnt" id="cc-AP_VS_HOLD">0</span></div>
+    <div class="csb-row" id="csb-AP_APR_HOLD">            <span class="csb-name ap">AP_APR_HOLD</span>            <span class="csb-val dim" id="cv-AP_APR_HOLD">—</span>            <span class="csb-ago" id="ca-AP_APR_HOLD">never</span>            <span class="csb-cnt" id="cc-AP_APR_HOLD">0</span></div>
+    <div class="csb-row" id="csb-AP_BC_HOLD">             <span class="csb-name ap">AP_BC_HOLD</span>             <span class="csb-val dim" id="cv-AP_BC_HOLD">—</span>             <span class="csb-ago" id="ca-AP_BC_HOLD">never</span>             <span class="csb-cnt" id="cc-AP_BC_HOLD">0</span></div>
+    <div class="csb-row" id="csb-AP_PANEL_SPEED_HOLD">    <span class="csb-name ap">AP_PANEL_SPEED_HOLD</span>    <span class="csb-val dim" id="cv-AP_PANEL_SPEED_HOLD">—</span>    <span class="csb-ago" id="ca-AP_PANEL_SPEED_HOLD">never</span>    <span class="csb-cnt" id="cc-AP_PANEL_SPEED_HOLD">0</span></div>
+    <div class="csb-row" id="csb-AP_VNAV">                <span class="csb-name ap">AP_VNAV</span>                <span class="csb-val dim" id="cv-AP_VNAV">—</span>                <span class="csb-ago" id="ca-AP_VNAV">never</span>                <span class="csb-cnt" id="cc-AP_VNAV">0</span></div>
+
+    <div class="csb-subhdr"><span>Autopilot Set Values</span></div>
+    <div class="csb-row" id="csb-HEADING_BUG_SET">         <span class="csb-name nav">HEADING_BUG_SET</span>         <span class="csb-val dim" id="cv-HEADING_BUG_SET">—</span>         <span class="csb-ago" id="ca-HEADING_BUG_SET">never</span>         <span class="csb-cnt" id="cc-HEADING_BUG_SET">0</span></div>
+    <div class="csb-row" id="csb-AP_ALT_VAR_SET_ENGLISH">  <span class="csb-name nav">AP_ALT_VAR_SET_ENGLISH</span>  <span class="csb-val dim" id="cv-AP_ALT_VAR_SET_ENGLISH">—</span>  <span class="csb-ago" id="ca-AP_ALT_VAR_SET_ENGLISH">never</span>  <span class="csb-cnt" id="cc-AP_ALT_VAR_SET_ENGLISH">0</span></div>
+    <div class="csb-row" id="csb-AP_VS_VAR_SET_ENGLISH">   <span class="csb-name nav">AP_VS_VAR_SET_ENGLISH</span>   <span class="csb-val dim" id="cv-AP_VS_VAR_SET_ENGLISH">—</span>   <span class="csb-ago" id="ca-AP_VS_VAR_SET_ENGLISH">never</span>   <span class="csb-cnt" id="cc-AP_VS_VAR_SET_ENGLISH">0</span></div>
+    <div class="csb-row" id="csb-AP_SPD_VAR_SET">          <span class="csb-name nav">AP_SPD_VAR_SET</span>          <span class="csb-val dim" id="cv-AP_SPD_VAR_SET">—</span>          <span class="csb-ago" id="ca-AP_SPD_VAR_SET">never</span>          <span class="csb-cnt" id="cc-AP_SPD_VAR_SET">0</span></div>
+
+    <div class="csb-subhdr"><span>Systems</span></div>
+    <div class="csb-row" id="csb-FLAPS_UP">                <span class="csb-name sys">FLAPS_UP</span>               <span class="csb-val dim" id="cv-FLAPS_UP">—</span>               <span class="csb-ago" id="ca-FLAPS_UP">never</span>               <span class="csb-cnt" id="cc-FLAPS_UP">0</span></div>
+    <div class="csb-row" id="csb-FLAPS_DOWN">              <span class="csb-name sys">FLAPS_DOWN</span>             <span class="csb-val dim" id="cv-FLAPS_DOWN">—</span>             <span class="csb-ago" id="ca-FLAPS_DOWN">never</span>             <span class="csb-cnt" id="cc-FLAPS_DOWN">0</span></div>
+    <div class="csb-row" id="csb-PARKING_BRAKE_SET">       <span class="csb-name sys">PARKING_BRAKE_SET</span>      <span class="csb-val dim" id="cv-PARKING_BRAKE_SET">—</span>      <span class="csb-ago" id="ca-PARKING_BRAKE_SET">never</span>      <span class="csb-cnt" id="cc-PARKING_BRAKE_SET">0</span></div>
+    <div class="csb-row" id="csb-LANDING_LIGHTS_TOGGLE">   <span class="csb-name sys">LANDING_LIGHTS_TOGGLE</span>  <span class="csb-val dim" id="cv-LANDING_LIGHTS_TOGGLE">—</span>  <span class="csb-ago" id="ca-LANDING_LIGHTS_TOGGLE">never</span>  <span class="csb-cnt" id="cc-LANDING_LIGHTS_TOGGLE">0</span></div>
+    <div class="csb-row" id="csb-QUICK_PREFLIGHT">         <span class="csb-name sys">QUICK_PREFLIGHT</span>         <span class="csb-val dim" id="cv-QUICK_PREFLIGHT">—</span>         <span class="csb-ago" id="ca-QUICK_PREFLIGHT">never</span>         <span class="csb-cnt" id="cc-QUICK_PREFLIGHT">0</span></div>
+  </div>
+
+</div>
+
+<!-- Last fired bar -->
+<div class="last-fired">
+  <span class="lf-lbl">Last Command</span>
+  <span class="lf-val" id="lf-type">—</span>
+  <span style="color:#303840" id="lf-val"></span>
+  <span style="color:#3a4858;font-size:9px" id="lf-desc"></span>
+  <span style="color:#303840;font-size:9px;margin-left:auto" id="lf-age"></span>
+</div>
+
+<script>
+const BASE = 'http://192.168.1.42:8080';
+
+// Track last-fired times per command
+const lastFired = {};   // cmd → { time, value }
+let ws = null;
+let lastCmd = null;
+
+// Command State Board tracking
+const cmdState    = {};        // type → { value, time, count }
+const seenCmdKeys = new Set(); // "type:time" to avoid double-counting
+
+function fmtVal(v, dec) {
+  if (v == null) return '—';
+  if (typeof v === 'boolean') return v ? 'ON' : 'OFF';
+  return dec ? Number(v).toFixed(dec) : String(Math.round(v));
+}
+
+// ── Command State Board helpers ────────────────────────────────────────────
+function updateCsbRow(type, value, time) {
+  const key = type + ':' + (time || 0);
+  if (seenCmdKeys.has(key)) return;
+  seenCmdKeys.add(key);
+  if (!cmdState[type]) cmdState[type] = { value: null, time: null, count: 0 };
+  cmdState[type].value = value;
+  cmdState[type].time  = time || Date.now();
+  cmdState[type].count++;
+  renderCsbRow(type);
+  flashCsb(type);
+}
+
+function renderCsbRow(type) {
+  const s = cmdState[type];
+  if (!s) return;
+  const vEl = document.getElementById('cv-' + type);
+  const cEl = document.getElementById('cc-' + type);
+  if (vEl) {
+    const v = s.value;
+    if (v == null)               { vEl.textContent = '✓'; }
+    else if (typeof v === 'boolean') { vEl.textContent = v ? 'ON' : 'OFF'; }
+    else if (typeof v === 'number')  { vEl.textContent = Number.isInteger(v) ? v : v.toFixed(1); }
+    else                         { vEl.textContent = String(v); }
+    vEl.className = 'csb-val';
+  }
+  if (cEl) cEl.textContent = s.count;
+}
+
+function flashCsb(type) {
+  const row = document.getElementById('csb-' + type);
+  if (!row) return;
+  row.classList.add('flash');
+  setTimeout(() => row.classList.remove('flash'), 700);
+}
+
+function tickCsbAges() {
+  const now = Date.now();
+  for (const [type, s] of Object.entries(cmdState)) {
+    if (!s.time) continue;
+    const aEl = document.getElementById('ca-' + type);
+    if (!aEl) continue;
+    const secs = Math.round((now - s.time) / 1000);
+    if      (secs < 60)   aEl.textContent = secs + 's ago';
+    else if (secs < 3600) aEl.textContent = Math.round(secs / 60) + 'm ago';
+    else                  aEl.textContent = Math.round(secs / 3600) + 'h ago';
+  }
+}
+
+// ── Update live command values ─────────────────────────────────────────────
+function setLive(cmd, value) {
+  const el = document.getElementById('live-' + cmd);
+  if (!el) return;
+  const t = typeof value;
+  if (t === 'boolean') {
+    el.textContent = value ? 'ON' : 'OFF';
+    el.className   = 'cmd-live ' + (value ? 'ok' : 'dim');
+  } else if (t === 'number') {
+    el.textContent = Number.isInteger(value) ? value : value.toFixed(1);
+    el.className   = 'cmd-live';
+  } else {
+    el.textContent = value != null ? String(value) : '—';
+    el.className   = 'cmd-live';
+  }
+}
+
+// ── Update flight data inputs ──────────────────────────────────────────────
+function updateInputs(fd) {
+  function si(id, val, unit, dec, clsFn) {
+    const el = document.getElementById('in-' + id);
+    if (!el) return;
+    if (val == null) { el.textContent = '—'; el.className = 'inp-val dim'; return; }
+    const n = typeof val === 'boolean' ? val : (dec ? parseFloat(val).toFixed(dec) : Math.round(val));
+    el.textContent = typeof val === 'boolean' ? (val ? 'YES' : 'NO') : n + (unit ? ' ' + unit : '');
+    el.className = 'inp-val ' + (clsFn ? clsFn(val) : '');
+  }
+
+  si('speed',  fd.speed,         'kt',  0, v => v > 0 ? 'ok' : '');
+  si('gs',     fd.groundSpeed,   'kt',  1);
+  si('alt',    fd.altitude,      'ft',  0);
+  si('agl',    fd.altitudeAGL,   'ft',  0, v => v < 50 ? 'warn' : '');
+  si('vs',     fd.verticalSpeed, 'fpm', 0, v => v > 100 ? 'ok' : v < -500 ? 'warn' : '');
+  si('pitch',  fd.pitch,         '°',   1, v => Math.abs(v) > 20 ? 'warn' : '');
+  si('bank',   fd.bank,          '°',   1, v => Math.abs(v) > 15 ? 'warn' : '');
+  si('hdg',    fd.heading,       '°',   0);
+  si('thr',    fd.throttle != null ? Math.round(fd.throttle) : null, '%', 0, v => v > 50 ? 'ok' : '');
+  si('mix',    fd.mixture  != null ? Math.round(fd.mixture)  : null, '%', 0, v => v >= 90 ? 'ok' : 'warn');
+  si('rpm',    fd.engineRpm,     'RPM', 0, v => v >= 500 ? 'ok' : 'err');
+  si('flaps',  fd.flapsIndex,    '',    0);
+  si('gear',   fd.gearDown,      '');
+  si('brk',    fd.parkingBrake,  '', 0, v => v ? 'err' : 'ok');
+  si('gnd',    fd.onGround,      '', 0, v => v ? 'warn' : 'ok');
+  si('fuel',   fd.fuelTotal,     'gal', 1);
+  si('apm',    fd.apMaster,      '', 0, v => v ? 'ok' : 'dim');
+  si('aphdg',  fd.apHdgSet,      '°',   0);
+  si('apalt',  fd.apAltSet,      'ft',  0);
+  si('apvs',   fd.apVsSet,       'fpm', 0);
+  si('apspd',  fd.apSpdSet,      'kt',  0);
+  si('wdir',   fd.windDirection, '°',   0);
+  si('wspd',   fd.windSpeed,     'kt',  0);
+  si('oat',    fd.ambientTemp,   '°C',  0);
+  si('da',     fd.densityAltitude,'ft', 0);
+}
+
+// ── Update live control outputs from Sally state ───────────────────────────
+function updateLiveFromAP(ap) {
+  if (!ap) return;
+  const live = ap.live || {};
+  if (live.elevator  != null) setLive('AXIS_ELEVATOR_SET',  parseFloat(live.elevator.toFixed(1)));
+  if (live.aileron   != null) setLive('AXIS_AILERONS_SET',  parseFloat(live.aileron.toFixed(1)));
+  if (live.rudder    != null) setLive('AXIS_RUDDER_SET',    parseFloat(live.rudder.toFixed(1)));
+  if (live.throttle  != null) setLive('THROTTLE_SET',       Math.round(live.throttle));
+  if (live.mixture   != null) setLive('MIXTURE_SET',        Math.round(live.mixture));
+  if (live.lBrake    != null) setLive('AXIS_LEFT_BRAKE_SET', Math.round(live.lBrake));
+  if (live.rBrake    != null) setLive('AXIS_RIGHT_BRAKE_SET',Math.round(live.rBrake));
+
+  // AP modes from flightData
+  const fd = ap._fd || {};
+  setLive('AP_MASTER',     !!ap.apMaster);
+}
+
+// ── Handle last command ────────────────────────────────────────────────────
+function handleLastCmd(lc, phase, sub) {
+  if (!lc || (lastCmd && lastCmd.time === lc.time)) return;
+  lastCmd = lc;
+
+  lastFired[lc.type] = { time: lc.time, value: lc.value };
+  setLive(lc.type, lc.value != null ? lc.value : '✓');
+  updateCsbRow(lc.type, lc.value, lc.time);
+
+  document.getElementById('lf-type').textContent = lc.type || '—';
+  document.getElementById('lf-val').textContent  = lc.value != null ? '= ' + lc.value : '';
+  document.getElementById('lf-desc').textContent = lc.description || '';
+  document.getElementById('h-last').textContent  = lc.type || '—';
+
+  // Highlight row
+  document.querySelectorAll('.cmd-row').forEach(r => r.style.background = '');
+  const row = document.querySelector(`.cmd-row[data-cmd="${lc.type}"]`);
+  if (row) {
+    row.style.background = 'rgba(79,195,247,0.08)';
+    setTimeout(() => { if (row) row.style.background = ''; }, 2000);
+  }
+}
+
+function updateLastCmdAge() {
+  if (!lastCmd) return;
+  const ago = Math.round((Date.now() - lastCmd.time) / 1000);
+  document.getElementById('lf-age').textContent = ago + 's ago';
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+function connectWS() {
+  try { ws = new WebSocket('ws://192.168.1.42:8080'); } catch { return; }
+  ws.onopen = () => {
+    const b = document.getElementById('ws-badge');
+    b.textContent = 'WS ON'; b.className = 'badge badge-ws-ok';
+  };
+  ws.onclose = () => {
+    const b = document.getElementById('ws-badge');
+    b.textContent = 'WS OFF'; b.className = 'badge badge-ws-err';
+    setTimeout(connectWS, 3000);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'flightData' && msg.data) {
+        const fd = msg.data;
+        const ap = fd.aiAutopilot || null;
+
+        updateInputs(fd);
+        if (ap) {
+          ap._fd = fd;
+          updateLiveFromAP(ap);
+          const phase = ap.phase || '';
+          const sub   = ap.subPhase || '';
+          document.getElementById('h-phase').textContent = phase || '—';
+          document.getElementById('h-sub').textContent   = sub   || '—';
+          handleLastCmd(ap.lastCmd, phase, sub);
+          // Live AP mode states
+          setLive('AP_MASTER',           !!fd.apMaster);
+          setLive('AP_HDG_HOLD',         !!fd.apHdgLock);
+          setLive('AP_ALT_HOLD',         !!fd.apAltLock);
+          setLive('AP_VS_HOLD',          !!fd.apVsLock);
+          setLive('AP_APR_HOLD',         !!fd.apAprLock);
+          setLive('AP_BC_HOLD',          !!fd.apBcLock);
+          setLive('AP_PANEL_SPEED_HOLD', !!fd.apSpdLock);
+          setLive('HEADING_BUG_SET',     fd.apHdgSet  != null ? Math.round(fd.apHdgSet)  + '°' : '—');
+          setLive('AP_ALT_VAR_SET_ENGLISH', fd.apAltSet != null ? Math.round(fd.apAltSet) + ' ft' : '—');
+          setLive('AP_VS_VAR_SET_ENGLISH',  fd.apVsSet  != null ? Math.round(fd.apVsSet)  + ' fpm': '—');
+          setLive('AP_SPD_VAR_SET',         fd.apSpdSet != null ? Math.round(fd.apSpdSet) + ' kt' : '—');
+          setLive('PARKING_BRAKE_SET',   fd.parkingBrake ? 1 : 0);
+          setLive('THROTTLE_SET',        fd.throttle != null ? Math.round(fd.throttle) : '—');
+          setLive('MIXTURE_SET',         fd.mixture  != null ? Math.round(fd.mixture)  : '—');
+        }
+      }
+    } catch {}
+  };
+}
+connectWS();
+
+// ── Search / filter ───────────────────────────────────────────────────────
+function filterAll() {
+  const q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.cmd-row, .inp-row').forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.classList.toggle('hidden', q.length > 0 && !text.includes(q));
+  });
+}
+
+// ── History poll: seed CSB from server command log ─────────────────────────
+async function pollCommandHistory() {
+  try {
+    const r = await fetch(BASE + '/api/ai-autopilot/state');
+    if (!r.ok) return;
+    const data = await r.json();
+    // Accept array or wrapped object with various key names
+    const cmds = Array.isArray(data)
+      ? data
+      : (data.commandLog || data.recentCmds || data.lastCmds || []);
+    // Process oldest-first so counts are chronologically accurate
+    for (const c of [...cmds].reverse()) {
+      if (!c || !c.type) continue;
+      updateCsbRow(c.type, c.value != null ? c.value : null, c.time || null);
+    }
+  } catch {}
+}
+pollCommandHistory();
+setInterval(pollCommandHistory, 8000);
+
+// ── Age ticker ────────────────────────────────────────────────────────────
+setInterval(() => { updateLastCmdAge(); tickCsbAges(); }, 1000);
+</script>
+</body>
+</html>
