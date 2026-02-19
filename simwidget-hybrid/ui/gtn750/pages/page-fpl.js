@@ -375,6 +375,12 @@ class FlightPlanPage {
         this.flightPlan.waypoints.forEach((wp, index) => {
             this.renderRow(wp, index, activeIdx);
         });
+
+        // Scroll active waypoint into view
+        const items = this.elements.fplList.querySelectorAll('.gtn-fpl-item');
+        if (items[activeIdx]) {
+            items[activeIdx].scrollIntoView({ block: 'nearest', behavior: 'auto' });
+        }
     }
 
     renderRow(wp, index, activeIdx) {

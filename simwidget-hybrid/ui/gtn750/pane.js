@@ -109,7 +109,7 @@ class GTN750Pane extends SimGlassBase {
         this._weatherRafId = null;
 
         // Handler refs for cleanup
-        this._resizeHandler = () => this.resizeCanvas();
+        this._resizeHandler = () => { this.resizeCanvas(); this._applyDeviceSize(); };
         this._beforeUnloadHandler = () => this.destroy();
 
         // Page instances (lazy-created on first visit)
@@ -221,6 +221,9 @@ class GTN750Pane extends SimGlassBase {
 
         // Check database currency (safety-critical)
         this.checkDatabaseCurrency();
+
+        // Apply device-size class immediately and on every resize
+        this._applyDeviceSize();
     }
 
     /**
@@ -302,6 +305,14 @@ class GTN750Pane extends SimGlassBase {
                     case 'c':
                         e.preventDefault();
                         this.centerMap();
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        if (this.pageManager?.getCurrentPageId() === 'fpl') this.showFlightPlanInfoModal();
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        if (this.pageManager?.getCurrentPageId() === 'fpl') this.sendFlightPlanToAutopilot();
                         break;
                 }
             }
@@ -1541,6 +1552,7 @@ class GTN750Pane extends SimGlassBase {
         if (pageId === 'wx') {
             this.weatherPageRenderActive = false;
             if (this._weatherRafId) { cancelAnimationFrame(this._weatherRafId); this._weatherRafId = null; }
+            if (this.weatherOverlay) this.weatherOverlay.stopAutoRefresh();
         }
     }
 
@@ -1599,8 +1611,11 @@ class GTN750Pane extends SimGlassBase {
         if (!this.weatherRange) this.weatherRange = 50;
         if (this.weatherOverlay) {
             this.weatherOverlay.fetchRadarData();
-            this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
-            this.weatherOverlay.fetchTaf(this.data.latitude, this.data.longitude, this.weatherRange || 50);
+            const hasPos = this.data.latitude !== 0 || this.data.longitude !== 0;
+            if (hasPos) {
+                this.weatherOverlay.fetchNearbyMetars(this.data.latitude, this.data.longitude);
+                this.weatherOverlay.fetchTaf(this.data.latitude, this.data.longitude, this.weatherRange || 50);
+            }
         }
     }
 
@@ -1617,6 +1632,26 @@ class GTN750Pane extends SimGlassBase {
         resizeOne(this.elements.terrainCanvas);
         resizeOne(this.elements.trafficCanvas);
         resizeOne(this.elements.wxCanvas);
+    }
+
+    /**
+     * Detect device size and apply device-* class to the root element.
+     * Runs on init and on every resize event.
+     */
+    _applyDeviceSize() {
+        const root = this.elements.root || document.querySelector('.gtn750');
+        if (!root) return;
+        const size = typeof PlatformUtils !== 'undefined'
+            ? PlatformUtils.applyDeviceSize(root)
+            : (() => {
+                const w = window.innerWidth;
+                const isTouch = navigator.maxTouchPoints > 0;
+                const s = isTouch && w >= 600 ? 'tablet' : isTouch && w < 600 ? 'phone' : 'desktop';
+                root.classList.remove('device-phone', 'device-tablet', 'device-desktop');
+                root.classList.add(`device-${s}`);
+                return s;
+            })();
+        GTNCore.log(`[GTN750] Device size: ${size} (${window.innerWidth}x${window.innerHeight})`);
     }
 
     // ===== PAGE RENDERING (terrain, traffic, weather) =====
@@ -1653,6 +1688,7 @@ class GTN750Pane extends SimGlassBase {
             this.weatherOverlay.setLayer('metar', true);
             this.weatherOverlay.setLayer('taf', true);
             if (this.elements.wxTaf) this.elements.wxTaf.checked = true;
+            this.weatherOverlay.startAutoRefresh(this.data.latitude, this.data.longitude);
         }
         const renderLoop = () => {
             if (!this.weatherPageRenderActive) { this._weatherRafId = null; return; }
@@ -1916,11 +1952,11 @@ class GTN750Pane extends SimGlassBase {
             const catMap = { VFR: ['☀️', 'Clear'], MVFR: ['🌤️', 'Marginal'], IFR: ['🌧️', 'IFR'], LIFR: ['⛈️', 'Low IFR'] };
             // Refine with weather phenomena if available
             const wx = nearest.weather || [];
-            if (wx.some(w => w.includes('TS') || w.includes('GR'))) { iconEl.textContent = '⛈️'; textEl.textContent = 'Storm'; }
-            else if (wx.some(w => w.includes('SN'))) { iconEl.textContent = '🌨️'; textEl.textContent = 'Snow'; }
-            else if (wx.some(w => w.includes('RA') || w.includes('DZ'))) { iconEl.textContent = '🌧️'; textEl.textContent = 'Rain'; }
-            else if (wx.some(w => w.includes('FG'))) { iconEl.textContent = '🌫️'; textEl.textContent = 'Fog'; }
-            else if (wx.some(w => w.includes('BR') || w.includes('HZ'))) { iconEl.textContent = '🌁'; textEl.textContent = 'Haze'; }
+            if (wx.some(w => (w.raw || w).includes('TS') || (w.raw || w).includes('GR'))) { iconEl.textContent = '⛈️'; textEl.textContent = 'Storm'; }
+            else if (wx.some(w => (w.raw || w).includes('SN'))) { iconEl.textContent = '🌨️'; textEl.textContent = 'Snow'; }
+            else if (wx.some(w => (w.raw || w).includes('RA') || (w.raw || w).includes('DZ'))) { iconEl.textContent = '🌧️'; textEl.textContent = 'Rain'; }
+            else if (wx.some(w => (w.raw || w).includes('FG'))) { iconEl.textContent = '🌫️'; textEl.textContent = 'Fog'; }
+            else if (wx.some(w => (w.raw || w).includes('BR') || (w.raw || w).includes('HZ'))) { iconEl.textContent = '🌁'; textEl.textContent = 'Haze'; }
             else { const [icon, text] = catMap[cat] || catMap.VFR; iconEl.textContent = icon; textEl.textContent = text; }
         } else {
             // Sim precip fallback
@@ -1974,7 +2010,7 @@ class GTN750Pane extends SimGlassBase {
         // Weather phenomena
         const wx = s.weather || [];
         if (wx.length > 0) {
-            html += `<div class="wx-sd-row">Wx: <b>${wx.join(', ')}</b></div>`;
+            html += `<div class="wx-sd-row">Wx: <b>${wx.map(w => w.raw || w).join(', ')}</b></div>`;
         }
 
         // Wind
@@ -3053,12 +3089,12 @@ class GTN750Pane extends SimGlassBase {
         const modal = document.getElementById('fpl-info-modal');
         if (!modal || !this.flightPlanManager) return;
 
-        // Get current groundspeed and fuel burn rate
+        // Get current groundspeed and fuel burn rate (use live fuelFlow when sim running)
         const groundSpeed = this.data?.groundSpeed || 120;
-        const fuelBurnRate = 8.5; // Default GPH for GA aircraft
+        const fuelBurnRate = (this.data?.fuelFlow > 0) ? this.data.fuelFlow : 8.5;
 
         // Calculate statistics
-        const stats = this.flightPlanManager.getFlightPlanStatistics(groundSpeed, fuelBurnRate);
+        const stats = this.flightPlanManager.getFlightPlanStatistics(groundSpeed, fuelBurnRate, this.data?.magvar || 0);
 
         if (!stats) {
             alert('No flight plan loaded');

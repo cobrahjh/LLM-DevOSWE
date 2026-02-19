@@ -165,6 +165,58 @@ const PlatformUtils = {
      * Get user agent info
      * @returns {Object} {browser, version, os}
      */
+    /**
+     * Detect device size category based on screen width, touch capability, and UA.
+     * @returns {'phone'|'tablet'|'desktop'}
+     */
+    getDeviceSize() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const shorter = Math.min(w, h);
+        const longer  = Math.max(w, h);
+        const isTouch = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+        const ua = navigator.userAgent;
+
+        // Explicit iPad / Android tablet UA
+        if (/iPad/i.test(ua)) return 'tablet';
+        if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
+
+        // Touch + short-side >= 600px → tablet
+        if (isTouch && shorter >= 600) return 'tablet';
+
+        // Touch + width < 600px → phone
+        if (isTouch && w < 600) return 'phone';
+
+        // Non-touch narrow screen still gets "tablet" layout
+        if (w >= 600 && w <= 1280 && shorter >= 480) return 'tablet';
+
+        // Anything < 600px wide without explicit touch → phone
+        if (w < 600) return 'phone';
+
+        return 'desktop';
+    },
+
+    /**
+     * Returns true if the device is a tablet (any orientation).
+     * @returns {boolean}
+     */
+    isTablet() {
+        return this.getDeviceSize() === 'tablet';
+    },
+
+    /**
+     * Apply device-size class to an element (default: document.body).
+     * Adds device-phone / device-tablet / device-desktop.
+     * Call again on resize to update.
+     * @param {Element} [target]
+     */
+    applyDeviceSize(target = document.body) {
+        const size = this.getDeviceSize();
+        target.classList.remove('device-phone', 'device-tablet', 'device-desktop');
+        target.classList.add(`device-${size}`);
+        return size;
+    },
+
     getUserAgent() {
         const ua = navigator.userAgent;
 

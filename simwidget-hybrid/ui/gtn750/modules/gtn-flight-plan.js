@@ -2276,7 +2276,7 @@ class GTNFlightPlan {
      * @param {number} fuelBurnRate - Fuel burn rate in gallons per hour (optional)
      * @returns {Object} Statistics object with total and per-leg data
      */
-    getFlightPlanStatistics(groundSpeed = 120, fuelBurnRate = 8.5) {
+    getFlightPlanStatistics(groundSpeed = 120, fuelBurnRate = 8.5, magvar = 0) {
         if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length < 2) {
             return null;
         }
@@ -2284,7 +2284,7 @@ class GTNFlightPlan {
         const totalDistance = this.calculateTotalDistance();
         const totalETE = groundSpeed > 0 ? (totalDistance / groundSpeed) * 60 : 0; // minutes
         const totalFuel = this.calculateFuelRequired(totalDistance, groundSpeed, fuelBurnRate);
-        const legs = this.calculateLegStatistics(groundSpeed);
+        const legs = this.calculateLegStatistics(groundSpeed, magvar);
 
         // Find highest altitude constraint
         const maxAltitude = Math.max(...this.flightPlan.waypoints
@@ -2319,7 +2319,7 @@ class GTNFlightPlan {
             const wp1 = waypoints[i];
             const wp2 = waypoints[i + 1];
 
-            if (wp1.lat && wp1.lon && wp2.lat && wp2.lon) {
+            if (wp1.lat && (wp1.lon || wp1.lng) && wp2.lat && (wp2.lon || wp2.lng)) {
                 const distance = this.core.haversineDistance(
                     wp1.lat, wp1.lon || wp1.lng,
                     wp2.lat, wp2.lon || wp2.lng
@@ -2336,7 +2336,7 @@ class GTNFlightPlan {
      * @param {number} groundSpeed - Groundspeed in knots
      * @returns {Array} Array of leg statistics
      */
-    calculateLegStatistics(groundSpeed = 120) {
+    calculateLegStatistics(groundSpeed = 120, magvar = 0) {
         if (!this.flightPlan || !this.flightPlan.waypoints || this.flightPlan.waypoints.length < 2) {
             return [];
         }
@@ -2357,15 +2357,11 @@ class GTNFlightPlan {
             if (!isLast) {
                 const nextWp = waypoints[i + 1];
 
-                if (wp.lat && wp.lon && nextWp.lat && nextWp.lon) {
-                    legDistance = this.core.haversineDistance(
-                        wp.lat, wp.lon || wp.lng,
-                        nextWp.lat, nextWp.lon || nextWp.lng
-                    );
-                    bearing = this.core.calculateBearing(
-                        wp.lat, wp.lon || wp.lng,
-                        nextWp.lat, nextWp.lon || nextWp.lng
-                    );
+                if (wp.lat && (wp.lon || wp.lng) && nextWp.lat && (nextWp.lon || nextWp.lng)) {
+                    const wLon = wp.lon || wp.lng;
+                    const nLon = nextWp.lon || nextWp.lng;
+                    legDistance = this.core.haversineDistance(wp.lat, wLon, nextWp.lat, nLon);
+                    bearing = this.core.calculateMagneticBearing(wp.lat, wLon, nextWp.lat, nLon, magvar);
                     legTime = groundSpeed > 0 ? (legDistance / groundSpeed) * 60 : 0; // minutes
                 }
 

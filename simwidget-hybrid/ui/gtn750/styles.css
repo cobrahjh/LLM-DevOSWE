@@ -5180,3 +5180,283 @@ body {
     background: rgba(255, 0, 0, 0.3);
     border-color: rgba(255, 0, 0, 0.6);
 }
+
+/* ============================================================
+   TABLET & TOUCH SUPPORT
+   @media (pointer: coarse)  — actual touch devices (tablets, phones)
+   @media (max-width: 1024px) — smaller screens (tablet portrait, etc.)
+   ============================================================ */
+
+/* ── Touch-target sizing and interaction ── */
+@media (pointer: coarse) {
+    /* Prevent 300ms tap delay on all interactive elements */
+    button, .home-btn, .gtn-softkey, .freq-main, .freq-stby,
+    .corner-field, .nrst-item, .fpl-waypoint, .page-tab,
+    .dto-result-item, .proc-item, .sys-setting-row,
+    .user-wpt-btn, .taxi-btn, .taxi-control-btn, select, input {
+        touch-action: manipulation;
+    }
+
+    /* ── Frequency bar ── */
+    .freq-bar {
+        min-height: 52px;
+        padding: 3px 6px;
+        gap: 4px;
+    }
+
+    .freq-section {
+        padding: 3px 6px;
+        gap: 1px;
+    }
+
+    .freq-label {
+        font-size: 10px;
+    }
+
+    .freq-main {
+        font-size: 16px;
+        padding: 2px 0;
+    }
+
+    .freq-stby {
+        font-size: 12px;
+    }
+
+    .freq-stby-label {
+        font-size: 9px;
+    }
+
+    /* ── Home / page selector buttons ── */
+    .home-buttons {
+        padding: 5px 6px;
+        gap: 4px;
+    }
+
+    .home-btn {
+        padding: 6px 4px;
+        min-height: 46px;
+        border-radius: 4px;
+    }
+
+    .home-btn svg {
+        width: 20px;
+        height: 20px;
+        margin-bottom: 2px;
+    }
+
+    .home-btn span {
+        font-size: 10px;
+        letter-spacing: 0.4px;
+    }
+
+    /* ── Softkeys ── */
+    .gtn-softkeys {
+        min-height: 50px;
+        padding: 5px 6px;
+        gap: 4px;
+    }
+
+    .gtn-softkey {
+        padding: 12px 4px;
+        font-size: 11px;
+        border-radius: 5px;
+    }
+
+    /* ── Corner data fields ── */
+    .corner-field {
+        padding: 6px 8px;
+        border-radius: 5px;
+    }
+
+    .corner-label {
+        font-size: 10px;
+    }
+
+    .corner-value {
+        font-size: 15px;
+    }
+
+    /* ── NRST list items ── */
+    .nrst-item {
+        padding: 10px 8px;
+        min-height: 44px;
+    }
+
+    /* ── Flight plan waypoints ── */
+    .fpl-waypoint {
+        padding: 9px 8px;
+        min-height: 44px;
+    }
+
+    /* ── DTO / search results ── */
+    .dto-result-item {
+        padding: 10px 12px;
+        min-height: 44px;
+    }
+
+    /* ── Page content scrolling ── */
+    .page-content, .nrst-list, .fpl-list, .dto-results,
+    .proc-list, .proc-detail, .sys-content, .aux-content,
+    .user-wpt-list {
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+    }
+
+    /* ── XPDR / radio controls ── */
+    .xpdr-ident {
+        padding: 6px 10px;
+        min-height: 36px;
+        font-size: 12px;
+    }
+
+    /* ── System page selects and inputs ── */
+    .sys-setting-row select,
+    .sys-setting-row input[type="checkbox"] {
+        min-height: 36px;
+        font-size: 14px;
+    }
+
+    /* ── Procedure items ── */
+    .proc-item {
+        padding: 10px 12px;
+        min-height: 44px;
+    }
+
+    /* ── User waypoint buttons ── */
+    .user-wpt-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    /* ── Taxi / SafeTaxi controls ── */
+    .taxi-control-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+    }
+
+    .taxi-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    /* ── Generic avionics buttons ── */
+    .avionics-btn, .nav-btn, .map-btn {
+        min-height: 40px;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    /* ── Section collapse toggles ── */
+    .section-toggle {
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    /* ── Settings button ── */
+    .settings-btn, .compact-toggle {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+}
+
+/* ── JS-driven device class overrides (set by PlatformUtils.applyDeviceSize) ── */
+/* These mirror the @media (pointer: coarse) rules so JS detection and CSS detection agree */
+.gtn750.device-tablet .freq-bar,
+.gtn750.device-phone  .freq-bar { min-height: 52px; padding: 3px 6px; gap: 4px; }
+
+.gtn750.device-tablet .freq-label,
+.gtn750.device-phone  .freq-label { font-size: 10px; }
+
+.gtn750.device-tablet .freq-main,
+.gtn750.device-phone  .freq-main { font-size: 16px; }
+
+.gtn750.device-tablet .home-btn,
+.gtn750.device-phone  .home-btn { min-height: 46px; padding: 6px 4px; }
+
+.gtn750.device-tablet .home-btn svg,
+.gtn750.device-phone  .home-btn svg { width: 20px; height: 20px; }
+
+.gtn750.device-tablet .home-btn span,
+.gtn750.device-phone  .home-btn span { font-size: 10px; }
+
+.gtn750.device-tablet .gtn-softkeys,
+.gtn750.device-phone  .gtn-softkeys { min-height: 50px; padding: 5px 6px; }
+
+.gtn750.device-tablet .gtn-softkey,
+.gtn750.device-phone  .gtn-softkey { padding: 12px 4px; font-size: 11px; }
+
+.gtn750.device-tablet .corner-field,
+.gtn750.device-phone  .corner-field { padding: 6px 8px; }
+
+.gtn750.device-tablet .corner-label,
+.gtn750.device-phone  .corner-label { font-size: 10px; }
+
+.gtn750.device-tablet .corner-value,
+.gtn750.device-phone  .corner-value { font-size: 15px; }
+
+.gtn750.device-tablet .nrst-item,
+.gtn750.device-phone  .nrst-item { min-height: 44px; padding: 10px 8px; }
+
+.gtn750.device-tablet .fpl-waypoint,
+.gtn750.device-phone  .fpl-waypoint { min-height: 44px; padding: 9px 8px; }
+
+.gtn750.device-tablet .dto-result-item,
+.gtn750.device-phone  .dto-result-item { min-height: 44px; padding: 10px 12px; }
+
+.gtn750.device-tablet .proc-item,
+.gtn750.device-phone  .proc-item { min-height: 44px; padding: 10px 12px; }
+
+.gtn750.device-tablet .taxi-control-btn,
+.gtn750.device-phone  .taxi-control-btn { width: 44px; height: 44px; font-size: 22px; }
+
+/* Phone-specific: collapse freq bar to save space */
+.gtn750.device-phone .freq-bar { min-height: 44px; }
+.gtn750.device-phone .freq-section { padding: 2px 4px; }
+
+/* ── Layout adjustments for tablet-width screens ── */
+@media (max-width: 1024px) {
+    /* Freq bar wraps on portrait tablets */
+    .freq-bar {
+        flex-wrap: wrap;
+    }
+
+    .freq-group {
+        flex: 1 1 40%;
+    }
+
+    /* Home buttons scale naturally (flex: 1) — no override needed */
+
+    /* Compact mode shrinks to fill small screen */
+    .gtn750.compact {
+        width: 280px;
+        height: 180px;
+    }
+}
+
+/* ── Landscape tablet (wide but short) ── */
+@media (max-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
+    /* Collapse freq bar and home bar by default to maximize map/page area */
+    .freq-bar:not(.collapsed) {
+        min-height: 44px;
+    }
+
+    .home-buttons {
+        padding: 3px 6px;
+    }
+
+    .home-btn {
+        min-height: 38px;
+        padding: 4px 2px;
+    }
+
+    .gtn-softkeys {
+        min-height: 44px;
+        padding: 4px 6px;
+    }
+
+    .gtn-softkey {
+        padding: 8px 4px;
+    }
+}

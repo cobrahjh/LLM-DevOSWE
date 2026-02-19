@@ -975,6 +975,46 @@ app.get('/api/weather/metar/:icao', async (req, res) => {
     res.status(404).json({ error: `No METAR found for ${icao}` });
 });
 
+// Nearby airports TAF (within radius) - must be before :icao route
+app.get('/api/weather/taf/nearby', async (req, res) => {
+    const { lat, lon, radius = 100 } = req.query;
+
+    if (!lat || !lon) {
+        return res.status(400).json({ error: 'Provide lat and lon' });
+    }
+
+    try {
+        const latNum = parseFloat(lat);
+        const lonNum = parseFloat(lon);
+        const radiusNm = parseFloat(radius);
+
+        const latDelta = radiusNm / 60;
+        const lonDelta = radiusNm / (60 * Math.cos(latNum * Math.PI / 180));
+
+        const bbox = `${latNum - latDelta},${lonNum - lonDelta},${latNum + latDelta},${lonNum + lonDelta}`;
+        const awcUrl = `https://aviationweather.gov/api/data/taf?bbox=${bbox}&format=json`;
+
+        const response = await fetch(awcUrl, { signal: AbortSignal.timeout(8000) });
+
+        if (response.ok) {
+            const data = await response.json();
+            const tafs = (data || []).map(t => ({
+                icao: t.icaoId,
+                lat: t.lat,
+                lon: t.lon,
+                raw: t.rawTAF,
+                forecast: (t.fcsts || []).map(fg => ({ flight_rules: fg.flightRules || 'VFR' }))
+            }));
+            return res.json({ tafs, count: tafs.length });
+        }
+
+        res.status(502).json({ error: 'AWC TAF API unavailable' });
+    } catch (e) {
+        console.log('[Weather] Nearby TAF failed:', e.message);
+        res.status(500).json({ error: 'Failed to fetch nearby TAFs' });
+    }
+});
+
 app.get('/api/weather/taf/:icao', async (req, res) => {
     const icao = req.params.icao.toUpperCase();
 
