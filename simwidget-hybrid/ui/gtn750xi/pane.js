@@ -119,6 +119,7 @@ class GTN750XiPane extends SimGlassBase {
         this.vcalcPage = null;
         this.tripPlanningPage = null;
         this.fuelPlanningPage = null;
+        this.daltTasWindsPage = null;
         this.chartsPage = null;
         this.nearestPage = null;
         this.systemPage = null;
@@ -823,6 +824,7 @@ class GTN750XiPane extends SimGlassBase {
         this.updateVcalcPage();
         this.tripPlanningPage?.update();
         this.fuelPlanningPage?.update();
+        this.daltTasWindsPage?.update();
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
@@ -1330,6 +1332,14 @@ class GTN750XiPane extends SimGlassBase {
                     });
                 }
                 break;
+            case 'dalt-tas-winds':
+                if (!this.daltTasWindsPage && typeof DaltTasWindsPage !== 'undefined') {
+                    this.daltTasWindsPage = new DaltTasWindsPage({
+                        core: this.core,
+                        getData: () => this.data
+                    });
+                }
+                break;
             case 'charts':
                 if (!this.chartsPage && typeof ChartsPage !== 'undefined') {
                     this.chartsPage = new ChartsPage({
@@ -1526,7 +1536,7 @@ class GTN750XiPane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'trip-planning', 'fuel-planning', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'trip-planning', 'fuel-planning', 'dalt-tas-winds', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -1573,6 +1583,12 @@ class GTN750XiPane extends SimGlassBase {
             if (this.fuelPlanningPage) {
                 this.fuelPlanningPage.init();
                 this.fuelPlanningPage.render();
+            }
+        }
+        if (pageId === 'dalt-tas-winds') {
+            if (this.daltTasWindsPage) {
+                this.daltTasWindsPage.init();
+                this.daltTasWindsPage.render();
             }
         }
         if (pageId === 'taxi') {
@@ -2827,6 +2843,9 @@ class GTN750XiPane extends SimGlassBase {
             case 'fuel-use-sensor': if (this.fuelPlanningPage) this.fuelPlanningPage.toggleUseSensorData(); break;
             case 'fuel-next-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.nextLeg(); break;
             case 'fuel-prev-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.prevLeg(); break;
+            case 'goto-dalt-tas-winds': if (this.pageManager) this.pageManager.switchPage('dalt-tas-winds'); break;
+            case 'dalt-use-sensor': if (this.daltTasWindsPage) this.daltTasWindsPage.toggleUseSensorData(); break;
+            case 'dalt-reset': if (this.daltTasWindsPage) this.daltTasWindsPage.reset(); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
             case 'aux-logbook': if (this.auxPage) this.auxPage.showSubpage('logbook'); break;
             case 'logbook-export': if (this.auxPage) this.auxPage.exportLogbook(); break;

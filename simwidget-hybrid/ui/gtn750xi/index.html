@@ -1207,6 +1207,83 @@
                 </div>
             </div>
 
+            <!-- DALT/TAS/Winds Page -->
+            <div class="gtn-page" id="page-dalt-tas-winds" style="display:none;">
+                <div class="dalt-container">
+                    <div class="dalt-header">
+                        <div class="dalt-title">DALT / TAS / WINDS</div>
+                        <button class="dalt-toggle" id="dalt-use-sensor">Use Sensor Data: OFF</button>
+                    </div>
+
+                    <!-- Input Section -->
+                    <div class="dalt-section">
+                        <div class="dalt-subtitle">INPUT DATA</div>
+                        <div class="dalt-row">
+                            <span class="dalt-label">Indicated ALT</span>
+                            <input type="number" id="dalt-indicated-alt" class="dalt-input-num" value="5000" min="-1000" max="60000" step="100">
+                            <span class="dalt-unit">FT</span>
+                        </div>
+                        <div class="dalt-row">
+                            <span class="dalt-label">BARO</span>
+                            <input type="number" id="dalt-baro" class="dalt-input-num" value="29.92" min="27.00" max="31.00" step="0.01">
+                            <span class="dalt-unit">inHg</span>
+                        </div>
+                        <div class="dalt-row">
+                            <span class="dalt-label">CAS</span>
+                            <input type="number" id="dalt-cas" class="dalt-input-num" value="120" min="0" max="999" step="5">
+                            <span class="dalt-unit">KT</span>
+                        </div>
+                        <div class="dalt-row">
+                            <span class="dalt-label">TAT</span>
+                            <input type="number" id="dalt-tat" class="dalt-input-num" value="15" min="-60" max="60" step="1">
+                            <span class="dalt-unit">°C</span>
+                        </div>
+                        <div class="dalt-row">
+                            <span class="dalt-label">HDG</span>
+                            <input type="number" id="dalt-hdg" class="dalt-input-num" value="0" min="0" max="359" step="1">
+                            <span class="dalt-unit">°</span>
+                        </div>
+                        <div class="dalt-row">
+                            <span class="dalt-label">TRK</span>
+                            <input type="number" id="dalt-trk" class="dalt-input-num" value="0" min="0" max="359" step="1">
+                            <span class="dalt-unit">°</span>
+                        </div>
+                        <div class="dalt-row">
+                            <span class="dalt-label">Ground Speed</span>
+                            <input type="number" id="dalt-ground-speed" class="dalt-input-num" value="120" min="0" max="999" step="5">
+                            <span class="dalt-unit">KT</span>
+                        </div>
+                    </div>
+
+                    <!-- Output Section -->
+                    <div class="dalt-section dalt-results">
+                        <div class="dalt-subtitle">CALCULATED DATA</div>
+                        <div class="dalt-results-grid">
+                            <div class="dalt-result-item">
+                                <span class="dalt-result-label">Density ALT</span>
+                                <span class="dalt-result-value" id="dalt-result-density">--- FT</span>
+                            </div>
+                            <div class="dalt-result-item">
+                                <span class="dalt-result-label">TAS</span>
+                                <span class="dalt-result-value" id="dalt-result-tas">--- KT</span>
+                            </div>
+                            <div class="dalt-result-item">
+                                <span class="dalt-result-label">Wind Direction</span>
+                                <span class="dalt-result-value" id="dalt-result-wind-dir">---°</span>
+                            </div>
+                            <div class="dalt-result-item">
+                                <span class="dalt-result-label">Wind Speed</span>
+                                <span class="dalt-result-value" id="dalt-result-wind-speed">--- KT</span>
+                            </div>
+                            <div class="dalt-result-item dalt-result-wide">
+                                <span class="dalt-result-label">Wind Component</span>
+                                <span class="dalt-result-value" id="dalt-result-headwind">--- KT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- SYSTEM Page -->
             <div class="gtn-page" id="page-system" style="display:none;">
                 <div class="gtn-sys-scroll">

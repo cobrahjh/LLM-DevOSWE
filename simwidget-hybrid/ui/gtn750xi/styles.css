@@ -4347,6 +4347,128 @@ body {
     border-top: 1px solid var(--gtn-border);
 }
 
+/* DALT/TAS/Winds Page */
+.dalt-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.dalt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--gtn-dark);
+    border-bottom: 1px solid var(--gtn-border);
+}
+
+.dalt-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gtn-cyan);
+}
+
+.dalt-toggle {
+    padding: 6px 12px;
+    background: var(--gtn-dark);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-white);
+    font-weight: 600;
+    font-size: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dalt-toggle.active {
+    background: var(--gtn-accent);
+    color: white;
+}
+
+.dalt-section {
+    padding: 12px;
+    border-bottom: 1px solid var(--gtn-border);
+}
+
+.dalt-subtitle {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gtn-cyan);
+    margin-bottom: 10px;
+}
+
+.dalt-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.dalt-label {
+    flex: 1;
+    font-size: 11px;
+    color: var(--gtn-gray);
+}
+
+.dalt-input-num {
+    padding: 6px 8px;
+    background: var(--gtn-dark);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-green);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--gtn-mono);
+    border-radius: 4px;
+    width: 90px;
+    text-align: right;
+}
+
+.dalt-input-num:disabled {
+    background: var(--gtn-bg);
+    cursor: not-allowed;
+}
+
+.dalt-unit {
+    font-size: 10px;
+    color: var(--gtn-gray);
+    width: 50px;
+}
+
+.dalt-results {
+    flex: 1;
+    background: var(--gtn-dark);
+}
+
+.dalt-results-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 12px;
+}
+
+.dalt-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dalt-result-item.dalt-result-wide {
+    grid-column: 1 / -1;
+}
+
+.dalt-result-label {
+    font-size: 10px;
+    color: var(--gtn-gray);
+}
+
+.dalt-result-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gtn-green);
+    font-family: var(--gtn-mono);
+}
+
 /* System Page */
 .gtn-sys-scroll {
     flex: 1;

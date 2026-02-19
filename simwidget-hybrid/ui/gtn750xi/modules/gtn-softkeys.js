@@ -170,10 +170,10 @@ class GTNSoftKeys {
         this.registerContext('aux', [
             { label: 'TRIP', action: 'goto-trip-planning' },
             { label: 'FUEL', action: 'goto-fuel-planning' },
+            { label: 'DALT', action: 'goto-dalt-tas-winds' },
             { label: 'VCALC', action: 'goto-vcalc' },
             { label: 'TIMER', action: 'aux-timer' },
-            { label: 'LOGBK', action: 'aux-logbook' },
-            { label: 'BACK', action: 'back' }
+            { label: 'LOGBK', action: 'aux-logbook' }
         ]);
 
         // VCALC page
@@ -202,6 +202,16 @@ class GTNSoftKeys {
             { label: 'SENSOR', action: 'fuel-use-sensor', toggle: true },
             { label: 'NEXT', action: 'fuel-next-leg' },
             { label: 'PREV', action: 'fuel-prev-leg' },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // DALT/TAS/Winds page
+        this.registerContext('dalt-tas-winds', [
+            { label: 'SENSOR', action: 'dalt-use-sensor', toggle: true },
+            { label: 'RESET', action: 'dalt-reset' },
+            { label: '', action: null },
+            { label: '', action: null },
             { label: '', action: null },
             { label: 'BACK', action: 'back' }
         ]);
