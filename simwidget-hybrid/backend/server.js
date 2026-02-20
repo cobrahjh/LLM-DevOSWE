@@ -3784,6 +3784,77 @@ app.post('/api/ai-autopilot/execute-flight-plan', requireApOwner, (req, res) => 
     res.json({ success: true, waypoints: plan.waypoints.length });
 });
 
+// ── AI Speed Control API ────────────────────────────────────────────────
+let aiSpeedControl = {
+    enabled: false,
+    targetSpeed: 0,
+    interval: null
+};
+
+function runSpeedControl() {
+    if (!aiSpeedControl.enabled || !flightData) return;
+
+    const currentSpeed = flightData.airspeed || 0;
+    const targetSpeed = aiSpeedControl.targetSpeed;
+    const error = targetSpeed - currentSpeed;
+
+    // Simple proportional control with deadband
+    if (Math.abs(error) < 2) return; // Within 2 knots - no adjustment needed
+
+    // Calculate throttle adjustment (proportional gain = 0.5)
+    const throttleAdjustment = error * 0.5;
+    const currentThrottle = flightData.throttle || 0;
+    let newThrottle = currentThrottle + throttleAdjustment;
+
+    // Clamp to 0-100%
+    newThrottle = Math.max(0, Math.min(100, newThrottle));
+
+    // Send throttle command
+    if (isSimConnected && simConnectConnection) {
+        executeCommand('THROTTLE_SET', Math.round(newThrottle));
+        console.log(`[AI Speed] Target: ${targetSpeed}kt, Current: ${currentSpeed.toFixed(1)}kt, Throttle: ${newThrottle.toFixed(1)}%`);
+    }
+}
+
+app.post('/api/ai-autopilot/speed-control/enable', requireApOwner, (req, res) => {
+    const { targetSpeed } = req.body;
+
+    if (!targetSpeed || targetSpeed < 40 || targetSpeed > 500) {
+        return res.status(400).json({ error: 'Target speed must be 40-500 knots' });
+    }
+
+    aiSpeedControl.enabled = true;
+    aiSpeedControl.targetSpeed = targetSpeed;
+
+    // Start control loop (runs every 500ms)
+    if (aiSpeedControl.interval) clearInterval(aiSpeedControl.interval);
+    aiSpeedControl.interval = setInterval(runSpeedControl, 500);
+
+    console.log(`[AI Speed Control] Enabled - Target: ${targetSpeed}kt`);
+    res.json({ success: true, enabled: true, targetSpeed });
+});
+
+app.post('/api/ai-autopilot/speed-control/disable', requireApOwner, (req, res) => {
+    aiSpeedControl.enabled = false;
+
+    if (aiSpeedControl.interval) {
+        clearInterval(aiSpeedControl.interval);
+        aiSpeedControl.interval = null;
+    }
+
+    console.log('[AI Speed Control] Disabled');
+    res.json({ success: true, enabled: false });
+});
+
+app.get('/api/ai-autopilot/speed-control/status', (req, res) => {
+    res.json({
+        enabled: aiSpeedControl.enabled,
+        targetSpeed: aiSpeedControl.targetSpeed,
+        currentSpeed: flightData?.airspeed || 0,
+        throttle: flightData?.throttle || 0
+    });
+});
+
 // ── ATC Ground Operations API ──────────────────────────────────────────
 app.post('/api/ai-autopilot/request-taxi', requireApOwner, async (req, res) => {
     try {

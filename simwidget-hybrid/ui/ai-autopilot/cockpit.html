@@ -68,6 +68,8 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
 .input-row { display: flex; align-items: center; gap: 4px; }
 .input-row input { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 2px; padding: 3px 5px; font-family: monospace; font-size: 9px; flex: 1; }
 .input-unit { color: #8b949e; font-size: 8px; }
+.status-text { font-size: 8px; color: #8b949e; margin-top: 3px; padding: 2px 4px; background: #0d1117; border-radius: 2px; text-align: center; }
+.status-text.active { color: #3fb950; background: #0d2a18; }
 
 /* Issues */
 .issue { padding: 4px 6px; border-radius: 2px; margin-bottom: 3px; line-height: 1.3; font-size: 9px; }
@@ -166,6 +168,17 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                     <span class="input-unit">°</span>
                     <button class="btn blue" onclick="setHeading()">Set</button>
                 </div>
+            </div>
+
+            <!-- AI Speed Control -->
+            <div class="section">
+                <div class="section-title">AI Speed Control</div>
+                <div class="input-row">
+                    <input type="number" id="target-speed" value="120" min="40" max="500" step="5">
+                    <span class="input-unit">kt</span>
+                    <button class="btn green" id="speed-toggle" onclick="toggleSpeedControl()">Enable</button>
+                </div>
+                <div class="status-text" id="speed-status">Disabled</div>
             </div>
         </div>
 
@@ -482,6 +495,37 @@ async function setHeading() {
         return;
     }
     await api('POST', '/api/command', { command: 'HEADING_BUG_SET', value: hdg });
+}
+
+// AI Speed Control
+let speedControlEnabled = false;
+
+async function toggleSpeedControl() {
+    const targetSpeed = parseInt(document.getElementById('target-speed').value);
+    if (targetSpeed < 40 || targetSpeed > 500) {
+        showToast('✗ Speed must be 40-500 kt', 'red');
+        return;
+    }
+
+    speedControlEnabled = !speedControlEnabled;
+    const btn = document.getElementById('speed-toggle');
+    const status = document.getElementById('speed-status');
+
+    if (speedControlEnabled) {
+        btn.textContent = 'Disable';
+        btn.classList.remove('green');
+        btn.classList.add('red');
+        status.textContent = `Active - Target ${targetSpeed} kt`;
+        status.classList.add('active');
+        await api('POST', '/api/ai-autopilot/speed-control/enable', { targetSpeed });
+    } else {
+        btn.textContent = 'Enable';
+        btn.classList.remove('red');
+        btn.classList.add('green');
+        status.textContent = 'Disabled';
+        status.classList.remove('active');
+        await api('POST', '/api/ai-autopilot/speed-control/disable');
+    }
 }
 
 // Server Control
