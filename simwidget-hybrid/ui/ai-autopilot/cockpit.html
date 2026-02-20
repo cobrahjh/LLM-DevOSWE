@@ -140,10 +140,11 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
             <div class="section">
                 <div class="section-title">Flight Plan</div>
                 <div class="btn-grid">
-                    <button class="btn blue" onclick="importSimBrief()">📥 Import SimBrief</button>
-                    <button class="btn red" onclick="clearFlightPlan()">🗑️ Clear Plan</button>
-                    <button class="btn" onclick="requestTaxi()">🚕 Request Taxi</button>
-                    <button class="btn" onclick="clearedTakeoff()">🛫 Cleared T/O</button>
+                    <button class="btn blue" onclick="importSimBrief()">📥 SimBrief</button>
+                    <button class="btn blue" onclick="importFromGTN750()">🗺️ GTN750</button>
+                    <button class="btn red" onclick="clearFlightPlan()">🗑️ Clear</button>
+                    <button class="btn" onclick="requestTaxi()">🚕 Taxi</button>
+                    <button class="btn" onclick="clearedTakeoff()">🛫 T/O</button>
                 </div>
             </div>
 
@@ -378,6 +379,52 @@ async function api(method, endpoint, body = null) {
 // Flight Plan
 async function importSimBrief() {
     await api('POST', '/api/ai-autopilot/simbrief-import');
+}
+
+async function importFromGTN750() {
+    try {
+        // Try both GTN750Xi and GTN750 localStorage keys
+        const gtn750xiState = localStorage.getItem('gtn750xi_state');
+        const gtn750State = localStorage.getItem('gtn750-state');
+        const stateJson = gtn750xiState || gtn750State;
+
+        if (!stateJson) {
+            showToast('✗ No GTN750 plan found', 'red');
+            return;
+        }
+
+        const state = JSON.parse(stateJson);
+
+        // Check if flight plan manager has waypoints
+        if (!state.flightPlanManager?.waypoints || state.flightPlanManager.waypoints.length < 2) {
+            showToast('✗ No waypoints in GTN750', 'red');
+            return;
+        }
+
+        // Convert GTN750 format to AI Autopilot format
+        const flightPlan = {
+            waypoints: state.flightPlanManager.waypoints.map(wp => ({
+                ident: wp.ident || wp.name,
+                lat: wp.lat || wp.latitude,
+                lng: wp.lng || wp.lon || wp.longitude,
+                type: wp.type || 'waypoint',
+                altitude: wp.altitude || wp.alt,
+                speed: wp.speed
+            })),
+            cruiseAltitude: state.flightPlanManager.cruiseAltitude || 8500,
+            totalDistance: state.flightPlanManager.totalDistance || 0
+        };
+
+        // Send to AI Autopilot
+        const result = await api('POST', '/api/ai-autopilot/execute-flight-plan', flightPlan);
+
+        if (result) {
+            showToast(`✓ Imported ${flightPlan.waypoints.length} waypoints from GTN750`, 'green');
+        }
+    } catch (e) {
+        console.error('GTN750 import error:', e);
+        showToast('✗ Import failed: ' + e.message, 'red');
+    }
 }
 
 async function clearFlightPlan() {
