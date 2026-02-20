@@ -5606,6 +5606,87 @@ function startMockData() {
             transponderIdent: 0,
             // Navigation source
             apNavSelected: 0,
+
+            // ── Phase 2 vars (48 mock) ───────────────────────────
+            // Autopilot Extended
+            apNav1Lock: true, apApproachHold: false, apBackcourseHold: false,
+            apFlc: false, apYawDamper: true, apThrottleArm: false,
+            apWingLeveler: false, apFlightDirector: true,
+            // Trim
+            elevatorTrimPos: -0.02, elevatorTrimPct: -3.5,
+            aileronTrimPct: 0, rudderTrimPct: 0,
+            // Airspeed Extended
+            airspeedTrue: mockSpd * 1.05, airspeedMach: mockSpd / 660,
+            headingTrue: (mockHdg - 5.2 + 360) % 360,
+            // Design Speeds
+            designSpeedVs0: 48, designSpeedVs1: 55, designSpeedVc: 140,
+            // Weight
+            totalWeight: 2450, emptyWeight: 1680,
+            // Electrical
+            masterBattery: true, mainBusVoltage: 28.1,
+            avionicsBusVoltage: 27.8, batteryLoad: 35,
+            // Brakes
+            brakeLeft: 0, brakeRight: 0,
+            // More Lights
+            lightCabin: false, lightRecognition: false, lightWing: false,
+            lightLogo: false, lightPanel: true,
+            // Pitot/Vacuum
+            pitotHeat: false, vacuumPressure: 5.1,
+            // Simulation
+            simRate: 1, cameraState: 2,
+            // Barometer
+            kohlsmanMb: 1013.25, barometerPressure: 1013.25,
+            // Multi-Engine
+            numberOfEngines: 1, engineType: 0,
+            turbN1: 0, turbN2: 0,
+            // Misc
+            radioHeight: Math.max(0, mockAGL),
+            totalAirTemp: 12 + (Math.random() - 0.5) * 4,
+
+            // ── Phase 3 vars (56 mock) ───────────────────────────
+            // Flight Model & Performance
+            gForce: 1.0 + (Math.random() - 0.5) * 0.1,
+            dynamicPressure: mockSpd * mockSpd * 0.00339,
+            designTakeoffSpeed: 65, designSpeedClimb: 130,
+            designCruiseAlt: 8000,
+            decisionHeight: 200, decisionAltMsl: 1700,
+            cgPercent: 25.3, cgPercentLateral: 0.1,
+            maxGrossWeight: 2550, wingSpan: 36,
+            // Autopilot Advanced
+            apFdBank: (Math.random() - 0.5) * 0.1,
+            apFdPitch: (Math.random() - 0.5) * 0.05,
+            apManagedThrottle: false, apTogaPower: false,
+            apMachHoldVar: 0,
+            apSpeedSlot: 1, apAltSlot: 1, apVsSlot: 1,
+            // Aircraft Systems
+            structuralIcePct: 0, pitotIcePct: 0,
+            cabinAltitude: 0, cabinPressureDiff: 0,
+            warningFuel: false, warningOilPressure: false,
+            warningVacuum: false, warningVoltage: false,
+            onAnyRunway: false, crashFlag: 0,
+            // Gear & Brakes Advanced
+            gearTotalPctExtended: mockAlt < 2000 ? 100 : 0,
+            gearNoseOnGround: false,
+            gearSpeedExceeded: false,
+            antiskidActive: false, autobrakesActive: false,
+            nosewheelLock: false,
+            // Markers & Navigation
+            markerBeaconState: 0,
+            innerMarker: false, middleMarker: false, outerMarker: false,
+            adfRadial: 135 + (Math.random() - 0.5) * 10,
+            // Flaps & Spoilers
+            flapSpeedExceeded: false,
+            spoilersLeftPos: 0, spoilersRightPos: 0,
+            spoilerAvailable: false,
+            // Electrical Advanced
+            totalLoadAmps: 42, batteryCapacityPct: 95,
+            apuPctRpm: 0, externalPowerOn: false,
+            // Helicopter
+            rotorRpm: 0, rotorRpmPct: 0,
+            collectivePos: 0, rotorClutch: false,
+            rotorGovActive: false, rotorChipDetected: false,
+            tailRotorPedal: 0, rotorTemp: 0,
+
             connected: false, // Show as disconnected in mock mode
             aiAutopilot: ruleEngineServer.getBroadcastState()
         };
