@@ -17,6 +17,7 @@
 .v2-freq-bar {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 6px 10px;
     background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
