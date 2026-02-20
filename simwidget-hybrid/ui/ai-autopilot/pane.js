@@ -1451,23 +1451,23 @@ class AiAutopilotPane extends SimGlassBase {
 body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monospace; font-size:11px; }
 .dbg-toolbar { display:flex; gap:6px; padding:6px 10px; background:#0a1018; border-bottom:1px solid #1a2030; align-items:center; position:sticky; top:0; z-index:1; }
 .dbg-toolbar .title { font-size:11px; font-weight:700; color:#4fc3f7; letter-spacing:1.5px; margin-right:8px; }
-.dbg-toolbar button { padding:2px 8px; border:1px solid #222; border-radius:2px; background:transparent; color:#556; font-size:10px; font-weight:700; font-family:'Consolas',monospace; cursor:pointer; }
+.dbg-toolbar button { padding:2px 8px; border:1px solid #222; border-radius:2px; background:transparent; color:#90a0b0; font-size:10px; font-weight:700; font-family:'Consolas',monospace; cursor:pointer; }
 .dbg-toolbar button:hover { color:#889; border-color:#445; }
 .dbg-toolbar button.active { color:#4fc3f7; border-color:#4fc3f7; background:rgba(79,195,247,0.08); }
 .dbg-toolbar .clear { margin-left:auto; }
 .dbg-toolbar .clear:hover { color:#ef5350; border-color:#ef5350; }
-.dbg-stats { display:flex; gap:14px; padding:4px 10px; font-size:10px; color:#445; background:#0a1018; border-bottom:1px solid #1a2030; }
-.dbg-stats span span { color:#667; }
+.dbg-stats { display:flex; gap:14px; padding:4px 10px; font-size:10px; color:#90a0b0; background:#0a1018; border-bottom:1px solid #1a2030; }
+.dbg-stats span span { color:#a0b0c0; }
 .dbg-log { padding:6px 10px; overflow-y:auto; flex:1; }
 .dbg-entry { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:1px 0; line-height:1.7; }
-.dbg-time { color:#334; margin-right:4px; }
+.dbg-time { color:#90a0b0; margin-right:4px; }
 .dbg-tag { display:inline-block; width:28px; text-align:center; font-weight:700; font-size:9px; margin-right:4px; border-radius:2px; padding:0 2px; }
 .dbg-tag.api { color:#66bb6a; background:rgba(102,187,106,0.1); }
 .dbg-tag.ws { color:#78909c; background:rgba(120,144,156,0.1); }
 .dbg-tag.llm { color:#ba68c8; background:rgba(186,104,200,0.1); }
 .dbg-tag.cmd { color:#ffb74d; background:rgba(255,183,77,0.1); }
 .dbg-text { color:#8899aa; }
-.dbg-text .ok { color:#66bb6a; } .dbg-text .err { color:#ef5350; } .dbg-text .dim { color:#445; }
+.dbg-text .ok { color:#66bb6a; } .dbg-text .err { color:#ef5350; } .dbg-text .dim { color:#90a0b0; }
 .dbg-text .url { color:#4fc3f7; } .dbg-text .val { color:#e0e0e0; } .dbg-text .dur { color:#ffa726; }
 ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#223; border-radius:2px; }
 </style></head><body>

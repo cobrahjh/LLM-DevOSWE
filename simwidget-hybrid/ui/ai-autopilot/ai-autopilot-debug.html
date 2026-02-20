@@ -494,7 +494,7 @@ function updateFreqChart() {
       <span class="freq-cnt">${cnt}</span>
     </div>`;
   }).join('');
-  document.getElementById('cmd-freq-rows').innerHTML = html || '<span style="color:#303840;font-size:9px">no commands yet</span>';
+  document.getElementById('cmd-freq-rows').innerHTML = html || '<span style="color:#a0b0c0;font-size:9px">no commands yet</span>';
 
   // CPM stat
   const now = Date.now();
@@ -630,7 +630,7 @@ function updateFlightDisplay(fd, ap) {
     const ago = Math.round((Date.now() - lc.time) / 1000);
     document.getElementById('last-cmd-bar').innerHTML =
       'Last: <span>' + esc(lc.type) + '=' + esc(String(lc.value)) + '</span> ' +
-      esc(lc.description || '') + ' <span style="color:#303840">' + ago + 's ago</span>';
+      esc(lc.description || '') + ' <span style="color:#a0b0c0">' + ago + 's ago</span>';
   }
 }
 
