@@ -310,9 +310,24 @@ async function registerSession() {
 
             // Update UI to show ownership status
             updateOwnershipStatus();
+
+            // Show user feedback if not owner
+            if (!isOwner && data.ownerHostname) {
+                showToast(`⚠️ Locked - ${data.ownerHostname} has control`, 'orange');
+            }
+        } else {
+            console.error(`[Session] Registration failed: ${res.status}`);
+            showToast('⚠️ Session registration failed', 'red');
+
+            // Retry after 5 seconds
+            setTimeout(registerSession, 5000);
         }
     } catch (e) {
-        console.error('[Session] Registration failed:', e);
+        console.error('[Session] Registration error:', e);
+        showToast('⚠️ Cannot connect to server', 'red');
+
+        // Retry after 5 seconds
+        setTimeout(registerSession, 5000);
     }
 }
 
@@ -340,18 +355,26 @@ function updateOwnershipStatus() {
     const aiToggle = document.getElementById('ai-toggle');
     const lockStatus = document.getElementById('lock-status');
 
+    // Null checks - elements might not exist yet
+    if (!aiToggle || !lockStatus) {
+        console.warn('[Session] UI elements not ready, will retry on next heartbeat');
+        return;
+    }
+
     if (!isOwner) {
         aiToggle.style.opacity = '0.5';
         aiToggle.title = 'Another page has control (locked)';
         lockStatus.textContent = '🔒';
         lockStatus.classList.add('locked');
         lockStatus.title = 'Locked - Another page has control';
+        console.log('[Session] Control locked by another page');
     } else {
         aiToggle.style.opacity = '1';
         aiToggle.title = 'Toggle Sally AI Autopilot on/off';
         lockStatus.textContent = '🔓';
         lockStatus.classList.remove('locked');
         lockStatus.title = 'Unlocked - This page has control';
+        console.log('[Session] This page has control');
     }
 }
 
@@ -522,18 +545,21 @@ async function api(method, endpoint, body = null) {
             showToast('✓ Success', 'green');
             return await res.json();
         } else if (res.status === 403) {
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (data.locked) {
                 showToast(`✗ Locked by ${data.ownerHostname}`, 'red');
             } else {
                 showToast('✗ Forbidden', 'red');
             }
+            return null;
         } else {
             showToast('✗ Error: ' + res.status, 'red');
+            return null;
         }
     } catch (e) {
         showToast('✗ Network Error', 'red');
         console.error(e);
+        return null;
     }
 }
 
@@ -731,10 +757,17 @@ async function applyAllTuning() {
 // Toast
 function showToast(msg, type = 'green') {
     const toast = document.getElementById('toast');
+    const colors = {
+        green: '#3fb950',
+        red: '#f85149',
+        orange: '#d29922'
+    };
+    const color = colors[type] || colors.green;
+
     toast.textContent = msg;
     toast.style.display = 'block';
-    toast.style.borderColor = type === 'green' ? '#3fb950' : '#f85149';
-    toast.style.color = type === 'green' ? '#3fb950' : '#f85149';
+    toast.style.borderColor = color;
+    toast.style.color = color;
     setTimeout(() => toast.style.display = 'none', 3000);
 }
 
