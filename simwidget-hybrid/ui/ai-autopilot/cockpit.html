@@ -279,6 +279,7 @@ let currentPhase = 'PREFLIGHT';
 const sessionId = 'cockpit-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
 let isOwner = false;
 let heartbeatTimer = null;
+let lastManualToggle = 0; // Track manual button clicks
 
 // Initialize
 init();
@@ -446,14 +447,20 @@ function updateDisplay(data) {
 
     // Sally state toggle
     const aiToggle = document.getElementById('ai-toggle');
-    if (data.sallyState?.enabled) {
-        aiToggle.textContent = 'SALLY ON';
-        aiToggle.classList.remove('off');
-        aiToggle.classList.add('active');
+    // Don't override if manually toggled in last 2 seconds (prevents flicker)
+    if (Date.now() - lastManualToggle < 2000) {
+        // Skip WebSocket update, keep manual state
     } else {
-        aiToggle.textContent = 'SALLY OFF';
-        aiToggle.classList.remove('active');
-        aiToggle.classList.add('off');
+        // Normal WebSocket-based update
+        if (data.sallyState?.enabled) {
+            aiToggle.textContent = 'SALLY ON';
+            aiToggle.classList.remove('off');
+            aiToggle.classList.add('active');
+        } else {
+            aiToggle.textContent = 'SALLY OFF';
+            aiToggle.classList.remove('active');
+            aiToggle.classList.add('off');
+        }
     }
 
     // State cards
@@ -633,6 +640,7 @@ async function enableSally() {
     const result = await api('POST', '/api/ai-autopilot/enable');
     if (result) {
         // Update button immediately (don't wait for WebSocket)
+        lastManualToggle = Date.now();
         const aiToggle = document.getElementById('ai-toggle');
         aiToggle.textContent = 'SALLY ON';
         aiToggle.classList.remove('off');
@@ -644,6 +652,7 @@ async function disableSally() {
     const result = await api('POST', '/api/ai-autopilot/disable');
     if (result) {
         // Update button immediately (don't wait for WebSocket)
+        lastManualToggle = Date.now();
         const aiToggle = document.getElementById('ai-toggle');
         aiToggle.textContent = 'SALLY OFF';
         aiToggle.classList.remove('active');
