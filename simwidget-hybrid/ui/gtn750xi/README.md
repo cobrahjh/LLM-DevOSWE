@@ -2,9 +2,21 @@
 
 Full-featured Garmin GTN 750Xi GPS emulator for Microsoft Flight Simulator with modular architecture, flight planning, navigation, map rendering, and complete Planning utilities suite. Based on GTN 750 v3.0+ with experimental features and enhanced utilities.
 
-**Version:** v1.0+ (2026-02-19)
-**Access:** `http://192.168.1.42:8080/ui/gtn750xi/`
+**Version:** v1.0+ (2026-02-20)
 **Status:** Experimental Build with 5 Planning Utilities
+
+## 🎨 UI Layouts
+
+**V1 (Classic):** `http://192.168.1.42:8080/ui/gtn750xi/`
+- Horizontal home buttons at top
+- Original GTN750 style
+
+**V2 (App Grid):** `http://192.168.1.42:8080/ui/gtn750xi/?layout=v2`
+- 4×3 app icon grid (Garmin GTN 725Xi/750Xi style)
+- Page locator bar: ◀ MAP | FPL | NRST | PROC | UTIL ▶
+- Touch-friendly icons with hover effects
+
+*Same backend code, zero duplication. Switch layouts via URL parameter.*
 
 ## 📚 Documentation
 
