@@ -172,8 +172,8 @@ class GTNSoftKeys {
             { label: 'FUEL', action: 'goto-fuel-planning' },
             { label: 'DALT', action: 'goto-dalt-tas-winds' },
             { label: 'VCALC', action: 'goto-vcalc' },
-            { label: 'TIMER', action: 'aux-timer' },
-            { label: 'LOGBK', action: 'aux-logbook' }
+            { label: 'CHKLIST', action: 'goto-checklists' },
+            { label: 'TIMER', action: 'aux-timer' }
         ]);
 
         // VCALC page
@@ -211,6 +211,16 @@ class GTNSoftKeys {
             { label: 'SENSOR', action: 'dalt-use-sensor', toggle: true },
             { label: 'RESET', action: 'dalt-reset' },
             { label: '', action: null },
+            { label: '', action: null },
+            { label: '', action: null },
+            { label: 'BACK', action: 'back' }
+        ]);
+
+        // CHECKLISTS page
+        this.registerContext('checklists', [
+            { label: 'MENU', action: 'checklist-menu' },
+            { label: 'NEXT', action: 'checklist-next' },
+            { label: 'CLEAR', action: 'checklist-clear-current' },
             { label: '', action: null },
             { label: '', action: null },
             { label: 'BACK', action: 'back' }

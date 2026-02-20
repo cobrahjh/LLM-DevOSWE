@@ -117,6 +117,10 @@ class GTN750XiPane extends SimGlassBase {
         this.proceduresPage = null;
         this.auxPage = null;
         this.vcalcPage = null;
+        this.tripPlanningPage = null;
+        this.fuelPlanningPage = null;
+        this.daltTasWindsPage = null;
+        this.checklistsPage = null;
         this.chartsPage = null;
         this.nearestPage = null;
         this.systemPage = null;
@@ -601,6 +605,10 @@ class GTN750XiPane extends SimGlassBase {
             nrst: 'pages/page-nrst.js',
             aux: 'pages/page-aux.js',
             vcalc: 'pages/page-vcalc.js',
+            'trip-planning': 'pages/page-trip-planning.js',
+            'fuel-planning': 'pages/page-fuel-planning.js',
+            'dalt-tas-winds': 'pages/page-dalt-tas-winds.js',
+            checklists: 'pages/page-checklists.js',
             system: 'pages/page-system.js',
             taxi: 'pages/page-taxi.js',
             'user-wpt': 'pages/page-user-wpt.js'
@@ -1292,6 +1300,41 @@ class GTN750XiPane extends SimGlassBase {
                     });
                 }
                 break;
+            case 'trip-planning':
+                if (!this.tripPlanningPage && typeof TripPlanningPage !== 'undefined') {
+                    this.tripPlanningPage = new TripPlanningPage({
+                        core: this.core,
+                        serverPort: this.serverPort,
+                        flightPlanManager: this.flightPlanManager,
+                        getData: () => this.data
+                    });
+                }
+                break;
+            case 'fuel-planning':
+                if (!this.fuelPlanningPage && typeof FuelPlanningPage !== 'undefined') {
+                    this.fuelPlanningPage = new FuelPlanningPage({
+                        core: this.core,
+                        serverPort: this.serverPort,
+                        flightPlanManager: this.flightPlanManager,
+                        getData: () => this.data
+                    });
+                }
+                break;
+            case 'dalt-tas-winds':
+                if (!this.daltTasWindsPage && typeof DaltTasWindsPage !== 'undefined') {
+                    this.daltTasWindsPage = new DaltTasWindsPage({
+                        core: this.core,
+                        getData: () => this.data
+                    });
+                }
+                break;
+            case 'checklists':
+                if (!this.checklistsPage && typeof ChecklistsPage !== 'undefined') {
+                    this.checklistsPage = new ChecklistsPage({
+                        core: this.core
+                    });
+                }
+                break;
             case 'charts':
                 if (!this.chartsPage && typeof ChartsPage !== 'undefined') {
                     this.chartsPage = new ChartsPage({
@@ -1488,7 +1531,7 @@ class GTN750XiPane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'trip-planning', 'fuel-planning', 'dalt-tas-winds', 'checklists', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -1523,6 +1566,30 @@ class GTN750XiPane extends SimGlassBase {
                 this.vcalcPage.init();
                 this.vcalcPage.enable();
                 this.vcalcPage.render();
+            }
+        }
+        if (pageId === 'trip-planning') {
+            if (this.tripPlanningPage) {
+                this.tripPlanningPage.init();
+                this.tripPlanningPage.render();
+            }
+        }
+        if (pageId === 'fuel-planning') {
+            if (this.fuelPlanningPage) {
+                this.fuelPlanningPage.init();
+                this.fuelPlanningPage.render();
+            }
+        }
+        if (pageId === 'dalt-tas-winds') {
+            if (this.daltTasWindsPage) {
+                this.daltTasWindsPage.init();
+                this.daltTasWindsPage.render();
+            }
+        }
+        if (pageId === 'checklists') {
+            if (this.checklistsPage) {
+                this.checklistsPage.init();
+                this.checklistsPage.render();
             }
         }
         if (pageId === 'taxi') {
@@ -2767,6 +2834,23 @@ class GTN750XiPane extends SimGlassBase {
             case 'aux-trip': if (this.auxPage) this.auxPage.showSubpage('trip'); break;
             case 'aux-fuel': if (this.auxPage) this.auxPage.showSubpage('fuel'); break;
             case 'goto-vcalc': if (this.pageManager) this.pageManager.switchPage('vcalc'); break;
+            case 'goto-trip-planning': if (this.pageManager) this.pageManager.switchPage('trip-planning'); break;
+            case 'goto-fuel-planning': if (this.pageManager) this.pageManager.switchPage('fuel-planning'); break;
+            case 'goto-dalt-tas-winds': if (this.pageManager) this.pageManager.switchPage('dalt-tas-winds'); break;
+            case 'goto-checklists': if (this.pageManager) this.pageManager.switchPage('checklists'); break;
+            case 'trip-toggle-mode': if (this.tripPlanningPage) this.tripPlanningPage.toggleMode(); break;
+            case 'trip-use-sensor': if (this.tripPlanningPage) this.tripPlanningPage.toggleUseSensorData(); break;
+            case 'trip-next-leg': if (this.tripPlanningPage) this.tripPlanningPage.nextLeg(); break;
+            case 'trip-prev-leg': if (this.tripPlanningPage) this.tripPlanningPage.prevLeg(); break;
+            case 'fuel-toggle-mode': if (this.fuelPlanningPage) this.fuelPlanningPage.toggleMode(); break;
+            case 'fuel-use-sensor': if (this.fuelPlanningPage) this.fuelPlanningPage.toggleUseSensorData(); break;
+            case 'fuel-next-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.nextLeg(); break;
+            case 'fuel-prev-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.prevLeg(); break;
+            case 'dalt-use-sensor': if (this.daltTasWindsPage) this.daltTasWindsPage.toggleUseSensorData(); break;
+            case 'dalt-reset': if (this.daltTasWindsPage) this.daltTasWindsPage.reset(); break;
+            case 'checklist-menu': if (this.checklistsPage) this.checklistsPage.showMenu(); break;
+            case 'checklist-next': if (this.checklistsPage) this.checklistsPage.goToNextChecklist(); break;
+            case 'checklist-clear-current': if (this.checklistsPage) this.checklistsPage.clearCurrentChecklist(); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
             case 'aux-logbook': if (this.auxPage) this.auxPage.showSubpage('logbook'); break;
             case 'logbook-export': if (this.auxPage) this.auxPage.exportLogbook(); break;
