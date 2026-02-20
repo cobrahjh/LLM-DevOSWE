@@ -269,7 +269,8 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
 <div id="toast"></div>
 
 <script>
-const BASE = 'http://192.168.1.42:8080';
+// Use current host for API and WebSocket (works with localhost and remote IP)
+const BASE = window.location.origin;
 let ws = null;
 let tuningData = {};
 let currentPhase = 'PREFLIGHT';
@@ -389,7 +390,8 @@ window.addEventListener('beforeunload', () => {
 
 // WebSocket Connection
 function connectWebSocket() {
-    const wsUrl = `ws://192.168.1.42:8080`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}`;
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
