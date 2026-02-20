@@ -7,7 +7,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #0a0e14; color: #c0c8d8; font-family: 'Segoe UI', sans-serif; font-size: 14px; padding: 16px; }
 h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
-.subtitle { color: #6b7a8d; font-size: 12px; margin-bottom: 16px; }
+.subtitle { color: #a0b0c0; font-size: 12px; margin-bottom: 16px; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .panel { background: #111820; border: 1px solid #1e2a38; border-radius: 8px; padding: 14px; }
 .panel-title { font-size: 13px; color: #ffab40; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -16,7 +16,7 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 /* Learnings */
 .learning { background: #0d1218; border: 1px solid #1a2430; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; position: relative; }
 .learning-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.learning-id { color: #6b7a8d; font-size: 11px; font-weight: 600; }
+.learning-id { color: #a0b0c0; font-size: 11px; font-weight: 600; }
 .learning-cat { background: #1a2430; color: #4fc3f7; font-size: 10px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; }
 .learning-cat.elevator { color: #ff7043; background: #2a1510; }
 .learning-cat.aileron { color: #66bb6a; background: #102a15; }
@@ -24,9 +24,9 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 .learning-cat.throttle { color: #ffab40; background: #2a2010; }
 .learning-cat.speed { color: #42a5f5; background: #101a2a; }
 .learning-cat.control { color: #ef5350; background: #2a1010; }
-.learning-cat.phase { color: #78909c; background: #1a2028; }
+.learning-cat.phase { color: #a0b0c0; background: #1a2028; }
 .learning-text { font-size: 13px; line-height: 1.4; }
-.learning-meta { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-size: 11px; color: #6b7a8d; }
+.learning-meta { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-size: 11px; color: #a0b0c0; }
 .learning-reinf { color: #66bb6a; }
 .conf-bar { height: 4px; border-radius: 2px; background: #1a2430; margin-top: 6px; overflow: hidden; }
 .conf-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
@@ -37,7 +37,7 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 .conf-pct.low { color: #ef5350; }
 .conf-pct.med { color: #ffab40; }
 .conf-pct.high { color: #66bb6a; }
-.learning-delete { position: absolute; top: 8px; right: 10px; background: none; border: none; color: #4a5568; cursor: pointer; font-size: 14px; }
+.learning-delete { position: absolute; top: 8px; right: 10px; background: none; border: none; color: #a0b0c0; cursor: pointer; font-size: 14px; }
 .learning-delete:hover { color: #ef5350; }
 
 /* Attempts */
@@ -51,13 +51,13 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 .attempt-outcome.success { color: #66bb6a; background: #102a15; }
 .attempt-outcome.crash { color: #ef5350; background: #2a1010; }
 .attempt-outcome.aborted { color: #ffab40; background: #2a2010; }
-.attempt-outcome.unknown { color: #78909c; background: #1a2028; }
-.attempt-phases { font-size: 11px; color: #6b7a8d; margin-top: 3px; }
-.attempt-stats { font-size: 11px; color: #8899aa; margin-top: 3px; }
+.attempt-outcome.unknown { color: #a0b0c0; background: #1a2028; }
+.attempt-phases { font-size: 11px; color: #a0b0c0; margin-top: 3px; }
+.attempt-stats { font-size: 11px; color: #a0b0c0; margin-top: 3px; }
 
 /* Tuning */
 .tuning-table { width: 100%; border-collapse: collapse; }
-.tuning-table th { text-align: left; font-size: 11px; color: #6b7a8d; padding: 4px 8px; border-bottom: 1px solid #1e2a38; }
+.tuning-table th { text-align: left; font-size: 11px; color: #a0b0c0; padding: 4px 8px; border-bottom: 1px solid #1e2a38; }
 .tuning-table td { padding: 4px 8px; font-size: 12px; border-bottom: 1px solid #111820; }
 .tuning-param { color: #4fc3f7; font-family: 'Consolas', monospace; }
 .tuning-value { color: #ffab40; font-weight: 600; font-family: 'Consolas', monospace; }
@@ -70,15 +70,15 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 .stat-value.orange { color: #ffab40; }
 .stat-value.green { color: #66bb6a; }
 .stat-value.red { color: #ef5350; }
-.stat-label { font-size: 10px; color: #6b7a8d; text-transform: uppercase; }
+.stat-label { font-size: 10px; color: #a0b0c0; text-transform: uppercase; }
 
 /* Category summary */
 .cat-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.cat-chip { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #1a2430; color: #8899aa; }
+.cat-chip { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #1a2430; color: #a0b0c0; }
 .cat-chip .count { font-weight: 700; margin-left: 3px; }
 
 /* Empty states */
-.empty { color: #4a5568; font-style: italic; text-align: center; padding: 20px; }
+.empty { color: #90a0b0; font-style: italic; text-align: center; padding: 20px; }
 
 /* Status dot */
 .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
@@ -86,10 +86,10 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 .status-dot.disconnected { background: #ef5350; }
 
 /* Refresh indicator */
-.refresh { font-size: 11px; color: #4a5568; float: right; }
+.refresh { font-size: 11px; color: #90a0b0; float: right; }
 
 /* Actions */
-.btn { background: #1a2430; border: 1px solid #2a3a4a; color: #8899aa; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.btn { background: #1a2430; border: 1px solid #2a3a4a; color: #a0b0c0; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
 .btn:hover { background: #243040; color: #c0c8d8; }
 .btn-danger { border-color: #5a2020; }
 .btn-danger:hover { background: #3a1515; color: #ef5350; }
@@ -97,10 +97,10 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 
 /* Conversations */
 .convo { background: #0d1218; border: 1px solid #1a2430; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
-.convo-time { font-size: 10px; color: #4a5568; margin-bottom: 4px; }
+.convo-time { font-size: 10px; color: #90a0b0; margin-bottom: 4px; }
 .convo-user { color: #4fc3f7; font-size: 12px; margin-bottom: 4px; padding-left: 8px; border-left: 2px solid #4fc3f7; }
 .convo-sally { color: #c0c8d8; font-size: 12px; padding-left: 8px; border-left: 2px solid #ffab40; white-space: pre-wrap; line-height: 1.4; }
-.convo-meta { display: flex; gap: 10px; font-size: 10px; color: #4a5568; margin-top: 4px; }
+.convo-meta { display: flex; gap: 10px; font-size: 10px; color: #90a0b0; margin-top: 4px; }
 .convo-meta .cmds { color: #66bb6a; }
 .convo-meta .dur { color: #ffab40; }
 
@@ -125,7 +125,7 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 <div class="grid">
     <!-- Learnings Panel -->
     <div class="panel">
-        <div class="panel-title">Learnings <span id="learningCount" style="color:#6b7a8d">(0)</span></div>
+        <div class="panel-title">Learnings <span id="learningCount" style="color:#a0b0c0">(0)</span></div>
         <div class="cat-summary" id="catSummary"></div>
         <div class="scroll" id="learningsList"><div class="empty">No learnings yet — Sally will record observations after analyzing takeoff attempts</div></div>
         <div class="actions">
@@ -136,7 +136,7 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 
     <!-- Attempts Panel -->
     <div class="panel">
-        <div class="panel-title">Takeoff Attempts <span id="attemptCount" style="color:#6b7a8d">(0)</span></div>
+        <div class="panel-title">Takeoff Attempts <span id="attemptCount" style="color:#a0b0c0">(0)</span></div>
         <div class="scroll" id="attemptsList"><div class="empty">No attempts logged yet</div></div>
     </div>
 
@@ -154,7 +154,7 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
 
     <!-- Conversations Panel -->
     <div class="panel panel-full">
-        <div class="panel-title">Conversation Log <span id="convoCount" style="color:#6b7a8d">(0)</span></div>
+        <div class="panel-title">Conversation Log <span id="convoCount" style="color:#a0b0c0">(0)</span></div>
         <div class="scroll" id="convoList" style="max-height:400px;"><div class="empty">No conversations yet</div></div>
         <div class="actions">
             <button class="btn btn-danger" onclick="clearConversations()">Clear Log</button>
@@ -177,8 +177,8 @@ h1 { font-size: 20px; color: #4fc3f7; margin-bottom: 4px; }
         </div>
         <div id="perfChart" style="height:80px;display:flex;align-items:flex-end;gap:2px;"></div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;">
-            <span style="font-size:10px;color:#4a5568;">Response time history (last 20 queries)</span>
-            <span style="font-size:10px;color:#4a5568;" id="perfAvgLen">Avg response: 0 chars</span>
+            <span style="font-size:10px;color:#90a0b0;">Response time history (last 20 queries)</span>
+            <span style="font-size:10px;color:#90a0b0;" id="perfAvgLen">Avg response: 0 chars</span>
         </div>
     </div>
 </div>
