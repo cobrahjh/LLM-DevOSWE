@@ -100,10 +100,10 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
         </div>
         <div class="header-controls">
             <div class="conn-dot" id="conn-status" title="Connection status"></div>
-            <button class="header-btn off" id="ai-toggle">SALLY OFF</button>
-            <button class="header-btn" id="import-fpl">📋 FPL</button>
-            <button class="header-btn" id="clear-fpl">✕ CLR</button>
-            <button class="header-btn" onclick="location.reload()">🔄</button>
+            <button class="header-btn off" id="ai-toggle" title="Toggle Sally AI Autopilot on/off">SALLY OFF</button>
+            <button class="header-btn" id="import-fpl" title="Import flight plan from SimBrief">📋 FPL</button>
+            <button class="header-btn" id="clear-fpl" title="Clear current flight plan">✕ CLR</button>
+            <button class="header-btn" onclick="location.reload()" title="Reload cockpit page">🔄</button>
         </div>
     </div>
 
@@ -142,11 +142,11 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
             <div class="section">
                 <div class="section-title">Flight Plan</div>
                 <div class="btn-grid">
-                    <button class="btn blue" onclick="importSimBrief()">📥 SimBrief</button>
-                    <button class="btn blue" onclick="importFromGTN750()">🗺️ GTN750Xi</button>
-                    <button class="btn red" onclick="clearFlightPlan()">🗑️ Clear</button>
-                    <button class="btn" onclick="requestTaxi()">🚕 Taxi</button>
-                    <button class="btn" onclick="clearedTakeoff()">🛫 T/O</button>
+                    <button class="btn blue" onclick="importSimBrief()" title="Import flight plan from SimBrief">📥 SimBrief</button>
+                    <button class="btn blue" onclick="importFromGTN750()" title="Import flight plan from GTN750Xi GPS">🗺️ GTN750Xi</button>
+                    <button class="btn red" onclick="clearFlightPlan()" title="Clear current flight plan and waypoints">🗑️ Clear</button>
+                    <button class="btn" onclick="requestTaxi()" title="Request taxi clearance from ATC">🚕 Taxi</button>
+                    <button class="btn" onclick="clearedTakeoff()" title="Issue takeoff clearance">🛫 T/O</button>
                 </div>
             </div>
 
@@ -158,28 +158,28 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                     <div>
                         <div style="font-size: 7px; color: #8b949e; margin-bottom: 2px;">CRUISE ALT</div>
                         <div class="input-row">
-                            <input type="number" id="cruise-alt" value="8500" min="1000" max="45000" step="500" style="width: 100%;">
+                            <input type="number" id="cruise-alt" value="8500" min="1000" max="45000" step="500" style="width: 100%;" title="Target cruise altitude (1000-45000 ft)">
                             <span class="input-unit">ft</span>
                         </div>
-                        <button class="btn blue" onclick="setCruiseAlt()" style="width: 100%; margin-top: 2px;">Set</button>
+                        <button class="btn blue" onclick="setCruiseAlt()" style="width: 100%; margin-top: 2px;" title="Set target cruise altitude for AI Autopilot">Set</button>
                     </div>
                     <!-- Heading -->
                     <div>
                         <div style="font-size: 7px; color: #8b949e; margin-bottom: 2px;">HEADING</div>
                         <div class="input-row">
-                            <input type="number" id="heading-bug" value="360" min="0" max="360" step="1" style="width: 100%;">
+                            <input type="number" id="heading-bug" value="360" min="0" max="360" step="1" style="width: 100%;" title="Heading bug (0-360°)">
                             <span class="input-unit">°</span>
                         </div>
-                        <button class="btn blue" onclick="setHeading()" style="width: 100%; margin-top: 2px;">Set</button>
+                        <button class="btn blue" onclick="setHeading()" style="width: 100%; margin-top: 2px;" title="Set heading bug in autopilot">Set</button>
                     </div>
                     <!-- Speed -->
                     <div>
                         <div style="font-size: 7px; color: #8b949e; margin-bottom: 2px;">AI SPEED</div>
                         <div class="input-row">
-                            <input type="number" id="target-speed" value="120" min="40" max="500" step="5" style="width: 100%;">
+                            <input type="number" id="target-speed" value="120" min="40" max="500" step="5" style="width: 100%;" title="Target airspeed (40-500 kt)">
                             <span class="input-unit">kt</span>
                         </div>
-                        <button class="btn green" id="speed-toggle" onclick="toggleSpeedControl()" style="width: 100%; margin-top: 2px;">Enable</button>
+                        <button class="btn green" id="speed-toggle" onclick="toggleSpeedControl()" style="width: 100%; margin-top: 2px;" title="Enable AI auto-throttle to maintain target speed">Enable</button>
                     </div>
                 </div>
                 <div class="status-text" id="speed-status" style="margin-top: 4px;">Speed control disabled</div>
@@ -193,8 +193,8 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                 <div class="section-title">Server Status</div>
                 <div class="cards" id="server-cards"></div>
                 <div class="btn-grid" style="margin-top: 8px">
-                    <button class="btn warn" onclick="restartServer()">⟳ Restart</button>
-                    <button class="btn red" onclick="stopServer()">■ Stop</button>
+                    <button class="btn warn" onclick="restartServer()" title="Restart SimGlass server">⟳ Restart</button>
+                    <button class="btn red" onclick="stopServer()" title="Stop SimGlass server">■ Stop</button>
                 </div>
             </div>
 
@@ -202,10 +202,10 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
             <div class="section">
                 <div class="section-title">Sally AI Control</div>
                 <div class="btn-grid">
-                    <button class="btn green" onclick="enableSally()">✓ Enable</button>
-                    <button class="btn red" onclick="disableSally()">✕ Disable</button>
-                    <button class="btn warn" onclick="clearATCGate()">Clear ATC Gate</button>
-                    <button class="btn" onclick="resetLearning()">Reset Learning</button>
+                    <button class="btn green" onclick="enableSally()" title="Enable Sally AI Autopilot">✓ Enable</button>
+                    <button class="btn red" onclick="disableSally()" title="Disable Sally AI Autopilot">✕ Disable</button>
+                    <button class="btn warn" onclick="clearATCGate()" title="Clear ATC gate hold (if stuck at runway)">Clear ATC Gate</button>
+                    <button class="btn" onclick="resetLearning()" title="Reset all Sally learning data">Reset Learning</button>
                 </div>
             </div>
 
