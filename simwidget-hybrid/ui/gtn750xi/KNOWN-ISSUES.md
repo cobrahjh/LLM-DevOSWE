@@ -47,21 +47,20 @@
 
 **Access:** AUX page > FUEL soft key
 
+### DALT/TAS/Wind Calculator ⭐
+
+**Status:** Implemented (2026-02-19), not yet flight tested
+**What works:** Density Altitude calculation (ISA standard), TAS calculation (CAS corrected for altitude/temp), Wind vector calculation (direction/speed/headwind component), Use Sensor Data toggle (pulls all inputs from sim), auto-calculate on entry, RESET function
+**Missing:**
+- Real-flight validation
+- Pressure ALT mode when ADC sensor provides it (currently uses Indicated ALT conversion)
+- RAT (Ram Air Temperature) option vs TAT (installer configurable per guide; currently TAT only)
+
+**Access:** AUX page > DALT soft key
+
 ---
 
 ## 🟡 Inherited - Untested Features
-
----
-
-### DALT/TAS/Wind Calculator
-
-**Status:** Not implemented
-**Needed:**
-- Inputs: Indicated ALT, BARO, CAS, TAT/RAT, HDG, TRK, Ground Speed
-- Outputs: Density Altitude, TAS, Wind Direction/Speed, Headwind Component
-- Use Sensor Data toggle
-
-**Workaround:** Weather page shows some wind data from METAR/sim
 
 ---
 

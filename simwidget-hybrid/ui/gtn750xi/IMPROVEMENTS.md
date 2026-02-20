@@ -132,6 +132,53 @@
 
 ---
 
+### DALT/TAS/Wind Calculator ⭐ NEW
+
+**What it is:** Planning utility that calculates density altitude, true airspeed, and wind data. Per Garmin GTN 750Xi Pilot's Guide Section 4 (pages 4-15 to 4-17).
+
+**Inputs:**
+- **Indicated ALT** (FT) — Altitude above/below sea level
+- **BARO** (inHg) — Barometric pressure (27.00–31.00)
+- **CAS** (Calibrated Air Speed) — Knots
+- **TAT** (Total Air Temperature) — °C (-60 to +60)
+- **HDG** (Heading) — Degrees (0-359)
+- **TRK** (Track angle) — Degrees (0-359)
+- **Ground Speed** (KT)
+- **Use Sensor Data** — Toggle to pull all inputs from MSFS air data computer/GPS
+
+**Calculated Outputs:**
+- **Density Altitude** (FT) — Pressure altitude corrected for nonstandard temperature
+  - Formula: Density ALT = Pressure ALT + 120 × (OAT - Standard Temp)
+  - Where: Pressure ALT = Indicated ALT + (29.92 - BARO) × 1000
+  - Standard Temp = 15°C - (Pressure ALT / 1000 × 2)
+- **TAS** (True Airspeed) — Calibrated airspeed corrected for altitude and temperature (KT)
+  - Simplified formula: TAS ≈ CAS × (1 + altitude/1000 × 0.02)
+- **Wind Direction** (degrees) — Direction from which wind is coming (shows dashes if wind = 0)
+- **Wind Speed** (KT) — Magnitude of wind vector
+- **Wind Component** (KT) — Headwind/Tailwind/Crosswind with label
+  - Calculated from vector difference: Ground track/speed - TAS heading
+
+**Features:**
+- Auto-calculate on entry (GTN 750Xi style)
+- Sensor data fields disabled when Use Sensor Data active
+- Wind direction shows dashes if wind speed = 0
+- RESET button restores all defaults
+- Settings persist to localStorage
+
+**Access:** AUX page > DALT soft key
+**Soft Keys:** SENSOR, RESET, BACK
+
+**Files:**
+- `pages/page-dalt-tas-winds.js` (281 lines) — DaltTasWindsPage class
+- Updated: `index.html`, `pane.js`, `modules/gtn-softkeys.js`, `styles.css`
+
+**Notes:**
+- Pressure ALT mode (replaces Indicated ALT when ADC provides it) not yet implemented
+- RAT (Ram Air Temperature) option not implemented (guide mentions installer configurable; currently TAT only)
+- Wind direction reference (Magnetic vs True) follows NAV Angle system setting (not yet wired)
+
+---
+
 ## Inherited from GTN 750 v3.0+
 
 All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750Xi v1.0+. See sections below for full history.
@@ -271,18 +318,10 @@ All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750
 
 ### Completed - Planning Utilities ✅
 
+**VCALC** — ✅ Implemented (commit 75a2939)
 **Trip Planning** — ✅ Implemented (commit 9325a0b)
 **Fuel Planning** — ✅ Implemented (commit 63868c0)
-**VCALC** — ✅ Implemented (commit 75a2939)
-
-### Planned - Additional Utilities (Phase 2)
-
-**DALT/TAS/Wind Calculator**
-- Density Altitude calculator
-- True Airspeed calculator
-- Wind direction/speed calculator
-- Headwind/tailwind component
-- Use Sensor Data toggle
+**DALT/TAS/Wind Calculator** — ✅ Implemented (commit 350e348)
 
 ### Planned - Additional Utilities (Phase 3)
 
@@ -316,6 +355,12 @@ All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750
 - Catalog flight plan selection
 - Fuel Range Ring integration on map
 - Waypoint picker modal UI
+
+**DALT/TAS/Winds Enhancements:**
+- Pressure ALT mode when ADC sensor provides it
+- RAT (Ram Air Temperature) option vs TAT
+- NAV Angle system setting integration (Magnetic vs True wind direction)
+- Waypoint picker modal UI for Trip/Fuel Planning pages
 
 ---
 
