@@ -29,6 +29,27 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
 .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #f85149; }
 .conn-dot.ok { background: #3fb950; }
 
+/* Phase indicators */
+.phase-indicators { display: flex; gap: 2px; margin-left: 4px; }
+.phase-chip {
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    border-radius: 2px;
+    padding: 2px 4px;
+    font-size: 7px;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+.phase-chip.active {
+    background: #0d2533;
+    border-color: #58a6ff;
+    color: #58a6ff;
+    font-weight: bold;
+    box-shadow: 0 0 4px #58a6ff;
+}
+
 /* Autopilot Section */
 .section { background: #161b22; border: 1px solid #30363d; border-radius: 3px; padding: 5px; margin-bottom: 4px; }
 .section-title { color: #58a6ff; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; border-bottom: 1px solid #21262d; padding-bottom: 2px; }
@@ -101,8 +122,16 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
         <div class="header-controls">
             <div class="conn-dot" id="conn-status" title="Connection status"></div>
             <button class="header-btn off" id="ai-toggle" title="Toggle Sally AI Autopilot on/off">SALLY OFF</button>
-            <button class="header-btn" id="import-fpl" title="Import flight plan from SimBrief">📋 FPL</button>
-            <button class="header-btn" id="clear-fpl" title="Clear current flight plan">✕ CLR</button>
+            <div class="phase-indicators">
+                <span class="phase-chip" data-phase="PREFLIGHT">PRE</span>
+                <span class="phase-chip" data-phase="TAXI">TAXI</span>
+                <span class="phase-chip" data-phase="TAKEOFF">T/O</span>
+                <span class="phase-chip" data-phase="CLIMB">CLB</span>
+                <span class="phase-chip" data-phase="CRUISE">CRZ</span>
+                <span class="phase-chip" data-phase="DESCENT">DES</span>
+                <span class="phase-chip" data-phase="APPROACH">APP</span>
+                <span class="phase-chip" data-phase="LANDING">LND</span>
+            </div>
             <button class="header-btn" onclick="location.reload()" title="Reload cockpit page">🔄</button>
         </div>
     </div>
@@ -286,6 +315,14 @@ function updateDisplay(data) {
     if (data.sallyState?.currentPhase) {
         currentPhase = data.sallyState.currentPhase;
         document.getElementById('phase-name').textContent = currentPhase;
+
+        // Update header phase indicators
+        document.querySelectorAll('.phase-chip').forEach(chip => {
+            chip.classList.remove('active');
+            if (chip.dataset.phase === currentPhase) {
+                chip.classList.add('active');
+            }
+        });
     }
 
     // Phase progress (estimate based on altitude/speed)
@@ -617,9 +654,6 @@ document.getElementById('ai-toggle').onclick = function() {
         enableSally();
     }
 };
-
-document.getElementById('import-fpl').onclick = importSimBrief;
-document.getElementById('clear-fpl').onclick = clearFlightPlan;
 </script>
 
 </body>
