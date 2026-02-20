@@ -18,7 +18,7 @@ body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New
 .hdr-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
 .search { background: #0d1218; border: 1px solid #1a2030; color: #c0c8d8; border-radius: 3px; padding: 3px 8px; font-size: 11px; font-family: inherit; width: 180px; outline: none; }
 .search:focus { border-color: #4fc3f7; }
-.hdr-stat { font-size: 10px; color: #8090a0; }
+.hdr-stat { font-size: 10px; color: #a0b0c0; }
 .hdr-stat span { color: #c0c8d8; }
 
 /* ── Layout ── */
@@ -39,14 +39,14 @@ body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New
 .csb-name.nav  { color: #42a5f5; }
 .csb-name.sys  { color: #ce93d8; }
 .csb-val  { font-size: 11px; font-weight: bold; color: #4fc3f7; text-align: right; }
-.csb-val.dim  { color: #607080; }
+.csb-val.dim  { color: #90a0b0; }
 .csb-val.ok   { color: #3fb950; }
 .csb-val.warn { color: #ffab40; }
 .csb-val.err  { color: #f85149; }
-.csb-ago  { font-size: 9px; color: #607080; text-align: right; }
-.csb-cnt  { font-size: 9px; color: #607080; text-align: right; }
+.csb-ago  { font-size: 9px; color: #90a0b0; text-align: right; }
+.csb-cnt  { font-size: 9px; color: #90a0b0; text-align: right; }
 .csb-subhdr { padding: 3px 10px 2px; background: #090d12; border-bottom: 1px solid #0d1218; }
-.csb-subhdr span { font-size: 9px; color: #607080; text-transform: uppercase; letter-spacing: 1px; }
+.csb-subhdr span { font-size: 9px; color: #90a0b0; text-transform: uppercase; letter-spacing: 1px; }
 
 /* ── Section ── */
 .section { margin-bottom: 0; }
@@ -58,7 +58,7 @@ body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New
 .sec-title.nav   { color: #42a5f5; }
 .sec-title.sys   { color: #ce93d8; }
 .sec-title.in    { color: #4fc3f7; }
-.sec-count { font-size: 9px; color: #607080; margin-left: auto; }
+.sec-count { font-size: 9px; color: #90a0b0; margin-left: auto; }
 
 /* ── Command row ── */
 .cmd-row { display: grid; grid-template-columns: 200px 80px 60px 1fr; gap: 6px; padding: 3px 10px; border-bottom: 1px solid #0d1218; align-items: center; }
@@ -70,14 +70,14 @@ body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New
 .cmd-name.eng   { color: #ffa726; }
 .cmd-name.nav   { color: #42a5f5; }
 .cmd-name.sys   { color: #ce93d8; }
-.cmd-range { font-size: 9px; color: #8090a0; }
+.cmd-range { font-size: 9px; color: #a0b0c0; }
 .cmd-live  { font-size: 11px; font-weight: bold; color: #4fc3f7; text-align: right; }
 .cmd-live.ok   { color: #3fb950; }
 .cmd-live.warn { color: #ffab40; }
 .cmd-live.err  { color: #f85149; }
-.cmd-live.dim  { color: #607080; }
-.cmd-desc { font-size: 9px; color: #708090; }
-.cmd-ago  { font-size: 9px; color: #607080; }
+.cmd-live.dim  { color: #90a0b0; }
+.cmd-desc { font-size: 9px; color: #a0b0c0; }
+.cmd-ago  { font-size: 9px; color: #90a0b0; }
 
 /* ── Activity dot ── */
 .act-dot { width: 6px; height: 6px; border-radius: 50%; background: #1a2030; flex-shrink: 0; transition: background 0.4s; }
@@ -88,14 +88,14 @@ body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New
 .inp-row { display: grid; grid-template-columns: 180px 90px 90px 1fr; gap: 6px; padding: 3px 10px; border-bottom: 1px solid #0d1218; align-items: center; }
 .inp-row:hover { background: #0d1218; }
 .inp-row.hidden { display: none; }
-.inp-name { font-size: 10px; color: #8090a0; }
+.inp-name { font-size: 10px; color: #a0b0c0; }
 .inp-val  { font-size: 11px; font-weight: bold; color: #4fc3f7; text-align: right; }
 .inp-val.ok   { color: #3fb950; }
 .inp-val.warn { color: #ffab40; }
 .inp-val.err  { color: #f85149; }
-.inp-val.dim  { color: #607080; }
-.inp-unit { font-size: 9px; color: #708090; }
-.inp-desc { font-size: 9px; color: #607080; }
+.inp-val.dim  { color: #90a0b0; }
+.inp-unit { font-size: 9px; color: #a0b0c0; }
+.inp-desc { font-size: 9px; color: #90a0b0; }
 
 /* ── Gauge bar in row ── */
 .mini-bar-wrap { width: 50px; height: 4px; background: #1a2030; border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 4px; }
@@ -103,7 +103,7 @@ body { background: #070b0f; color: #b0bcc8; font-family: 'Consolas','Courier New
 
 /* ── Last fired banner ── */
 .last-fired { flex-shrink: 0; padding: 3px 12px; background: #0a0e14; border-top: 1px solid #1a2030; display: flex; gap: 10px; align-items: center; min-height: 24px; font-size: 10px; }
-.lf-lbl { color: #708090; text-transform: uppercase; font-size: 9px; flex-shrink: 0; }
+.lf-lbl { color: #a0b0c0; text-transform: uppercase; font-size: 9px; flex-shrink: 0; }
 .lf-val { color: #4fc3f7; }
 
 ::-webkit-scrollbar { width: 4px; }
