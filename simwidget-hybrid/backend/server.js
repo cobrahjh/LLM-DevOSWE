@@ -3756,6 +3756,34 @@ app.post('/api/ai-autopilot/cruise-alt', requireApOwner, (req, res) => {
     res.json({ success: true, cruiseAlt: alt });
 });
 
+// ── Flight Plan Execution API ──────────────────────────────────────────
+app.post('/api/ai-autopilot/execute-flight-plan', requireApOwner, (req, res) => {
+    const plan = req.body;
+
+    // Validate flight plan
+    if (!plan || !plan.waypoints || plan.waypoints.length < 2) {
+        return res.status(400).json({ error: 'Flight plan must have at least 2 waypoints' });
+    }
+
+    // Broadcast to all connected clients via WebSocket
+    const message = JSON.stringify({
+        type: 'execute-flight-plan',
+        data: plan
+    });
+
+    wss.clients.forEach((client) => {
+        if (client.readyState === 1) { // WebSocket.OPEN
+            try {
+                client.send(message);
+            } catch (e) {
+                console.error('[execute-flight-plan] Send error:', e.message);
+            }
+        }
+    });
+
+    res.json({ success: true, waypoints: plan.waypoints.length });
+});
+
 // ── ATC Ground Operations API ──────────────────────────────────────────
 app.post('/api/ai-autopilot/request-taxi', requireApOwner, async (req, res) => {
     try {

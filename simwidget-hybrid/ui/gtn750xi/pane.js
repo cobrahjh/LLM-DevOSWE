@@ -467,7 +467,14 @@ class GTN750XiPane extends SimGlassBase {
                 showTerrain: this.map.showTerrain,
                 showTraffic: this.map.showTraffic,
                 showWeather: this.map.showWeather,
-                showAirways: this.map.showAirways
+                showAirways: this.map.showAirways,
+                flightPlanManager: this.flightPlanManager ? {
+                    flightPlan: this.flightPlanManager.flightPlan,
+                    waypoints: this.flightPlanManager.flightPlan?.waypoints || [],
+                    activeWaypointIndex: this.flightPlanManager.activeWaypointIndex || 0,
+                    cruiseAltitude: this.flightPlanManager.flightPlan?.cruiseAltitude || 0,
+                    totalDistance: this.flightPlanManager.flightPlan?.totalDistance || 0
+                } : null
             };
             localStorage.setItem('gtn750-state', JSON.stringify(state));
         } catch (e) {
