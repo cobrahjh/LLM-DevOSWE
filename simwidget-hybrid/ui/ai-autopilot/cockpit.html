@@ -150,35 +150,39 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                 </div>
             </div>
 
-            <!-- Cruise Altitude -->
+            <!-- AP Controls -->
             <div class="section">
-                <div class="section-title">Cruise Altitude</div>
-                <div class="input-row">
-                    <input type="number" id="cruise-alt" value="8500" min="1000" max="45000" step="500">
-                    <span class="input-unit">ft</span>
-                    <button class="btn blue" onclick="setCruiseAlt()">Set</button>
+                <div class="section-title">Autopilot Controls</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                    <!-- Cruise Alt -->
+                    <div>
+                        <div style="font-size: 7px; color: #8b949e; margin-bottom: 2px;">CRUISE ALT</div>
+                        <div class="input-row">
+                            <input type="number" id="cruise-alt" value="8500" min="1000" max="45000" step="500" style="width: 100%;">
+                            <span class="input-unit">ft</span>
+                        </div>
+                        <button class="btn blue" onclick="setCruiseAlt()" style="width: 100%; margin-top: 2px;">Set</button>
+                    </div>
+                    <!-- Heading -->
+                    <div>
+                        <div style="font-size: 7px; color: #8b949e; margin-bottom: 2px;">HEADING</div>
+                        <div class="input-row">
+                            <input type="number" id="heading-bug" value="360" min="0" max="360" step="1" style="width: 100%;">
+                            <span class="input-unit">°</span>
+                        </div>
+                        <button class="btn blue" onclick="setHeading()" style="width: 100%; margin-top: 2px;">Set</button>
+                    </div>
+                    <!-- Speed -->
+                    <div>
+                        <div style="font-size: 7px; color: #8b949e; margin-bottom: 2px;">AI SPEED</div>
+                        <div class="input-row">
+                            <input type="number" id="target-speed" value="120" min="40" max="500" step="5" style="width: 100%;">
+                            <span class="input-unit">kt</span>
+                        </div>
+                        <button class="btn green" id="speed-toggle" onclick="toggleSpeedControl()" style="width: 100%; margin-top: 2px;">Enable</button>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Heading -->
-            <div class="section">
-                <div class="section-title">Heading</div>
-                <div class="input-row">
-                    <input type="number" id="heading-bug" value="360" min="0" max="360" step="1">
-                    <span class="input-unit">°</span>
-                    <button class="btn blue" onclick="setHeading()">Set</button>
-                </div>
-            </div>
-
-            <!-- AI Speed Control -->
-            <div class="section">
-                <div class="section-title">AI Speed Control</div>
-                <div class="input-row">
-                    <input type="number" id="target-speed" value="120" min="40" max="500" step="5">
-                    <span class="input-unit">kt</span>
-                    <button class="btn green" id="speed-toggle" onclick="toggleSpeedControl()">Enable</button>
-                </div>
-                <div class="status-text" id="speed-status">Disabled</div>
+                <div class="status-text" id="speed-status" style="margin-top: 4px;">Speed control disabled</div>
             </div>
         </div>
 
@@ -515,14 +519,14 @@ async function toggleSpeedControl() {
         btn.textContent = 'Disable';
         btn.classList.remove('green');
         btn.classList.add('red');
-        status.textContent = `Active - Target ${targetSpeed} kt`;
+        status.textContent = `Speed control active - Target ${targetSpeed} kt`;
         status.classList.add('active');
         await api('POST', '/api/ai-autopilot/speed-control/enable', { targetSpeed });
     } else {
         btn.textContent = 'Enable';
         btn.classList.remove('red');
         btn.classList.add('green');
-        status.textContent = 'Disabled';
+        status.textContent = 'Speed control disabled';
         status.classList.remove('active');
         await api('POST', '/api/ai-autopilot/speed-control/disable');
     }
