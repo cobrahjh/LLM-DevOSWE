@@ -157,6 +157,16 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                     <button class="btn blue" onclick="setCruiseAlt()">Set</button>
                 </div>
             </div>
+
+            <!-- Heading -->
+            <div class="section">
+                <div class="section-title">Heading</div>
+                <div class="input-row">
+                    <input type="number" id="heading-bug" value="360" min="0" max="360" step="1">
+                    <span class="input-unit">°</span>
+                    <button class="btn blue" onclick="setHeading()">Set</button>
+                </div>
+            </div>
         </div>
 
         <!-- Right Pane: Diagnostics & Tuning -->
@@ -462,6 +472,16 @@ async function resetLearning() {
 async function setCruiseAlt() {
     const alt = parseInt(document.getElementById('cruise-alt').value);
     await api('POST', '/api/ai-autopilot/set-cruise-alt', { altitude: alt });
+}
+
+// Heading
+async function setHeading() {
+    const hdg = parseInt(document.getElementById('heading-bug').value);
+    if (hdg < 0 || hdg > 360) {
+        showToast('✗ Heading must be 0-360', 'red');
+        return;
+    }
+    await api('POST', '/api/command', { command: 'HEADING_BUG_SET', value: hdg });
 }
 
 // Server Control
