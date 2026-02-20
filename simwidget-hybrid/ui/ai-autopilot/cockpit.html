@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Cockpit - Autopilot + Diagnostics</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; height: 100vh; }
+
+/* Layout */
+.cockpit-container { display: flex; flex-direction: column; height: 100vh; }
+.cockpit-header { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.cockpit-title { color: #58a6ff; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.cockpit-body { display: flex; flex: 1; overflow: hidden; }
+
+/* Panes */
+.pane { flex: 1; overflow-y: auto; padding: 16px; border-right: 1px solid #30363d; }
+.pane:last-child { border-right: none; }
+.pane-left { background: #0d1117; }
+.pane-right { background: #0a0c10; }
+
+/* Header controls */
+.header-controls { display: flex; align-items: center; gap: 8px; }
+.header-btn { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 5px; padding: 6px 12px; cursor: pointer; font-family: monospace; font-size: 11px; transition: all 0.2s; }
+.header-btn:hover { background: #30363d; }
+.header-btn.active { background: #0d2a18; border-color: #3fb950; color: #3fb950; }
+.header-btn.off { background: #2a0d0d; border-color: #f85149; color: #f85149; }
+.conn-dot { width: 10px; height: 10px; border-radius: 50%; background: #f85149; }
+.conn-dot.ok { background: #3fb950; }
+
+/* Autopilot Section */
+.section { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.section-title { color: #58a6ff; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; border-bottom: 1px solid #21262d; padding-bottom: 6px; }
+
+/* Phase Display */
+.phase-display { text-align: center; margin-bottom: 16px; }
+.phase-name { font-size: 24px; font-weight: bold; color: #58a6ff; display: block; margin-bottom: 8px; }
+.phase-bar { background: #21262d; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+.phase-progress { background: linear-gradient(90deg, #3fb950, #58a6ff); height: 100%; width: 0%; transition: width 0.3s; }
+.phase-targets { display: flex; justify-content: space-around; font-size: 14px; color: #8b949e; }
+.phase-targets .target { padding: 4px 8px; background: #21262d; border-radius: 4px; }
+
+/* State Cards */
+.cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 5px; padding: 8px 10px; min-width: 100px; flex: 1; }
+.card-label { color: #8b949e; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+.card-val { font-size: 14px; font-weight: bold; color: #f0f6fc; }
+.card-val.ok { color: #3fb950; }
+.card-val.warn { color: #d29922; }
+.card-val.err { color: #f85149; }
+
+/* Controls */
+.btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.btn { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; padding: 8px 12px; cursor: pointer; font-family: monospace; font-size: 11px; transition: all 0.2s; text-align: center; }
+.btn:hover { background: #30363d; transform: translateY(-1px); }
+.btn.green { border-color: #3fb950; color: #3fb950; }
+.btn.green:hover { background: #0d2a18; }
+.btn.red { border-color: #f85149; color: #f85149; }
+.btn.red:hover { background: #2a0d0d; }
+.btn.blue { border-color: #58a6ff; color: #58a6ff; }
+.btn.blue:hover { background: #0d2533; }
+.btn.warn { border-color: #d29922; color: #d29922; }
+.btn.warn:hover { background: #2a1f0d; }
+.btn:disabled { opacity: 0.3; pointer-events: none; }
+
+/* Input row */
+.input-row { display: flex; align-items: center; gap: 8px; }
+.input-row input { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; padding: 6px 10px; font-family: monospace; font-size: 12px; flex: 1; }
+.input-unit { color: #8b949e; font-size: 11px; }
+
+/* Issues */
+.issue { padding: 8px 10px; border-radius: 4px; margin-bottom: 6px; line-height: 1.4; font-size: 11px; }
+.issue.ok { background: #0d2a18; border-left: 3px solid #3fb950; }
+.issue.warn { background: #2a1f0d; border-left: 3px solid #d29922; }
+.issue.err { background: #2a0d0d; border-left: 3px solid #f85149; }
+.issue-code { font-size: 9px; color: #8b949e; margin-bottom: 2px; font-family: monospace; }
+
+/* Toast */
+#toast { position: fixed; bottom: 20px; right: 20px; background: #161b22; border: 1px solid #3fb950; border-radius: 6px; padding: 12px 16px; color: #3fb950; font-size: 12px; display: none; animation: slideIn 0.3s; }
+@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .cockpit-body { flex-direction: column; }
+    .pane { border-right: none; border-bottom: 1px solid #30363d; max-height: 50vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="cockpit-container">
+    <!-- Header -->
+    <div class="cockpit-header">
+        <div class="cockpit-title">
+            ✈️ AI COCKPIT
+            <span style="font-size: 11px; color: #8b949e; font-weight: normal;">Autopilot + Diagnostics</span>
+        </div>
+        <div class="header-controls">
+            <div class="conn-dot" id="conn-status" title="Connection status"></div>
+            <button class="header-btn off" id="ai-toggle">SALLY OFF</button>
+            <button class="header-btn" id="import-fpl">📋 FPL</button>
+            <button class="header-btn" id="clear-fpl">✕ CLR</button>
+            <button class="header-btn" onclick="location.reload()">🔄</button>
+        </div>
+    </div>
+
+    <!-- Two-pane body -->
+    <div class="cockpit-body">
+        <!-- Left Pane: Autopilot Controls -->
+        <div class="pane pane-left">
+            <!-- Phase Display -->
+            <div class="section">
+                <div class="phase-display">
+                    <span class="phase-name" id="phase-name">PREFLIGHT</span>
+                    <div class="phase-bar">
+                        <div class="phase-progress" id="phase-progress"></div>
+                    </div>
+                    <div class="phase-targets">
+                        <span class="target" id="target-alt">--- ft</span>
+                        <span class="target" id="target-spd">--- kt</span>
+                        <span class="target" id="target-vs">--- fpm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- State Cards -->
+            <div class="section">
+                <div class="section-title">Current State</div>
+                <div class="cards" id="state-cards"></div>
+            </div>
+
+            <!-- Issues -->
+            <div class="section" id="issues-section" style="display:none">
+                <div class="section-title">Issues</div>
+                <div id="issues"></div>
+            </div>
+
+            <!-- Flight Plan Control -->
+            <div class="section">
+                <div class="section-title">Flight Plan</div>
+                <div class="btn-grid">
+                    <button class="btn blue" onclick="importSimBrief()">📥 Import SimBrief</button>
+                    <button class="btn red" onclick="clearFlightPlan()">🗑️ Clear Plan</button>
+                    <button class="btn" onclick="requestTaxi()">🚕 Request Taxi</button>
+                    <button class="btn" onclick="clearedTakeoff()">🛫 Cleared T/O</button>
+                </div>
+            </div>
+
+            <!-- Cruise Altitude -->
+            <div class="section">
+                <div class="section-title">Cruise Altitude</div>
+                <div class="input-row">
+                    <input type="number" id="cruise-alt" value="8500" min="1000" max="45000" step="500">
+                    <span class="input-unit">ft</span>
+                    <button class="btn blue" onclick="setCruiseAlt()">Set</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Pane: Diagnostics & Tuning -->
+        <div class="pane pane-right">
+            <!-- Server Status -->
+            <div class="section">
+                <div class="section-title">Server Status</div>
+                <div class="cards" id="server-cards"></div>
+                <div class="btn-grid" style="margin-top: 8px">
+                    <button class="btn warn" onclick="restartServer()">⟳ Restart</button>
+                    <button class="btn red" onclick="stopServer()">■ Stop</button>
+                </div>
+            </div>
+
+            <!-- Sally Control -->
+            <div class="section">
+                <div class="section-title">Sally AI Control</div>
+                <div class="btn-grid">
+                    <button class="btn green" onclick="enableSally()">✓ Enable</button>
+                    <button class="btn red" onclick="disableSally()">✕ Disable</button>
+                    <button class="btn warn" onclick="clearATCGate()">Clear ATC Gate</button>
+                    <button class="btn" onclick="resetLearning()">Reset Learning</button>
+                </div>
+            </div>
+
+            <!-- Force Phase -->
+            <div class="section">
+                <div class="section-title">Force Phase</div>
+                <div class="btn-grid" id="phase-grid"></div>
+            </div>
+
+            <!-- Takeoff Tuning -->
+            <div class="section">
+                <div class="section-title">Takeoff Tuning</div>
+                <div id="tuning-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px;"></div>
+                <div class="btn-grid">
+                    <button class="btn green" onclick="applyAllTuning()">Apply All</button>
+                    <button class="btn" onclick="loadTuning()">↻ Reload</button>
+                </div>
+            </div>
+
+            <!-- Last Command -->
+            <div class="section">
+                <div class="section-title">Last Command</div>
+                <div id="last-cmd" style="font-family: monospace; font-size: 11px; color: #8b949e;">---</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const BASE = 'http://192.168.1.42:8080';
+let ws = null;
+let tuningData = {};
+let currentPhase = 'PREFLIGHT';
+
+// Initialize
+init();
+
+async function init() {
+    connectWebSocket();
+    loadTuning();
+    loadPhaseButtons();
+    setInterval(updateTimestamp, 1000);
+}
+
+// WebSocket Connection
+function connectWebSocket() {
+    const wsUrl = `ws://192.168.1.42:8080`;
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        document.getElementById('conn-status').classList.add('ok');
+    };
+
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            updateDisplay(data);
+        } catch (e) {
+            console.error('WebSocket parse error:', e);
+        }
+    };
+
+    ws.onclose = () => {
+        document.getElementById('conn-status').classList.remove('ok');
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = () => {
+        document.getElementById('conn-status').classList.remove('ok');
+    };
+}
+
+// Update Display
+function updateDisplay(data) {
+    // Phase
+    if (data.sallyState?.currentPhase) {
+        currentPhase = data.sallyState.currentPhase;
+        document.getElementById('phase-name').textContent = currentPhase;
+    }
+
+    // Phase progress (estimate based on altitude/speed)
+    if (data.altitude && data.targetAltitude && data.targetAltitude > 0) {
+        const progress = Math.min(100, (data.altitude / data.targetAltitude) * 100);
+        document.getElementById('phase-progress').style.width = progress + '%';
+    }
+
+    // Targets
+    document.getElementById('target-alt').textContent = data.targetAltitude ? `${Math.round(data.targetAltitude)} ft` : '--- ft';
+    document.getElementById('target-spd').textContent = data.targetSpeed ? `${Math.round(data.targetSpeed)} kt` : '--- kt';
+    document.getElementById('target-vs').textContent = data.verticalSpeed ? `${Math.round(data.verticalSpeed)} fpm` : '--- fpm';
+
+    // Sally state toggle
+    const aiToggle = document.getElementById('ai-toggle');
+    if (data.sallyState?.enabled) {
+        aiToggle.textContent = 'SALLY ON';
+        aiToggle.classList.remove('off');
+        aiToggle.classList.add('active');
+    } else {
+        aiToggle.textContent = 'SALLY OFF';
+        aiToggle.classList.remove('active');
+        aiToggle.classList.add('off');
+    }
+
+    // State cards
+    updateStateCards(data);
+
+    // Server cards
+    updateServerCards(data.sallyState);
+
+    // Issues
+    updateIssues(data.sallyState?.issues || []);
+
+    // Last command
+    if (data.sallyState?.lastCommand) {
+        document.getElementById('last-cmd').textContent = data.sallyState.lastCommand;
+    }
+}
+
+// State Cards
+function updateStateCards(data) {
+    const cards = document.getElementById('state-cards');
+    const metrics = [
+        { label: 'Altitude', value: data.altitude ? `${Math.round(data.altitude)} ft` : '---', status: 'ok' },
+        { label: 'Speed', value: data.groundSpeed ? `${Math.round(data.groundSpeed)} kt` : '---', status: 'ok' },
+        { label: 'Heading', value: data.heading ? `${Math.round(data.heading)}°` : '---', status: 'ok' },
+        { label: 'V/S', value: data.verticalSpeed ? `${Math.round(data.verticalSpeed)} fpm` : '---', status: data.verticalSpeed > 0 ? 'ok' : 'warn' }
+    ];
+
+    cards.innerHTML = metrics.map(m => `
+        <div class="card">
+            <div class="card-label">${m.label}</div>
+            <div class="card-val ${m.status}">${m.value}</div>
+        </div>
+    `).join('');
+}
+
+// Server Cards
+function updateServerCards(sallyState) {
+    const cards = document.getElementById('server-cards');
+    if (!sallyState) return;
+
+    const serverMetrics = [
+        { label: 'Rule Engine', value: sallyState.ruleEngineOk ? 'OK' : 'DOWN', status: sallyState.ruleEngineOk ? 'ok' : 'err' },
+        { label: 'Control Loop', value: sallyState.controlLoopActive ? 'ACTIVE' : 'IDLE', status: sallyState.controlLoopActive ? 'ok' : 'warn' }
+    ];
+
+    cards.innerHTML = serverMetrics.map(m => `
+        <div class="card">
+            <div class="card-label">${m.label}</div>
+            <div class="card-val ${m.status}">${m.value}</div>
+        </div>
+    `).join('');
+}
+
+// Issues
+function updateIssues(issues) {
+    const issuesDiv = document.getElementById('issues');
+    const section = document.getElementById('issues-section');
+
+    if (!issues || issues.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    issuesDiv.innerHTML = issues.map(issue => {
+        const severity = issue.severity || 'warn';
+        return `
+            <div class="issue ${severity}">
+                <div class="issue-code">${issue.code || 'ISSUE'}</div>
+                ${issue.message || issue}
+            </div>
+        `;
+    }).join('');
+}
+
+// API Helpers
+async function api(method, endpoint, body = null) {
+    try {
+        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) options.body = JSON.stringify(body);
+
+        const res = await fetch(BASE + endpoint, options);
+        if (res.ok) {
+            showToast('✓ Success', 'green');
+            return await res.json();
+        } else {
+            showToast('✗ Error: ' + res.status, 'red');
+        }
+    } catch (e) {
+        showToast('✗ Network Error', 'red');
+        console.error(e);
+    }
+}
+
+// Flight Plan
+async function importSimBrief() {
+    await api('POST', '/api/ai-autopilot/simbrief-import');
+}
+
+async function clearFlightPlan() {
+    await api('POST', '/api/ai-autopilot/clear-plan');
+}
+
+async function requestTaxi() {
+    await api('POST', '/api/ai-autopilot/request-taxi');
+}
+
+async function clearedTakeoff() {
+    await api('POST', '/api/ai-autopilot/cleared-takeoff');
+}
+
+// Sally Control
+async function enableSally() {
+    await api('POST', '/api/ai-autopilot/enable');
+}
+
+async function disableSally() {
+    await api('POST', '/api/ai-autopilot/disable');
+}
+
+async function clearATCGate() {
+    await api('POST', '/api/ai-autopilot/atc-deactivate');
+}
+
+async function resetLearning() {
+    if (confirm('Reset all Sally learning data?')) {
+        await api('POST', '/api/ai-pilot/reset-learning');
+    }
+}
+
+// Cruise Altitude
+async function setCruiseAlt() {
+    const alt = parseInt(document.getElementById('cruise-alt').value);
+    await api('POST', '/api/ai-autopilot/set-cruise-alt', { altitude: alt });
+}
+
+// Server Control
+async function restartServer() {
+    await api('POST', '/api/ai-pilot/restart');
+}
+
+async function stopServer() {
+    if (confirm('Stop Sally server?')) {
+        await api('POST', '/api/ai-pilot/stop');
+    }
+}
+
+// Phase Buttons
+function loadPhaseButtons() {
+    const phases = ['PREFLIGHT', 'TAXI', 'TAKEOFF', 'CLIMB', 'CRUISE', 'DESCENT', 'APPROACH', 'LANDING', 'TAXI_IN'];
+    const grid = document.getElementById('phase-grid');
+
+    grid.innerHTML = phases.map(phase => `
+        <button class="btn" onclick="forcePhase('${phase}')">${phase}</button>
+    `).join('');
+}
+
+async function forcePhase(phase) {
+    await api('POST', '/api/ai-autopilot/force-phase', { phase });
+}
+
+// Tuning
+async function loadTuning() {
+    try {
+        const res = await fetch(BASE + '/api/ai-pilot/tuning');
+        tuningData = await res.json();
+        renderTuning();
+    } catch (e) {
+        console.error('Load tuning error:', e);
+    }
+}
+
+function renderTuning() {
+    const grid = document.getElementById('tuning-grid');
+    const keys = ['vr', 'v2', 'climbPitch', 'climbPower', 'rotateTime'];
+
+    grid.innerHTML = keys.map(key => {
+        const val = tuningData[key] || 0;
+        return `
+            <div style="background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 6px 8px;">
+                <div style="font-size: 9px; color: #8b949e; text-transform: uppercase; margin-bottom: 3px;">${key}</div>
+                <input type="number" id="tune-${key}" value="${val}" step="0.1"
+                       style="width: 100%; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9;
+                              border-radius: 3px; padding: 4px 6px; font-size: 11px; font-family: monospace;"
+                       onchange="updateTuning('${key}', this.value)">
+            </div>
+        `;
+    }).join('');
+}
+
+function updateTuning(key, value) {
+    tuningData[key] = parseFloat(value);
+}
+
+async function applyAllTuning() {
+    await api('POST', '/api/ai-pilot/update-tuning', tuningData);
+}
+
+// Toast
+function showToast(msg, type = 'green') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    toast.style.borderColor = type === 'green' ? '#3fb950' : '#f85149';
+    toast.style.color = type === 'green' ? '#3fb950' : '#f85149';
+    setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+// Timestamp
+function updateTimestamp() {
+    // Could add a timestamp display if needed
+}
+
+// Toggle buttons
+document.getElementById('ai-toggle').onclick = function() {
+    if (this.classList.contains('active')) {
+        disableSally();
+    } else {
+        enableSally();
+    }
+};
+
+document.getElementById('import-fpl').onclick = importSimBrief;
+document.getElementById('clear-fpl').onclick = clearFlightPlan;
+</script>
+
+</body>
+</html>
