@@ -420,9 +420,10 @@ function connectWebSocket() {
 
 // Update Display
 function updateDisplay(data) {
-    // Phase
-    if (data.sallyState?.currentPhase) {
-        currentPhase = data.sallyState.currentPhase;
+    // Phase - check both data.phase and data.sallyState.currentPhase
+    const phase = data.phase || data.currentPhase || data.sallyState?.currentPhase;
+    if (phase) {
+        currentPhase = phase;
         document.getElementById('phase-name').textContent = currentPhase;
 
         // Update header phase indicators
@@ -452,7 +453,9 @@ function updateDisplay(data) {
         // Skip WebSocket update, keep manual state
     } else {
         // Normal WebSocket-based update
-        if (data.sallyState?.enabled) {
+        // Check both data.enabled and data.sallyState.enabled for compatibility
+        const isEnabled = data.enabled || data.sallyState?.enabled;
+        if (isEnabled) {
             aiToggle.textContent = 'SALLY ON';
             aiToggle.classList.remove('off');
             aiToggle.classList.add('active');
