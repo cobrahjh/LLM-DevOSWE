@@ -630,11 +630,25 @@ async function clearedTakeoff() {
 
 // Sally Control
 async function enableSally() {
-    await api('POST', '/api/ai-autopilot/enable');
+    const result = await api('POST', '/api/ai-autopilot/enable');
+    if (result) {
+        // Update button immediately (don't wait for WebSocket)
+        const aiToggle = document.getElementById('ai-toggle');
+        aiToggle.textContent = 'SALLY ON';
+        aiToggle.classList.remove('off');
+        aiToggle.classList.add('active');
+    }
 }
 
 async function disableSally() {
-    await api('POST', '/api/ai-autopilot/disable');
+    const result = await api('POST', '/api/ai-autopilot/disable');
+    if (result) {
+        // Update button immediately (don't wait for WebSocket)
+        const aiToggle = document.getElementById('ai-toggle');
+        aiToggle.textContent = 'SALLY OFF';
+        aiToggle.classList.remove('active');
+        aiToggle.classList.add('off');
+    }
 }
 
 async function clearATCGate() {
