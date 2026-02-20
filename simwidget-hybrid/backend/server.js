@@ -4687,7 +4687,157 @@ async function initSimConnect() {
         handle.addToDataDefinition(0, 'YOKE X POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
         handle.addToDataDefinition(0, 'RUDDER PEDAL POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
 
-        console.log('[SimConnect] Registered 132 SimVars for MSFS 2024');
+        // Autopilot Extended (8 vars)
+        handle.addToDataDefinition(0, 'AUTOPILOT NAV1 LOCK', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT APPROACH HOLD', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT BACKCOURSE HOLD', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT FLIGHT LEVEL CHANGE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT YAW DAMPER', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT THROTTLE ARM', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT WING LEVELER', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT FLIGHT DIRECTOR ACTIVE', 'Bool', SimConnectDataType.FLOAT64, 0);
+
+        // Trim (4 vars)
+        handle.addToDataDefinition(0, 'ELEVATOR TRIM POSITION', 'radians', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ELEVATOR TRIM PCT', 'percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AILERON TRIM PCT', 'percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'RUDDER TRIM PCT', 'percent', SimConnectDataType.FLOAT64, 0);
+
+        // Airspeed Extended (3 vars)
+        handle.addToDataDefinition(0, 'AIRSPEED TRUE', 'knots', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AIRSPEED MACH', 'mach', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PLANE HEADING DEGREES TRUE', 'degrees', SimConnectDataType.FLOAT64, 0);
+
+        // Design Speeds (3 vars)
+        handle.addToDataDefinition(0, 'DESIGN SPEED VS0', 'knots', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DESIGN SPEED VS1', 'knots', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DESIGN SPEED VC', 'knots', SimConnectDataType.FLOAT64, 0);
+
+        // Weight (2 vars)
+        handle.addToDataDefinition(0, 'TOTAL WEIGHT', 'pounds', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'EMPTY WEIGHT', 'pounds', SimConnectDataType.FLOAT64, 0);
+
+        // Electrical (4 vars)
+        handle.addToDataDefinition(0, 'ELECTRICAL MASTER BATTERY', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ELECTRICAL MAIN BUS VOLTAGE', 'volts', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ELECTRICAL AVIONICS BUS VOLTAGE', 'volts', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ELECTRICAL BATTERY LOAD', 'amperes', SimConnectDataType.FLOAT64, 0);
+
+        // Brakes (2 vars)
+        handle.addToDataDefinition(0, 'BRAKE LEFT POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'BRAKE RIGHT POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+
+        // More Lights (5 vars)
+        handle.addToDataDefinition(0, 'LIGHT CABIN', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'LIGHT RECOGNITION', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'LIGHT WING', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'LIGHT LOGO', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'LIGHT PANEL', 'Bool', SimConnectDataType.FLOAT64, 0);
+
+        // Pitot/Vacuum (2 vars)
+        handle.addToDataDefinition(0, 'PITOT HEAT', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'VACUUM SUCTION PRESSURE', 'inHg', SimConnectDataType.FLOAT64, 0);
+
+        // Simulation (2 vars)
+        handle.addToDataDefinition(0, 'SIMULATION RATE', 'number', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'CAMERA STATE', 'enum', SimConnectDataType.FLOAT64, 0);
+
+        // Barometer (2 vars)
+        handle.addToDataDefinition(0, 'KOHLSMAN SETTING MB', 'millibars', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'BAROMETER PRESSURE', 'millibars', SimConnectDataType.FLOAT64, 0);
+
+        // NAV2 Radio (5 vars)
+        handle.addToDataDefinition(0, 'NAV CDI:2', 'number', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV OBS:2', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV RADIAL:2', 'degrees', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV TOFROM:2', 'enum', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NAV SIGNAL:2', 'number', SimConnectDataType.FLOAT64, 0);
+
+        // Multi-Engine Basics (4 vars)
+        handle.addToDataDefinition(0, 'NUMBER OF ENGINES', 'number', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ENGINE TYPE', 'enum', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TURB ENG N1:1', 'percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TURB ENG N2:1', 'percent', SimConnectDataType.FLOAT64, 0);
+
+        // Misc (2 vars)
+        handle.addToDataDefinition(0, 'RADIO HEIGHT', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TOTAL AIR TEMPERATURE', 'celsius', SimConnectDataType.FLOAT64, 0);
+
+        // ── Phase 3: High-Value & Helicopter Variables (56 vars) ─────────
+
+        // Flight Model & Performance (11 vars)
+        handle.addToDataDefinition(0, 'G FORCE', 'GForce', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DYNAMIC PRESSURE', 'psf', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DESIGN TAKEOFF SPEED', 'knots', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DESIGN SPEED CLIMB', 'feet per second', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DESIGN CRUISE ALT', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DECISION HEIGHT', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'DECISION ALTITUDE MSL', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'CG PERCENT', 'percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'CG PERCENT LATERAL', 'percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'MAX GROSS WEIGHT', 'pounds', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'WING SPAN', 'feet', SimConnectDataType.FLOAT64, 0);
+
+        // Autopilot Advanced (8 vars)
+        handle.addToDataDefinition(0, 'AUTOPILOT FLIGHT DIRECTOR BANK', 'radians', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT FLIGHT DIRECTOR PITCH', 'radians', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT MANAGED THROTTLE ACTIVE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT TAKEOFF POWER ACTIVE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT MACH HOLD VAR', 'number', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT SPEED SLOT INDEX', 'number', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT ALTITUDE SLOT INDEX', 'number', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOPILOT VS SLOT INDEX', 'number', SimConnectDataType.FLOAT64, 0);
+
+        // Aircraft Systems (10 vars)
+        handle.addToDataDefinition(0, 'STRUCTURAL ICE PCT', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PITOT ICE PCT', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PRESSURIZATION CABIN ALTITUDE', 'feet', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'PRESSURIZATION PRESSURE DIFFERENTIAL', 'psf', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'WARNING FUEL', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'WARNING OIL PRESSURE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'WARNING VACUUM', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'WARNING VOLTAGE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ON ANY RUNWAY', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'CRASH FLAG', 'enum', SimConnectDataType.FLOAT64, 0);
+
+        // Gear & Brakes Advanced (6 vars)
+        handle.addToDataDefinition(0, 'GEAR TOTAL PCT EXTENDED', 'percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GEAR IS ON GROUND:0', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'GEAR SPEED EXCEEDED', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ANTISKID BRAKES ACTIVE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'AUTOBRAKES ACTIVE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'NOSEWHEEL LOCK ON', 'Bool', SimConnectDataType.FLOAT64, 0);
+
+        // Markers & Navigation (5 vars)
+        handle.addToDataDefinition(0, 'MARKER BEACON STATE', 'enum', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'INNER MARKER', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'MIDDLE MARKER', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'OUTER MARKER', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ADF RADIAL:1', 'degrees', SimConnectDataType.FLOAT64, 0);
+
+        // Flaps & Spoilers (4 vars)
+        handle.addToDataDefinition(0, 'FLAP SPEED EXCEEDED', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'SPOILERS LEFT POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'SPOILERS RIGHT POSITION', 'Position', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'SPOILER AVAILABLE', 'Bool', SimConnectDataType.FLOAT64, 0);
+
+        // Electrical Advanced (4 vars)
+        handle.addToDataDefinition(0, 'ELECTRICAL TOTAL LOAD AMPS', 'amperes', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ELECTRICAL BATTERY ESTIMATED CAPACITY PCT', 'percent', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'APU PCT RPM', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'EXTERNAL POWER ON', 'Bool', SimConnectDataType.FLOAT64, 0);
+
+        // Helicopter (8 vars)
+        handle.addToDataDefinition(0, 'ROTOR RPM:1', 'rpm', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ROTOR RPM PCT:1', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'COLLECTIVE POSITION', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ROTOR CLUTCH ACTIVE', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ROTOR GOV ACTIVE:1', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ROTOR CHIP DETECTED', 'Bool', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'TAIL ROTOR PEDAL POSITION', 'Percent Over 100', SimConnectDataType.FLOAT64, 0);
+        handle.addToDataDefinition(0, 'ROTOR TEMPERATURE', 'Rankine', SimConnectDataType.FLOAT64, 0);
+
+        console.log('[SimConnect] Registered 236 SimVars for MSFS 2024');
 
         // Writable fuel tank definitions (separate definition IDs for writing)
         // Units: "Percent Over 100" = 0.0 to 1.0 range
@@ -4954,6 +5104,104 @@ async function initSimConnect() {
                     fd.aileronPos = rf(); fd.rudderPos = rf(); fd.yokeY = rf();
                     fd.yokeX = rf(); fd.rudderPedal = rf();
                     fd.elevatorPos = fd.yokeY;  // use yoke Y as elevator proxy
+
+                    // Autopilot Extended (8 vars)
+                    fd.apNav1Lock = rb(); fd.apApproachHold = rb(); fd.apBackcourseHold = rb();
+                    fd.apFlc = rb(); fd.apYawDamper = rb(); fd.apThrottleArm = rb();
+                    fd.apWingLeveler = rb(); fd.apFlightDirector = rb();
+
+                    // Trim (4 vars)
+                    fd.elevatorTrimPos = rf(); fd.elevatorTrimPct = rf();
+                    fd.aileronTrimPct = rf(); fd.rudderTrimPct = rf();
+
+                    // Airspeed Extended (3 vars)
+                    fd.airspeedTrue = rf(); fd.airspeedMach = rf(); fd.headingTrue = rf();
+
+                    // Design Speeds (3 vars)
+                    fd.designSpeedVs0 = rf(); fd.designSpeedVs1 = rf(); fd.designSpeedVc = rf();
+
+                    // Weight (2 vars)
+                    fd.totalWeight = rf(); fd.emptyWeight = rf();
+
+                    // Electrical (4 vars)
+                    fd.masterBattery = rb(); fd.mainBusVoltage = rf();
+                    fd.avionicsBusVoltage = rf(); fd.batteryLoad = rf();
+
+                    // Brakes (2 vars)
+                    fd.brakeLeft = rf(); fd.brakeRight = rf();
+
+                    // More Lights (5 vars)
+                    fd.lightCabin = rb(); fd.lightRecognition = rb(); fd.lightWing = rb();
+                    fd.lightLogo = rb(); fd.lightPanel = rb();
+
+                    // Pitot/Vacuum (2 vars)
+                    fd.pitotHeat = rb(); fd.vacuumPressure = rf();
+
+                    // Simulation (2 vars)
+                    fd.simRate = rf(); fd.cameraState = ri();
+
+                    // Barometer (2 vars)
+                    fd.kohlsmanMb = rf(); fd.barometerPressure = rf();
+
+                    // NAV2 Radio (5 vars)
+                    fd.nav2Cdi = rf(); fd.nav2Obs = rf(); fd.nav2Radial = rf();
+                    fd.nav2ToFrom = ri(); fd.nav2Signal = rf();
+
+                    // Multi-Engine Basics (4 vars)
+                    fd.numberOfEngines = ri(); fd.engineType = ri();
+                    fd.turbN1 = rf(); fd.turbN2 = rf();
+
+                    // Misc (2 vars)
+                    fd.radioHeight = rf(); fd.totalAirTemp = rf();
+
+                    // ── Phase 3: High-Value & Helicopter (56 vars) ───────
+
+                    // Flight Model & Performance (11 vars)
+                    fd.gForce = rf(); fd.dynamicPressure = rf();
+                    fd.designTakeoffSpeed = rf(); fd.designSpeedClimb = rf();
+                    fd.designCruiseAlt = rf();
+                    fd.decisionHeight = rf(); fd.decisionAltMsl = rf();
+                    fd.cgPercent = rf(); fd.cgPercentLateral = rf();
+                    fd.maxGrossWeight = rf(); fd.wingSpan = rf();
+
+                    // Autopilot Advanced (8 vars)
+                    fd.apFdBank = rf(); fd.apFdPitch = rf();
+                    fd.apManagedThrottle = rb(); fd.apTogaPower = rb();
+                    fd.apMachHoldVar = rf();
+                    fd.apSpeedSlot = ri(); fd.apAltSlot = ri(); fd.apVsSlot = ri();
+
+                    // Aircraft Systems (10 vars)
+                    fd.structuralIcePct = rf(); fd.pitotIcePct = rf();
+                    fd.cabinAltitude = rf(); fd.cabinPressureDiff = rf();
+                    fd.warningFuel = rb(); fd.warningOilPressure = rb();
+                    fd.warningVacuum = rb(); fd.warningVoltage = rb();
+                    fd.onAnyRunway = rb(); fd.crashFlag = ri();
+
+                    // Gear & Brakes Advanced (6 vars)
+                    fd.gearTotalPctExtended = rf(); fd.gearNoseOnGround = rb();
+                    fd.gearSpeedExceeded = rb();
+                    fd.antiskidActive = rb(); fd.autobrakesActive = rb();
+                    fd.nosewheelLock = rb();
+
+                    // Markers & Navigation (5 vars)
+                    fd.markerBeaconState = ri();
+                    fd.innerMarker = rb(); fd.middleMarker = rb(); fd.outerMarker = rb();
+                    fd.adfRadial = rf();
+
+                    // Flaps & Spoilers (4 vars)
+                    fd.flapSpeedExceeded = rb();
+                    fd.spoilersLeftPos = rf(); fd.spoilersRightPos = rf();
+                    fd.spoilerAvailable = rb();
+
+                    // Electrical Advanced (4 vars)
+                    fd.totalLoadAmps = rf(); fd.batteryCapacityPct = rf();
+                    fd.apuPctRpm = rf(); fd.externalPowerOn = rb();
+
+                    // Helicopter (8 vars)
+                    fd.rotorRpm = rf(); fd.rotorRpmPct = rf();
+                    fd.collectivePos = rf(); fd.rotorClutch = rb();
+                    fd.rotorGovActive = rb(); fd.rotorChipDetected = rb();
+                    fd.tailRotorPedal = rf(); fd.rotorTemp = rf();
                 } catch (e) {
                     if (!this._loggedReadError) {
                         console.error('[SimConnect] Data read partial at buffer offset, got', Object.keys(fd).length, 'vars. Error:', e.message);
