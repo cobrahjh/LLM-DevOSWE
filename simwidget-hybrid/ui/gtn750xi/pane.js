@@ -240,6 +240,18 @@ class GTN750XiPane extends SimGlassBase {
         link.href = 'themes/theme-v2-appgrid.css';
         document.head.appendChild(link);
 
+        // Load V2 frequency bar
+        try {
+            const freqBarResponse = await fetch('layouts/layout-v2-freq-bar.html');
+            const freqBarHtml = await freqBarResponse.text();
+            const freqBar = document.querySelector('.freq-bar');
+            if (freqBar) {
+                freqBar.insertAdjacentHTML('afterend', freqBarHtml);
+            }
+        } catch (e) {
+            console.error('[GTN750Xi] Failed to load V2 freq bar:', e);
+        }
+
         // Load V2 home layout HTML (replace home-buttons)
         try {
             const response = await fetch('layouts/layout-v2-home.html');

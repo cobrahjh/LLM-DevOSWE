@@ -4,9 +4,135 @@
  * URL-based activation: ?layout=v2
  */
 
-/* Hide V1 home buttons when V2 is active */
+/* Hide V1 elements when V2 is active */
 .layout-v2 .home-buttons {
     display: none !important;
+}
+
+.layout-v2 .freq-bar {
+    display: none !important;
+}
+
+/* V2 Frequency Bar - Compact Design */
+.v2-freq-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+    border-bottom: 2px solid var(--gtn-border);
+    height: 50px;
+}
+
+.v2-freq-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.v2-freq-label {
+    font-size: 8px;
+    color: var(--gtn-gray);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.v2-freq-sublabel {
+    font-size: 7px;
+    color: var(--gtn-gray);
+    text-align: center;
+}
+
+.v2-freq-active {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gtn-green);
+    font-family: var(--gtn-mono);
+}
+
+.v2-freq-stby {
+    display: flex;
+    gap: 4px;
+    font-size: 11px;
+    align-items: center;
+}
+
+.v2-stby-label {
+    font-size: 7px;
+    color: var(--gtn-gray);
+}
+
+.v2-stby-value {
+    color: var(--gtn-cyan);
+    font-family: var(--gtn-mono);
+    font-weight: 600;
+}
+
+.v2-audio-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(0, 200, 255, 0.2);
+    border: 1px solid var(--gtn-cyan);
+    border-radius: 4px;
+    color: var(--gtn-cyan);
+    font-size: 8px;
+    cursor: pointer;
+}
+
+.v2-audio-btn:hover {
+    background: var(--gtn-cyan);
+    color: var(--gtn-bg);
+}
+
+.v2-selector {
+    display: flex;
+    gap: 2px;
+}
+
+.v2-sel-btn {
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--gtn-border);
+    color: var(--gtn-white);
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.v2-sel-btn.active {
+    background: var(--gtn-accent);
+    border-color: var(--gtn-cyan);
+}
+
+.v2-xpdr-code {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gtn-green);
+    font-family: var(--gtn-mono);
+}
+
+.v2-xpdr-ident {
+    padding: 2px 6px;
+    background: rgba(255, 200, 0, 0.2);
+    border: 1px solid #ffc800;
+    color: #ffc800;
+    font-size: 8px;
+    font-weight: 700;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.v2-xpdr-ident:hover {
+    background: #ffc800;
+    color: var(--gtn-bg);
 }
 
 /* Back/Home Button (top-left corner) */
