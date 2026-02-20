@@ -32,9 +32,9 @@ class SystemPage {
             showNavaids: true,
 
             // Range Rings & Overlays
-            navRangeRing: false,
+            navRangeRing: true,
             navRangeRingDistance: 10,  // nm
-            trackVector: false,
+            trackVector: true,
             trackVectorLength: 60,     // seconds
 
             // Auto Features
@@ -45,7 +45,7 @@ class SystemPage {
             runwayExtensions: true,    // 5nm centerline projection
 
             // Auto Zoom
-            autoZoom: false,
+            autoZoom: true,
             autoZoomMin: 2,            // nm
             autoZoomMax: 100,          // nm
 
