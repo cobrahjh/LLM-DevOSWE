@@ -1,17 +1,84 @@
 # GTN 750Xi GPS Widget
 
-Full-featured Garmin GTN 750Xi GPS emulator for Microsoft Flight Simulator with modular architecture, flight planning, navigation, and map rendering. Based on GTN 750 with modernized UI and enhanced features.
+Full-featured Garmin GTN 750Xi GPS emulator for Microsoft Flight Simulator with modular architecture, flight planning, navigation, map rendering, and complete Planning utilities suite. Based on GTN 750 v3.0+ with experimental features and enhanced utilities.
+
+**Version:** v1.0+ (2026-02-19)
+**Access:** `http://192.168.1.42:8080/ui/gtn750xi/`
+**Status:** Experimental Build with 5 Planning Utilities
 
 ## 📚 Documentation
 
 **[→ Open HTML Documentation](docs/index.html)** - Complete interactive documentation
 
 Quick links:
-- [User Guide](docs/user-guide.html) - How to use all features
-- [Plugin Development](docs/plugins.html) - Extend GTN750 with custom pages
+- [KNOWN-ISSUES.md](KNOWN-ISSUES.md) - Known issues and implementation status
+- [IMPROVEMENTS.md](IMPROVEMENTS.md) - Full changelog and feature documentation
+- [GTN750XI-INFO.md](GTN750XI-INFO.md) - GTN750Xi overview and differences from GTN750
+- [FEATURE-STATUS.md](FEATURE-STATUS.md) - Complete feature audit
+- [User Guide](docs/user-guide.html) - How to use all features (inherited from GTN750)
 - [Keyboard Shortcuts](docs/keyboard-shortcuts.html) - Complete keyboard reference
-- [Troubleshooting](docs/troubleshooting.html) - Common issues and solutions
-- [SafeTaxi Guide](docs/safetaxi.html) - Airport diagram documentation
+
+## What's New in GTN750Xi
+
+### 🆕 Planning Utilities Suite (v1.0+)
+
+Complete implementation of all Garmin GTN 750Xi Planning utilities from Pilot's Guide Section 4:
+
+**VCALC (Vertical Calculator)**
+- Time to TOD and required VS calculations
+- Target altitude, VS profile, offset configuration
+- Target waypoint selection from flight plan
+- Real-time status: "Descend to target", "Approaching TOD", "At target altitude"
+- Access: AUX page > VCALC
+
+**Trip Planning**
+- Point-to-Point mode: From/To waypoints, P.Position toggle
+- Flight Plan mode: Active FPL, leg selector, Next/Prev navigation
+- Calculates: DTK, DIS, ETE, ETA, ESA, Sunrise/Sunset at destination
+- Use Sensor Data toggle for live GPS ground speed
+- Access: AUX page > TRIP
+
+**Fuel Planning**
+- Point-to-Point and Flight Plan modes
+- EST Fuel Remaining with real-time countdown (decrements every second)
+- Calculates: Fuel Required, Fuel at Dest, Reserve, Range, Efficiency, Endurance
+- Use Sensor Data pulls fuelTotal/fuelFlow/groundSpeed from sim
+- Access: AUX page > FUEL
+
+**DALT/TAS/Wind Calculator**
+- Calculates Density Altitude, True Airspeed, Wind vector
+- Inputs: Indicated ALT, BARO, CAS, TAT, HDG, TRK, Ground Speed
+- Use Sensor Data pulls all inputs from air data computer
+- Wind component shows headwind/tailwind/crosswind
+- Access: AUX page > DALT
+
+**Checklists**
+- Electronic aircraft checklists with completion tracking
+- 10 Normal Procedures checklists (77 items)
+- 4 Emergency Procedures checklists (30 items)
+- Tap checkboxes to mark complete (turn green with ✓)
+- Status bar: "LIST NOT FINISHED" / "LIST IS FINISHED"
+- Clear Current, Clear All, Go to Next Checklist
+- Access: AUX page > CHKLIST
+
+### 🚀 Quick Access to Planning Utilities
+
+1. Navigate to **AUX** page (keyboard: `a` or home button)
+2. Press soft key:
+   - **TRIP** → Trip Planning
+   - **FUEL** → Fuel Planning
+   - **DALT** → DALT/TAS/Wind Calculator
+   - **VCALC** → Vertical Calculator
+   - **CHKLIST** → Checklists
+   - **TIMER** → Timer utility
+
+All utilities feature:
+- Auto-calculate on entry (GTN 750Xi style)
+- Settings persist to localStorage
+- Use Sensor Data toggle for live sim data
+- Soft keys: MODE, SENSOR, NEXT, PREV, BACK (context-dependent)
+
+---
 
 ## Features
 
@@ -108,8 +175,13 @@ Quick links:
 - **FPL** - Flight plan management
 - **NRST** - Nearest airports/navaids
 - **TAXI** - SafeTaxi airport surface diagrams
-- **PROC** - Departure/arrival/approach procedures (NEW v2.6.0)
-- **AUX** - Auxiliary functions
+- **PROC** - Departure/arrival/approach procedures
+- **AUX** - Auxiliary functions (gateway to Planning utilities)
+- **VCALC** - Vertical Calculator (NEW Xi v1.0+)
+- **TRIP PLANNING** - Route planning utility (NEW Xi v1.0+)
+- **FUEL PLANNING** - Fuel planning utility (NEW Xi v1.0+)
+- **DALT/TAS/WINDS** - Air data calculator (NEW Xi v1.0+)
+- **CHECKLISTS** - Electronic checklists (NEW Xi v1.0+)
 - **CHARTS** - Approach plate viewer (integration ready)
 - **SYSTEM** - Settings and configuration
 
