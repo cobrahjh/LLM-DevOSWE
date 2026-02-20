@@ -28,6 +28,8 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
 .header-btn.off { background: #2a0d0d; border-color: #f85149; color: #f85149; }
 .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #f85149; }
 .conn-dot.ok { background: #3fb950; }
+.lock-status { font-size: 10px; opacity: 0.6; transition: opacity 0.3s; }
+.lock-status.locked { opacity: 1; }
 
 /* Phase indicators */
 .phase-indicators { display: flex; gap: 2px; margin-left: 4px; }
@@ -121,6 +123,7 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
         </div>
         <div class="header-controls">
             <div class="conn-dot" id="conn-status" title="Connection status"></div>
+            <div class="lock-status" id="lock-status" title="Control ownership status">🔓</div>
             <button class="header-btn off" id="ai-toggle" title="Toggle Sally AI Autopilot on/off">SALLY OFF</button>
             <div class="phase-indicators">
                 <span class="phase-chip" data-phase="PREFLIGHT">PRE</span>
@@ -271,15 +274,95 @@ let ws = null;
 let tuningData = {};
 let currentPhase = 'PREFLIGHT';
 
+// Session management
+const sessionId = 'cockpit-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+let isOwner = false;
+let heartbeatTimer = null;
+
 // Initialize
 init();
 
 async function init() {
+    await registerSession();
     connectWebSocket();
     loadTuning();
     loadPhaseButtons();
     setInterval(updateTimestamp, 1000);
 }
+
+// Session Registration
+async function registerSession() {
+    try {
+        const res = await fetch(BASE + '/api/ai-autopilot/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, hostname: 'cockpit' })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            isOwner = data.isOwner;
+            console.log(`[Session] Registered - Owner: ${isOwner}`);
+
+            // Start heartbeat
+            if (heartbeatTimer) clearInterval(heartbeatTimer);
+            heartbeatTimer = setInterval(sendHeartbeat, 5000);
+
+            // Update UI to show ownership status
+            updateOwnershipStatus();
+        }
+    } catch (e) {
+        console.error('[Session] Registration failed:', e);
+    }
+}
+
+async function sendHeartbeat() {
+    try {
+        const res = await fetch(BASE + '/api/ai-autopilot/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, hostname: 'cockpit' })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            if (data.isOwner !== isOwner) {
+                isOwner = data.isOwner;
+                updateOwnershipStatus();
+            }
+        }
+    } catch (e) {
+        // Heartbeat failed, but keep trying
+    }
+}
+
+function updateOwnershipStatus() {
+    const aiToggle = document.getElementById('ai-toggle');
+    const lockStatus = document.getElementById('lock-status');
+
+    if (!isOwner) {
+        aiToggle.style.opacity = '0.5';
+        aiToggle.title = 'Another page has control (locked)';
+        lockStatus.textContent = '🔒';
+        lockStatus.classList.add('locked');
+        lockStatus.title = 'Locked - Another page has control';
+    } else {
+        aiToggle.style.opacity = '1';
+        aiToggle.title = 'Toggle Sally AI Autopilot on/off';
+        lockStatus.textContent = '🔓';
+        lockStatus.classList.remove('locked');
+        lockStatus.title = 'Unlocked - This page has control';
+    }
+}
+
+// Unregister on page unload
+window.addEventListener('beforeunload', () => {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    navigator.sendBeacon(
+        BASE + '/api/ai-autopilot/unregister',
+        new Blob([JSON.stringify({ sessionId })], { type: 'application/json' })
+    );
+});
 
 // WebSocket Connection
 function connectWebSocket() {
@@ -425,12 +508,26 @@ function updateIssues(issues) {
 async function api(method, endpoint, body = null) {
     try {
         const options = { method, headers: { 'Content-Type': 'application/json' } };
-        if (body) options.body = JSON.stringify(body);
+
+        // Include sessionId in request body for POST requests
+        if (method === 'POST') {
+            const requestBody = body ? { ...body, sessionId } : { sessionId };
+            options.body = JSON.stringify(requestBody);
+        } else if (body) {
+            options.body = JSON.stringify(body);
+        }
 
         const res = await fetch(BASE + endpoint, options);
         if (res.ok) {
             showToast('✓ Success', 'green');
             return await res.json();
+        } else if (res.status === 403) {
+            const data = await res.json();
+            if (data.locked) {
+                showToast(`✗ Locked by ${data.ownerHostname}`, 'red');
+            } else {
+                showToast('✗ Forbidden', 'red');
+            }
         } else {
             showToast('✗ Error: ' + res.status, 'red');
         }
