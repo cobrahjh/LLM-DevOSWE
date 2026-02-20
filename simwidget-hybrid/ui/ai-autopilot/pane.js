@@ -1452,7 +1452,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 .dbg-toolbar { display:flex; gap:6px; padding:6px 10px; background:#0a1018; border-bottom:1px solid #1a2030; align-items:center; position:sticky; top:0; z-index:1; }
 .dbg-toolbar .title { font-size:11px; font-weight:700; color:#4fc3f7; letter-spacing:1.5px; margin-right:8px; }
 .dbg-toolbar button { padding:2px 8px; border:1px solid #222; border-radius:2px; background:transparent; color:#90a0b0; font-size:10px; font-weight:700; font-family:'Consolas',monospace; cursor:pointer; }
-.dbg-toolbar button:hover { color:#889; border-color:#445; }
+.dbg-toolbar button:hover { color:#c0c8d8; border-color:#90a0b0; }
 .dbg-toolbar button.active { color:#4fc3f7; border-color:#4fc3f7; background:rgba(79,195,247,0.08); }
 .dbg-toolbar .clear { margin-left:auto; }
 .dbg-toolbar .clear:hover { color:#ef5350; border-color:#ef5350; }
@@ -1540,7 +1540,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                 : self._debugLog.filter(e => popFilters.has(e.cat)).slice(0, 100);
 
             if (entries.length === 0) {
-                logEl.innerHTML = '<div style="color:#334;padding:8px;font-style:italic">No debug entries</div>';
+                logEl.innerHTML = '<div style="color:#90a0b0;padding:8px;font-style:italic">No debug entries</div>';
             } else {
                 logEl.innerHTML = entries.map(e =>
                     `<div class="dbg-entry"><span class="dbg-time">${e.ts}</span>` +
@@ -1673,7 +1673,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             : this._debugLog.filter(e => filters.has(e.cat)).slice(0, 60);
 
         if (entries.length === 0) {
-            this.elements.debugLog.innerHTML = '<div style="color:#334;padding:8px;font-style:italic">No debug entries</div>';
+            this.elements.debugLog.innerHTML = '<div style="color:#90a0b0;padding:8px;font-style:italic">No debug entries</div>';
             return;
         }
 
