@@ -117,9 +117,6 @@ class GTN750XiPane extends SimGlassBase {
         this.proceduresPage = null;
         this.auxPage = null;
         this.vcalcPage = null;
-        this.tripPlanningPage = null;
-        this.fuelPlanningPage = null;
-        this.daltTasWindsPage = null;
         this.chartsPage = null;
         this.nearestPage = null;
         this.systemPage = null;
@@ -387,9 +384,6 @@ class GTN750XiPane extends SimGlassBase {
             this.map.range = this.map.ranges[currentIndex - 1];
             this.mapControls.setRange(this.map.range);
             this.saveState();
-            this._checkNorthUpAbove();
-            // Manual zoom overrides auto zoom
-            this._autoZoomOverridden = true;
         }
     }
 
@@ -403,9 +397,6 @@ class GTN750XiPane extends SimGlassBase {
             this.map.range = this.map.ranges[currentIndex + 1];
             this.mapControls.setRange(this.map.range);
             this.saveState();
-            this._checkNorthUpAbove();
-            // Manual zoom overrides auto zoom
-            this._autoZoomOverridden = true;
         }
     }
 
@@ -610,8 +601,6 @@ class GTN750XiPane extends SimGlassBase {
             nrst: 'pages/page-nrst.js',
             aux: 'pages/page-aux.js',
             vcalc: 'pages/page-vcalc.js',
-            'trip-planning': 'pages/page-trip-planning.js',
-            'fuel-planning': 'pages/page-fuel-planning.js',
             system: 'pages/page-system.js',
             taxi: 'pages/page-taxi.js',
             'user-wpt': 'pages/page-user-wpt.js'
@@ -770,12 +759,6 @@ class GTN750XiPane extends SimGlassBase {
         if (d.fuelFlow !== undefined) this.data.fuelFlow = d.fuelFlow;
         if (d.fuelCapacity !== undefined) this.data.fuelCapacity = d.fuelCapacity;
 
-        // Check if destination changed and fetch runway data
-        this._updateDestinationRunways();
-
-        // Auto Zoom logic
-        this._updateAutoZoom();
-
         // Always update CDI nav data (critical for navigation accuracy)
         this.cdiManager.updateNav1(d);
         this.cdiManager.updateNav2(d);
@@ -822,9 +805,6 @@ class GTN750XiPane extends SimGlassBase {
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.flightPlanManager?.checkApproachPhase(this.data);
         this.updateVcalcPage();
-        this.tripPlanningPage?.update();
-        this.fuelPlanningPage?.update();
-        this.daltTasWindsPage?.update();
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
@@ -1312,34 +1292,6 @@ class GTN750XiPane extends SimGlassBase {
                     });
                 }
                 break;
-            case 'trip-planning':
-                if (!this.tripPlanningPage && typeof TripPlanningPage !== 'undefined') {
-                    this.tripPlanningPage = new TripPlanningPage({
-                        core: this.core,
-                        serverPort: this.serverPort,
-                        flightPlanManager: this.flightPlanManager,
-                        getData: () => this.data
-                    });
-                }
-                break;
-            case 'fuel-planning':
-                if (!this.fuelPlanningPage && typeof FuelPlanningPage !== 'undefined') {
-                    this.fuelPlanningPage = new FuelPlanningPage({
-                        core: this.core,
-                        serverPort: this.serverPort,
-                        flightPlanManager: this.flightPlanManager,
-                        getData: () => this.data
-                    });
-                }
-                break;
-            case 'dalt-tas-winds':
-                if (!this.daltTasWindsPage && typeof DaltTasWindsPage !== 'undefined') {
-                    this.daltTasWindsPage = new DaltTasWindsPage({
-                        core: this.core,
-                        getData: () => this.data
-                    });
-                }
-                break;
             case 'charts':
                 if (!this.chartsPage && typeof ChartsPage !== 'undefined') {
                     this.chartsPage = new ChartsPage({
@@ -1536,7 +1488,7 @@ class GTN750XiPane extends SimGlassBase {
         }
 
         // Lazy load page-specific modules
-        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'trip-planning', 'fuel-planning', 'dalt-tas-winds', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
+        if (['fpl', 'proc', 'charts', 'nrst', 'aux', 'vcalc', 'system', 'taxi', 'user-wpt'].includes(pageId)) {
             await this.loadPageModule(pageId);
         }
 
@@ -1571,24 +1523,6 @@ class GTN750XiPane extends SimGlassBase {
                 this.vcalcPage.init();
                 this.vcalcPage.enable();
                 this.vcalcPage.render();
-            }
-        }
-        if (pageId === 'trip-planning') {
-            if (this.tripPlanningPage) {
-                this.tripPlanningPage.init();
-                this.tripPlanningPage.render();
-            }
-        }
-        if (pageId === 'fuel-planning') {
-            if (this.fuelPlanningPage) {
-                this.fuelPlanningPage.init();
-                this.fuelPlanningPage.render();
-            }
-        }
-        if (pageId === 'dalt-tas-winds') {
-            if (this.daltTasWindsPage) {
-                this.daltTasWindsPage.init();
-                this.daltTasWindsPage.render();
             }
         }
         if (pageId === 'taxi') {
@@ -2833,19 +2767,6 @@ class GTN750XiPane extends SimGlassBase {
             case 'aux-trip': if (this.auxPage) this.auxPage.showSubpage('trip'); break;
             case 'aux-fuel': if (this.auxPage) this.auxPage.showSubpage('fuel'); break;
             case 'goto-vcalc': if (this.pageManager) this.pageManager.switchPage('vcalc'); break;
-            case 'goto-trip-planning': if (this.pageManager) this.pageManager.switchPage('trip-planning'); break;
-            case 'goto-fuel-planning': if (this.pageManager) this.pageManager.switchPage('fuel-planning'); break;
-            case 'trip-toggle-mode': if (this.tripPlanningPage) this.tripPlanningPage.toggleMode(); break;
-            case 'trip-use-sensor': if (this.tripPlanningPage) this.tripPlanningPage.toggleUseSensorData(); break;
-            case 'trip-next-leg': if (this.tripPlanningPage) this.tripPlanningPage.nextLeg(); break;
-            case 'trip-prev-leg': if (this.tripPlanningPage) this.tripPlanningPage.prevLeg(); break;
-            case 'fuel-toggle-mode': if (this.fuelPlanningPage) this.fuelPlanningPage.toggleMode(); break;
-            case 'fuel-use-sensor': if (this.fuelPlanningPage) this.fuelPlanningPage.toggleUseSensorData(); break;
-            case 'fuel-next-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.nextLeg(); break;
-            case 'fuel-prev-leg': if (this.fuelPlanningPage) this.fuelPlanningPage.prevLeg(); break;
-            case 'goto-dalt-tas-winds': if (this.pageManager) this.pageManager.switchPage('dalt-tas-winds'); break;
-            case 'dalt-use-sensor': if (this.daltTasWindsPage) this.daltTasWindsPage.toggleUseSensorData(); break;
-            case 'dalt-reset': if (this.daltTasWindsPage) this.daltTasWindsPage.reset(); break;
             case 'aux-timer': this.toggleAuxTimer(); break;
             case 'aux-logbook': if (this.auxPage) this.auxPage.showSubpage('logbook'); break;
             case 'logbook-export': if (this.auxPage) this.auxPage.exportLogbook(); break;
@@ -4421,6 +4342,11 @@ class GTN750XiPane extends SimGlassBase {
                 this.showDatabaseWarning('UPDATING', job.message || job.status, '#00ffff');
                 const btn = document.querySelector('.db-update-btn');
                 if (btn) { btn.disabled = true; btn.textContent = `${job.progress || 0}%`; }
+            }
+        } catch (e) {
+            // Network error during poll — keep trying
+        }
+    }
 
     /**
      * North Up Above — auto-switch to North Up when zoomed out beyond threshold
@@ -4564,11 +4490,6 @@ class GTN750XiPane extends SimGlassBase {
 
         // Default to max if waypoint is beyond max range
         return Math.min(maxRange, this.map.ranges[this.map.ranges.length - 1]);
-    }
-            }
-        } catch (e) {
-            // Network error during poll — keep trying
-        }
     }
 
     destroy() {
