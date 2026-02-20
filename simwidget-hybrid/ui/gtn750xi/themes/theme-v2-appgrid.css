@@ -9,6 +9,37 @@
     display: none !important;
 }
 
+/* Back/Home Button (top-left corner) */
+.v2-back-btn {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--gtn-cyan);
+    border-radius: 50%;
+    color: var(--gtn-cyan);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.v2-back-btn:hover {
+    background: var(--gtn-cyan);
+    color: var(--gtn-bg);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 200, 255, 0.5);
+}
+
+.v2-back-btn:active {
+    transform: scale(1.05);
+}
+
 /* App Grid Container (replaces home buttons) */
 .app-grid {
     display: grid;

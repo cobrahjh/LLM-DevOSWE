@@ -130,6 +130,10 @@ class GTN750XiPane extends SimGlassBase {
         // Soft key retry counter
         this._softKeyRetries = 0;
 
+        // Page navigation history (for V2 back button)
+        this.pageHistory = [];
+        this.currentLayout = 'v1'; // Detected on init
+
         // Compact mode
         this.compactMode = localStorage.getItem('gtn750-compact') === 'true';
         this._compactRafId = null;
@@ -215,6 +219,7 @@ class GTN750XiPane extends SimGlassBase {
     detectAndApplyLayout() {
         const urlParams = new URLSearchParams(window.location.search);
         const layout = urlParams.get('layout') || 'v1';
+        this.currentLayout = layout;
 
         if (layout === 'v2') {
             this.applyV2Layout();
@@ -267,6 +272,12 @@ class GTN750XiPane extends SimGlassBase {
                         }
                     });
                 });
+
+                // Wire up back/home button
+                const backBtn = document.getElementById('v2-back-btn');
+                if (backBtn) {
+                    backBtn.addEventListener('click', () => this.handleV2Back());
+                }
             }
 
             GTNCore.log('[GTN750Xi] V2 App Grid layout applied');
@@ -279,6 +290,33 @@ class GTN750XiPane extends SimGlassBase {
         document.querySelectorAll('.page-locator-item').forEach(item => {
             item.classList.toggle('active', item.dataset.page === activePage);
         });
+    }
+
+    /**
+     * Handle V2 back button: go to previous page if history exists, otherwise show app grid
+     */
+    handleV2Back() {
+        const currentPage = this.pageManager?.getCurrentPageId();
+
+        // If on app grid or map (home), do nothing
+        if (!currentPage || currentPage === 'map') {
+            return;
+        }
+
+        // If there's history, go back
+        if (this.pageHistory.length > 0) {
+            const prevPage = this.pageHistory.pop();
+            if (this.pageManager) {
+                this.pageManager.switchPage(prevPage, { skipHistory: true });
+                this.updatePageLocator(prevPage);
+            }
+        } else {
+            // No history, return to map (home)
+            if (this.pageManager) {
+                this.pageManager.switchPage('map', { skipHistory: true });
+                this.updatePageLocator('map');
+            }
+        }
     }
 
     init() {
@@ -1566,6 +1604,13 @@ class GTN750XiPane extends SimGlassBase {
     }
 
     onPageChange(pageId) {
+        // Track page history for V2 back button (only if not skipHistory)
+        if (this.currentLayout === 'v2' && this.currentPage && this.currentPage !== pageId) {
+            this.pageHistory.push(this.currentPage);
+            // Limit history to 10 pages
+            if (this.pageHistory.length > 10) this.pageHistory.shift();
+        }
+
         this.currentPage = pageId;
         this.saveState();
 
