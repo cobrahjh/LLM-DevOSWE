@@ -179,6 +179,63 @@
 
 ---
 
+### Checklists ⭐ NEW
+
+**What it is:** Electronic aircraft checklists with group/checklist selection and completion tracking. Per Garmin GTN 750Xi Pilot's Guide Section 4 (pages 4-20 to 4-22).
+
+**Features:**
+- **Group Selection:** Normal Procedures, Emergency Procedures
+- **Checklist Selection:** Multiple checklists per group
+- **Checkbox UI:**
+  - Tap checkboxes to mark items complete/incomplete
+  - Completed items: green text with ✓ check mark
+  - Incomplete items: white text with empty checkbox
+- **Completion Status:**
+  - "LIST NOT FINISHED" (white background) when items remain
+  - "LIST IS FINISHED" (green background) when all items checked
+- **Functions:**
+  - Clear Current Checklist — resets all checkboxes for active list
+  - Clear All Checklists — resets all checkboxes across all groups/checklists
+  - Go to Next Checklist — advances to next list when current complete
+- **Data Persistence:**
+  - Checkboxes automatically clear on page reload (per spec)
+  - Completion state stored in memory only (not localStorage)
+
+**Sample Checklists Included (Cessna 172 style):**
+
+Normal Procedures (10 checklists, 77 items):
+- Preflight Inspection (10 items)
+- Before Engine Start (7 items)
+- Engine Start (9 items)
+- Before Takeoff (15 items)
+- Normal Takeoff (7 items)
+- Cruise (5 items)
+- Descent (6 items)
+- Before Landing (6 items)
+- After Landing (4 items)
+- Engine Shutdown (8 items)
+
+Emergency Procedures (4 checklists, 30 items):
+- Engine Fire During Start (8 items)
+- Engine Fire In Flight (6 items)
+- Engine Failure (9 items)
+- Electrical Fire (7 items)
+
+**Access:** AUX page > CHKLIST soft key
+**Soft Keys:** MENU, NEXT, CLEAR, BACK
+
+**Files:**
+- `pages/page-checklists.js` (279 lines) — ChecklistsPage class
+- Updated: `index.html`, `pane.js`, `modules/gtn-softkeys.js`, `styles.css`
+
+**Notes:**
+- Default checklists loaded from `_loadDefaultChecklists()` method (simulates chklist.ace file)
+- SD card file upload UI not implemented (currently uses hardcoded defaults)
+- Group/Checklist selection modal (MENU soft key) placeholder — needs full modal UI
+- Feature can be titled "Checklists" or "Task Lists" per installer config (currently "Checklists")
+
+---
+
 ## Inherited from GTN 750 v3.0+
 
 All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750Xi v1.0+. See sections below for full history.
@@ -322,19 +379,15 @@ All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750
 **Trip Planning** — ✅ Implemented (commit 9325a0b)
 **Fuel Planning** — ✅ Implemented (commit 63868c0)
 **DALT/TAS/Wind Calculator** — ✅ Implemented (commit 350e348)
+**Checklists** — ✅ Implemented (commit dcfb121)
 
 ### Planned - Additional Utilities (Phase 3)
 
-**RAIM Prediction**
+**RAIM Prediction** (Low Priority)
 - GPS coverage availability prediction
 - Waypoint/Date/Time inputs
 - RAIM Available/Unavailable status
-
-**Checklists**
-- SD card simulation with chklist.ace support
-- Group/Checklist selector
-- Checkbox completion tracking
-- Clear Current/Clear All functions
+- Note: Not required in WAAS coverage areas (assumed available in sim)
 
 ### Planned - Enhancements (Phase 4)
 
@@ -360,7 +413,15 @@ All features, fixes, and optimizations from GTN 750 v3.0+ are included in GTN750
 - Pressure ALT mode when ADC sensor provides it
 - RAT (Ram Air Temperature) option vs TAT
 - NAV Angle system setting integration (Magnetic vs True wind direction)
-- Waypoint picker modal UI for Trip/Fuel Planning pages
+
+**Checklists Enhancements:**
+- SD card file upload UI for custom checklists
+- Group/Checklist selection modal (full UI for MENU soft key)
+- Checklist editor integration
+- Additional aircraft checklist templates
+
+**Common Enhancements:**
+- Waypoint picker modal UI for Trip/Fuel Planning pages (From/To selection)
 
 ---
 

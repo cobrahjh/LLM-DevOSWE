@@ -60,6 +60,21 @@
 
 ---
 
+### Checklists ⭐
+
+**Status:** Implemented (2026-02-19), not yet flight tested
+**What works:** Group/Checklist selection, scrollable checklist with checkbox UI, tap to toggle completion, completed items turn green with check mark, completion status bar ("LIST NOT FINISHED" / "LIST IS FINISHED"), Clear Current Checklist, Clear All Checklists, Go to Next Checklist, checkboxes clear on page reload (per spec)
+**Included:** 10 Normal Procedures checklists (Preflight → Engine Shutdown), 4 Emergency Procedures checklists (Engine Fire, Engine Failure, Electrical Fire), total 77 inspection items
+**Missing:**
+- Real-flight validation
+- SD card file upload UI (currently uses hardcoded default checklists)
+- Group/Checklist selection modal (MENU soft key placeholder)
+- Custom checklist editor integration
+
+**Access:** AUX page > CHKLIST soft key
+
+---
+
 ## 🟡 Inherited - Untested Features
 
 ---
@@ -74,19 +89,7 @@
 - Status output: RAIM Available / Unavailable / Computing
 
 **Impact:** Low — WAAS assumed available in sim
-
----
-
-### Checklists
-
-**Status:** Not implemented
-**Needed:**
-- SD card file loading simulation (chklist.ace format)
-- Group/Checklist selector
-- Checkbox UI with completion status
-- Clear Current/Clear All functions
-
-**Impact:** Medium — useful for pre-flight/landing sim realism
+**Note:** Only remaining Planning utility from Pilot's Guide Section 4
 
 ---
 
