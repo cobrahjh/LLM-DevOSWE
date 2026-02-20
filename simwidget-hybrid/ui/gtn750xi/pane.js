@@ -820,6 +820,9 @@ class GTN750XiPane extends SimGlassBase {
         this.flightPlanManager?.checkWaypointSequencing(this.data, this.cdiManager.obs.suspended);
         this.flightPlanManager?.checkApproachPhase(this.data);
         this.updateVcalcPage();
+        this.tripPlanningPage?.update();
+        this.fuelPlanningPage?.update();
+        this.daltTasWindsPage?.update();
         this.holdingManager?.update(this.data);
         this.checkHoldingPattern();
         this.fuelMonitor?.update(this.data, this.flightPlanManager?.flightPlan);
