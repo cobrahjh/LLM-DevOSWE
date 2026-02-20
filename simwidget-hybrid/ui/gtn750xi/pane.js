@@ -207,7 +207,82 @@ class GTN750XiPane extends SimGlassBase {
         this.init();
     }
 
+    /**
+     * Detect layout from URL param and apply appropriate theme
+     * ?layout=v2 → App Grid layout
+     * Default → Classic home button layout
+     */
+    detectAndApplyLayout() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const layout = urlParams.get('layout') || 'v1';
+
+        if (layout === 'v2') {
+            this.applyV2Layout();
+        }
+        // V1 is default, no action needed
+    }
+
+    async applyV2Layout() {
+        const container = document.querySelector('.gtn750xi, .gtn750');
+        if (!container) return;
+
+        // Add layout class
+        container.classList.add('layout-v2');
+
+        // Load V2 CSS theme
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'themes/theme-v2-appgrid.css';
+        document.head.appendChild(link);
+
+        // Load V2 home layout HTML (replace home-buttons)
+        try {
+            const response = await fetch('layouts/layout-v2-home.html');
+            const html = await response.text();
+
+            // Find home-buttons and insert V2 layout after it
+            const homeButtons = document.querySelector('.home-buttons');
+            if (homeButtons) {
+                homeButtons.style.display = 'none';
+                homeButtons.insertAdjacentHTML('afterend', html);
+
+                // Wire up app icon clicks
+                document.querySelectorAll('.app-icon').forEach(icon => {
+                    icon.addEventListener('click', () => {
+                        const page = icon.dataset.page;
+                        if (page && this.pageManager) {
+                            this.pageManager.switchPage(page);
+                            this.updatePageLocator(page);
+                        }
+                    });
+                });
+
+                // Wire up page locator clicks
+                document.querySelectorAll('.page-locator-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const page = item.dataset.page;
+                        if (page && this.pageManager) {
+                            this.pageManager.switchPage(page);
+                            this.updatePageLocator(page);
+                        }
+                    });
+                });
+            }
+
+            GTNCore.log('[GTN750Xi] V2 App Grid layout applied');
+        } catch (e) {
+            console.error('[GTN750Xi] Failed to load V2 layout:', e);
+        }
+    }
+
+    updatePageLocator(activePage) {
+        document.querySelectorAll('.page-locator-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.page === activePage);
+        });
+    }
+
     init() {
+        this.detectAndApplyLayout();
         this.cacheElements();
         this.wireModuleElements();
         this.setupCanvas();

@@ -1,0 +1,117 @@
+/**
+ * GTN750Xi Theme V2 - App Grid Layout
+ * Based on Garmin GTN 725Xi/750Xi screenshots from Pilot's Guide
+ * URL-based activation: ?layout=v2
+ */
+
+/* Hide V1 home buttons when V2 is active */
+.layout-v2 .home-buttons {
+    display: none !important;
+}
+
+/* App Grid Container (replaces home buttons) */
+.app-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+    background: var(--gtn-bg);
+    border-bottom: 2px solid var(--gtn-border);
+    height: 180px;
+}
+
+.app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+    border: 1px solid var(--gtn-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 10px 6px;
+}
+
+.app-icon:hover {
+    background: linear-gradient(135deg, #252540 0%, #1a1a2e 100%);
+    border-color: var(--gtn-cyan);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 200, 255, 0.3);
+}
+
+.app-icon:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 200, 255, 0.2);
+}
+
+.app-icon-image {
+    font-size: 32px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.app-icon-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gtn-white);
+    text-align: center;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+/* Page Locator Bar */
+.page-locator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 12px;
+    background: var(--gtn-dark);
+    border-top: 1px solid var(--gtn-border);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.page-locator-item {
+    padding: 6px 16px;
+    background: transparent;
+    border: none;
+    color: var(--gtn-gray);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.page-locator-item:hover {
+    color: var(--gtn-white);
+}
+
+.page-locator-item.active {
+    background: var(--gtn-cyan);
+    color: var(--gtn-bg);
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(0, 200, 255, 0.5);
+}
+
+.page-locator-arrow {
+    color: var(--gtn-cyan);
+    font-size: 14px;
+}
+
+/* Adjust main display area for V2 layout */
+.layout-v2 .main-display {
+    /* Height adjusted for app grid + locator bar */
+}
+
+/* V2 Status Bar Adjustments */
+.layout-v2 .status-bar {
+    /* May need tweaks for V2 */
+}
+
+/* Ensure existing pages work with V2 layout */
+.layout-v2 .gtn-page {
+    /* No changes needed - pages are layout-agnostic */
+}
