@@ -293,6 +293,10 @@ class GTN750XiPane extends SimGlassBase {
                         e.preventDefault();
                         if (this.pageManager) this.pageManager.switchPage('wx');
                         break;
+                    case 'u':
+                        e.preventDefault();
+                        if (this.pageManager) this.pageManager.switchPage('aux');
+                        break;
                     case ' ':
                         e.preventDefault();
                         this.toggleCDISource();
