@@ -23,14 +23,14 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
 .badge-sub { border-color: #4fc3f7; color: #4fc3f7; background: #001520; }
 .badge-ws-ok  { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
 .badge-ws-err { border-color: #f85149; color: #f85149; background: #2a0d0d; }
-.hdr-stat { font-size: 10px; color: #506070; }
+.hdr-stat { font-size: 10px; color: #8090a0; }
 .hdr-stat span { color: #c0c8d8; }
 .hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .btn { background: #1a2030; border: 1px solid #2a3040; color: #c0c8d8; border-radius: 3px; padding: 3px 9px; cursor: pointer; font-family: inherit; font-size: 10px; }
 .btn:hover { background: #2a3040; }
 .btn-pause { border-color: #ffab40; color: #ffab40; }
 .btn-pause.active { background: #2a1f0d; }
-.ts { font-size: 10px; color: #404850; }
+.ts { font-size: 10px; color: #708090; }
 
 /* ── Stats bar ── */
 .stats {
@@ -39,12 +39,12 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
   background: #0a0e14; border-bottom: 1px solid #1a2030;
 }
 .stat { display: flex; gap: 5px; align-items: baseline; }
-.stat-lbl { font-size: 9px; color: #506070; text-transform: uppercase; }
+.stat-lbl { font-size: 9px; color: #8090a0; text-transform: uppercase; }
 .stat-val { font-size: 13px; color: #e0e8f0; font-weight: bold; }
 .stat-val.ok   { color: #3fb950; }
 .stat-val.warn { color: #ffab40; }
 .stat-val.err  { color: #f85149; }
-.stat-unit { font-size: 9px; color: #506070; }
+.stat-unit { font-size: 9px; color: #8090a0; }
 
 /* ── Main panels ── */
 .panels { flex: 1; display: flex; overflow: hidden; gap: 1px; background: #1a2030; }
@@ -59,11 +59,11 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
   display: flex; align-items: center; gap: 6px;
   background: #0d1218; border-bottom: 1px solid #1a2030;
 }
-.panel-title { font-size: 10px; font-weight: bold; color: #506070; text-transform: uppercase; letter-spacing: 1px; flex: 1; }
+.panel-title { font-size: 10px; font-weight: bold; color: #8090a0; text-transform: uppercase; letter-spacing: 1px; flex: 1; }
 .panel-title.blue  { color: #4fc3f7; }
 .panel-title.amber { color: #ffab40; }
 .panel-title.green { color: #3fb950; }
-.panel-count { font-size: 9px; color: #404850; }
+.panel-count { font-size: 9px; color: #708090; }
 .filter-input {
   background: #080c10; border: 1px solid #1a2030; color: #c0c8d8;
   border-radius: 2px; padding: 2px 6px; font-size: 10px; font-family: inherit;
@@ -74,7 +74,7 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
 
 /* ── Server log panel ── */
 .log-line { padding: 1px 10px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; border-left: 2px solid transparent; }
-.log-line .ts { color: #303840; margin-right: 6px; }
+.log-line .ts { color: #607080; margin-right: 6px; }
 .log-line.level-log  { color: #8090a0; }
 .log-line.level-error { color: #f85149; border-left-color: #f85149; background: rgba(248,81,73,0.05); }
 .log-line.level-warn  { color: #ffab40; border-left-color: #ffab40; background: rgba(255,171,64,0.05); }
@@ -85,14 +85,14 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
 /* ── Flight input panel ── */
 .fd-grid { padding: 8px 10px; display: flex; flex-direction: column; gap: 0; }
 .fd-section { margin-bottom: 10px; }
-.fd-section-title { font-size: 9px; color: #303840; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #1a2030; }
+.fd-section-title { font-size: 9px; color: #607080; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #1a2030; }
 .fd-row { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 0; border-bottom: 1px solid #0d1218; }
-.fd-lbl { color: #506070; font-size: 10px; }
+.fd-lbl { color: #8090a0; font-size: 10px; }
 .fd-val { color: #e0e8f0; font-size: 12px; font-weight: bold; text-align: right; }
 .fd-val.ok   { color: #3fb950; }
 .fd-val.warn { color: #ffab40; }
 .fd-val.err  { color: #f85149; }
-.fd-val.dim  { color: #303840; }
+.fd-val.dim  { color: #607080; }
 .fd-val.hi   { color: #4fc3f7; }
 
 /* Bar gauge */
@@ -106,7 +106,7 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
 
 /* AP status grid */
 .ap-grid { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 0; }
-.ap-item { font-size: 9px; padding: 1px 6px; border-radius: 2px; border: 1px solid #1a2030; color: #506070; }
+.ap-item { font-size: 9px; padding: 1px 6px; border-radius: 2px; border: 1px solid #1a2030; color: #8090a0; }
 .ap-item.on { border-color: #3fb950; color: #3fb950; background: #0d2a18; }
 
 /* ── Command output panel ── */
@@ -116,11 +116,11 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
   align-items: baseline;
 }
 .cmd-entry:hover { background: #0d1218; }
-.cmd-ts   { color: #303840; font-size: 10px; }
+.cmd-ts   { color: #607080; font-size: 10px; }
 .cmd-type { font-size: 11px; font-weight: bold; }
 .cmd-val  { color: #e0e8f0; font-size: 11px; }
-.cmd-src  { color: #404850; font-size: 9px; text-align: right; }
-.cmd-desc { color: #404850; font-size: 9px; grid-column: 2 / 5; padding-top: 0; }
+.cmd-src  { color: #708090; font-size: 9px; text-align: right; }
+.cmd-desc { color: #708090; font-size: 9px; grid-column: 2 / 5; padding-top: 0; }
 
 /* Command colors by category */
 .cat-throttle .cmd-type { color: #ffab40; }
@@ -139,10 +139,10 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
 }
 .phase-entry.sub { border-left-color: #4fc3f7; background: rgba(79,195,247,0.06); }
 .phase-entry .pe-ts { color: #505060; font-size: 10px; flex-shrink: 0; }
-.phase-entry .pe-label { font-size: 9px; color: #506070; text-transform: uppercase; flex-shrink: 0; }
+.phase-entry .pe-label { font-size: 9px; color: #8090a0; text-transform: uppercase; flex-shrink: 0; }
 .phase-entry .pe-val { font-weight: bold; color: #ffab40; }
 .phase-entry.sub .pe-val { color: #4fc3f7; }
-.phase-entry .pe-arrow { color: #303840; }
+.phase-entry .pe-arrow { color: #607080; }
 
 /* ── Issues bar ── */
 .issues-bar {
@@ -151,12 +151,12 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
   background: #0a0e14; border-top: 1px solid #1a2030;
   min-height: 26px;
 }
-.issues-lbl { font-size: 9px; color: #506070; text-transform: uppercase; flex-shrink: 0; }
+.issues-lbl { font-size: 9px; color: #8090a0; text-transform: uppercase; flex-shrink: 0; }
 .issue-tag { font-size: 9px; padding: 1px 7px; border-radius: 3px; border: 1px solid; }
 .issue-tag.ok   { border-color: #1c4a28; color: #3fb950; background: #0d2a18; }
 .issue-tag.warn { border-color: #5a4010; color: #ffab40; background: #2a1f0d; }
 .issue-tag.err  { border-color: #5a1d1d; color: #f85149; background: #2a0d0d; }
-.last-cmd-bar { margin-left: auto; font-size: 10px; color: #506070; }
+.last-cmd-bar { margin-left: auto; font-size: 10px; color: #8090a0; }
 .last-cmd-bar span { color: #4fc3f7; }
 
 /* ── Scroll to bottom ── */
@@ -171,12 +171,12 @@ body { background: #080c10; color: #c0c8d8; font-family: 'Consolas', 'Courier Ne
 
 /* ── cmd rate mini chart ── */
 .cmd-freq { padding: 6px 10px; border-bottom: 1px solid #1a2030; background: #0a0e14; }
-.cmd-freq-title { font-size: 9px; color: #303840; text-transform: uppercase; margin-bottom: 4px; }
+.cmd-freq-title { font-size: 9px; color: #607080; text-transform: uppercase; margin-bottom: 4px; }
 .freq-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
-.freq-lbl { font-size: 9px; color: #506070; width: 130px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.freq-lbl { font-size: 9px; color: #8090a0; width: 130px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .freq-bar-wrap { flex: 1; height: 5px; background: #1a2030; border-radius: 2px; overflow: hidden; }
 .freq-bar-fill { height: 100%; border-radius: 2px; background: #4fc3f7; transition: width 0.4s; }
-.freq-cnt { font-size: 9px; color: #506070; width: 24px; text-align: right; }
+.freq-cnt { font-size: 9px; color: #8090a0; width: 24px; text-align: right; }
 </style>
 </head>
 <body>
