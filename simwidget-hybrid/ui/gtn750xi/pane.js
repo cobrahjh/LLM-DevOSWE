@@ -263,24 +263,24 @@ class GTN750XiPane extends SimGlassBase {
                 homeButtons.style.display = 'none';
                 homeButtons.insertAdjacentHTML('afterend', html);
 
-                // Wire up app icon clicks
-                document.querySelectorAll('.app-icon').forEach(icon => {
-                    icon.addEventListener('click', () => {
-                        const page = icon.dataset.page;
+                // Wire up menu bar item clicks
+                document.querySelectorAll('.v2-menu-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const page = item.dataset.page;
                         if (page && this.pageManager) {
                             this.pageManager.switchPage(page);
-                            this.updatePageLocator(page);
+                            this.updateV2MenuBar(page);
                         }
                     });
                 });
 
-                // Wire up page locator clicks
+                // Wire up page locator clicks (if present)
                 document.querySelectorAll('.page-locator-item').forEach(item => {
                     item.addEventListener('click', () => {
                         const page = item.dataset.page;
                         if (page && this.pageManager) {
                             this.pageManager.switchPage(page);
-                            this.updatePageLocator(page);
+                            this.updateV2MenuBar(page);
                         }
                     });
                 });
@@ -302,6 +302,14 @@ class GTN750XiPane extends SimGlassBase {
         document.querySelectorAll('.page-locator-item').forEach(item => {
             item.classList.toggle('active', item.dataset.page === activePage);
         });
+    }
+
+    updateV2MenuBar(activePage) {
+        document.querySelectorAll('.v2-menu-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.page === activePage);
+        });
+        // Also update page locator if present
+        this.updatePageLocator(activePage);
     }
 
     /**

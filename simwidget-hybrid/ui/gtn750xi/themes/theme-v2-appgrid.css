@@ -167,62 +167,58 @@
     transform: scale(1.05);
 }
 
-/* App Grid Container (replaces home buttons) */
-.app-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 4px;
-    padding: 6px;
-    background: var(--gtn-bg);
-    border-bottom: 1px solid var(--gtn-border);
-    height: 120px;
-}
-
-.app-icon {
+/* V2 Menu Bar - Horizontal navigation underneath freq bar */
+.v2-menu-bar {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
-    border: 1px solid var(--gtn-border);
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 6px 8px;
+    background: var(--gtn-dark);
+    border-bottom: 1px solid var(--gtn-border);
+    min-height: 36px;
+}
+
+.v2-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
+    color: var(--gtn-white);
+    font-size: 9px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
-    padding: 4px 2px;
+    white-space: nowrap;
 }
 
-.app-icon:hover {
-    background: linear-gradient(135deg, #252540 0%, #1a1a2e 100%);
+.v2-menu-item svg {
+    fill: var(--gtn-cyan);
+    flex-shrink: 0;
+}
+
+.v2-menu-item:hover {
+    background: rgba(0, 200, 255, 0.2);
     border-color: var(--gtn-cyan);
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 200, 255, 0.3);
 }
 
-.app-icon:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0, 200, 255, 0.2);
-}
-
-.app-icon-svg {
-    width: 24px;
-    height: 24px;
-    fill: var(--gtn-cyan);
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-}
-
-.app-icon:hover .app-icon-svg {
+.v2-menu-item:hover svg {
     fill: var(--gtn-white);
 }
 
-.app-icon-label {
-    font-size: 8px;
-    font-weight: 600;
-    color: var(--gtn-white);
-    text-align: center;
-    line-height: 1.1;
-    text-transform: uppercase;
+.v2-menu-item.active {
+    background: var(--gtn-cyan);
+    color: var(--gtn-bg);
+    border-color: var(--gtn-cyan);
+}
+
+.v2-menu-item.active svg {
+    fill: var(--gtn-bg);
 }
 
 /* Page Locator Bar */
