@@ -42,6 +42,7 @@ const cameraSystem = require('./camera-system');
 const { HotReloadManager } = require('./hot-reload');
 const PluginLoader = require('./plugin-system/plugin-loader');
 const PluginAPI = require('./plugin-system/plugin-api');
+const LovableWSAdapter = require('./lovable-ws-adapter');
 const { setupWeatherRoutes } = require('./weather-api');
 const { setupCopilotRoutes } = require('./copilot-api');
 const { setupAiPilotRoutes } = require('./ai-pilot-api');
@@ -4067,6 +4068,7 @@ setInterval(() => {
 wss.on('connection', (ws) => {
     console.log('Client connected');
     ws._isAlive = true;
+    ws._useLovableFormat = false; // Default to SimGlass format
     usageMetrics.trackConnection(+1);
 
     // Clear held axes on new connection — prevents stale elevator/aileron from previous session
@@ -4078,7 +4080,7 @@ wss.on('connection', (ws) => {
     // Add client to hot reload manager (development only)
     hotReloadManager.addClient(ws);
 
-    // Send current state immediately
+    // Send current state immediately (default SimGlass format)
     ws.send(JSON.stringify({ type: 'flightData', data: flightData }));
 
     ws.on('message', (message) => {
@@ -4090,6 +4092,15 @@ wss.on('connection', (ws) => {
                     handleFuelCommand(msg.action, msg);
                 } else {
                     executeCommand(msg.command, msg.value);
+                }
+            } else if (msg.type === 'setFormat') {
+                // Client requests Lovable format
+                if (msg.format === 'lovable') {
+                    ws._useLovableFormat = true;
+                    console.log('[WS] Client switched to Lovable format');
+                } else {
+                    ws._useLovableFormat = false;
+                    console.log('[WS] Client using SimGlass format');
                 }
             }
         } catch (e) {
@@ -4286,10 +4297,22 @@ function updateHeldAxesTimer() {
 
 // Broadcast flight data to all connected clients
 function broadcastFlightData() {
-    const message = JSON.stringify({ type: 'flightData', data: flightData });
+    const simGlassMessage = JSON.stringify({ type: 'flightData', data: flightData });
+
     wss.clients.forEach((client) => {
         if (client.readyState === 1) { // WebSocket.OPEN
             try {
+                let message;
+                if (client._useLovableFormat) {
+                    // Transform to Lovable format
+                    const adapter = new LovableWSAdapter();
+                    adapter.setFlightPlanManager(null); // TODO: Get flight plan manager instance
+                    const lovableData = adapter.transform(flightData);
+                    message = JSON.stringify(lovableData);
+                } else {
+                    // Use SimGlass format (default)
+                    message = simGlassMessage;
+                }
                 client.send(message);
             } catch (e) {
                 try { client.terminate(); } catch (_) {}
