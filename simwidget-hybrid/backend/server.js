@@ -115,6 +115,11 @@ const wss = new WebSocketServer({ server });
 
 const PORT = 8080;
 
+// WebSocket broadcast throttle (limit updates to 10Hz for Lovable clients)
+const BROADCAST_THROTTLE_MS = 100; // 10 updates per second
+let lastBroadcastTime = 0;
+let pendingBroadcast = false;
+
 // In-memory server log buffer (last 500 lines)
 const LOG_BUFFER_MAX = 500;
 const serverLogBuffer = [];
@@ -3785,6 +3790,85 @@ app.post('/api/ai-autopilot/execute-flight-plan', requireApOwner, (req, res) => 
     res.json({ success: true, waypoints: plan.waypoints.length });
 });
 
+app.post('/api/ai-autopilot/simbrief-import', requireApOwner, async (req, res) => {
+    const { userid, username } = req.body;
+
+    if (!userid && !username) {
+        return res.status(400).json({ error: 'Provide userid or username in request body' });
+    }
+
+    try {
+        // Fetch SimBrief OFP
+        let url = 'https://www.simbrief.com/api/xml.fetcher.php?json=1';
+        if (userid) {
+            url += '&userid=' + encodeURIComponent(userid);
+        } else {
+            url += '&username=' + encodeURIComponent(username);
+        }
+
+        const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        const data = await response.json();
+
+        if (data.fetch?.status?.startsWith('Error')) {
+            return res.status(404).json({ error: data.fetch.status });
+        }
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: 'SimBrief API error' });
+        }
+
+        // Parse flight plan from SimBrief data
+        const ofp = data;
+        const waypoints = [];
+
+        // Extract waypoints from navlog
+        if (ofp.navlog?.fix) {
+            ofp.navlog.fix.forEach((fix, i) => {
+                waypoints.push({
+                    ident: fix.ident,
+                    latitude: parseFloat(fix.pos_lat),
+                    longitude: parseFloat(fix.pos_long),
+                    altitude: parseInt(fix.altitude_feet) || 0
+                });
+            });
+        }
+
+        if (waypoints.length < 2) {
+            return res.status(400).json({ error: 'Not enough waypoints in SimBrief flight plan' });
+        }
+
+        const cruiseAlt = parseInt(ofp.aircraft?.initial_altitude) || parseInt(ofp.general?.initial_altitude) || 0;
+
+        const plan = {
+            origin: ofp.origin?.icao_code || waypoints[0].ident,
+            destination: ofp.destination?.icao_code || waypoints[waypoints.length - 1].ident,
+            cruiseAltitude: cruiseAlt,
+            waypoints: waypoints,
+            distance: parseFloat(ofp.general?.air_distance) || 0,
+            source: 'simbrief'
+        };
+
+        // Broadcast to all clients
+        const message = JSON.stringify({ type: 'execute-flight-plan', data: plan });
+        wss.clients.forEach((client) => {
+            if (client.readyState === 1) {
+                try { client.send(message); } catch (e) {}
+            }
+        });
+
+        res.json({
+            success: true,
+            waypoints: waypoints.length,
+            origin: plan.origin,
+            destination: plan.destination,
+            cruiseAltitude: cruiseAlt
+        });
+    } catch (e) {
+        console.error('[SimBrief Import] Failed:', e.message);
+        res.status(500).json({ error: 'Failed to import from SimBrief: ' + e.message });
+    }
+});
+
 // ── AI Speed Control API ────────────────────────────────────────────────
 let aiSpeedControl = {
     enabled: false,
@@ -4297,6 +4381,25 @@ function updateHeldAxesTimer() {
 
 // Broadcast flight data to all connected clients
 function broadcastFlightData() {
+    const now = Date.now();
+
+    // Throttle broadcasts to 10Hz (100ms minimum interval)
+    if (now - lastBroadcastTime < BROADCAST_THROTTLE_MS) {
+        if (!pendingBroadcast) {
+            pendingBroadcast = true;
+            setTimeout(() => {
+                pendingBroadcast = false;
+                broadcastFlightDataImmediate();
+            }, BROADCAST_THROTTLE_MS - (now - lastBroadcastTime));
+        }
+        return;
+    }
+
+    broadcastFlightDataImmediate();
+}
+
+function broadcastFlightDataImmediate() {
+    lastBroadcastTime = Date.now();
     const simGlassMessage = JSON.stringify({ type: 'flightData', data: flightData });
 
     wss.clients.forEach((client) => {
@@ -4304,13 +4407,13 @@ function broadcastFlightData() {
             try {
                 let message;
                 if (client._useLovableFormat) {
-                    // Transform to Lovable format
+                    // Transform to Lovable format (throttled to 10Hz)
                     const adapter = new LovableWSAdapter();
                     adapter.setFlightPlanManager(null); // TODO: Get flight plan manager instance
                     const lovableData = adapter.transform(flightData);
                     message = JSON.stringify(lovableData);
                 } else {
-                    // Use SimGlass format (default)
+                    // Use SimGlass format (default, no throttle)
                     message = simGlassMessage;
                 }
                 client.send(message);
