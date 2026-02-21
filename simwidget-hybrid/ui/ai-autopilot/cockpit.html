@@ -150,11 +150,6 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                     <div class="phase-bar">
                         <div class="phase-progress" id="phase-progress"></div>
                     </div>
-                    <div class="phase-targets">
-                        <span class="target" id="target-alt">--- ft</span>
-                        <span class="target" id="target-spd">--- kt</span>
-                        <span class="target" id="target-vs">--- fpm</span>
-                    </div>
                 </div>
             </div>
 
@@ -179,6 +174,15 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                     <button class="btn red" onclick="clearFlightPlan()" title="Clear current flight plan and waypoints">🗑️ Clear</button>
                     <button class="btn" onclick="requestTaxi()" title="Request taxi clearance from ATC">🚕 Taxi</button>
                     <button class="btn" onclick="clearedTakeoff()" title="Issue takeoff clearance">🛫 T/O</button>
+                </div>
+            </div>
+
+            <!-- Phase Checklist -->
+            <div class="section">
+                <div class="section-title">Phase Checklist</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                    <button class="btn blue" onclick="importChecklist()" title="Import phase checklist from ROCK-PC">📥 Import from ROCK-PC</button>
+                    <button class="btn green" onclick="syncToRock()" title="Sync this checklist to ROCK-PC">📤 Sync to ROCK-PC</button>
                 </div>
             </div>
 
@@ -257,10 +261,10 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
                 </div>
             </div>
 
-            <!-- Last Command -->
+            <!-- Command Log -->
             <div class="section">
-                <div class="section-title">Last Command</div>
-                <div id="last-cmd" style="font-family: monospace; font-size: 11px; color: #8b949e;">---</div>
+                <div class="section-title">Last 20 Commands</div>
+                <div id="command-log" style="font-family: monospace; font-size: 9px; color: #8b949e; max-height: 200px; overflow-y: auto; line-height: 1.4;">---</div>
             </div>
         </div>
     </div>
@@ -269,6 +273,9 @@ body { background: #0d1117; color: #c9d1d9; font-family: monospace; font-size: 1
 <div id="toast"></div>
 
 <script>
+// HTML escape to prevent XSS
+function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 // Use current host for API and WebSocket (works with localhost and remote IP)
 const BASE = window.location.origin;
 let ws = null;
@@ -401,7 +408,14 @@ function connectWebSocket() {
 
     ws.onmessage = (event) => {
         try {
-            const data = JSON.parse(event.data);
+            const message = JSON.parse(event.data);
+            // Debug: log what we're receiving
+            console.log('[WS] message.type:', message.type);
+            if (message.type === 'flightData') {
+                console.log('[WS] aiAutopilot:', message.data?.aiAutopilot);
+            }
+            // Extract data payload from message
+            const data = message.data || message;
             updateDisplay(data);
         } catch (e) {
             console.error('WebSocket parse error:', e);
@@ -420,8 +434,8 @@ function connectWebSocket() {
 
 // Update Display
 function updateDisplay(data) {
-    // Phase - check both data.phase and data.sallyState.currentPhase
-    const phase = data.phase || data.currentPhase || data.sallyState?.currentPhase;
+    // Phase - check data.aiAutopilot.phase (WebSocket path)
+    const phase = data.aiAutopilot?.phase || data.phase || data.currentPhase;
     if (phase) {
         currentPhase = phase;
         document.getElementById('phase-name').textContent = currentPhase;
@@ -435,17 +449,6 @@ function updateDisplay(data) {
         });
     }
 
-    // Phase progress (estimate based on altitude/speed)
-    if (data.altitude && data.targetAltitude && data.targetAltitude > 0) {
-        const progress = Math.min(100, (data.altitude / data.targetAltitude) * 100);
-        document.getElementById('phase-progress').style.width = progress + '%';
-    }
-
-    // Targets
-    document.getElementById('target-alt').textContent = data.targetAltitude ? `${Math.round(data.targetAltitude)} ft` : '--- ft';
-    document.getElementById('target-spd').textContent = data.targetSpeed ? `${Math.round(data.targetSpeed)} kt` : '--- kt';
-    document.getElementById('target-vs').textContent = data.verticalSpeed ? `${Math.round(data.verticalSpeed)} fpm` : '--- fpm';
-
     // Sally state toggle
     const aiToggle = document.getElementById('ai-toggle');
     // Don't override if manually toggled in last 2 seconds (prevents flicker)
@@ -453,8 +456,8 @@ function updateDisplay(data) {
         // Skip WebSocket update, keep manual state
     } else {
         // Normal WebSocket-based update
-        // Check both data.enabled and data.sallyState.enabled for compatibility
-        const isEnabled = data.enabled || data.sallyState?.enabled;
+        // WebSocket broadcasts Sally state as data.aiAutopilot.enabled
+        const isEnabled = data.aiAutopilot?.enabled || false;
         if (isEnabled) {
             aiToggle.textContent = 'SALLY ON';
             aiToggle.classList.remove('off');
@@ -470,15 +473,13 @@ function updateDisplay(data) {
     updateStateCards(data);
 
     // Server cards
-    updateServerCards(data.sallyState);
+    updateServerCards(data.aiAutopilot);
 
     // Issues
-    updateIssues(data.sallyState?.issues || []);
+    updateIssues(data.aiAutopilot?.issues || []);
 
-    // Last command
-    if (data.sallyState?.lastCommand) {
-        document.getElementById('last-cmd').textContent = data.sallyState.lastCommand;
-    }
+    // Command log (last 20 commands)
+    updateCommandLog(data.commandLog || data.aiAutopilot?.commandLog || []);
 }
 
 // State Cards
@@ -493,8 +494,8 @@ function updateStateCards(data) {
 
     cards.innerHTML = metrics.map(m => `
         <div class="card">
-            <div class="card-label">${m.label}</div>
-            <div class="card-val ${m.status}">${m.value}</div>
+            <div class="card-label">${esc(m.label)}</div>
+            <div class="card-val ${esc(m.status)}">${esc(m.value)}</div>
         </div>
     `).join('');
 }
@@ -511,8 +512,8 @@ function updateServerCards(sallyState) {
 
     cards.innerHTML = serverMetrics.map(m => `
         <div class="card">
-            <div class="card-label">${m.label}</div>
-            <div class="card-val ${m.status}">${m.value}</div>
+            <div class="card-label">${esc(m.label)}</div>
+            <div class="card-val ${esc(m.status)}">${esc(m.value)}</div>
         </div>
     `).join('');
 }
@@ -531,11 +532,33 @@ function updateIssues(issues) {
     issuesDiv.innerHTML = issues.map(issue => {
         const severity = issue.severity || 'warn';
         return `
-            <div class="issue ${severity}">
-                <div class="issue-code">${issue.code || 'ISSUE'}</div>
-                ${issue.message || issue}
+            <div class="issue ${esc(severity)}">
+                <div class="issue-code">${esc(issue.code || 'ISSUE')}</div>
+                ${esc(issue.message || issue)}
             </div>
         `;
+    }).join('');
+}
+
+// Command Log
+function updateCommandLog(commands) {
+    const logDiv = document.getElementById('command-log');
+    if (!commands || commands.length === 0) {
+        logDiv.textContent = 'No commands yet';
+        return;
+    }
+
+    // Take last 20 commands
+    const recent = commands.slice(0, 20);
+
+    logDiv.innerHTML = recent.map(cmd => {
+        if (typeof cmd === 'object') {
+            const value = cmd.value !== undefined ? ` = ${esc(String(cmd.value))}` : '';
+            const time = cmd.time ? esc(new Date(cmd.time).toLocaleTimeString()) : '';
+            return `<div>${time} ${esc(cmd.type || '')}${value}</div>`;
+        } else {
+            return `<div>${esc(String(cmd))}</div>`;
+        }
     }).join('');
 }
 
@@ -577,7 +600,22 @@ async function api(method, endpoint, body = null) {
 
 // Flight Plan
 async function importSimBrief() {
-    await api('POST', '/api/ai-autopilot/simbrief-import');
+    const input = prompt('SimBrief Pilot ID or Username:');
+    if (!input) {
+        showToast('✗ SimBrief import cancelled', 'red');
+        return;
+    }
+
+    showToast('Fetching from SimBrief...', 'orange');
+
+    // Try as numeric pilot ID first, otherwise use as username
+    const isNumeric = /^\d+$/.test(input);
+    const payload = isNumeric ? { userid: input } : { username: input };
+
+    const result = await api('POST', '/api/ai-autopilot/simbrief-import', payload);
+    if (result) {
+        showToast(`✓ Imported ${result.waypoints} waypoints: ${result.origin} → ${result.destination}`, 'green');
+    }
 }
 
 async function importFromGTN750() {
@@ -630,6 +668,22 @@ async function clearFlightPlan() {
     await api('POST', '/api/ai-autopilot/clear-plan');
 }
 
+async function importChecklist() {
+    showToast('Importing checklist from ROCK-PC...', 'orange');
+    const result = await api('POST', '/api/ai-autopilot/phase-checklist/import');
+    if (result) {
+        showToast(`✓ Imported ${result.phases} phase checklists from ROCK-PC`, 'green');
+    }
+}
+
+async function syncToRock() {
+    showToast('Syncing checklist to ROCK-PC...', 'orange');
+    const result = await api('POST', '/api/ai-autopilot/phase-checklist/sync-to-rock');
+    if (result) {
+        showToast(`✓ Synced ${result.phases} phase checklists to ROCK-PC`, 'green');
+    }
+}
+
 async function requestTaxi() {
     await api('POST', '/api/ai-autopilot/request-taxi');
 }
@@ -676,7 +730,7 @@ async function resetLearning() {
 // Cruise Altitude
 async function setCruiseAlt() {
     const alt = parseInt(document.getElementById('cruise-alt').value);
-    await api('POST', '/api/ai-autopilot/set-cruise-alt', { altitude: alt });
+    await api('POST', '/api/ai-autopilot/cruise-alt', { altitude: alt });
 }
 
 // Heading
@@ -779,7 +833,7 @@ function updateTuning(key, value) {
 }
 
 async function applyAllTuning() {
-    await api('POST', '/api/ai-pilot/update-tuning', tuningData);
+    await api('POST', '/api/ai-pilot/tuning', tuningData);
 }
 
 // Toast

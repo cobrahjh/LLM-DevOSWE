@@ -3047,7 +3047,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             const isOverride = entry.type.includes('OVERRIDE') || entry.type === 'ADVISORY_ACCEPTED';
             return `<div class="log-entry${isOverride ? ' override' : ''}">` +
                    `<span class="log-time">${ts}</span>` +
-                   `<span class="log-cmd">${entry.description}</span>` +
+                   `<span class="log-cmd">${this._esc(entry.description)}</span>` +
                    `</div>`;
         }).join('');
 
@@ -3059,7 +3059,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
 
         if (!advisory || advisory.error) {
             this.elements.advisoryContent.innerHTML =
-                `<span class="advisory-text" style="color:#ef5350">${advisory?.text || 'Advisory failed'}</span>`;
+                `<span class="advisory-text" style="color:#ef5350">${this._esc(advisory?.text || 'Advisory failed')}</span>`;
             if (this.elements.advisoryActions) this.elements.advisoryActions.style.display = 'none';
             return;
         }
@@ -3069,7 +3069,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
             .replace(/^#{1,6}\s+/gm, '')
             .replace(/\*{2,}/g, '')
             .trim();
-        this.elements.advisoryContent.innerHTML = `<span class="advisory-text">${cleanText}</span>`;
+        this.elements.advisoryContent.innerHTML = `<span class="advisory-text">${this._esc(cleanText)}</span>`;
 
         // Only show Accept/Dismiss when there are actual executable commands
         if (this.elements.advisoryActions) {
@@ -3303,7 +3303,7 @@ body { margin:0; background:#060a10; color:#8899aa; font-family:'Consolas',monos
                         if (result.valid) {
                             statusEl.innerHTML = '<span class="as-ok">Valid key (' + (result.tier || 'pro') + ')</span>';
                         } else {
-                            statusEl.innerHTML = '<span class="as-err">' + (result.error || 'Invalid key') + '</span>';
+                            statusEl.innerHTML = '<span class="as-err">' + self._esc(result.error || 'Invalid key') + '</span>';
                         }
                     } catch (e) {
                         statusEl.innerHTML = '<span class="as-err">Server error</span>';
