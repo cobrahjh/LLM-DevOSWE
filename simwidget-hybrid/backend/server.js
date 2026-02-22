@@ -1626,7 +1626,25 @@ app.get('/api/config', (req, res) => {
 
 app.post('/api/config', (req, res) => {
     try {
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(req.body, null, 2));
+        if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+            return res.status(400).json({ error: 'Config must be a JSON object' });
+        }
+        const ALLOWED_CONFIG_KEYS = [
+            'msfsVersion', 'chasePlaneDetected', 'ahkDetected', 'simConnectDetected',
+            'cameraMode', 'autostartServer', 'autostartOverlay', 'serverPort',
+            'theme', 'autoStart', 'port', 'simconnect', 'copilot', 'sayIntentions'
+        ];
+        const keys = Object.keys(req.body);
+        const invalid = keys.filter(k => !ALLOWED_CONFIG_KEYS.includes(k));
+        if (invalid.length > 0) {
+            return res.status(400).json({ error: 'Invalid config keys: ' + invalid.join(', ') });
+        }
+        // Size limit: 10KB
+        const json = JSON.stringify(req.body, null, 2);
+        if (json.length > 10240) {
+            return res.status(400).json({ error: 'Config too large (max 10KB)' });
+        }
+        fs.writeFileSync(CONFIG_PATH, json);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -1636,6 +1654,13 @@ app.post('/api/config', (req, res) => {
 // SimConnect remote settings endpoint
 app.post('/api/simconnect/remote', async (req, res) => {
     const { host, port } = req.body;
+    // Validate host (IP or hostname only) and port
+    if (host && !/^[a-zA-Z0-9.\-]+$/.test(host)) {
+        return res.status(400).json({ error: 'Invalid host format' });
+    }
+    if (port !== undefined && (!Number.isInteger(port) || port < 1 || port > 65535)) {
+        return res.status(400).json({ error: 'Port must be 1-65535' });
+    }
     console.log(`[SimConnect] Setting remote host: ${host}:${port || 500}`);
 
     try {
@@ -1748,11 +1773,20 @@ app.get('/api/services', (req, res) => {
 
 app.post('/api/services', async (req, res) => {
     const { service, action } = req.body;
-    
+
     if (!service || !action) {
         return res.status(400).json({ error: 'service and action required' });
     }
-    
+
+    const ALLOWED_SERVICES = ['SimGlass', 'agent', 'remote'];
+    const ALLOWED_ACTIONS = ['start', 'stop', 'restart'];
+    if (!ALLOWED_SERVICES.includes(service)) {
+        return res.status(400).json({ error: 'Unknown service' });
+    }
+    if (!ALLOWED_ACTIONS.includes(action)) {
+        return res.status(400).json({ error: 'Unknown action' });
+    }
+
     const serviceConfigs = {
         SimGlass: {
             dir: 'C:\\DevOSWE\\simwidget-hybrid\\backend',
@@ -1770,11 +1804,8 @@ app.post('/api/services', async (req, res) => {
             port: 8590
         }
     };
-    
+
     const config = serviceConfigs[service];
-    if (!config) {
-        return res.status(400).json({ error: 'Unknown service' });
-    }
     
     try {
         let cmd;
@@ -1817,9 +1848,62 @@ app.get('/api/ai-autopilot/phase-checklist', (req, res) => {
 });
 app.post('/api/ai-autopilot/phase-checklist', (req, res) => {
     try {
-        fs.writeFileSync(PHASE_CHECKLIST_PATH, JSON.stringify(req.body, null, 2));
+        if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+            return res.status(400).json({ error: 'Checklist must be a JSON object' });
+        }
+        // Size limit: 50KB
+        const json = JSON.stringify(req.body, null, 2);
+        if (json.length > 51200) {
+            return res.status(400).json({ error: 'Checklist too large (max 50KB)' });
+        }
+        fs.writeFileSync(PHASE_CHECKLIST_PATH, json);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Import checklist from ROCK-PC (192.168.1.192)
+app.post('/api/ai-autopilot/phase-checklist/import', async (req, res) => {
+    try {
+        const response = await fetch('http://192.168.1.192:8080/api/ai-autopilot/phase-checklist', {
+            signal: AbortSignal.timeout(5000)
+        });
+        const data = await response.json();
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            return res.status(400).json({ error: 'Invalid checklist data from ROCK-PC' });
+        }
+        const json = JSON.stringify(data, null, 2);
+        if (json.length > 51200) {
+            return res.status(400).json({ error: 'Imported checklist too large (max 50KB)' });
+        }
+        fs.writeFileSync(PHASE_CHECKLIST_PATH, json);
+        res.json({ success: true, message: 'Imported from ROCK-PC', phases: Object.keys(data).length });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to import from ROCK-PC: ' + e.message });
+    }
+});
+
+// Sync checklist TO ROCK-PC (push current checklist to 192.168.1.192)
+app.post('/api/ai-autopilot/phase-checklist/sync-to-rock', async (req, res) => {
+    try {
+        const checklist = fs.existsSync(PHASE_CHECKLIST_PATH)
+            ? JSON.parse(fs.readFileSync(PHASE_CHECKLIST_PATH, 'utf8'))
+            : {};
+
+        const response = await fetch('http://192.168.1.192:8080/api/ai-autopilot/phase-checklist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(checklist),
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (!response.ok) {
+            throw new Error(`ROCK-PC returned ${response.status}`);
+        }
+
+        res.json({ success: true, message: 'Synced to ROCK-PC', phases: Object.keys(checklist).length });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to sync to ROCK-PC: ' + e.message });
+    }
 });
 
 // Logs API endpoint
@@ -3869,6 +3953,14 @@ app.post('/api/ai-autopilot/simbrief-import', requireApOwner, async (req, res) =
     }
 });
 
+app.post('/api/ai-autopilot/clear-plan', requireApOwner, (req, res) => {
+    // Clear flight plan from rule engine
+    if (ruleEngineServer.clearFlightPlan) {
+        ruleEngineServer.clearFlightPlan();
+    }
+    res.json({ success: true });
+});
+
 // ── AI Speed Control API ────────────────────────────────────────────────
 let aiSpeedControl = {
     enabled: false,
@@ -4074,6 +4166,27 @@ app.post('/api/ai-autopilot/force-subphase', requireApOwner, (req, res) => {
         ruleEngineServer.flightPhase.setManualPhase('TAKEOFF');
     }
     res.json({ success: true, subPhase, phase: ruleEngineServer.flightPhase.phase });
+});
+
+// ── AI Pilot Management Endpoints ──────────────────────────────────────────
+app.post('/api/ai-pilot/reset-learning', requireApOwner, (req, res) => {
+    // Reset learning data if implemented
+    if (ruleEngineServer.resetLearning) {
+        ruleEngineServer.resetLearning();
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, error: 'Learning system not implemented' });
+    }
+});
+
+app.post('/api/ai-pilot/restart', requireApOwner, (req, res) => {
+    res.json({ success: true, message: 'Please restart the SimGlass server manually' });
+    // Note: Auto-restart removed per memory rules
+});
+
+app.post('/api/ai-pilot/stop', requireApOwner, (req, res) => {
+    res.json({ success: true, message: 'Please stop the SimGlass server manually' });
+    // Note: Auto-shutdown removed per memory rules
 });
 
 // ── Device Management (flight controller disable/enable for AI autopilot) ──
