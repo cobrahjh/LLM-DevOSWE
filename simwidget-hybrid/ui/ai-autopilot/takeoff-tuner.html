@@ -257,6 +257,7 @@
         const STORAGE_KEY = 'simglass-takeoff-tuning';
         const HOLDS_KEY = 'simglass-takeoff-holds';
         const CHANNEL_NAME = 'SimGlass-sync';
+        function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
         // ── Phase definitions ──
         const PHASES = [
@@ -759,7 +760,7 @@
                         const span = document.createElement('span');
                         span.className = 'set-item';
                         span.dataset.key = sf.key;
-                        span.innerHTML = `<span class="set-label">${sf.label}</span><span class="set-val">${v}${unit ? ' ' + unit : ''}</span>`;
+                        span.innerHTML = `<span class="set-label">${esc(sf.label)}</span><span class="set-val">${esc(String(v))}${unit ? ' ' + esc(unit) : ''}</span>`;
                         setDiv.appendChild(span);
                     });
                     body.appendChild(setDiv);

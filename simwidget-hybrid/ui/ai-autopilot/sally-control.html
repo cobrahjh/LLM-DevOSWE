@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sally Control Center</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-on {
+            background: #238636;
+            color: white;
+        }
+
+        .btn-on:hover {
+            background: #2ea043;
+        }
+
+        .btn-off {
+            background: #da3633;
+            color: white;
+        }
+
+        .btn-off:hover {
+            background: #f85149;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-label {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .status-on { color: #3fb950; }
+        .status-off { color: #f85149; }
+        .status-idle { color: #d29922; }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #30363d;
+            font-weight: bold;
+            font-size: 14px;
+            background: #0d1117;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #0d1117;
+            border-left: 3px solid #30363d;
+            border-radius: 3px;
+        }
+
+        .log-time {
+            color: #6e7681;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+
+        .log-content {
+            color: #c9d1d9;
+        }
+
+        .sally-recommendation {
+            border-left-color: #58a6ff;
+            background: #0d1726;
+        }
+
+        .sally-tuning {
+            border-left-color: #3fb950;
+            background: #0d1a14;
+        }
+
+        .sally-analysis {
+            border-left-color: #d29922;
+            background: #1a1410;
+        }
+
+        .rule-command {
+            border-left-color: #8957e5;
+            background: #161320;
+        }
+
+        .rule-brake {
+            border-left-color: #3fb950;
+            background: #0d1a14;
+        }
+
+        .rule-control {
+            border-left-color: #58a6ff;
+            background: #0d1726;
+        }
+
+        .code {
+            background: #0d1117;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #79c0ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">🤖 Sally Control Center <span id="owner-status" style="font-size: 14px; color: #f85149;"></span></div>
+        <div class="controls">
+            <button class="btn btn-on" id="btn-on" onclick="turnOn()">▶ Turn ON</button>
+            <button class="btn btn-off" id="btn-off" onclick="turnOff()">■ Turn OFF</button>
+            <button class="btn" id="btn-takeover" onclick="forceTakeover()" style="background: #d29922; color: white;">⚡ Take Control</button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-label">Sally AI:</span>
+            <span class="status-value status-off" id="sally-status">OFF</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Rule Engine:</span>
+            <span class="status-value status-off" id="engine-status">OFF</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Phase:</span>
+            <span class="status-value" id="phase-status">---</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Sub-Phase:</span>
+            <span class="status-value" id="subphase-status">---</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Server:</span>
+            <span class="status-value status-idle" id="server-status">CHECKING...</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">SimConnect:</span>
+            <span class="status-value status-idle" id="simconnect-status">CHECKING...</span>
+        </div>
+    </div>
+
+    <div class="panels">
+        <div class="panel">
+            <div class="panel-header">
+                💡 Sally AI Output
+                <button class="btn-clear" onclick="clearSallyOutput()" style="float: right; padding: 2px 8px; font-size: 11px; background: #30363d; color: #c9d1d9; border: none; border-radius: 3px; cursor: pointer;">Clear</button>
+            </div>
+            <div class="panel-content" id="sally-output">
+                <div style="color: #6e7681; text-align: center; padding: 40px 20px;">
+                    Waiting for Sally AI activity...
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                ⚙️ Rule Engine Output
+                <button class="btn-clear" onclick="clearEngineOutput()" style="float: right; padding: 2px 8px; font-size: 11px; background: #30363d; color: #c9d1d9; border: none; border-radius: 3px; cursor: pointer;">Clear</button>
+            </div>
+            <div class="panel-content" id="engine-output">
+                <div style="color: #6e7681; text-align: center; padding: 40px 20px;">
+                    Waiting for Rule Engine commands...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE = window.location.origin;
+        const sessionId = 'sally-control-' + Date.now();
+        let updateInterval = null;
+        let isOwner = false;
+
+        // Register session on load
+        async function init() {
+            try {
+                console.log('Registering session:', sessionId);
+                const res = await fetch(BASE + '/api/ai-autopilot/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, hostname: 'sally-control' })
+                });
+                const data = await res.json();
+                isOwner = data.isOwner;
+                console.log('Session registered, owner:', isOwner, 'Response:', data);
+
+                if (!isOwner) {
+                    console.warn('NOT OWNER - another session has control:', data.ownerSessionId);
+                    document.getElementById('owner-status').textContent = '(NOT OWNER - click Take Control)';
+                    document.getElementById('owner-status').style.display = 'inline';
+                } else {
+                    document.getElementById('owner-status').textContent = '(OWNER)';
+                    document.getElementById('owner-status').style.color = '#3fb950';
+                    document.getElementById('owner-status').style.display = 'inline';
+                }
+
+                // Start polling for updates
+                updateInterval = setInterval(updateStatus, 1000);
+                updateStatus(); // Initial update
+            } catch (e) {
+                console.error('Registration failed:', e);
+                alert('Session registration failed: ' + e.message);
+            }
+        }
+
+        async function forceTakeover() {
+            try {
+                console.log('Force takeover - unregistering current owner');
+                // First get current state to find owner
+                const stateRes = await fetch(BASE + '/api/ai-autopilot/state');
+                const state = await stateRes.json();
+
+                if (state.lock && state.lock.ownerSessionId) {
+                    console.log('Unregistering owner:', state.lock.ownerSessionId);
+                    // Unregister the current owner
+                    await fetch(BASE + '/api/ai-autopilot/unregister', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId: state.lock.ownerSessionId })
+                    });
+                }
+
+                // Now register ourselves
+                const res = await fetch(BASE + '/api/ai-autopilot/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, hostname: 'sally-control' })
+                });
+                const data = await res.json();
+                isOwner = data.isOwner;
+
+                if (isOwner) {
+                    document.getElementById('owner-status').textContent = '(OWNER)';
+                    document.getElementById('owner-status').style.color = '#3fb950';
+                    alert('✓ Control taken! You can now use ON/OFF buttons.');
+                } else {
+                    alert('❌ Failed to take control. Try again.');
+                }
+            } catch (e) {
+                console.error('Takeover failed:', e);
+                alert('Takeover error: ' + e.message);
+            }
+        }
+
+        async function turnOn() {
+            if (!isOwner) {
+                alert('Not session owner! Another page has control.');
+                return;
+            }
+
+            try {
+                const res = await fetch(BASE + '/api/ai-autopilot/enable', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                const data = await res.json();
+                console.log('Enable response:', data);
+                if (data.enabled) {
+                    addSallyLog('Sally AI and Rule Engine ENABLED', 'sally-recommendation');
+                    // Force immediate status update
+                    setTimeout(updateStatus, 100);
+                } else {
+                    console.error('Enable failed - response:', data);
+                    alert('Failed to enable Sally: ' + JSON.stringify(data));
+                }
+            } catch (e) {
+                console.error('Enable failed:', e);
+                alert('Enable error: ' + e.message);
+            }
+        }
+
+        async function turnOff() {
+            if (!isOwner) {
+                alert('Not session owner! Another page has control.');
+                return;
+            }
+
+            try {
+                const res = await fetch(BASE + '/api/ai-autopilot/disable', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                addSallyLog('Sally AI and Rule Engine DISABLED', 'sally-analysis');
+            } catch (e) {
+                console.error('Disable failed:', e);
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const res = await fetch(BASE + '/api/ai-autopilot/state');
+                const state = await res.json();
+
+                // Update status bar
+                document.getElementById('sally-status').textContent = state.enabled ? 'ON' : 'OFF';
+                document.getElementById('sally-status').className = 'status-value ' + (state.enabled ? 'status-on' : 'status-off');
+
+                document.getElementById('engine-status').textContent = state.ruleEngineOk ? 'ACTIVE' : 'IDLE';
+                document.getElementById('engine-status').className = 'status-value ' + (state.ruleEngineOk ? 'status-on' : 'status-idle');
+
+                document.getElementById('phase-status').textContent = state.phase || '---';
+                document.getElementById('subphase-status').textContent = state.subPhase || '---';
+
+                // Update rule engine output with commands
+                if (state.commandLog && state.commandLog.length > 0) {
+                    updateRuleEngineOutput(state.commandLog.slice(0, 20));
+                }
+
+                // Update live control values
+                if (state.live) {
+                    updateLiveControls(state.live);
+                }
+
+                // Update server and SimConnect status
+                try {
+                    const statusRes = await fetch(BASE + '/api/status');
+                    const statusData = await statusRes.json();
+
+                    // Server status
+                    document.getElementById('server-status').textContent = 'RUNNING';
+                    document.getElementById('server-status').className = 'status-value status-on';
+
+                    // SimConnect status (check flightData.connected)
+                    const simConnected = statusData.flightData?.connected || false;
+                    document.getElementById('simconnect-status').textContent = simConnected ? 'CONNECTED' : 'DISCONNECTED';
+                    document.getElementById('simconnect-status').className = 'status-value ' + (simConnected ? 'status-on' : 'status-off');
+                } catch (statusErr) {
+                    // Server not responding
+                    document.getElementById('server-status').textContent = 'DOWN';
+                    document.getElementById('server-status').className = 'status-value status-off';
+                    document.getElementById('simconnect-status').textContent = 'UNKNOWN';
+                    document.getElementById('simconnect-status').className = 'status-value status-idle';
+                }
+            } catch (e) {
+                console.error('Update failed:', e);
+                // Mark server as down if main update fails
+                document.getElementById('server-status').textContent = 'DOWN';
+                document.getElementById('server-status').className = 'status-value status-off';
+                document.getElementById('simconnect-status').textContent = 'UNKNOWN';
+                document.getElementById('simconnect-status').className = 'status-value status-idle';
+            }
+        }
+
+        function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+        let lastCommandCount = 0;
+        function updateRuleEngineOutput(commands) {
+            if (commands.length === lastCommandCount) return;
+            lastCommandCount = commands.length;
+
+            const output = document.getElementById('engine-output');
+            output.innerHTML = commands.map(cmd => {
+                const time = cmd.time ? new Date(cmd.time).toLocaleTimeString() : 'now';
+                const value = cmd.value !== undefined ? ` = ${cmd.value}` : '';
+
+                let cssClass = 'rule-command';
+                if (cmd.type.includes('BRAKE')) cssClass = 'rule-brake';
+                else if (cmd.type.includes('AXIS') || cmd.type.includes('ELEVATOR') || cmd.type.includes('AILERON')) cssClass = 'rule-control';
+
+                return `
+                    <div class="log-entry ${cssClass}">
+                        <div class="log-content">[${esc(time)}] <span class="code">${esc(cmd.type)}${esc(String(value))}</span></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearEngineOutput() {
+            document.getElementById('engine-output').innerHTML = '<div style="color: #6e7681; text-align: center; padding: 40px 20px;">Cleared. Waiting for new commands...</div>';
+            lastCommandCount = 0;
+        }
+
+        function clearSallyOutput() {
+            document.getElementById('sally-output').innerHTML = '<div style="color: #6e7681; text-align: center; padding: 40px 20px;">Cleared. Waiting for Sally AI activity...</div>';
+        }
+
+        let lastLiveUpdate = '';
+        function updateLiveControls(live) {
+            const summary = `E:${live.elevator} A:${live.aileron} T:${live.throttle} R:${live.rudder}`;
+            if (summary === lastLiveUpdate) return;
+            lastLiveUpdate = summary;
+
+            addEngineLog(`Live Controls: Elevator=${live.elevator}, Aileron=${live.aileron}, Throttle=${live.throttle}, Rudder=${live.rudder}`, 'rule-control');
+        }
+
+        function addSallyLog(message, type = 'sally-recommendation') {
+            const output = document.getElementById('sally-output');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `
+                <div class="log-content">[${esc(time)}] ${esc(message)}</div>
+            `;
+            output.insertBefore(entry, output.firstChild);
+
+            // Keep max 50 entries
+            while (output.children.length > 50) {
+                output.removeChild(output.lastChild);
+            }
+        }
+
+        function addEngineLog(message, type = 'rule-command') {
+            // Rule engine logs are updated wholesale in updateRuleEngineOutput
+            // This function is for supplementary messages
+        }
+
+        // Poll for Sally AI activity (tuning updates, learnings)
+        setInterval(async () => {
+            try {
+                const res = await fetch(BASE + '/api/ai-pilot/tuning');
+                const tuning = await res.json();
+
+                // Check if tuning changed
+                if (window.lastTuning && JSON.stringify(tuning) !== JSON.stringify(window.lastTuning)) {
+                    const changes = [];
+                    for (const key in tuning) {
+                        if (tuning[key] !== window.lastTuning[key]) {
+                            changes.push(`${key}: ${window.lastTuning[key]} → ${tuning[key]}`);
+                        }
+                    }
+                    if (changes.length > 0) {
+                        addSallyLog(`🔧 Tuning Updated: ${changes.join(', ')}`, 'sally-tuning');
+                    }
+                }
+                window.lastTuning = tuning;
+            } catch (e) {
+                // Ignore
+            }
+        }, 2000);
+
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) clearInterval(updateInterval);
+            navigator.sendBeacon(BASE + '/api/ai-autopilot/unregister',
+                JSON.stringify({ sessionId }));
+        });
+
+        init();
+    </script>
+</body>
+</html>
