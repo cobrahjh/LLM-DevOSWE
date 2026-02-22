@@ -4,6 +4,8 @@
  * @version 1.2.0
  */
 
+function _esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 const VATSIM_DATA_URL = 'https://data.vatsim.net/v3/vatsim-data.json';
 const DEFAULT_UPDATE_INTERVAL = 15000; // 15 seconds (VATSIM recommendation)
 const DEFAULT_RANGE_NM = 50;
@@ -358,17 +360,17 @@ class VatsimLivePane extends SimGlassBase {
 
         item.innerHTML = `
             <div class="aircraft-header">
-                <span class="callsign">${pilot.callsign}</span>
+                <span class="callsign">${_esc(pilot.callsign)}</span>
                 <div class="aircraft-actions">
-                    <button class="btn-follow" data-callsign="${pilot.callsign}" title="${isFollowed ? 'Unfollow' : 'Follow on map'}">
+                    <button class="btn-follow" data-callsign="${_esc(pilot.callsign)}" title="${isFollowed ? 'Unfollow' : 'Follow on map'}">
                         ${isFollowed ? '⭐' : '☆'}
                     </button>
                     <span class="distance">${pilot.distance.toFixed(0)} nm</span>
                 </div>
             </div>
             <div class="aircraft-details">
-                <span class="aircraft-type">${aircraft}</span>
-                <span class="route">${departure} → ${arrival}</span>
+                <span class="aircraft-type">${_esc(aircraft)}</span>
+                <span class="route">${_esc(departure)} → ${_esc(arrival)}</span>
             </div>
             <div class="aircraft-stats">
                 <span>Alt: ${Math.round(pilot.altitude).toLocaleString()} ft</span>
@@ -433,14 +435,14 @@ class VatsimLivePane extends SimGlassBase {
 
         item.innerHTML = `
             <div class="atc-header">
-                <span class="atc-callsign">${controller.callsign}</span>
-                <span class="atc-frequency">${frequency}</span>
+                <span class="atc-callsign">${_esc(controller.callsign)}</span>
+                <span class="atc-frequency">${_esc(String(frequency))}</span>
             </div>
             <div class="atc-details">
-                <span class="atc-name">${controller.name}</span>
+                <span class="atc-name">${_esc(controller.name)}</span>
                 <span class="atc-time">${hoursOnline}h online</span>
             </div>
-            ${controller.text_atis ? `<div class="atc-atis">${controller.text_atis.join(' ')}</div>` : ''}
+            ${controller.text_atis ? `<div class="atc-atis">${_esc(controller.text_atis.join(' '))}</div>` : ''}
         `;
 
         return item;
@@ -564,8 +566,8 @@ class VatsimLivePane extends SimGlassBase {
         const notification = document.createElement('div');
         notification.className = `vatsim-notification vatsim-notification-${type}`;
         notification.innerHTML = `
-            <div class="notification-title">${title}</div>
-            <div class="notification-message">${message}</div>
+            <div class="notification-title">${_esc(title)}</div>
+            <div class="notification-message">${_esc(message)}</div>
         `;
 
         // Add to page

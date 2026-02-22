@@ -3,6 +3,8 @@
  * Provides flight planning tools and utility functions
  */
 
+function _escAux(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 class AuxPage {
     constructor(options = {}) {
         this.core = options.core || new GTNCore();
@@ -598,12 +600,12 @@ class AuxPage {
             const hobbsTime = this.flightLogger.formatDuration(flight.hobbsTime);
 
             row.innerHTML = `
-                <td>${date}</td>
-                <td>${dep}</td>
-                <td>${dest}</td>
-                <td>${aircraft}</td>
-                <td>${flightTime}</td>
-                <td>${hobbsTime}</td>
+                <td>${_escAux(date)}</td>
+                <td>${_escAux(dep)}</td>
+                <td>${_escAux(dest)}</td>
+                <td>${_escAux(aircraft)}</td>
+                <td>${_escAux(flightTime)}</td>
+                <td>${_escAux(hobbsTime)}</td>
             `;
 
             tableBody.appendChild(row);

@@ -22,6 +22,8 @@
  * @typedef {import('./types.js').MapState} MapState
  */
 
+function _esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 class GTN750Pane extends SimGlassBase {
     constructor() {
         super({
@@ -3475,11 +3477,11 @@ class GTN750Pane extends SimGlassBase {
 
             issueEl.innerHTML = `
                 <div class="validation-issue-header">
-                    <span class="validation-icon ${issue.severity}">${icon}</span>
-                    <span class="validation-message">${issue.message}</span>
+                    <span class="validation-icon ${_esc(issue.severity)}">${icon}</span>
+                    <span class="validation-message">${_esc(issue.message)}</span>
                     ${waypointTag}
                 </div>
-                ${issue.details ? `<div class="validation-details">${issue.details}</div>` : ''}
+                ${issue.details ? `<div class="validation-details">${_esc(issue.details)}</div>` : ''}
             `;
             issuesEl.appendChild(issueEl);
         });

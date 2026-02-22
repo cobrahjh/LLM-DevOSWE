@@ -16,6 +16,8 @@
 const CHECKLISTS = {};
 const EMERGENCY_PROCEDURES = {};
 
+function _esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 class AICopilot extends SimGlassBase {
     constructor() {
         super({
@@ -1519,9 +1521,9 @@ class AICopilot extends SimGlassBase {
                         });
                         const result = await res.json();
                         if (result.valid) {
-                            statusEl.innerHTML = '<span class="cs-ok">Valid key (' + (result.tier || 'pro') + ')</span>';
+                            statusEl.innerHTML = '<span class="cs-ok">Valid key (' + _esc(result.tier || 'pro') + ')</span>';
                         } else {
-                            statusEl.innerHTML = '<span class="cs-err">' + (result.error || 'Invalid key') + '</span>';
+                            statusEl.innerHTML = '<span class="cs-err">' + _esc(result.error || 'Invalid key') + '</span>';
                         }
                     } catch (e) {
                         statusEl.innerHTML = '<span class="cs-err">Server error</span>';

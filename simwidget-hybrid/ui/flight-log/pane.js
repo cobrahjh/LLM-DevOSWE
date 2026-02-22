@@ -1,3 +1,5 @@
+function _esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 class FlightLog extends SimGlassBase {
     constructor() {
         super({
@@ -149,7 +151,7 @@ class FlightLog extends SimGlassBase {
             const item = document.createElement('div');
             item.className = 'history-item';
             const m = Math.floor(f.duration/60), s = f.duration % 60;
-            item.innerHTML = '<div><span class="history-route">' + f.departure + ' → ' + f.arrival + '</span><br><span class="history-date">' + new Date(f.date).toLocaleDateString() + '</span></div><span class="history-time">' + m + ':' + s.toString().padStart(2,'0') + '</span>';
+            item.innerHTML = '<div><span class="history-route">' + _esc(f.departure) + ' → ' + _esc(f.arrival) + '</span><br><span class="history-date">' + _esc(new Date(f.date).toLocaleDateString()) + '</span></div><span class="history-time">' + m + ':' + s.toString().padStart(2,'0') + '</span>';
             list.appendChild(item);
         });
     }

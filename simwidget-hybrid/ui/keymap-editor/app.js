@@ -23,6 +23,7 @@
  * - Visual indicator for noisy disabled devices
  */
 
+function _esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 const API_BASE = `http://${window.location.hostname}:8080`;
 
 let keymaps = {};
@@ -887,8 +888,8 @@ async function checkConflicts() {
         const list = document.getElementById('conflicts-list');
         
         if (data.conflicts && data.conflicts.length > 0) {
-            list.innerHTML = data.conflicts.map(c => 
-                `<li><strong>${c.key}</strong>: ${c.usages.map(u => `${u.category}.${u.action}`).join(', ')}</li>`
+            list.innerHTML = data.conflicts.map(c =>
+                `<li><strong>${_esc(c.key)}</strong>: ${c.usages.map(u => `${_esc(u.category)}.${_esc(u.action)}`).join(', ')}</li>`
             ).join('');
             panel.classList.remove('hidden');
             log(`Found ${data.conflicts.length} conflict(s)`, 'error');

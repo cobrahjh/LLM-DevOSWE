@@ -7,6 +7,8 @@
  * Last Updated: 2025-01-08
  */
 
+function _esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 class ServicesPanel extends SimGlassBase {
     constructor() {
         super({
@@ -100,10 +102,10 @@ class ServicesPanel extends SimGlassBase {
         
         let content = `<span class="log-timestamp">${timestamp}</span>`;
         if (service) {
-            content += `<span class="log-service">[${service.toUpperCase()}]</span>`;
+            content += `<span class="log-service">[${_esc(service.toUpperCase())}]</span>`;
         }
-        content += message;
-        
+        content += _esc(message);
+
         logEntry.innerHTML = content;
         this.logContainer.appendChild(logEntry);
         

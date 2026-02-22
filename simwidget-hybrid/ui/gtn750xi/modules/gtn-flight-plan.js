@@ -3,6 +3,8 @@
  * Extracted from widget.js for modular architecture
  */
 
+function _esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 class GTNFlightPlan {
     constructor(options = {}) {
         this.core = options.core || new GTNCore();
@@ -464,7 +466,7 @@ class GTNFlightPlan {
                 const icon = catInfo ? catInfo.icon : '●';
 
                 info.innerHTML = `
-                    <div class="dto-name">${icon} ${this.dtoTarget.name}</div>
+                    <div class="dto-name">${_esc(icon)} ${_esc(this.dtoTarget.name)}</div>
                     <div class="dto-coords">USER WPT - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
                 `;
                 activateBtn.disabled = false;
@@ -497,8 +499,8 @@ class GTNFlightPlan {
 
                     const extra = data.results?.length > 1 ? ` (+${data.results.length - 1} more)` : '';
                     info.innerHTML = `
-                        <div class="dto-name">${this.dtoTarget.name}${extra}</div>
-                        <div class="dto-coords">${this.dtoTarget.type} - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
+                        <div class="dto-name">${_esc(this.dtoTarget.name)}${_esc(extra)}</div>
+                        <div class="dto-coords">${_esc(this.dtoTarget.type)} - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
                     `;
                     activateBtn.disabled = false;
                     return;
@@ -532,8 +534,8 @@ class GTNFlightPlan {
                     );
 
                     info.innerHTML = `
-                        <div class="dto-name">${this.dtoTarget.name}</div>
-                        <div class="dto-coords">${this.dtoTarget.type} - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
+                        <div class="dto-name">${_esc(this.dtoTarget.name)}</div>
+                        <div class="dto-coords">${_esc(this.dtoTarget.type)} - ${dist.toFixed(1)}nm @ ${Math.round(brg)}°</div>
                     `;
                     activateBtn.disabled = false;
                     return;
@@ -1276,8 +1278,8 @@ class GTNFlightPlan {
                 const distText = aw.distance > 0 ? `${Math.round(aw.distance)} nm` : '';
 
                 html += `
-                    <div class="awy-suggestion-item" data-ident="${aw.ident}" data-entry="${aw.entry}" data-exit="${aw.exit}">
-                        <div class="awy-suggestion-name">${aw.ident}</div>
+                    <div class="awy-suggestion-item" data-ident="${_esc(aw.ident)}" data-entry="${_esc(aw.entry)}" data-exit="${_esc(aw.exit)}">
+                        <div class="awy-suggestion-name">${_esc(aw.ident)}</div>
                         <div class="awy-suggestion-details">
                             ${aw.fixCount} fixes • MEA ${meaText}${distText ? ' • ' + distText : ''}
                         </div>

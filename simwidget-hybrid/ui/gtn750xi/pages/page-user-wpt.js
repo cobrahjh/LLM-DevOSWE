@@ -3,6 +3,8 @@
  * UI for creating, editing, and managing custom navigation waypoints
  */
 
+function _escUwp(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
 class UserWaypointsPage {
     constructor(options = {}) {
         this.core = options.core || new GTNCore();
@@ -354,9 +356,9 @@ class UserWaypointsPage {
             item.className = 'user-wpt-item';
             item.innerHTML = `
                 <div class="user-wpt-item-header">
-                    <span class="user-wpt-icon" style="color: ${category?.color || '#fff'}">${category?.icon || '●'}</span>
-                    <span class="user-wpt-ident">${wp.ident}</span>
-                    <span class="user-wpt-name">${wp.name}</span>
+                    <span class="user-wpt-icon" style="color: ${category?.color || '#fff'}">${_escUwp(category?.icon || '●')}</span>
+                    <span class="user-wpt-ident">${_escUwp(wp.ident)}</span>
+                    <span class="user-wpt-name">${_escUwp(wp.name)}</span>
                 </div>
                 <div class="user-wpt-item-coords">
                     ${this.core.formatLatitude(wp.lat)} ${this.core.formatLongitude(wp.lon)}
