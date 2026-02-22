@@ -137,7 +137,7 @@ class FlightRecorderPane extends SimGlassBase {
 
     createSession() {
         return {
-            id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+            id: Date.now().toString(36) + Array.from(crypto.getRandomValues(new Uint8Array(3))).map(b => b.toString(36)).join('').slice(0, 5),
             startTime: new Date().toISOString(),
             endTime: null,
             duration: 0,
@@ -709,7 +709,7 @@ class FlightRecorderPane extends SimGlassBase {
                     event.target.value = '';
                     return;
                 }
-                data.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+                data.id = Date.now().toString(36) + Array.from(crypto.getRandomValues(new Uint8Array(3))).map(b => b.toString(36)).join('').slice(0, 5);
             }
 
             this.savedSessions.unshift(data);

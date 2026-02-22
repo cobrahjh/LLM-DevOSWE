@@ -111,7 +111,7 @@ class AiAutopilotPane extends SimGlassBase {
         this._llmLastRt = null;  // last LLM response time in ms
 
         // Session lock — first-come-first-served multi-pane control
-        this._paneSessionId = 'ap-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+        this._paneSessionId = 'ap-' + Date.now().toString(36) + '-' + Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(36)).join('').slice(0, 8);
         this._paneHostname = location.hostname || 'unknown';
         this._isSessionOwner = false;
         this._sessionLocked = false;

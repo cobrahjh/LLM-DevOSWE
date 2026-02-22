@@ -6,7 +6,7 @@
 
 const crypto = require('crypto');
 
-const LICENSE_SECRET = 'SimGlass-Copilot-2025-AviationAI';
+const LICENSE_SECRET = process.env.SIMGLASS_LICENSE_SECRET || 'SimGlass-Copilot-2025-AviationAI';
 const KEY_PREFIX = 'SW';
 const SEGMENT_LEN = 5;
 const SEGMENT_COUNT = 4;

@@ -42,7 +42,7 @@ class CockpitSync {
     generateDeviceId() {
         let id = localStorage.getItem('cockpit-sync-device-id');
         if (!id) {
-            id = 'device-' + Math.random().toString(36).substr(2, 9);
+            id = 'device-' + Array.from(crypto.getRandomValues(new Uint8Array(5))).map(b => b.toString(36)).join('').slice(0, 9);
             localStorage.setItem('cockpit-sync-device-id', id);
         }
         return id;

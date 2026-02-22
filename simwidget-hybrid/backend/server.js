@@ -465,12 +465,19 @@ app.get('/', (req, res) => {
     `);
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
-// CORS for toolbar panel
+// CORS — restrict to local network origins
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin || '';
+    const allowed = !origin ||
+        origin.startsWith('http://localhost') ||
+        origin.startsWith('http://127.0.0.1') ||
+        origin.startsWith('http://192.168.1.');
+    res.header('Access-Control-Allow-Origin', allowed ? origin || '*' : '');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
     next();
 });
 
@@ -4289,7 +4296,13 @@ setInterval(() => {
     });
 }, WS_HEARTBEAT_INTERVAL);
 
+const MAX_WS_CLIENTS = 100;
+
 wss.on('connection', (ws) => {
+    if (wss.clients.size > MAX_WS_CLIENTS) {
+        ws.close(1008, 'Server at capacity');
+        return;
+    }
     console.log('Client connected');
     ws._isAlive = true;
     ws._useLovableFormat = false; // Default to SimGlass format

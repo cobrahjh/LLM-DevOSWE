@@ -253,6 +253,12 @@ class UserWaypointsPage {
         const file = event.target.files[0];
         if (!file) return;
 
+        const MAX_IMPORT_SIZE = 5 * 1024 * 1024; // 5MB
+        if (file.size > MAX_IMPORT_SIZE) {
+            alert('File too large. Maximum size is 5MB.');
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = e.target.result;
