@@ -137,8 +137,9 @@ class FuelPlanningPage {
             try {
                 const data = JSON.parse(saved);
                 if (data.mode) this.mode = data.mode;
-                if (data.pointToPoint) Object.assign(this.pointToPoint, data.pointToPoint);
-                if (data.flightPlan) Object.assign(this.flightPlan, data.flightPlan);
+                const _safe = o => { if (o) { delete o.__proto__; delete o.constructor; delete o.prototype; } return o; };
+                if (data.pointToPoint) Object.assign(this.pointToPoint, _safe(data.pointToPoint));
+                if (data.flightPlan) Object.assign(this.flightPlan, _safe(data.flightPlan));
                 if (data.reserveMinutes) this.reserveMinutes = data.reserveMinutes;
             } catch (e) {
                 console.error('[Fuel Planning] Failed to load settings:', e);

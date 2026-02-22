@@ -124,8 +124,9 @@ class VcalcPage {
         if (saved) {
             try {
                 const data = JSON.parse(saved);
-                if (data.profile) Object.assign(this.profile, data.profile);
-                if (data.settings) Object.assign(this.settings, data.settings);
+                const _safe = o => { if (o) { delete o.__proto__; delete o.constructor; delete o.prototype; } return o; };
+                if (data.profile) Object.assign(this.profile, _safe(data.profile));
+                if (data.settings) Object.assign(this.settings, _safe(data.settings));
             } catch (e) {
                 console.error('[VCALC] Failed to load settings:', e);
             }

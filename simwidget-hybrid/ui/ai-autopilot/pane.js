@@ -285,6 +285,7 @@ class AiAutopilotPane extends SimGlassBase {
             tuningGetter: () => {
                 const base = this._getTakeoffTuning?.() || {};
                 const cl   = this._getChecklistTuning(this.flightPhase?.phase);
+                delete base.__proto__; delete base.constructor; delete cl.__proto__; delete cl.constructor;
                 return Object.assign({}, base, cl);
             },
             holdsGetter: () => this._getTakeoffHolds?.() || {}

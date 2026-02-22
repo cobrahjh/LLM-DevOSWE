@@ -636,9 +636,10 @@ class CockpitFxPane extends SimGlassBase {
                 this.el.bassVolSlider.value = this._bassVol;
                 this.el.bassVolLabel.textContent = this._bassVol;
             }
-            if (s.layerVols) Object.assign(this._layerVols, s.layerVols);
-            if (s.layerBass) Object.assign(this._layerBass, s.layerBass);
-            if (s.layerEnabled) Object.assign(this._layerEnabled, s.layerEnabled);
+            const _safe = o => { if (o) { delete o.__proto__; delete o.constructor; delete o.prototype; } return o; };
+            if (s.layerVols) Object.assign(this._layerVols, _safe(s.layerVols));
+            if (s.layerBass) Object.assign(this._layerBass, _safe(s.layerBass));
+            if (s.layerEnabled) Object.assign(this._layerEnabled, _safe(s.layerEnabled));
             if (s.cabinLevel !== undefined) {
                 this._cabinLevel = parseInt(s.cabinLevel);
                 this.el.cabinSlider.value = this._cabinLevel;

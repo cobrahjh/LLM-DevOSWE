@@ -624,6 +624,8 @@ class SystemPage {
     importSettings(json) {
         try {
             const imported = JSON.parse(json);
+            // Block prototype pollution
+            delete imported.__proto__; delete imported.constructor; delete imported.prototype;
             Object.assign(this.settings, imported);
             this.saveSettings();
             this.updateUI();

@@ -2401,6 +2401,19 @@ app.post('/api/cockpit/sync/:sessionId', (req, res) => {
     if (!session) {
         return res.status(404).json({ error: 'Session not found' });
     }
+    // Validate state
+    if (!req.body.state || typeof req.body.state !== 'object' || Array.isArray(req.body.state)) {
+        return res.status(400).json({ error: 'State must be an object' });
+    }
+    const stateJson = JSON.stringify(req.body.state);
+    if (stateJson.length > 10240) {
+        return res.status(400).json({ error: 'State too large (max 10KB)' });
+    }
+    // Block prototype pollution keys
+    const keys = Object.keys(req.body.state);
+    if (keys.some(k => k === '__proto__' || k === 'constructor' || k === 'prototype')) {
+        return res.status(400).json({ error: 'Invalid state keys' });
+    }
     // Merge state updates
     session.state = { ...session.state, ...req.body.state };
     session.lastUpdate = Date.now();
@@ -3200,31 +3213,45 @@ app.post('/api/debug/camera', (req, res) => {
 app.post('/api/debug/save-paste', (req, res) => {
     try {
         const { content, timestamp, source } = req.body;
+        if (typeof content !== 'string') {
+            return res.status(400).json({ error: 'Content must be a string' });
+        }
+        // Size limit: 1MB
+        if (content.length > 1048576) {
+            return res.status(400).json({ error: 'Content too large (max 1MB)' });
+        }
         const fs = require('fs');
         const path = require('path');
 
         const outputPath = path.join(__dirname, '..', 'debug-console.txt');
-        const header = `=== Debug Console Paste ===\nTimestamp: ${timestamp || new Date().toISOString()}\nSource: ${source || 'unknown'}\n${'='.repeat(50)}\n\n`;
+        const safeSource = String(source || 'unknown').replace(/[^a-zA-Z0-9_\-. ]/g, '');
+        const header = `=== Debug Console Paste ===\nTimestamp: ${timestamp || new Date().toISOString()}\nSource: ${safeSource}\n${'='.repeat(50)}\n\n`;
 
         fs.writeFileSync(outputPath, header + content, 'utf8');
 
-        console.log(`[DEBUG] Saved paste to ${outputPath} (${content.length} chars)`);
+        console.log(`[DEBUG] Saved paste (${content.length} chars)`);
         res.json({
             success: true,
             file: 'debug-console.txt',
-            size: content.length,
-            path: outputPath
+            size: content.length
         });
     } catch (error) {
         console.error('[DEBUG] Error saving paste:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Save failed' });
     }
 });
 
 // Trigger any InputEvent by name (e.g., PROCEDURE_AUTOSTART)
 app.post('/api/inputevent/:name', (req, res) => {
     const name = req.params.name;
+    // Validate event name format (alphanumeric + underscore, max 64 chars)
+    if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(name)) {
+        return res.status(400).json({ error: 'Invalid event name format' });
+    }
     const value = req.body.value ?? 1;
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return res.status(400).json({ error: 'Value must be a finite number' });
+    }
     const hash = (global.inputEventHashes || {})[name];
     if (!hash) return res.status(404).json({ error: `InputEvent ${name} not found` });
     if (!simConnectConnection) return res.status(503).json({ error: 'No SimConnect' });

@@ -82,6 +82,7 @@ class AuxPage {
         if (saved) {
             try {
                 const settings = JSON.parse(saved);
+                delete settings.__proto__; delete settings.constructor; delete settings.prototype;
                 Object.assign(this.tripData, settings);
             } catch (e) {
                 if (window.telemetry) {
